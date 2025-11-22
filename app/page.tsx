@@ -4,4 +4,3 @@ export default function Home() {
   // redirigir directamente al dashboard
   redirect("/dashboard");
 }
-
