@@ -2,6 +2,7 @@
 import Button from "@/components/ui/Button";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { motion } from "motion/react";
 export default function AuthHome (){
     const router = useRouter();
     const handleLogin = () => {
@@ -17,13 +18,22 @@ export default function AuthHome (){
                 <Image src="/image.png" alt="DER Logo" width={240} height={87} className="object-contain"/>
             </div>
             {/* Decoración 1 - Esquina superior derecha */}
-            <div className="absolute top-[-10] right-0 z-0">
+            <motion.div 
+                className="absolute top-[-10] right-0 z-0"
+                initial={{ opacity: 0, x: 100, y: -100 }}
+                animate={{ opacity: 1, x: 0, y: 0,}}
+                transition={{ duration: 1.2,ease: "easeOut" }}>
                 <Image src="/deco1.svg" alt="Decoración 1" width={600} height={600} className="object-contain"/>
-            </div>
+            </motion.div>
+            
             {/* Decoración 2 - Esquina inferior izquierda */}
-            <div className="absolute bottom-[-10] left-0 z-0">
+            <motion.div 
+                className="absolute bottom-[-10] left-0 z-0"
+                initial={{ opacity: 0, x: -100, y: 100 }}
+                animate={{ opacity: 1, x: 0, y: 0 }}
+                transition={{ duration: 1.2, ease: "easeOut"}}>
                 <Image src="/deco2.svg" alt="Decoración 2" width={600} height={600} className="object-contain"/>
-            </div>
+            </motion.div>
             {/* Contenedor centrado para la tarjeta */}
             <div className="flex h-screen justify-center items-center relative z-10">
                 <div className="w-1/3 bg-[#FCFCFC] h-1/2 rounded-4xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col items-center justify-center p-5">
