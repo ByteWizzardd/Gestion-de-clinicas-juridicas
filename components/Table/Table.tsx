@@ -18,14 +18,14 @@ export default function Table<T extends Record<string, unknown>>({ data, rowsPer
   const startIdx = (currentPage - 1) * rowsPerPage;
   const endIdx = startIdx + rowsPerPage;
   const pageData = data.slice(startIdx, endIdx);
-
+  
   return (
     <>
       <TableContainer>
         <TableHeader title={columns}/>
         <tbody className="border-t-2 border-t-transparent">
           {pageData.map((row, idx) => (
-            <TableRow key={idx} data={row} />
+            <TableRow key={idx} data={row} rowIndex={startIdx + idx} />
           ))}
         </tbody>
       </TableContainer>
@@ -36,4 +36,4 @@ export default function Table<T extends Record<string, unknown>>({ data, rowsPer
       />
     </>
   );
-} 
+}

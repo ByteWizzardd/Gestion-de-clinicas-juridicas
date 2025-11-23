@@ -1,5 +1,3 @@
-import { color } from "motion";
-
 type TablePaginationProps = {
     currentPage: number;
     totalPages: number;
@@ -43,7 +41,7 @@ export function TablePagination({ currentPage, totalPages, onPageChange }: Table
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="icon icon-tabler icons-tabler-outline icon-tabler-arrow-left hover:bg-(--primary-hover) hover:rounded-full"
+                    className="icon icon-tabler icons-tabler-outline icon-tabler-arrow-left hover:bg-primary-hover hover:rounded-full"
                 >
                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                     <path d="M5 12l14 0" />
