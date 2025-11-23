@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { AnimatePresence, motion } from 'motion/react';
 
 interface CalendarWidgetProps {
   selectedDate: Date;
@@ -195,76 +196,85 @@ export default function CalendarWidget({
         </div>
 
         {/* Grid de días del calendario - 6 filas */}
-        <div className="grid grid-cols-7 grid-rows-6 flex-1">
-          {/* Días del mes anterior */}
-          {Array.from({ length: startingDayOfWeek }).map((_, index) => {
-            const day = daysInPrevMonth - startingDayOfWeek + index + 1;
-            const isLastInRow = (index + 1) % 7 === 0;
-            return (
-              <button
-                key={`prev-${day}`}
-                onClick={() => handleDayClick(day, false)}
-                className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-sm text-left ${
-                  isLastInRow ? 'border-r-0' : ''
-                }`}
-              >
-                {day}
-              </button>
-            );
-          })}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`${currentMonth.getFullYear()}-${currentMonth.getMonth()}`}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            className="grid grid-cols-7 grid-rows-6 flex-1"
+          >
+            {/* Días del mes anterior */}
+            {Array.from({ length: startingDayOfWeek }).map((_, index) => {
+              const day = daysInPrevMonth - startingDayOfWeek + index + 1;
+              const isLastInRow = (index + 1) % 7 === 0;
+              return (
+                <button
+                  key={`prev-${day}`}
+                  onClick={() => handleDayClick(day, false)}
+                  className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-sm text-left ${
+                    isLastInRow ? 'border-r-0' : ''
+                  }`}
+                >
+                  {day}
+                </button>
+              );
+            })}
 
-          {/* Días del mes actual */}
-          {Array.from({ length: daysInMonth }).map((_, index) => {
-            const day = index + 1;
-            const isCurrentDay = isToday(day, true);
-            const hasApts = hasAppointments(day, true);
-            // Calcular posición en el grid completo (incluyendo días previos)
-            const gridPosition = startingDayOfWeek + index;
-            const isLastInRow = (gridPosition + 1) % 7 === 0;
+            {/* Días del mes actual */}
+            {Array.from({ length: daysInMonth }).map((_, index) => {
+              const day = index + 1;
+              const isCurrentDay = isToday(day, true);
+              const hasApts = hasAppointments(day, true);
+              // Calcular posición en el grid completo (incluyendo días previos)
+              const gridPosition = startingDayOfWeek + index;
+              const isLastInRow = (gridPosition + 1) % 7 === 0;
 
-            return (
-              <button
-                key={day}
-                onClick={() => handleDayClick(day, true)}
-                className={`
+              return (
+                <button
+                  key={day}
+                  onClick={() => handleDayClick(day, true)}
+                  className={`
  p-2 border-r border-b border-gray-300 transition-colors text-sm text-left relative
-                  ${isLastInRow ? 'border-r-0' : ''}
-                  ${
-                    isCurrentDay
-                      ? 'bg-primary text-white font-semibold hover:bg-primary-dark'
-                      : hasApts
-                      ? 'bg-primary-light text-primary font-medium hover:bg-primary-light/80'
-                      : 'text-foreground hover:bg-gray-50'
-                  }
-                `}
-              >
-                {day}
-                {hasApts && !isCurrentDay && (
-                  <span className="absolute bottom-2 left-2 w-1.5 h-1.5 bg-primary rounded-full" />
-                )}
-              </button>
-            );
-          })}
+                    ${isLastInRow ? 'border-r-0' : ''}
+                    ${
+                      isCurrentDay
+                        ? 'bg-primary text-white font-semibold hover:bg-primary-dark'
+                        : hasApts
+                        ? 'bg-primary-light text-primary font-medium hover:bg-primary-light/80'
+                        : 'text-foreground hover:bg-gray-50'
+                    }
+                  `}
+                >
+                  {day}
+                  {hasApts && !isCurrentDay && (
+                    <span className="absolute bottom-2 left-2 w-1.5 h-1.5 bg-primary rounded-full" />
+                  )}
+                </button>
+              );
+            })}
 
-          {/* Días del mes siguiente */}
-          {Array.from({ length: daysInNextMonth }).map((_, index) => {
-            const day = index + 1;
-            // Calcular posición en el grid completo
-            const gridPosition = startingDayOfWeek + daysInMonth + index;
-            const isLastInRow = (gridPosition + 1) % 7 === 0;
-            return (
-              <button
-                key={`next-${day}`}
-                onClick={() => handleDayClick(day, false)}
-                className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-sm text-left ${
-                  isLastInRow ? 'border-r-0' : ''
-                }`}
-              >
-                {day}
-              </button>
-            );
-          })}
-        </div>
+            {/* Días del mes siguiente */}
+            {Array.from({ length: daysInNextMonth }).map((_, index) => {
+              const day = index + 1;
+              // Calcular posición en el grid completo
+              const gridPosition = startingDayOfWeek + daysInMonth + index;
+              const isLastInRow = (gridPosition + 1) % 7 === 0;
+              return (
+                <button
+                  key={`next-${day}`}
+                  onClick={() => handleDayClick(day, false)}
+                  className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-sm text-left ${
+                    isLastInRow ? 'border-r-0' : ''
+                  }`}
+                >
+                  {day}
+                </button>
+              );
+            })}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );

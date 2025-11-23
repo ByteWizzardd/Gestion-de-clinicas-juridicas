@@ -9,7 +9,7 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full' | 'custom';
   showCloseButton?: boolean;
   closeOnOverlayClick?: boolean;
   footer?: React.ReactNode;
@@ -68,6 +68,7 @@ export default function Modal({
     lg: 'max-w-lg',
     xl: 'max-w-xl',
     full: 'max-w-full mx-4',
+    custom: '', // Para permitir max-w personalizado
   };
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -100,39 +101,38 @@ export default function Modal({
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
               className={`
-                bg-white rounded-lg shadow-xl w-full ${sizeStyles[size]} 
-                pointer-events-auto max-h-[90vh] flex flex-col
+                bg-white rounded-xl shadow-xl w-full ${sizeStyles[size]} 
+                pointer-events-auto flex flex-col
                 ${className}
               `}
               role="dialog"
               aria-modal="true"
               aria-labelledby={title ? 'modal-title' : undefined}
             >
-              {/* Header */}
-              {(title || showCloseButton) && (
+              {/* Botón de cerrar flotante */}
+              {showCloseButton && !title && (
+                <button
+                  onClick={onClose}
+                  className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
+                  aria-label="Cerrar modal"
+                >
+                  <XMarkIcon className="w-6 h-6" />
+                </button>
+              )}
+              {/* Header con título (solo si se proporciona title) */}
+              {title && (
                 <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                  {title && (
-                    <h2
-                      id="modal-title"
-                      className="text-xl font-semibold text-foreground"
-                    >
-                      {title}
-                    </h2>
-                  )}
-                  {showCloseButton && (
-                    <button
-                      onClick={onClose}
-                      className="ml-auto p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
-                      aria-label="Cerrar modal"
-                    >
-                      <XMarkIcon className="w-5 h-5" />
-                    </button>
-                  )}
+                  <h2
+                    id="modal-title"
+                    className="text-xl font-semibold text-foreground"
+                  >
+                    {title}
+                  </h2>
                 </div>
               )}
 
               {/* Content */}
-              <div className="flex-1 overflow-y-auto p-6">{children}</div>
+              <div className={`flex-1 ${title ? 'p-6' : ''}`}>{children}</div>
 
               {/* Footer */}
               {footer && (
