@@ -6,6 +6,7 @@ import type { UserRole } from '../../components/sidebar/menu-config';
 import Notification from '../../components/ui/Notification';
 import DateTime from '../../components/ui/DateTime';
 import ApplicantFormModal from '../../components/ui/ApplicantFormModal';
+import CaseFormModal from '../../components/ui/CaseFormModal';
 
 export default function DashboardLayout({
   children,
@@ -14,18 +15,24 @@ export default function DashboardLayout({
 }) {
   // Rol de usuario, por ahora se usa student pero para pruebas se puede cambiar este valor a admin o professor
   const userRole: UserRole = 'student';
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isApplicantModalOpen, setIsApplicantModalOpen] = useState(false);
+  const [isCaseModalOpen, setIsCaseModalOpen] = useState(false);
 
-  const handleOpenModal = () => {
-    setIsModalOpen(true);
+  const handleCloseApplicantModal = () => {
+    setIsApplicantModalOpen(false);
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
+  const handleCloseCaseModal = () => {
+    setIsCaseModalOpen(false);
   };
 
-  const handleSubmit = (data: any) => {
-    console.log('Datos del formulario:', data);
+  const handleSubmitApplicant = (data: any) => {
+    console.log('Datos del solicitante:', data);
+    // Aquí procesarías los datos, por ejemplo, enviarlos a una API
+  };
+
+  const handleSubmitCase = (data: any) => {
+    console.log('Datos del caso:', data);
     // Aquí procesarías los datos, por ejemplo, enviarlos a una API
   };
 
@@ -48,9 +55,16 @@ export default function DashboardLayout({
 
       {/* Modal de Registro de Solicitante */}
       <ApplicantFormModal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onSubmit={handleSubmit}
+        isOpen={isApplicantModalOpen}
+        onClose={handleCloseApplicantModal}
+        onSubmit={handleSubmitApplicant}
+      />
+
+      {/* Modal de Registro de Caso */}
+      <CaseFormModal
+        isOpen={isCaseModalOpen}
+        onClose={handleCloseCaseModal}
+        onSubmit={handleSubmitCase}
       />
     </div>
   );
