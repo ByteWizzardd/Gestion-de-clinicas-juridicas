@@ -8,7 +8,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     isLoading?: boolean;    
 }
 
-export default function Button({ children, variant='primary', size='md', isLoading=false, disabled, ...props }: ButtonProps) {
+export default function Button({ children, className="", variant='primary', size='md', isLoading=false, disabled, ...props }: ButtonProps) {
     //estilos base
     const baseStyles = 'justify-center items-center inline-flex cursor-pointer rounded-md font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none'
     
@@ -29,7 +29,7 @@ export default function Button({ children, variant='primary', size='md', isLoadi
     }
     
     return(
-        <button className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]}`} disabled={disabled} {...props}>
+        <button className={`${baseStyles} ${className} ${variantStyles[variant]} ${sizeStyles[size]}`} disabled={disabled} {...props} >
             {isLoading ? <ArrowPathIcon className="animate-spin" /> : children}
         </button>
     );
