@@ -1,14 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import Modal from './Modal';
-import Stepper from './Stepper';
-import Input from './Input';
-import InputGroup from './InputGroup';
-import Select from './Select';
-import Button from './Button';
+import Modal from '../ui/Modal';
+import Stepper from '../ui/Stepper';
+import Input from '../ui/Input';
+import InputGroup from '../ui/InputGroup';
+import Select from '../ui/Select';
+import Button from '../ui/Button';
 import { ArrowRightIcon, ArrowLeftIcon, CalendarIcon } from '@heroicons/react/24/outline';
-import DatePicker from './DatePicker';
+import DatePicker from '../ui/DatePicker';
 
 interface ApplicantFormModalProps {
   isOpen: boolean;

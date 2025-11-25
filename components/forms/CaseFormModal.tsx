@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import Modal from './Modal';
-import Input from './Input';
-import Select from './Select';
-import TextArea from './TextArea';
-import DatePicker from './DatePicker';
-import Button from './Button';
+import Modal from '../ui/Modal';
+import Input from '../ui/Input';
+import Select from '../ui/Select';
+import TextArea from '../ui/TextArea';
+import DatePicker from '../ui/DatePicker';
+import Button from '../ui/Button';
 import { XMarkIcon, CalendarIcon } from '@heroicons/react/24/outline';
 
 interface CaseFormModalProps {
