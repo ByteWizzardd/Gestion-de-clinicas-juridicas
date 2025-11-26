@@ -18,9 +18,10 @@ interface SelectProps {
     onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
     required?: boolean;
     className?: string;
+    icon?: React.ReactNode;
 }
 
-export default function Select({ label, error, options, placeholder = "Selecciona una opción", value = "", onChange, required, className = "" }: SelectProps) {
+export default function Select({ label, error, options, placeholder = "Selecciona una opción", value = "", onChange, required, className = "", icon }: SelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     const selectRef = useRef<HTMLDivElement>(null);
 
@@ -55,26 +56,29 @@ export default function Select({ label, error, options, placeholder = "Seleccion
 
     return (
         <div className="flex flex-col gap-1">
-            {label && (<label className="text-base font-normal text-foreground mb-1">{label}</label>)}
+            {label && (<label className="text-sm font-normal text-foreground mb-1">{label}</label>)}
             <div className="relative" ref={selectRef}>
                 <button
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
                     className={`
-                        w-full h-[40px] px-4 pr-8 rounded-full border flex items-center justify-between
+                        w-full h-[45px] ${icon ? 'pl-4 pr-4' : 'pl-5 pr-4'} rounded-3xl border flex items-center gap-3 justify-between
                         ${error ? 'border-danger' : 'border-gray-300'}
                         focus:outline-none focus:ring-1 
                         ${error ? 'focus:ring-danger' : 'focus:ring-primary'}
                         bg-white cursor-pointer transition-colors
-                        text-base text-foreground text-left
+                        text-sm text-foreground text-left
                         ${className}
                     `}
                 >
-                    <span className={selectedOption ? 'text-foreground' : 'text-[#717171]'}>
-                        {selectedOption ? selectedOption.label : placeholder}
-                    </span>
-                    <ChevronDownIcon 
-                        className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'transform rotate-180' : ''}`}
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                        {icon && <span className="flex-shrink-0">{icon}</span>}
+                        <span className={`truncate ${selectedOption ? 'text-foreground' : 'text-[#717171]'}`}>
+                            {selectedOption ? selectedOption.label : placeholder}
+                        </span>
+                    </div>
+                    <ChevronDownIcon
+                        className={`w-4 h-4 text-gray-600 transition-transform flex-shrink-0 ${isOpen ? 'transform rotate-180' : ''}`}
                     />
                 </button>
 
@@ -85,7 +89,7 @@ export default function Select({ label, error, options, placeholder = "Seleccion
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -10, scale: 0.95 }}
                             transition={{ duration: 0.2, ease: 'easeOut' }}
-                            className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-2xl shadow-lg max-h-60 overflow-hidden"
+                            className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto"
                         >
                             {options.map((option, index) => (
                                 <button
@@ -93,10 +97,10 @@ export default function Select({ label, error, options, placeholder = "Seleccion
                                     type="button"
                                     onClick={() => handleSelect(option.value)}
                                     className={`
-                                        w-full px-4 py-2 text-left text-base text-foreground hover:bg-gray-100 transition-colors
+                                        w-full px-3 py-2 text-left text-sm text-foreground hover:bg-gray-100 transition-colors
                                         ${value === option.value ? 'bg-primary-light text-primary font-medium' : ''}
-                                        ${index === 0 ? 'rounded-t-2xl' : ''}
-                                        ${index === options.length - 1 ? 'rounded-b-2xl' : ''}
+                                        ${index === 0 ? 'rounded-t-lg' : ''}
+                                        ${index === options.length - 1 ? 'rounded-b-lg' : ''}
                                     `}
                                 >
                                     {option.label}

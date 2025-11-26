@@ -52,45 +52,41 @@ export default function FilterBar({
     ];
 
     return (
-        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-            <div className="flex flex-wrap items-end gap-4">
-                {/* Filters Section */}
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 min-w-0">
-                    <div className="flex items-center gap-2">
-                        <CalendarIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                        <Select
-                            options={dateRangeOptions}
-                            value={filters.dateRange}
-                            onChange={(e) => handleFilterUpdate('dateRange', e.target.value)}
-                            placeholder="Rango de Fechas"
-                            className="text-sm"
-                        />
-                    </div>
+        <div className="flex flex-wrap items-center gap-4 justify-between">
+            {/* Filters Section */}
+            <div className="flex items-center gap-4">
+                <Select
+                    options={dateRangeOptions}
+                    value={filters.dateRange}
+                    onChange={(e) => handleFilterUpdate('dateRange', e.target.value)}
+                    placeholder="Rango de Fechas"
+                    className="text-sm min-w-[300px]"
+                    icon={<CalendarIcon className="w-5 h-5 text-gray-400" />}
+                />
 
-                    <Select
-                        options={nucleoOptions}
-                        value={filters.nucleo}
-                        onChange={(e) => handleFilterUpdate('nucleo', e.target.value)}
-                        placeholder="Núcleo"
-                        className="text-sm"
-                    />
+                <Select
+                    options={nucleoOptions}
+                    value={filters.nucleo}
+                    onChange={(e) => handleFilterUpdate('nucleo', e.target.value)}
+                    placeholder="Núcleo"
+                    className="text-sm min-w-[300px]"
+                />
 
-                    <Select
-                        options={termOptions}
-                        value={filters.term}
-                        onChange={(e) => handleFilterUpdate('term', e.target.value)}
-                        placeholder="TERM - Periodo"
-                        className="text-sm"
-                    />
-                </div>
+                <Select
+                    options={termOptions}
+                    value={filters.term}
+                    onChange={(e) => handleFilterUpdate('term', e.target.value)}
+                    placeholder="TERM - Periodo"
+                    className="text-sm min-w-[300px]"
+                />
+            </div>
 
-                {/* View Switcher */}
-                <div className="flex-shrink-0">
-                    <ViewSwitcher
-                        activeView={viewMode}
-                        onViewChange={onViewModeChange}
-                    />
-                </div>
+            {/* View Switcher */}
+            <div className="flex-shrink-0">
+                <ViewSwitcher
+                    activeView={viewMode}
+                    onViewChange={onViewModeChange}
+                />
             </div>
         </div>
     );

@@ -23,18 +23,20 @@ export default function KPICard({
     trend,
     trendValue
 }: KPICardProps) {
+    // Subtle pastel backgrounds matching reference
     const variantStyles = {
-        default: 'bg-gradient-to-br from-gray-50 to-white border-gray-200',
-        success: 'bg-gradient-to-br from-green-50 to-white border-green-200',
-        warning: 'bg-gradient-to-br from-orange-50 to-white border-orange-200',
-        danger: 'bg-gradient-to-br from-red-50 to-white border-red-200'
+        default: 'bg-orange-50/30 border-gray-200',
+        success: 'bg-green-50/40 border-green-100',
+        warning: 'bg-orange-50/40 border-orange-100',
+        danger: 'bg-red-50/40 border-red-100'
     };
 
+    // Large semi-transparent circular icon backgrounds
     const iconBgStyles = {
-        default: 'bg-gray-100 text-gray-600',
-        success: 'bg-green-100 text-green-600',
-        warning: 'bg-orange-100 text-orange-600',
-        danger: 'bg-red-100 text-red-600'
+        default: 'bg-orange-200/30 text-orange-400',
+        success: 'bg-green-200/30 text-green-400',
+        warning: 'bg-orange-200/30 text-orange-400',
+        danger: 'bg-red-200/30 text-red-400'
     };
 
     const trendStyles = {
@@ -44,43 +46,41 @@ export default function KPICard({
     };
 
     return (
-        <div className={`${variantStyles[variant]} border-2 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow`}>
-            <div className="flex items-start justify-between gap-4">
-                {/* Left Content */}
-                <div className="flex-1 min-w-0">
-                    {/* Title */}
-                    <h3 className="text-lg font-semibold text-gray-700 mb-3">{title}</h3>
+        <div className={`${variantStyles[variant]} border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden`}>
+            {/* Large decorative icon in top-right corner */}
+            <div className={`absolute -top-4 -right-4 ${iconBgStyles[variant]} p-8 rounded-full opacity-60`}>
+                {icon}
+            </div>
 
-                    {/* Main Value */}
-                    <div className="mb-2">
-                        <div className="text-4xl font-bold text-foreground">{mainValue}</div>
-                        {mainLabel && (
-                            <div className="text-sm text-gray-600 mt-1">{mainLabel}</div>
-                        )}
-                    </div>
+            {/* Content */}
+            <div className="relative z-10">
+                {/* Title */}
+                <h3 className="text-base font-semibold text-gray-700 mb-4">{title}</h3>
 
-                    {/* Context/Trend */}
-                    <div className="flex items-center gap-2 mb-3">
-                        {trend && trendValue && (
-                            <span className={`text-sm font-semibold ${trendStyles[trend]}`}>
-                                {trendValue}
-                            </span>
-                        )}
-                        <span className="text-sm text-gray-600">{contextText}</span>
-                    </div>
-
-                    {/* Detail Text */}
-                    {detailText && (
-                        <div className="text-sm text-gray-500 mt-2 pt-2 border-t border-gray-200">
-                            {detailText}
-                        </div>
+                {/* Main Value */}
+                <div className="mb-3">
+                    <div className="text-4xl font-bold text-gray-900">{mainValue}</div>
+                    {mainLabel && (
+                        <div className="text-sm text-gray-600 mt-1 font-medium">{mainLabel}</div>
                     )}
                 </div>
 
-                {/* Right Icon */}
-                <div className={`${iconBgStyles[variant]} p-4 rounded-xl flex-shrink-0`}>
-                    {icon}
+                {/* Context/Trend */}
+                <div className="mb-3">
+                    {trend && trendValue && (
+                        <span className={`text-sm font-semibold ${trendStyles[trend]} mr-2`}>
+                            {trendValue}
+                        </span>
+                    )}
+                    <span className="text-sm text-gray-600">{contextText}</span>
                 </div>
+
+                {/* Detail Text */}
+                {detailText && (
+                    <div className="text-xs text-gray-500 mt-3 pt-3 border-t border-gray-200/50">
+                        {detailText}
+                    </div>
+                )}
             </div>
         </div>
     );

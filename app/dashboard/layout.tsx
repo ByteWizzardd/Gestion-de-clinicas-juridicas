@@ -21,7 +21,7 @@ export default function DashboardLayout({
 
       <div className="flex-1 flex flex-col">
         <div className="absolute top-6 right-6 flex items-center gap-4 z-10 text-lg">
-          <Notification count={3}/>
+          <Notification count={3} />
           <DateTime />
         </div>
 

@@ -10,32 +10,34 @@ interface ViewSwitcherProps {
 }
 
 export default function ViewSwitcher({ activeView, onViewChange }: ViewSwitcherProps) {
-    const buttonClass = (view: ViewMode) => `
-        flex items-center justify-center p-3 rounded-lg transition-all
-        ${activeView === view
-            ? 'bg-primary text-white shadow-md'
-            : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-        }
-    `;
+    const isChartsActive = activeView === 'charts';
 
     return (
-        <div className="flex gap-2 bg-gray-50 p-1 rounded-lg border border-gray-200">
-            <button
-                onClick={() => onViewChange('charts')}
-                className={buttonClass('charts')}
-                title="Vista de Gráficas"
-                aria-label="Vista de Gráficas"
-            >
-                <ChartBarIcon className="w-5 h-5" />
-            </button>
-            <button
-                onClick={() => onViewChange('cards')}
-                className={buttonClass('cards')}
-                title="Vista de Reportes"
-                aria-label="Vista de Reportes"
-            >
-                <DocumentTextIcon className="w-5 h-5" />
-            </button>
+        <div className="w-[200px] h-[45px] rounded-lg border border-gray-300 overflow-hidden bg-white">
+            <label className="inline-flex items-center cursor-pointer">
+                <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={!isChartsActive}
+                    onChange={(e) => onViewChange(e.target.checked ? 'cards' : 'charts')}
+                />
+                <div className="relative w-[200px] h-[45px] peer-focus:outline-none peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0 after:left-0 after:bg-[#991B1B] after:rounded-lg after:h-full after:w-[100px] after:transition-all after:duration-300">
+                    {/* Charts Icon */}
+                    <div className="absolute left-[40px] top-1/2 transform -translate-y-1/2 z-10 pointer-events-none">
+                        <ChartBarIcon
+                            className={`w-6 h-6 transition-colors duration-300 ${isChartsActive ? 'text-white' : 'text-[#991B1B]'
+                                }`}
+                        />
+                    </div>
+                    {/* Cards Icon */}
+                    <div className="absolute right-[40px] top-1/2 transform -translate-y-1/2 z-10 pointer-events-none">
+                        <DocumentTextIcon
+                            className={`w-6 h-6 transition-colors duration-300 ${!isChartsActive ? 'text-white' : 'text-[#991B1B]'
+                                }`}
+                        />
+                    </div>
+                </div>
+            </label>
         </div>
     );
 }

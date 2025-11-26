@@ -10,42 +10,44 @@ interface ReportCardProps {
     variant?: 'primary' | 'secondary' | 'success' | 'danger';
 }
 
-export default function ReportCard({ 
-    title, 
-    description, 
-    icon, 
-    onGenerate, 
-    variant = 'primary' 
+export default function ReportCard({
+    title,
+    description,
+    icon,
+    onGenerate,
+    variant = 'primary'
 }: ReportCardProps) {
-    const variantStyles = {
-        primary: 'from-primary/10 to-primary/5 border-primary/20',
-        secondary: 'from-secondary/10 to-secondary/5 border-secondary/20',
-        success: 'from-success/10 to-success/5 border-success/20',
-        danger: 'from-danger/10 to-danger/5 border-danger/20'
+    // Subtle background colors matching reference
+    const cardBgStyles = {
+        primary: 'bg-white border-gray-200',
+        secondary: 'bg-white border-gray-200',
+        success: 'bg-white border-gray-200',
+        danger: 'bg-white border-gray-200'
     };
 
-    const iconColors = {
-        primary: 'text-primary',
-        secondary: 'text-secondary',
-        success: 'text-success',
-        danger: 'text-danger'
+    // Icon circle background colors matching Figma design exactly
+    const iconBgStyles = {
+        primary: 'bg-red-800',
+        secondary: 'bg-orange-500',
+        success: 'bg-red-700',
+        danger: 'bg-orange-500'
     };
 
     return (
-        <div className={`bg-gradient-to-br ${variantStyles[variant]} border rounded-lg p-6 flex flex-col gap-4 hover:shadow-md transition-shadow`}>
-            <div className="flex items-start gap-4">
-                <div className={`${iconColors[variant]} flex-shrink-0`}>
-                    {icon}
-                </div>
+        <div className={`${cardBgStyles[variant]} border rounded-xl p-5 flex flex-col gap-3 hover:shadow-lg transition-shadow min-h-[200px]`}>
+            <div className="flex items-start gap-4 justify-between">
                 <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-lg text-foreground mb-2">{title}</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed">{description}</p>
+                    <h3 className="font-semibold text-sm text-gray-800 mb-2 leading-tight">{title}</h3>
+                    <p className="text-xs text-gray-500 leading-relaxed">{description}</p>
+                </div>
+                <div className={`${iconBgStyles[variant]} p-3 rounded-full flex-shrink-0 text-white`}>
+                    {icon}
                 </div>
             </div>
             <div className="mt-auto">
-                <Button 
-                    variant={variant} 
-                    size="sm" 
+                <Button
+                    variant={variant}
+                    size="sm"
                     onClick={onGenerate}
                     className="w-full"
                 >
