@@ -44,9 +44,11 @@ export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarP
 
             return (
               <li key={item.href}>
-                <Link href={item.href} className={`flex items-center gap-3 px-4 py-3 transition-all duration-200
-                    ${isActive ? 'bg-primary text-white font-semibold rounded-3xl'
-                        : 'text-foreground hover:bg-gray-100 rounded-lg hover:rounded-3xl'}`}>
+                <Link 
+                  href={item.href}
+                  className={`flex items-center gap-3 px-4 py-3 transition-all duration-200
+                      ${isActive ? 'bg-primary text-white font-semibold rounded-3xl'
+                          : 'text-foreground hover:bg-gray-100 rounded-lg hover:rounded-3xl'}`}>
                   <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-foreground'}`} />
                   <span>{item.label}</span>
                 </Link>

@@ -16,7 +16,7 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen bg-background relative">
       <div className="flex-shrink-0">
-        <Sidebar role={userRole}/>
+        <Sidebar role={userRole} />
       </div>
 
       <div className="flex-1 flex flex-col">

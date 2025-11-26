@@ -4,20 +4,26 @@ type TableHeaderProps = {
 
 export function TableHeader({ title }: TableHeaderProps) {
     return (
-        <table className="w-1/2 table-auto bg-primary rounded-3xl border-6 border-primary overflow-hidden">
-            <thead>
-                <tr>
-                    {title.map((col, idx) => (
-                        <th
-                            key={idx}
-                            className="font-urbanist text-2xl font-medium"
-                            style={{ color: "var(--on-primary)" }}
-                        >
-                            {col}
-                        </th>
-                    ))}
-                </tr>
-            </thead>
-        </table>
+    <>
+        <thead className="bg-primary">
+            <tr>
+                {title.map((col, idx) => (
+                    <th
+                        key={idx}
+                        className="text-2xl font-medium py-3 px-4 first:rounded-l-3xl text-on-primary"
+                    > 
+                        {col}
+                    </th>
+                ))}
+                {/* Encabezado para la columna de acciones */}
+                <th
+                    className="text-2xl font-medium py-3 px-4 last:rounded-r-3xl text-on-primary"
+                >
+                    Acciones
+                </th>
+            </tr>
+        </thead>
+    </>
     );
 }
+

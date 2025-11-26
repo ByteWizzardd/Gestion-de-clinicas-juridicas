@@ -10,6 +10,13 @@
   --primary-dark: #731A1D;
   --on-primary: #FFFFFF;
 
+  --on-primary-light: rgb(156, 35, 39, 0.4);
+
+  --on-border: #3E3E3E;
+  --primary-hover: #f59094;
+  
+  --on-primary-dots: #6d6d6dbf;
+
   --secondary: #F47E1F;
   --secondary-light: #F8C39B;
   --secondary-dark: #D16B11;
@@ -42,6 +49,11 @@
   --color-success: var(--success);
   --color-success-light: var(--success-light);
   --color-success-dark: var(--success-dark);
+  --color-on-primary: var(--on-primary);
+  --color-on-border: var(--on-border);
+  --color-primary-hover: var(--primary-hover);
+  --color-on-primary-dots: var(--on-primary-dots);
+  --color-on-primary-light: var(--on-primary-light);
 }
 
 
