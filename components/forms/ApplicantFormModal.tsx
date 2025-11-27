@@ -13,7 +13,7 @@ import DatePicker from '../ui/DatePicker';
 interface ApplicantFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: unknown) => void;
 }
 
 interface FormData {

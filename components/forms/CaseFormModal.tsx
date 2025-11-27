@@ -12,7 +12,7 @@ import { XMarkIcon, CalendarIcon } from '@heroicons/react/24/outline';
 interface CaseFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: unknown) => void;
 }
 
 interface FormData {
