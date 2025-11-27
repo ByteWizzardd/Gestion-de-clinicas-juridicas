@@ -17,7 +17,9 @@ export function TableRow<T extends Record<string, unknown>>({ data, rowIndex }: 
                     {String(cell)}
                 </td>
             ))}
-            {/* Nueva columna de acciones */}
+            {/* Nueva columna de acciones*/}
+            {/* No hay necesidad de crear una columna separada para acciones, y cuando 
+            se le agrega datos, se coloca automaticamente la imagen del svg*/}
             <td
                 className={`py-5 text-center flex-1
                     ${rowIndex % 2 === 1 ? 'rounded-r-xl' : ''}

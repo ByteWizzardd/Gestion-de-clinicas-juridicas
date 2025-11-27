@@ -14,11 +14,11 @@ interface TableProps<T> {
 
 export default function Table<T extends Record<string, unknown>>({ data, rowsPerPage = 10, columns }: TableProps<T>) {
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(data.length / rowsPerPage);
+  const totalPages = Math.max(1, Math.ceil(data.length / rowsPerPage));
   const startIdx = (currentPage - 1) * rowsPerPage;
   const endIdx = startIdx + rowsPerPage;
   const pageData = data.slice(startIdx, endIdx);
-  
+
   return (
     <>
       <TableContainer>

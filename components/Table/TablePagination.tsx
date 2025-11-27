@@ -12,17 +12,17 @@ export function TablePagination({ currentPage, totalPages, onPageChange }: Table
         <nav aria-label="pagination" className="flex justify-end gap-10 items-center mr-40 mt-5">
         <span className="flex items-center gap-2">
             Mostrar
-                <select
-                        className="border-2 rounded-lg h-8 w-11 border-(--on-border) focus:active:hover:border-(--on-border)"
-                        value={currentPage}
-                        onChange={e => onPageChange(Number(e.target.value))}
-                    >
-                    {pages.map(page => (
-                        <option key={page} value={page}>
-                            {page}
-                        </option>
-                    ))}
-                </select>
+            <select
+                className="border-2 rounded-lg h-8 w-11 border-on-border focus:active:hover:border-on-border text-center"
+                value={currentPage}
+                onChange={e => onPageChange(Number(e.target.value))}
+            >
+                {pages.map(page => (
+                    <option key={page} value={page}>
+                        {page}
+                    </option>
+                ))}
+            </select>
         </span>
             <button
                 onClick={() => onPageChange(currentPage - 1)}
@@ -68,7 +68,7 @@ export function TablePagination({ currentPage, totalPages, onPageChange }: Table
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="icon icon-tabler icons-tabler-outline icon-tabler-arrow-left hover:bg-(--primary-hover) hover:rounded-full"
+                    className="icon icon-tabler icons-tabler-outline icon-tabler-arrow-left hover:bg-primary-hover hover:rounded-full"
                 >
                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                     <path d="M5 12l14 0" />
