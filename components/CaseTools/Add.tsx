@@ -6,14 +6,11 @@ type AddProps = {
 
 function Add({label}: AddProps) {
   return (
-    <Button
-      variant="outline"
-      className="w-50 h-10 rounded-full! text-foreground! flex items-center justify-center gap-3"
-    >
+    <button className="h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors">
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
+        width="18"
+        height="18"
         viewBox="0 0 24 24"
         fill="none"
         stroke="#414040"
@@ -26,8 +23,8 @@ function Add({label}: AddProps) {
         <path d="M12 5l0 14" />
         <path d="M5 12l14 0" />
       </svg>
-      <span className="text-center">{label}</span>
-    </Button>
+      <span className="text-sm text-center">{label}</span>
+    </button>
   );
 }
 

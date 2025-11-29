@@ -10,14 +10,14 @@ export function TableHeader({ title }: TableHeaderProps) {
                 {title.map((col, idx) => (
                     <th
                         key={idx}
-                        className="text-xl font-medium py-3 px-4 first:rounded-l-full text-on-primary"
+                        className="text-sm sm:text-base font-medium py-2.5 px-3 first:rounded-l-full text-on-primary whitespace-nowrap"
                     > 
                         {col}
                     </th>
                 ))}
                 {/* Encabezado para la columna de acciones */}
                 <th
-                    className="text-xl font-medium py-3 px-4 last:rounded-r-full text-on-primary"
+                    className="text-sm sm:text-base font-medium py-2.5 px-3 last:rounded-r-full text-on-primary whitespace-nowrap"
                 >
                     Acciones
                 </th>

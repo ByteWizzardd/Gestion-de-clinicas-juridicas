@@ -8,14 +8,14 @@ type CaseToolsProps = {
 
 function CaseTools({ addLabel }: CaseToolsProps) {
     return (
-        <div className="flex flex-nowrap gap-4 items-center w-full">
-            <div className="flex-1 ml-10">
+        <div className="flex flex-nowrap gap-3 sm:gap-4 items-center w-full px-3">
+            <div className="flex-1 min-w-0">
                 <Search/>
             </div>
-            <div className="mr-7">
+            <div className="flex gap-3 sm:gap-4 items-center flex-shrink-0">
                 <Filter/>
+                <Add label={addLabel} />
             </div>
-            <Add label={addLabel} />
         </div>
     );
 }
