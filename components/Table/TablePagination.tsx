@@ -1,3 +1,5 @@
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
+
 type TablePaginationProps = {
     currentPage: number;
     totalPages: number;
@@ -31,56 +33,28 @@ export function TablePagination({ currentPage, totalPages, rowsPerPage, onPageCh
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={currentPage === 1}
                 aria-label="Previous Page"
-                className="disabled:opacity-50 disabled:cursor-not-allowed"
+                className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                {/* svg de flecha izquierda */}
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    style={{ color: "var(--primary)" }}
-                    width="32"
-                    height="32"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="icon icon-tabler icons-tabler-outline icon-tabler-arrow-left hover:bg-primary-hover hover:rounded-full sm:w-10 sm:h-10"
-                >
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                    <path d="M5 12l14 0" />
-                    <path d="M5 12l6 6" />
-                    <path d="M5 12l6 -6" />
-                </svg>
-
+                <div className="p-1.5 rounded-full hover:bg-gray-100 transition-colors">
+                    <ChevronLeftIcon 
+                        style={{ color: "var(--primary)" }}
+                        className="w-8 h-8 sm:w-10 sm:h-10"
+                    />
+                </div>
             </button>
 
             <button
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
                 aria-label="Next Page"
-                className="disabled:opacity-50 disabled:cursor-not-allowed"
+                className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                {/* svg de flecha derecha */}
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    style={{ color: "var(--primary)" }}
-                    width="32"
-                    height="32"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="icon icon-tabler icons-tabler-outline icon-tabler-arrow-left hover:bg-primary-hover hover:rounded-full sm:w-10 sm:h-10"
-                >
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                    <path d="M5 12l14 0" />
-                    <path d="M13 18l6 -6" />
-                    <path d="M13 6l6 6" />
-                </svg> 
-            
+                <div className="p-1.5 rounded-full hover:bg-gray-100 transition-colors">
+                    <ChevronRightIcon 
+                        style={{ color: "var(--primary)" }}
+                        className="w-8 h-8 sm:w-10 sm:h-10"
+                    />
+                </div>
             </button>
         </div>
         </nav>

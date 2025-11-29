@@ -32,7 +32,7 @@ export default function Table<T extends Record<string, unknown>>({ data, rowsPer
         <TableHeader title={columns}/>
         <tbody className="border-t-2 border-t-transparent">
           {pageData.map((row, idx) => (
-            <TableRow key={idx} data={row} rowIndex={startIdx + idx} />
+            <TableRow key={idx} data={row} rowIndex={idx} />
           ))}
         </tbody>
       </TableContainer>
