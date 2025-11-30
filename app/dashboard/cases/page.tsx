@@ -1,3 +1,4 @@
+'use client';
 import CaseTools from "@/components/CaseTools/CaseTools";
 import Table from "@/components/table/Table";
 
@@ -90,6 +91,24 @@ const mockCases = [
 ];
 
 export default function CasesPage() {
+  const handleView = (data: typeof mockCases[0]) => {
+    console.log('Ver caso:', data);
+    // Aquí puedes abrir un modal o navegar a una página de detalle
+  };
+
+  const handleEdit = (data: typeof mockCases[0]) => {
+    console.log('Editar caso:', data);
+    // Aquí puedes abrir un modal de edición
+  };
+
+  const handleDelete = (data: typeof mockCases[0]) => {
+    console.log('Eliminar caso:', data);
+    // Aquí puedes mostrar un confirm y eliminar
+    if (confirm(`¿Estás seguro de eliminar el caso ${data.codigo}?`)) {
+      // Lógica de eliminación
+    }
+  };
+
   return (
     <>
       <h1 className="text-2xl sm:text-3xl lg:text-4xl m-3 font-semibold font-primary">Listado de Casos</h1>
@@ -99,6 +118,9 @@ export default function CasesPage() {
       <Table
         data={mockCases}
         columns={["Código", "Solicitante", "Materia", "Estatus", "Responsable Principal"]}
+        onView={handleView}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
       />
     </>
   );

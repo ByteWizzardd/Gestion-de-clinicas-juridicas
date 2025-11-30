@@ -10,9 +10,19 @@ interface TableProps<T> {
   data: T[];
   rowsPerPage?: number;
   columns: string[];
+  onView?: (data: T) => void;
+  onEdit?: (data: T) => void;
+  onDelete?: (data: T) => void;
 }
 
-export default function Table<T extends Record<string, unknown>>({ data, rowsPerPage: initialRowsPerPage = 10, columns }: TableProps<T>) {
+export default function Table<T extends Record<string, unknown>>({ 
+  data, 
+  rowsPerPage: initialRowsPerPage = 10, 
+  columns,
+  onView,
+  onEdit,
+  onDelete
+}: TableProps<T>) {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(initialRowsPerPage);
   
@@ -32,7 +42,14 @@ export default function Table<T extends Record<string, unknown>>({ data, rowsPer
         <TableHeader title={columns}/>
         <tbody className="border-t-2 border-t-transparent">
           {pageData.map((row, idx) => (
-            <TableRow key={idx} data={row} rowIndex={idx} />
+            <TableRow 
+              key={idx} 
+              data={row} 
+              rowIndex={idx}
+              onView={onView}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
           ))}
         </tbody>
       </TableContainer>

@@ -1,11 +1,14 @@
-import { EllipsisHorizontalIcon } from '@heroicons/react/24/solid';
+import ActionMenu from '@/components/ui/ActionMenu';
 
 type TableRowProps<T> = {
     data: T;
-    rowIndex: number; 
+    rowIndex: number;
+    onView?: (data: T) => void;
+    onEdit?: (data: T) => void;
+    onDelete?: (data: T) => void;
 };
 
-export function TableRow<T extends Record<string, unknown>>({ data, rowIndex }: TableRowProps<T>) {
+export function TableRow<T extends Record<string, unknown>>({ data, rowIndex, onView, onEdit, onDelete }: TableRowProps<T>) {
     const cells = Object.values(data);
     return (
         <tr className={`border-none ${rowIndex % 2 === 1 ? 'bg-on-primary-light' : ''}`}>
@@ -27,7 +30,13 @@ export function TableRow<T extends Record<string, unknown>>({ data, rowIndex }: 
                     ${rowIndex % 2 === 1 ? 'rounded-r-xl' : ''}
                 `}
             >
-                    <EllipsisHorizontalIcon className="bg-on-primary-dots mx-auto text-on-primary cursor-pointer rounded-full w-5 h-5 sm:w-6 sm:h-6" />
+                <div className="flex justify-center">
+                    <ActionMenu
+                        onView={onView ? () => onView(data) : undefined}
+                        onEdit={onEdit ? () => onEdit(data) : undefined}
+                        onDelete={onDelete ? () => onDelete(data) : undefined}
+                    />
+                </div>
             </td>
         </tr>
     );
