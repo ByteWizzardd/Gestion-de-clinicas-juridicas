@@ -2,7 +2,7 @@
 
 import Select from '../ui/Select';
 import ViewSwitcher, { ViewMode } from '../ui/ViewSwitcher';
-import { CalendarIcon } from '@heroicons/react/24/outline';
+import { CalendarIcon } from '@heroicons/react/24/solid';
 
 export interface ReportFilters {
     dateRange: string;
@@ -27,62 +27,48 @@ export default function FilterBar({
         onFilterChange({ ...filters, [key]: value });
     };
 
-    const dateRangeOptions = [
-        { value: 'last-week', label: 'Última semana' },
-        { value: 'last-month', label: 'Último mes' },
-        { value: 'last-quarter', label: 'Último trimestre' },
-        { value: 'last-year', label: 'Último año' },
-        { value: 'custom', label: 'Personalizado' }
-    ];
-
-    const nucleoOptions = [
-        { value: 'all', label: 'Todos los núcleos' },
-        { value: 'nucleo-1', label: 'Núcleo 1' },
-        { value: 'nucleo-2', label: 'Núcleo 2' },
-        { value: 'nucleo-3', label: 'Núcleo 3' },
-        { value: 'nucleo-4', label: 'Núcleo 4' }
-    ];
-
-    const termOptions = [
-        { value: 'all', label: 'Todos los periodos' },
-        { value: '2024-1', label: '2024-1' },
-        { value: '2024-2', label: '2024-2' },
-        { value: '2023-2', label: '2023-2' },
-        { value: '2023-1', label: '2023-1' }
-    ];
+    const dateRangeOptions: { value: string; label: string }[] = [];
+    const nucleoOptions: { value: string; label: string }[] = [];
+    const termOptions: { value: string; label: string }[] = [];
 
     return (
-        <div className="flex flex-wrap items-center gap-4 justify-between">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-4 justify-between">
             {/* Filters Section */}
-            <div className="flex items-center gap-4">
-                <Select
-                    options={dateRangeOptions}
-                    value={filters.dateRange}
-                    onChange={(e) => handleFilterUpdate('dateRange', e.target.value)}
-                    placeholder="Rango de Fechas"
-                    className="text-sm min-w-[300px]"
-                    icon={<CalendarIcon className="w-5 h-5 text-gray-400" />}
-                />
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-3 flex-1">
+                <div className="flex-1 sm:flex-initial sm:w-[320px]">
+                    <Select
+                        options={dateRangeOptions}
+                        value={filters.dateRange}
+                        onChange={(e) => handleFilterUpdate('dateRange', e.target.value)}
+                        placeholder="Rango de Fechas"
+                        className="text-sm w-full"
+                        icon={<CalendarIcon className="w-5 h-5 text-neutral-700" />}
+                    />
+                </div>
 
-                <Select
-                    options={nucleoOptions}
-                    value={filters.nucleo}
-                    onChange={(e) => handleFilterUpdate('nucleo', e.target.value)}
-                    placeholder="Núcleo"
-                    className="text-sm min-w-[300px]"
-                />
+                <div className="flex-1 sm:flex-initial sm:w-[280px]">
+                    <Select
+                        options={nucleoOptions}
+                        value={filters.nucleo}
+                        onChange={(e) => handleFilterUpdate('nucleo', e.target.value)}
+                        placeholder="Núcleo"
+                        className="text-sm w-full"
+                    />
+                </div>
 
-                <Select
-                    options={termOptions}
-                    value={filters.term}
-                    onChange={(e) => handleFilterUpdate('term', e.target.value)}
-                    placeholder="TERM - Periodo"
-                    className="text-sm min-w-[300px]"
-                />
+                <div className="flex-1 sm:flex-initial sm:w-[300px]">
+                    <Select
+                        options={termOptions}
+                        value={filters.term}
+                        onChange={(e) => handleFilterUpdate('term', e.target.value)}
+                        placeholder="TERM - Periodo"
+                        className="text-sm w-full"
+                    />
+                </div>
             </div>
 
             {/* View Switcher */}
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 w-full sm:w-auto flex justify-start sm:justify-end">
                 <ViewSwitcher
                     activeView={viewMode}
                     onViewChange={onViewModeChange}

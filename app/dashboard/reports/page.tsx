@@ -42,10 +42,8 @@ export default function ReportsPage() {
         <div className="p-6 space-y-6">
             {/* Header */}
             <div className="mb-4">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Reportes</h1>
-                <p className="text-gray-600">
-                    Presentación de las métricas clave a través de gráficas y cuadros.
-                </p>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl m-3 font-semibold font-primary">Reportes</h1>
+                <p className="mb-6 ml-3 text-sm sm:text-base">Presentación de las métricas clave a través de gráficas y cuadros.</p>
             </div>
 
             {/* Report Generation Cards */}

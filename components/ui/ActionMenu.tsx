@@ -44,7 +44,6 @@ export default function ActionMenu({ onView, onEdit, onDelete }: ActionMenuProps
   };
 
   const hasActions = onView || onEdit || onDelete;
-  const actionCount = [onView, onEdit, onDelete].filter(Boolean).length;
 
   return (
     <div className="relative">
@@ -61,7 +60,7 @@ export default function ActionMenu({ onView, onEdit, onDelete }: ActionMenuProps
                 Ver
               </button>
               {(onEdit || onDelete) && (
-                <div className="border-t border-gray-200 my-1"></div>
+                <div className="border-t border-gray-100 my-1"></div>
               )}
             </>
           )}
@@ -72,7 +71,7 @@ export default function ActionMenu({ onView, onEdit, onDelete }: ActionMenuProps
                 Editar
               </button>
               {onDelete && (
-                <div className="border-t border-gray-200 my-1"></div>
+                <div className="border-t border-gray-100 my-1"></div>
               )}
             </>
           )}

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { AnimatePresence, motion } from 'motion/react';
+import DropdownMenu from './DropdownMenu';
 
 interface SelectOption {
     value: string;
@@ -23,25 +24,8 @@ interface SelectProps {
 
 export default function Select({ label, error, options, placeholder = "Selecciona una opción", value = "", onChange, required, className = "", icon }: SelectProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const selectRef = useRef<HTMLDivElement>(null);
 
     const selectedOption = options.find((opt) => opt.value === value);
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (selectRef.current && !selectRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        };
-
-        if (isOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [isOpen]);
 
     const handleSelect = (optionValue: string) => {
         if (onChange) {
@@ -54,62 +38,71 @@ export default function Select({ label, error, options, placeholder = "Seleccion
         setIsOpen(false);
     };
 
+    const triggerButton = (isOpenState: boolean) => (
+        <button
+            type="button"
+            className={`
+                w-full h-10 ${icon ? 'pl-4 pr-4' : 'pl-5 pr-4'} rounded-3xl shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] overflow-hidden flex items-center gap-3 justify-between
+                outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0
+                bg-white cursor-pointer
+                text-sm text-neutral-800/90 text-left font-normal
+                ${className}
+            `}
+        >
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+                {icon && <span className="flex-shrink-0">{icon}</span>}
+                <span className={`truncate ${selectedOption ? 'text-neutral-800/90' : 'text-neutral-600'}`}>
+                    {selectedOption ? selectedOption.label : placeholder}
+                </span>
+            </div>
+            <ChevronDownIcon
+                className={`w-4 h-4 text-neutral-700 transition-transform flex-shrink-0 ${isOpenState ? 'transform rotate-180' : ''}`}
+            />
+        </button>
+    );
+
     return (
         <div className="flex flex-col gap-1">
             {label && (<label className="text-sm font-normal text-foreground mb-1">{label}</label>)}
-            <div className="relative" ref={selectRef}>
-                <button
-                    type="button"
-                    onClick={() => setIsOpen(!isOpen)}
-                    className={`
-                        w-full h-[45px] ${icon ? 'pl-4 pr-4' : 'pl-5 pr-4'} rounded-3xl border flex items-center gap-3 justify-between
-                        ${error ? 'border-danger' : 'border-gray-300'}
-                        focus:outline-none focus:ring-1 
-                        ${error ? 'focus:ring-danger' : 'focus:ring-primary'}
-                        bg-white cursor-pointer transition-colors
-                        text-sm text-foreground text-left
-                        ${className}
-                    `}
-                >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                        {icon && <span className="flex-shrink-0">{icon}</span>}
-                        <span className={`truncate ${selectedOption ? 'text-foreground' : 'text-[#717171]'}`}>
-                            {selectedOption ? selectedOption.label : placeholder}
-                        </span>
-                    </div>
-                    <ChevronDownIcon
-                        className={`w-4 h-4 text-gray-600 transition-transform flex-shrink-0 ${isOpen ? 'transform rotate-180' : ''}`}
-                    />
-                </button>
-
+            <DropdownMenu
+                trigger={triggerButton}
+                align="left"
+                className="w-full"
+                menuClassName="w-full"
+                onOpenChange={setIsOpen}
+            >
                 <AnimatePresence>
-                    {isOpen && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                            transition={{ duration: 0.2, ease: 'easeOut' }}
-                            className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto"
-                        >
-                            {options.map((option, index) => (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        transition={{ duration: 0.2, ease: 'easeOut' }}
+                        className="bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-auto py-1"
+                    >
+                        {options.length > 0 ? (
+                            options.map((option, index) => (
                                 <button
                                     key={option.value}
                                     type="button"
                                     onClick={() => handleSelect(option.value)}
                                     className={`
-                                        w-full px-3 py-2 text-left text-sm text-foreground hover:bg-gray-100 transition-colors
+                                        w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer
                                         ${value === option.value ? 'bg-primary-light text-primary font-medium' : ''}
-                                        ${index === 0 ? 'rounded-t-lg' : ''}
-                                        ${index === options.length - 1 ? 'rounded-b-lg' : ''}
+                                        ${index === 0 ? 'rounded-t-xl' : ''}
+                                        ${index === options.length - 1 ? 'rounded-b-xl' : ''}
                                     `}
                                 >
                                     {option.label}
                                 </button>
-                            ))}
-                        </motion.div>
-                    )}
+                            ))
+                        ) : (
+                            <div className="px-4 py-2.5 text-sm text-gray-500 text-center">
+                                No hay opciones disponibles
+                            </div>
+                        )}
+                    </motion.div>
                 </AnimatePresence>
-            </div>
+            </DropdownMenu>
             {error && (<p className="text-xs text-danger mt-1">{error}</p>)}
         </div>
     );
