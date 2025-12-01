@@ -1,0 +1,3 @@
+# Esta carpeta contiene las migraciones de base de datos
+# Las migraciones deben seguir el formato: YYYYMMDD_HHMMSS_descripcion.sql
+
