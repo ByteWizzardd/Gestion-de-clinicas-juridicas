@@ -7,13 +7,15 @@ Esta carpeta contiene todos los archivos relacionados con la base de datos del p
 ```
 database/
 ├── schemas/          # Esquemas de base de datos (DDL)
-│   └── schema.sql    # Esquema principal con todas las tablas
+│   └── schema.sql    # Esquema principal con todas las tablas, vistas, funciones, triggers
 ├── migrations/       # Migraciones de base de datos
 │   └── (archivos de migración versionados)
 ├── seeds/           # Datos iniciales y semillas
 │   └── (scripts para poblar la base de datos)
-└── scripts/         # Scripts utilitarios SQL
-    └── (consultas, procedimientos almacenados, etc.)
+└── queries/          # Queries SQL (DML) organizadas por entidad
+    ├── casos/        # Queries para la entidad casos
+    ├── clientes/     # Queries para la entidad clientes
+    └── catalogos/    # Queries para tablas maestras
 ```
 
 ## Descripción de Carpetas
@@ -39,13 +41,28 @@ Ejemplos:
 - Tipos de trámites legales
 - Datos de prueba para desarrollo
 
-### `scripts/`
-Contiene scripts SQL utilitarios como:
-- Consultas complejas frecuentes
-- Procedimientos almacenados
-- Funciones
-- Triggers
-- Scripts de mantenimiento
+### `queries/`
+Contiene todas las queries SQL (DML) de la aplicación organizadas por entidad. Cada entidad tiene su propia carpeta con archivos `.sql` para cada operación.
+
+**Estructura**:
+- `casos/`: Queries para casos legales (get-all.sql, get-by-id.sql, create.sql, etc.)
+- `clientes/`: Queries para clientes
+- `usuarios/`: Queries para usuarios del sistema
+- `catalogos/`: Queries para tablas maestras (estados, nucleos, etc.)
+
+**Características**:
+- SQL puro y visible en archivos `.sql`
+- Usa prepared statements (`$1, $2, $3...`)
+- Organizado por entidad
+- Ejecutable directamente en un cliente SQL
+- Cargado dinámicamente por los helpers TypeScript en `lib/db/queries/`
+
+Ver [queries/README.md](./queries/README.md) para más detalles.
+
+**Nota sobre procedimientos almacenados, funciones y triggers:**
+- Si necesitas crear procedimientos almacenados, funciones o triggers, deben ir en `schemas/schema.sql` (son parte del DDL)
+- Si son cambios posteriores, deben ir en `migrations/` como migraciones versionadas
+- Las consultas complejas frecuentes deben estar en `queries/` organizadas por entidad
 
 ## Uso
 
