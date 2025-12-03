@@ -46,7 +46,7 @@ export default function Select({ label, error, options, placeholder = "Seleccion
                 outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0
                 bg-white cursor-pointer
                 text-neutral-800/90 text-left font-normal
-                ${className || 'text-sm'}
+                ${className || 'text-base'}
             `}
         >
             <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -63,7 +63,7 @@ export default function Select({ label, error, options, placeholder = "Seleccion
 
     return (
         <div className="flex flex-col gap-1">
-            {label && (<label className="text-sm font-normal text-foreground mb-1">{label}</label>)}
+            {label && (<label className="text-base font-normal text-foreground mb-1">{label}</label>)}
             <DropdownMenu
                 trigger={triggerButton}
                 align="left"
@@ -86,7 +86,7 @@ export default function Select({ label, error, options, placeholder = "Seleccion
                                     type="button"
                                     onClick={() => handleSelect(option.value)}
                                     className={`
-                                        w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer
+                                        w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer
                                         ${value === option.value ? 'bg-primary-light text-primary font-medium' : ''}
                                         ${index === 0 ? 'rounded-t-xl' : ''}
                                         ${index === options.length - 1 ? 'rounded-b-xl' : ''}
@@ -96,7 +96,7 @@ export default function Select({ label, error, options, placeholder = "Seleccion
                                 </button>
                             ))
                         ) : (
-                            <div className="px-4 py-2.5 text-sm text-gray-500 text-center">
+                            <div className="px-4 py-2.5 text-base text-gray-500 text-center">
                                 No hay opciones disponibles
                             </div>
                         )}

@@ -213,7 +213,7 @@ export default function CalendarWidget({
                 <button
                   key={`prev-${day}`}
                   onClick={() => handleDayClick(day, false)}
-                  className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-sm text-left ${
+                  className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-base text-left ${
                     isLastInRow ? 'border-r-0' : ''
                   }`}
                 >
@@ -236,7 +236,7 @@ export default function CalendarWidget({
                   key={day}
                   onClick={() => handleDayClick(day, true)}
                   className={`
- p-2 border-r border-b border-gray-300 transition-colors text-sm text-left relative
+ p-2 border-r border-b border-gray-300 transition-colors text-base text-left relative
                     ${isLastInRow ? 'border-r-0' : ''}
                     ${
                       isCurrentDay
@@ -265,7 +265,7 @@ export default function CalendarWidget({
                 <button
                   key={`next-${day}`}
                   onClick={() => handleDayClick(day, false)}
-                  className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-sm text-left ${
+                  className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-base text-left ${
                     isLastInRow ? 'border-r-0' : ''
                   }`}
                 >

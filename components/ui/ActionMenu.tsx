@@ -55,7 +55,7 @@ export default function ActionMenu({ onView, onEdit, onDelete }: ActionMenuProps
         <div ref={menuRef} className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 z-50 py-1">
           {onView && (
             <>
-              <button onClick={() => handleAction(onView)} className="group w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:text-gray-900 flex items-center gap-3 transition-colors cursor-pointer">
+              <button onClick={() => handleAction(onView)} className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 flex items-center gap-3 transition-colors cursor-pointer">
                 <EyeIcon className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
                 Ver
               </button>
@@ -66,7 +66,7 @@ export default function ActionMenu({ onView, onEdit, onDelete }: ActionMenuProps
           )}
           {onEdit && (
             <>
-              <button onClick={() => handleAction(onEdit)} className="group w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:text-gray-900 flex items-center gap-3 transition-colors cursor-pointer">
+              <button onClick={() => handleAction(onEdit)} className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 flex items-center gap-3 transition-colors cursor-pointer">
                 <PencilIcon className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
                 Editar
               </button>
@@ -76,7 +76,7 @@ export default function ActionMenu({ onView, onEdit, onDelete }: ActionMenuProps
             </>
           )}
           {onDelete && (
-            <button onClick={() => handleAction(onDelete)} className="group w-full px-4 py-2.5 text-left text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors cursor-pointer">
+            <button onClick={() => handleAction(onDelete)} className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors cursor-pointer">
               <TrashIcon className="w-4 h-4 text-gray-500 group-hover:text-red-600 transition-colors" />
               Eliminar
             </button>

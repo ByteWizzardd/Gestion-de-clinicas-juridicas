@@ -243,7 +243,7 @@ export default function DatePicker({ value, onChange, error, required }: DatePic
                 <button
                   key={`prev-${day}`}
                   onClick={() => handleDayClick(day, false)}
-                  className="text-sm text-gray-400 hover:bg-gray-100 rounded-md py-2 transition-colors"
+                  className="text-base text-gray-400 hover:bg-gray-100 rounded-md py-2 transition-colors"
                 >
                   {day}
                 </button>
@@ -261,7 +261,7 @@ export default function DatePicker({ value, onChange, error, required }: DatePic
                 <button
                   key={day}
                   onClick={() => handleDayClick(day, true)}
-                  className={`text-sm ${todayClass} ${selectedClass} rounded-md py-2 transition-colors ${
+                  className={`text-base ${todayClass} ${selectedClass} rounded-md py-2 transition-colors ${
                     isSelected(day, true) ? '' : 'text-foreground'
                   }`}
                 >
@@ -277,7 +277,7 @@ export default function DatePicker({ value, onChange, error, required }: DatePic
                 <button
                   key={`next-${day}`}
                   onClick={() => handleDayClick(day, false)}
-                  className="text-sm text-gray-400 hover:bg-gray-100 rounded-md py-2 transition-colors"
+                  className="text-base text-gray-400 hover:bg-gray-100 rounded-md py-2 transition-colors"
                 >
                   {day}
                 </button>

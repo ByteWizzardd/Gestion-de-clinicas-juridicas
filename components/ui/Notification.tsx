@@ -106,7 +106,7 @@ export default function Notification({ count = 0, onClick }: NotificationProps) 
           </div>
           {notifications.length > 0 && (
             <div className="p-3 border-t border-gray-200 flex-shrink-0">
-              <button className="w-full text-sm text-primary hover:text-primary/80 font-medium">
+              <button className="w-full text-base text-primary hover:text-primary/80 font-medium">
                 Ver todas las notificaciones
               </button>
             </div>

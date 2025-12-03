@@ -14,7 +14,7 @@ export function TablePagination({ currentPage, totalPages, rowsPerPage, onPageCh
 
     return (
         <nav aria-label="pagination" className="flex flex-col sm:flex-row justify-between sm:justify-end gap-3 sm:gap-6 items-center sm:mr-10 lg:mr-40 mt-4 px-3 sm:px-0">
-        <span className="flex items-center gap-2 text-xs sm:text-sm">
+        <span className="flex items-center gap-2 text-base">
             Mostrar
             <select
                 className="border-2 rounded-lg h-7 w-14 border-on-border focus:active:hover:border-on-border text-center text-xs"

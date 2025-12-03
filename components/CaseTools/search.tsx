@@ -12,7 +12,7 @@ function Search() {
             name="q"
             autoComplete="off"
             placeholder="Buscar caso..."
-            className="flex-1 px-4 py-2.5 h-full focus:outline-none bg-transparent text-sm text-foreground placeholder:text-gray-500"
+            className="flex-1 px-4 py-2.5 h-full focus:outline-none bg-transparent text-base text-foreground placeholder:text-gray-500"
           />
           <MagnifyingGlassIcon className="w-[18px] h-[18px] text-[#414040] mr-3" />
         </label>

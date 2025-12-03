@@ -37,7 +37,7 @@ export default function ReportCard({
         <div className={`${cardBgStyles[variant]} border rounded-xl p-5 flex flex-col gap-3 hover:shadow-lg transition-shadow min-h-[200px]`}>
             <div className="flex items-start gap-4 justify-between">
                 <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm text-gray-800 mb-2 leading-tight">{title}</h3>
+                    <h3 className="font-semibold text-base text-gray-800 mb-2 leading-tight">{title}</h3>
                     <p className="text-xs text-gray-500 leading-relaxed">{description}</p>
                 </div>
                 <div className={`${iconBgStyles[variant]} p-3 rounded-full flex-shrink-0 text-white`}>

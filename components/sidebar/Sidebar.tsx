@@ -63,12 +63,12 @@ export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarP
         <div className="flex items-center gap-3 mb-5">
           <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0"></div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">{userName}</p>
+            <p className="text-base font-medium text-foreground truncate">{userName}</p>
             <p className="text-xs text-gray-600">{getRoleLabel(role)}</p>
           </div>
         </div>
 
-        <button onClick={handleLogout} className="w-full bg-primary text-white px-3 py-1.5 rounded-lg text-sm cursor-pointer font-medium flex items-center justify-center gap-2 hover:bg-primary-dark transition-colors ">
+        <button onClick={handleLogout} className="w-full bg-primary text-white px-3 py-1.5 rounded-lg text-base cursor-pointer font-medium flex items-center justify-center gap-2 hover:bg-primary-dark transition-colors ">
           <ArrowRightOnRectangleIcon className="w-4 h-4"/>
           <span>Cerrar Sesión</span>
         </button>

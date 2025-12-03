@@ -69,13 +69,13 @@ export default function KPICard({
                 {/* Context/Trend */}
                 {contextText && (
                     <div className="mb-1.5">
-                        <span className="text-sm text-neutral-800/50">{contextText}</span>
+                        <span className="text-base text-neutral-800/50">{contextText}</span>
                     </div>
                 )}
 
                 {/* Detail Text */}
                 {detailText && (
-                    <div className={`${showRedLine ? 'text-sm' : 'text-xs'} text-neutral-800/50 mb-1.5`}>
+                    <div className={`${showRedLine ? 'text-base' : 'text-xs'} text-neutral-800/50 mb-1.5`}>
                         {detailText}
                     </div>
                 )}
