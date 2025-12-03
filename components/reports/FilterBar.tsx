@@ -1,6 +1,6 @@
 'use client';
 
-import Select from '../forms/Select';
+import Select from '@/components/forms/Select';
 import ViewSwitcher, { ViewMode } from '../ui/navigation/ViewSwitcher';
 import { Calendar } from 'lucide-react';
 
