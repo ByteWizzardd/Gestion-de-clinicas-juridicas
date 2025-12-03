@@ -1,12 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import {
-    FileText,
-    BarChart3,
-    UserCircle,
-    FileBarChart
-} from 'lucide-react';
 import ReportCard from '@/components/ui/ReportCard';
 import FilterBar, { ReportFilters } from '@/components/reports/FilterBar';
 import { ViewMode } from '@/components/ui/ViewSwitcher';
