@@ -4,55 +4,47 @@ import Button from './Button';
 
 interface ReportCardProps {
     title: string;
-    description: string;
     icon: React.ReactNode;
     onGenerate: () => void;
-    variant?: 'primary' | 'secondary' | 'success' | 'danger';
+    buttonColor?: 'red' | 'orange';
 }
 
 export default function ReportCard({
     title,
-    description,
     icon,
     onGenerate,
-    variant = 'primary'
+    buttonColor = 'red'
 }: ReportCardProps) {
-    // Subtle background colors matching reference
-    const cardBgStyles = {
-        primary: 'bg-white border-gray-200',
-        secondary: 'bg-white border-gray-200',
-        success: 'bg-white border-gray-200',
-        danger: 'bg-white border-gray-200'
+    const buttonStyles = {
+        red: 'bg-[#9c2327] hover:bg-[#7a1b1f]',
+        orange: 'bg-[#f47e1f] hover:bg-[#c66519]'
     };
 
-    // Icon circle background colors matching Figma design exactly
-    const iconBgStyles = {
-        primary: 'bg-red-800',
-        secondary: 'bg-orange-500',
-        success: 'bg-red-700',
-        danger: 'bg-orange-500'
+    const iconColorStyles = {
+        red: 'text-primary/20',
+        orange: 'text-secondary/20'
     };
 
     return (
-        <div className={`${cardBgStyles[variant]} border rounded-xl p-5 flex flex-col gap-3 hover:shadow-lg transition-shadow min-h-[200px]`}>
-            <div className="flex items-start gap-4 justify-between">
-                <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm text-gray-800 mb-2 leading-tight">{title}</h3>
-                    <p className="text-xs text-gray-500 leading-relaxed">{description}</p>
-                </div>
-                <div className={`${iconBgStyles[variant]} p-3 rounded-full flex-shrink-0 text-white`}>
-                    {icon}
-                </div>
+        <div className="bg-neutral-50 rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.3)] h-40 w-full relative overflow-hidden p-4 flex flex-col">
+            {/* Título */}
+            <h3 className="text-xl text-neutral-800/85 font-normal leading-tight pr-20 my-auto">
+                {title}
+            </h3>
+
+            {/* Icono decorativo grande en la esquina superior derecha */}
+            <div className={`absolute top-2 right-2 w-24 h-24 ${iconColorStyles[buttonColor]} flex items-center justify-center pointer-events-none`}>
+                {icon}
             </div>
-            <div className="mt-auto">
-                <Button
-                    variant={variant}
-                    size="sm"
+
+            {/* Botón en la parte inferior */}
+            <div className="mt-auto flex justify-center pt-2">
+                <button
                     onClick={onGenerate}
-                    className="w-full"
+                    className={`${buttonStyles[buttonColor]} h-9 w-40 rounded-lg text-white text-base font-normal transition-colors`}
                 >
                     Generar Informe
-                </Button>
+                </button>
             </div>
         </div>
     );

@@ -7,7 +7,7 @@ import Input from '../ui/Input';
 import InputGroup from '../ui/InputGroup';
 import Select from '../ui/Select';
 import Button from '../ui/Button';
-import { ArrowRightIcon, ArrowLeftIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { ArrowRight, ArrowLeft, Calendar } from 'lucide-react';
 import DatePicker from '../ui/DatePicker';
 
 interface ApplicantFormModalProps {
@@ -170,7 +170,7 @@ export default function ApplicantFormModal({
         <div className="flex flex-col gap-1">
           <label className="text-base font-normal text-foreground mb-1">Fecha de Nacimiento</label>
           <div className="relative">
-            <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600 pointer-events-none z-10" />
+            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600 pointer-events-none z-10" />
             <DatePicker
               value={formData.fechaNacimiento}
               onChange={(value) => updateField('fechaNacimiento', value)}
@@ -360,14 +360,14 @@ export default function ApplicantFormModal({
         <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
           {currentStep > 0 && (
             <Button variant="outline" onClick={handleBack}>
-              <ArrowLeftIcon className="w-5 h-5 mr-2" />
+              <ArrowLeft className="w-5 h-5 mr-2" />
               Atrás
             </Button>
           )}
           {currentStep < STEPS.length - 1 ? (
             <Button variant="primary" size="xl" onClick={handleNext}>
               Siguiente
-              <ArrowRightIcon className="w-5 h-5 ml-2" />
+              <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           ) : (
             <Button variant="primary" size="xl" onClick={handleSubmit}>

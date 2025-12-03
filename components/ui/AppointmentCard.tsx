@@ -35,7 +35,7 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
       </div>
 
       {/* Segunda línea: Detalle del Caso */}
-      <p className="text-sm text-gray-600 font-normal">
+      <p className="text-base text-gray-600 font-normal">
         Caso: {appointment.caseDetail}
       </p>
     </div>

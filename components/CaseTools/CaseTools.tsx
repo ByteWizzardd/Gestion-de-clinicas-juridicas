@@ -14,7 +14,7 @@ function CaseTools({ addLabel }: CaseToolsProps) {
             </div>
             <div className="flex gap-3 sm:gap-4 items-center flex-shrink-0">
                 <Filter/>
-                <Add label={addLabel} />
+            <Add label={addLabel} />
             </div>
         </div>
     );

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 
 interface CalendarWidgetProps {
@@ -165,7 +165,7 @@ export default function CalendarWidget({
           className="p-2 hover:bg-gray-100 rounded-md transition-colors"
           aria-label="Mes anterior"
         >
-          <ChevronLeftIcon className="w-5 h-5 text-foreground" />
+          <ChevronLeft className="w-5 h-5 text-foreground" />
         </button>
         <h2 className="text-xl font-semibold text-foreground">
           {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
@@ -175,7 +175,7 @@ export default function CalendarWidget({
           className="p-2 hover:bg-gray-100 rounded-md transition-colors"
           aria-label="Mes siguiente"
         >
-          <ChevronRightIcon className="w-5 h-5 text-foreground" />
+          <ChevronRight className="w-5 h-5 text-foreground" />
         </button>
       </div>
 
@@ -213,7 +213,7 @@ export default function CalendarWidget({
                 <button
                   key={`prev-${day}`}
                   onClick={() => handleDayClick(day, false)}
-                  className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-sm text-left ${
+                  className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-base text-left ${
                     isLastInRow ? 'border-r-0' : ''
                   }`}
                 >
@@ -236,7 +236,7 @@ export default function CalendarWidget({
                   key={day}
                   onClick={() => handleDayClick(day, true)}
                   className={`
- p-2 border-r border-b border-gray-300 transition-colors text-sm text-left relative
+ p-2 border-r border-b border-gray-300 transition-colors text-base text-left relative
                     ${isLastInRow ? 'border-r-0' : ''}
                     ${
                       isCurrentDay
@@ -265,7 +265,7 @@ export default function CalendarWidget({
                 <button
                   key={`next-${day}`}
                   onClick={() => handleDayClick(day, false)}
-                  className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-sm text-left ${
+                  className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-base text-left ${
                     isLastInRow ? 'border-r-0' : ''
                   }`}
                 >

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDownIcon } from '@heroicons/react/24/outline';
+import { ChevronDown } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 
 interface SelectOption {
@@ -60,7 +60,7 @@ function SelectSmall({ value, onChange, options, className = '', error = false }
         <span className={selectedOption ? 'text-foreground' : 'text-[#717171]'}>
           {selectedOption ? selectedOption.label : 'V'}
         </span>
-        <ChevronDownIcon
+        <ChevronDown
           className={`absolute top-1/2 right-2 transform -translate-y-1/2 w-3 h-3 text-gray-400 transition-transform pointer-events-none ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>

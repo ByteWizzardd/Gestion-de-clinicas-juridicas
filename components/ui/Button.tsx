@@ -1,5 +1,5 @@
 'use client';
-import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import { Loader2 } from "lucide-react";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     children: React.ReactNode;
@@ -24,14 +24,14 @@ export default function Button({ children, className = "", variant = 'primary', 
     //estilos para los tamaños
     const sizeStyles = {
         sm: "h-8 px-3 text-xs",
-        md: "h-10 px-4 py-2 text-sm",
+        md: "h-10 px-4 py-2 text-base",
         lg: "h-12 px-6 text-base",
         xl: "h-[55px] px-6 text-xl rounded-[15px]",
     }
 
     return (
         <button className={`${baseStyles} ${className} ${variantStyles[variant]} ${sizeStyles[size]}`} disabled={disabled} {...props} >
-            {isLoading ? <ArrowPathIcon className="animate-spin" /> : children}
+            {isLoading ? <Loader2 className="animate-spin" /> : children}
         </button>
     );
 }

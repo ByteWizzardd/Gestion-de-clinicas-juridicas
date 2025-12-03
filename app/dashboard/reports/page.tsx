@@ -1,12 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import {
-    DocumentTextIcon,
-    ChartBarSquareIcon,
-    UserCircleIcon,
-    DocumentChartBarIcon
-} from '@heroicons/react/24/outline';
+import { FileBarChart, Clock, User, Briefcase } from 'lucide-react';
 import ReportCard from '@/components/ui/ReportCard';
 import FilterBar, { ReportFilters } from '@/components/reports/FilterBar';
 import { ViewMode } from '@/components/ui/ViewSwitcher';
@@ -42,41 +37,35 @@ export default function ReportsPage() {
         <div className="p-6 space-y-6">
             {/* Header */}
             <div className="mb-4">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Reportes</h1>
-                <p className="text-gray-600">
-                    Presentación de las métricas clave a través de gráficas y cuadros.
-                </p>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl m-3 font-semibold font-primary">Reportes</h1>
+                <p className="mb-6 ml-3 text-base">Presentación de las métricas clave a través de gráficas y cuadros.</p>
             </div>
 
             {/* Report Generation Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <ReportCard
                     title="Informe Global de Actividad"
-                    description="Resumen de casos por TERM y Tipo de Caso en el rango de fecha seleccionado."
-                    icon={<DocumentTextIcon className="w-7 h-7" />}
-                    variant="primary"
+                    icon={<FileBarChart className="w-full h-full" strokeWidth={1.5} />}
                     onGenerate={() => handleGenerateReport('Informe Global de Actividad')}
+                    buttonColor="red"
                 />
                 <ReportCard
                     title="Reporte de Estatus de Casos"
-                    description="Informe detallado que muestra el estatus de los casos clasificado por su estado."
-                    icon={<ChartBarSquareIcon className="w-7 h-7" />}
-                    variant="secondary"
+                    icon={<Clock className="w-full h-full" strokeWidth={1.5} />}
                     onGenerate={() => handleGenerateReport('Reporte de Estatus de Casos')}
+                    buttonColor="orange"
                 />
                 <ReportCard
                     title="Ficha Resumen del Solicitante"
-                    description="Genera la ficha completa del cliente, usando solo la Cédula."
-                    icon={<UserCircleIcon className="w-7 h-7" />}
-                    variant="success"
+                    icon={<User className="w-full h-full" strokeWidth={1.5} />}
                     onGenerate={() => handleGenerateReport('Ficha Resumen del Solicitante')}
+                    buttonColor="red"
                 />
                 <ReportCard
                     title="Informe de Casos en Particular"
-                    description="Genera el detalle de un caso, usando solo el código."
-                    icon={<DocumentChartBarIcon className="w-7 h-7" />}
-                    variant="danger"
+                    icon={<Briefcase className="w-full h-full" strokeWidth={1.5} />}
                     onGenerate={() => handleGenerateReport('Informe de Casos en Particular')}
+                    buttonColor="orange"
                 />
             </div>
 

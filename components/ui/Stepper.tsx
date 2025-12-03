@@ -30,7 +30,7 @@ export default function Stepper({ steps, currentStep }: StepperProps) {
                       }
                     `}
                   >
-                    <span className={`text-sm font-normal ${
+                    <span className={`text-base font-normal ${
                       isActive ? 'text-secondary' : 'text-gray-500'
                     }`}>
                       {stepNumber}
@@ -39,7 +39,7 @@ export default function Stepper({ steps, currentStep }: StepperProps) {
                   {/* Etiqueta del paso */}
                   <span
                     className={`
-                      mt-2 text-sm text-center whitespace-nowrap
+                      mt-2 text-base text-center whitespace-nowrap
                       ${
                         isActive
                           ? 'font-normal text-secondary'

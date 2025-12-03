@@ -2,7 +2,7 @@ import ActionMenu from '@/components/ui/ActionMenu';
 
 type TableRowProps<T> = {
     data: T;
-    rowIndex: number;
+    rowIndex: number; 
     onView?: (data: T) => void;
     onEdit?: (data: T) => void;
     onDelete?: (data: T) => void;
@@ -15,7 +15,7 @@ export function TableRow<T extends Record<string, unknown>>({ data, rowIndex, on
             {cells.map((cell, index) => (
                 <td
                     key={index}
-                    className={`py-4 sm:py-5 text-center flex-1 text-sm sm:text-base px-3
+                    className={`py-4 sm:py-5 text-center flex-1 text-base px-3
                         ${rowIndex % 2 === 1 && index === 0 ? 'rounded-l-xl' : ''}
                     `}
                 >

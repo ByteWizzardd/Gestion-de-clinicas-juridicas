@@ -1,4 +1,4 @@
-import { UserGroupIcon, BriefcaseIcon, CalendarIcon, UserIcon, TableCellsIcon, Squares2X2Icon, ClockIcon } from '@heroicons/react/24/solid';
+import { Users, Briefcase, Calendar, User, Table, LayoutGrid, Clock } from 'lucide-react';
 
 export type UserRole = 'admin' | 'professor' | 'student';
 
@@ -16,7 +16,7 @@ export const fullMenu: MenuItem[] = [
   {
     label: 'Dashboard',
     href: '/dashboard',
-    icon: Squares2X2Icon,
+    icon: LayoutGrid,
     roles: ['admin', 'professor', 'student'],
     labelByRole: {
       admin: 'Dashboard',
@@ -27,25 +27,25 @@ export const fullMenu: MenuItem[] = [
   {
     label: 'Listado de Casos',
     href: '/dashboard/cases',
-    icon: BriefcaseIcon,
+    icon: Briefcase,
     roles: ['admin', 'professor', 'student'],
   },
   {
     label: 'Solicitantes',
     href: '/dashboard/applicants',
-    icon: UserIcon,
+    icon: User,
     roles: ['admin', 'professor', 'student'],
   },
   {
     label: 'Programación y Consultas',
     href: '/dashboard/appointments',
-    icon: CalendarIcon,
+    icon: Calendar,
     roles: ['admin', 'professor', 'student'],
   },
   {
     label: 'Gestión de Usuarios',
     href: '/dashboard/users',
-    icon: UserGroupIcon,
+    icon: Users,
     roles: ['admin'],
     labelByRole: {
       admin: 'Gestión de Usuarios',
@@ -56,13 +56,13 @@ export const fullMenu: MenuItem[] = [
   {
     label: 'Gestión de Catálogos',
     href: '/dashboard/catalogs',
-    icon: TableCellsIcon,
+    icon: Table,
     roles: ['admin'],
   },
   {
     label: 'Reportes',
     href: '/dashboard/reports',
-    icon: ClockIcon,
+    icon: Clock,
     roles: ['professor', 'student'],
   },
 ];

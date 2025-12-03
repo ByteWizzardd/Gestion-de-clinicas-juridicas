@@ -1,4 +1,4 @@
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 type TablePaginationProps = {
     currentPage: number;
@@ -14,7 +14,7 @@ export function TablePagination({ currentPage, totalPages, rowsPerPage, onPageCh
 
     return (
         <nav aria-label="pagination" className="flex flex-col sm:flex-row justify-between sm:justify-end gap-3 sm:gap-6 items-center sm:mr-10 lg:mr-40 mt-4 px-3 sm:px-0">
-        <span className="flex items-center gap-2 text-xs sm:text-sm">
+        <span className="flex items-center gap-2 text-base">
             Mostrar
             <select
                 className="border-2 rounded-lg h-7 w-14 border-on-border focus:active:hover:border-on-border text-center text-xs"
@@ -36,8 +36,8 @@ export function TablePagination({ currentPage, totalPages, rowsPerPage, onPageCh
                 className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 <div className="p-1.5 rounded-full hover:bg-gray-100 transition-colors">
-                    <ChevronLeftIcon 
-                        style={{ color: "var(--primary)" }}
+                    <ChevronLeft 
+                    style={{ color: "var(--primary)" }}
                         className="w-8 h-8 sm:w-10 sm:h-10"
                     />
                 </div>
@@ -50,8 +50,8 @@ export function TablePagination({ currentPage, totalPages, rowsPerPage, onPageCh
                 className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 <div className="p-1.5 rounded-full hover:bg-gray-100 transition-colors">
-                    <ChevronRightIcon 
-                        style={{ color: "var(--primary)" }}
+                    <ChevronRight 
+                    style={{ color: "var(--primary)" }}
                         className="w-8 h-8 sm:w-10 sm:h-10"
                     />
                 </div>

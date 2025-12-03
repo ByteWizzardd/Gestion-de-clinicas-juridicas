@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 
 interface DatePickerProps {
@@ -210,7 +210,7 @@ export default function DatePicker({ value, onChange, error, required }: DatePic
               className="p-1 hover:bg-gray-100 rounded-md transition-colors"
               aria-label="Mes anterior"
             >
-              <ChevronLeftIcon className="w-5 h-5 text-foreground" />
+              <ChevronLeft className="w-5 h-5 text-foreground" />
             </button>
             <h3 className="text-base font-semibold text-foreground">
               {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
@@ -220,7 +220,7 @@ export default function DatePicker({ value, onChange, error, required }: DatePic
               className="p-1 hover:bg-gray-100 rounded-md transition-colors"
               aria-label="Mes siguiente"
             >
-              <ChevronRightIcon className="w-5 h-5 text-foreground" />
+              <ChevronRight className="w-5 h-5 text-foreground" />
             </button>
           </div>
 
@@ -243,7 +243,7 @@ export default function DatePicker({ value, onChange, error, required }: DatePic
                 <button
                   key={`prev-${day}`}
                   onClick={() => handleDayClick(day, false)}
-                  className="text-sm text-gray-400 hover:bg-gray-100 rounded-md py-2 transition-colors"
+                  className="text-base text-gray-400 hover:bg-gray-100 rounded-md py-2 transition-colors"
                 >
                   {day}
                 </button>
@@ -261,7 +261,7 @@ export default function DatePicker({ value, onChange, error, required }: DatePic
                 <button
                   key={day}
                   onClick={() => handleDayClick(day, true)}
-                  className={`text-sm ${todayClass} ${selectedClass} rounded-md py-2 transition-colors ${
+                  className={`text-base ${todayClass} ${selectedClass} rounded-md py-2 transition-colors ${
                     isSelected(day, true) ? '' : 'text-foreground'
                   }`}
                 >
@@ -277,7 +277,7 @@ export default function DatePicker({ value, onChange, error, required }: DatePic
                 <button
                   key={`next-${day}`}
                   onClick={() => handleDayClick(day, false)}
-                  className="text-sm text-gray-400 hover:bg-gray-100 rounded-md py-2 transition-colors"
+                  className="text-base text-gray-400 hover:bg-gray-100 rounded-md py-2 transition-colors"
                 >
                   {day}
                 </button>
