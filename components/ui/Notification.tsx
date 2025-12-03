@@ -71,12 +71,12 @@ export default function Notification({ count = 0, onClick }: NotificationProps) 
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -10, scale: 0.95 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="bg-white border border-gray-200 rounded-xl shadow-xl max-h-96 overflow-auto"
+          className="bg-white border border-gray-200 rounded-xl shadow-xl flex flex-col max-h-96"
         >
-          <div className="p-4 border-b border-gray-200">
+          <div className="p-4 border-b border-gray-200 flex-shrink-0">
             <h3 className="text-lg font-semibold text-neutral-800">Notificaciones</h3>
           </div>
-          <div className="max-h-80 overflow-y-auto">
+          <div className="overflow-y-auto flex-1 min-h-0">
             {notifications.length > 0 ? (
               notifications.map((notification) => (
                 <button
@@ -91,21 +91,21 @@ export default function Notification({ count = 0, onClick }: NotificationProps) 
                       <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-neutral-800">{notification.title}</p>
-                      <p className="text-xs text-neutral-600 mt-1 line-clamp-2">{notification.message}</p>
-                      <p className="text-xs text-neutral-500 mt-1">{notification.time}</p>
+                      <p className="text-md font-medium text-neutral-800">{notification.title}</p>
+                      <p className="text-base text-neutral-600 mt-1 line-clamp-2">{notification.message}</p>
+                      <p className="text-base text-neutral-500 mt-1">{notification.time}</p>
                     </div>
                   </div>
                 </button>
               ))
             ) : (
-              <div className="px-4 py-8 text-sm text-gray-500 text-center">
+              <div className="px-4 py-8 text-base text-gray-500 text-center">
                 No hay notificaciones
               </div>
             )}
           </div>
           {notifications.length > 0 && (
-            <div className="p-3 border-t border-gray-200">
+            <div className="p-3 border-t border-gray-200 flex-shrink-0">
               <button className="w-full text-sm text-primary hover:text-primary/80 font-medium">
                 Ver todas las notificaciones
               </button>
