@@ -41,7 +41,7 @@ export default function FilterBar({
                     value={filters.dateRange}
                     onChange={(e) => handleFilterUpdate('dateRange', e.target.value)}
                     placeholder="Rango de Fechas"
-                        className="text-sm w-full"
+                        className="text-md w-full"
                         icon={<CalendarIcon className="w-5 h-5 text-neutral-700" />}
                 />
                 </div>
@@ -52,7 +52,7 @@ export default function FilterBar({
                     value={filters.nucleo}
                     onChange={(e) => handleFilterUpdate('nucleo', e.target.value)}
                     placeholder="Núcleo"
-                        className="text-sm w-full"
+                        className="text-md w-full"
                 />
                 </div>
 
@@ -62,7 +62,7 @@ export default function FilterBar({
                     value={filters.term}
                     onChange={(e) => handleFilterUpdate('term', e.target.value)}
                     placeholder="TERM - Periodo"
-                        className="text-sm w-full"
+                        className="text-md w-full"
                 />
                 </div>
             </div>

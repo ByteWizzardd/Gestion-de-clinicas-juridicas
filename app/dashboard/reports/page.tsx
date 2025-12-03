@@ -48,34 +48,7 @@ export default function ReportsPage() {
 
             {/* Report Generation Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <ReportCard
-                    title="Informe Global de Actividad"
-                    description="Resumen de casos por TERM y Tipo de Caso en el rango de fecha seleccionado."
-                    icon={<DocumentTextIcon className="w-7 h-7" />}
-                    variant="primary"
-                    onGenerate={() => handleGenerateReport('Informe Global de Actividad')}
-                />
-                <ReportCard
-                    title="Reporte de Estatus de Casos"
-                    description="Informe detallado que muestra el estatus de los casos clasificado por su estado."
-                    icon={<ChartBarSquareIcon className="w-7 h-7" />}
-                    variant="secondary"
-                    onGenerate={() => handleGenerateReport('Reporte de Estatus de Casos')}
-                />
-                <ReportCard
-                    title="Ficha Resumen del Solicitante"
-                    description="Genera la ficha completa del cliente, usando solo la Cédula."
-                    icon={<UserCircleIcon className="w-7 h-7" />}
-                    variant="success"
-                    onGenerate={() => handleGenerateReport('Ficha Resumen del Solicitante')}
-                />
-                <ReportCard
-                    title="Informe de Casos en Particular"
-                    description="Genera el detalle de un caso, usando solo el código."
-                    icon={<DocumentChartBarIcon className="w-7 h-7" />}
-                    variant="danger"
-                    onGenerate={() => handleGenerateReport('Informe de Casos en Particular')}
-                />
+
             </div>
 
             {/* Filter Bar with View Switcher */}
