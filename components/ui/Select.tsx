@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDownIcon } from "@heroicons/react/24/outline";
+import { ChevronDown } from "lucide-react";
 import { AnimatePresence, motion } from 'motion/react';
 import DropdownMenu from './DropdownMenu';
 
@@ -55,7 +55,7 @@ export default function Select({ label, error, options, placeholder = "Seleccion
                     {selectedOption ? selectedOption.label : placeholder}
                 </span>
             </div>
-            <ChevronDownIcon
+            <ChevronDown
                 className={`w-4 h-4 text-neutral-700 transition-transform flex-shrink-0 ${isOpenState ? 'transform rotate-180' : ''}`}
             />
         </button>

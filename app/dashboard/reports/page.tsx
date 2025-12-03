@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import {
-    DocumentTextIcon,
-    ChartBarSquareIcon,
-    UserCircleIcon,
-    DocumentChartBarIcon
-} from '@heroicons/react/24/outline';
+    FileText,
+    BarChart3,
+    UserCircle,
+    FileBarChart
+} from 'lucide-react';
 import ReportCard from '@/components/ui/ReportCard';
 import FilterBar, { ReportFilters } from '@/components/reports/FilterBar';
 import { ViewMode } from '@/components/ui/ViewSwitcher';

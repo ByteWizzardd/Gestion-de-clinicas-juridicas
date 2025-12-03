@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/solid';
+import { LogOut } from 'lucide-react';
 import { getMenuByRole, type UserRole } from './menu-config';
 
 interface SidebarProps {
@@ -69,7 +69,7 @@ export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarP
         </div>
 
         <button onClick={handleLogout} className="w-full bg-primary text-white px-3 py-1.5 rounded-lg text-base cursor-pointer font-medium flex items-center justify-center gap-2 hover:bg-primary-dark transition-colors ">
-          <ArrowRightOnRectangleIcon className="w-4 h-4"/>
+          <LogOut className="w-4 h-4"/>
           <span>Cerrar Sesión</span>
         </button>
       </div>

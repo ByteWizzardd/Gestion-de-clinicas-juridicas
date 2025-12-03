@@ -1,6 +1,6 @@
 'use client';
 
-import { BellIcon } from '@heroicons/react/24/outline';
+import { Bell } from 'lucide-react';
 import DropdownMenu from './DropdownMenu';
 import { AnimatePresence, motion } from 'motion/react';
 
@@ -50,7 +50,7 @@ export default function Notification({ count = 0, onClick }: NotificationProps) 
       className="relative flex items-center justify-center p-2 cursor-pointer hover:bg-neutral-100 rounded-lg transition-colors" 
       aria-label="Notificaciones"
     >
-      <BellIcon className="w-6 h-6 text-foreground"/>
+      <Bell className="w-6 h-6 text-foreground"/>
       {unreadCount > 0 && (
         <span className="absolute top-0 right-0 flex items-center justify-center w-5 h-5 text-xs font-semibold text-white bg-primary rounded-full">
           {unreadCount > 9 ? '9+' : unreadCount}

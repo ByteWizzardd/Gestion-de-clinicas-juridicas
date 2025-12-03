@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { X } from 'lucide-react';
 
 interface ModalProps {
   children: React.ReactNode;
@@ -116,7 +116,7 @@ export default function Modal({
                   className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
                   aria-label="Cerrar modal"
                 >
-                  <XMarkIcon className="w-6 h-6" />
+                  <X className="w-6 h-6" />
                 </button>
               )}
               {/* Header con título (solo si se proporciona title) */}

@@ -1,6 +1,6 @@
 'use client';
 
-import { ChartBarIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { BarChart3, FileText } from 'lucide-react';
 
 export type ViewMode = 'charts' | 'cards';
 
@@ -24,14 +24,14 @@ export default function ViewSwitcher({ activeView, onViewChange }: ViewSwitcherP
                 <div className="relative w-full h-[45px] peer-focus:outline-none peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0 after:left-0 after:bg-primary after:rounded-lg after:h-full after:w-1/2 after:transition-all after:duration-300">
                     {/* Charts Icon */}
                     <div className="absolute left-1/4 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
-                        <ChartBarIcon
+                        <BarChart3
                             className={`w-6 h-6 transition-colors duration-300 ${isChartsActive ? 'text-white' : 'text-primary'
                                 }`}
                         />
                     </div>
                     {/* Cards Icon */}
                     <div className="absolute right-1/4 top-1/2 transform translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
-                        <DocumentTextIcon
+                        <FileText
                             className={`w-6 h-6 transition-colors duration-300 ${!isChartsActive ? 'text-white' : 'text-primary'
                                 }`}
                         />

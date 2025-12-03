@@ -1,4 +1,4 @@
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 type TablePaginationProps = {
     currentPage: number;
@@ -36,7 +36,7 @@ export function TablePagination({ currentPage, totalPages, rowsPerPage, onPageCh
                 className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 <div className="p-1.5 rounded-full hover:bg-gray-100 transition-colors">
-                    <ChevronLeftIcon 
+                    <ChevronLeft 
                     style={{ color: "var(--primary)" }}
                         className="w-8 h-8 sm:w-10 sm:h-10"
                     />
@@ -50,7 +50,7 @@ export function TablePagination({ currentPage, totalPages, rowsPerPage, onPageCh
                 className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 <div className="p-1.5 rounded-full hover:bg-gray-100 transition-colors">
-                    <ChevronRightIcon 
+                    <ChevronRight 
                     style={{ color: "var(--primary)" }}
                         className="w-8 h-8 sm:w-10 sm:h-10"
                     />

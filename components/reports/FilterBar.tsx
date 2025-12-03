@@ -2,7 +2,7 @@
 
 import Select from '../ui/Select';
 import ViewSwitcher, { ViewMode } from '../ui/ViewSwitcher';
-import { CalendarIcon } from '@heroicons/react/24/solid';
+import { Calendar } from 'lucide-react';
 
 export interface ReportFilters {
     dateRange: string;
@@ -42,7 +42,7 @@ export default function FilterBar({
                     onChange={(e) => handleFilterUpdate('dateRange', e.target.value)}
                     placeholder="Rango de Fechas"
                         className="text-md w-full"
-                        icon={<CalendarIcon className="w-5 h-5 text-neutral-700" />}
+                        icon={<Calendar className="w-5 h-5 text-neutral-700" />}
                 />
                 </div>
 

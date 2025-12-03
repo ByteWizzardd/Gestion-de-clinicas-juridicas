@@ -7,7 +7,7 @@ import Select from '../ui/Select';
 import TextArea from '../ui/TextArea';
 import DatePicker from '../ui/DatePicker';
 import Button from '../ui/Button';
-import { XMarkIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { X, Calendar } from 'lucide-react';
 
 interface CaseFormModalProps {
   isOpen: boolean;
@@ -125,7 +125,7 @@ export default function CaseFormModal({
           className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
           aria-label="Cerrar modal"
         >
-          <XMarkIcon className="w-6 h-6" />
+          <X className="w-6 h-6" />
         </button>
         
         {/* Título */}
@@ -138,7 +138,7 @@ export default function CaseFormModal({
             <div className="flex flex-col gap-1">
               <label className="text-base font-normal text-foreground mb-1">Fecha del Caso</label>
               <div className="relative">
-                <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600 pointer-events-none z-10" />
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600 pointer-events-none z-10" />
                 <DatePicker
                   value={formData.fechaCaso}
                   onChange={(value) => updateField('fechaCaso', value)}

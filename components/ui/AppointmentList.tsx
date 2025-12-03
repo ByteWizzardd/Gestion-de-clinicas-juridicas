@@ -2,7 +2,7 @@
 
 import type { Appointment } from '@/types/appointment';
 import AppointmentCard from './AppointmentCard';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { Plus } from 'lucide-react';
 
 interface AppointmentListProps {
   appointments: Appointment[];
@@ -56,7 +56,7 @@ export default function AppointmentList({
           className="h-7 w-7 bg-primary text-white rounded-full flex items-center justify-center hover:bg-primary-dark transition-colors mb-1"
           aria-label="Añadir cita"
         >
-          <PlusIcon className="w-5 h-5" strokeWidth={4} />
+          <Plus className="w-5 h-5" strokeWidth={4} />
         </button>
       );
     }

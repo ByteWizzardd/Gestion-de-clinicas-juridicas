@@ -1,7 +1,6 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
-import { EllipsisHorizontalIcon } from '@heroicons/react/24/solid';
-import { EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { MoreHorizontal, Eye, Pencil, Trash2 } from 'lucide-react';
 
 type ActionMenuProps = {
   onView?: () => void;
@@ -48,7 +47,7 @@ export default function ActionMenu({ onView, onEdit, onDelete }: ActionMenuProps
   return (
     <div className="relative">
       <div ref={buttonRef} onClick={() => setIsOpen(!isOpen)} className="inline-flex items-center justify-center p-1 rounded-full hover:bg-gray-200 transition-colors cursor-pointer">
-        <EllipsisHorizontalIcon className="bg-on-primary-dots mx-auto text-on-primary rounded-full w-5 h-5 sm:w-6 sm:h-6" />
+        <MoreHorizontal className="bg-on-primary-dots mx-auto text-on-primary rounded-full w-5 h-5 sm:w-6 sm:h-6" />
       </div>
 
       {isOpen && hasActions && (
@@ -56,7 +55,7 @@ export default function ActionMenu({ onView, onEdit, onDelete }: ActionMenuProps
           {onView && (
             <>
               <button onClick={() => handleAction(onView)} className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 flex items-center gap-3 transition-colors cursor-pointer">
-                <EyeIcon className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
+                <Eye className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
                 Ver
               </button>
               {(onEdit || onDelete) && (
@@ -67,7 +66,7 @@ export default function ActionMenu({ onView, onEdit, onDelete }: ActionMenuProps
           {onEdit && (
             <>
               <button onClick={() => handleAction(onEdit)} className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 flex items-center gap-3 transition-colors cursor-pointer">
-                <PencilIcon className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
+                <Pencil className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
                 Editar
               </button>
               {onDelete && (
@@ -77,7 +76,7 @@ export default function ActionMenu({ onView, onEdit, onDelete }: ActionMenuProps
           )}
           {onDelete && (
             <button onClick={() => handleAction(onDelete)} className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors cursor-pointer">
-              <TrashIcon className="w-4 h-4 text-gray-500 group-hover:text-red-600 transition-colors" />
+              <Trash2 className="w-4 h-4 text-gray-500 group-hover:text-red-600 transition-colors" />
               Eliminar
             </button>
           )}

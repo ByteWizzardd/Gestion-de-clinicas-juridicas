@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import { ArrowLeftIcon } from "@heroicons/react/24/solid";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
@@ -40,7 +40,7 @@ export default function LoginPage() {
                         <Link href="/auth" onClick={handleBack}
                             className="absolute top-10 left-8 z-30 p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
                         >
-                            <ArrowLeftIcon className="w-8 h-8 text-foreground hover:text-primary transition-colors" />
+                            <ArrowLeft className="w-8 h-8 text-foreground hover:text-primary transition-colors" />
                         </Link>
                     </motion.div>
                 )}
