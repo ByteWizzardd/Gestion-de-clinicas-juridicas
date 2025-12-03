@@ -143,7 +143,8 @@ SELECT t.*, EXTRACT(YEAR FROM AGE(CURRENT_DATE, t.fecha_nacimiento))::INTEGER AS
 CREATE TABLE usuarios (
     cedula VARCHAR(20) PRIMARY KEY REFERENCES clientes(cedula), 
     habilitado BOOLEAN DEFAULT TRUE,
-    rol_sistema VARCHAR(20) CHECK (rol_sistema IN ('Estudiante', 'Profesor', 'Coordinador'))
+    rol_sistema VARCHAR(20) CHECK (rol_sistema IN ('Estudiante', 'Profesor', 'Coordinador')),
+    foto_perfil BYTEA
 );
 
 CREATE TABLE coordinadores (

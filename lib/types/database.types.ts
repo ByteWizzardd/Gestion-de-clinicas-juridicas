@@ -34,6 +34,7 @@ export interface Usuario {
   cedula: string;
   habilitado: boolean | null;
   rol_sistema: 'Estudiante' | 'Profesor' | 'Coordinador' | null;
+  foto_perfil: Buffer | null;
 }
 
 export interface Caso {
