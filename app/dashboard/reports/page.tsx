@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { FileBarChart, Clock, User, Briefcase } from 'lucide-react';
 import ReportCard from '@/components/ui/ReportCard';
 import FilterBar, { ReportFilters } from '@/components/reports/FilterBar';
 import { ViewMode } from '@/components/ui/ViewSwitcher';
@@ -42,7 +43,30 @@ export default function ReportsPage() {
 
             {/* Report Generation Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-
+                <ReportCard
+                    title="Informe Global de Actividad"
+                    icon={<FileBarChart className="w-full h-full" strokeWidth={1.5} />}
+                    onGenerate={() => handleGenerateReport('Informe Global de Actividad')}
+                    buttonColor="red"
+                />
+                <ReportCard
+                    title="Reporte de Estatus de Casos"
+                    icon={<Clock className="w-full h-full" strokeWidth={1.5} />}
+                    onGenerate={() => handleGenerateReport('Reporte de Estatus de Casos')}
+                    buttonColor="orange"
+                />
+                <ReportCard
+                    title="Ficha Resumen del Solicitante"
+                    icon={<User className="w-full h-full" strokeWidth={1.5} />}
+                    onGenerate={() => handleGenerateReport('Ficha Resumen del Solicitante')}
+                    buttonColor="red"
+                />
+                <ReportCard
+                    title="Informe de Casos en Particular"
+                    icon={<Briefcase className="w-full h-full" strokeWidth={1.5} />}
+                    onGenerate={() => handleGenerateReport('Informe de Casos en Particular')}
+                    buttonColor="orange"
+                />
             </div>
 
             {/* Filter Bar with View Switcher */}

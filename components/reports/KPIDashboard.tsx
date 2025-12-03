@@ -34,7 +34,7 @@ export default function KPIDashboard() {
                             <div className="relative flex-shrink-0">
                                 {/* Icono triangular naranja semitransparente detrás del texto */}
                                 <div className="absolute -top-6 right-5 translate-x-6 w-48 h-48 overflow-visible pointer-events-none flex items-center justify-center">
-                                    <TriangleAlert className="w-full h-full text-secondary-light/30" strokeWidth={1.5} />
+                                    <TriangleAlert className="w-full h-full text-secondary-light/30" strokeWidth={2} />
                                 </div>
                             </div>
                         </div>
