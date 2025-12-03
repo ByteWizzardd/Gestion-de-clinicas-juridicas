@@ -37,7 +37,7 @@ export function TablePagination({ currentPage, totalPages, rowsPerPage, onPageCh
             >
                 <div className="p-1.5 rounded-full hover:bg-gray-100 transition-colors">
                     <ChevronLeftIcon 
-                        style={{ color: "var(--primary)" }}
+                    style={{ color: "var(--primary)" }}
                         className="w-8 h-8 sm:w-10 sm:h-10"
                     />
                 </div>
@@ -51,7 +51,7 @@ export function TablePagination({ currentPage, totalPages, rowsPerPage, onPageCh
             >
                 <div className="p-1.5 rounded-full hover:bg-gray-100 transition-colors">
                     <ChevronRightIcon 
-                        style={{ color: "var(--primary)" }}
+                    style={{ color: "var(--primary)" }}
                         className="w-8 h-8 sm:w-10 sm:h-10"
                     />
                 </div>

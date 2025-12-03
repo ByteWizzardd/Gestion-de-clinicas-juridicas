@@ -4,8 +4,10 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        'main': ['"League Spartan"', 'sans-serif'],
-        'secundary': ['Urbanist', 'sans-serif'],
+        'primary': ['var(--font-league-spartan)', 'sans-serif'],
+        'secondary': ['var(--font-urbanist)', 'sans-serif'],
+        'main': ['var(--font-league-spartan)', 'sans-serif'],
+        'secundary': ['var(--font-urbanist)', 'sans-serif'],
       },
     },
   },

@@ -36,34 +36,34 @@ export default function FilterBar({
             {/* Filters Section */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-3 flex-1">
                 <div className="flex-1 sm:flex-initial sm:w-[320px]">
-                    <Select
-                        options={dateRangeOptions}
-                        value={filters.dateRange}
-                        onChange={(e) => handleFilterUpdate('dateRange', e.target.value)}
-                        placeholder="Rango de Fechas"
+                <Select
+                    options={dateRangeOptions}
+                    value={filters.dateRange}
+                    onChange={(e) => handleFilterUpdate('dateRange', e.target.value)}
+                    placeholder="Rango de Fechas"
                         className="text-sm w-full"
                         icon={<CalendarIcon className="w-5 h-5 text-neutral-700" />}
-                    />
+                />
                 </div>
 
                 <div className="flex-1 sm:flex-initial sm:w-[280px]">
-                    <Select
-                        options={nucleoOptions}
-                        value={filters.nucleo}
-                        onChange={(e) => handleFilterUpdate('nucleo', e.target.value)}
-                        placeholder="Núcleo"
+                <Select
+                    options={nucleoOptions}
+                    value={filters.nucleo}
+                    onChange={(e) => handleFilterUpdate('nucleo', e.target.value)}
+                    placeholder="Núcleo"
                         className="text-sm w-full"
-                    />
+                />
                 </div>
 
                 <div className="flex-1 sm:flex-initial sm:w-[300px]">
-                    <Select
-                        options={termOptions}
-                        value={filters.term}
-                        onChange={(e) => handleFilterUpdate('term', e.target.value)}
-                        placeholder="TERM - Periodo"
+                <Select
+                    options={termOptions}
+                    value={filters.term}
+                    onChange={(e) => handleFilterUpdate('term', e.target.value)}
+                    placeholder="TERM - Periodo"
                         className="text-sm w-full"
-                    />
+                />
                 </div>
             </div>
 

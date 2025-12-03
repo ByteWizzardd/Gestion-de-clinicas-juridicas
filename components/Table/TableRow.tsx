@@ -2,7 +2,7 @@ import ActionMenu from '@/components/ui/ActionMenu';
 
 type TableRowProps<T> = {
     data: T;
-    rowIndex: number;
+    rowIndex: number; 
     onView?: (data: T) => void;
     onEdit?: (data: T) => void;
     onDelete?: (data: T) => void;
