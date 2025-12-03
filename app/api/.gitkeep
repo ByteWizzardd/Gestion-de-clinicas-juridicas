@@ -1,0 +1,3 @@
+# Esta carpeta contendrá los endpoints de la API
+# Estructura: app/api/[recurso]/route.ts
+

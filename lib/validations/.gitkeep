@@ -1,0 +1,3 @@
+# Esta carpeta contendrá los schemas de validación Zod
+# Ejemplo: casos.schema.ts, clientes.schema.ts, etc.
+
