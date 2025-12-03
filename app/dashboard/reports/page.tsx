@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { FileBarChart, Clock, User, Briefcase } from 'lucide-react';
-import ReportCard from '@/components/ui/ReportCard';
+import ReportCard from '@/components/cards/ReportCard';
 import FilterBar, { ReportFilters } from '@/components/reports/FilterBar';
-import { ViewMode } from '@/components/ui/ViewSwitcher';
+import { ViewMode } from '@/components/ui/navigation/ViewSwitcher';
 import DistributionChart from '@/components/reports/charts/DistributionChart';
 import TopCasesChart from '@/components/reports/charts/TopCasesChart';
 import KPIDashboard from '@/components/reports/KPIDashboard';

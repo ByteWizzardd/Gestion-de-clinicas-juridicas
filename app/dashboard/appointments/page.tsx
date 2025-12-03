@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import CalendarWidget from '@/components/ui/CalendarWidget';
-import AppointmentList from '@/components/ui/AppointmentList';
+import CalendarWidget from '@/components/ui/calendar/CalendarWidget';
+import AppointmentList from '@/components/cards/AppointmentList';
 import type { Appointment } from '@/types/appointment';
 
 // Datos de ejemplo - En producción esto vendría de una API

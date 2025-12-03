@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import Modal from '../ui/Modal';
-import Input from '../ui/Input';
-import Select from '../ui/Select';
-import TextArea from '../ui/TextArea';
-import DatePicker from '../ui/DatePicker';
+import Modal from '../ui/feedback/Modal';
+import Input from './Input';
+import Select from './Select';
+import TextArea from './TextArea';
+import DatePicker from './DatePicker';
 import Button from '../ui/Button';
 import { X, Calendar } from 'lucide-react';
 

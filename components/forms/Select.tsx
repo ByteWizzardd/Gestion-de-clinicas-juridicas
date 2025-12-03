@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from "lucide-react";
 import { AnimatePresence, motion } from 'motion/react';
-import DropdownMenu from './DropdownMenu';
+import DropdownMenu from '../ui/navigation/DropdownMenu';
 
 interface SelectOption {
     value: string;

@@ -2,8 +2,8 @@
 
 import Sidebar from '../../components/sidebar/Sidebar';
 import type { UserRole } from '../../components/sidebar/menu-config';
-import Notification from '../../components/ui/Notification';
-import DateTime from '../../components/ui/DateTime';
+import Notification from '../../components/ui/feedback/Notification';
+import DateTime from '../../components/ui/calendar/DateTime';
 
 export default function DashboardLayout({
   children,
