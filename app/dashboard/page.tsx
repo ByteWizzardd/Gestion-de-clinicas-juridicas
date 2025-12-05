@@ -1,8 +1,12 @@
 'use client';
+import { useState } from 'react';
 import MetricCard from "@/components/cards/MetricCard";
 import { CircleCheck, Briefcase } from 'lucide-react';
+import CompactCalendar from "@/components/ui/calendar/CompactCalendar";
 
 export default function DashboardPage() {
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  
   return (
     <div className="max-h-screen">
       <div className="mb-6 mt-4">
@@ -38,10 +42,24 @@ export default function DashboardPage() {
           </div>
           
           {/* Agenda */}
-          <div className="bg-white rounded-3xl shadow-md p-6 max-w-[calc(2*21.25rem+1.5rem)] flex-1">
-            <h3 className="text-xl font-normal text-neutral-800">
-              Tu Agenda
-            </h3>
+          <div className="bg-white rounded-3xl shadow-md p-6 max-w-[calc(2*21.25rem+1.5rem)] flex-1 flex flex-col min-h-0">
+            <div className="flex gap-6 flex-1 min-h-0">
+              {/* Mitad izquierda - Título y contenido */}
+              <div className="w-1/2 flex flex-col">
+                <h3 className="text-xl font-normal text-neutral-800 mb-4">
+                  Tu Agenda
+                </h3>
+              </div>
+              {/* Mitad derecha - Calendario */}
+              <div className="w-1/2 flex items-center justify-center min-h-0">
+                <div className="w-full h-full">
+                  <CompactCalendar
+                    selectedDate={selectedDate}
+                    onDateChange={setSelectedDate}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
