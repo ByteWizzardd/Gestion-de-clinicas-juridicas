@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
 
 interface CompactCalendarProps {
   selectedDate: Date;
@@ -196,15 +195,10 @@ export default function CompactCalendar({
         </div>
 
         {/* Grid de días del calendario - más compacto */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`${currentMonth.getFullYear()}-${currentMonth.getMonth()}`}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
-            className="grid grid-cols-7 grid-rows-6 flex-1"
-          >
+        <div
+          key={`${currentMonth.getFullYear()}-${currentMonth.getMonth()}`}
+          className="grid grid-cols-7 grid-rows-6 flex-1"
+        >
             {/* Días del mes anterior */}
             {Array.from({ length: startingDayOfWeek }).map((_, index) => {
               const day = daysInPrevMonth - startingDayOfWeek + index + 1;
@@ -273,8 +267,7 @@ export default function CompactCalendar({
                 </button>
               );
             })}
-          </motion.div>
-        </AnimatePresence>
+        </div>
       </div>
     </div>
   );

@@ -63,7 +63,7 @@ export default function DashboardPage() {
             <div className="flex gap-6 flex-1 min-h-0">
               {/* Mitad izquierda - Título y lista de citas */}
               <div className="w-1/2 flex flex-col min-h-0">
-                <h3 className="text-xl font-normal text-neutral-800 mb-4 flex-shrink-0">
+                <h3 className="text-2xl font-semibold text-neutral-800 mb-4 flex-shrink-0">
                   Tu Agenda
                 </h3>
                 <div className="flex-1 min-h-0 overflow-y-auto pr-2">
@@ -86,7 +86,7 @@ export default function DashboardPage() {
         {/* Acciones recinetes */}
         <div className="flex-1 min-w-94 lg:max-w-116">
           <div className="bg-white rounded-3xl shadow-md p-6 h-full">
-            <h3 className="text-xl font-normal text-center text-neutral-800"> Acciones Recientes </h3>
+            <h3 className="text-2xl font-semibold text-center text-neutral-800"> Acciones Recientes </h3>
           </div>
         </div>
       </div>
