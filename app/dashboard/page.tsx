@@ -3,9 +3,26 @@ import { useState } from 'react';
 import MetricCard from "@/components/cards/MetricCard";
 import { CircleCheck, Briefcase } from 'lucide-react';
 import CompactCalendar from "@/components/ui/calendar/CompactCalendar";
+import DashboardAppointmentList from "@/components/cards/DashboardAppointmentList";
 
 export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
+  
+  // Datos de ejemplo para las citas
+  const appointments = [
+    {
+      time: "10:00 AM",
+      title: "Orientación Familiar",
+      client: "Cliente: Sofía R.",
+      reason: "Motivo: Divorcio"
+    },
+    {
+      time: "2:30 PM",
+      title: "Firma de Documento",
+      client: "Cliente: Pedro D.",
+      reason: "Motivo: Poder Especial"
+    }
+  ];
   
   return (
     <div className="max-h-screen">
@@ -44,11 +61,14 @@ export default function DashboardPage() {
           {/* Agenda */}
           <div className="bg-white rounded-3xl shadow-md p-6 max-w-[calc(2*21.25rem+1.5rem)] flex-1 flex flex-col min-h-0">
             <div className="flex gap-6 flex-1 min-h-0">
-              {/* Mitad izquierda - Título y contenido */}
-              <div className="w-1/2 flex flex-col">
-                <h3 className="text-xl font-normal text-neutral-800 mb-4">
+              {/* Mitad izquierda - Título y lista de citas */}
+              <div className="w-1/2 flex flex-col min-h-0">
+                <h3 className="text-xl font-normal text-neutral-800 mb-4 flex-shrink-0">
                   Tu Agenda
                 </h3>
+                <div className="flex-1 min-h-0 overflow-y-auto pr-2">
+                  <DashboardAppointmentList appointments={appointments} />
+                </div>
               </div>
               {/* Mitad derecha - Calendario */}
               <div className="w-1/2 flex items-center justify-center min-h-0">
