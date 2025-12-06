@@ -38,3 +38,5 @@ next-env.d.ts
 
 # uploads (si se implementa)
 /uploads
+
+.github

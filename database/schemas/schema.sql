@@ -217,6 +217,16 @@ CREATE TABLE casos (
     id_expediente VARCHAR(50) REFERENCES expedientes(id_expediente),
     cedula_cliente VARCHAR(20) NOT NULL REFERENCES clientes(cedula)
 );
+-- Modificación: Agregar columna fecha_solicitud a casos y llenarla desde clientes
+ALTER TABLE casos ADD COLUMN fecha_solicitud DATE;
+
+UPDATE casos
+SET fecha_solicitud = clientes.fecha_solicitud
+FROM clientes
+WHERE casos.cedula_cliente = clientes.cedula;
+
+ALTER TABLE clientes DROP CONSTRAINT IF EXISTS check_solicitante_completo;
+ALTER TABLE clientes DROP COLUMN fecha_solicitud;
 
 -- ==========================================================
 -- 7. DETALLES DEL CASO (BYTEA Y PKs COMPUESTAS)
