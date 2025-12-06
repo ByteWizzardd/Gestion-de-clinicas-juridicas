@@ -1,3 +1,5 @@
+import { ERROR_CODES } from '@/lib/constants/errors';
+
 /**
  * Clase base para errores de la aplicación
  */
@@ -22,7 +24,7 @@ export class ValidationError extends AppError {
     message: string,
     public fields?: Record<string, string[]>
   ) {
-    super(message, 400, 'VALIDATION_ERROR');
+    super(message, 400, ERROR_CODES.VALIDATION_ERROR);
   }
 }
 
@@ -31,7 +33,7 @@ export class ValidationError extends AppError {
  */
 export class NotFoundError extends AppError {
   constructor(message: string) {
-    super(message, 404, 'NOT_FOUND');
+    super(message, 404, ERROR_CODES.NOT_FOUND);
   }
 }
 
@@ -41,7 +43,7 @@ export class NotFoundError extends AppError {
  */
 export class UnauthorizedError extends AppError {
   constructor(message: string) {
-    super(message, 401, 'UNAUTHORIZED');
+    super(message, 401, ERROR_CODES.UNAUTHORIZED);
   }
 }
 
@@ -51,7 +53,7 @@ export class UnauthorizedError extends AppError {
  */
 export class ForbiddenError extends AppError {
   constructor(message: string) {
-    super(message, 403, 'FORBIDDEN');
+    super(message, 403, ERROR_CODES.FORBIDDEN);
   }
 }
 
@@ -64,7 +66,7 @@ export class DatabaseError extends AppError {
     message: string,
     public originalError?: unknown
   ) {
-    super(message, 500, 'DATABASE_ERROR');
+    super(message, 500, ERROR_CODES.DATABASE_ERROR);
   }
 }
 
@@ -74,7 +76,7 @@ export class DatabaseError extends AppError {
  */
 export class ConflictError extends AppError {
   constructor(message: string) {
-    super(message, 409, 'CONFLICT');
+    super(message, 409, ERROR_CODES.CONFLICT);
   }
 }
 
