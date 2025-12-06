@@ -24,3 +24,5 @@ export class SolicitantesService {
     }
   }
 }
+
+export const solicitantesService = new SolicitantesService();
