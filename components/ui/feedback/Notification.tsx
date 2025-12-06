@@ -1,7 +1,7 @@
 'use client';
 
 import { Bell } from 'lucide-react';
-import DropdownMenu from './DropdownMenu';
+import DropdownMenu from '../navigation/DropdownMenu';
 import { AnimatePresence, motion } from 'motion/react';
 
 interface NotificationProps {

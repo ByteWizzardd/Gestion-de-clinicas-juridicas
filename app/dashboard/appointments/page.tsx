@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import CalendarWidget from '@/components/ui/CalendarWidget';
-import AppointmentList from '@/components/ui/AppointmentList';
+import CalendarWidget from '@/components/ui/calendar/CalendarWidget';
+import AppointmentList from '@/components/cards/AppointmentList';
 import type { Appointment } from '@/types/appointment';
 
 export default function AppointmentsPage() {

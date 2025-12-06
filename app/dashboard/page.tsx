@@ -11,6 +11,7 @@ export default function DashboardPage() {
           Aquí podrás ver el estado de las citas y los casos.
         </p>
       </div>
+      <p>sdc,aervbfdbfjjn</p>
     </div>
   );
 }

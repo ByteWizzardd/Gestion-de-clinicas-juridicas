@@ -1,7 +1,7 @@
 'use client';
 
-import Select from '../ui/Select';
-import ViewSwitcher, { ViewMode } from '../ui/ViewSwitcher';
+import Select from '@/components/forms/Select';
+import ViewSwitcher, { ViewMode } from '../ui/navigation/ViewSwitcher';
 import { Calendar } from 'lucide-react';
 
 export interface ReportFilters {

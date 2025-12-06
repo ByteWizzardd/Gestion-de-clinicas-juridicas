@@ -1,14 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import Modal from '../ui/Modal';
-import Stepper from '../ui/Stepper';
-import Input from '../ui/Input';
-import InputGroup from '../ui/InputGroup';
-import Select from '../ui/Select';
+import Modal from '../ui/feedback/Modal';
+import Stepper from './Stepper';
+import Input from './Input';
+import InputGroup from './InputGroup';
+import Select from './Select';
 import Button from '../ui/Button';
 import { ArrowRight, ArrowLeft, Calendar } from 'lucide-react';
-import DatePicker from '../ui/DatePicker';
+import DatePicker from './DatePicker';
 
 interface ApplicantFormModalProps {
   isOpen: boolean;
