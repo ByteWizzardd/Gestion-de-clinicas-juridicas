@@ -1,6 +1,8 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
+// Carga los scripts SQL desde la carpeta database/queries
+
 /**
  * Directorio base donde se encuentran los archivos SQL
  */

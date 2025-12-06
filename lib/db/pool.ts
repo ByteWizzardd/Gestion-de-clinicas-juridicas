@@ -1,6 +1,8 @@
 import { Pool, PoolConfig } from 'pg';
 import { logger } from '@/lib/utils/logger';
 
+// Conección y gestion de archivos SQL
+
 /**
  * Configuración del pool de conexiones PostgreSQL
  */
