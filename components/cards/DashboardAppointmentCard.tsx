@@ -14,16 +14,16 @@ export default function DashboardAppointmentCard({
   reason,
 }: DashboardAppointmentCardProps) {
   return (
-    <div className="relative flex items-stretch gap-2">
+    <div className="relative flex items-stretch gap-1.5 md:gap-2">
       {/* Línea vertical decorativa */}
-      <div className="w-1 bg-primary rounded-full flex-shrink-0"></div>
+      <div className="w-0.5 md:w-1 bg-primary rounded-full flex-shrink-0"></div>
       {/* Card */}
-      <div className="bg-primary rounded-xl p-2.5 text-on-primary flex-1">
-        <div className="text-sm font-semibold mb-1">
+      <div className="bg-primary rounded-lg md:rounded-xl p-2 md:p-2.5 text-on-primary flex-1">
+        <div className="text-xs md:text-sm font-semibold mb-0.5 md:mb-1">
           {time} - {title}
         </div>
-        <div className="text-xs font-normal mb-1">{client}</div>
-        <div className="text-xs font-normal">{reason}</div>
+        <div className="text-[10px] md:text-xs font-normal mb-0.5 md:mb-1">{client}</div>
+        <div className="text-[10px] md:text-xs font-normal">{reason}</div>
       </div>
     </div>
   );

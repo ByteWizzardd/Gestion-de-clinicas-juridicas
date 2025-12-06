@@ -16,31 +16,31 @@ export default function MetricCard({
     icon: Icon
 }: MetricCardProps) {
     return (
-        <div className="bg-white rounded-3xl shadow-md relative overflow-hidden p-6 min-h-48">
+        <div className="bg-white rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] relative overflow-hidden p-4 md:p-6 min-h-40 md:min-h-48">
             {/* Icono de fondo decorativo */}
             {Icon && (
                 <div className="absolute top-2 w-full h-full flex items-center justify-center right-15">
-                    <Icon className="w-40 h-40 text-secondary-light/30" strokeWidth={2} />
+                    <Icon className="w-32 h-32 md:w-40 md:h-40 text-secondary-light/30" strokeWidth={2} />
                 </div>
             )}
 
             {/* Título arriba-izquierda */}
-            <h3 className="text-xl font-medium text-neutral-800 mb-6 relative z-10">
+            <h3 className="text-lg md:text-xl font-medium text-neutral-800 mb-4 md:mb-6 relative z-10">
                 {title}
             </h3>
 
             {/* Contenido principal alineado a la derecha */}
-            <div className="flex flex-col items-end mb-8 pr-2 relative z-10">
-                <div className="text-5xl font-semibold text-neutral-800 mb-2">
+            <div className="flex flex-col items-end mb-6 md:mb-8 pr-2 relative z-10">
+                <div className="text-3xl md:text-5xl font-semibold text-neutral-800 mb-2">
                     {mainValue}
                 </div>
-                <div className="text-base font-normal text-neutral-600">
+                <div className="text-sm md:text-base font-normal text-neutral-600">
                     {subtitle}
                 </div>
             </div>
 
             {/* Línea separadora naranja en la parte inferior, con márgenes laterales */}
-            <div className="absolute bottom-4 left-6 right-6 h-0.5 bg-secondary z-10"></div>
+            <div className="absolute bottom-3 md:bottom-4 left-4 md:left-6 right-4 md:right-6 h-0.5 bg-secondary z-10"></div>
         </div>
     );
 }

@@ -26,21 +26,21 @@ export default function DashboardPage() {
   
   return (
     <div className="max-h-screen">
-      <div className="mb-6 mt-4">
-        <h1 className="text-3xl font-medium text-foreground mb-1" style={{ fontFamily: 'var(--font-league-spartan)' }}>
+      <div className="mb-4 md:mb-6 mt-4 px-4 md:px-0">
+        <h1 className="text-2xl md:text-3xl font-medium text-foreground mb-1" style={{ fontFamily: 'var(--font-league-spartan)' }}>
           Bienvenido al dashboard
         </h1>
-        <p className="text-base text-gray-600" style={{ fontFamily: 'var(--font-urbanist)' }}>
+        <p className="text-sm md:text-base text-gray-600" style={{ fontFamily: 'var(--font-urbanist)' }}>
           Aquí podrás ver el estado de las citas y los casos.
         </p>
       </div>
 
       {/* Contenedor principal para layout lado a lado */}
-      <div className="flex flex-col lg:flex-row gap-6 mt-6 h-[calc(100vh-10rem)]">
+      <div className="flex flex-col lg:flex-row gap-4 md:gap-6 mt-4 md:mt-6 px-4 md:px-0 h-[calc(100vh-8rem)] md:h-[calc(100vh-10rem)]">
         {/* Cards de métricas */}
-        <div className="flex flex-col gap-6 flex-1">
-          <div className="flex flex-wrap gap-6">
-            <div className="flex-1 max-w-85">
+        <div className="flex flex-col gap-4 md:gap-6 flex-1">
+          <div className="flex flex-col sm:flex-row gap-4 md:gap-6">
+            <div className="flex-1 w-full sm:max-w-85">
               <MetricCard
                 title="Expedientes Cerrados"
                 mainValue="12"
@@ -48,7 +48,7 @@ export default function DashboardPage() {
                 icon={CircleCheck}
               />
             </div>
-            <div className="flex-1 max-w-85">
+            <div className="flex-1 w-full sm:max-w-85">
               <MetricCard
                 title="Foco del Trámite"
                 mainValue="Asesoría"
@@ -59,19 +59,19 @@ export default function DashboardPage() {
           </div>
           
           {/* Agenda */}
-          <div className="bg-white rounded-3xl shadow-md p-6 max-w-[calc(2*21.25rem+1.5rem)] flex-1 flex flex-col min-h-0">
-            <div className="flex gap-6 flex-1 min-h-0">
+          <div className="bg-white rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] p-4 md:p-6 w-full lg:max-w-[calc(2*21.25rem+1.5rem)] flex-1 flex flex-col min-h-0">
+            <div className="flex flex-col md:flex-row gap-4 md:gap-6 flex-1 min-h-0">
               {/* Mitad izquierda - Título y lista de citas */}
-              <div className="w-1/2 flex flex-col min-h-0">
-                <h3 className="text-2xl font-semibold text-neutral-800 mb-4 flex-shrink-0">
+              <div className="w-full md:w-1/2 flex flex-col min-h-0">
+                <h3 className="text-xl md:text-2xl font-semibold text-neutral-800 mb-3 md:mb-4 flex-shrink-0">
                   Tu Agenda
                 </h3>
-                <div className="flex-1 min-h-0 overflow-y-auto pr-2">
+                <div className="flex-1 overflow-y-auto pr-2 min-h-[200px] md:min-h-0">
                   <DashboardAppointmentList appointments={appointments} />
                 </div>
               </div>
               {/* Mitad derecha - Calendario */}
-              <div className="w-1/2 flex items-center justify-center min-h-0">
+              <div className="w-full md:w-1/2 flex items-center justify-center min-h-[300px] md:min-h-0">
                 <div className="w-full h-full">
                   <CompactCalendar
                     selectedDate={selectedDate}
@@ -83,10 +83,10 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Acciones recinetes */}
-        <div className="flex-1 min-w-94 lg:max-w-116">
-          <div className="bg-white rounded-3xl shadow-md p-6 h-full">
-            <h3 className="text-2xl font-semibold text-center text-neutral-800"> Acciones Recientes </h3>
+        {/* Acciones recientes */}
+        <div className="flex-1 w-full lg:min-w-94 lg:max-w-116">
+          <div className="bg-white rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] p-4 md:p-6 h-full min-h-[200px] lg:min-h-0">
+            <h3 className="text-xl md:text-2xl font-semibold text-center text-neutral-800"> Acciones Recientes </h3>
           </div>
         </div>
       </div>

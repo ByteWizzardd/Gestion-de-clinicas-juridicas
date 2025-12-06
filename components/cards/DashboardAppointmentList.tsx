@@ -17,9 +17,9 @@ export default function DashboardAppointmentList({
   appointments,
 }: DashboardAppointmentListProps) {
   return (
-    <div className="flex flex-col gap-2.5 h-full">
+    <div className="flex flex-col gap-2 md:gap-2.5 h-full">
       {appointments.length === 0 ? (
-        <div className="text-sm text-gray-500 text-center py-4">
+        <div className="text-xs md:text-sm text-gray-500 text-center py-4">
           No hay citas programadas
         </div>
       ) : (

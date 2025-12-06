@@ -158,34 +158,34 @@ export default function CompactCalendar({
   return (
     <div className="h-full flex flex-col">
       {/* Header con navegación - más compacto */}
-      <div className="flex items-center justify-between mb-3 flex-shrink-0">
+      <div className="flex items-center justify-between mb-2 md:mb-3 flex-shrink-0">
         <button
           onClick={handlePrevMonth}
-          className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+          className="p-0.5 md:p-1 hover:bg-gray-100 rounded-md transition-colors"
           aria-label="Mes anterior"
         >
-          <ChevronLeft className="w-4 h-4 text-foreground" />
+          <ChevronLeft className="w-3 h-3 md:w-4 md:h-4 text-foreground" />
         </button>
-        <h2 className="text-sm font-semibold text-foreground">
+        <h2 className="text-xs md:text-sm font-semibold text-foreground">
           {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
         </h2>
         <button
           onClick={handleNextMonth}
-          className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+          className="p-0.5 md:p-1 hover:bg-gray-100 rounded-md transition-colors"
           aria-label="Mes siguiente"
         >
-          <ChevronRight className="w-4 h-4 text-foreground" />
+          <ChevronRight className="w-3 h-3 md:w-4 md:h-4 text-foreground" />
         </button>
       </div>
 
       {/* Tabla de calendario con bordes - más compacta */}
-      <div className="border border-gray-300 rounded-xl overflow-hidden flex-1 flex flex-col">
+      <div className="border border-gray-300 rounded-lg md:rounded-xl overflow-hidden flex-1 flex flex-col">
         {/* Header de días de la semana - más compacto */}
         <div className="grid grid-cols-7 border-b border-gray-300 flex-shrink-0">
           {dayNames.map((day, index) => (
             <div
               key={day}
-              className={`text-center text-[10px] font-medium text-gray-600 py-1 border-r border-gray-300 bg-gray-50 ${
+              className={`text-center text-[9px] md:text-[10px] font-medium text-gray-600 py-0.5 md:py-1 border-r border-gray-300 bg-gray-50 ${
                 index === dayNames.length - 1 ? 'border-r-0' : ''
               }`}
             >
@@ -207,7 +207,7 @@ export default function CompactCalendar({
                 <button
                   key={`prev-${day}`}
                   onClick={() => handleDayClick(day, false)}
-                  className={`p-1 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-xs text-center ${
+                  className={`p-0.5 md:p-1 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-[10px] md:text-xs text-center ${
                     isLastInRow ? 'border-r-0' : ''
                   }`}
                 >
@@ -230,7 +230,7 @@ export default function CompactCalendar({
                   key={day}
                   onClick={() => handleDayClick(day, true)}
                   className={`
-                    p-1 border-r border-b border-gray-300 transition-colors text-xs text-center relative
+                    p-0.5 md:p-1 border-r border-b border-gray-300 transition-colors text-[10px] md:text-xs text-center relative
                     ${isLastInRow ? 'border-r-0' : ''}
                     ${
                       isCurrentDay
@@ -243,7 +243,7 @@ export default function CompactCalendar({
                 >
                   {day}
                   {hasApts && !isCurrentDay && (
-                    <span className="absolute bottom-0.5 left-0.5 w-1 h-1 bg-primary rounded-full" />
+                    <span className="absolute bottom-0.5 left-0.5 w-0.5 h-0.5 md:w-1 md:h-1 bg-primary rounded-full" />
                   )}
                 </button>
               );
@@ -259,7 +259,7 @@ export default function CompactCalendar({
                 <button
                   key={`next-${day}`}
                   onClick={() => handleDayClick(day, false)}
-                  className={`p-1 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-xs text-center ${
+                  className={`p-0.5 md:p-1 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-[10px] md:text-xs text-center ${
                     isLastInRow ? 'border-r-0' : ''
                   }`}
                 >
