@@ -15,7 +15,6 @@ export interface Cliente {
   nombres: string | null;
   apellidos: string | null;
   fecha_nacimiento: Date | null;
-  fecha_solicitud: Date | null;
   telefono_local: string | null;
   telefono_celular: string | null;
   correo_electronico: string | null;
@@ -41,6 +40,7 @@ export interface Caso {
   id_caso: number;
   fecha_inicio_caso: Date | null;
   fecha_fin_caso: Date | null;
+  fecha_solicitud: Date;
   tramite: string | null;
   estatus: string | null;
   observaciones: string | null;
@@ -80,7 +80,7 @@ export interface ClienteWithRelations extends Cliente {
 }
 
 // Tipos para inserts (sin campos auto-generados)
-export type CreateCliente = Omit<Cliente, 'fecha_solicitud'>;
+export type CreateCliente = Omit<Cliente, never>;
 export type CreateCaso = Omit<Caso, 'id_caso' | 'fecha_inicio_caso'>;
 export type CreateUsuario = Omit<Usuario, never>;
 

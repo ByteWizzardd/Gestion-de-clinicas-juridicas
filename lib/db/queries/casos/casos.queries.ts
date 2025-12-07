@@ -1,5 +1,5 @@
-import { loadSQL } from '../sql-loader';
-import { pool } from '../pool';
+import { loadSQL } from '../../sql-loader';
+import { pool } from '../../pool';
 import { QueryResult } from 'pg';
 
 /**
@@ -45,8 +45,13 @@ export const casosQueries = {
     id_nucleo?: number;
     id_ambito_legal?: number;
     id_expediente?: string;
+    fecha_solicitud: string | Date;
   }): Promise<any> => {
     const query = loadSQL('casos/create.sql');
+    const fechaSolicitudStr = typeof data.fecha_solicitud === 'string' 
+      ? data.fecha_solicitud 
+      : data.fecha_solicitud.toISOString().split('T')[0];
+    
     const result: QueryResult = await pool.query(query, [
       data.tramite,
       data.estatus,
@@ -55,6 +60,7 @@ export const casosQueries = {
       data.id_nucleo || null,
       data.id_ambito_legal || null,
       data.id_expediente || null,
+      fechaSolicitudStr,
     ]);
     return result.rows[0];
   },
@@ -72,6 +78,7 @@ export const casosQueries = {
       id_nucleo?: number;
       id_ambito_legal?: number;
       id_expediente?: string;
+      fecha_solicitud?: string | Date;
     }
   ): Promise<any> => {
     const query = loadSQL('casos/update.sql');
@@ -84,6 +91,7 @@ export const casosQueries = {
       data.id_nucleo || null,
       data.id_ambito_legal || null,
       data.id_expediente || null,
+      data.fecha_solicitud ? (typeof data.fecha_solicitud === 'string' ? data.fecha_solicitud : data.fecha_solicitud.toISOString().split('T')[0]) : null,
     ]);
     return result.rows[0];
   },

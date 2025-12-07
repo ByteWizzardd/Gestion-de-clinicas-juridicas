@@ -5,6 +5,7 @@ SELECT
     c.id_caso,
     c.fecha_inicio_caso,
     c.fecha_fin_caso,
+    c.fecha_solicitud,
     c.tramite,
     c.estatus,
     c.observaciones,

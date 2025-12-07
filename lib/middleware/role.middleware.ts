@@ -1,17 +1,7 @@
 import { NextRequest } from 'next/server';
 import { ForbiddenError } from '@/lib/utils/errors';
 import { requireAuth, requireRole, AuthenticatedRequest } from './auth.middleware';
-
-/**
- * Roles del sistema
- */
-export const ROLES = {
-  ESTUDIANTE: 'Estudiante',
-  PROFESOR: 'Profesor',
-  COORDINADOR: 'Coordinador',
-} as const;
-
-export type Role = typeof ROLES[keyof typeof ROLES];
+import { ROLES, type Role } from '@/lib/constants/roles';
 
 /**
  * Verifica que el usuario tiene rol de Estudiante
