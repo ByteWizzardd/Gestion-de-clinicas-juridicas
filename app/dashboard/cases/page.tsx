@@ -1,107 +1,83 @@
 'use client';
+import { useState, useEffect } from 'react';
 import CaseTools from "@/components/CaseTools/CaseTools";
 import Table from "@/components/table/Table";
 
-// Datos de prueba
-const mockCases = [
-  {
-    codigo: "CASE-001",
-    solicitante: "Juan Pérez",
-    materia: "Derecho Civil",
-    estatus: "En Proceso",
-    responsable: "Dr. María González"
-  },
-  {
-    codigo: "CASE-002",
-    solicitante: "Ana Martínez",
-    materia: "Derecho Laboral",
-    estatus: "Cerrado",
-    responsable: "Dr. Carlos Rodríguez"
-  },
-  {
-    codigo: "CASE-003",
-    solicitante: "Luis Hernández",
-    materia: "Derecho Penal",
-    estatus: "En Revisión",
-    responsable: "Dra. Laura Sánchez"
-  },
-  {
-    codigo: "CASE-004",
-    solicitante: "Carmen López",
-    materia: "Derecho Familiar",
-    estatus: "En Proceso",
-    responsable: "Dr. Roberto Díaz"
-  },
-  {
-    codigo: "CASE-005",
-    solicitante: "Pedro García",
-    materia: "Derecho Comercial",
-    estatus: "Pendiente",
-    responsable: "Dra. Sofía Ramírez"
-  },
-  {
-    codigo: "CASE-006",
-    solicitante: "María Fernández",
-    materia: "Derecho Civil",
-    estatus: "En Proceso",
-    responsable: "Dr. Miguel Torres"
-  },
-  {
-    codigo: "CASE-007",
-    solicitante: "José Morales",
-    materia: "Derecho Laboral",
-    estatus: "Cerrado",
-    responsable: "Dra. Patricia Vega"
-  },
-  {
-    codigo: "CASE-008",
-    solicitante: "Rosa Jiménez",
-    materia: "Derecho Penal",
-    estatus: "En Revisión",
-    responsable: "Dr. Fernando Castro"
-  },
-  {
-    codigo: "CASE-009",
-    solicitante: "Carlos Ruiz",
-    materia: "Derecho Familiar",
-    estatus: "En Proceso",
-    responsable: "Dra. Gabriela Mendoza"
-  },
-  {
-    codigo: "CASE-010",
-    solicitante: "Laura Ortiz",
-    materia: "Derecho Comercial",
-    estatus: "Pendiente",
-    responsable: "Dr. Alejandro Herrera"
-  },
-  {
-    codigo: "CASE-011",
-    solicitante: "Diego Vargas",
-    materia: "Derecho Civil",
-    estatus: "En Proceso",
-    responsable: "Dra. Isabel Moreno"
-  },
-  {
-    codigo: "CASE-012",
-    solicitante: "Elena Cruz",
-    materia: "Derecho Laboral",
-    estatus: "Cerrado",
-    responsable: "Dr. Andrés Vargas"
-  }
-];
+interface Caso {
+  id_caso: number;
+  fecha_inicio_caso: string;
+  fecha_fin_caso: string | null;
+  tramite: string;
+  estatus: string;
+  observaciones: string;
+  id_nucleo: number;
+  id_ambito_legal: number;
+  id_expediente: string | null;
+  cedula_cliente: string;
+  nombre_completo_cliente: string;
+  nombre_responsable: string | null;
+}
+
+interface TableRow extends Record<string, unknown> {
+  codigo: string;
+  solicitante: string;
+  materia: string;
+  estatus: string;
+  responsable: string;
+}
 
 export default function CasesPage() {
-  const handleView = (data: typeof mockCases[0]) => {
+  const [casos, setCasos] = useState<Caso[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Función para cargar los casos desde la API
+  const fetchCasos = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch('/api/casos');
+
+      if (!response.ok) {
+        throw new Error('Error al cargar los casos');
+      }
+
+      const data = await response.json();
+      setCasos(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error desconocido');
+      console.error('Error al cargar casos:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Cargar datos al montar el componente
+  useEffect(() => {
+    fetchCasos();
+  }, []);
+
+  // Transformar los datos para la tabla
+  const tableData: TableRow[] = casos.map((caso) => ({
+    codigo: `CASE-${caso.id_caso}`,
+    solicitante: caso.nombre_completo_cliente,
+    materia: caso.tramite,
+    estatus: caso.estatus,
+    responsable: caso.nombre_responsable || 'Sin asignar',
+  }));
+
+  const handleView = (data: TableRow) => {
     console.log('Ver caso:', data);
     // Aquí puedes abrir un modal o navegar a una página de detalle
   };
 
-  const handleEdit = (data: typeof mockCases[0]) => {
+  const handleEdit = (data: TableRow) => {
     console.log('Editar caso:', data);
     // Aquí puedes abrir un modal de edición
   };
 
-  const handleDelete = (data: typeof mockCases[0]) => {
+  const handleDelete = (data: TableRow) => {
     console.log('Eliminar caso:', data);
     // Aquí puedes mostrar un confirm y eliminar
     if (confirm(`¿Estás seguro de eliminar el caso ${data.codigo}?`)) {
@@ -115,13 +91,29 @@ export default function CasesPage() {
       <p className="mb-6 ml-3 text-base">Directorio principal de todos los casos</p>
       <CaseTools addLabel="Añadir Caso" />
       <div className="mt-10"></div>
-      <Table
-        data={mockCases}
-        columns={["Código", "Solicitante", "Materia", "Estatus", "Responsable Principal"]}
-        onView={handleView}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+
+      {loading && (
+        <div className="flex justify-center items-center py-12">
+          <div className="text-lg text-gray-600">Cargando casos...</div>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mx-3 mb-4">
+          <strong className="font-bold">Error: </strong>
+          <span>{error}</span>
+        </div>
+      )}
+
+      {!loading && !error && (
+        <Table
+          data={tableData}
+          columns={["Código", "Solicitante", "Materia", "Estatus", "Responsable Principal"]}
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      )}
     </>
   );
 }
