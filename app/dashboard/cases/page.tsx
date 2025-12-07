@@ -1,8 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import CaseTools from "@/components/CaseTools/CaseTools";
 import Table from "@/components/Table/Table";
 import CaseFormModal from "@/components/forms/CaseFormModal";
+import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
 
 interface Caso {
   id_caso: number;
@@ -32,6 +33,25 @@ export default function CasesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
+  const [estatusFilter, setEstatusFilter] = useState('');
+  const [tramiteFilter, setTramiteFilter] = useState('');
+
+  // Opciones para los filtros
+  const estatusOptions = [
+    { value: ESTATUS_CASO.EN_REVISION, label: ESTATUS_CASO.EN_REVISION },
+    { value: ESTATUS_CASO.EN_PROCESO, label: ESTATUS_CASO.EN_PROCESO },
+    { value: ESTATUS_CASO.ARCHIVADO, label: ESTATUS_CASO.ARCHIVADO },
+    { value: ESTATUS_CASO.ENTREGADO, label: ESTATUS_CASO.ENTREGADO },
+    { value: ESTATUS_CASO.ASESORIA, label: ESTATUS_CASO.ASESORIA },
+  ];
+
+  const tramiteOptions = [
+    { value: TRAMITES.ASESORIA, label: TRAMITES.ASESORIA },
+    { value: TRAMITES.CONCILIACION_MEDIACION, label: TRAMITES.CONCILIACION_MEDIACION },
+    { value: TRAMITES.REDACCION_DOCUMENTOS, label: TRAMITES.REDACCION_DOCUMENTOS },
+    { value: TRAMITES.ASISTENCIA_JUDICIAL, label: TRAMITES.ASISTENCIA_JUDICIAL },
+  ];
 
   // Función para cargar los casos desde la API
   const fetchCasos = async () => {
@@ -67,16 +87,49 @@ export default function CasesPage() {
     fetchCasos();
   }, []);
 
-  // Transformar los datos para la tabla
-  const tableData: TableRow[] = Array.isArray(casos) 
-    ? casos.map((caso) => ({
-        codigo: caso.id_caso.toString(),
-        solicitante: caso.nombre_completo_cliente,
-        materia: caso.tramite,
-        estatus: caso.estatus,
-        responsable: caso.nombre_responsable || 'Sin asignar',
-      }))
-    : [];
+  // Función para normalizar texto removiendo acentos
+  const normalizeText = (text: string): string => {
+    return text
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remover diacríticos (acentos)
+      .toLowerCase();
+  };
+
+  // Transformar y filtrar los datos para la tabla
+  const filteredCasos = useMemo(() => {
+    if (!searchValue && !estatusFilter && !tramiteFilter) {
+      return casos;
+    }
+
+    return casos.filter((caso) => {
+      // Filtro por búsqueda (busca en código, solicitante, materia, estatus, responsable)
+      // Normaliza tanto el texto de búsqueda como los campos para comparar sin acentos
+      const normalizedSearch = normalizeText(searchValue);
+      const matchesSearch = 
+        !searchValue ||
+        caso.id_caso.toString().includes(searchValue) ||
+        normalizeText(caso.nombre_completo_cliente || '').includes(normalizedSearch) ||
+        normalizeText(caso.tramite || '').includes(normalizedSearch) ||
+        normalizeText(caso.estatus || '').includes(normalizedSearch) ||
+        normalizeText(caso.nombre_responsable || '').includes(normalizedSearch);
+
+      // Filtro por estatus
+      const matchesEstatus = !estatusFilter || caso.estatus === estatusFilter;
+
+      // Filtro por trámite
+      const matchesTramite = !tramiteFilter || caso.tramite === tramiteFilter;
+
+      return matchesSearch && matchesEstatus && matchesTramite;
+    });
+  }, [casos, searchValue, estatusFilter, tramiteFilter]);
+
+  const tableData: TableRow[] = filteredCasos.map((caso) => ({
+    codigo: caso.id_caso.toString(),
+    solicitante: caso.nombre_completo_cliente,
+    materia: caso.tramite,
+    estatus: caso.estatus,
+    responsable: caso.nombre_responsable || 'Sin asignar',
+  }));
 
   const handleView = (data: TableRow) => {
     console.log('Ver caso:', data);
@@ -154,7 +207,18 @@ export default function CasesPage() {
     <>
       <h1 className="text-2xl sm:text-3xl lg:text-4xl m-3 font-semibold font-primary">Listado de Casos</h1>
       <p className="mb-6 ml-3 text-base">Directorio principal de todos los casos</p>
-      <CaseTools addLabel="Añadir Caso" onAddClick={handleAddCase} />
+      <CaseTools 
+        addLabel="Añadir Caso" 
+        onAddClick={handleAddCase}
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+        estatusFilter={estatusFilter}
+        tramiteFilter={tramiteFilter}
+        onEstatusChange={setEstatusFilter}
+        onTramiteChange={setTramiteFilter}
+        estatusOptions={estatusOptions}
+        tramiteOptions={tramiteOptions}
+      />
       <div className="mt-10"></div>
 
       {loading && (

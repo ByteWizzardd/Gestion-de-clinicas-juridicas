@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { casosService } from '@/lib/services/casos/casos.service';
 import { successResponse, errorResponse } from '@/lib/utils/responses';
+import { verifyToken } from '@/lib/utils/security';
+import { UnauthorizedError } from '@/lib/utils/errors';
 
 /**
  * GET /api/casos
@@ -29,18 +31,26 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/casos
  * Crea un nuevo caso
+ * Requiere autenticación: obtiene la cédula del usuario desde el token
  */
 export async function POST(request: NextRequest) {
     try {
+        // Obtener token de la cookie
+        const token = request.cookies.get('auth_token')?.value;
+
+        if (!token) {
+            throw new UnauthorizedError('No hay sesión activa');
+        }
+
+        // Verificar token y obtener cédula del usuario
+        const decoded = await verifyToken(token);
+        const cedulaUsuario = decoded.cedula;
+
         const body = await request.json();
-        console.log('POST /api/casos - Datos recibidos:', body);
-        
-        const nuevoCaso = await casosService.createCaso(body);
-        console.log('POST /api/casos - Caso creado exitosamente:', nuevoCaso);
+        const nuevoCaso = await casosService.createCaso(body, cedulaUsuario);
         
         return successResponse(nuevoCaso, 201);
     } catch (error) {
-        console.error('POST /api/casos - Error:', error);
         return errorResponse(error);
     }
 }

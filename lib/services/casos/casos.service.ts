@@ -1,7 +1,9 @@
 import { casosQueries } from '@/lib/db/queries/casos/casos.queries';
 import { asignacionesQueries } from '@/lib/db/queries/asignaciones/asignaciones.queries';
+import { cambiosEstatusQueries } from '@/lib/db/queries/cambios-estatus/cambios-estatus.queries';
 import { AppError, ValidationError, NotFoundError } from '@/lib/utils/errors';
 import { CreateCasoSchema, CreateCasoInput } from '@/lib/validations/casos.schema';
+import { ESTATUS_CASO } from '@/lib/constants/status';
 import { pool } from '@/lib/db/pool';
 
 /**
@@ -62,14 +64,13 @@ export const casosService = {
     /**
      * Crea un nuevo caso
      * Valida los datos y verifica que el cliente exista
+     * @param data Datos del caso a crear
+     * @param cedulaUsuario Cédula del usuario/estudiante que registra el caso
      */
-    createCaso: async (data: unknown) => {
+    createCaso: async (data: unknown, cedulaUsuario: string) => {
         try {
-            console.log('casosService.createCaso - Datos recibidos:', data);
-            
             // Validar datos con Zod
             const validatedData = CreateCasoSchema.parse(data) as CreateCasoInput;
-            console.log('casosService.createCaso - Datos validados:', validatedData);
 
             // Verificar que el cliente existe
             const clienteCheck = await pool.query(
@@ -114,10 +115,15 @@ export const casosService = {
                 fecha_solicitud: validatedData.fecha_solicitud || undefined,
             };
             
-            console.log('casosService.createCaso - Datos para insertar:', casoData);
-            
             const nuevoCaso = await casosQueries.create(casoData);
-            console.log('casosService.createCaso - Caso creado:', nuevoCaso);
+
+            // Registrar el cambio de estatus en la tabla cambios_estatus
+            // El estatus inicial será "En revisión" cuando se crea un caso nuevo
+            await cambiosEstatusQueries.create(
+                cedulaUsuario,
+                nuevoCaso.id_caso,
+                ESTATUS_CASO.EN_REVISION
+            );
 
             return nuevoCaso;
         } catch (error) {

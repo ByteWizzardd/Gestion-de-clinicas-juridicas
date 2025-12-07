@@ -22,10 +22,22 @@ export default function Table<T extends Record<string, unknown>>({
   onDelete
 }: TableProps<T>) {
 
-  // Paginación visual: no oculta filas, solo navega visualmente
+  // Paginación: calcular qué datos mostrar según la página actual
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = initialRowsPerPage;
   const totalPages = Math.max(1, Math.ceil(data.length / rowsPerPage));
+
+  // Calcular el rango de datos a mostrar
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  const paginatedData = data.slice(startIndex, endIndex);
+
+  // Resetear a la página 1 cuando cambian los datos
+  React.useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [data.length, currentPage, totalPages]);
 
   // Cuando cambias de página, hace scroll automático a la tabla
   const handlePageChange = (page: number) => {
@@ -42,16 +54,24 @@ export default function Table<T extends Record<string, unknown>>({
       <TableContainer>
         <TableHeader title={columns}/>
         <tbody className="border-t-2 border-t-transparent">
-          {data.map((row, idx) => (
-            <TableRow 
-              key={idx} 
-              data={row} 
-              rowIndex={idx}
-              onView={onView}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-          ))}
+          {paginatedData.length > 0 ? (
+            paginatedData.map((row, idx) => (
+              <TableRow 
+                key={startIndex + idx} 
+                data={row} 
+                rowIndex={startIndex + idx}
+                onView={onView}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            ))
+          ) : (
+            <tr>
+              <td colSpan={columns.length + 1} className="text-center py-8 text-gray-500">
+                No se encontraron casos que coincidan con los filtros
+              </td>
+            </tr>
+          )}
         </tbody>
       </TableContainer>
       <TablePagination
