@@ -9,6 +9,8 @@ export interface MenuItem {
   roles?: UserRole[]; // Si no se especifica, está disponible para todos los roles
   // Para items que tienen diferentes labels según el rol
   labelByRole?: Record<UserRole, string>;
+  // Para items que tienen diferentes hrefs según el rol
+  hrefByRole?: Record<UserRole, string>;
 }
 
 // Menú completo con todos los items y sus permisos
@@ -47,11 +49,12 @@ export const fullMenu: MenuItem[] = [
     href: '/dashboard/users',
     icon: Users,
     roles: ['admin'],
-    labelByRole: {
-      admin: 'Gestión de Usuarios',
-      professor: 'Gestión de Equipo',
-      student: 'Gestión de Usuarios',
-    },
+  },
+  {
+    label: 'Gestión de Equipo',
+    href: '/dashboard/team',
+    icon: Users,
+    roles: ['professor'],
   },
   {
     label: 'Gestión de Catálogos',
@@ -74,6 +77,7 @@ export function getMenuByRole(role: UserRole): MenuItem[] {
     .map((item) => ({
       ...item,
       label: item.labelByRole?.[role] || item.label,
+      href: item.hrefByRole?.[role] || item.href,
     }));
 }
 

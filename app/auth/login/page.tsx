@@ -10,6 +10,12 @@ import { motion, AnimatePresence } from "motion/react";
 export default function LoginPage() {
     const router = useRouter();
     const [isExiting, setIsExiting] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [formData, setFormData] = useState({
+        correo: "",
+        password: "",
+    });
 
     const handleBack = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -19,12 +25,59 @@ export default function LoginPage() {
         }, 1200);
     };
 
-    const handleLogin = () => {
-        setIsExiting(true);
-        setTimeout(() => {
-            // TODO: Implementar lógica de login y redirección al dashboard
-            router.push("/dashboard");
-        }, 1200);
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value,
+        }));
+        setError(null);
+    };
+
+    const handleLogin = async (e?: React.MouseEvent) => {
+        if (e) e.preventDefault();
+        
+        setError(null);
+        
+        if (!formData.correo || !formData.password) {
+            setError("Por favor complete todos los campos");
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            const response = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    correo: formData.correo,
+                    password: formData.password,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error?.message || "Error al iniciar sesión");
+            }
+
+            // Login exitoso
+            setIsExiting(true);
+            setTimeout(() => {
+                router.push("/dashboard");
+            }, 800);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Error al iniciar sesión");
+            setIsLoading(false);
+        }
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        handleLogin();
     };
 
     return(
@@ -57,14 +110,37 @@ export default function LoginPage() {
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -100 }}
                             transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 }}>
-                    <div className="flex flex-col gap-6 w-full">
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-6 w-full">
                         <div className="mb-5">
                             <h1 className="text-5xl font-normal text-foreground mb-2 text-center font-primary">Iniciar Sesión</h1>
                             <div className="w-full h-0.5 bg-secondary mt-5"/>
                         </div>
+                        {error && (
+                            <div className="bg-danger-light border border-danger rounded-lg p-3 text-danger text-sm">
+                                {error}
+                            </div>
+                        )}
                         <div className="flex flex-col gap-4 !font-urbanist">
-                            <Input label="Correo institucional" placeholder="Ingrese su correo institucional" className="bg-gray-100 text-base"/>
-                            <Input label="Contraseña" placeholder="Ingrese su contraseña" className="bg-gray-200 !text-base"/>
+                            <Input 
+                                label="Correo institucional" 
+                                placeholder="Ingrese su correo institucional" 
+                                className="bg-gray-100 text-base"
+                                name="correo"
+                                type="email"
+                                value={formData.correo}
+                                onChange={handleInputChange}
+                                required
+                            />
+                            <Input 
+                                label="Contraseña" 
+                                placeholder="Ingrese su contraseña" 
+                                className="bg-gray-200 !text-base"
+                                name="password"
+                                type="password"
+                                value={formData.password}
+                                onChange={handleInputChange}
+                                required
+                            />
                             <Link href="#" className="text-base text-primary text-right -mt-2 hover:underline">¿Olvidó su contraseña?</Link>
                         </div>
                             <div className="flex flex-col gap-2 mt-4 !font-urbanist">
@@ -72,14 +148,16 @@ export default function LoginPage() {
                                     children="Ingresar a tu cuenta" 
                                     variant="primary" 
                                     size="lg" 
-                                    isLoading={false}  
+                                    isLoading={isLoading}  
                                     className="!rounded-3xl !text-xl w-full" 
-                                    onClick={handleLogin}/>
+                                    type="submit"
+                                    disabled={isLoading}
+                                />
                                 <p className="text-base text-center text-foreground">
                                     ¿No tiene una cuenta? <Link href="/auth/register" className="text-primary hover:underline">Regístrese acá</Link>
                                 </p>
                             </div>
-                        </div>
+                        </form>
                     </motion.div>
                     )}
                 </AnimatePresence>
