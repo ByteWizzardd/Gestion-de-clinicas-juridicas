@@ -184,10 +184,9 @@ CREATE TABLE expedientes (
 
 CREATE TABLE casos (
     id_caso SERIAL PRIMARY KEY,
-    fecha_inicio_caso DATE NOT NULL DEFAULT CURRENT_DATE,
+    fecha_inicio_caso DATE DEFAULT CURRENT_DATE,
     fecha_fin_caso DATE,
-    fecha_solicitud DATE NOT NULL,
-    fecha_solicitud DATE NOT NULL,
+    fecha_solicitud DATE NOT NULL DEFAULT CURRENT_DATE,
     
     tramite VARCHAR(100) NOT NULL CHECK (tramite IN (
         'Asesoría', 
@@ -196,7 +195,7 @@ CREATE TABLE casos (
         'Asistencia Judicial - Casos externos'
     )),
     
-    estatus VARCHAR(50) NOT NULL CHECK (estatus IN ('En proceso', 'Archivado', 'Entregado', 'Asesoría')),
+    estatus VARCHAR(50) NOT NULL CHECK (estatus IN ('En proceso', 'Archivado', 'Entregado', 'Asesoría', 'En revisión')),
     
     observaciones TEXT NOT NULL,
     id_nucleo INTEGER NOT NULL REFERENCES nucleos(id_nucleo),
@@ -256,6 +255,7 @@ CREATE TABLE asignaciones (
     term VARCHAR(20) NOT NULL REFERENCES semestres(term),
     cedula_estudiante VARCHAR(20) NOT NULL REFERENCES estudiantes(cedula_estudiante),
     cedula_profesor VARCHAR(20) NOT NULL REFERENCES profesores(cedula_profesor),
+    cedula_coordinador VARCHAR(20) NOT NULL REFERENCES coordinadores(cedula_coordinador),
     fecha_fin DATE NOT NULL,
     PRIMARY KEY (fecha_inicio, id_caso, term, cedula_estudiante)
 );

@@ -35,8 +35,16 @@ export default function Select({ label, error, options, placeholder = "Seleccion
             } as React.ChangeEvent<HTMLSelectElement>;
             onChange(syntheticEvent);
         }
+        // Cerrar el dropdown inmediatamente después de seleccionar
         setIsOpen(false);
     };
+
+    // Sincronizar el estado cuando isOpen cambia externamente
+    useEffect(() => {
+        if (!isOpen) {
+            // El dropdown se cerró, no hacer nada adicional
+        }
+    }, [isOpen]);
 
     const triggerButton = (isOpenState: boolean) => (
         <button

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, ReactNode } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 
 interface DropdownMenuProps {
   trigger: ReactNode | ((isOpen: boolean) => ReactNode);
@@ -22,6 +23,13 @@ export default function DropdownMenu({
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
+
+  // Sincronizar el estado externo si se proporciona onOpenChange
+  useEffect(() => {
+    if (onOpenChange) {
+      onOpenChange(isOpen);
+    }
+  }, [isOpen, onOpenChange]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -69,14 +77,30 @@ export default function DropdownMenu({
         {triggerElement}
       </div>
 
-      {isOpen && (
-        <div 
-          ref={menuRef} 
-          className={`absolute ${alignClasses[align]} mt-2 z-50 ${menuClassName}`}
-        >
-          {children}
-        </div>
-      )}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            ref={menuRef} 
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className={`absolute ${alignClasses[align]} mt-2 z-50 ${menuClassName}`}
+            onClick={(e) => {
+              // Si el clic es en un botón dentro del menú, cerrar el dropdown inmediatamente
+              const target = e.target as HTMLElement;
+              const clickedButton = target.closest('button');
+              if (clickedButton) {
+                // Cerrar inmediatamente para que la animación de salida se ejecute
+                setIsOpen(false);
+                onOpenChange?.(false);
+              }
+            }}
+          >
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

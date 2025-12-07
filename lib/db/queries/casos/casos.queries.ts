@@ -36,6 +36,7 @@ export const casosQueries = {
 
   /**
    * Crea un nuevo caso
+   * Si fecha_solicitud no se proporciona, se usa CURRENT_DATE en la base de datos
    */
   create: async (data: {
     tramite: string;
@@ -45,12 +46,12 @@ export const casosQueries = {
     id_nucleo?: number;
     id_ambito_legal?: number;
     id_expediente?: string;
-    fecha_solicitud: string | Date;
+    fecha_solicitud?: string | Date;
   }): Promise<any> => {
     const query = loadSQL('casos/create.sql');
-    const fechaSolicitudStr = typeof data.fecha_solicitud === 'string' 
-      ? data.fecha_solicitud 
-      : data.fecha_solicitud.toISOString().split('T')[0];
+    const fechaSolicitudStr = data.fecha_solicitud
+      ? (typeof data.fecha_solicitud === 'string' ? data.fecha_solicitud : data.fecha_solicitud.toISOString().split('T')[0])
+      : null;
     
     const result: QueryResult = await pool.query(query, [
       data.tramite,
@@ -63,6 +64,15 @@ export const casosQueries = {
       fechaSolicitudStr,
     ]);
     return result.rows[0];
+  },
+
+  /**
+   * Obtiene el último ID de caso registrado
+   */
+  getLastId: async (): Promise<number> => {
+    const query = loadSQL('casos/get-last-id.sql');
+    const result: QueryResult = await pool.query(query);
+    return result.rows[0]?.last_id || 0;
   },
 
   /**

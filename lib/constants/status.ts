@@ -6,6 +6,7 @@ export const ESTATUS_CASO = {
   ARCHIVADO: 'Archivado',
   ENTREGADO: 'Entregado',
   ASESORIA: 'Asesoría',
+  EN_REVISION: 'En revisión',
 } as const;
 
 export type EstatusCaso = typeof ESTATUS_CASO[keyof typeof ESTATUS_CASO];
@@ -16,7 +17,7 @@ export type EstatusCaso = typeof ESTATUS_CASO[keyof typeof ESTATUS_CASO];
 export const TRAMITES = {
   ASESORIA: 'Asesoría',
   CONCILIACION_MEDIACION: 'Conciliación y Mediación',
-  REDACCION_DOCUMENTOS: '(Redacción documentos y/o convenio)',
+  REDACCION_DOCUMENTOS: 'Redacción documentos y/o convenio',
   ASISTENCIA_JUDICIAL: 'Asistencia Judicial - Casos externos',
 } as const;
 

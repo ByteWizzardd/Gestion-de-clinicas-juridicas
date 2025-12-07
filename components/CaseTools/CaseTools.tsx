@@ -4,9 +4,10 @@ import Search from "./search";
 
 type CaseToolsProps = {
   addLabel?: string;
+  onAddClick?: () => void;
 };
 
-function CaseTools({ addLabel }: CaseToolsProps) {
+function CaseTools({ addLabel, onAddClick }: CaseToolsProps) {
     return (
         <div className="flex flex-nowrap gap-3 sm:gap-4 items-center w-full px-3">
             <div className="flex-1 min-w-0">
@@ -14,7 +15,7 @@ function CaseTools({ addLabel }: CaseToolsProps) {
             </div>
             <div className="flex gap-3 sm:gap-4 items-center flex-shrink-0">
                 <Filter/>
-            <Add label={addLabel} />
+            <Add label={addLabel} onClick={onAddClick} />
             </div>
         </div>
     );

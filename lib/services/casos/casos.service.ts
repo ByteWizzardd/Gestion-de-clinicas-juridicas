@@ -1,6 +1,8 @@
 import { casosQueries } from '@/lib/db/queries/casos/casos.queries';
 import { asignacionesQueries } from '@/lib/db/queries/asignaciones/asignaciones.queries';
-import { AppError } from '@/lib/utils/errors';
+import { AppError, ValidationError, NotFoundError } from '@/lib/utils/errors';
+import { CreateCasoSchema, CreateCasoInput } from '@/lib/validations/casos.schema';
+import { pool } from '@/lib/db/pool';
 
 /**
  * Servicio para la entidad Casos
@@ -33,6 +35,114 @@ export const casosService = {
         } catch (error) {
             throw new AppError(
                 'Error al obtener los casos',
+                500,
+                error instanceof Error ? error.message : 'Error desconocido'
+            );
+        }
+    },
+
+    /**
+     * Obtiene el siguiente número de caso
+     * Retorna solo el número (sin prefijo)
+     */
+    getNextCaseNumber: async (): Promise<number> => {
+        try {
+            const lastId = await casosQueries.getLastId();
+            const nextId = lastId + 1;
+            return nextId;
+        } catch (error) {
+            throw new AppError(
+                'Error al obtener el siguiente número de caso',
+                500,
+                error instanceof Error ? error.message : 'Error desconocido'
+            );
+        }
+    },
+
+    /**
+     * Crea un nuevo caso
+     * Valida los datos y verifica que el cliente exista
+     */
+    createCaso: async (data: unknown) => {
+        try {
+            console.log('casosService.createCaso - Datos recibidos:', data);
+            
+            // Validar datos con Zod
+            const validatedData = CreateCasoSchema.parse(data) as CreateCasoInput;
+            console.log('casosService.createCaso - Datos validados:', validatedData);
+
+            // Verificar que el cliente existe
+            const clienteCheck = await pool.query(
+                'SELECT cedula FROM clientes WHERE cedula = $1',
+                [validatedData.cedula_cliente]
+            );
+
+            if (clienteCheck.rows.length === 0) {
+                throw new NotFoundError(`Cliente con cédula ${validatedData.cedula_cliente} no encontrado`);
+            }
+
+            // Verificar que el núcleo existe
+            const nucleoCheck = await pool.query(
+                'SELECT id_nucleo FROM nucleos WHERE id_nucleo = $1',
+                [validatedData.id_nucleo]
+            );
+
+            if (nucleoCheck.rows.length === 0) {
+                throw new NotFoundError(`Núcleo con ID ${validatedData.id_nucleo} no encontrado`);
+            }
+
+            // Verificar que el ámbito legal existe
+            const ambitoCheck = await pool.query(
+                'SELECT id_ambito_legal FROM ambitos_legales WHERE id_ambito_legal = $1',
+                [validatedData.id_ambito_legal]
+            );
+
+            if (ambitoCheck.rows.length === 0) {
+                throw new NotFoundError(`Ámbito legal con ID ${validatedData.id_ambito_legal} no encontrado`);
+            }
+
+            // Crear el caso
+            // Si fecha_solicitud no se proporciona, se usa CURRENT_DATE en la BD
+            const casoData = {
+                tramite: validatedData.tramite,
+                estatus: validatedData.estatus,
+                observaciones: validatedData.observaciones,
+                cedula_cliente: validatedData.cedula_cliente,
+                id_nucleo: validatedData.id_nucleo,
+                id_ambito_legal: validatedData.id_ambito_legal,
+                id_expediente: validatedData.id_expediente || undefined,
+                fecha_solicitud: validatedData.fecha_solicitud || undefined,
+            };
+            
+            console.log('casosService.createCaso - Datos para insertar:', casoData);
+            
+            const nuevoCaso = await casosQueries.create(casoData);
+            console.log('casosService.createCaso - Caso creado:', nuevoCaso);
+
+            return nuevoCaso;
+        } catch (error) {
+            if (error instanceof ValidationError || error instanceof NotFoundError) {
+                throw error;
+            }
+
+            // Si es un error de Zod, convertirlo a ValidationError
+            if (error && typeof error === 'object' && 'issues' in error) {
+                const zodError = error as { issues: Array<{ path: (string | number)[]; message: string }> };
+                const fields: Record<string, string[]> = {};
+                
+                zodError.issues.forEach((issue) => {
+                    const path = issue.path.join('.');
+                    if (!fields[path]) {
+                        fields[path] = [];
+                    }
+                    fields[path].push(issue.message);
+                });
+
+                throw new ValidationError('Error de validación', fields);
+            }
+
+            throw new AppError(
+                'Error al crear el caso',
                 500,
                 error instanceof Error ? error.message : 'Error desconocido'
             );

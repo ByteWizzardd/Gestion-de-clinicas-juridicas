@@ -15,6 +15,15 @@ export default function DatePicker({ value, onChange, error, required }: DatePic
   const [isOpen, setIsOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(() => {
     if (value) {
+      // Parsear la fecha como local para evitar problemas de zona horaria
+      const parts = value.split('-');
+      if (parts.length === 3) {
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1; // Los meses en JS son 0-indexed
+        const day = parseInt(parts[2], 10);
+        const date = new Date(year, month, day);
+        return new Date(date.getFullYear(), date.getMonth(), 1);
+      }
       const date = new Date(value);
       return new Date(date.getFullYear(), date.getMonth(), 1);
     }
@@ -73,13 +82,24 @@ export default function DatePicker({ value, onChange, error, required }: DatePic
   // Verificar si es el día seleccionado
   const isSelected = (day: number, isCurrentMonth: boolean) => {
     if (!value || !isCurrentMonth) return false;
-    const selectedDate = new Date(value);
+    // Parsear la fecha como local para evitar problemas de zona horaria
+    const parts = value.split('-');
+    let selectedDate: Date;
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // Los meses en JS son 0-indexed
+      const dayValue = parseInt(parts[2], 10);
+      selectedDate = new Date(year, month, dayValue);
+    } else {
+      selectedDate = new Date(value);
+    }
     selectedDate.setHours(0, 0, 0, 0);
     const date = new Date(
       currentMonth.getFullYear(),
       currentMonth.getMonth(),
       day
     );
+    date.setHours(0, 0, 0, 0);
     return date.getTime() === selectedDate.getTime();
   };
 
@@ -163,13 +183,37 @@ export default function DatePicker({ value, onChange, error, required }: DatePic
   // Actualizar el mes cuando cambia el valor
   useEffect(() => {
     if (value) {
-      const date = new Date(value);
-      setCurrentMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+      // Parsear la fecha como local para evitar problemas de zona horaria
+      // Si el formato es YYYY-MM-DD, parsearlo manualmente
+      const parts = value.split('-');
+      if (parts.length === 3) {
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1; // Los meses en JS son 0-indexed
+        const day = parseInt(parts[2], 10);
+        const date = new Date(year, month, day);
+        setCurrentMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+      } else {
+        const date = new Date(value);
+        setCurrentMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+      }
     }
   }, [value]);
 
   const formatDisplayDate = (dateString: string) => {
     if (!dateString) return 'dd/mm/aaaa';
+    // Parsear la fecha como local para evitar problemas de zona horaria
+    const parts = dateString.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // Los meses en JS son 0-indexed
+      const day = parseInt(parts[2], 10);
+      const date = new Date(year, month, day);
+      const dayStr = String(date.getDate()).padStart(2, '0');
+      const monthStr = String(date.getMonth() + 1).padStart(2, '0');
+      const yearStr = date.getFullYear();
+      return `${dayStr}/${monthStr}/${yearStr}`;
+    }
+    // Fallback al método anterior si el formato no es YYYY-MM-DD
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');

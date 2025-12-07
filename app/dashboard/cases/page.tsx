@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import CaseTools from "@/components/CaseTools/CaseTools";
 import Table from "@/components/Table/Table";
+import CaseFormModal from "@/components/forms/CaseFormModal";
 
 interface Caso {
   id_caso: number;
@@ -30,6 +31,7 @@ export default function CasesPage() {
   const [casos, setCasos] = useState<Caso[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Función para cargar los casos desde la API
   const fetchCasos = async () => {
@@ -43,8 +45,15 @@ export default function CasesPage() {
         throw new Error('Error al cargar los casos');
       }
 
-      const data = await response.json();
-      setCasos(data);
+      const result = await response.json();
+      
+      // La respuesta ahora viene en formato { success: true, data: [...] }
+      if (result.success && result.data) {
+        setCasos(result.data);
+      } else {
+        // Fallback por si la respuesta no tiene el formato esperado
+        setCasos(Array.isArray(result) ? result : []);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
       console.error('Error al cargar casos:', err);
@@ -59,13 +68,15 @@ export default function CasesPage() {
   }, []);
 
   // Transformar los datos para la tabla
-  const tableData: TableRow[] = casos.map((caso) => ({
-    codigo: `CASE-${caso.id_caso}`,
-    solicitante: caso.nombre_completo_cliente,
-    materia: caso.tramite,
-    estatus: caso.estatus,
-    responsable: caso.nombre_responsable || 'Sin asignar',
-  }));
+  const tableData: TableRow[] = Array.isArray(casos) 
+    ? casos.map((caso) => ({
+        codigo: caso.id_caso.toString(),
+        solicitante: caso.nombre_completo_cliente,
+        materia: caso.tramite,
+        estatus: caso.estatus,
+        responsable: caso.nombre_responsable || 'Sin asignar',
+      }))
+    : [];
 
   const handleView = (data: TableRow) => {
     console.log('Ver caso:', data);
@@ -85,11 +96,65 @@ export default function CasesPage() {
     }
   };
 
+  const handleAddCase = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleSubmitCase = async (data: unknown) => {
+    try {
+      console.log('Datos enviados al servidor:', data);
+      
+      const response = await fetch('/api/casos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      console.log('Respuesta del servidor:', result);
+
+      if (!response.ok) {
+        const errorMessage = result.error?.message || 'Error al crear el caso';
+        const errorCode = result.error?.code || 'UNKNOWN_ERROR';
+        const errorFields = result.error?.fields;
+        
+        console.error('Error del servidor:', {
+          status: response.status,
+          message: errorMessage,
+          code: errorCode,
+          fields: errorFields,
+        });
+        
+        if (errorFields) {
+          const fieldErrors = Object.entries(errorFields)
+            .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+            .join('\n');
+          alert(`Error de validación:\n${fieldErrors}`);
+        } else {
+          alert(`Error: ${errorMessage}\nCódigo: ${errorCode}`);
+        }
+        return;
+      }
+
+      alert('Caso registrado exitosamente');
+      setIsModalOpen(false);
+      fetchCasos();
+    } catch (err) {
+      console.error('Error al crear caso:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+      alert(`Error al crear el caso: ${errorMessage}\n\nRevisa la consola para más detalles.`);
+    }
+  };
+
   return (
     <>
       <h1 className="text-2xl sm:text-3xl lg:text-4xl m-3 font-semibold font-primary">Listado de Casos</h1>
       <p className="mb-6 ml-3 text-base">Directorio principal de todos los casos</p>
-      <CaseTools addLabel="Añadir Caso" />
+      <CaseTools addLabel="Añadir Caso" onAddClick={handleAddCase} />
       <div className="mt-10"></div>
 
       {loading && (
@@ -114,6 +179,13 @@ export default function CasesPage() {
           onDelete={handleDelete}
         />
       )}
+
+      {/* Modal de registro de caso */}
+      <CaseFormModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSubmit={handleSubmitCase}
+      />
     </>
   );
 }
