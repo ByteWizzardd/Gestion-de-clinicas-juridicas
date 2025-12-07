@@ -1,9 +1,10 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { LogOut } from 'lucide-react';
+import { useState } from 'react';
 import { getMenuByRole, type UserRole } from './menu-config';
 
 interface SidebarProps {
@@ -13,7 +14,9 @@ interface SidebarProps {
 
 export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const menu = getMenuByRole(role);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Función para obtener el label del rol en español
   const getRoleLabel = (role: UserRole): string => {
@@ -25,8 +28,26 @@ export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarP
     return roleLabels[role];
   };
 
-  const handleLogout = () => {
-    console.log('Cerrar sesión');
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        // Redirigir al login
+        router.push('/auth/login');
+      } else {
+        console.error('Error al cerrar sesión');
+      }
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -68,9 +89,12 @@ export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarP
           </div>
         </div>
 
-        <button onClick={handleLogout} className="w-full bg-primary text-white px-3 py-1.5 rounded-lg text-base cursor-pointer font-medium flex items-center justify-center gap-2 hover:bg-primary-dark transition-colors ">
+        <button 
+          onClick={handleLogout} 
+          disabled={isLoggingOut}
+          className="w-full bg-primary text-white px-3 py-1.5 rounded-lg text-base cursor-pointer font-medium flex items-center justify-center gap-2 hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
           <LogOut className="w-4 h-4"/>
-          <span>Cerrar Sesión</span>
+          <span>{isLoggingOut ? 'Cerrando...' : 'Cerrar Sesión'}</span>
         </button>
       </div>
     </aside>

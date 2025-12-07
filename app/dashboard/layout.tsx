@@ -1,22 +1,73 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Sidebar from '../../components/sidebar/Sidebar';
 import type { UserRole } from '../../components/sidebar/menu-config';
 import Notification from '../../components/ui/feedback/Notification';
 import DateTime from '../../components/ui/calendar/DateTime';
+import { mapSystemRoleToSidebarRole } from '@/lib/utils/role-mapper';
+
+interface User {
+  cedula: string;
+  nombres: string;
+  apellidos: string;
+  correo: string;
+  rol: string;
+}
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Rol de usuario, por ahora se usa student pero para pruebas se puede cambiar este valor a admin o professor
-  const userRole: UserRole = 'student';
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Obtener información del usuario autenticado
+    const fetchUser = async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        const data = await response.json();
+
+        if (data.success) {
+          setUser(data.data);
+        } else {
+          // Si no hay sesión, redirigir al login
+          router.push('/auth/login');
+        }
+      } catch (error) {
+        console.error('Error al obtener usuario:', error);
+        router.push('/auth/login');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [router]);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="text-lg text-gray-600">Cargando...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // La redirección se maneja en el useEffect
+  }
+
+  const userRole: UserRole = mapSystemRoleToSidebarRole(user.rol);
+  const userName = `${user.nombres} ${user.apellidos}`.trim() || 'Usuario';
 
   return (
     <div className="flex h-screen bg-background relative">
       <div className="flex-shrink-0">
-        <Sidebar role={userRole} />
+        <Sidebar role={userRole} userName={userName} />
       </div>
 
       <div className="flex-1 flex flex-col w-full">

@@ -6,11 +6,17 @@ import { logger } from '@/lib/utils/logger';
 /**
  * Configuración del pool de conexiones PostgreSQL
  */
+if (!process.env.DATABASE_URL) {
+  logger.error('DATABASE_URL no está configurada en las variables de entorno');
+}
+
 const config: PoolConfig = {
   connectionString: process.env.DATABASE_URL,
   max: 20, // Máximo de conexiones en el pool
   idleTimeoutMillis: 30000, // Tiempo de espera antes de cerrar conexiones inactivas
-  connectionTimeoutMillis: 2000, // Tiempo máximo para establecer conexión
+  connectionTimeoutMillis: 10000, // Tiempo máximo para establecer conexión (aumentado a 10s)
+  statement_timeout: 30000, // Timeout para queries (30 segundos)
+  query_timeout: 30000, // Timeout para queries (30 segundos)
 };
 
 // Crear el pool de conexiones
