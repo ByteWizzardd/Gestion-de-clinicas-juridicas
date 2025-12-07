@@ -4,6 +4,7 @@ import MetricCard from "@/components/cards/MetricCard";
 import { CircleCheck, Briefcase } from 'lucide-react';
 import CompactCalendar from "@/components/ui/calendar/CompactCalendar";
 import DashboardAppointmentList from "@/components/cards/DashboardAppointmentList";
+import ActionHistoryList from "@/components/cards/ActionHistoryList";
 
 export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -21,6 +22,23 @@ export default function DashboardPage() {
       title: "Firma de Documento",
       client: "Cliente: Pedro D.",
       reason: "Motivo: Poder Especial"
+    }
+  ];
+
+  // Datos de ejemplo para el historial de acciones
+  const actions = [
+    {
+      mainText: "Ver Bitácora Completa",
+      caseInfo: "Caso: C-001 (S. Rodríguez) - UCAB GY"
+    },
+    {
+      mainText: "Segunda Cita Programada",
+      caseInfo: "Caso: C-005 (M. García) - UCAB GY"
+    },
+    {
+      mainText: "Carga de Documentos",
+      subText: "Originales",
+      caseInfo: "Caso: C-008 (J. Rivero) - UCAB GY"
     }
   ];
   
@@ -86,8 +104,13 @@ export default function DashboardPage() {
 
           {/* Acciones recientes */}
           <div className="flex-1 w-full lg:min-w-94 lg:max-w-116 2xl:max-w-[28rem]">
-            <div className="bg-white rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] p-4 md:p-6 h-full min-h-[200px] lg:min-h-0">
-              <h3 className="text-xl md:text-2xl font-semibold text-center text-neutral-800"> Acciones Recientes </h3>
+            <div className="bg-white rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] p-4 md:p-6 h-full min-h-[200px] lg:min-h-0 flex flex-col">
+              <h3 className="text-xl md:text-2xl font-semibold text-center text-neutral-800 mb-4 md:mb-6 flex-shrink-0">
+                Historial de Acciones
+              </h3>
+              <div className="flex-1 overflow-y-auto">
+                <ActionHistoryList actions={actions} />
+              </div>
             </div>
           </div>
         </div>
