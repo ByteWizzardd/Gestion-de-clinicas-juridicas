@@ -1,11 +1,9 @@
 "use client";
 import React, { useState } from "react";
-import { TableContainer } from "@/components/table/TableContainer";
-import { TableHeader } from "@/components/table/TableHeader";
-import { TableRow } from "@/components/table/TableRow";
-import { TablePagination } from "@/components/table/TablePagination";
-
-
+import { TableContainer } from "./TableContainer";
+import { TableHeader } from "./TableHeader";
+import { TableRow } from "./TableRow";
+import { TablePagination } from "./TablePagination";
 interface TableProps<T> {
   data: T[];
   rowsPerPage?: number;
@@ -23,17 +21,20 @@ export default function Table<T extends Record<string, unknown>>({
   onEdit,
   onDelete
 }: TableProps<T>) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(initialRowsPerPage);
-  
-  const totalPages = Math.max(1, Math.ceil(data.length / rowsPerPage));
-  const startIdx = (currentPage - 1) * rowsPerPage;
-  const endIdx = startIdx + rowsPerPage;
-  const pageData = data.slice(startIdx, endIdx);
 
-  const handleRowsPerPageChange = (newRowsPerPage: number) => {
-    setRowsPerPage(newRowsPerPage);
-    setCurrentPage(1); // Resetear a la primera página cuando cambia el número de filas
+  // Paginación visual: no oculta filas, solo navega visualmente
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = initialRowsPerPage;
+  const totalPages = Math.max(1, Math.ceil(data.length / rowsPerPage));
+
+  // Cuando cambias de página, hace scroll automático a la tabla
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll a la tabla (ajusta el selector si tu tabla tiene un id diferente)
+    const table = document.querySelector('table');
+    if (table) {
+      table.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   return (
@@ -41,7 +42,7 @@ export default function Table<T extends Record<string, unknown>>({
       <TableContainer>
         <TableHeader title={columns}/>
         <tbody className="border-t-2 border-t-transparent">
-          {pageData.map((row, idx) => (
+          {data.map((row, idx) => (
             <TableRow 
               key={idx} 
               data={row} 
@@ -57,8 +58,8 @@ export default function Table<T extends Record<string, unknown>>({
         currentPage={currentPage}
         totalPages={totalPages}
         rowsPerPage={rowsPerPage}
-        onPageChange={setCurrentPage}
-        onRowsPerPageChange={handleRowsPerPageChange}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={() => {}}
       />
     </>
   );

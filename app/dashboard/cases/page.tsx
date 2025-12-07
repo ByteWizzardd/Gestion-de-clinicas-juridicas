@@ -1,6 +1,6 @@
 'use client';
 import CaseTools from "@/components/CaseTools/CaseTools";
-import Table from "@/components/table/Table";
+import Table from "@/components/Table/Table";
 
 // Datos de prueba
 const mockCases = [

@@ -6,9 +6,9 @@ import { z } from 'zod';
 // Esquema Zod para validar los resultados de solicitantes
 export const getAllSolicitantes = z.object({
     cedula: z.string(),
-    nombres: z.string(),
-    apellidos: z.string(),
+    nombre_completo: z.string(),
     telefono_celular: z.string(),
+    nucleo: z.string().nullable(),
     fecha_solicitud: z.string().nullable(),
 });
 
@@ -16,9 +16,25 @@ export type Solicitante = z.infer<typeof getAllSolicitantes>;
 
 export const solicitantesQueries = {
     getAllSolicitantes: async (): Promise<Solicitante[]> => {
-        const getSolicitantesSQL = loadSQL("clientes/get-solicitantes.sql");
+        const getSolicitantesSQL = loadSQL("solicitantes/get-solicitantes.sql");
         const result: QueryResult = await pool.query(getSolicitantesSQL);
-        const validatedData = getAllSolicitantes.array().parse(result.rows);
+        // Unir nombres y apellidos en nombre_completo
+        type DBRow = {
+            cedula: string;
+            nombres: string;
+            apellidos: string;
+            telefono_celular: string;
+            nucleo: string | null;
+            fecha_solicitud: Date | null;
+        };
+        const rowsWithNombreCompleto = result.rows.map((row: DBRow) => ({
+            ...row,
+            nombre_completo: `${row.nombres} ${row.apellidos}`,
+            fecha_solicitud: row.fecha_solicitud
+                ? row.fecha_solicitud.toISOString().slice(0, 10)
+                : null,
+        }));
+        const validatedData = getAllSolicitantes.array().parse(rowsWithNombreCompleto);
         return validatedData;
     },
 };

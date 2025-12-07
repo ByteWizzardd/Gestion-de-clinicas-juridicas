@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SolicitantesService } from "../../../lib/services/solicitantes/solicitantes.service";
 
+
 // El request aun no se usa pero se deja para futuras mejoras
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {

@@ -116,7 +116,6 @@ CREATE TABLE clientes (
     nombres VARCHAR(100) NOT NULL,
     apellidos VARCHAR(100) NOT NULL,
     fecha_nacimiento DATE NOT NULL,
-    fecha_solicitud DATE DEFAULT CURRENT_DATE,
     telefono_local VARCHAR(20),
     telefono_celular VARCHAR(20) NOT NULL,
     correo_electronico VARCHAR(100) NOT NULL,
@@ -133,17 +132,7 @@ CREATE TABLE clientes (
     id_parroquia INTEGER REFERENCES parroquias(id_parroquia),
     id_nucleo INTEGER REFERENCES nucleos(id_nucleo),
     
-    -- Si es solicitante (fecha_solicitud IS NOT NULL), todos los campos relacionados deben ser obligatorios
-    CONSTRAINT check_solicitante_completo CHECK (
-        fecha_solicitud IS NULL OR (
-            id_nucleo IS NOT NULL AND
-            id_hogar IS NOT NULL AND
-            id_nivel_educativo IS NOT NULL AND
-            id_trabajo IS NOT NULL AND
-            id_vivienda IS NOT NULL AND
-            id_parroquia IS NOT NULL
-        )
-    )
+    -- Eliminada fecha_solicitud y la restricción asociada
 );
 
 CREATE VIEW view_clientes_info AS
@@ -201,6 +190,7 @@ CREATE TABLE casos (
     id_caso SERIAL PRIMARY KEY,
     fecha_inicio_caso DATE NOT NULL DEFAULT CURRENT_DATE,
     fecha_fin_caso DATE,
+    fecha_solicitud DATE NOT NULL,
     
     tramite VARCHAR(100) NOT NULL CHECK (tramite IN (
         'Asesoría', 
@@ -217,16 +207,6 @@ CREATE TABLE casos (
     id_expediente VARCHAR(50) REFERENCES expedientes(id_expediente),
     cedula_cliente VARCHAR(20) NOT NULL REFERENCES clientes(cedula)
 );
--- Modificación: Agregar columna fecha_solicitud a casos y llenarla desde clientes
-ALTER TABLE casos ADD COLUMN fecha_solicitud DATE;
-
-UPDATE casos
-SET fecha_solicitud = clientes.fecha_solicitud
-FROM clientes
-WHERE casos.cedula_cliente = clientes.cedula;
-
-ALTER TABLE clientes DROP CONSTRAINT IF EXISTS check_solicitante_completo;
-ALTER TABLE clientes DROP COLUMN fecha_solicitud;
 
 -- ==========================================================
 -- 7. DETALLES DEL CASO (BYTEA Y PKs COMPUESTAS)
