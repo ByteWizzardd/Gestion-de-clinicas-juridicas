@@ -187,6 +187,7 @@ CREATE TABLE casos (
     fecha_inicio_caso DATE NOT NULL DEFAULT CURRENT_DATE,
     fecha_fin_caso DATE,
     fecha_solicitud DATE NOT NULL,
+    fecha_solicitud DATE NOT NULL,
     
     tramite VARCHAR(100) NOT NULL CHECK (tramite IN (
         'Asesoría', 

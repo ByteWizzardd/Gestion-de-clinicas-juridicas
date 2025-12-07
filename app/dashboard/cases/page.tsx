@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import CaseTools from "@/components/CaseTools/CaseTools";
-import Table from "@/components/table/Table";
+import Table from "@/components/Table/Table";
 
 interface Caso {
   id_caso: number;

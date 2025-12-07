@@ -196,6 +196,7 @@ INSERT INTO clientes (
  (SELECT id_nucleo FROM nucleos WHERE nombre_nucleo = 'UCAB Guayana' LIMIT 1)),
 -- Solicitante 2: Completo
 ('V23456789', 'Juan', 'Pérez', '1990-08-20', NULL, '0414-2345678', 'juan.perez@email.com', 'M', 'V', 'Soltero', false,
+('V23456789', 'Juan', 'Pérez', '1990-08-20', NULL, '0414-2345678', 'juan.perez@email.com', 'M', 'V', 'Soltero', false,
  (SELECT id_hogar FROM familias_hogares WHERE cant_personas = 3 AND cant_trabajadores = 1 LIMIT 1),
  (SELECT id_nivel_educativo FROM niveles_educativos WHERE nivel = 6 LIMIT 1),
  (SELECT id_trabajo FROM trabajos WHERE condicion_actividad = 'Ama de Casa' LIMIT 1),
@@ -203,6 +204,7 @@ INSERT INTO clientes (
  (SELECT id_parroquia FROM parroquias WHERE nombre_parroquia = 'Altagracia' LIMIT 1),
  (SELECT id_nucleo FROM nucleos WHERE nombre_nucleo = 'UCAB Caracas' LIMIT 1)),
 -- Solicitante 3: Completo
+('V34567890', 'Carmen', 'Rodríguez', '1978-12-03', '0212-5555678', '0416-3456789', 'carmen.rodriguez@email.com', 'F', 'V', 'Divorciado', false,
 ('V34567890', 'Carmen', 'Rodríguez', '1978-12-03', '0212-5555678', '0416-3456789', 'carmen.rodriguez@email.com', 'F', 'V', 'Divorciado', false,
  (SELECT id_hogar FROM familias_hogares WHERE cant_personas = 5 AND cant_trabajadores = 2 LIMIT 1),
  (SELECT id_nivel_educativo FROM niveles_educativos WHERE nivel = 14 LIMIT 1),
@@ -212,6 +214,7 @@ INSERT INTO clientes (
  (SELECT id_nucleo FROM nucleos WHERE nombre_nucleo = 'UCAB Guayana' LIMIT 1)),
 -- Solicitante 4: Completo
 ('V45678901', 'Carlos', 'Martínez', '1992-03-25', NULL, '0424-4567890', 'carlos.martinez@email.com', 'M', 'V', 'Soltero', false,
+('V45678901', 'Carlos', 'Martínez', '1992-03-25', NULL, '0424-4567890', 'carlos.martinez@email.com', 'M', 'V', 'Soltero', false,
  (SELECT id_hogar FROM familias_hogares WHERE cant_personas = 2 AND cant_trabajadores = 1 LIMIT 1),
  (SELECT id_nivel_educativo FROM niveles_educativos WHERE nivel = 7 LIMIT 1),
  (SELECT id_trabajo FROM trabajos WHERE condicion_actividad = 'Pensionado' LIMIT 1),
@@ -219,6 +222,7 @@ INSERT INTO clientes (
  (SELECT id_parroquia FROM parroquias WHERE nombre_parroquia = 'Baruta' LIMIT 1),
  (SELECT id_nucleo FROM nucleos WHERE nombre_nucleo = 'UCAB Caracas' LIMIT 1)),
 -- Solicitante 5: Completo
+('V56789012', 'Ana', 'López', '1987-07-10', '0212-5559012', '0412-5678901', 'ana.lopez@email.com', 'F', 'V', 'Casado', true,
 ('V56789012', 'Ana', 'López', '1987-07-10', '0212-5559012', '0412-5678901', 'ana.lopez@email.com', 'F', 'V', 'Casado', true,
  (SELECT id_hogar FROM familias_hogares WHERE cant_personas = 6 AND cant_trabajadores = 3 LIMIT 1),
  (SELECT id_nivel_educativo FROM niveles_educativos WHERE nivel = 12 LIMIT 1),
@@ -236,6 +240,7 @@ INSERT INTO clientes (
 INSERT INTO casos (
     fecha_inicio_caso,
     fecha_fin_caso,
+    fecha_solicitud,
     fecha_solicitud,
     tramite,
     estatus,
