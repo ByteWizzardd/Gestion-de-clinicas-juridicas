@@ -7,6 +7,7 @@
 --   $5 = id_nucleo (opcional, puede ser NULL)
 --   $6 = id_ambito_legal (opcional, puede ser NULL)
 --   $7 = id_expediente (opcional, puede ser NULL)
+--   $8 = fecha_solicitud (OBLIGATORIO)
 INSERT INTO casos (
     tramite,
     estatus,
@@ -14,7 +15,8 @@ INSERT INTO casos (
     cedula_cliente,
     id_nucleo,
     id_ambito_legal,
-    id_expediente
-) VALUES ($1, $2, $3, $4, $5, $6, $7)
+    id_expediente,
+    fecha_solicitud
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING *;
 

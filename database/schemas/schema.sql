@@ -116,7 +116,6 @@ CREATE TABLE clientes (
     nombres VARCHAR(100) NOT NULL,
     apellidos VARCHAR(100) NOT NULL,
     fecha_nacimiento DATE NOT NULL,
-    fecha_solicitud DATE DEFAULT CURRENT_DATE,
     telefono_local VARCHAR(20),
     telefono_celular VARCHAR(20) NOT NULL,
     correo_electronico VARCHAR(100) NOT NULL,
@@ -131,19 +130,7 @@ CREATE TABLE clientes (
     id_trabajo INTEGER REFERENCES trabajos(id_trabajo),
     id_vivienda INTEGER REFERENCES viviendas(id_vivienda),
     id_parroquia INTEGER REFERENCES parroquias(id_parroquia),
-    id_nucleo INTEGER REFERENCES nucleos(id_nucleo),
-    
-    -- Si es solicitante (fecha_solicitud IS NOT NULL), todos los campos relacionados deben ser obligatorios
-    CONSTRAINT check_solicitante_completo CHECK (
-        fecha_solicitud IS NULL OR (
-            id_nucleo IS NOT NULL AND
-            id_hogar IS NOT NULL AND
-            id_nivel_educativo IS NOT NULL AND
-            id_trabajo IS NOT NULL AND
-            id_vivienda IS NOT NULL AND
-            id_parroquia IS NOT NULL
-        )
-    )
+    id_nucleo INTEGER REFERENCES nucleos(id_nucleo)
 );
 
 CREATE VIEW view_clientes_info AS
@@ -179,8 +166,6 @@ CREATE TABLE secciones (
 
 CREATE TABLE estudiantes (
     cedula_estudiante VARCHAR(20) PRIMARY KEY REFERENCES usuarios(cedula),
-    
-    -- CAMBIO REALIZADO: Eliminado 'tipo_vinculacion'. Solo queda este:
     tipo_estudiante VARCHAR(50) NOT NULL CHECK (tipo_estudiante IN ('Voluntario', 'Inscrito', 'Egresado')),
     
     num_seccion INTEGER NOT NULL, 
@@ -201,11 +186,12 @@ CREATE TABLE casos (
     id_caso SERIAL PRIMARY KEY,
     fecha_inicio_caso DATE NOT NULL DEFAULT CURRENT_DATE,
     fecha_fin_caso DATE,
+    fecha_solicitud DATE NOT NULL,
     
     tramite VARCHAR(100) NOT NULL CHECK (tramite IN (
         'Asesoría', 
         'Conciliación y Mediación', 
-        '(Redacción documentos y/o convenio)', 
+        'Redacción documentos y/o convenio', 
         'Asistencia Judicial - Casos externos'
     )),
     
@@ -297,4 +283,66 @@ CREATE TABLE orientaciones (
     FOREIGN KEY (fecha_cita, id_caso) REFERENCES citas(fecha_cita, id_caso),
     PRIMARY KEY (cedula_usuario, fecha_cita, id_caso)
 );
+
+-- ==========================================================
+-- 8. FUNCIONES Y TRIGGERS PARA VALIDACIÓN DE SOLICITANTES
+-- ==========================================================
+
+-- Función para validar que un cliente solicitante tenga todos los campos completos
+CREATE OR REPLACE FUNCTION validate_solicitante_completo()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Si el cliente tiene al menos un caso, debe tener todos los campos relacionados
+    -- (todos los casos tienen fecha_solicitud obligatoria, por lo que el cliente debe ser un solicitante completo)
+    IF EXISTS (
+        SELECT 1 FROM casos 
+        WHERE cedula_cliente = NEW.cedula
+    ) THEN
+        IF NEW.id_nucleo IS NULL OR
+           NEW.id_hogar IS NULL OR
+           NEW.id_nivel_educativo IS NULL OR
+           NEW.id_trabajo IS NULL OR
+           NEW.id_vivienda IS NULL OR
+           NEW.id_parroquia IS NULL THEN
+            RAISE EXCEPTION 'El cliente es solicitante (tiene casos) y debe tener todos los campos relacionados completos: id_nucleo, id_hogar, id_nivel_educativo, id_trabajo, id_vivienda, id_parroquia';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger para validar al insertar o actualizar clientes
+CREATE TRIGGER trigger_validate_solicitante_completo
+    BEFORE INSERT OR UPDATE ON clientes
+    FOR EACH ROW
+    EXECUTE FUNCTION validate_solicitante_completo();
+
+-- Función para validar al insertar o actualizar casos
+-- Como fecha_solicitud es obligatoria, siempre se debe validar que el cliente tenga todos los campos completos
+CREATE OR REPLACE FUNCTION validate_cliente_solicitante_on_caso()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Validar que el cliente tenga todos los campos relacionados completos
+    -- (todos los casos tienen fecha_solicitud, por lo que el cliente debe ser un solicitante completo)
+    IF NOT EXISTS (
+        SELECT 1 FROM clientes
+        WHERE cedula = NEW.cedula_cliente
+        AND id_nucleo IS NOT NULL
+        AND id_hogar IS NOT NULL
+        AND id_nivel_educativo IS NOT NULL
+        AND id_trabajo IS NOT NULL
+        AND id_vivienda IS NOT NULL
+        AND id_parroquia IS NOT NULL
+    ) THEN
+        RAISE EXCEPTION 'No se puede crear un caso para un cliente que no tiene todos los campos relacionados completos (id_nucleo, id_hogar, id_nivel_educativo, id_trabajo, id_vivienda, id_parroquia)';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger para validar al insertar o actualizar casos
+CREATE TRIGGER trigger_validate_cliente_solicitante_on_caso
+    BEFORE INSERT OR UPDATE ON casos
+    FOR EACH ROW
+    EXECUTE FUNCTION validate_cliente_solicitante_on_caso();
 

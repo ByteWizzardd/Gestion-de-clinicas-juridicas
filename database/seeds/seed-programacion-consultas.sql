@@ -165,14 +165,13 @@ INSERT INTO ambitos_legales (materia, tipo, descripcion) VALUES
 -- 11. CLIENTES (SOLICITANTES COMPLETOS)
 -- ==========================================================
 -- Nota: cedula es PRIMARY KEY (VARCHAR, NO es SERIAL)
--- IMPORTANTE: Si fecha_solicitud IS NOT NULL, TODOS los campos relacionados deben ser NOT NULL
+-- IMPORTANTE: Si un cliente tiene casos con fecha_solicitud, TODOS los campos relacionados deben ser NOT NULL
 -- Por eso, para solicitantes, debemos proporcionar: id_nucleo, id_hogar, id_nivel_educativo, id_trabajo, id_vivienda, id_parroquia
 INSERT INTO clientes (
     cedula,
     nombres,
     apellidos,
     fecha_nacimiento,
-    fecha_solicitud,
     telefono_local,
     telefono_celular,
     correo_electronico,
@@ -187,8 +186,8 @@ INSERT INTO clientes (
     id_parroquia,
     id_nucleo
 ) VALUES
--- Solicitante 1: Completo (es solicitante porque tiene fecha_solicitud)
-('V12345678', 'María', 'González', '1985-05-15', '2024-01-10', '0212-5551234', '0412-1234567', 'maria.gonzalez@email.com', 'F', 'V', 'Casado', false, 
+-- Solicitante 1: Completo (es solicitante porque tendrá casos con fecha_solicitud)
+('V12345678', 'María', 'González', '1985-05-15', '0212-5551234', '0412-1234567', 'maria.gonzalez@email.com', 'F', 'V', 'Casado', false, 
  (SELECT id_hogar FROM familias_hogares WHERE cant_personas = 4 AND cant_trabajadores = 2 LIMIT 1),
  (SELECT id_nivel_educativo FROM niveles_educativos WHERE nivel = 12 LIMIT 1),
  (SELECT id_trabajo FROM trabajos WHERE condicion_actividad = 'Otra' AND condicion_trabajo = 'Empleado' LIMIT 1),
@@ -196,7 +195,7 @@ INSERT INTO clientes (
  (SELECT id_parroquia FROM parroquias WHERE nombre_parroquia = 'Catedral' LIMIT 1),
  (SELECT id_nucleo FROM nucleos WHERE nombre_nucleo = 'UCAB Guayana' LIMIT 1)),
 -- Solicitante 2: Completo
-('V23456789', 'Juan', 'Pérez', '1990-08-20', '2024-02-15', NULL, '0414-2345678', 'juan.perez@email.com', 'M', 'V', 'Soltero', false,
+('V23456789', 'Juan', 'Pérez', '1990-08-20', NULL, '0414-2345678', 'juan.perez@email.com', 'M', 'V', 'Soltero', false,
  (SELECT id_hogar FROM familias_hogares WHERE cant_personas = 3 AND cant_trabajadores = 1 LIMIT 1),
  (SELECT id_nivel_educativo FROM niveles_educativos WHERE nivel = 6 LIMIT 1),
  (SELECT id_trabajo FROM trabajos WHERE condicion_actividad = 'Ama de Casa' LIMIT 1),
@@ -204,7 +203,7 @@ INSERT INTO clientes (
  (SELECT id_parroquia FROM parroquias WHERE nombre_parroquia = 'Altagracia' LIMIT 1),
  (SELECT id_nucleo FROM nucleos WHERE nombre_nucleo = 'UCAB Caracas' LIMIT 1)),
 -- Solicitante 3: Completo
-('V34567890', 'Carmen', 'Rodríguez', '1978-12-03', '2024-03-01', '0212-5555678', '0416-3456789', 'carmen.rodriguez@email.com', 'F', 'V', 'Divorciado', false,
+('V34567890', 'Carmen', 'Rodríguez', '1978-12-03', '0212-5555678', '0416-3456789', 'carmen.rodriguez@email.com', 'F', 'V', 'Divorciado', false,
  (SELECT id_hogar FROM familias_hogares WHERE cant_personas = 5 AND cant_trabajadores = 2 LIMIT 1),
  (SELECT id_nivel_educativo FROM niveles_educativos WHERE nivel = 14 LIMIT 1),
  (SELECT id_trabajo FROM trabajos WHERE condicion_actividad = 'Estudiante' LIMIT 1),
@@ -212,7 +211,7 @@ INSERT INTO clientes (
  (SELECT id_parroquia FROM parroquias WHERE nombre_parroquia = 'Chacao' LIMIT 1),
  (SELECT id_nucleo FROM nucleos WHERE nombre_nucleo = 'UCAB Guayana' LIMIT 1)),
 -- Solicitante 4: Completo
-('V45678901', 'Carlos', 'Martínez', '1992-03-25', '2024-04-05', NULL, '0424-4567890', 'carlos.martinez@email.com', 'M', 'V', 'Soltero', false,
+('V45678901', 'Carlos', 'Martínez', '1992-03-25', NULL, '0424-4567890', 'carlos.martinez@email.com', 'M', 'V', 'Soltero', false,
  (SELECT id_hogar FROM familias_hogares WHERE cant_personas = 2 AND cant_trabajadores = 1 LIMIT 1),
  (SELECT id_nivel_educativo FROM niveles_educativos WHERE nivel = 7 LIMIT 1),
  (SELECT id_trabajo FROM trabajos WHERE condicion_actividad = 'Pensionado' LIMIT 1),
@@ -220,7 +219,7 @@ INSERT INTO clientes (
  (SELECT id_parroquia FROM parroquias WHERE nombre_parroquia = 'Baruta' LIMIT 1),
  (SELECT id_nucleo FROM nucleos WHERE nombre_nucleo = 'UCAB Caracas' LIMIT 1)),
 -- Solicitante 5: Completo
-('V56789012', 'Ana', 'López', '1987-07-10', '2024-05-12', '0212-5559012', '0412-5678901', 'ana.lopez@email.com', 'F', 'V', 'Casado', true,
+('V56789012', 'Ana', 'López', '1987-07-10', '0212-5559012', '0412-5678901', 'ana.lopez@email.com', 'F', 'V', 'Casado', true,
  (SELECT id_hogar FROM familias_hogares WHERE cant_personas = 6 AND cant_trabajadores = 3 LIMIT 1),
  (SELECT id_nivel_educativo FROM niveles_educativos WHERE nivel = 12 LIMIT 1),
  (SELECT id_trabajo FROM trabajos WHERE condicion_actividad = 'Jubilado' LIMIT 1),
@@ -237,6 +236,7 @@ INSERT INTO clientes (
 INSERT INTO casos (
     fecha_inicio_caso,
     fecha_fin_caso,
+    fecha_solicitud,
     tramite,
     estatus,
     observaciones,
@@ -245,32 +245,32 @@ INSERT INTO casos (
     id_expediente,
     cedula_cliente
 ) VALUES
--- Caso 1: Asesoría en proceso
-('2024-01-15', NULL, 'Asesoría', 'En proceso', 'Cliente solicita asesoría para proceso de divorcio. Primera consulta realizada.', 
+-- Caso 1: Asesoría en proceso (solicitante)
+('2024-01-15', NULL, '2024-01-10', 'Asesoría', 'En proceso', 'Cliente solicita asesoría para proceso de divorcio. Primera consulta realizada.', 
  (SELECT id_nucleo FROM nucleos WHERE nombre_nucleo = 'UCAB Guayana' LIMIT 1),
  (SELECT id_ambito_legal FROM ambitos_legales WHERE materia = 'Derecho de Familia' LIMIT 1), NULL, 'V12345678'),
--- Caso 2: Conciliación en proceso
-('2024-02-20', NULL, 'Conciliación y Mediación', 'En proceso', 'Proceso de mediación para pensión alimentaria. En espera de respuesta de la contraparte.',
+-- Caso 2: Conciliación en proceso (solicitante)
+('2024-02-20', NULL, '2024-02-15', 'Conciliación y Mediación', 'En proceso', 'Proceso de mediación para pensión alimentaria. En espera de respuesta de la contraparte.',
  (SELECT id_nucleo FROM nucleos WHERE nombre_nucleo = 'UCAB Caracas' LIMIT 1),
  (SELECT id_ambito_legal FROM ambitos_legales WHERE materia = 'Derecho de Familia' LIMIT 1), NULL, 'V23456789'),
--- Caso 3: Redacción de documentos
-('2024-03-05', NULL, '(Redacción documentos y/o convenio)', 'En proceso', 'Redacción de convenio de separación de bienes. Pendiente revisión.',
+-- Caso 3: Redacción de documentos (solicitante)
+('2024-03-05', NULL, '2024-03-01', '(Redacción documentos y/o convenio)', 'En proceso', 'Redacción de convenio de separación de bienes. Pendiente revisión.',
  (SELECT id_nucleo FROM nucleos WHERE nombre_nucleo = 'UCAB Guayana' LIMIT 1),
  (SELECT id_ambito_legal FROM ambitos_legales WHERE materia = 'Derecho Civil' LIMIT 1), NULL, 'V34567890'),
--- Caso 4: Asistencia Judicial
-('2024-04-10', NULL, 'Asistencia Judicial - Casos externos', 'En proceso', 'Acompañamiento en audiencia de conciliación laboral.',
+-- Caso 4: Asistencia Judicial (solicitante)
+('2024-04-10', NULL, '2024-04-05', 'Asistencia Judicial - Casos externos', 'En proceso', 'Acompañamiento en audiencia de conciliación laboral.',
  (SELECT id_nucleo FROM nucleos WHERE nombre_nucleo = 'UCAB Caracas' LIMIT 1),
  (SELECT id_ambito_legal FROM ambitos_legales WHERE materia = 'Derecho Laboral' LIMIT 1), NULL, 'V45678901'),
--- Caso 5: Asesoría
-('2024-05-15', NULL, 'Asesoría', 'Asesoría', 'Consulta inicial sobre derechos laborales. Pendiente documentación.',
+-- Caso 5: Asesoría (solicitante)
+('2024-05-15', NULL, '2024-05-12', 'Asesoría', 'Asesoría', 'Consulta inicial sobre derechos laborales. Pendiente documentación.',
  (SELECT id_nucleo FROM nucleos WHERE nombre_nucleo = 'UCAB Guayana' LIMIT 1),
  (SELECT id_ambito_legal FROM ambitos_legales WHERE materia = 'Derecho Laboral' LIMIT 1), NULL, 'V56789012'),
--- Caso 6: Caso archivado
-('2023-12-01', '2024-01-30', 'Asesoría', 'Archivado', 'Caso resuelto. Cliente satisfecho con la asesoría proporcionada.',
+-- Caso 6: Caso archivado (solicitante)
+('2023-12-01', '2024-01-30', '2024-01-10', 'Asesoría', 'Archivado', 'Caso resuelto. Cliente satisfecho con la asesoría proporcionada.',
  (SELECT id_nucleo FROM nucleos WHERE nombre_nucleo = 'UCAB Guayana' LIMIT 1),
  (SELECT id_ambito_legal FROM ambitos_legales WHERE materia = 'Derecho de Familia' LIMIT 1), NULL, 'V12345678'),
--- Caso 7: Caso entregado
-('2023-11-15', '2024-02-28', 'Conciliación y Mediación', 'Entregado', 'Mediación exitosa. Acuerdo firmado por ambas partes.',
+-- Caso 7: Caso entregado (solicitante)
+('2023-11-15', '2024-02-28', '2024-02-15', 'Conciliación y Mediación', 'Entregado', 'Mediación exitosa. Acuerdo firmado por ambas partes.',
  (SELECT id_nucleo FROM nucleos WHERE nombre_nucleo = 'UCAB Caracas' LIMIT 1),
  (SELECT id_ambito_legal FROM ambitos_legales WHERE materia = 'Derecho de Familia' LIMIT 1), NULL, 'V23456789');
 
@@ -315,7 +315,7 @@ INSERT INTO citas (fecha_cita, id_caso, proxima_cita) VALUES
 -- SELECT COUNT(*) FROM familias_hogares;
 -- SELECT COUNT(*) FROM artefactos_domesticos;
 -- SELECT COUNT(*) FROM ambitos_legales;
--- SELECT COUNT(*) FROM clientes WHERE fecha_solicitud IS NOT NULL;
+-- SELECT COUNT(*) FROM casos WHERE fecha_solicitud IS NOT NULL;
 -- SELECT COUNT(*) FROM casos;
 -- SELECT COUNT(*) FROM citas;
 -- ==========================================================

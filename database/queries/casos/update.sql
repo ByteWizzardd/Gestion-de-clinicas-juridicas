@@ -8,6 +8,7 @@
 --   $6 = id_nucleo (opcional)
 --   $7 = id_ambito_legal (opcional)
 --   $8 = id_expediente (opcional)
+--   $9 = fecha_solicitud (opcional)
 UPDATE casos
 SET 
     tramite = COALESCE($2, tramite),
@@ -16,7 +17,8 @@ SET
     fecha_fin_caso = COALESCE($5, fecha_fin_caso),
     id_nucleo = COALESCE($6, id_nucleo),
     id_ambito_legal = COALESCE($7, id_ambito_legal),
-    id_expediente = COALESCE($8, id_expediente)
+    id_expediente = COALESCE($8, id_expediente),
+    fecha_solicitud = COALESCE($9, fecha_solicitud)
 WHERE id_caso = $1
 RETURNING *;
 
