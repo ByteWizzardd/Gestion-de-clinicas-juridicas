@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Button from "@/components/ui/Button";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -7,19 +7,32 @@ import { motion, AnimatePresence } from "motion/react";
 export default function AuthHome (){
     const router = useRouter();
     const [isExiting, setIsExiting] = useState(false);
+    const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+        setPrefersReducedMotion(mediaQuery.matches);
+        
+        const handleChange = (e: MediaQueryListEvent) => {
+            setPrefersReducedMotion(e.matches);
+        };
+        
+        mediaQuery.addEventListener("change", handleChange);
+        return () => mediaQuery.removeEventListener("change", handleChange);
+    }, []);
 
     const handleLogin = () => {
         setIsExiting(true);
         setTimeout(() => {
             router.push("/auth/login");
-        }, 1200); // Duración de la animación de salida
+        }, prefersReducedMotion ? 0 : 150);
     }
 
     const handleRegister = () => {
         setIsExiting(true);
         setTimeout(() => {
             router.push("/auth/register");
-        }, 1200); // Duración de la animación de salida
+        }, prefersReducedMotion ? 0 : 150);
     }
 
     return(
@@ -31,10 +44,10 @@ export default function AuthHome (){
                         <motion.div 
                             key="logo"
                             className="absolute top-4 left-0 z-10"
-                            initial={{ opacity: 0, x: -100 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -100 }}
-                            transition={{ duration: 1.2, ease: "easeOut"}}>
+                            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut"}}>
                             <Image src="/image.png" alt="DER Logo" width={240} height={87} className="object-contain"/>
                         </motion.div>
                         
@@ -42,10 +55,10 @@ export default function AuthHome (){
                         <motion.div 
                             key="deco1"
                             className="absolute top-[-10] right-0 z-0"
-                            initial={{ opacity: 0, x: 100, y: -100 }}
-                            animate={{ opacity: 1, x: 0, y: 0 }}
-                            exit={{ opacity: 0, x: 100, y: -100 }}
-                            transition={{ duration: 1.2, ease: "easeOut" }}>
+                            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}>
                             <Image src="/deco1.svg" alt="Decoración 1" width={600} height={600} className="object-contain"/>
                         </motion.div>
                         
@@ -53,10 +66,10 @@ export default function AuthHome (){
                         <motion.div 
                             key="deco2"
                             className="absolute bottom-[-10] left-0 z-0"
-                            initial={{ opacity: 0, x: -100, y: 100 }}
-                            animate={{ opacity: 1, x: 0, y: 0 }}
-                            exit={{ opacity: 0, x: -100, y: 100 }}
-                            transition={{ duration: 1.2, ease: "easeOut" }}>
+                            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}>
                             <Image src="/deco2.svg" alt="Decoración 2" width={600} height={600} className="object-contain"/>
                         </motion.div>
                     </>
@@ -70,10 +83,10 @@ export default function AuthHome (){
                         <motion.div 
                             key="card"
                             className="w-1/3 bg-[#FCFCFC] h-1/2 rounded-4xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col items-center justify-center p-5"
-                            initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.8, y: 20 }}
-                            transition={{duration: 1.2, ease: "easeOut"}}>
+                            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut"}}>
                     <div className="text-foreground text-center">
                         {/*Textos*/}
                         <p className="text-5xl font-semibold font-primary">

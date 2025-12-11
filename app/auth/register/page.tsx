@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/forms/Input";
 import { ArrowLeft } from "lucide-react";
@@ -12,6 +12,7 @@ export default function RegisterPage() {
     const [isExiting, setIsExiting] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
     const [formData, setFormData] = useState({
         nombreCompleto: "",
         cedula: "",
@@ -20,12 +21,24 @@ export default function RegisterPage() {
         confirmPassword: "",
     });
 
+    useEffect(() => {
+        const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+        setPrefersReducedMotion(mediaQuery.matches);
+        
+        const handleChange = (e: MediaQueryListEvent) => {
+            setPrefersReducedMotion(e.matches);
+        };
+        
+        mediaQuery.addEventListener("change", handleChange);
+        return () => mediaQuery.removeEventListener("change", handleChange);
+    }, []);
+
     const handleBack = (e: React.MouseEvent) => {
         e.preventDefault();
         setIsExiting(true);
         setTimeout(() => {
             router.push("/auth");
-        }, 1200);
+        }, prefersReducedMotion ? 0 : 150);
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,7 +98,7 @@ export default function RegisterPage() {
             setIsExiting(true);
             setTimeout(() => {
                 router.push("/dashboard");
-            }, 800);
+            }, prefersReducedMotion ? 0 : 150);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Error al registrar usuario");
             setIsLoading(false);
@@ -103,10 +116,10 @@ export default function RegisterPage() {
                 {!isExiting && (
                     <motion.div
                         key="back-arrow"
-                        initial={{ opacity: 0, x: 50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 50 }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}>
+                        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                        transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.15, ease: "easeOut" }}>
                         <Link href="/auth" onClick={handleBack}
                             className="absolute top-10 left-[820px] z-30 p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
                             <ArrowLeft className="w-8 h-8 text-foreground hover:text-primary transition-colors" />
@@ -123,10 +136,10 @@ export default function RegisterPage() {
                         <motion.div 
                             key="circle"
                             className="absolute left-5 top-1/2 -translate-y-1/2 -translate-x-1/2 font-primary"
-                            initial={{ opacity: 0, x: -200, scale: 0.8 }}
-                            animate={{ opacity: 1, x: 0, scale: 1 }}
-                            exit={{ opacity: 0, x: -200, scale: 0.8 }}
-                            transition={{ duration: 1.2, ease: "easeOut", delay: 0.4 }}>
+                            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}>
                             <div className="w-[1620px] h-[1620px] flex flex-col justify-center items-end rounded-full border-4 border-primary bg-primary">
                                 <p className="text-white w-1/2 font-semibold text-7xl text-left pr-20 pl-15">Acceso a la Justicia para Todos. </p>
                                 <p className="text-white text-left w-1/2 text-4xl/8 pr-40 pl-15 mt-2">Su trabajo garantiza un proceso eficaz y responsable.</p>
@@ -141,10 +154,10 @@ export default function RegisterPage() {
                         <motion.div 
                             key="register-form"
                             className="w-full max-w-md pr-15"
-                            initial={{ opacity: 0, x: 100 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 100 }}
-                            transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 }}>
+                            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}>
                     <form onSubmit={handleSubmit} className="flex flex-col gap-6 w-full">
                         <div className="mb-5">
                             <h1 className="text-5xl font-normal text-foreground mb-2 text-center font-primary">Crear Cuenta</h1>

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/forms/Input";
 import { ArrowLeft } from "lucide-react";
@@ -12,17 +12,30 @@ export default function LoginPage() {
     const [isExiting, setIsExiting] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
     const [formData, setFormData] = useState({
         correo: "",
         password: "",
     });
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+        setPrefersReducedMotion(mediaQuery.matches);
+        
+        const handleChange = (e: MediaQueryListEvent) => {
+            setPrefersReducedMotion(e.matches);
+        };
+        
+        mediaQuery.addEventListener("change", handleChange);
+        return () => mediaQuery.removeEventListener("change", handleChange);
+    }, []);
 
     const handleBack = (e: React.MouseEvent) => {
         e.preventDefault();
         setIsExiting(true);
         setTimeout(() => {
             router.push("/auth");
-        }, 1200);
+        }, prefersReducedMotion ? 0 : 150);
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,7 +81,7 @@ export default function LoginPage() {
             setIsExiting(true);
             setTimeout(() => {
                 router.push("/dashboard");
-            }, 800);
+            }, prefersReducedMotion ? 0 : 150);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Error al iniciar sesión");
             setIsLoading(false);
@@ -86,10 +99,10 @@ export default function LoginPage() {
                 {!isExiting && (
                     <motion.div
                         key="back-arrow"
-                        initial={{ opacity: 0, x: -50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -50 }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}>
+                        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                        transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.15, ease: "easeOut" }}>
                         <Link href="/auth" onClick={handleBack}
                             className="absolute top-10 left-8 z-30 p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
                         >
@@ -106,10 +119,10 @@ export default function LoginPage() {
                         <motion.div 
                             key="login-form"
                             className="w-full max-w-md pl-15"
-                            initial={{ opacity: 0, x: -100 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -100 }}
-                            transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 }}>
+                            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}>
                     <form onSubmit={handleSubmit} className="flex flex-col gap-6 w-full">
                         <div className="mb-5">
                             <h1 className="text-5xl font-normal text-foreground mb-2 text-center font-primary">Iniciar Sesión</h1>
@@ -168,10 +181,10 @@ export default function LoginPage() {
                         <motion.div 
                             key="circle"
                             className="absolute right-5 top-1/2 -translate-y-1/2 translate-x-1/2 font-primary"
-                            initial={{ opacity: 0, x: 200, scale: 0.8 }}
-                            animate={{ opacity: 1, x: 0, scale: 1 }}
-                            exit={{ opacity: 0, x: 200, scale: 0.8 }}
-                            transition={{ duration: 1.2, ease: "easeOut", delay: 0.4 }}>
+                            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}>
                             <div className="w-[1620px] h-[1620px] flex flex-col justify-center items-start rounded-full border-4 border-primary bg-primary">
                                 <p className="text-white w-1/2 font-semibold text-7xl text-right pl-50 pr-20">Juntos por la Justicia Social.</p>
                                 <p className="text-white text-right w-1/2 text-4xl/8 pl-30 pr-20 mt-2">ODS 16 - Promoviendo la paz y la inclusión en Ciudad Guayana.</p>
