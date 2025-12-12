@@ -29,16 +29,35 @@ export default function DashboardPage() {
   const actions = [
     {
       mainText: "Ver Bitácora Completa",
-      caseInfo: "Caso: C-001 (S. Rodríguez) - UCAB GY"
+      subText: "hola este es un ejemplo",
+      caseInfo: "Caso: C-001 (S. Rodríguez) - UCAB GY",
+      date: "15 Ene 2024",
+      time: "14:30",
+      actionType: "view" as const
     },
     {
       mainText: "Segunda Cita Programada",
-      caseInfo: "Caso: C-005 (M. García) - UCAB GY"
+      subText: "hola este es otro ejemplo",
+      caseInfo: "Caso: C-005 (M. García) - UCAB GY",
+      date: "14 Ene 2024",
+      time: "10:15",
+      actionType: "appointment" as const
     },
     {
       mainText: "Carga de Documentos",
       subText: "Originales",
-      caseInfo: "Caso: C-008 (J. Rivero) - UCAB GY"
+      caseInfo: "Caso: C-008 (J. Rivero) - UCAB GY",
+      date: "13 Ene 2024",
+      time: "16:45",
+      actionType: "document" as const
+    },
+    {
+      mainText: "Actualización de Estado",
+      subText: "En revisión",
+      caseInfo: "Caso: C-003 (A. Martínez) - UCAB GY",
+      date: "12 Ene 2024",
+      time: "09:20",
+      actionType: "update" as const
     }
   ];
   
