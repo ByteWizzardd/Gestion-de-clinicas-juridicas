@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import type { Appointment } from '@/types/appointment';
 
 interface CompactCalendarProps {
   selectedDate: Date;
   onDateChange: (date: Date) => void;
   onMonthChange?: (date: Date) => void;
-  appointments?: { date: Date }[];
+  appointments?: Appointment[];
+  loading?: boolean;
 }
 
 export default function CompactCalendar({
@@ -15,7 +17,15 @@ export default function CompactCalendar({
   onDateChange,
   onMonthChange,
   appointments = [],
+  loading = false,
 }: CompactCalendarProps) {
+  // Preparar datos para el calendario (solo fechas)
+  const calendarAppointments = useMemo(() => {
+    if (!appointments || appointments.length === 0) return [];
+    return appointments.map((apt) => ({
+      date: new Date(apt.date),
+    }));
+  }, [appointments]);
   const [currentMonth, setCurrentMonth] = useState(
     new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
   );
@@ -59,13 +69,14 @@ export default function CompactCalendar({
 
   // Verificar si un día tiene citas
   const hasAppointments = (day: number, isCurrentMonth: boolean) => {
-    if (!isCurrentMonth) return false;
+    if (!isCurrentMonth || loading) return false;
     const date = new Date(
       currentMonth.getFullYear(),
       currentMonth.getMonth(),
       day
     );
-    return appointments.some((apt) => {
+    date.setHours(0, 0, 0, 0);
+    return calendarAppointments.some((apt) => {
       const aptDate = new Date(apt.date);
       aptDate.setHours(0, 0, 0, 0);
       return aptDate.getTime() === date.getTime();
@@ -272,4 +283,3 @@ export default function CompactCalendar({
     </div>
   );
 }
-
