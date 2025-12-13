@@ -56,7 +56,7 @@ export default function Table<T extends Record<string, unknown>>({
   };
 
   return (
-    <>
+    <div className="relative overflow-visible">
       <TableContainer>
         <TableHeader title={columns}/>
         <tbody className="border-t-2 border-t-transparent">
@@ -87,6 +87,6 @@ export default function Table<T extends Record<string, unknown>>({
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />
-    </>
+    </div>
   );
 }
