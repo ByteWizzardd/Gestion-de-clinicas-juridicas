@@ -1,4 +1,4 @@
--- Obtener información completa de un cliente/solicitante con todas sus relaciones
+-- Obtener información completa de un cliente con todas sus relaciones
 -- Parámetros: $1 = cedula
 SELECT 
     -- Datos básicos del cliente

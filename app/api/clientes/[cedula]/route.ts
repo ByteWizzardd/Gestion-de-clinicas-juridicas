@@ -1,32 +1,32 @@
-import { NextRequest, NextResponse } from "next/server";
-import { ClientesService } from "../../../../lib/services/clientes/clientes.service";
+import { NextRequest, NextResponse } from 'next/server';
+import { ClientesService } from '../../../../lib/services/clientes/clientes.service';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ cedula: string }> | { cedula: string } }
 ): Promise<NextResponse> {
   try {
     // Handle both Promise and direct params (Next.js 15 compatibility)
     const resolvedParams = params instanceof Promise ? await params : params;
-    const { id } = resolvedParams;
+    const { cedula } = resolvedParams;
     
-    if (!id) {
+    if (!cedula) {
       return NextResponse.json(
         {
           success: false,
-          message: "Cédula del solicitante es requerida",
+          message: 'Cédula del cliente es requerida',
         },
         { status: 400 }
       );
     }
 
-    const solicitante = await ClientesService.getClienteCompleto(id);
+    const cliente = await ClientesService.getClienteCompleto(cedula);
 
-    if (!solicitante) {
+    if (!cliente) {
       return NextResponse.json(
         {
           success: false,
-          message: "Solicitante no encontrado",
+          message: 'Cliente no encontrado',
         },
         { status: 404 }
       );
@@ -35,20 +35,20 @@ export async function GET(
     return NextResponse.json(
       {
         success: true,
-        data: solicitante,
+        data: cliente,
         timestamp: new Date().toISOString(),
       },
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("[SolicitantesRoute] Error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+    console.error('[ClientesRoute] Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
     const errorStack = error instanceof Error ? error.stack : undefined;
 
     return NextResponse.json(
       {
         success: false,
-        message: "No se pudo obtener el solicitante",
+        message: 'No se pudo obtener el cliente',
         error: errorMessage,
         stack: errorStack,
         timestamp: new Date().toISOString(),
