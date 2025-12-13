@@ -37,4 +37,18 @@ export const solicitantesQueries = {
         const validatedData = getAllSolicitantes.array().parse(rowsWithNombreCompleto);
         return validatedData;
     },
+    
+    getSolicitanteById: async (cedula: string): Promise<any | null> => {
+        const getSolicitanteSQL = loadSQL("solicitantes/get-by-id.sql");
+        const result: QueryResult = await pool.query(getSolicitanteSQL, [cedula]);
+        if (result.rows.length === 0) {
+            return null;
+        }
+        const row = result.rows[0];
+        // Formatear fecha_nacimiento
+        if (row.fecha_nacimiento) {
+            row.fecha_nacimiento = row.fecha_nacimiento.toISOString().slice(0, 10);
+        }
+        return row;
+    },
 };

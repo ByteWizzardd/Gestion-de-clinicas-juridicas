@@ -1,3 +1,5 @@
+import React from 'react';
+
 type TableContainerProps = {
     children: React.ReactNode;
 }

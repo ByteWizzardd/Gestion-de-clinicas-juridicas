@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import CaseTools from "@/components/CaseTools/CaseTools";
 import Table from "@/components/Table/Table";
 import CaseFormModal from "@/components/forms/CaseFormModal";
@@ -30,6 +31,7 @@ interface TableRow extends Record<string, unknown> {
 }
 
 export default function CasesPage() {
+  const router = useRouter();
   const [casos, setCasos] = useState<Caso[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -131,7 +133,8 @@ export default function CasesPage() {
   }));
 
   const handleView = (data: TableRow) => {
-    // Aquí puedes abrir un modal o navegar a una página de detalle
+    const caso = data as TableRow;
+    router.push(`/dashboard/cases/${caso.codigo}`);
   };
 
   const handleEdit = (data: TableRow) => {

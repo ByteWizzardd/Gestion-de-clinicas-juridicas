@@ -11,6 +11,7 @@ type ActionMenuProps = {
 
 export default function ActionMenu({ onView, onEdit, onDelete }: ActionMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [showAbove, setShowAbove] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
 
@@ -28,6 +29,26 @@ export default function ActionMenu({ onView, onEdit, onDelete }: ActionMenuProps
 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      
+      // Verificar si hay espacio suficiente abajo
+      const checkPosition = () => {
+        if (buttonRef.current && menuRef.current) {
+          const buttonRect = buttonRef.current.getBoundingClientRect();
+          const menuHeight = menuRef.current.offsetHeight || 150; // Altura estimada del menú
+          const spaceBelow = window.innerHeight - buttonRect.bottom;
+          const spaceAbove = buttonRect.top;
+          
+          // Si no hay espacio abajo pero sí arriba, mostrar arriba
+          if (spaceBelow < menuHeight + 10 && spaceAbove > menuHeight + 10) {
+            setShowAbove(true);
+          } else {
+            setShowAbove(false);
+          }
+        }
+      };
+      
+      // Verificar posición después de que el menú se renderice
+      setTimeout(checkPosition, 0);
     }
 
     return () => {
@@ -51,7 +72,12 @@ export default function ActionMenu({ onView, onEdit, onDelete }: ActionMenuProps
       </div>
 
       {isOpen && hasActions && (
-        <div ref={menuRef} className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 z-50 py-1">
+        <div 
+          ref={menuRef} 
+          className={`absolute right-0 w-48 bg-white rounded-xl shadow-xl border border-gray-200 z-[100] py-1 ${
+            showAbove ? 'bottom-full mb-2' : 'top-full mt-2'
+          }`}
+        >
           {onView && (
             <>
               <button onClick={() => handleAction(onView)} className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 flex items-center gap-3 transition-colors cursor-pointer">

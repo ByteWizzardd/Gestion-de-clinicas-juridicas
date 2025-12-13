@@ -9,7 +9,7 @@ type TablePaginationProps = {
 };
 
 export function TablePagination({ currentPage, totalPages, rowsPerPage, onPageChange, onRowsPerPageChange }: TablePaginationProps) {
-    const rowsPerPageOptions = totalPages === 1 ? [1] : [5, 10, 15, 25, 50];
+    const rowsPerPageOptions = [10, 25, 50];
 
     return (
         <nav aria-label="pagination" className="flex flex-col sm:flex-row justify-between sm:justify-end gap-3 sm:gap-6 items-center sm:mr-10 lg:mr-40 mt-4 px-3 sm:px-0">

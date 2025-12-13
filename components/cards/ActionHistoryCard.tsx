@@ -49,7 +49,7 @@ export default function ActionHistoryCard({
       )}
       
       {/* Punto/Icono de la línea de tiempo */}
-      <div className={`relative z-10 flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-full ${colorClass} border-2 flex items-center justify-center`}>
+      <div className={`relative z-0 flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-full ${colorClass} border-2 flex items-center justify-center`}>
         <Icon className="w-4 h-4 md:w-5 md:h-5" />
       </div>
 

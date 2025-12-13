@@ -1,12 +1,13 @@
 "use client"; 
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import CaseTools from "@/components/CaseTools/CaseTools";
 import Table from "@/components/Table/Table";
 import Spinner from "@/components/ui/feedback/Spinner";
 import ApplicantFormModal from "@/components/forms/ApplicantFormModal";
 
-interface Solicitante {
+interface Solicitante extends Record<string, unknown> {
   cedula: string;
   nombre_completo: string;
   telefono_celular: string;
@@ -15,6 +16,7 @@ interface Solicitante {
 }
 
 export default function ApplicantsPage() {
+  const router = useRouter();
   const [solicitantes, setSolicitantes] = useState<Solicitante[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -77,6 +79,26 @@ export default function ApplicantsPage() {
       .toLowerCase();
   };
 
+  // Obtener núcleos únicos para el filtro (combinado con opciones de API)
+  const nucleoOptions = useMemo(() => {
+    const nucleos = new Set<string>();
+    solicitantes.forEach(s => {
+      if (s.nucleo) {
+        nucleos.add(s.nucleo);
+      }
+    });
+    // Combinar con opciones de la API si existen
+    nucleosOptions.forEach(opt => {
+      if (opt.value) {
+        nucleos.add(opt.value);
+      }
+    });
+    return Array.from(nucleos).map(nucleo => ({
+      value: nucleo,
+      label: nucleo
+    }));
+  }, [solicitantes, nucleosOptions]);
+
   // Filtrar solicitantes
   const filteredSolicitantes = useMemo(() => {
     if (!searchValue && !nucleoFilter) {
@@ -90,7 +112,7 @@ export default function ApplicantsPage() {
         !searchValue ||
         solicitante.cedula.includes(searchValue) ||
         normalizeText(solicitante.nombre_completo || '').includes(normalizedSearch) ||
-        solicitante.telefono_celular.includes(searchValue);
+        normalizeText(solicitante.telefono_celular || '').includes(normalizedSearch);
 
       // Filtro por núcleo
       const matchesNucleo = !nucleoFilter || solicitante.nucleo === nucleoFilter;
@@ -98,6 +120,34 @@ export default function ApplicantsPage() {
       return matchesSearch && matchesNucleo;
     });
   }, [solicitantes, searchValue, nucleoFilter]);
+
+  // Manejar acción de ver
+  const handleView = (data: Record<string, unknown>) => {
+    const solicitante = data as Solicitante;
+    router.push(`/dashboard/applicants/${solicitante.cedula}`);
+  };
+
+  // Manejar acción de editar
+  const handleEdit = (data: Record<string, unknown>) => {
+    const solicitante = data as Solicitante;
+    // TODO: Implementar lógica de edición
+    console.log("Editar solicitante:", solicitante);
+    alert(`Editar solicitante: ${solicitante.nombre_completo}`);
+  };
+
+  // Manejar acción de eliminar
+  const handleDelete = (data: Record<string, unknown>) => {
+    const solicitante = data as Solicitante;
+    // TODO: Implementar lógica de eliminación con confirmación
+    const confirmDelete = window.confirm(
+      `¿Está seguro de que desea eliminar al solicitante ${solicitante.nombre_completo}?`
+    );
+    if (confirmDelete) {
+      console.log("Eliminar solicitante:", solicitante);
+      // Aquí iría la llamada a la API para eliminar
+      alert(`Eliminar solicitante: ${solicitante.nombre_completo}`);
+    }
+  };
 
   // Mostrar loading
   if (loading) {
@@ -120,7 +170,7 @@ export default function ApplicantsPage() {
         onSearchChange={setSearchValue}
         estatusFilter={nucleoFilter}
         onEstatusChange={setNucleoFilter}
-        estatusOptions={nucleosOptions}
+        estatusOptions={nucleoOptions}
         tramiteFilter=""
         onTramiteChange={() => {}}
         tramiteOptions={[]}
@@ -135,6 +185,9 @@ export default function ApplicantsPage() {
           fecha_solicitud: s.fecha_solicitud || 'N/A',
         }))}
         columns={["Cédula", "Nombre Completo", "Teléfono Celular", "Núcleo", "Fecha Solicitud"]}
+        onView={handleView}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
       />
 
       {/* Modal de registro de solicitante */}
