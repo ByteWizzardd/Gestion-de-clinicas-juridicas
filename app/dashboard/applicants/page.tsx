@@ -1,12 +1,21 @@
 "use client"; 
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import CaseTools from "@/components/CaseTools/CaseTools";
-import Table from "@/components/Table/Table";
-import Spinner from "@/components/ui/feedback/Spinner";
+import Table from "@/components/table/Table";
+
+interface Solicitante extends Record<string, unknown> {
+  cedula: string;
+  nombre_completo: string;
+  telefono_celular: string;
+  nucleo: string | null;
+  fecha_solicitud: string | null;
+}
 
 export default function ApplicantsPage() {
-  const [solicitantes, setSolicitantes] = useState([]);
+  const router = useRouter();
+  const [solicitantes, setSolicitantes] = useState<Solicitante[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchSolicitantes = async () => {
@@ -36,6 +45,34 @@ export default function ApplicantsPage() {
     fetchSolicitantes();
   }, []);
 
+  // Manejar acción de ver
+  const handleView = (data: Record<string, unknown>) => {
+    const solicitante = data as Solicitante;
+    router.push(`/dashboard/applicants/${solicitante.cedula}`);
+  };
+
+  // Manejar acción de editar
+  const handleEdit = (data: Record<string, unknown>) => {
+    const solicitante = data as Solicitante;
+    // TODO: Implementar lógica de edición
+    console.log("Editar solicitante:", solicitante);
+    alert(`Editar solicitante: ${solicitante.nombre_completo}`);
+  };
+
+  // Manejar acción de eliminar
+  const handleDelete = (data: Record<string, unknown>) => {
+    const solicitante = data as Solicitante;
+    // TODO: Implementar lógica de eliminación con confirmación
+    const confirmDelete = window.confirm(
+      `¿Está seguro de que desea eliminar al solicitante ${solicitante.nombre_completo}?`
+    );
+    if (confirmDelete) {
+      console.log("Eliminar solicitante:", solicitante);
+      // Aquí iría la llamada a la API para eliminar
+      alert(`Eliminar solicitante: ${solicitante.nombre_completo}`);
+    }
+  };
+
   // Mostrar loading
   if (loading) {
     return (
@@ -56,6 +93,9 @@ export default function ApplicantsPage() {
       <Table
         data={solicitantes}
         columns={["Cédula", "Nombre Completo", "Teléfono Celular", "Núcleo", "Fecha Solicitud"]}
+        onView={handleView}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
       />
     </>
   );
