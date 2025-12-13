@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
 import CaseTools from "@/components/CaseTools/CaseTools";
-import Table from "@/components/Table/Table";
+import Table from "@/components/table/Table";
 import CaseFormModal from "@/components/forms/CaseFormModal";
 import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
 

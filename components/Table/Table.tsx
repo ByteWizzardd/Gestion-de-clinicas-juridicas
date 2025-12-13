@@ -1,9 +1,9 @@
 "use client";
 import React, { useState } from "react";
-import { TableContainer } from "./TableContainer";
-import { TableHeader } from "./TableHeader";
-import { TableRow } from "./TableRow";
-import { TablePagination } from "./TablePagination";
+import { TableContainer } from "@/components/table/TableContainer";
+import { TableHeader } from "@/components/table/TableHeader";
+import { TableRow } from "@/components/table/TableRow";
+import { TablePagination } from "@/components/table/TablePagination";
 interface TableProps<T> {
   data: T[];
   rowsPerPage?: number;
@@ -24,7 +24,7 @@ export default function Table<T extends Record<string, unknown>>({
 
   // Paginación: calcular qué datos mostrar según la página actual
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = initialRowsPerPage;
+  const [rowsPerPage, setRowsPerPage] = useState(initialRowsPerPage);
   const totalPages = Math.max(1, Math.ceil(data.length / rowsPerPage));
 
   // Calcular el rango de datos a mostrar
@@ -32,12 +32,18 @@ export default function Table<T extends Record<string, unknown>>({
   const endIndex = startIndex + rowsPerPage;
   const paginatedData = data.slice(startIndex, endIndex);
 
-  // Resetear a la página 1 cuando cambian los datos
+  // Resetear a la página 1 cuando cambian los datos o las filas por página
   React.useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
       setCurrentPage(1);
     }
-  }, [data.length, currentPage, totalPages]);
+  }, [data.length, currentPage, totalPages, rowsPerPage]);
+
+  // Manejar cambio de filas por página
+  const handleRowsPerPageChange = (newRowsPerPage: number) => {
+    setRowsPerPage(newRowsPerPage);
+    setCurrentPage(1); // Resetear a la primera página cuando cambia el número de filas
+  };
 
   // Cuando cambias de página, hace scroll automático a la tabla
   const handlePageChange = (page: number) => {
@@ -79,7 +85,7 @@ export default function Table<T extends Record<string, unknown>>({
         totalPages={totalPages}
         rowsPerPage={rowsPerPage}
         onPageChange={handlePageChange}
-        onRowsPerPageChange={() => {}}
+        onRowsPerPageChange={handleRowsPerPageChange}
       />
     </>
   );
