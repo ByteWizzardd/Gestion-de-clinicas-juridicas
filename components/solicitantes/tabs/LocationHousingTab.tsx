@@ -20,15 +20,29 @@ interface LocationHousingTabProps {
 }
 
 export default function LocationHousingTab({ cliente }: LocationHousingTabProps) {
+  // Verificar si hay información de ubicación o vivienda
+  const hasLocation = cliente.nombre_estado || cliente.nombre_municipio || cliente.nombre_parroquia;
+  const hasHousing = cliente.tipo_vivienda || cliente.cant_habitaciones !== null || cliente.cant_banos !== null;
+  const hasServices = cliente.agua_potable || cliente.eliminacion_aguas_n || cliente.aseo;
+
+  if (!hasLocation && !hasHousing && !hasServices) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+        <p className="text-gray-500 text-lg">No hay información de ubicación y vivienda disponible</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Ubicación Geográfica */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-          <MapPin className="w-5 h-5 text-primary" />
-          Ubicación Geográfica
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {hasLocation && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-primary" />
+            Ubicación Geográfica
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {cliente.nombre_estado && (
             <div>
               <label className="text-sm font-medium text-gray-500">Estado</label>
@@ -47,16 +61,18 @@ export default function LocationHousingTab({ cliente }: LocationHousingTabProps)
               <p className="text-base text-gray-900 mt-1">{cliente.nombre_parroquia}</p>
             </div>
           )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Características de la Vivienda */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-          <Home className="w-5 h-5 text-primary" />
-          Características de la Vivienda
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {hasHousing && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+            <Home className="w-5 h-5 text-primary" />
+            Características de la Vivienda
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {cliente.tipo_vivienda && (
             <div>
               <label className="text-sm font-medium text-gray-500">Tipo de Vivienda</label>
@@ -93,16 +109,18 @@ export default function LocationHousingTab({ cliente }: LocationHousingTabProps)
               <p className="text-base text-gray-900 mt-1">{cliente.material_techo}</p>
             </div>
           )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Servicios Básicos */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" />
-          Servicios Básicos
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {hasServices && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-primary" />
+            Servicios Básicos
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {cliente.agua_potable && (
             <div className="flex items-start gap-3">
               <Droplet className="w-5 h-5 text-primary mt-1" />
@@ -129,9 +147,10 @@ export default function LocationHousingTab({ cliente }: LocationHousingTabProps)
                 <p className="text-base text-gray-900 mt-1">{cliente.aseo}</p>
               </div>
             </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

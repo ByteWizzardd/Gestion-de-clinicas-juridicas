@@ -23,15 +23,29 @@ interface SocioeconomicInfoTabProps {
 export default function SocioeconomicInfoTab({ cliente }: SocioeconomicInfoTabProps) {
   const artefactosDisponibles = ['Nevera', 'Lavadora', 'Computadora', 'Cable Satelital', 'Internet', 'Carro', 'Moto'];
 
+  // Verificar si hay información socioeconómica
+  const hasEducation = cliente.nivel !== null && cliente.nivel !== undefined;
+  const hasWork = cliente.condicion_actividad || cliente.condicion_trabajo;
+  const hasHome = cliente.cant_personas !== null || cliente.cant_trabajadores !== null;
+
+  if (!hasEducation && !hasWork && !hasHome) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+        <p className="text-gray-500 text-lg">No hay información socioeconómica disponible</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Educación */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-          <GraduationCap className="w-5 h-5 text-primary" />
-          Educación
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {hasEducation && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+            <GraduationCap className="w-5 h-5 text-primary" />
+            Educación
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {cliente.nivel !== null && cliente.nivel !== undefined && (
             <div>
               <label className="text-sm font-medium text-gray-500">Nivel Educativo</label>
@@ -56,16 +70,18 @@ export default function SocioeconomicInfoTab({ cliente }: SocioeconomicInfoTabPr
               <p className="text-base text-gray-900 mt-1">{cliente.trimestres_cursados} trimestres</p>
             </div>
           )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Trabajo */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-          <Briefcase className="w-5 h-5 text-primary" />
-          Trabajo
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {hasWork && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+            <Briefcase className="w-5 h-5 text-primary" />
+            Trabajo
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {cliente.condicion_actividad && (
             <div>
               <label className="text-sm font-medium text-gray-500">Condición de Actividad</label>
@@ -90,16 +106,18 @@ export default function SocioeconomicInfoTab({ cliente }: SocioeconomicInfoTabPr
               </span>
             </div>
           )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Hogar Familiar */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-          <Home className="w-5 h-5 text-primary" />
-          Hogar Familiar
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      {hasHome && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+            <Home className="w-5 h-5 text-primary" />
+            Hogar Familiar
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           {cliente.cant_personas !== null && cliente.cant_personas !== undefined && (
             <div>
               <label className="text-sm font-medium text-gray-500">Cantidad de Personas</label>
@@ -134,11 +152,11 @@ export default function SocioeconomicInfoTab({ cliente }: SocioeconomicInfoTabPr
           )}
         </div>
 
-        {/* Artefactos Domésticos */}
-        {cliente.artefactos && cliente.artefactos.length > 0 && (
-          <div className="mt-4">
-            <label className="text-sm font-medium text-gray-500 mb-2 block">Artefactos Domésticos</label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {/* Artefactos Domésticos */}
+          {cliente.artefactos && cliente.artefactos.length > 0 && (
+            <div className="mt-4">
+              <label className="text-sm font-medium text-gray-500 mb-2 block">Artefactos Domésticos</label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {artefactosDisponibles.map((artefacto) => {
                 const tiene = cliente.artefactos?.includes(artefacto);
                 return (
@@ -152,11 +170,12 @@ export default function SocioeconomicInfoTab({ cliente }: SocioeconomicInfoTabPr
                     <span className="text-sm">{artefacto}</span>
                   </div>
                 );
-              })}
+                })}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

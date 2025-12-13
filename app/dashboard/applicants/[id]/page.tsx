@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import Tabs from '@/components/ui/Tabs';
+import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import PersonalInfoTab from '@/components/solicitantes/tabs/PersonalInfoTab';
 import ContactInfoTab from '@/components/solicitantes/tabs/ContactInfoTab';
 import SocioeconomicInfoTab from '@/components/solicitantes/tabs/SocioeconomicInfoTab';
@@ -113,22 +114,25 @@ export default function ApplicantDetailPage() {
     },
   ];
 
+  const nombreCompleto = `${solicitante.nombres || ''} ${solicitante.apellidos || ''}`.trim() || 'Solicitante';
+
   return (
-    <div className="p-8">
-      <button
-        onClick={() => router.back()}
-        className="flex items-center gap-2 mb-6 text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
-      >
-        <ArrowLeft className="w-5 h-5" />
-        <span>Volver</span>
-      </button>
+    <div className="p-4 sm:p-6 lg:p-8">
+      <Breadcrumbs
+        items={[
+          { label: 'Solicitantes', href: '/dashboard/applicants' },
+          { label: nombreCompleto }
+        ]}
+      />
       
-      <h1 className="text-4xl font-semibold mb-2" style={{ fontFamily: 'var(--font-league-spartan)' }}>
-        {solicitante.nombres} {solicitante.apellidos}
+      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-2" style={{ fontFamily: 'var(--font-league-spartan)' }}>
+        {nombreCompleto}
       </h1>
-      <p className="text-base text-gray-500 mb-8">
-        Cédula: {solicitante.cedula}
-      </p>
+      {solicitante.cedula && (
+        <p className="text-sm sm:text-base text-gray-500 mb-6 sm:mb-8">
+          Cédula: {solicitante.cedula}
+        </p>
+      )}
 
       <Tabs tabs={tabs} defaultTab="personal" />
     </div>
