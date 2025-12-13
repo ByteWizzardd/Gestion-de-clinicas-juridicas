@@ -23,6 +23,50 @@ export class SolicitantesService {
       );
     }
   }
+
+  /**
+   * Obtiene un solicitante por su cédula con toda su información relacionada
+   * @param cedula - Cédula del solicitante
+   * @returns Promise<any | null> - Información completa del solicitante o null si no existe
+   * @throws {AppError} - Si ocurre un error al obtener los datos
+   */
+  static async getSolicitanteById(cedula: string): Promise<any | null> {
+    try {
+      return await solicitantesQueries.getSolicitanteById(cedula);
+    } catch (error) {
+      console.error("[SolicitantesService] Error fetching solicitante by id:", error);
+      if (error instanceof Error) {
+        console.error(`Error details: ${error.message}`);
+      }
+      throw new AppError(
+        "No se pudo obtener el solicitante. Por favor, intente más tarde.",
+        500,
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+  }
+
+  /**
+   * Obtiene un solicitante completo por su cédula con todas sus relaciones (núcleo, educación, trabajo, hogar, vivienda, casos)
+   * @param cedula - Cédula del solicitante
+   * @returns Promise<any | null> - Información completa del solicitante o null si no existe
+   * @throws {AppError} - Si ocurre un error al obtener los datos
+   */
+  static async getSolicitanteCompleto(cedula: string): Promise<any | null> {
+    try {
+      return await solicitantesQueries.getSolicitanteCompleto(cedula);
+    } catch (error) {
+      console.error("[SolicitantesService] Error fetching solicitante completo:", error);
+      if (error instanceof Error) {
+        console.error(`Error details: ${error.message}`);
+      }
+      throw new AppError(
+        "No se pudo obtener la información completa del solicitante. Por favor, intente más tarde.",
+        500,
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+  }
 }
 
 export const solicitantesService = new SolicitantesService();
