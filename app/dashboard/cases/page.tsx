@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import CaseTools from "@/components/CaseTools/CaseTools";
 import Table from "@/components/Table/Table";
 import CaseFormModal from "@/components/forms/CaseFormModal";
+import Spinner from "@/components/ui/feedback/Spinner";
 import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
 
 interface Caso {
@@ -255,8 +256,9 @@ export default function CasesPage() {
       <div className="mt-10"></div>
 
       {loading && (
-        <div className="flex justify-center items-center py-12">
-          <div className="text-lg text-gray-600">Cargando casos...</div>
+        <div className="flex flex-col justify-center items-center py-12 min-h-[400px]">
+          <Spinner />
+          <p className="text-on-border mt-4">Cargando casos...</p>
         </div>
       )}
 

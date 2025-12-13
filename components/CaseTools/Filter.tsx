@@ -27,7 +27,7 @@ function Filter({
   tramiteOptions
 }: FilterProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const hasActiveFilter = estatusFilter !== '' || tramiteFilter !== '';
+  const hasActiveFilter = estatusFilter !== '' || (tramiteFilter !== '' && tramiteOptions && tramiteOptions.length > 0);
 
   const handleClearFilters = () => {
     onEstatusChange('');
@@ -47,7 +47,7 @@ function Filter({
       <span className="text-base text-center">Filtro</span>
       {hasActiveFilter && (
         <span className="ml-1 bg-primary text-on-primary rounded-full w-5 h-5 flex items-center justify-center text-xs font-medium">
-          {(estatusFilter ? 1 : 0) + (tramiteFilter ? 1 : 0)}
+          {(estatusFilter ? 1 : 0) + (tramiteFilter && tramiteOptions && tramiteOptions.length > 0 ? 1 : 0)}
         </span>
       )}
     </button>
@@ -95,42 +95,46 @@ function Filter({
               </div>
             </div>
 
-            {/* Separador */}
-            <div className="border-t border-gray-200 my-2"></div>
+            {/* Separador - Solo si hay filtro de trámite */}
+            {tramiteOptions && tramiteOptions.length > 0 && (
+              <>
+                <div className="border-t border-gray-200 my-2"></div>
 
-            {/* Filtro por Trámite */}
-            <div className="mb-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1 px-2">
-                Trámite
-              </label>
-              <div className="space-y-1">
-                <button
-                  type="button"
-                  onClick={() => onTramiteChange('')}
-                  className={`w-full px-3 py-2 text-left text-sm rounded-lg transition-colors ${
-                    tramiteFilter === ''
-                      ? 'bg-primary-light text-primary font-medium'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  Todos los trámites
-                </button>
-                {tramiteOptions && tramiteOptions.length > 0 && tramiteOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => onTramiteChange(option.value)}
-                    className={`w-full px-3 py-2 text-left text-sm rounded-lg transition-colors ${
-                      tramiteFilter === option.value
-                        ? 'bg-primary-light text-primary font-medium'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+                {/* Filtro por Trámite */}
+                <div className="mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 px-2">
+                    Trámite
+                  </label>
+                  <div className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => onTramiteChange('')}
+                      className={`w-full px-3 py-2 text-left text-sm rounded-lg transition-colors ${
+                        tramiteFilter === ''
+                          ? 'bg-primary-light text-primary font-medium'
+                          : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      Todos los trámites
+                    </button>
+                    {tramiteOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => onTramiteChange(option.value)}
+                        className={`w-full px-3 py-2 text-left text-sm rounded-lg transition-colors ${
+                          tramiteFilter === option.value
+                            ? 'bg-primary-light text-primary font-medium'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* Botón para limpiar filtros */}
             {hasActiveFilter && (

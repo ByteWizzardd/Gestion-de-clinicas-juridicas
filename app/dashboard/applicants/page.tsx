@@ -102,10 +102,9 @@ export default function ApplicantsPage() {
   // Mostrar loading
   if (loading) {
     return (
-      <div className="p-8">
-      {/* Componente de spinner 
-      <Spinner></Spinner>*/}
-      <p className="text-on-border">Cargando solicitantes...</p>
+      <div className="flex flex-col justify-center items-center py-12 min-h-[400px]">
+        <Spinner />
+        <p className="text-on-border mt-4">Cargando solicitantes...</p>
       </div>
     );
   }
