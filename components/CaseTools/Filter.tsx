@@ -61,10 +61,10 @@ function Filter({
       menuClassName="bg-white border border-gray-300 rounded-2xl shadow-lg min-w-[280px] p-2"
     >
       <div>
-            {/* Filtro por Estatus */}
+            {/* Filtro por Estatus/Núcleo */}
             <div className="mb-2">
               <label className="block text-sm font-medium text-gray-700 mb-1 px-2">
-                Estatus
+                {estatusOptions.length > 0 && estatusOptions[0]?.label?.includes('UCAB') ? 'Núcleo' : 'Estatus'}
               </label>
               <div className="space-y-1">
                 <button
@@ -76,7 +76,7 @@ function Filter({
                       : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
-                  Todos los estatus
+                  {estatusOptions.length > 0 && estatusOptions[0]?.label?.includes('UCAB') ? 'Todos los núcleos' : 'Todos los estatus'}
                 </button>
                 {estatusOptions && estatusOptions.length > 0 && estatusOptions.map((option) => (
                   <button

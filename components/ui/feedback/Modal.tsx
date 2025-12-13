@@ -114,9 +114,11 @@ export default function Modal({
                 <button
                   onClick={onClose}
                   className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
+                  style={{ cursor: 'pointer' }}
                   aria-label="Cerrar modal"
+                  type="button"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-6 h-6" style={{ pointerEvents: 'none' }} />
                 </button>
               )}
               {/* Header con título (solo si se proporciona title) */}
@@ -128,6 +130,17 @@ export default function Modal({
                   >
                     {title}
                   </h2>
+                  {showCloseButton && (
+                    <button
+                      onClick={onClose}
+                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+                      style={{ cursor: 'pointer' }}
+                      aria-label="Cerrar modal"
+                      type="button"
+                    >
+                      <X className="w-6 h-6" style={{ pointerEvents: 'none' }} />
+                    </button>
+                  )}
                 </div>
               )}
 

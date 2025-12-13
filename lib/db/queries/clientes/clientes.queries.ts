@@ -20,5 +20,35 @@ export const clientesQueries = {
     const result: QueryResult = await pool.query(query, [cedula]);
     return result.rows;
   },
+
+
+  /**
+   * Actualiza un cliente con todos los datos completos
+   */
+  updateComplete: async (data: {
+    cedula: string;
+    telefonoLocal?: string | null;
+    telefonoCelular: string;
+    estadoCivil?: string | null;
+    concubinato?: boolean | null;
+    idHogar?: number | null;
+    idNivelEducativo?: number | null;
+    idTrabajo?: number | null;
+    idVivienda?: number | null;
+  }): Promise<any> => {
+    const query = loadSQL('clientes/update-complete.sql');
+    const result: QueryResult = await pool.query(query, [
+      data.cedula,
+      data.telefonoLocal || null,
+      data.telefonoCelular,
+      data.estadoCivil || null,
+      data.concubinato ?? null,
+      data.idHogar || null,
+      data.idNivelEducativo || null,
+      data.idTrabajo || null,
+      data.idVivienda || null,
+    ]);
+    return result.rows[0];
+  },
 };
 

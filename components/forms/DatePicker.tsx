@@ -13,6 +13,7 @@ interface DatePickerProps {
 
 export default function DatePicker({ value, onChange, error, required }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'calendar' | 'year' | 'month'>('year');
   const [currentMonth, setCurrentMonth] = useState(() => {
     if (value) {
       // Parsear la fecha como local para evitar problemas de zona horaria
@@ -28,6 +29,11 @@ export default function DatePicker({ value, onChange, error, required }: DatePic
       return new Date(date.getFullYear(), date.getMonth(), 1);
     }
     return new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  });
+  const [yearRange, setYearRange] = useState(() => {
+    const currentYear = value ? currentMonth.getFullYear() : new Date().getFullYear();
+    const startYear = Math.floor(currentYear / 10) * 10;
+    return { start: startYear, end: startYear + 9 };
   });
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -119,6 +125,73 @@ export default function DatePicker({ value, onChange, error, required }: DatePic
     ));
   };
 
+  const handlePrevYear = () => {
+    setCurrentMonth(new Date(
+      currentMonth.getFullYear() - 1,
+      currentMonth.getMonth(),
+      1
+    ));
+  };
+
+  const handleNextYear = () => {
+    setCurrentMonth(new Date(
+      currentMonth.getFullYear() + 1,
+      currentMonth.getMonth(),
+      1
+    ));
+  };
+
+  const handlePrevYearRange = () => {
+    setYearRange({ start: yearRange.start - 10, end: yearRange.end - 10 });
+  };
+
+  const handleNextYearRange = () => {
+    setYearRange({ start: yearRange.start + 10, end: yearRange.end + 10 });
+  };
+
+  const handleYearClick = (year: number) => {
+    setCurrentMonth(new Date(year, 0, 1)); // Establecer el mes a enero (0) para evitar problemas
+    setViewMode('month');
+  };
+
+  const handleMonthClick = (month: number) => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), month, 1));
+    setViewMode('calendar');
+  };
+
+  const handleHeaderClick = () => {
+    if (viewMode === 'calendar') {
+      setViewMode('month');
+    } else if (viewMode === 'month') {
+      setViewMode('year');
+      const currentYear = currentMonth.getFullYear();
+      const startYear = Math.floor(currentYear / 10) * 10;
+      setYearRange({ start: startYear, end: startYear + 9 });
+    }
+  };
+
+  // Resetear a vista de año cuando se abre el picker (solo cuando cambia isOpen)
+  useEffect(() => {
+    if (isOpen) {
+      setViewMode('year');
+      // Obtener el año actual sin depender de currentMonth en las dependencias
+      let yearToUse: number;
+      if (value) {
+        const parts = value.split('-');
+        if (parts.length === 3) {
+          yearToUse = parseInt(parts[0], 10);
+        } else {
+          const date = new Date(value);
+          yearToUse = date.getFullYear();
+        }
+      } else {
+        yearToUse = new Date().getFullYear();
+      }
+      const startYear = Math.floor(yearToUse / 10) * 10;
+      setYearRange({ start: startYear, end: startYear + 9 });
+    }
+  }, [isOpen]);
+
   const handleDayClick = (day: number, isCurrentMonth: boolean) => {
     let clickedDate: Date;
     if (!isCurrentMonth) {
@@ -161,6 +234,7 @@ export default function DatePicker({ value, onChange, error, required }: DatePic
     const dayStr = String(clickedDate.getDate()).padStart(2, '0');
     onChange(`${year}-${month}-${dayStr}`);
     setIsOpen(false);
+    setViewMode('calendar');
   };
 
   // Cerrar al hacer clic fuera
@@ -250,89 +324,145 @@ export default function DatePicker({ value, onChange, error, required }: DatePic
           {/* Header con navegación */}
           <div className="flex items-center justify-between mb-4">
             <button
-              onClick={handlePrevMonth}
-              className="p-1 hover:bg-gray-100 rounded-md transition-colors"
-              aria-label="Mes anterior"
+              onClick={viewMode === 'calendar' ? handlePrevMonth : viewMode === 'month' ? handlePrevYear : handlePrevYearRange}
+              className="p-1 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+              aria-label={viewMode === 'calendar' ? 'Mes anterior' : viewMode === 'month' ? 'Año anterior' : 'Década anterior'}
             >
               <ChevronLeft className="w-5 h-5 text-foreground" />
             </button>
-            <h3 className="text-base font-semibold text-foreground">
-              {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-            </h3>
             <button
-              onClick={handleNextMonth}
-              className="p-1 hover:bg-gray-100 rounded-md transition-colors"
-              aria-label="Mes siguiente"
+              onClick={handleHeaderClick}
+              className="px-3 py-1 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+            >
+              <h3 className="text-base font-semibold text-foreground">
+                {viewMode === 'calendar' && `${monthNames[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`}
+                {viewMode === 'month' && `${currentMonth.getFullYear()}`}
+                {viewMode === 'year' && `${yearRange.start} - ${yearRange.end}`}
+              </h3>
+            </button>
+            <button
+              onClick={viewMode === 'calendar' ? handleNextMonth : viewMode === 'month' ? handleNextYear : handleNextYearRange}
+              className="p-1 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+              aria-label={viewMode === 'calendar' ? 'Mes siguiente' : viewMode === 'month' ? 'Año siguiente' : 'Década siguiente'}
             >
               <ChevronRight className="w-5 h-5 text-foreground" />
             </button>
           </div>
 
-          {/* Grid de días */}
-          <div className="grid grid-cols-7 gap-1">
-            {/* Días de la semana */}
-            {dayNames.map((day) => (
-              <div
-                key={day}
-                className="text-xs font-medium text-gray-500 text-center py-2"
-              >
-                {day}
-              </div>
-            ))}
-
-            {/* Días del mes anterior */}
-            {Array.from({ length: startingDayOfWeek }, (_, i) => {
-              const day = daysInPrevMonth - startingDayOfWeek + i + 1;
-              return (
-                <button
-                  key={`prev-${day}`}
-                  onClick={() => handleDayClick(day, false)}
-                  className="text-base text-gray-400 hover:bg-gray-100 rounded-md py-2 transition-colors"
-                >
-                  {day}
-                </button>
-              );
-            })}
-
-            {/* Días del mes actual */}
-            {Array.from({ length: daysInMonth }, (_, i) => {
-              const day = i + 1;
-              const todayClass = isToday(day, true) ? 'font-semibold' : '';
-              const selectedClass = isSelected(day, true)
-                ? 'bg-primary text-white hover:bg-primary'
-                : 'hover:bg-gray-100';
-              return (
-                <button
+          {/* Vista de calendario */}
+          {viewMode === 'calendar' && (
+            <div className="grid grid-cols-7 gap-1">
+              {/* Días de la semana */}
+              {dayNames.map((day) => (
+                <div
                   key={day}
-                  onClick={() => handleDayClick(day, true)}
-                  className={`text-base ${todayClass} ${selectedClass} rounded-md py-2 transition-colors ${
-                    isSelected(day, true) ? '' : 'text-foreground'
-                  }`}
+                  className="text-xs font-medium text-gray-500 text-center py-2"
                 >
                   {day}
-                </button>
-              );
-            })}
+                </div>
+              ))}
 
-            {/* Días del mes siguiente */}
-            {Array.from({ length: daysInNextMonth }, (_, i) => {
-              const day = i + 1;
-              return (
-                <button
-                  key={`next-${day}`}
-                  onClick={() => handleDayClick(day, false)}
-                  className="text-base text-gray-400 hover:bg-gray-100 rounded-md py-2 transition-colors"
-                >
-                  {day}
-                </button>
-              );
-            })}
-          </div>
+              {/* Días del mes anterior */}
+              {Array.from({ length: startingDayOfWeek }, (_, i) => {
+                const day = daysInPrevMonth - startingDayOfWeek + i + 1;
+                return (
+                  <button
+                    key={`prev-${day}`}
+                    onClick={() => handleDayClick(day, false)}
+                    className="text-base text-gray-400 hover:bg-gray-100 rounded-md py-2 transition-colors cursor-pointer"
+                  >
+                    {day}
+                  </button>
+                );
+              })}
+
+              {/* Días del mes actual */}
+              {Array.from({ length: daysInMonth }, (_, i) => {
+                const day = i + 1;
+                const todayClass = isToday(day, true) ? 'font-semibold' : '';
+                const selectedClass = isSelected(day, true)
+                  ? 'bg-primary text-white hover:bg-primary'
+                  : 'hover:bg-gray-100';
+                return (
+                  <button
+                    key={day}
+                    onClick={() => handleDayClick(day, true)}
+                    className={`text-base ${todayClass} ${selectedClass} rounded-md py-2 transition-colors cursor-pointer ${
+                      isSelected(day, true) ? '' : 'text-foreground'
+                    }`}
+                  >
+                    {day}
+                  </button>
+                );
+              })}
+
+              {/* Días del mes siguiente */}
+              {Array.from({ length: daysInNextMonth }, (_, i) => {
+                const day = i + 1;
+                return (
+                  <button
+                    key={`next-${day}`}
+                    onClick={() => handleDayClick(day, false)}
+                    className="text-base text-gray-400 hover:bg-gray-100 rounded-md py-2 transition-colors cursor-pointer"
+                  >
+                    {day}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Vista de meses */}
+          {viewMode === 'month' && (
+            <div className="grid grid-cols-3 gap-2">
+              {monthNames.map((month, index) => {
+                const isCurrentMonth = index === currentMonth.getMonth();
+                return (
+                  <button
+                    key={month}
+                    onClick={() => handleMonthClick(index)}
+                    className={`px-3 py-2 text-sm rounded-md transition-colors cursor-pointer ${
+                      isCurrentMonth
+                        ? 'bg-primary text-white font-semibold'
+                        : 'hover:bg-gray-100 text-foreground'
+                    }`}
+                  >
+                    {month}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Vista de años */}
+          {viewMode === 'year' && (
+            <div className="grid grid-cols-3 gap-2">
+              {Array.from({ length: 12 }, (_, i) => {
+                const year = yearRange.start + i;
+                const isCurrentYear = year === currentMonth.getFullYear();
+                const currentYear = new Date().getFullYear();
+                const isThisYear = year === currentYear;
+                return (
+                  <button
+                    key={year}
+                    onClick={() => handleYearClick(year)}
+                    className={`px-3 py-2 text-sm rounded-md transition-colors cursor-pointer ${
+                      isCurrentYear
+                        ? 'bg-primary text-white font-semibold'
+                        : isThisYear
+                        ? 'bg-gray-200 text-foreground font-medium'
+                        : 'hover:bg-gray-100 text-foreground'
+                    }`}
+                  >
+                    {year}
+                  </button>
+                );
+              })}
+            </div>
+          )}
           </motion.div>
         )}
       </AnimatePresence>
-
-      {error && <p className="text-xs text-danger mt-1">{error}</p>}
     </div>
   );
 }

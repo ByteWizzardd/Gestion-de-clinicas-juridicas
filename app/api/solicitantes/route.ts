@@ -1,32 +1,41 @@
-import { NextRequest, NextResponse } from "next/server";
-import { SolicitantesService } from "../../../lib/services/solicitantes/solicitantes.service";
+import { NextRequest } from 'next/server';
+import { solicitantesService } from '@/lib/services/solicitantes/solicitantes.service';
+import { solicitantesQueries } from '@/lib/db/queries/solicitantes/solicitantes.queries';
+import { successResponse, errorResponse } from '@/lib/utils/responses';
 
-
-// El request aun no se usa pero se deja para futuras mejoras
-export async function GET(request: NextRequest): Promise<NextResponse> {
+/**
+ * GET /api/solicitantes
+ * Obtiene todos los solicitantes
+ */
+export async function GET(request: NextRequest) {
   try {
-    const solicitantes = await SolicitantesService.getAllSolicitantes();
+    const result = await solicitantesQueries.getAllSolicitantes();
+    
+    return successResponse(result);
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: solicitantes,
-        count: solicitantes.length,
-        timestamp: new Date().toISOString(),
-      },
-      { status: 200 }
-    );
-  } catch (error: unknown) {
-    console.error("[SolicitantesRoute] Error:", error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        message: "No se pudieron obtener los solicitantes",
-        error: error instanceof Error ? error.message : "Error desconocido",
-        timestamp: new Date().toISOString(),
-      },
-      { status: 500 }
-    );
+/**
+ * POST /api/solicitantes
+ * Registra un nuevo solicitante con todos sus datos
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    
+    const result = await solicitantesService.create(body);
+    
+    return successResponse(result, 201);
+  } catch (error: any) {
+    // Log detallado del error para debugging
+    console.error('Error en POST /api/solicitantes:', {
+      message: error?.message,
+      code: error?.code,
+      detail: error?.detail,
+      stack: error?.stack,
+    });
+    return errorResponse(error);
   }
 }

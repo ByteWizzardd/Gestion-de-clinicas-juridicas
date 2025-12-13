@@ -121,7 +121,19 @@ export default function InputGroup({
 }: InputGroupProps) {
   return (
     <div className="flex flex-col gap-1">
-      {label && <label className="text-base font-normal text-foreground mb-1">{label}</label>}
+      {label && (
+        <label className="text-base font-normal text-foreground mb-1">
+          {label.split(' *').map((part, index, array) => 
+            index < array.length - 1 ? (
+              <span key={index}>
+                {part} <span className="text-danger">*</span>
+              </span>
+            ) : (
+              <span key={index}>{part}</span>
+            )
+          )}
+        </label>
+      )}
       <div className="flex items-center gap-2">
         {/* Select pequeño */}
         <SelectSmall
@@ -139,15 +151,15 @@ export default function InputGroup({
             placeholder={inputPlaceholder}
             className={`
               w-full h-[40px] px-4 rounded-full border
-              ${error ? 'border-danger' : 'border-transparent bg-[#E5E7EB]'}
+              ${error ? 'border-danger' : 'border-transparent'} bg-[#E5E7EB]
               focus:outline-none focus:ring-1 
               ${error ? 'focus:ring-danger' : 'focus:ring-primary'}
               text-base placeholder:text-[#717171]
             `}
           />
-          {error && <p className="text-xs text-danger mt-1">{error}</p>}
         </div>
       </div>
+      {error && <p className="text-xs text-danger mt-1">{error}</p>}
     </div>
   );
 }

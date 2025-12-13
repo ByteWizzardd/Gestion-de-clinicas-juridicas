@@ -17,9 +17,9 @@ CREATE TABLE niveles_educativos (
 
 CREATE TABLE trabajos (
     id_trabajo SERIAL PRIMARY KEY,
-    condicion_actividad VARCHAR(50) NOT NULL CHECK (condicion_actividad IN ('Ama de Casa', 'Estudiante', 'Pensionado', 'Jubilado', 'Otra')),
+    condicion_actividad VARCHAR(50) CHECK (condicion_actividad IN ('Ama de Casa', 'Estudiante', 'Pensionado', 'Jubilado', 'Otra')),
     buscando_trabajo BOOLEAN NOT NULL,
-    condicion_trabajo VARCHAR(50) NOT NULL CHECK (condicion_trabajo IN ('Patrono', 'Empleado', 'Obrero', 'Cuenta propia'))
+    condicion_trabajo VARCHAR(50) CHECK (condicion_trabajo IN ('Patrono', 'Empleado', 'Obrero', 'Cuenta propia'))
 );
 
 CREATE TABLE familias_hogares (
@@ -29,7 +29,8 @@ CREATE TABLE familias_hogares (
     cant_ninos INTEGER NOT NULL,
     cant_ninos_estudiando INTEGER NOT NULL,
     jefe_hogar BOOLEAN NOT NULL,
-    id_nivel_educativo INTEGER REFERENCES niveles_educativos(id_nivel_educativo)
+    id_nivel_educativo INTEGER REFERENCES niveles_educativos(id_nivel_educativo),
+    ingresos_mensuales DECIMAL(10, 2) NOT NULL
 );
 
 CREATE TABLE tribunales (
@@ -129,8 +130,7 @@ CREATE TABLE clientes (
     id_nivel_educativo INTEGER REFERENCES niveles_educativos(id_nivel_educativo),
     id_trabajo INTEGER REFERENCES trabajos(id_trabajo),
     id_vivienda INTEGER REFERENCES viviendas(id_vivienda),
-    id_parroquia INTEGER REFERENCES parroquias(id_parroquia),
-    id_nucleo INTEGER REFERENCES nucleos(id_nucleo)
+    id_parroquia INTEGER REFERENCES parroquias(id_parroquia)
 );
 
 CREATE VIEW view_clientes_info AS
