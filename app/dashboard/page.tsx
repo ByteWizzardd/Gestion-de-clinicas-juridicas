@@ -93,7 +93,7 @@ export default function DashboardPage() {
     },
     {
       mainText: "Actualización de Estado",
-      subText: "En revisión",
+      subText: "En proceso",
       caseInfo: "Caso: C-003 (A. Martínez) - UCAB GY",
       date: "12 Ene 2024",
       time: "09:20",

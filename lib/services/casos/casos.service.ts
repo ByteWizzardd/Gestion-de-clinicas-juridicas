@@ -107,7 +107,7 @@ export const casosService = {
             const casoData = {
                 tramite: validatedData.tramite,
                 estatus: validatedData.estatus,
-                observaciones: validatedData.observaciones,
+                observaciones: validatedData.observaciones || undefined,
                 cedula_cliente: validatedData.cedula_cliente,
                 id_nucleo: validatedData.id_nucleo,
                 id_ambito_legal: validatedData.id_ambito_legal,
@@ -118,11 +118,11 @@ export const casosService = {
             const nuevoCaso = await casosQueries.create(casoData);
 
             // Registrar el cambio de estatus en la tabla cambios_estatus
-            // El estatus inicial será "En revisión" cuando se crea un caso nuevo
+            // El estatus inicial será el mismo que se asignó al caso
             await cambiosEstatusQueries.create(
                 cedulaUsuario,
                 nuevoCaso.id_caso,
-                ESTATUS_CASO.EN_REVISION
+                validatedData.estatus
             );
 
             return nuevoCaso;

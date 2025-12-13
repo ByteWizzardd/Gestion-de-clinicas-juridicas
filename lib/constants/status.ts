@@ -6,7 +6,6 @@ export const ESTATUS_CASO = {
   ARCHIVADO: 'Archivado',
   ENTREGADO: 'Entregado',
   ASESORIA: 'Asesoría',
-  EN_REVISION: 'En revisión',
 } as const;
 
 export type EstatusCaso = typeof ESTATUS_CASO[keyof typeof ESTATUS_CASO];

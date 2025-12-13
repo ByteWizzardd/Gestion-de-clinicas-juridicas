@@ -71,7 +71,19 @@ export default function Select({ label, error, options, placeholder = "Seleccion
 
     return (
         <div className="flex flex-col gap-1">
-            {label && (<label className="text-base font-normal text-foreground mb-1">{label}</label>)}
+            {label && (
+                <label className="text-base font-normal text-foreground mb-1">
+                    {label.split(' *').map((part, index, array) => 
+                        index < array.length - 1 ? (
+                            <span key={index}>
+                                {part} <span className="text-danger">*</span>
+                            </span>
+                        ) : (
+                            <span key={index}>{part}</span>
+                        )
+                    )}
+                </label>
+            )}
             <DropdownMenu
                 trigger={triggerButton}
                 align="left"

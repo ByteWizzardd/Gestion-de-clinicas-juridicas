@@ -9,8 +9,8 @@ export default function TextArea({ label, error, ...props }: TextAreaProps) {
       {label && <label className="text-base font-normal text-foreground mb-1">{label}</label>}
       <textarea
         className={`
-          w-full p-4 rounded-lg border
-          ${error ? 'border-danger' : 'border-transparent bg-[#E5E7EB]'}
+          w-full p-4 rounded-lg border bg-[#E5E7EB]
+          ${error ? 'border-danger' : 'border-transparent'}
           focus:outline-none focus:ring-1
           ${error ? 'focus:ring-danger' : 'focus:ring-primary'}
           text-base placeholder:text-[#717171] resize-none

@@ -39,7 +39,6 @@ export default function CasesPage() {
 
   // Opciones para los filtros
   const estatusOptions = [
-    { value: ESTATUS_CASO.EN_REVISION, label: ESTATUS_CASO.EN_REVISION },
     { value: ESTATUS_CASO.EN_PROCESO, label: ESTATUS_CASO.EN_PROCESO },
     { value: ESTATUS_CASO.ARCHIVADO, label: ESTATUS_CASO.ARCHIVADO },
     { value: ESTATUS_CASO.ENTREGADO, label: ESTATUS_CASO.ENTREGADO },
@@ -76,7 +75,6 @@ export default function CasesPage() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
-      console.error('Error al cargar casos:', err);
     } finally {
       setLoading(false);
     }
@@ -132,17 +130,14 @@ export default function CasesPage() {
   }));
 
   const handleView = (data: TableRow) => {
-    console.log('Ver caso:', data);
     // Aquí puedes abrir un modal o navegar a una página de detalle
   };
 
   const handleEdit = (data: TableRow) => {
-    console.log('Editar caso:', data);
     // Aquí puedes abrir un modal de edición
   };
 
   const handleDelete = (data: TableRow) => {
-    console.log('Eliminar caso:', data);
     // Aquí puedes mostrar un confirm y eliminar
     if (confirm(`¿Estás seguro de eliminar el caso ${data.codigo}?`)) {
       // Lógica de eliminación
@@ -159,28 +154,33 @@ export default function CasesPage() {
 
   const handleSubmitCase = async (data: unknown) => {
     try {
-      console.log('Datos enviados al servidor:', data);
+      const caseData = data as any;
+      const archivos = Array.isArray(caseData.archivos) ? caseData.archivos : [];
       
+      // Separar los archivos de los datos del caso antes de serializar
+      const casoDataSinArchivos = {
+        fecha_solicitud: caseData.fecha_solicitud,
+        cedula_cliente: caseData.cedula_cliente,
+        id_ambito_legal: caseData.id_ambito_legal,
+        tramite: caseData.tramite,
+        estatus: caseData.estatus,
+        id_nucleo: caseData.id_nucleo,
+        observaciones: caseData.observaciones,
+      };
+      
+      // Crear el caso primero
       const response = await fetch('/api/casos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(casoDataSinArchivos),
       });
 
       const result = await response.json();
-      console.log('Respuesta del servidor:', result);
 
       if (!response.ok) {
         const errorMessage = result.error?.message || 'Error al crear el caso';
         const errorCode = result.error?.code || 'UNKNOWN_ERROR';
         const errorFields = result.error?.fields;
-        
-        console.error('Error del servidor:', {
-          status: response.status,
-          message: errorMessage,
-          code: errorCode,
-          fields: errorFields,
-        });
         
         if (errorFields) {
           const fieldErrors = Object.entries(errorFields)
@@ -193,13 +193,46 @@ export default function CasesPage() {
         return;
       }
 
+      // Si el caso se creó exitosamente y hay archivos, subirlos
+      if (archivos.length > 0 && result.success && result.data) {
+        // El id_caso puede estar directamente en result.data o en result.data.id_caso
+        const idCaso = result.data.id_caso || (result.data as any).id_caso;
+        
+        if (!idCaso || isNaN(Number(idCaso))) {
+          alert('Caso creado exitosamente, pero no se pudo obtener el ID del caso para subir los archivos');
+          setIsModalOpen(false);
+          fetchCasos();
+          return;
+        }
+        
+        // Crear FormData para enviar los archivos
+        const formData = new FormData();
+        archivos.forEach((archivo: File) => {
+          formData.append('archivos', archivo);
+        });
+
+        try {
+          const uploadResponse = await fetch(`/api/casos/${idCaso}/soportes`, {
+            method: 'POST',
+            body: formData,
+          });
+
+          const uploadResult = await uploadResponse.json();
+          
+          if (!uploadResponse.ok) {
+            alert(`Caso creado exitosamente, pero hubo un error al subir los archivos: ${uploadResult.error?.message || 'Error desconocido'}`);
+          }
+        } catch (uploadErr) {
+          alert('Caso creado exitosamente, pero hubo un error al subir los archivos');
+        }
+      }
+
       alert('Caso registrado exitosamente');
       setIsModalOpen(false);
       fetchCasos();
     } catch (err) {
-      console.error('Error al crear caso:', err);
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
-      alert(`Error al crear el caso: ${errorMessage}\n\nRevisa la consola para más detalles.`);
+      alert(`Error al crear el caso: ${errorMessage}`);
     }
   };
 

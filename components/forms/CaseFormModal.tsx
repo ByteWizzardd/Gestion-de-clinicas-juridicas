@@ -8,7 +8,7 @@ import TextArea from './TextArea';
 import DatePicker from './DatePicker';
 import Button from '../ui/Button';
 import CedulaInput from './CedulaInput';
-import { X, Calendar } from 'lucide-react';
+import { X, Calendar, Upload, File, XCircle } from 'lucide-react';
 import { TRAMITES, ESTATUS_CASO } from '@/lib/constants/status';
 
 interface CaseFormModalProps {
@@ -60,25 +60,32 @@ export default function CaseFormModal({
   const [ambitosLegales, setAmbitosLegales] = useState<Array<{ id_ambito_legal: number; materia: string; tipo: string }>>([]);
   const [loadingCatalogos, setLoadingCatalogos] = useState(false);
   const [loadingCaseNumber, setLoadingCaseNumber] = useState(false);
+  const [archivos, setArchivos] = useState<File[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
 
   // Cargar catálogos y siguiente número de caso al abrir el modal
   // También actualizar la fecha actual (misma lógica que DateTime)
   useEffect(() => {
     if (isOpen) {
-      // Actualizar la fecha actual usando la misma lógica que DateTime
-      // Crear una fecha local sin parsear strings para evitar problemas de zona horaria
+      // Limpiar el formulario cuando se abre el modal
       const now = new Date();
-      // Usar métodos locales que respetan la zona horaria del navegador
-      // Estos métodos siempre devuelven valores en la zona horaria local
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, '0');
       const day = String(now.getDate()).padStart(2, '0');
       const currentDate = `${year}-${month}-${day}`;
       
-      setFormData((prev) => ({
-        ...prev,
+      setFormData({
         fechaCaso: currentDate,
-      }));
+        casoNumero: '',
+        cedulaSolicitanteTipo: 'V',
+        cedulaSolicitante: '',
+        tipoCaso: '',
+        tramite: '',
+        nucleo: '',
+        observaciones: '',
+      });
+      setErrors({});
+      setArchivos([]);
       
       loadCatalogos();
       loadNextCaseNumber();
@@ -99,7 +106,7 @@ export default function CaseFormModal({
         }
       }
     } catch (error) {
-      console.error('Error al cargar siguiente número de caso:', error);
+      // Error al cargar siguiente número de caso
     } finally {
       setLoadingCaseNumber(false);
     }
@@ -123,7 +130,7 @@ export default function CaseFormModal({
         setAmbitosLegales(ambitosData.data || []);
       }
     } catch (error) {
-      console.error('Error al cargar catálogos:', error);
+      // Error al cargar catálogos
     } finally {
       setLoadingCatalogos(false);
     }
@@ -148,15 +155,12 @@ export default function CaseFormModal({
     if (!formData.nucleo) {
       newErrors.nucleo = 'Este campo es requerido';
     }
-    if (!formData.observaciones.trim()) {
-      newErrors.observaciones = 'Este campo es requerido';
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (validateForm()) {
       // Mapear los datos del formulario a la estructura de la BD
       // Combinar tipo y número de cédula del solicitante
@@ -167,9 +171,10 @@ export default function CaseFormModal({
         cedula_cliente: cedulaCompletaSolicitante,
         id_ambito_legal: parseInt(formData.tipoCaso),
         tramite: formData.tramite,
-        estatus: ESTATUS_CASO.EN_REVISION, // Siempre 'En revisión' para casos nuevos
+        estatus: ESTATUS_CASO.ASESORIA, // Siempre 'Asesoría' para casos nuevos
         id_nucleo: parseInt(formData.nucleo),
         observaciones: formData.observaciones,
+        archivos: archivos, // Incluir archivos en los datos
       };
 
       onSubmit(apiData);
@@ -188,7 +193,19 @@ export default function CaseFormModal({
       observaciones: '',
     });
     setErrors({});
+    setArchivos([]);
     onClose();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setArchivos((prev) => [...prev, ...newFiles]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setArchivos((prev) => prev.filter((_, i) => i !== index));
   };
 
   const updateField = (field: keyof FormData, value: string) => {
@@ -229,7 +246,7 @@ export default function CaseFormModal({
           {/* Fila 1: Fecha del Caso, Caso N°, Cédula de Solicitante */}
           <div className="col-span-1">
             <div className="flex flex-col gap-1">
-              <label className="text-base font-normal text-foreground mb-1">Fecha del Caso</label>
+              <label className="text-base font-normal text-foreground mb-1">Fecha del Caso <span className="text-danger">*</span></label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600 pointer-events-none z-10" />
                 <DatePicker
@@ -252,7 +269,7 @@ export default function CaseFormModal({
           </div>
           <div className="col-span-1">
             <CedulaInput
-              label="Cédula de Solicitante"
+              label="Cédula de Solicitante *"
               tipoValue={formData.cedulaSolicitanteTipo}
               onTipoChange={(value) => updateField('cedulaSolicitanteTipo', value)}
               value={formData.cedulaSolicitante}
@@ -266,7 +283,7 @@ export default function CaseFormModal({
           {/* Fila 2: Tipo de Caso, Trámite */}
           <div className="col-span-1">
             <Select
-              label="Tipo de Caso"
+              label="Tipo de Caso *"
               value={formData.tipoCaso}
               onChange={(e) => updateField('tipoCaso', e.target.value)}
               options={ambitosLegales.map((ambito) => ({
@@ -280,7 +297,7 @@ export default function CaseFormModal({
           </div>
           <div className="col-span-1">
             <Select
-              label="Trámite"
+              label="Trámite *"
               value={formData.tramite}
               onChange={(e) => updateField('tramite', e.target.value)}
               options={[
@@ -298,7 +315,7 @@ export default function CaseFormModal({
           {/* Fila 3: Núcleo */}
           <div className="col-span-1">
             <Select
-              label="Núcleo"
+              label="Núcleo *"
               value={formData.nucleo}
               onChange={(e) => updateField('nucleo', e.target.value)}
               options={nucleos.map((nucleo) => ({
@@ -319,16 +336,81 @@ export default function CaseFormModal({
               onChange={(e) => updateField('observaciones', e.target.value)}
               placeholder="Ingrese observaciones del caso"
               error={errors.observaciones}
-              required
             />
+          </div>
+
+          {/* Fila 5: Soportes/Documentos (ocupa todo el ancho) */}
+          <div className="col-span-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-base font-normal text-foreground mb-1">
+                Soportes/Documentos
+              </label>
+              
+              {/* Input de carga de archivos */}
+              <div className="relative">
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="file-upload"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.mp3,.wav,.ogg,.mp4,.avi,.mov,.wmv,.flv,.webm,.m4a,.aac,.wma"
+                />
+                <label
+                  htmlFor="file-upload"
+                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 bg-[#E5E7EB] cursor-pointer hover:bg-gray-200 transition-colors"
+                >
+                  <Upload className="w-5 h-5 text-gray-600" />
+                  <span className="text-base text-foreground">Seleccionar archivos</span>
+                </label>
+              </div>
+
+              {/* Lista de archivos seleccionados */}
+              {archivos.length > 0 && (
+                <div className="mt-2 space-y-2">
+                  {archivos.map((archivo, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between px-4 py-2 rounded-lg bg-gray-100 border border-gray-200"
+                    >
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <File className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                        <span className="text-sm text-foreground truncate" title={archivo.name}>
+                          {archivo.name}
+                        </span>
+                        <span className="text-xs text-gray-500 flex-shrink-0">
+                          ({(archivo.size / 1024).toFixed(1)} KB)
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        className="ml-2 p-1 text-danger hover:bg-danger/10 rounded-full transition-colors"
+                        aria-label="Eliminar archivo"
+                      >
+                        <XCircle className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Footer con botón */}
-        <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
-          <Button variant="primary" size="xl" onClick={handleSubmit}>
-            Registrar Caso
-          </Button>
+        <div className="flex flex-col border-t border-gray-200">
+          {/* Nota sobre campos obligatorios */}
+          <div className="flex items-center gap-1 pt-2 pb-4">
+            <span className="text-danger font-medium text-sm">*</span>
+            <span className="text-sm text-gray-600">Campo obligatorio</span>
+          </div>
+          
+          <div className="flex justify-end">
+            <Button variant="primary" size="xl" onClick={handleSubmit}>
+              Registrar Caso
+            </Button>
+          </div>
         </div>
       </div>
     </Modal>

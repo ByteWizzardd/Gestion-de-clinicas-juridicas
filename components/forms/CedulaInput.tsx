@@ -242,7 +242,19 @@ export default function CedulaInput({
 
   return (
     <div className="flex flex-col gap-1" ref={containerRef}>
-      {label && <label className="text-base font-normal text-foreground mb-1">{label}</label>}
+      {label && (
+        <label className="text-base font-normal text-foreground mb-1">
+          {label.split(' *').map((part, index, array) => 
+            index < array.length - 1 ? (
+              <span key={index}>
+                {part} <span className="text-danger">*</span>
+              </span>
+            ) : (
+              <span key={index}>{part}</span>
+            )
+          )}
+        </label>
+      )}
       <div className="flex items-center gap-2 relative">
         {/* Select pequeño para tipo de cédula */}
         <SelectSmall
@@ -268,15 +280,14 @@ export default function CedulaInput({
               }
             }}
             className={`
-              w-full h-[40px] px-4 rounded-full border
-              ${error ? 'border-danger' : 'border-transparent bg-[#E5E7EB]'}
+              w-full h-[40px] px-4 rounded-full border bg-[#E5E7EB]
+              ${error ? 'border-danger' : 'border-transparent'}
               focus:outline-none focus:ring-1 
               ${error ? 'focus:ring-danger' : 'focus:ring-primary'}
               text-base placeholder:text-[#717171]
             `}
             required={required}
           />
-          {error && <p className="text-xs text-danger mt-1">{error}</p>}
           
           {/* Lista de sugerencias */}
           <AnimatePresence>
@@ -316,6 +327,7 @@ export default function CedulaInput({
           </AnimatePresence>
         </div>
       </div>
+      {error && <p className="text-xs text-danger mt-1">{error}</p>}
     </div>
   );
 }

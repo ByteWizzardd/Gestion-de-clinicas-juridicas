@@ -19,11 +19,10 @@ export const CreateCasoSchema = z.object({
     ESTATUS_CASO.ARCHIVADO,
     ESTATUS_CASO.ENTREGADO,
     ESTATUS_CASO.ASESORIA,
-    ESTATUS_CASO.EN_REVISION,
   ] as [string, ...string[]], {
     errorMap: () => ({ message: 'Estatus inválido' }),
   }),
-  observaciones: z.string().min(1, 'Las observaciones son requeridas'),
+  observaciones: z.string().optional().nullable(),
   cedula_cliente: z.string().min(1, 'La cédula del cliente es requerida'),
   id_nucleo: z.number().int().positive('El núcleo es requerido'),
   id_ambito_legal: z.number().int().positive('El ámbito legal es requerido'),

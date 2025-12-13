@@ -195,9 +195,9 @@ CREATE TABLE casos (
         'Asistencia Judicial - Casos externos'
     )),
     
-    estatus VARCHAR(50) NOT NULL CHECK (estatus IN ('En proceso', 'Archivado', 'Entregado', 'Asesoría', 'En revisión')),
+    estatus VARCHAR(50) NOT NULL CHECK (estatus IN ('En proceso', 'Archivado', 'Entregado', 'Asesoría')),
     
-    observaciones TEXT NOT NULL,
+    observaciones TEXT,
     id_nucleo INTEGER NOT NULL REFERENCES nucleos(id_nucleo),
     id_ambito_legal INTEGER NOT NULL REFERENCES ambitos_legales(id_ambito_legal),
     id_expediente VARCHAR(50) REFERENCES expedientes(id_expediente),
@@ -255,7 +255,6 @@ CREATE TABLE asignaciones (
     term VARCHAR(20) NOT NULL REFERENCES semestres(term),
     cedula_estudiante VARCHAR(20) NOT NULL REFERENCES estudiantes(cedula_estudiante),
     cedula_profesor VARCHAR(20) NOT NULL REFERENCES profesores(cedula_profesor),
-    cedula_coordinador VARCHAR(20) NOT NULL REFERENCES coordinadores(cedula_coordinador),
     fecha_fin DATE NOT NULL,
     PRIMARY KEY (fecha_inicio, id_caso, term, cedula_estudiante)
 );
