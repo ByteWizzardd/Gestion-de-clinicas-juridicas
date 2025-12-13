@@ -12,7 +12,7 @@ export default function ApplicantDetailPage() {
     <div className="p-8">
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-2 mb-6 text-gray-600 hover:text-gray-900 transition-colors"
+        className="flex items-center gap-2 mb-6 text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-5 h-5" />
         <span>Volver</span>

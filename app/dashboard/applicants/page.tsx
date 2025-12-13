@@ -1,6 +1,6 @@
 "use client"; 
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import CaseTools from "@/components/CaseTools/CaseTools";
 import Table from "@/components/table/Table";
@@ -17,6 +17,8 @@ export default function ApplicantsPage() {
   const router = useRouter();
   const [solicitantes, setSolicitantes] = useState<Solicitante[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchValue, setSearchValue] = useState('');
+  const [nucleoFilter, setNucleoFilter] = useState('');
 
   const fetchSolicitantes = async () => {
     setLoading(true); 
@@ -44,6 +46,50 @@ export default function ApplicantsPage() {
   useEffect(() => {
     fetchSolicitantes();
   }, []);
+
+  // Función para normalizar texto removiendo acentos
+  const normalizeText = (text: string): string => {
+    return text
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remover diacríticos (acentos)
+      .toLowerCase();
+  };
+
+  // Obtener núcleos únicos para el filtro
+  const nucleoOptions = useMemo(() => {
+    const nucleos = new Set<string>();
+    solicitantes.forEach(s => {
+      if (s.nucleo) {
+        nucleos.add(s.nucleo);
+      }
+    });
+    return Array.from(nucleos).map(nucleo => ({
+      value: nucleo,
+      label: nucleo
+    }));
+  }, [solicitantes]);
+
+  // Filtrar solicitantes
+  const filteredSolicitantes = useMemo(() => {
+    if (!searchValue && !nucleoFilter) {
+      return solicitantes;
+    }
+
+    return solicitantes.filter((solicitante) => {
+      // Filtro por búsqueda (busca en cédula, nombre, teléfono)
+      const normalizedSearch = normalizeText(searchValue);
+      const matchesSearch = 
+        !searchValue ||
+        solicitante.cedula.includes(searchValue) ||
+        normalizeText(solicitante.nombre_completo || '').includes(normalizedSearch) ||
+        normalizeText(solicitante.telefono_celular || '').includes(normalizedSearch);
+
+      // Filtro por núcleo
+      const matchesNucleo = !nucleoFilter || solicitante.nucleo === nucleoFilter;
+
+      return matchesSearch && matchesNucleo;
+    });
+  }, [solicitantes, searchValue, nucleoFilter]);
 
   // Manejar acción de ver
   const handleView = (data: Record<string, unknown>) => {
@@ -88,10 +134,20 @@ export default function ApplicantsPage() {
     <>
       <h1 className="text-4xl m-3 font-semibold font-primary">Solicitantes</h1>
       <p className="mb-6 ml-3">Listado y búsqueda de todas las personas atendidas.</p>
-      <CaseTools addLabel="Añadir Solicitante" />
+      <CaseTools 
+        addLabel="Añadir Solicitante"
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+        estatusFilter={nucleoFilter}
+        tramiteFilter=""
+        onEstatusChange={setNucleoFilter}
+        onTramiteChange={() => {}}
+        estatusOptions={nucleoOptions}
+        tramiteOptions={[]}
+      />
       <div className="mt-10"></div>
       <Table
-        data={solicitantes}
+        data={filteredSolicitantes}
         columns={["Cédula", "Nombre Completo", "Teléfono Celular", "Núcleo", "Fecha Solicitud"]}
         onView={handleView}
         onEdit={handleEdit}
