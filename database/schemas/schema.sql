@@ -142,7 +142,7 @@ SELECT t.*, EXTRACT(YEAR FROM AGE(CURRENT_DATE, t.fecha_nacimiento))::INTEGER AS
 
 CREATE TABLE usuarios (
     cedula VARCHAR(20) PRIMARY KEY REFERENCES clientes(cedula), 
-    nombre_usuario VARCHAR(100) NOT NULL, -- Nombre del correo UCAB sin el dominio (ej: juan.perez de juan.perez@ucab.edu.ve)
+    nombre_usuario VARCHAR(100) NOT NULL UNIQUE, -- Nombre del correo UCAB sin el dominio (ej: juan.perez de juan.perez@ucab.edu.ve) - Clave alternativa
     password_hash VARCHAR(255) NOT NULL,
     habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     rol_sistema VARCHAR(20) NOT NULL CHECK (rol_sistema IN ('Estudiante', 'Profesor', 'Coordinador')),
