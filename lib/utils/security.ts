@@ -8,10 +8,41 @@
  */
 
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { TokenExpiredError, JsonWebTokenError, SignOptions } from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'tu-secreto-super-seguro-cambiar-en-produccion';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+const JWT_SECRET: string = process.env.JWT_SECRET || 'tu-secreto-super-seguro-cambiar-en-produccion';
+// Por defecto: 30 días. Formato: número seguido de unidad (d=days, h=hours, m=minutes, s=seconds)
+// Ejemplos: '30d', '720h', '43200m'
+const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '30d';
+
+/**
+ * Convierte el formato de tiempo del JWT (ej: '30d') a segundos para usar en cookies
+ * @param expiresIn Formato de tiempo del JWT (ej: '30d', '720h', '43200m')
+ * @returns Tiempo en segundos
+ */
+export function jwtExpiresInToSeconds(expiresIn: string): number {
+  const match = expiresIn.match(/^(\d+)([dhms])$/);
+  if (!match) {
+    // Si no coincide el formato, asumir que es en segundos
+    return parseInt(expiresIn, 10) || 60 * 60 * 24 * 30; // Por defecto 30 días
+  }
+  
+  const value = parseInt(match[1], 10);
+  const unit = match[2];
+  
+  switch (unit) {
+    case 'd': // días
+      return value * 24 * 60 * 60;
+    case 'h': // horas
+      return value * 60 * 60;
+    case 'm': // minutos
+      return value * 60;
+    case 's': // segundos
+      return value;
+    default:
+      return 60 * 60 * 24 * 30; // Por defecto 30 días
+  }
+}
 
 /**
  * Verifica un token JWT
@@ -25,9 +56,29 @@ export async function verifyToken(token: string): Promise<{
   rol: string;
 }> {
   try {
+    if (!JWT_SECRET || JWT_SECRET === 'tu-secreto-super-seguro-cambiar-en-produccion') {
+      console.warn('[verifyToken] JWT_SECRET no está configurado o usa el valor por defecto');
+    }
+    
     const decoded = jwt.verify(token, JWT_SECRET) as { cedula: string; rol: string };
+    
+    if (!decoded.cedula || !decoded.rol) {
+      throw new Error('Token no contiene información válida del usuario');
+    }
+    
     return decoded;
   } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      console.error('[verifyToken] Token expirado');
+      throw new Error('Token expirado. Por favor, inicia sesión nuevamente.');
+    } else if (error instanceof JsonWebTokenError) {
+      console.error('[verifyToken] Token inválido:', error.message);
+      throw new Error('Token inválido. Por favor, inicia sesión nuevamente.');
+    } else if (error instanceof Error) {
+      console.error('[verifyToken] Error al verificar token:', error.message);
+      throw error;
+    }
+    console.error('[verifyToken] Error desconocido al verificar token:', error);
     throw new Error('Token inválido o expirado');
   }
 }
@@ -43,7 +94,7 @@ export function generateToken(cedula: string, rol: string): string {
   return jwt.sign(
     { cedula, rol },
     JWT_SECRET,
-    { expiresIn: JWT_EXPIRES_IN }
+    { expiresIn: JWT_EXPIRES_IN } as SignOptions
   );
 }
 

@@ -39,11 +39,19 @@ export async function POST(request: NextRequest) {
         const token = request.cookies.get('auth_token')?.value;
 
         if (!token) {
-            throw new UnauthorizedError('No hay sesión activa');
+            console.error('[POST /api/casos] No se encontró token en las cookies');
+            throw new UnauthorizedError('No hay sesión activa. Por favor, inicia sesión nuevamente.');
         }
 
         // Verificar token y obtener cédula del usuario
-        const decoded = await verifyToken(token);
+        let decoded;
+        try {
+            decoded = await verifyToken(token);
+        } catch (verifyError) {
+            console.error('[POST /api/casos] Error al verificar token:', verifyError);
+            throw new UnauthorizedError('Sesión expirada. Por favor, inicia sesión nuevamente.');
+        }
+        
         const cedulaUsuario = decoded.cedula;
 
         const body = await request.json();

@@ -68,12 +68,12 @@ CREATE TABLE viviendas (
     cant_habitaciones INTEGER NOT NULL,
     cant_banos INTEGER NOT NULL,
     
-    material_piso VARCHAR(50) NOT NULL CHECK (material_piso IN ('Tierra', 'Cemento', 'Cerámica', 'Granito', 'Parquet', 'Mármol')),
-    material_paredes VARCHAR(50) NOT NULL CHECK (material_paredes IN ('Cartón', 'Palma', 'Desechos', 'Bahareque', 'Bloque sin frizar', 'Bloque frizado')),
-    material_techo VARCHAR(50) NOT NULL CHECK (material_techo IN ('Madera', 'Cartón', 'Palma/Zinc', 'Acerolit', 'Platabanda', 'Tejas')),
+    material_piso VARCHAR(50) NOT NULL CHECK (material_piso IN ('Tierra', 'Cemento', 'Cerámica', 'Granito / Parquet / Mármol')),
+    material_paredes VARCHAR(50) NOT NULL CHECK (material_paredes IN ('Cartón / Palma / Desechos', 'Bahareque', 'Bloque sin frizar', 'Bloque frizado')),
+    material_techo VARCHAR(50) NOT NULL CHECK (material_techo IN ('Madera / Cartón / Palma', 'Zinc / Acerolit', 'Platabanda / Tejas')),
     agua_potable VARCHAR(50) NOT NULL CHECK (agua_potable IN ('Dentro de la vivienda', 'Fuera de la vivienda', 'No tiene servicio')),
-    eliminacion_aguas_n VARCHAR(50) NOT NULL CHECK (eliminacion_aguas_n IN ('Poceta a cloaca', 'Pozo séptico', 'Poceta sin conexión', 'Excusado a hoyo o letrina', 'No tiene')),
-    aseo VARCHAR(50) NOT NULL CHECK (aseo IN ('Llega a la vivienda', 'No llega a la vivienda', 'Container', 'No tiene'))
+    eliminacion_aguas_n VARCHAR(50) NOT NULL CHECK (eliminacion_aguas_n IN ('Poceta a cloaca / Pozo séptico', 'Poceta sin conexión', 'Excusado de hoyo o letrina', 'No tiene')),
+    aseo VARCHAR(50) NOT NULL CHECK (aseo IN ('Llega a la vivienda', 'No llega a la vivienda / Container', 'No tiene'))
 );
 
 CREATE TABLE artefactos_domesticos (

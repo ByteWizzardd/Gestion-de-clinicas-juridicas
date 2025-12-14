@@ -207,11 +207,15 @@ export default function ApplicantFormModal({
     // Validar nombres
     if (!formData.nombres.trim()) {
       newErrors.nombres = 'Este campo es requerido';
+    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(formData.nombres.trim())) {
+      newErrors.nombres = 'Solo se permiten letras y espacios';
     }
     
     // Validar apellidos
     if (!formData.apellidos.trim()) {
       newErrors.apellidos = 'Este campo es requerido';
+    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(formData.apellidos.trim())) {
+      newErrors.apellidos = 'Solo se permiten letras y espacios';
     }
     
     // Validar fecha de nacimiento
@@ -227,6 +231,39 @@ export default function ApplicantFormModal({
     // Validar teléfono celular
     if (!formData.telefonoCelular.trim()) {
       newErrors.telefonoCelular = 'Este campo es requerido';
+    } else if (!/^[0-9]+$/.test(formData.telefonoCelular.trim())) {
+      newErrors.telefonoCelular = 'Solo se permiten números';
+    } else {
+      const telefonoCelular = formData.telefonoCelular.trim();
+      const telefonoCelularLength = telefonoCelular.length;
+      
+      // Para números venezolanos (+58), el número debe tener 10 dígitos (sin el cero inicial)
+      // Ejemplo: 4122727981 (sin el 0 inicial, se guarda como +584122727981)
+      if (formData.codigoPaisCelular === '+58') {
+        if (telefonoCelular.startsWith('0') || telefonoCelularLength !== 10 || !/^[4][0-9]{9}$/.test(telefonoCelular)) {
+          newErrors.telefonoCelular = 'Número de teléfono inválido';
+        }
+      } else {
+        // Para otros países, validar longitud mínima y máxima
+        if (telefonoCelularLength < 7 || telefonoCelularLength > 15) {
+          newErrors.telefonoCelular = 'Número de teléfono inválido';
+        }
+      }
+    }
+    
+    // Validar teléfono local (si está presente)
+    if (formData.telefonoLocal.trim()) {
+      if (!/^[0-9]+$/.test(formData.telefonoLocal.trim())) {
+        newErrors.telefonoLocal = 'Solo se permiten números';
+      } else {
+        const telefonoLocalLength = formData.telefonoLocal.trim().length;
+        // Validar longitud: números locales venezolanos típicamente tienen 7 dígitos
+        if (telefonoLocalLength < 7) {
+          newErrors.telefonoLocal = 'El teléfono local debe tener al menos 7 dígitos';
+        } else if (telefonoLocalLength > 10) {
+          newErrors.telefonoLocal = 'El teléfono local no puede tener más de 10 dígitos';
+        }
+      }
     }
     
     // Validar correo electrónico
@@ -351,6 +388,17 @@ export default function ApplicantFormModal({
     // Validar jefe de hogar
     if (!formData.jefeHogar || formData.jefeHogar.trim() === '') {
       newErrors.jefeHogar = 'Este campo es requerido';
+    }
+
+    // Validaciones de congruencia entre campos
+    // Debe haber al menos un adulto (cantPersonas > cantNinos)
+    if (!newErrors.cantPersonas && !newErrors.cantNinos && cantPersonasValue > 0 && cantNinosValue >= cantPersonasValue) {
+      newErrors.cantNinos = `Debe haber al menos un adulto. Si hay ${cantPersonasValue} persona(s), no puede haber ${cantNinosValue} niño(s)`;
+    }
+
+    // Si el solicitante NO es jefe de hogar, debe haber al menos 2 personas (solicitante + jefe de hogar)
+    if (!newErrors.cantPersonas && !newErrors.jefeHogar && formData.jefeHogar === 'no' && cantPersonasValue < 2) {
+      newErrors.cantPersonas = 'Si no eres jefe de hogar, debe haber al menos 2 personas (tú y el jefe de hogar)';
     }
 
     // Validar ingresos mensuales
@@ -655,8 +703,39 @@ export default function ApplicantFormModal({
     onClose();
   };
 
+  // Función para filtrar solo letras (incluyendo espacios y acentos)
+  const filterOnlyLetters = (value: string): string => {
+    // Permite solo letras (incluyendo acentos) y espacios
+    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '');
+  };
+
+  // Función para filtrar solo números
+  const filterOnlyNumbers = (value: string): string => {
+    // Permite solo números
+    return value.replace(/[^0-9]/g, '');
+  };
+
+  // Función para filtrar código de país (números y +)
+  const filterCountryCode = (value: string): string => {
+    // Permite solo números y el símbolo + al inicio
+    if (value.startsWith('+')) {
+      return '+' + value.slice(1).replace(/[^0-9]/g, '');
+    }
+    return value.replace(/[^0-9+]/g, '');
+  };
+
   const updateField = (field: keyof FormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Filtrar caracteres especiales según el tipo de campo
+    let filteredValue = value;
+    if (field === 'nombres' || field === 'apellidos') {
+      filteredValue = filterOnlyLetters(value);
+    } else if (field === 'telefonoLocal' || field === 'telefonoCelular') {
+      filteredValue = filterOnlyNumbers(value);
+    } else if (field === 'codigoPaisCelular') {
+      filteredValue = filterCountryCode(value);
+    }
+    
+    setFormData((prev) => ({ ...prev, [field]: filteredValue }));
     // Limpiar error del campo cuando se modifica
     if (errors[field]) {
       setErrors((prev) => {
@@ -818,6 +897,7 @@ export default function ApplicantFormModal({
           onChange={(e) => updateField('telefonoLocal', e.target.value)}
           placeholder="Ingrese teléfono local"
           type="tel"
+          error={errors.telefonoLocal}
         />
       </div>
 
@@ -833,6 +913,7 @@ export default function ApplicantFormModal({
           inputPlaceholder="Ingrese teléfono celular"
           error={errors.telefonoCelular}
           selectWidth="w-20"
+          editableCode={true}
         />
       </div>
       <div className="col-span-1">
@@ -938,9 +1019,7 @@ export default function ApplicantFormModal({
             { value: 'Tierra', label: 'Tierra' },
             { value: 'Cemento', label: 'Cemento' },
             { value: 'Cerámica', label: 'Cerámica' },
-            { value: 'Granito', label: 'Granito' },
-            { value: 'Parquet', label: 'Parquet' },
-            { value: 'Mármol', label: 'Mármol' },
+            { value: 'Granito / Parquet / Mármol', label: 'Granito / Parquet / Mármol' },
           ]}
           placeholder="Seleccionar material"
           error={errors.materialPiso}
@@ -953,9 +1032,7 @@ export default function ApplicantFormModal({
           value={formData.materialParedes}
           onChange={(e) => updateField('materialParedes', e.target.value)}
           options={[
-            { value: 'Cartón', label: 'Cartón' },
-            { value: 'Palma', label: 'Palma' },
-            { value: 'Desechos', label: 'Desechos' },
+            { value: 'Cartón / Palma / Desechos', label: 'Cartón / Palma / Desechos' },
             { value: 'Bahareque', label: 'Bahareque' },
             { value: 'Bloque sin frizar', label: 'Bloque sin frizar' },
             { value: 'Bloque frizado', label: 'Bloque frizado' },
@@ -971,12 +1048,9 @@ export default function ApplicantFormModal({
           value={formData.materialTecho}
           onChange={(e) => updateField('materialTecho', e.target.value)}
           options={[
-            { value: 'Madera', label: 'Madera' },
-            { value: 'Cartón', label: 'Cartón' },
-            { value: 'Palma/Zinc', label: 'Palma/Zinc' },
-            { value: 'Acerolit', label: 'Acerolit' },
-            { value: 'Platabanda', label: 'Platabanda' },
-            { value: 'Tejas', label: 'Tejas' },
+            { value: 'Madera / Cartón / Palma', label: 'Madera / Cartón / Palma' },
+            { value: 'Zinc / Acerolit', label: 'Zinc / Acerolit' },
+            { value: 'Platabanda / Tejas', label: 'Platabanda / Tejas' },
           ]}
           placeholder="Seleccionar material"
           error={errors.materialTecho}
@@ -1006,10 +1080,9 @@ export default function ApplicantFormModal({
           value={formData.eliminacionAguasN}
           onChange={(e) => updateField('eliminacionAguasN', e.target.value)}
           options={[
-            { value: 'Poceta a cloaca', label: 'Poceta a cloaca' },
-            { value: 'Pozo séptico', label: 'Pozo séptico' },
+            { value: 'Poceta a cloaca / Pozo séptico', label: 'Poceta a cloaca / Pozo séptico' },
             { value: 'Poceta sin conexión', label: 'Poceta sin conexión' },
-            { value: 'Excusado a hoyo o letrina', label: 'Excusado a hoyo o letrina' },
+            { value: 'Excusado de hoyo o letrina', label: 'Excusado de hoyo o letrina' },
             { value: 'No tiene', label: 'No tiene' },
           ]}
           placeholder="Seleccionar opción"
@@ -1024,8 +1097,7 @@ export default function ApplicantFormModal({
           onChange={(e) => updateField('aseo', e.target.value)}
           options={[
             { value: 'Llega a la vivienda', label: 'Llega a la vivienda' },
-            { value: 'No llega a la vivienda', label: 'No llega a la vivienda' },
-            { value: 'Container', label: 'Container' },
+            { value: 'No llega a la vivienda / Container', label: 'No llega a la vivienda / Container' },
             { value: 'No tiene', label: 'No tiene' },
           ]}
           placeholder="Seleccionar opción"
@@ -1120,7 +1192,7 @@ export default function ApplicantFormModal({
         />
       </div>
 
-      {/* Fila 2: Cantidad de Niños Estudiando, ¿Es Jefe de Hogar?, Ingresos Mensuales */}
+      {/* Fila 2: Cantidad de Niños Estudiando, Ingresos Mensuales, ¿Es Jefe de Hogar? */}
       <div className="col-span-1">
         <Input
           label="Cantidad de Niños Estudiando *"
@@ -1131,6 +1203,19 @@ export default function ApplicantFormModal({
           error={errors.cantNinosEstudiando}
           required
           min="0"
+        />
+      </div>
+      <div className="col-span-1">
+        <Input
+          label="Ingresos Mensuales (USD) *"
+          type="number"
+          value={formData.ingresosMensuales}
+          onChange={(e) => updateField('ingresosMensuales', e.target.value)}
+          placeholder="Ingrese monto en dólares"
+          error={errors.ingresosMensuales}
+          required
+          min="0"
+          step="0.01"
         />
       </div>
       <div className="col-span-1">
@@ -1170,19 +1255,6 @@ export default function ApplicantFormModal({
           placeholder="Seleccionar opción"
           error={errors.jefeHogar}
           required
-        />
-      </div>
-      <div className="col-span-1">
-        <Input
-          label="Ingresos Mensuales *"
-          type="number"
-          value={formData.ingresosMensuales}
-          onChange={(e) => updateField('ingresosMensuales', e.target.value)}
-          placeholder="Ingrese monto"
-          error={errors.ingresosMensuales}
-          required
-          min="0"
-          step="0.01"
         />
       </div>
 
