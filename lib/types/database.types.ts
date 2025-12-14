@@ -31,6 +31,8 @@ export interface Cliente {
 
 export interface Usuario {
   cedula: string;
+  nombre_usuario: string;
+  password_hash: string;
   habilitado: boolean | null;
   rol_sistema: 'Estudiante' | 'Profesor' | 'Coordinador' | null;
   foto_perfil: Buffer | null;
@@ -50,11 +52,20 @@ export interface Caso {
   cedula_cliente: string | null;
 }
 
+export interface Seccion {
+  num_seccion: number;
+  nrc_materia: string;
+  term_semestre: string;
+  cedula_profesor: string;
+  cedula_coordinador: string;
+}
+
 export interface Estudiante {
   cedula_estudiante: string;
   tipo_estudiante: 'Voluntario' | 'Inscrito' | 'Egresado' | null;
   num_seccion: number | null;
   nrc_materia: string | null;
+  term_semestre: string | null;
 }
 
 export interface Profesor {

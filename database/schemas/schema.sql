@@ -142,6 +142,8 @@ SELECT t.*, EXTRACT(YEAR FROM AGE(CURRENT_DATE, t.fecha_nacimiento))::INTEGER AS
 
 CREATE TABLE usuarios (
     cedula VARCHAR(20) PRIMARY KEY REFERENCES clientes(cedula), 
+    nombre_usuario VARCHAR(100) NOT NULL, -- Nombre del correo UCAB sin el dominio (ej: juan.perez de juan.perez@ucab.edu.ve)
+    password_hash VARCHAR(255) NOT NULL,
     habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     rol_sistema VARCHAR(20) NOT NULL CHECK (rol_sistema IN ('Estudiante', 'Profesor', 'Coordinador')),
     foto_perfil BYTEA
@@ -158,10 +160,11 @@ CREATE TABLE profesores (
 CREATE TABLE secciones (
     num_seccion INTEGER NOT NULL, -- Autoincrementado por TRIGGER
     nrc_materia VARCHAR(20) NOT NULL REFERENCES materias(nrc),
+    term_semestre VARCHAR(20) NOT NULL REFERENCES semestres(term),
     cedula_profesor VARCHAR(20) NOT NULL REFERENCES profesores(cedula_profesor),
     cedula_coordinador VARCHAR(20) NOT NULL REFERENCES coordinadores(cedula_coordinador),
     
-    PRIMARY KEY (num_seccion, nrc_materia)
+    PRIMARY KEY (num_seccion, nrc_materia, term_semestre)
 );
 
 CREATE TABLE estudiantes (
@@ -170,7 +173,8 @@ CREATE TABLE estudiantes (
     
     num_seccion INTEGER NOT NULL, 
     nrc_materia VARCHAR(20) NOT NULL,
-    FOREIGN KEY (num_seccion, nrc_materia) REFERENCES secciones(num_seccion, nrc_materia)
+    term_semestre VARCHAR(20) NOT NULL,
+    FOREIGN KEY (num_seccion, nrc_materia, term_semestre) REFERENCES secciones(num_seccion, nrc_materia, term_semestre)
 );
 
 -- ==========================================================
