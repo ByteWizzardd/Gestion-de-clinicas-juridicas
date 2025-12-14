@@ -350,3 +350,52 @@ CREATE TRIGGER trigger_validate_cliente_solicitante_on_caso
     FOR EACH ROW
     EXECUTE FUNCTION validate_cliente_solicitante_on_caso();
 
+-- ==========================================================
+-- 9. TRIGGER PARA ASIGNAR NOMBRE_USUARIO AUTOMÁTICAMENTE
+-- ==========================================================
+
+-- Función trigger para asignar nombre_usuario automáticamente desde el correo
+CREATE OR REPLACE FUNCTION assign_nombre_usuario_from_email()
+RETURNS TRIGGER AS $$
+DECLARE
+    cliente_correo VARCHAR(100);
+    nombre_usuario_extracted VARCHAR(100);
+BEGIN
+    -- Si nombre_usuario ya está asignado, no hacer nada
+    IF NEW.nombre_usuario IS NOT NULL AND NEW.nombre_usuario != '' THEN
+        RETURN NEW;
+    END IF;
+    
+    -- Obtener el correo electrónico del cliente relacionado
+    SELECT correo_electronico INTO cliente_correo
+    FROM clientes
+    WHERE cedula = NEW.cedula;
+    
+    -- Si no se encuentra el cliente o no tiene correo, lanzar error
+    IF cliente_correo IS NULL OR cliente_correo = '' THEN
+        RAISE EXCEPTION 'No se puede asignar nombre_usuario: el cliente con cédula % no tiene correo electrónico', NEW.cedula;
+    END IF;
+    
+    -- Extraer el nombre_usuario (parte antes del @)
+    -- Maneja tanto @ucab.edu.ve como @est.ucab.edu.ve
+    nombre_usuario_extracted := SPLIT_PART(cliente_correo, '@', 1);
+    
+    -- Validar que el nombre_usuario extraído no esté vacío
+    IF nombre_usuario_extracted IS NULL OR nombre_usuario_extracted = '' THEN
+        RAISE EXCEPTION 'No se puede extraer nombre_usuario del correo: %', cliente_correo;
+    END IF;
+    
+    -- Asignar el nombre_usuario extraído
+    NEW.nombre_usuario := nombre_usuario_extracted;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger para asignar nombre_usuario automáticamente al insertar o actualizar usuarios
+CREATE TRIGGER trigger_assign_nombre_usuario
+    BEFORE INSERT OR UPDATE ON usuarios
+    FOR EACH ROW
+    WHEN (NEW.nombre_usuario IS NULL OR NEW.nombre_usuario = '')
+    EXECUTE FUNCTION assign_nombre_usuario_from_email();
+
