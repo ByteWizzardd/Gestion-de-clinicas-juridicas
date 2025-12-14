@@ -119,7 +119,7 @@ CREATE TABLE clientes (
     fecha_nacimiento DATE NOT NULL,
     telefono_local VARCHAR(20),
     telefono_celular VARCHAR(20) NOT NULL,
-    correo_electronico VARCHAR(100) NOT NULL,
+    correo_electronico VARCHAR(100) NOT NULL UNIQUE, -- Clave alternativa
     
     sexo VARCHAR(1) NOT NULL CHECK (sexo IN ('M', 'F')),
     nacionalidad VARCHAR(10) NOT NULL CHECK (nacionalidad IN ('V', 'E', 'Ext')),

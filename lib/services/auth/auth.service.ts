@@ -36,10 +36,18 @@ export const authService = {
       throw new ValidationError('La contraseña debe tener al menos 6 caracteres');
     }
 
+    // Normalizar la cédula al formato "V66666666" (tipo + número)
+    // Si la cédula no empieza con V, E o J, asumir que es V
+    let cedulaNormalizada = data.cedula.trim().toUpperCase();
+    if (!cedulaNormalizada.match(/^[VEJ]/)) {
+      // Si no tiene tipo, agregar V por defecto
+      cedulaNormalizada = 'V' + cedulaNormalizada;
+    }
+
     // Verificar si el usuario ya existe
     let existingUser;
     try {
-      existingUser = await authQueries.getUserByCedula(data.cedula);
+      existingUser = await authQueries.getUserByCedula(cedulaNormalizada);
     } catch (error) {
       // Si hay error de conexión, lanzarlo
       throw error;
@@ -73,9 +81,9 @@ export const authService = {
     const sexo = data.sexo || 'M';
     const nacionalidad = data.nacionalidad || 'V';
 
-    // Crear o actualizar cliente primero
+    // Crear o actualizar cliente primero (usar cédula normalizada)
     await authQueries.createCliente({
-      cedula: data.cedula,
+      cedula: cedulaNormalizada,
       nombres,
       apellidos,
       correoElectronico: data.correo,
@@ -109,7 +117,7 @@ export const authService = {
     }
     
     const user = await authQueries.createUser({
-      cedula: data.cedula,
+      cedula: cedulaNormalizada,
       passwordHash,
       rolSistema,
     });
