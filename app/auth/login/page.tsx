@@ -14,7 +14,7 @@ export default function LoginPage() {
     const [error, setError] = useState<string | null>(null);
     const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
     const [formData, setFormData] = useState({
-        correo: "",
+        nombreUsuario: "",
         password: "",
     });
 
@@ -52,7 +52,7 @@ export default function LoginPage() {
         
         setError(null);
         
-        if (!formData.correo || !formData.password) {
+        if (!formData.nombreUsuario || !formData.password) {
             setError("Por favor complete todos los campos");
             return;
         }
@@ -66,7 +66,7 @@ export default function LoginPage() {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    correo: formData.correo,
+                    nombreUsuario: formData.nombreUsuario,
                     password: formData.password,
                 }),
             });
@@ -135,12 +135,12 @@ export default function LoginPage() {
                         )}
                         <div className="flex flex-col gap-4 !font-urbanist">
                             <Input 
-                                label="Correo institucional" 
-                                placeholder="Ingrese su correo institucional" 
+                                label="Nombre de usuario" 
+                                placeholder="Ingrese su nombre de usuario" 
                                 className="bg-gray-100 text-base"
-                                name="correo"
-                                type="email"
-                                value={formData.correo}
+                                name="nombreUsuario"
+                                type="text"
+                                value={formData.nombreUsuario}
                                 onChange={handleInputChange}
                                 required
                             />

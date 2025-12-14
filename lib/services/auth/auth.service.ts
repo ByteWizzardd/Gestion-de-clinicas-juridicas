@@ -130,16 +130,16 @@ export const authService = {
    * Inicia sesión de un usuario
    */
   login: async (data: {
-    correo: string;
+    nombreUsuario: string;
     password: string;
   }) => {
     // Validaciones
-    if (!data.correo || !data.password) {
-      throw new ValidationError('Correo y contraseña son requeridos');
+    if (!data.nombreUsuario || !data.password) {
+      throw new ValidationError('Nombre de usuario y contraseña son requeridos');
     }
 
-    // Buscar usuario por correo
-    const user = await authQueries.getUserByEmail(data.correo);
+    // Buscar usuario por nombre_usuario
+    const user = await authQueries.getUserByNombreUsuario(data.nombreUsuario);
     if (!user) {
       throw new UnauthorizedError('Credenciales inválidas');
     }

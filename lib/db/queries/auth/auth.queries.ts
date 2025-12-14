@@ -10,7 +10,41 @@ import { logger } from '@/lib/utils/logger';
  */
 export const authQueries = {
   /**
-   * Obtiene un usuario por su correo electrónico
+   * Obtiene un usuario por su nombre_usuario
+   */
+  getUserByNombreUsuario: async (nombreUsuario: string): Promise<any | null> => {
+    try {
+      const query = loadSQL('auth/get-user-by-nombre-usuario.sql');
+      const result: QueryResult = await pool.query(query, [nombreUsuario]);
+      return result.rows[0] || null;
+    } catch (error: any) {
+      // Detectar si el error es porque falta la columna password_hash o nombre_usuario
+      if (error?.code === '42703') {
+        if (error?.message?.includes('password_hash')) {
+          logger.error('La columna password_hash no existe. Ejecuta la migración primero.');
+          throw new DatabaseError(
+            'La columna password_hash no existe en la tabla usuarios. Por favor ejecuta la migración: database/migrations/add-password-to-usuarios.sql o visita /api/auth/migrate',
+            error
+          );
+        }
+        if (error?.message?.includes('nombre_usuario')) {
+          logger.error('La columna nombre_usuario no existe. Ejecuta la migración primero.');
+          throw new DatabaseError(
+            'La columna nombre_usuario no existe en la tabla usuarios. Por favor ejecuta la migración: database/migrations/add-nombre-usuario-to-usuarios.sql',
+            error
+          );
+        }
+      }
+      logger.error('Error en getUserByNombreUsuario', error);
+      throw new DatabaseError(
+        'Error al buscar usuario por nombre_usuario',
+        error
+      );
+    }
+  },
+
+  /**
+   * Obtiene un usuario por su correo electrónico (mantenido para compatibilidad)
    */
   getUserByEmail: async (email: string): Promise<any | null> => {
     try {
