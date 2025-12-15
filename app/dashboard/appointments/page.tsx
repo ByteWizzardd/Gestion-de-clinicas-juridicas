@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import CalendarWidget from '@/components/ui/calendar/CalendarWidget';
 import AppointmentList from '@/components/cards/AppointmentList';
+import Spinner from '@/components/ui/feedback/Spinner';
 import type { Appointment } from '@/types/appointment';
 import { getApiHeaders } from '@/lib/utils/api-client';
 
@@ -99,13 +100,15 @@ export default function AppointmentsPage() {
         </p>
       </div>
 
-      {/* Estados de carga y error */}
+      {/* Estado de carga */}
       {loading && (
-        <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
-          <p className="text-gray-600">Cargando citas...</p>
+        <div className="flex flex-col justify-center items-center h-[calc(100vh-10rem)]">
+          <Spinner />
+          <p className="text-on-border mt-4">Cargando citas...</p>
         </div>
       )}
 
+      {/* Estado de error */}
       {error && !loading && (
         <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
           <div className="text-center">
