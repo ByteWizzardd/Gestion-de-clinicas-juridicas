@@ -54,7 +54,8 @@ export const solicitantesQueries = {
 
     /**
      * Busca solicitantes por cédula (búsqueda parcial)
-     * Un solicitante es un cliente que tiene al menos un caso registrado
+     * Un solicitante es un cliente que tiene todos los datos completos requeridos por el formulario:
+     * estado_civil, concubinato, id_hogar, id_nivel_educativo, id_trabajo, id_vivienda
      */
     searchByCedula: async (cedula: string): Promise<Array<{
         cedula: string;

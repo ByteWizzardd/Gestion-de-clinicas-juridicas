@@ -41,6 +41,21 @@ export const clientesQueries = {
   },
 
   /**
+   * Busca clientes por correo electrónico (búsqueda exacta)
+   */
+  searchByEmail: async (email: string): Promise<Array<{
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+    correo_electronico: string;
+    nombre_completo: string;
+  }>> => {
+    const query = loadSQL('clientes/search-by-email.sql');
+    const result: QueryResult = await pool.query(query, [email]);
+    return result.rows;
+  },
+
+  /**
    * Actualiza un cliente con todos los datos completos
    */
   updateComplete: async (data: {

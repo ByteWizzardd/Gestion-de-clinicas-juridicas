@@ -7,7 +7,7 @@
 -- $5 = telefono_celular (mínimo requerido)
 -- $6 = fecha_nacimiento (requerido)
 -- $7 = sexo (requerido: 'M' o 'F')
--- $8 = nacionalidad (requerido: 'V', 'E' o 'Ext')
+-- $8 = nacionalidad (requerido: 'V' o 'Ext')
 
 INSERT INTO clientes (
     cedula,

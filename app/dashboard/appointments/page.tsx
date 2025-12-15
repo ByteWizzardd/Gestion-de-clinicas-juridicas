@@ -83,7 +83,6 @@ export default function AppointmentsPage() {
 
   const handleAddAppointment = () => {
     // TODO: Implementar lógica para añadir nueva cita
-    console.log('Añadir nueva cita');
   };
 
   return (

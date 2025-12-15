@@ -19,6 +19,7 @@ interface ApplicantFormData {
   correoElectronico: string;
   estadoCivil: string;
   concubinato: string;
+  nacionalidad: string;
   // Vivienda
   tipoVivienda: string;
   cantHabitaciones: string;
@@ -115,7 +116,17 @@ export const solicitantesService = {
       // 1. Crear o verificar cliente básico
       const cedula = `${data.cedulaTipo}${data.cedulaNumero}`;
       const sexo = data.sexo === 'Masculino' ? 'M' : 'F';
-      const nacionalidad = 'V'; // Por defecto venezolano
+      
+      // Asignar nacionalidad según el tipo de cédula
+      let nacionalidad = 'V'; // Por defecto venezolano
+      if (data.cedulaTipo === 'V' || data.cedulaTipo === 'J') {
+        nacionalidad = 'V'; // Venezolano
+      } else if (data.cedulaTipo === 'E') {
+        nacionalidad = 'Ext'; // Extranjero
+      } else if (data.cedulaTipo === 'P') {
+        // Si es pasaporte, usar la nacionalidad del formulario
+        nacionalidad = data.nacionalidad || 'Ext'; // Por defecto extranjero si no se especifica
+      }
       
       // Verificar si el cliente ya existe
       const clienteExistente = await client.query(

@@ -1,5 +1,5 @@
 import CaseTools from "@/components/CaseTools/CaseTools";
-import Table from "@/components/table/Table";
+import Table from "@/components/Table/Table";
 
 export default function TeamsPage() {
   return (

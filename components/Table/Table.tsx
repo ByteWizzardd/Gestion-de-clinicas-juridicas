@@ -1,9 +1,9 @@
 "use client";
 import React, { useState } from "react";
-import { TableContainer } from "@/components/table/TableContainer";
-import { TableHeader } from "@/components/table/TableHeader";
-import { TableRow } from "@/components/table/TableRow";
-import { TablePagination } from "@/components/table/TablePagination";
+import { TableContainer } from "@/components/Table/TableContainer";
+import { TableHeader } from "@/components/Table/TableHeader";
+import { TableRow } from "@/components/Table/TableRow";
+import { TablePagination } from "@/components/Table/TablePagination";
 interface TableProps<T> {
   data: T[];
   rowsPerPage?: number;

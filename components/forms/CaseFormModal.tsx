@@ -15,6 +15,8 @@ interface CaseFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: unknown) => void;
+  initialCedula?: string;
+  initialCedulaTipo?: string;
 }
 
 interface FormData {
@@ -32,6 +34,8 @@ export default function CaseFormModal({
   isOpen,
   onClose,
   onSubmit,
+  initialCedula = '',
+  initialCedulaTipo = 'V',
 }: CaseFormModalProps) {
   // Función para obtener la fecha actual en formato YYYY-MM-DD
   // Usa la misma lógica que el componente DateTime
@@ -77,8 +81,8 @@ export default function CaseFormModal({
       setFormData({
         fechaCaso: currentDate,
         casoNumero: '',
-        cedulaSolicitanteTipo: 'V',
-        cedulaSolicitante: '',
+        cedulaSolicitanteTipo: initialCedulaTipo || 'V',
+        cedulaSolicitante: initialCedula || '',
         tipoCaso: '',
         tramite: '',
         nucleo: '',
@@ -90,7 +94,7 @@ export default function CaseFormModal({
       loadCatalogos();
       loadNextCaseNumber();
     }
-  }, [isOpen]);
+  }, [isOpen, initialCedula, initialCedulaTipo]);
 
   const loadNextCaseNumber = async () => {
     try {

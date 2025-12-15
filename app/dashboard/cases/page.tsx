@@ -39,6 +39,8 @@ export default function CasesPage() {
   const [searchValue, setSearchValue] = useState('');
   const [estatusFilter, setEstatusFilter] = useState('');
   const [tramiteFilter, setTramiteFilter] = useState('');
+  const [initialCedula, setInitialCedula] = useState<string>('');
+  const [initialCedulaTipo, setInitialCedulaTipo] = useState<string>('V');
 
   // Opciones para los filtros
   const estatusOptions = [
@@ -87,6 +89,24 @@ export default function CasesPage() {
   useEffect(() => {
     fetchCasos();
   }, []);
+
+  // Leer parámetros de URL para abrir modal con cédula prellenada
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const cedula = searchParams.get('cedula');
+    const cedulaTipo = searchParams.get('cedulaTipo');
+    
+    if (cedula && cedulaTipo) {
+      // Extraer el número de cédula (sin el tipo)
+      const cedulaNumero = cedula.startsWith(cedulaTipo) ? cedula.substring(cedulaTipo.length) : cedula;
+      setInitialCedula(cedulaNumero);
+      setInitialCedulaTipo(cedulaTipo);
+      setIsModalOpen(true);
+      
+      // Limpiar los parámetros de la URL
+      router.replace('/dashboard/cases');
+    }
+  }, [router]);
 
   // Función para normalizar texto removiendo acentos
   const normalizeText = (text: string): string => {
@@ -287,6 +307,8 @@ export default function CasesPage() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onSubmit={handleSubmitCase}
+        initialCedula={initialCedula}
+        initialCedulaTipo={initialCedulaTipo}
       />
     </>
   );

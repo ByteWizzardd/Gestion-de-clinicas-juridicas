@@ -163,7 +163,7 @@ export default function CedulaInput({
       clearTimeout(timeoutRef.current);
     }
 
-    if (value.trim().length < 2) {
+    if (value.trim().length < 1) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;

@@ -142,62 +142,66 @@ const getNumerosPorTipo = (tipo: string) => {
   }
 };
 
+// Estado inicial del formulario (reutilizable)
+const getInitialFormData = (): FormData => ({
+  cedulaTipo: 'V',
+  cedulaNumero: '',
+  nombres: '',
+  apellidos: '',
+  fechaNacimiento: '',
+  sexo: '',
+  telefonoLocal: '',
+  codigoPaisCelular: '+58', // Código por defecto: Venezuela
+  telefonoCelular: '',
+  correoElectronico: '',
+  estadoCivil: '',
+  concubinato: '',
+  nacionalidad: 'V', // Por defecto venezolano cuando el tipo es 'V'
+  tipoVivienda: '',
+  cantHabitaciones: '',
+  cantBanos: '',
+  materialPiso: '',
+  materialParedes: '',
+  materialTecho: '',
+  aguaPotable: '',
+  eliminacionAguasN: '',
+  aseo: '',
+  artefactos: [],
+  cantPersonas: '',
+  cantTrabajadores: '',
+  cantNinos: '',
+  cantNinosEstudiando: '',
+  jefeHogar: '',
+  tipoEducativo: '',
+  numeroEducativo: '',
+  nivelEducativo: '',
+  anosCursados: '',
+  semestresCursados: '',
+  trimestresCursados: '',
+  ingresosMensuales: '',
+  tipoEducativoSolicitante: '',
+  numeroEducativoSolicitante: '',
+  nivelEducativoSolicitante: '',
+  anosCursadosSolicitante: '',
+  semestresCursadosSolicitante: '',
+  trimestresCursadosSolicitante: '',
+  trabaja: '',
+  condicionTrabajo: '',
+  buscandoTrabajo: '',
+  condicionActividad: '',
+});
+
 export default function ApplicantFormModal({
   isOpen,
   onClose,
   onSubmit,
 }: ApplicantFormModalProps) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState<FormData>({
-    cedulaTipo: 'V',
-    cedulaNumero: '',
-    nombres: '',
-    apellidos: '',
-    fechaNacimiento: '',
-    sexo: '',
-    telefonoLocal: '',
-    codigoPaisCelular: '+58', // Código por defecto: Venezuela
-    telefonoCelular: '',
-    correoElectronico: '',
-    estadoCivil: '',
-    concubinato: '',
-    nacionalidad: '',
-    tipoVivienda: '',
-    cantHabitaciones: '',
-    cantBanos: '',
-    materialPiso: '',
-    materialParedes: '',
-    materialTecho: '',
-    aguaPotable: '',
-    eliminacionAguasN: '',
-    aseo: '',
-    artefactos: [],
-    cantPersonas: '',
-    cantTrabajadores: '',
-    cantNinos: '',
-    cantNinosEstudiando: '',
-    jefeHogar: '',
-    tipoEducativo: '',
-    numeroEducativo: '',
-    nivelEducativo: '',
-    anosCursados: '',
-    semestresCursados: '',
-    trimestresCursados: '',
-    ingresosMensuales: '',
-    tipoEducativoSolicitante: '',
-    numeroEducativoSolicitante: '',
-    nivelEducativoSolicitante: '',
-    anosCursadosSolicitante: '',
-    semestresCursadosSolicitante: '',
-    trimestresCursadosSolicitante: '',
-    trabaja: '',
-    condicionTrabajo: '',
-    buscandoTrabajo: '',
-    condicionActividad: '',
-  });
+  const [formData, setFormData] = useState<FormData>(getInitialFormData());
 
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [cedulaCheckTimeout, setCedulaCheckTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [emailCheckTimeout, setEmailCheckTimeout] = useState<NodeJS.Timeout | null>(null);
   
   // Estados para recomendaciones de cédula
   const [cedulaSuggestions, setCedulaSuggestions] = useState<Array<{
@@ -217,6 +221,128 @@ export default function ApplicantFormModal({
   
   // Estado para controlar qué campos están bloqueados (autocompletados)
   const [lockedFields, setLockedFields] = useState<Set<keyof FormData>>(new Set());
+
+  // Helper para limpiar errores de campos específicos
+  const clearErrors = (fieldNames: (keyof FormData)[]) => {
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      fieldNames.forEach(field => delete newErrors[field]);
+      return newErrors;
+    });
+  };
+
+  // Helper para limpiar campos de duración educativa
+  const clearDuracionFields = (prefix: 'Solicitante' | 'JefeHogar') => {
+    if (prefix === 'Solicitante') {
+      setFormData((prev) => ({
+        ...prev,
+        anosCursadosSolicitante: '',
+        semestresCursadosSolicitante: '',
+        trimestresCursadosSolicitante: '',
+      }));
+      clearErrors(['anosCursadosSolicitante', 'semestresCursadosSolicitante', 'trimestresCursadosSolicitante']);
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        anosCursados: '',
+        semestresCursados: '',
+        trimestresCursados: '',
+      }));
+      clearErrors(['anosCursados', 'semestresCursados', 'trimestresCursados']);
+    }
+  };
+
+  // Helper para manejar cambio de tipo educativo
+  const handleTipoEducativoChange = (
+    tipoSeleccionado: string,
+    prefix: 'Solicitante' | 'JefeHogar'
+  ) => {
+    const tipoField = prefix === 'Solicitante' ? 'tipoEducativoSolicitante' : 'tipoEducativo';
+    const numeroField = prefix === 'Solicitante' ? 'numeroEducativoSolicitante' : 'numeroEducativo';
+    const nivelField = prefix === 'Solicitante' ? 'nivelEducativoSolicitante' : 'nivelEducativo';
+    
+    updateField(tipoField as keyof FormData, tipoSeleccionado);
+    
+    const numerosDisponibles = getNumerosPorTipo(tipoSeleccionado);
+    
+    if (numerosDisponibles.length === 1) {
+      const numeroAuto = numerosDisponibles[0].value;
+      setFormData((prev) => ({
+        ...prev,
+        [tipoField]: tipoSeleccionado,
+        [numeroField]: numeroAuto,
+        [nivelField]: numeroAuto,
+      }));
+      clearDuracionFields(prefix);
+      clearErrors([numeroField as keyof FormData]);
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [tipoField]: tipoSeleccionado,
+        [numeroField]: '',
+        [nivelField]: '',
+      }));
+      clearDuracionFields(prefix);
+      clearErrors([numeroField as keyof FormData]);
+    }
+  };
+
+  // Helper para manejar cambio de número educativo
+  const handleNumeroEducativoChange = (
+    value: string,
+    prefix: 'Solicitante' | 'JefeHogar'
+  ) => {
+    const numeroField = prefix === 'Solicitante' ? 'numeroEducativoSolicitante' : 'numeroEducativo';
+    const nivelField = prefix === 'Solicitante' ? 'nivelEducativoSolicitante' : 'nivelEducativo';
+    
+    updateField(numeroField as keyof FormData, value);
+    updateField(nivelField as keyof FormData, value);
+    
+    const nivelNum = Number(value);
+    if (nivelNum !== 12 && nivelNum !== 13 && nivelNum !== 14) {
+      clearDuracionFields(prefix);
+    }
+  };
+
+  // Helper para calcular duración desde años
+  const handleAnosChange = (
+    anosValue: string,
+    prefix: 'Solicitante' | 'JefeHogar'
+  ) => {
+    const anosField = prefix === 'Solicitante' ? 'anosCursadosSolicitante' : 'anosCursados';
+    const semestresField = prefix === 'Solicitante' ? 'semestresCursadosSolicitante' : 'semestresCursados';
+    const trimestresField = prefix === 'Solicitante' ? 'trimestresCursadosSolicitante' : 'trimestresCursados';
+    
+    updateField(anosField as keyof FormData, anosValue);
+    const anosNum = Number(anosValue);
+    if (!isNaN(anosNum) && anosNum >= 0) {
+      setFormData((prev) => ({
+        ...prev,
+        [anosField]: anosValue,
+        [semestresField]: (anosNum * 2).toString(),
+        [trimestresField]: (anosNum * 4).toString(),
+      }));
+    }
+  };
+
+  // Helper para calcular trimestres desde semestres
+  const handleSemestresChange = (
+    semestresValue: string,
+    prefix: 'Solicitante' | 'JefeHogar'
+  ) => {
+    const semestresField = prefix === 'Solicitante' ? 'semestresCursadosSolicitante' : 'semestresCursados';
+    const trimestresField = prefix === 'Solicitante' ? 'trimestresCursadosSolicitante' : 'trimestresCursados';
+    
+    updateField(semestresField as keyof FormData, semestresValue);
+    const semestresNum = Number(semestresValue);
+    if (!isNaN(semestresNum) && semestresNum >= 0) {
+      setFormData((prev) => ({
+        ...prev,
+        [semestresField]: semestresValue,
+        [trimestresField]: (semestresNum * 2).toString(),
+      }));
+    }
+  };
 
   const validateStep1 = (): boolean => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
@@ -303,6 +429,15 @@ export default function ApplicantFormModal({
     // Validar concubinato
     if (!formData.concubinato || formData.concubinato.trim() === '') {
       newErrors.concubinato = 'Este campo es requerido';
+    }
+
+    // Validar nacionalidad (solo si el tipo de cédula es 'P')
+    if (formData.cedulaTipo === 'P') {
+      if (!formData.nacionalidad || formData.nacionalidad.trim() === '') {
+        newErrors.nacionalidad = 'Este campo es requerido';
+      } else if (!['V', 'Ext'].includes(formData.nacionalidad)) {
+        newErrors.nacionalidad = 'Nacionalidad inválida';
+      }
     }
 
     setErrors(newErrors);
@@ -662,11 +797,10 @@ export default function ApplicantFormModal({
           throw new Error(typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage));
         }
 
-        // Llamar al callback de éxito
+        // Llamar al callback de éxito (recarga la lista y maneja el modal de confirmación)
+        // El componente padre ahora maneja el modal de confirmación
         onSubmit(result);
-        handleClose();
       } catch (error: any) {
-        console.error('Error al registrar solicitante:', error);
         const errorMessage = error?.message || 'Error al registrar solicitante. Por favor, intente nuevamente.';
         alert(errorMessage);
       }
@@ -693,11 +827,14 @@ export default function ApplicantFormModal({
       if (cedulaCheckTimeout) {
         clearTimeout(cedulaCheckTimeout);
       }
+      if (emailCheckTimeout) {
+        clearTimeout(emailCheckTimeout);
+      }
       if (cedulaSearchTimeout.current) {
         clearTimeout(cedulaSearchTimeout.current);
       }
     };
-  }, [cedulaCheckTimeout]);
+  }, [cedulaCheckTimeout, emailCheckTimeout]);
 
   const handleClose = () => {
     // Limpiar timeouts al cerrar
@@ -707,53 +844,7 @@ export default function ApplicantFormModal({
     }
     
     setCurrentStep(0);
-    setFormData({
-      cedulaTipo: 'V',
-      cedulaNumero: '',
-      nombres: '',
-      apellidos: '',
-      fechaNacimiento: '',
-      sexo: '',
-      telefonoLocal: '',
-      codigoPaisCelular: '+58',
-      telefonoCelular: '',
-      correoElectronico: '',
-      estadoCivil: '',
-      nacionalidad: '',
-      concubinato: '',
-      tipoVivienda: '',
-      cantHabitaciones: '',
-      cantBanos: '',
-      materialPiso: '',
-      materialParedes: '',
-      materialTecho: '',
-      aguaPotable: '',
-      eliminacionAguasN: '',
-      aseo: '',
-      artefactos: [],
-      cantPersonas: '',
-      cantTrabajadores: '',
-      cantNinos: '',
-      cantNinosEstudiando: '',
-      jefeHogar: '',
-      tipoEducativo: '',
-      numeroEducativo: '',
-      nivelEducativo: '',
-      anosCursados: '',
-      semestresCursados: '',
-      trimestresCursados: '',
-      ingresosMensuales: '',
-      tipoEducativoSolicitante: '',
-      numeroEducativoSolicitante: '',
-      nivelEducativoSolicitante: '',
-      anosCursadosSolicitante: '',
-      semestresCursadosSolicitante: '',
-      trimestresCursadosSolicitante: '',
-      trabaja: '',
-      condicionTrabajo: '',
-      buscandoTrabajo: '',
-      condicionActividad: '',
-    });
+    setFormData(getInitialFormData());
     setErrors({});
     onClose();
   };
@@ -809,6 +900,43 @@ export default function ApplicantFormModal({
       return;
     }
 
+    // Asignar nacionalidad automáticamente según el tipo de cédula
+    if (field === 'cedulaTipo') {
+      let nacionalidadAsignada = '';
+      if (value === 'V' || value === 'J') {
+        nacionalidadAsignada = 'V'; // Venezolano
+      } else if (value === 'E') {
+        nacionalidadAsignada = 'Ext'; // Extranjero
+      } else if (value === 'P') {
+        nacionalidadAsignada = ''; // Dejar vacío para que el usuario elija
+      }
+      
+      setFormData((prev) => ({
+        ...prev,
+        [field]: value,
+        nacionalidad: nacionalidadAsignada,
+      }));
+      
+      // Limpiar error de nacionalidad si se asignó automáticamente
+      if (nacionalidadAsignada && errors.nacionalidad) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.nacionalidad;
+          return newErrors;
+        });
+      }
+      
+      // Limpiar error del campo cuando se modifica
+      if (errors[field]) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[field];
+          return newErrors;
+        });
+      }
+      return;
+    }
+
     // No permitir editar campos bloqueados (autocompletados)
     if (lockedFields.has(field)) {
       return;
@@ -832,6 +960,11 @@ export default function ApplicantFormModal({
         delete newErrors[field];
         return newErrors;
       });
+    }
+
+    // Verificar correo electrónico si se modificó
+    if (field === 'correoElectronico') {
+      checkEmailExists(filteredValue);
     }
   };
 
@@ -866,7 +999,8 @@ export default function ApplicantFormModal({
       }
 
       // Si no es solicitante, buscar recomendaciones de clientes/usuarios
-      if (cedulaNumero.trim().length >= 2) {
+      // Permitir búsqueda con 1 carácter o más
+      if (cedulaNumero.trim().length >= 1) {
         if (cedulaSearchTimeout.current) {
           clearTimeout(cedulaSearchTimeout.current);
         }
@@ -890,12 +1024,11 @@ export default function ApplicantFormModal({
             if (exactMatch) {
               autocompleteFromCliente(exactMatch);
             }
-            } else {
+        } else {
               setCedulaSuggestions([]);
               setShowCedulaSuggestions(false);
             }
           } catch (error) {
-            console.error('Error al buscar sugerencias de cédula:', error);
             setCedulaSuggestions([]);
             setShowCedulaSuggestions(false);
           }
@@ -906,17 +1039,66 @@ export default function ApplicantFormModal({
       }
 
       // Limpiar el error si la cédula no existe como solicitante
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors.cedulaNumero;
-        return newErrors;
-      });
+          setErrors((prev) => {
+            const newErrors = { ...prev };
+            delete newErrors.cedulaNumero;
+            return newErrors;
+          });
     } catch (error) {
-      console.error('Error al verificar cédula:', error);
       // No mostrar error al usuario si falla la verificación
     }
   };
 
+  // Función para verificar si el correo electrónico ya existe como solicitante
+  const checkEmailExists = async (email: string) => {
+    if (!email || email.trim() === '') {
+      // Limpiar el error si el campo está vacío
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.correoElectronico;
+        return newErrors;
+      });
+      return;
+    }
+
+    // Validar formato de email básico antes de verificar
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      // No verificar si el formato es inválido, la validación de formato se hará en validateStep1
+      return;
+    }
+
+    // Limpiar timeout anterior si existe
+    if (emailCheckTimeout) {
+      clearTimeout(emailCheckTimeout);
+    }
+
+    // Esperar 500ms después de que el usuario deje de escribir
+    const timeout = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/solicitantes/search?q=${encodeURIComponent(email)}&type=email`);
+        const result = await response.json();
+
+        if (result.success && result.data && result.data.length > 0) {
+          // El correo ya está asociado a otra persona (cliente)
+          setErrors((prev) => ({
+            ...prev,
+            correoElectronico: `El correo electrónico ${email} ya está asociado a otra persona`,
+          }));
+        } else {
+          // Limpiar el error si el correo no existe como solicitante
+          setErrors((prev) => {
+            const newErrors = { ...prev };
+            delete newErrors.correoElectronico;
+            return newErrors;
+          });
+      }
+    } catch (error) {
+      // No mostrar error al usuario si falla la verificación
+    }
+    }, 500);
+
+    setEmailCheckTimeout(timeout);
+  };
 
   // Función para autocompletar el formulario con datos de un cliente
   const autocompleteFromCliente = (cliente: {
@@ -951,6 +1133,17 @@ export default function ApplicantFormModal({
       }
     }
 
+    // Asignar nacionalidad según el tipo de cédula
+    let nacionalidadAsignada = '';
+    if (cedulaTipo === 'V' || cedulaTipo === 'J') {
+      nacionalidadAsignada = 'V'; // Venezolano
+    } else if (cedulaTipo === 'E') {
+      nacionalidadAsignada = 'Ext'; // Extranjero
+    } else if (cedulaTipo === 'P') {
+      // Si es pasaporte, usar la nacionalidad del cliente o dejar vacío
+      nacionalidadAsignada = cliente.nacionalidad || '';
+    }
+
     // Actualizar el formulario con los datos del cliente
     setFormData((prev) => ({
       ...prev,
@@ -963,7 +1156,7 @@ export default function ApplicantFormModal({
       telefonoCelular,
       codigoPaisCelular,
       correoElectronico: cliente.correo_electronico || '',
-      nacionalidad: cliente.nacionalidad || '',
+      nacionalidad: nacionalidadAsignada,
     }));
 
     // Bloquear los campos autocompletados (incluyendo correo, pero cédula sigue editable)
@@ -1013,6 +1206,8 @@ export default function ApplicantFormModal({
           ]}
           onSelectChange={(value) => {
             updateField('cedulaTipo', value);
+            // Asignar nacionalidad automáticamente según el tipo de cédula
+            // (esto se maneja dentro de updateField)
             // Verificar cédula cuando cambia el tipo
             if (formData.cedulaNumero) {
               checkCedulaExists(value, formData.cedulaNumero);
@@ -1199,6 +1394,25 @@ export default function ApplicantFormModal({
           required
         />
       </div>
+
+      {/* Campo de Nacionalidad (solo visible cuando el tipo de cédula es 'P') */}
+      {formData.cedulaTipo === 'P' && (
+        <div className="col-span-1">
+          <Select
+            label="Nacionalidad *"
+            value={formData.nacionalidad}
+            onChange={(e) => updateField('nacionalidad', e.target.value)}
+            options={[
+              { value: 'V', label: 'Venezolano/a' },
+              { value: 'Ext', label: 'Extranjero/a' },
+            ]}
+            placeholder="Seleccionar nacionalidad"
+            error={errors.nacionalidad}
+            required
+            disabled={lockedFields.has('nacionalidad')}
+          />
+        </div>
+      )}
     </div>
   );
 
@@ -1477,17 +1691,7 @@ export default function ApplicantFormModal({
                 semestresCursados: '',
                 trimestresCursados: '',
               }));
-              // Limpiar errores de nivel educativo
-              setErrors((prev) => {
-                const newErrors = { ...prev };
-                delete newErrors.tipoEducativo;
-                delete newErrors.numeroEducativo;
-                delete newErrors.nivelEducativo;
-                delete newErrors.anosCursados;
-                delete newErrors.semestresCursados;
-                delete newErrors.trimestresCursados;
-                return newErrors;
-              });
+              clearErrors(['tipoEducativo', 'numeroEducativo', 'nivelEducativo', 'anosCursados', 'semestresCursados', 'trimestresCursados']);
             }
           }}
           options={[
@@ -1507,52 +1711,7 @@ export default function ApplicantFormModal({
             <Select
               label="Tipo de Educación del Jefe de Hogar *"
               value={formData.tipoEducativo}
-              onChange={(e) => {
-                const tipoSeleccionado = e.target.value;
-                updateField('tipoEducativo', tipoSeleccionado);
-                
-                const numerosDisponibles = getNumerosPorTipo(tipoSeleccionado);
-                
-                // Si solo hay un número disponible, asignarlo automáticamente
-                if (numerosDisponibles.length === 1) {
-                  const numeroAuto = numerosDisponibles[0].value;
-                  setFormData((prev) => ({
-                    ...prev,
-                    numeroEducativo: numeroAuto,
-                    nivelEducativo: numeroAuto,
-                    anosCursados: '',
-                    semestresCursados: '',
-                    trimestresCursados: '',
-                  }));
-                  // Limpiar errores
-                  setErrors((prev) => {
-                    const newErrors = { ...prev };
-                    delete newErrors.numeroEducativo;
-                    delete newErrors.anosCursados;
-                    delete newErrors.semestresCursados;
-                    delete newErrors.trimestresCursados;
-                    return newErrors;
-                  });
-                } else {
-                  // Si hay múltiples opciones, limpiar número y nivel
-                  setFormData((prev) => ({
-                    ...prev,
-                    numeroEducativo: '',
-                    nivelEducativo: '',
-                    anosCursados: '',
-                    semestresCursados: '',
-                    trimestresCursados: '',
-                  }));
-                  setErrors((prev) => {
-                    const newErrors = { ...prev };
-                    delete newErrors.numeroEducativo;
-                    delete newErrors.anosCursados;
-                    delete newErrors.semestresCursados;
-                    delete newErrors.trimestresCursados;
-                    return newErrors;
-                  });
-                }
-              }}
+              onChange={(e) => handleTipoEducativoChange(e.target.value, 'JefeHogar')}
               options={TIPOS_EDUCACION}
               placeholder="Seleccionar tipo de educación"
               error={errors.tipoEducativo}
@@ -1566,28 +1725,7 @@ export default function ApplicantFormModal({
                   <Select
                     label="Grado/Número del Jefe de Hogar *"
                     value={formData.numeroEducativo}
-                    onChange={(e) => {
-                      updateField('numeroEducativo', e.target.value);
-                      // Calcular nivelEducativo desde el número
-                      updateField('nivelEducativo', e.target.value);
-                      // Limpiar campos de duración si cambia el nivel
-                      const nivelNum = Number(e.target.value);
-                      if (nivelNum !== 12 && nivelNum !== 13 && nivelNum !== 14) {
-                        setFormData((prev) => ({
-                          ...prev,
-                          anosCursados: '',
-                          semestresCursados: '',
-                          trimestresCursados: '',
-                        }));
-                        setErrors((prev) => {
-                          const newErrors = { ...prev };
-                          delete newErrors.anosCursados;
-                          delete newErrors.semestresCursados;
-                          delete newErrors.trimestresCursados;
-                          return newErrors;
-                        });
-                      }
-                    }}
+                    onChange={(e) => handleNumeroEducativoChange(e.target.value, 'JefeHogar')}
                     options={getNumerosPorTipo(formData.tipoEducativo)}
                     placeholder="Seleccionar grado/número"
                     error={errors.numeroEducativo}
@@ -1618,20 +1756,7 @@ export default function ApplicantFormModal({
                   label="Años Cursados del Jefe de Hogar *"
                   type="number"
                   value={formData.anosCursados}
-                  onChange={(e) => {
-                    const anosValue = e.target.value;
-                    updateField('anosCursados', anosValue);
-                    // Calcular automáticamente semestres y trimestres
-                    const anosNum = Number(anosValue);
-                    if (!isNaN(anosNum) && anosNum >= 0) {
-                      setFormData((prev) => ({
-                        ...prev,
-                        anosCursados: anosValue,
-                        semestresCursados: (anosNum * 2).toString(),
-                        trimestresCursados: (anosNum * 4).toString(),
-                      }));
-                    }
-                  }}
+                  onChange={(e) => handleAnosChange(e.target.value, 'JefeHogar')}
                   placeholder="Ingrese años"
                   error={errors.anosCursados}
                   required
@@ -1643,19 +1768,7 @@ export default function ApplicantFormModal({
                   label="Semestres Cursados del Jefe de Hogar *"
                   type="number"
                   value={formData.semestresCursados}
-                  onChange={(e) => {
-                    const semestresValue = e.target.value;
-                    updateField('semestresCursados', semestresValue);
-                    // Calcular automáticamente trimestres a partir de semestres
-                    const semestresNum = Number(semestresValue);
-                    if (!isNaN(semestresNum) && semestresNum >= 0) {
-                      setFormData((prev) => ({
-                        ...prev,
-                        semestresCursados: semestresValue,
-                        trimestresCursados: (semestresNum * 2).toString(),
-                      }));
-                    }
-                  }}
+                  onChange={(e) => handleSemestresChange(e.target.value, 'JefeHogar')}
                   placeholder="Ingrese semestres"
                   error={errors.semestresCursados}
                   required
@@ -1688,52 +1801,7 @@ export default function ApplicantFormModal({
         <Select
           label="Tipo de Educación *"
           value={formData.tipoEducativoSolicitante}
-          onChange={(e) => {
-            const tipoSeleccionado = e.target.value;
-            updateField('tipoEducativoSolicitante', tipoSeleccionado);
-            
-            const numerosDisponibles = getNumerosPorTipo(tipoSeleccionado);
-            
-            // Si solo hay un número disponible, asignarlo automáticamente
-            if (numerosDisponibles.length === 1) {
-              const numeroAuto = numerosDisponibles[0].value;
-              setFormData((prev) => ({
-                ...prev,
-                numeroEducativoSolicitante: numeroAuto,
-                nivelEducativoSolicitante: numeroAuto,
-                anosCursadosSolicitante: '',
-                semestresCursadosSolicitante: '',
-                trimestresCursadosSolicitante: '',
-              }));
-              // Limpiar errores
-              setErrors((prev) => {
-                const newErrors = { ...prev };
-                delete newErrors.numeroEducativoSolicitante;
-                delete newErrors.anosCursadosSolicitante;
-                delete newErrors.semestresCursadosSolicitante;
-                delete newErrors.trimestresCursadosSolicitante;
-                return newErrors;
-              });
-            } else {
-              // Si hay múltiples opciones, limpiar número y nivel
-              setFormData((prev) => ({
-                ...prev,
-                numeroEducativoSolicitante: '',
-                nivelEducativoSolicitante: '',
-                anosCursadosSolicitante: '',
-                semestresCursadosSolicitante: '',
-                trimestresCursadosSolicitante: '',
-              }));
-              setErrors((prev) => {
-                const newErrors = { ...prev };
-                delete newErrors.numeroEducativoSolicitante;
-                delete newErrors.anosCursadosSolicitante;
-                delete newErrors.semestresCursadosSolicitante;
-                delete newErrors.trimestresCursadosSolicitante;
-                return newErrors;
-              });
-            }
-          }}
+          onChange={(e) => handleTipoEducativoChange(e.target.value, 'Solicitante')}
           options={TIPOS_EDUCACION}
           placeholder="Seleccionar tipo de educación"
           error={errors.tipoEducativoSolicitante}
@@ -1747,28 +1815,7 @@ export default function ApplicantFormModal({
               <Select
                 label="Grado/Número *"
                 value={formData.numeroEducativoSolicitante}
-                onChange={(e) => {
-                  updateField('numeroEducativoSolicitante', e.target.value);
-                  // Calcular nivelEducativoSolicitante desde el número
-                  updateField('nivelEducativoSolicitante', e.target.value);
-                  // Limpiar campos de duración si cambia el nivel
-                  const nivelNum = Number(e.target.value);
-                  if (nivelNum !== 12 && nivelNum !== 13 && nivelNum !== 14) {
-                    setFormData((prev) => ({
-                      ...prev,
-                      anosCursadosSolicitante: '',
-                      semestresCursadosSolicitante: '',
-                      trimestresCursadosSolicitante: '',
-                    }));
-                    setErrors((prev) => {
-                      const newErrors = { ...prev };
-                      delete newErrors.anosCursadosSolicitante;
-                      delete newErrors.semestresCursadosSolicitante;
-                      delete newErrors.trimestresCursadosSolicitante;
-                      return newErrors;
-                    });
-                  }
-                }}
+                onChange={(e) => handleNumeroEducativoChange(e.target.value, 'Solicitante')}
                 options={getNumerosPorTipo(formData.tipoEducativoSolicitante)}
                 placeholder="Seleccionar grado/número"
                 error={errors.numeroEducativoSolicitante}
@@ -1799,20 +1846,7 @@ export default function ApplicantFormModal({
               label="Años Cursados *"
               type="number"
               value={formData.anosCursadosSolicitante}
-              onChange={(e) => {
-                const anosValue = e.target.value;
-                updateField('anosCursadosSolicitante', anosValue);
-                // Calcular automáticamente semestres y trimestres
-                const anosNum = Number(anosValue);
-                if (!isNaN(anosNum) && anosNum >= 0) {
-                  setFormData((prev) => ({
-                    ...prev,
-                    anosCursadosSolicitante: anosValue,
-                    semestresCursadosSolicitante: (anosNum * 2).toString(),
-                    trimestresCursadosSolicitante: (anosNum * 4).toString(),
-                  }));
-                }
-              }}
+              onChange={(e) => handleAnosChange(e.target.value, 'Solicitante')}
               placeholder="Ingrese años"
               error={errors.anosCursadosSolicitante}
               required
@@ -1824,19 +1858,7 @@ export default function ApplicantFormModal({
               label="Semestres Cursados *"
               type="number"
               value={formData.semestresCursadosSolicitante}
-              onChange={(e) => {
-                const semestresValue = e.target.value;
-                updateField('semestresCursadosSolicitante', semestresValue);
-                // Calcular automáticamente trimestres a partir de semestres
-                const semestresNum = Number(semestresValue);
-                if (!isNaN(semestresNum) && semestresNum >= 0) {
-                  setFormData((prev) => ({
-                    ...prev,
-                    semestresCursadosSolicitante: semestresValue,
-                    trimestresCursadosSolicitante: (semestresNum * 2).toString(),
-                  }));
-                }
-              }}
+              onChange={(e) => handleSemestresChange(e.target.value, 'Solicitante')}
               placeholder="Ingrese semestres"
               error={errors.semestresCursadosSolicitante}
               required
@@ -1989,6 +2011,7 @@ export default function ApplicantFormModal({
   };
 
   return (
+    <>
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
@@ -2046,6 +2069,7 @@ export default function ApplicantFormModal({
         </div>
       </div>
     </Modal>
+  </>
   );
 }
 

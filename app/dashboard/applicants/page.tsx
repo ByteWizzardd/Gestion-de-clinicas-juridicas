@@ -6,6 +6,7 @@ import CaseTools from "@/components/CaseTools/CaseTools";
 import Table from "@/components/Table/Table";
 import Spinner from "@/components/ui/feedback/Spinner";
 import ApplicantFormModal from "@/components/forms/ApplicantFormModal";
+import ConfirmModal from "@/components/ui/feedback/ConfirmModal";
 
 interface Solicitante extends Record<string, unknown> {
   cedula: string;
@@ -20,6 +21,9 @@ export default function ApplicantsPage() {
   const [solicitantes, setSolicitantes] = useState<Solicitante[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [registeredCedula, setRegisteredCedula] = useState<{ tipo: string; numero: string } | null>(null);
+  const [registeredNombre, setRegisteredNombre] = useState<string>('');
   const [searchValue, setSearchValue] = useState('');
   const [nucleoFilter, setNucleoFilter] = useState('');
   const [nucleosOptions, setNucleosOptions] = useState<{ value: string; label: string }[]>([]);
@@ -131,7 +135,6 @@ export default function ApplicantsPage() {
   const handleEdit = (data: Record<string, unknown>) => {
     const solicitante = data as Solicitante;
     // TODO: Implementar lógica de edición
-    console.log("Editar solicitante:", solicitante);
     alert(`Editar solicitante: ${solicitante.nombre_completo}`);
   };
 
@@ -143,7 +146,6 @@ export default function ApplicantsPage() {
       `¿Está seguro de que desea eliminar al solicitante ${solicitante.nombre_completo}?`
     );
     if (confirmDelete) {
-      console.log("Eliminar solicitante:", solicitante);
       // Aquí iría la llamada a la API para eliminar
       alert(`Eliminar solicitante: ${solicitante.nombre_completo}`);
     }
@@ -192,13 +194,57 @@ export default function ApplicantsPage() {
 
       {/* Modal de registro de solicitante */}
       <ApplicantFormModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={(data) => {
-          // Recargar la lista de solicitantes después de registrar
-          fetchSolicitantes();
+        isOpen={isModalOpen && !showConfirmModal}
+        onClose={() => {
           setIsModalOpen(false);
+          setShowConfirmModal(false);
+          setRegisteredCedula(null);
+          setRegisteredNombre('');
         }}
+        onSubmit={(data: any) => {
+          // Guardar datos del solicitante registrado para el modal de confirmación
+          // El servicio devuelve { cliente, vivienda, nivelEducativo, trabajo, hogar }
+          const cliente = data.data?.cliente;
+          if (cliente && cliente.cedula) {
+            const cedulaCompleta = cliente.cedula;
+            const tipo = cedulaCompleta.charAt(0);
+            const numero = cedulaCompleta.substring(1);
+            setRegisteredCedula({ tipo, numero });
+            setRegisteredNombre(cliente.nombres && cliente.apellidos 
+              ? `${cliente.nombres} ${cliente.apellidos}` 
+              : '');
+          }
+          
+          // Recargar la lista de solicitantes
+          fetchSolicitantes();
+          
+          // Cerrar el modal de registro y mostrar el modal de confirmación
+          setIsModalOpen(false);
+          setShowConfirmModal(true);
+        }}
+      />
+      
+      {/* Modal de confirmación para asociar caso */}
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onClose={() => {
+          setShowConfirmModal(false);
+          setRegisteredCedula(null);
+          setRegisteredNombre('');
+        }}
+        onConfirm={() => {
+          setShowConfirmModal(false);
+          // Navegar a la página de casos con la cédula prellenada
+          if (registeredCedula) {
+            router.push(`/dashboard/cases?cedula=${registeredCedula.tipo}${registeredCedula.numero}&cedulaTipo=${registeredCedula.tipo}`);
+          }
+          setRegisteredCedula(null);
+          setRegisteredNombre('');
+        }}
+        title="¿Asociar caso al solicitante?"
+        message={`¿Deseas asociar un caso a ${registeredNombre}?`}
+        confirmLabel="Sí, asociar caso"
+        cancelLabel="No, cerrar"
       />
     </>
   );

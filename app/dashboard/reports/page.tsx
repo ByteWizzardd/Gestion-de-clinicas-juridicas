@@ -28,7 +28,6 @@ export default function ReportsPage() {
     const currentTopCasesData = nucleoTopCasesData[filters.nucleo] || topCasesData;
 
     const handleGenerateReport = (reportType: string) => {
-        console.log(`Generando reporte: ${reportType}`, { filters });
         // TODO: Implement actual report generation logic
         alert(`Generando ${reportType}...`);
     };

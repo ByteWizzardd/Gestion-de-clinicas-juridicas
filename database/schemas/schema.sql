@@ -122,7 +122,7 @@ CREATE TABLE clientes (
     correo_electronico VARCHAR(100) NOT NULL UNIQUE, -- Clave alternativa
     
     sexo VARCHAR(1) NOT NULL CHECK (sexo IN ('M', 'F')),
-    nacionalidad VARCHAR(10) NOT NULL CHECK (nacionalidad IN ('V', 'E', 'Ext')),
+    nacionalidad VARCHAR(10) NOT NULL CHECK (nacionalidad IN ('V', 'Ext')),
     estado_civil VARCHAR(20) CHECK (estado_civil IN ('Soltero', 'Casado', 'Divorciado', 'Viudo')),
     concubinato BOOLEAN,
     

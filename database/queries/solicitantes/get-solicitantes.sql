@@ -1,4 +1,7 @@
---Retorna los clientes que son solicitantes en al menos un caso
+-- Retorna los clientes que son solicitantes
+-- Un solicitante es un cliente que tiene todos los datos completos requeridos por el formulario:
+-- estado_civil, concubinato, id_hogar, id_nivel_educativo, id_trabajo, id_vivienda
+-- Y que tiene al menos un caso registrado (fecha_solicitud NOT NULL)
 
 SELECT 
     c.cedula,
@@ -20,6 +23,12 @@ SELECT
         LIMIT 1
     ) AS fecha_solicitud
 FROM clientes c
-WHERE EXISTS (
-    SELECT 1 FROM casos ca WHERE ca.cedula_cliente = c.cedula
-);
+WHERE c.estado_civil IS NOT NULL
+  AND c.concubinato IS NOT NULL
+  AND c.id_hogar IS NOT NULL
+  AND c.id_nivel_educativo IS NOT NULL
+  AND c.id_trabajo IS NOT NULL
+  AND c.id_vivienda IS NOT NULL
+  AND EXISTS (
+      SELECT 1 FROM casos ca WHERE ca.cedula_cliente = c.cedula
+  );

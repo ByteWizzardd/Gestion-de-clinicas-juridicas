@@ -19,7 +19,7 @@ export interface Cliente {
   telefono_celular: string | null;
   correo_electronico: string | null;
   sexo: 'M' | 'F' | null;
-  nacionalidad: 'V' | 'E' | 'Ext' | null;
+  nacionalidad: 'V' | 'Ext' | null;
   estado_civil: 'Soltero' | 'Casado' | 'Divorciado' | 'Viudo' | null;
   concubinato: boolean | null;
   id_hogar: number | null;
