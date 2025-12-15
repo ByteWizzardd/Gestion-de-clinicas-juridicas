@@ -22,6 +22,25 @@ export const clientesQueries = {
   },
 
   /**
+   * Busca clientes por cédula excluyendo solicitantes (para recomendaciones)
+   */
+  searchByCedulaExcludeSolicitantes: async (cedula: string): Promise<Array<{
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+    fecha_nacimiento: Date;
+    telefono_celular: string;
+    correo_electronico: string;
+    sexo: string;
+    nacionalidad: string;
+    nombre_completo: string;
+  }>> => {
+    const query = loadSQL('clientes/search-by-cedula-exclude-solicitantes.sql');
+    const result: QueryResult = await pool.query(query, [cedula]);
+    return result.rows;
+  },
+
+  /**
    * Actualiza un cliente con todos los datos completos
    */
   updateComplete: async (data: {

@@ -140,6 +140,7 @@ export default function CedulaInput({
     { value: 'V', label: 'V' },
     { value: 'E', label: 'E' },
     { value: 'J', label: 'J' },
+    { value: 'P', label: 'P' },
   ];
 
   // Cerrar sugerencias al hacer clic fuera
@@ -216,8 +217,8 @@ export default function CedulaInput({
     let tipoCedula = tipoValue;
     let numeroCedula = cliente.cedula;
     
-    // Si la cédula empieza con V, E o J, extraer el tipo
-    if (cliente.cedula.match(/^[VEJ]/)) {
+    // Si la cédula empieza con V, E, J o P, extraer el tipo
+    if (cliente.cedula.match(/^[VEJP]/)) {
       tipoCedula = cliente.cedula[0];
       numeroCedula = cliente.cedula.substring(1);
     }

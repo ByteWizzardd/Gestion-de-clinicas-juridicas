@@ -15,9 +15,10 @@ interface SelectSmallProps {
   options: SelectOption[];
   className?: string;
   error?: boolean;
+  disabled?: boolean;
 }
 
-function SelectSmall({ value, onChange, options, className = '', error = false }: SelectSmallProps) {
+function SelectSmall({ value, onChange, options, className = '', error = false, disabled = false }: SelectSmallProps) {
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef<HTMLDivElement>(null);
 
@@ -48,13 +49,18 @@ function SelectSmall({ value, onChange, options, className = '', error = false }
     <div ref={selectRef} className={`relative ${className}`}>
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          if (disabled) return;
+          setIsOpen(!isOpen);
+        }}
+        disabled={disabled}
         className={`
           w-full h-[40px] px-3 pr-8 rounded-full border flex items-center justify-between
           ${error ? 'border-danger' : 'border-gray-300'}
           focus:outline-none focus:ring-1 focus:ring-primary
-          bg-white cursor-pointer transition-colors
+          bg-white transition-colors
           text-base font-normal text-foreground
+          ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         `}
       >
         <span className={selectedOption ? 'text-foreground' : 'text-[#717171]'}>
@@ -107,6 +113,7 @@ interface InputGroupProps {
   error?: string;
   selectWidth?: string;
   editableCode?: boolean; // Si es true, el código de país será un input editable
+  disabled?: boolean; // Si es true, deshabilita ambos campos (select e input)
 }
 
 export default function InputGroup({
@@ -120,6 +127,7 @@ export default function InputGroup({
   error,
   selectWidth = 'w-14',
   editableCode = false,
+  disabled = false,
 }: InputGroupProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [filteredOptions, setFilteredOptions] = useState<{ value: string; label: string }[]>([]);
@@ -209,6 +217,7 @@ export default function InputGroup({
               type="text"
               value={selectValue}
               onChange={(e) => {
+                if (disabled) return;
                 onSelectChange(e.target.value);
                 // Filtrar opciones mientras el usuario escribe
                 if (isFocused) {
@@ -221,6 +230,7 @@ export default function InputGroup({
                 }
               }}
               onFocus={() => {
+                if (disabled) return;
                 setIsFocused(true);
                 // Solo mostrar sugerencias cuando el usuario hace focus
                 if (selectValue.trim().length === 0) {
@@ -245,12 +255,14 @@ export default function InputGroup({
                 }, 200);
               }}
               placeholder="+58"
+              disabled={disabled}
               className={`
                 w-full h-[40px] px-3 rounded-full border
                 ${error ? 'border-danger' : 'border-transparent'} bg-[#E5E7EB]
                 focus:outline-none focus:ring-1 
                 ${error ? 'focus:ring-danger' : 'focus:ring-primary'}
                 text-base placeholder:text-[#717171]
+                ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
               `}
             />
             {/* Lista de sugerencias */}
@@ -298,14 +310,19 @@ export default function InputGroup({
         <div className="flex-1">
           <input
             value={inputValue}
-            onChange={(e) => onInputChange(e.target.value)}
+            onChange={(e) => {
+              if (disabled) return;
+              onInputChange(e.target.value);
+            }}
             placeholder={inputPlaceholder}
+            disabled={disabled}
             className={`
               w-full h-[40px] px-4 rounded-full border
               ${error ? 'border-danger' : 'border-transparent'} bg-[#E5E7EB]
               focus:outline-none focus:ring-1 
               ${error ? 'focus:ring-danger' : 'focus:ring-primary'}
               text-base placeholder:text-[#717171]
+              ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
             `}
           />
         </div>

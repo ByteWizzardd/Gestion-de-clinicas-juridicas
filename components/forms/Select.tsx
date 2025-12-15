@@ -20,9 +20,10 @@ interface SelectProps {
     required?: boolean;
     className?: string;
     icon?: React.ReactNode;
+    disabled?: boolean;
 }
 
-export default function Select({ label, error, options, placeholder = "Selecciona una opción", value = "", onChange, required, className = "", icon }: SelectProps) {
+export default function Select({ label, error, options, placeholder = "Selecciona una opción", value = "", onChange, required, className = "", icon, disabled = false }: SelectProps) {
     const [isOpen, setIsOpen] = useState(false);
 
     const selectedOption = options.find((opt) => opt.value === value);

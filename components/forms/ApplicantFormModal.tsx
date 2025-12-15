@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import Modal from '../ui/feedback/Modal';
 import Stepper from './Stepper';
 import Input from './Input';
@@ -30,6 +31,7 @@ interface FormData {
   correoElectronico: string;
   estadoCivil: string;
   concubinato: string;
+  nacionalidad: string;
   // Paso 2 - Vivienda
   tipoVivienda: string;
   cantHabitaciones: string;
@@ -159,6 +161,7 @@ export default function ApplicantFormModal({
     correoElectronico: '',
     estadoCivil: '',
     concubinato: '',
+    nacionalidad: '',
     tipoVivienda: '',
     cantHabitaciones: '',
     cantBanos: '',
@@ -195,6 +198,25 @@ export default function ApplicantFormModal({
 
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [cedulaCheckTimeout, setCedulaCheckTimeout] = useState<NodeJS.Timeout | null>(null);
+  
+  // Estados para recomendaciones de cédula
+  const [cedulaSuggestions, setCedulaSuggestions] = useState<Array<{
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+    fecha_nacimiento: string;
+    telefono_celular: string;
+    correo_electronico: string;
+    sexo: string;
+    nacionalidad: string;
+    nombre_completo: string;
+  }>>([]);
+  const [showCedulaSuggestions, setShowCedulaSuggestions] = useState(false);
+  const cedulaInputRef = useRef<HTMLDivElement>(null);
+  const cedulaSearchTimeout = useRef<NodeJS.Timeout | null>(null);
+  
+  // Estado para controlar qué campos están bloqueados (autocompletados)
+  const [lockedFields, setLockedFields] = useState<Set<keyof FormData>>(new Set());
 
   const validateStep1 = (): boolean => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
@@ -651,7 +673,39 @@ export default function ApplicantFormModal({
     }
   };
 
+  // Cerrar sugerencias al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (cedulaInputRef.current && !cedulaInputRef.current.contains(event.target as Node)) {
+        setShowCedulaSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Limpiar timeouts al desmontar el componente
+  useEffect(() => {
+    return () => {
+      if (cedulaCheckTimeout) {
+        clearTimeout(cedulaCheckTimeout);
+      }
+      if (cedulaSearchTimeout.current) {
+        clearTimeout(cedulaSearchTimeout.current);
+      }
+    };
+  }, [cedulaCheckTimeout]);
+
   const handleClose = () => {
+    // Limpiar timeouts al cerrar
+    if (cedulaCheckTimeout) {
+      clearTimeout(cedulaCheckTimeout);
+      setCedulaCheckTimeout(null);
+    }
+    
     setCurrentStep(0);
     setFormData({
       cedulaTipo: 'V',
@@ -665,6 +719,7 @@ export default function ApplicantFormModal({
       telefonoCelular: '',
       correoElectronico: '',
       estadoCivil: '',
+      nacionalidad: '',
       concubinato: '',
       tipoVivienda: '',
       cantHabitaciones: '',
@@ -725,6 +780,40 @@ export default function ApplicantFormModal({
   };
 
   const updateField = (field: keyof FormData, value: string) => {
+    // Si el usuario cambia la cédula después de autocompletar, desbloquear todo y limpiar campos (incluyendo correo)
+    if ((field === 'cedulaTipo' || field === 'cedulaNumero') && lockedFields.size > 0) {
+      // Limpiar campos autocompletados (incluyendo correo)
+      setFormData((prev) => ({
+        ...prev,
+        nombres: '',
+        apellidos: '',
+        fechaNacimiento: '',
+        sexo: '',
+        telefonoCelular: '',
+        codigoPaisCelular: '+58',
+        correoElectronico: '',
+        nacionalidad: '',
+        [field]: value, // Actualizar el campo que se está modificando
+      }));
+      // Desbloquear todos los campos
+      setLockedFields(new Set());
+      // Limpiar sugerencias
+      setCedulaSuggestions([]);
+      setShowCedulaSuggestions(false);
+      // Limpiar errores
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.cedulaNumero;
+        return newErrors;
+      });
+      return;
+    }
+
+    // No permitir editar campos bloqueados (autocompletados)
+    if (lockedFields.has(field)) {
+      return;
+    }
+
     // Filtrar caracteres especiales según el tipo de campo
     let filteredValue = value;
     if (field === 'nombres' || field === 'apellidos') {
@@ -746,40 +835,157 @@ export default function ApplicantFormModal({
     }
   };
 
-  // Función para verificar si la cédula ya existe
+  // Función para verificar si la cédula ya existe como solicitante y buscar recomendaciones
   const checkCedulaExists = async (cedulaTipo: string, cedulaNumero: string) => {
     if (!cedulaNumero || cedulaNumero.trim() === '') {
+      setCedulaSuggestions([]);
+      setShowCedulaSuggestions(false);
       return;
     }
 
     const cedula = `${cedulaTipo}${cedulaNumero}`;
     
     try {
-      const response = await fetch(`/api/clientes/search?q=${encodeURIComponent(cedula)}`);
-      const result = await response.json();
+      // Primero verificar si es solicitante
+      const solicitanteResponse = await fetch(`/api/solicitantes/search?q=${encodeURIComponent(cedula)}&type=cedula`);
+      const solicitanteResult = await solicitanteResponse.json();
 
-      if (result.success && result.data) {
+      if (solicitanteResult.success && solicitanteResult.data) {
         // Buscar si hay una coincidencia exacta
-        const clienteExistente = result.data.find((c: any) => c.cedula === cedula);
+        const solicitanteExistente = solicitanteResult.data.find((s: any) => s.cedula === cedula);
         
-        if (clienteExistente) {
+        if (solicitanteExistente) {
           setErrors((prev) => ({
             ...prev,
-            cedulaNumero: `La cédula ${cedula} ya está registrada`,
+            cedulaNumero: `La cédula ${cedula} ya está registrada como solicitante`,
           }));
-        } else {
-          // Limpiar el error si la cédula no existe
-          setErrors((prev) => {
-            const newErrors = { ...prev };
-            delete newErrors.cedulaNumero;
-            return newErrors;
-          });
+          setCedulaSuggestions([]);
+          setShowCedulaSuggestions(false);
+          return; // No buscar recomendaciones si es solicitante
         }
       }
+
+      // Si no es solicitante, buscar recomendaciones de clientes/usuarios
+      if (cedulaNumero.trim().length >= 2) {
+        if (cedulaSearchTimeout.current) {
+          clearTimeout(cedulaSearchTimeout.current);
+        }
+        
+        cedulaSearchTimeout.current = setTimeout(async () => {
+          try {
+            const response = await fetch(`/api/clientes/search?q=${encodeURIComponent(cedula)}&type=cedula&excludeSolicitantes=true`);
+            const result = await response.json();
+
+            if (result.success && result.data) {
+            // Formatear fechas
+            const formattedData = result.data.map((c: any) => ({
+              ...c,
+              fecha_nacimiento: c.fecha_nacimiento ? new Date(c.fecha_nacimiento).toISOString().split('T')[0] : null,
+            }));
+            setCedulaSuggestions(formattedData);
+            setShowCedulaSuggestions(formattedData.length > 0 && !errors.cedulaNumero);
+            
+            // Si hay una coincidencia exacta, autocompletar automáticamente
+            const exactMatch = formattedData.find((c: any) => c.cedula === cedula);
+            if (exactMatch) {
+              autocompleteFromCliente(exactMatch);
+            }
+            } else {
+              setCedulaSuggestions([]);
+              setShowCedulaSuggestions(false);
+            }
+          } catch (error) {
+            console.error('Error al buscar sugerencias de cédula:', error);
+            setCedulaSuggestions([]);
+            setShowCedulaSuggestions(false);
+          }
+        }, 300);
+      } else {
+        setCedulaSuggestions([]);
+        setShowCedulaSuggestions(false);
+      }
+
+      // Limpiar el error si la cédula no existe como solicitante
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.cedulaNumero;
+        return newErrors;
+      });
     } catch (error) {
       console.error('Error al verificar cédula:', error);
       // No mostrar error al usuario si falla la verificación
     }
+  };
+
+
+  // Función para autocompletar el formulario con datos de un cliente
+  const autocompleteFromCliente = (cliente: {
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+    fecha_nacimiento: string;
+    telefono_celular: string;
+    correo_electronico: string;
+    sexo: string;
+    nacionalidad: string;
+  }) => {
+    // Extraer tipo y número de cédula
+    let cedulaTipo = 'V';
+    let cedulaNumero = cliente.cedula || '';
+    if (cedulaNumero.match(/^[VEJP]/)) {
+      cedulaTipo = cedulaNumero[0];
+      cedulaNumero = cedulaNumero.substring(1);
+    }
+
+    // Extraer código de país y número de teléfono celular
+    let codigoPaisCelular = '+58';
+    let telefonoCelular = cliente.telefono_celular || '';
+    if (telefonoCelular.startsWith('+58')) {
+      codigoPaisCelular = '+58';
+      telefonoCelular = telefonoCelular.substring(3);
+    } else if (telefonoCelular.startsWith('+')) {
+      const match = telefonoCelular.match(/^(\+\d{1,3})(.+)$/);
+      if (match) {
+        codigoPaisCelular = match[1];
+        telefonoCelular = match[2];
+      }
+    }
+
+    // Actualizar el formulario con los datos del cliente
+    setFormData((prev) => ({
+      ...prev,
+      cedulaTipo,
+      cedulaNumero,
+      nombres: cliente.nombres || '',
+      apellidos: cliente.apellidos || '',
+      fechaNacimiento: cliente.fecha_nacimiento || '',
+      sexo: cliente.sexo || '',
+      telefonoCelular,
+      codigoPaisCelular,
+      correoElectronico: cliente.correo_electronico || '',
+      nacionalidad: cliente.nacionalidad || '',
+    }));
+
+    // Bloquear los campos autocompletados (incluyendo correo, pero cédula sigue editable)
+    setLockedFields(new Set([
+      'nombres',
+      'apellidos',
+      'fechaNacimiento',
+      'sexo',
+      'telefonoCelular',
+      'codigoPaisCelular',
+      'correoElectronico',
+      'nacionalidad',
+    ]));
+
+    // Limpiar errores y ocultar sugerencias
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors.cedulaNumero;
+      return newErrors;
+    });
+    setShowCedulaSuggestions(false);
+    setCedulaSuggestions([]);
   };
 
   const handleArtefactoChange = (artefacto: string, checked: boolean) => {
@@ -795,7 +1001,7 @@ export default function ApplicantFormModal({
   const renderStep1 = () => (
     <div className="grid grid-cols-3 gap-x-6 gap-y-4">
       {/* Fila 1: Cédula, Nombres, Apellidos */}
-      <div className="col-span-1">
+      <div className="col-span-1 relative" ref={cedulaInputRef}>
         <InputGroup
           label="Cédula *"
           selectValue={formData.cedulaTipo}
@@ -803,6 +1009,7 @@ export default function ApplicantFormModal({
             { value: 'V', label: 'V' },
             { value: 'E', label: 'E' },
             { value: 'J', label: 'J' },
+            { value: 'P', label: 'P' },
           ]}
           onSelectChange={(value) => {
             updateField('cedulaTipo', value);
@@ -838,6 +1045,35 @@ export default function ApplicantFormModal({
           inputPlaceholder="Ingrese cédula"
           error={errors.cedulaNumero}
         />
+        {/* Lista de sugerencias de cédula */}
+        <AnimatePresence>
+          {showCedulaSuggestions && cedulaSuggestions.length > 0 && !errors.cedulaNumero && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+            >
+              {cedulaSuggestions.map((cliente, index) => (
+                <motion.button
+                  key={cliente.cedula}
+                  type="button"
+                  onClick={() => {
+                    autocompleteFromCliente(cliente);
+                  }}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.03, duration: 0.15 }}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none transition-colors"
+                >
+                  <div className="font-medium text-gray-900">{cliente.cedula}</div>
+                  <div className="text-sm text-gray-600">{cliente.nombre_completo}</div>
+                </motion.button>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
       <div className="col-span-1">
         <Input
@@ -847,6 +1083,7 @@ export default function ApplicantFormModal({
           placeholder="Ingrese nombres"
           error={errors.nombres}
           required
+          disabled={lockedFields.has('nombres')}
         />
       </div>
       <div className="col-span-1">
@@ -857,6 +1094,7 @@ export default function ApplicantFormModal({
           placeholder="Ingrese apellidos"
           error={errors.apellidos}
           required
+          disabled={lockedFields.has('apellidos')}
         />
       </div>
 
@@ -871,6 +1109,7 @@ export default function ApplicantFormModal({
               onChange={(value) => updateField('fechaNacimiento', value)}
               error={errors.fechaNacimiento}
               required
+              disabled={lockedFields.has('fechaNacimiento')}
             />
           </div>
           {errors.fechaNacimiento && <p className="text-xs text-danger mt-1">{errors.fechaNacimiento}</p>}
@@ -888,6 +1127,7 @@ export default function ApplicantFormModal({
           placeholder="Seleccionar sexo"
           error={errors.sexo}
           required
+          disabled={lockedFields.has('sexo')}
         />
       </div>
       <div className="col-span-1">
@@ -914,6 +1154,7 @@ export default function ApplicantFormModal({
           error={errors.telefonoCelular}
           selectWidth="w-20"
           editableCode={true}
+          disabled={lockedFields.has('telefonoCelular') || lockedFields.has('codigoPaisCelular')}
         />
       </div>
       <div className="col-span-1">
@@ -925,6 +1166,7 @@ export default function ApplicantFormModal({
           placeholder="Ingrese correo electrónico"
           error={errors.correoElectronico}
           required
+          disabled={lockedFields.size > 0}
         />
       </div>
       <div className="col-span-1">

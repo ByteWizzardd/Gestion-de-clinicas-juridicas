@@ -37,9 +37,9 @@ export const authService = {
     }
 
     // Normalizar la cédula al formato "V66666666" (tipo + número)
-    // Si la cédula no empieza con V, E o J, asumir que es V
+    // Si la cédula no empieza con V, E, J o P, asumir que es V
     let cedulaNormalizada = data.cedula.trim().toUpperCase();
-    if (!cedulaNormalizada.match(/^[VEJ]/)) {
+    if (!cedulaNormalizada.match(/^[VEJP]/)) {
       // Si no tiene tipo, agregar V por defecto
       cedulaNormalizada = 'V' + cedulaNormalizada;
     }

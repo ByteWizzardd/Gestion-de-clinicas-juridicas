@@ -51,4 +51,19 @@ export const solicitantesQueries = {
         }
         return row;
     },
+
+    /**
+     * Busca solicitantes por cédula (búsqueda parcial)
+     * Un solicitante es un cliente que tiene al menos un caso registrado
+     */
+    searchByCedula: async (cedula: string): Promise<Array<{
+        cedula: string;
+        nombres: string;
+        apellidos: string;
+        nombre_completo: string;
+    }>> => {
+        const query = loadSQL('solicitantes/search-by-cedula.sql');
+        const result: QueryResult = await pool.query(query, [cedula]);
+        return result.rows;
+    },
 };

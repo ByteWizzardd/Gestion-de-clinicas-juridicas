@@ -9,9 +9,10 @@ interface DatePickerProps {
   onChange: (value: string) => void;
   error?: string;
   required?: boolean;
+  disabled?: boolean;
 }
 
-export default function DatePicker({ value, onChange, error, required }: DatePickerProps) {
+export default function DatePicker({ value, onChange, error, required, disabled = false }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'calendar' | 'year' | 'month'>('year');
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -298,13 +299,17 @@ export default function DatePicker({ value, onChange, error, required }: DatePic
   return (
     <div className="relative" ref={dropdownRef}>
       <div
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          if (disabled) return;
+          setIsOpen(!isOpen);
+        }}
         className={`
-          w-full h-[40px] pl-12 pr-4 rounded-full border flex items-center cursor-pointer
+          w-full h-[40px] pl-12 pr-4 rounded-full border flex items-center
           ${error ? 'border-danger' : 'border-gray-300'}
           focus-within:ring-1 
           ${error ? 'focus-within:ring-danger' : 'focus-within:ring-primary'}
           bg-white
+          ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         `}
       >
         <span className={`text-base ${value ? 'text-gray-600' : 'text-gray-400'}`}>
