@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { solicitantesService } from '@/lib/services/solicitantes/solicitantes.service';
 import { solicitantesQueries } from '@/lib/db/queries/solicitantes/solicitantes.queries';
 import { successResponse, errorResponse } from '@/lib/utils/responses';
+import { requireApiAuth } from '@/lib/utils/api-auth';
 
 /**
  * GET /api/solicitantes
@@ -9,6 +10,9 @@ import { successResponse, errorResponse } from '@/lib/utils/responses';
  */
 export async function GET(request: NextRequest) {
   try {
+    const unauthorized = requireApiAuth(request);
+    if (unauthorized) return unauthorized;
+
     const result = await solicitantesQueries.getAllSolicitantes();
     
     return successResponse(result);
@@ -23,6 +27,9 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const unauthorized = requireApiAuth(request);
+    if (unauthorized) return unauthorized;
+
     const body = await request.json();
     
     const result = await solicitantesService.create(body);

@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import CalendarWidget from '@/components/ui/calendar/CalendarWidget';
 import AppointmentList from '@/components/cards/AppointmentList';
 import type { Appointment } from '@/types/appointment';
+import { getApiHeaders } from '@/lib/utils/api-client';
 
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -21,7 +22,9 @@ export default function AppointmentsPage() {
         setLoading(true);
         setError(null);
         
-        const response = await fetch('/api/citas');
+        const response = await fetch('/api/citas', {
+          headers: getApiHeaders(),
+        });
         
         if (!response.ok) {
           throw new Error('Error al cargar las citas');

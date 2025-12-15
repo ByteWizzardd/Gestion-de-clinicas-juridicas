@@ -3,6 +3,7 @@ import { soportesQueries } from '@/lib/db/queries/soportes/soportes.queries';
 import { successResponse, errorResponse } from '@/lib/utils/responses';
 import { verifyToken } from '@/lib/utils/security';
 import { UnauthorizedError, ValidationError } from '@/lib/utils/errors';
+import { requireApiAuth } from '@/lib/utils/api-auth';
 
 /**
  * POST /api/casos/[id]/soportes
@@ -14,6 +15,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const unauthorized = requireApiAuth(request);
+    if (unauthorized) return unauthorized;
+
     // Obtener token de la cookie
     const token = request.cookies.get('auth_token')?.value;
 

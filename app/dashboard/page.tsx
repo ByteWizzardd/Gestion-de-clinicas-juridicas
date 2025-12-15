@@ -7,6 +7,7 @@ import CompactCalendar from "@/components/ui/calendar/CompactCalendar";
 import DashboardAppointmentList from "@/components/cards/DashboardAppointmentList";
 import ActionHistoryList from "@/components/cards/ActionHistoryList";
 import type { Appointment } from '@/types/appointment';
+import { getApiHeaders } from '@/lib/utils/api-client';
 
 export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -34,7 +35,9 @@ export default function DashboardPage() {
         setLoading(true);
         setError(null);
         
-        const response = await fetch('/api/citas');
+        const response = await fetch('/api/citas', {
+          headers: getApiHeaders(),
+        });
         
         if (!response.ok) {
           throw new Error('Error al cargar las citas');

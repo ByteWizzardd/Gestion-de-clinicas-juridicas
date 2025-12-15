@@ -3,6 +3,7 @@ import { casosService } from '@/lib/services/casos/casos.service';
 import { successResponse, errorResponse } from '@/lib/utils/responses';
 import { verifyToken } from '@/lib/utils/security';
 import { UnauthorizedError } from '@/lib/utils/errors';
+import { requireApiAuth } from '@/lib/utils/api-auth';
 
 /**
  * GET /api/casos
@@ -12,6 +13,9 @@ import { UnauthorizedError } from '@/lib/utils/errors';
  */
 export async function GET(request: NextRequest) {
     try {
+        const unauthorized = requireApiAuth(request);
+        if (unauthorized) return unauthorized;
+
         const { searchParams } = new URL(request.url);
         const action = searchParams.get('action');
 
@@ -35,6 +39,9 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
     try {
+        const unauthorized = requireApiAuth(request);
+        if (unauthorized) return unauthorized;
+
         // Obtener token de la cookie
         const token = request.cookies.get('auth_token')?.value;
 

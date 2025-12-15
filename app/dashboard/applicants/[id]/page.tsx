@@ -10,6 +10,7 @@ import ContactInfoTab from '@/components/solicitantes/tabs/ContactInfoTab';
 import SocioeconomicInfoTab from '@/components/solicitantes/tabs/SocioeconomicInfoTab';
 import LocationHousingTab from '@/components/solicitantes/tabs/LocationHousingTab';
 import CasesTab from '@/components/solicitantes/tabs/CasesTab';
+import { getApiHeaders } from '@/lib/utils/api-client';
 
 export default function ApplicantDetailPage() {
   const params = useParams();
@@ -36,7 +37,9 @@ export default function ApplicantDetailPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`/api/solicitantes/${cedula}`);
+      const response = await fetch(`/api/solicitantes/${cedula}`, {
+        headers: getApiHeaders(),
+      });
       
       const result = await response.json();
       

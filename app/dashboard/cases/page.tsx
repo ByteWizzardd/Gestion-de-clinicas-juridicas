@@ -5,6 +5,7 @@ import CaseTools from "@/components/CaseTools/CaseTools";
 import Table from "@/components/Table/Table";
 import CaseFormModal from "@/components/forms/CaseFormModal";
 import Spinner from "@/components/ui/feedback/Spinner";
+import { getApiHeaders } from "@/lib/utils/api-client";
 import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
 
 interface Caso {
@@ -63,7 +64,9 @@ export default function CasesPage() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/casos');
+      const response = await fetch('/api/casos', {
+        headers: getApiHeaders(),
+      });
 
       if (!response.ok) {
         throw new Error('Error al cargar los casos');
@@ -195,7 +198,7 @@ export default function CasesPage() {
       // Crear el caso primero
       const response = await fetch('/api/casos', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getApiHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(casoDataSinArchivos),
       });
 
@@ -238,6 +241,7 @@ export default function CasesPage() {
         try {
           const uploadResponse = await fetch(`/api/casos/${idCaso}/soportes`, {
             method: 'POST',
+            headers: getApiHeaders(),
             body: formData,
           });
 

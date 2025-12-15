@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { solicitantesQueries } from '@/lib/db/queries/solicitantes/solicitantes.queries';
 import { clientesQueries } from '@/lib/db/queries/clientes/clientes.queries';
 import { successResponse, errorResponse } from '@/lib/utils/responses';
+import { requireApiAuth } from '@/lib/utils/api-auth';
 
 /**
  * GET /api/solicitantes/search?q=cedula&type=cedula
@@ -12,6 +13,9 @@ import { successResponse, errorResponse } from '@/lib/utils/responses';
  */
 export async function GET(request: NextRequest) {
   try {
+    const unauthorized = requireApiAuth(request);
+    if (unauthorized) return unauthorized;
+
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get('q') || '';
     const type = searchParams.get('type') || 'cedula';

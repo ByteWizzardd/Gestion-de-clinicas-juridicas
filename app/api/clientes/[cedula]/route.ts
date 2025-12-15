@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ClientesService } from '../../../../lib/services/clientes/clientes.service';
+import { requireApiAuth } from '@/lib/utils/api-auth';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ cedula: string }> | { cedula: string } }
 ): Promise<NextResponse> {
   try {
+    const unauthorized = requireApiAuth(request);
+    if (unauthorized) return unauthorized;
+
     // Handle both Promise and direct params (Next.js 15 compatibility)
     const resolvedParams = params instanceof Promise ? await params : params;
     const { cedula } = resolvedParams;

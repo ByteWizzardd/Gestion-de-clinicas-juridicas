@@ -7,6 +7,7 @@ import Table from "@/components/Table/Table";
 import Spinner from "@/components/ui/feedback/Spinner";
 import ApplicantFormModal from "@/components/forms/ApplicantFormModal";
 import ConfirmModal from "@/components/ui/feedback/ConfirmModal";
+import { getApiHeaders } from "@/lib/utils/api-client";
 
 interface Solicitante extends Record<string, unknown> {
   cedula: string;
@@ -31,7 +32,9 @@ export default function ApplicantsPage() {
   const fetchSolicitantes = async () => {
     setLoading(true); 
     try {
-      const response = await fetch("/api/solicitantes");
+      const response = await fetch("/api/solicitantes", {
+        headers: getApiHeaders(),
+      });
       
       // Verifica si la respuesta es exitosa
       if (!response.ok) {
@@ -54,7 +57,9 @@ export default function ApplicantsPage() {
   // Cargar núcleos para el filtro
   const fetchNucleos = async () => {
     try {
-      const response = await fetch("/api/nucleos");
+      const response = await fetch("/api/nucleos", {
+        headers: getApiHeaders(),
+      });
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
@@ -151,16 +156,6 @@ export default function ApplicantsPage() {
     }
   };
 
-  // Mostrar loading
-  if (loading) {
-    return (
-      <div className="flex flex-col justify-center items-center py-12 min-h-[400px]">
-        <Spinner />
-        <p className="text-on-border mt-4">Cargando solicitantes...</p>
-      </div>
-    );
-  }
-
   return (
     <>
       <h1 className="text-4xl m-3 font-semibold font-primary">Solicitantes</h1>
@@ -178,19 +173,29 @@ export default function ApplicantsPage() {
         tramiteOptions={[]}
       />
       <div className="mt-10"></div>
-      <Table
-        data={filteredSolicitantes.map((s) => ({
-          cedula: s.cedula,
-          nombre_completo: s.nombre_completo,
-          telefono_celular: s.telefono_celular,
-          nucleo: s.nucleo || 'Sin núcleo',
-          fecha_solicitud: s.fecha_solicitud || 'N/A',
-        }))}
-        columns={["Cédula", "Nombre Completo", "Teléfono Celular", "Núcleo", "Fecha Solicitud"]}
-        onView={handleView}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+
+      {loading && (
+        <div className="flex flex-col justify-center items-center py-12 min-h-[400px]">
+          <Spinner />
+          <p className="text-on-border mt-4">Cargando solicitantes...</p>
+        </div>
+      )}
+
+      {!loading && (
+        <Table
+          data={filteredSolicitantes.map((s) => ({
+            cedula: s.cedula,
+            nombre_completo: s.nombre_completo,
+            telefono_celular: s.telefono_celular,
+            nucleo: s.nucleo || 'Sin núcleo',
+            fecha_solicitud: s.fecha_solicitud || 'N/A',
+          }))}
+          columns={["Cédula", "Nombre Completo", "Teléfono Celular", "Núcleo", "Fecha Solicitud"]}
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      )}
 
       {/* Modal de registro de solicitante */}
       <ApplicantFormModal

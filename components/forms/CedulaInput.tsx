@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ChevronDown } from 'lucide-react';
+import { getApiHeaders } from '@/lib/utils/api-client';
 
 interface Cliente {
   cedula: string;
@@ -183,7 +184,10 @@ export default function CedulaInput({
           endpoint = '/api/estudiantes/search';
         }
         
-        const response = await fetch(`${endpoint}?q=${encodeURIComponent(searchQuery)}`);
+        const response = await fetch(
+          `${endpoint}?q=${encodeURIComponent(searchQuery)}`,
+          { headers: getApiHeaders() }
+        );
         
         if (response.ok) {
           const result = await response.json();
