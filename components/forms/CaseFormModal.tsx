@@ -10,7 +10,6 @@ import Button from '../ui/Button';
 import CedulaInput from './CedulaInput';
 import { X, Calendar, Upload, File, XCircle } from 'lucide-react';
 import { TRAMITES, ESTATUS_CASO } from '@/lib/constants/status';
-import { getApiHeaders } from '@/lib/utils/api-client';
 
 interface CaseFormModalProps {
   isOpen: boolean;
@@ -100,17 +99,14 @@ export default function CaseFormModal({
   const loadNextCaseNumber = async () => {
     try {
       setLoadingCaseNumber(true);
-      const response = await fetch('/api/casos?action=next-number', {
-        headers: getApiHeaders(),
-      });
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.data?.nextNumber) {
-          setFormData((prev) => ({
-            ...prev,
-            casoNumero: result.data.nextNumber, // Solo el número
-          }));
-        }
+      const { getNextCaseNumberAction } = await import('@/app/actions/casos');
+      const result = await getNextCaseNumberAction();
+      
+      if (result.success && result.data?.nextNumber) {
+        setFormData((prev) => ({
+          ...prev,
+          casoNumero: result.data!.nextNumber, // Solo el número
+        }));
       }
     } catch (error) {
       // Error al cargar siguiente número de caso
@@ -122,19 +118,19 @@ export default function CaseFormModal({
   const loadCatalogos = async () => {
     try {
       setLoadingCatalogos(true);
-      const [nucleosRes, ambitosRes] = await Promise.all([
-        fetch('/api/nucleos', { headers: getApiHeaders() }),
-        fetch('/api/ambitos-legales', { headers: getApiHeaders() }),
+      const { getNucleosAction } = await import('@/app/actions/nucleos');
+      const { getAmbitosLegalesAction } = await import('@/app/actions/ambitos-legales');
+      const [nucleosResult, ambitosResult] = await Promise.all([
+        getNucleosAction(),
+        getAmbitosLegalesAction(),
       ]);
 
-      if (nucleosRes.ok) {
-        const nucleosData = await nucleosRes.json();
-        setNucleos(nucleosData.data || []);
+      if (nucleosResult.success && nucleosResult.data) {
+        setNucleos(nucleosResult.data);
       }
 
-      if (ambitosRes.ok) {
-        const ambitosData = await ambitosRes.json();
-        setAmbitosLegales(ambitosData.data || []);
+      if (ambitosResult.success && ambitosResult.data) {
+        setAmbitosLegales(ambitosResult.data);
       }
     } catch (error) {
       // Error al cargar catálogos

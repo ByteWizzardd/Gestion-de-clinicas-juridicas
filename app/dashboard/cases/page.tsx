@@ -5,7 +5,6 @@ import CaseTools from "@/components/CaseTools/CaseTools";
 import Table from "@/components/Table/Table";
 import CaseFormModal from "@/components/forms/CaseFormModal";
 import Spinner from "@/components/ui/feedback/Spinner";
-import { getApiHeaders } from "@/lib/utils/api-client";
 import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
 
 interface Caso {
@@ -58,28 +57,23 @@ export default function CasesPage() {
     { value: TRAMITES.ASISTENCIA_JUDICIAL, label: TRAMITES.ASISTENCIA_JUDICIAL },
   ];
 
-  // Función para cargar los casos desde la API
+  // Función para cargar los casos usando Server Action
   const fetchCasos = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/casos', {
-        headers: getApiHeaders(),
-      });
+      const { getCasosAction } = await import('@/app/actions/casos');
+      const result = await getCasosAction();
 
-      if (!response.ok) {
-        throw new Error('Error al cargar los casos');
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Error al cargar los casos');
       }
 
-      const result = await response.json();
-      
-      // La respuesta ahora viene en formato { success: true, data: [...] }
-      if (result.success && result.data) {
+      if (result.data) {
         setCasos(result.data);
       } else {
-        // Fallback por si la respuesta no tiene el formato esperado
-        setCasos(Array.isArray(result) ? result : []);
+        setCasos([]);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
@@ -195,16 +189,11 @@ export default function CasesPage() {
         observaciones: caseData.observaciones,
       };
       
-      // Crear el caso primero
-      const response = await fetch('/api/casos', {
-        method: 'POST',
-        headers: getApiHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(casoDataSinArchivos),
-      });
+      // Crear el caso primero usando Server Action
+      const { createCasoAction, uploadSoportesAction } = await import('@/app/actions/casos');
+      const result = await createCasoAction(casoDataSinArchivos);
 
-      const result = await response.json();
-
-      if (!response.ok) {
+      if (!result.success) {
         const errorMessage = result.error?.message || 'Error al crear el caso';
         const errorCode = result.error?.code || 'UNKNOWN_ERROR';
         const errorFields = result.error?.fields;
@@ -239,15 +228,9 @@ export default function CasesPage() {
         });
 
         try {
-          const uploadResponse = await fetch(`/api/casos/${idCaso}/soportes`, {
-            method: 'POST',
-            headers: getApiHeaders(),
-            body: formData,
-          });
-
-          const uploadResult = await uploadResponse.json();
+          const uploadResult = await uploadSoportesAction(Number(idCaso), formData);
           
-          if (!uploadResponse.ok) {
+          if (!uploadResult.success) {
             alert(`Caso creado exitosamente, pero hubo un error al subir los archivos: ${uploadResult.error?.message || 'Error desconocido'}`);
           }
         } catch (uploadErr) {

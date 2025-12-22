@@ -10,7 +10,6 @@ import ContactInfoTab from '@/components/solicitantes/tabs/ContactInfoTab';
 import SocioeconomicInfoTab from '@/components/solicitantes/tabs/SocioeconomicInfoTab';
 import LocationHousingTab from '@/components/solicitantes/tabs/LocationHousingTab';
 import CasesTab from '@/components/solicitantes/tabs/CasesTab';
-import { getApiHeaders } from '@/lib/utils/api-client';
 
 export default function ApplicantDetailPage() {
   const params = useParams();
@@ -37,20 +36,18 @@ export default function ApplicantDetailPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`/api/solicitantes/${cedula}`, {
-        headers: getApiHeaders(),
-      });
       
-      const result = await response.json();
+      const { getSolicitanteByIdAction } = await import('@/app/actions/solicitantes');
+      const result = await getSolicitanteByIdAction(cedula);
       
-      if (!response.ok) {
-        throw new Error(result.message || result.error || 'Error al cargar la información del solicitante');
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Error al cargar la información del solicitante');
       }
       
-      if (result.success && result.data) {
+      if (result.data) {
         setSolicitante(result.data);
       } else {
-        throw new Error(result.message || 'No se pudo obtener la información');
+        throw new Error('No se pudo obtener la información');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido';

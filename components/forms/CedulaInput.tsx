@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ChevronDown } from 'lucide-react';
-import { getApiHeaders } from '@/lib/utils/api-client';
 
 interface Cliente {
   cedula: string;
@@ -176,28 +175,25 @@ export default function CedulaInput({
         // Buscar con el tipo de cédula incluido
         const searchQuery = tipoValue ? `${tipoValue}${value.trim()}` : value.trim();
         
-        // Determinar el endpoint según el tipo de búsqueda
-        let endpoint = '/api/clientes/search';
+        let result;
         if (searchType === 'profesor') {
-          endpoint = '/api/profesores/search';
+          const { searchProfesoresAction } = await import('@/app/actions/profesores');
+          result = await searchProfesoresAction(searchQuery);
         } else if (searchType === 'estudiante') {
-          endpoint = '/api/estudiantes/search';
+          const { searchEstudiantesAction } = await import('@/app/actions/estudiantes');
+          result = await searchEstudiantesAction(searchQuery);
+        } else {
+          // searchType === 'cliente'
+          const { searchClientesAction } = await import('@/app/actions/clientes');
+          result = await searchClientesAction(searchQuery, false);
         }
         
-        const response = await fetch(
-          `${endpoint}?q=${encodeURIComponent(searchQuery)}`,
-          { headers: getApiHeaders() }
-        );
-        
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success && result.data) {
-            setSuggestions(result.data);
-            setShowSuggestions(result.data.length > 0);
-          } else {
-            setSuggestions([]);
-            setShowSuggestions(false);
-          }
+        if (result.success && result.data) {
+          setSuggestions(result.data);
+          setShowSuggestions(result.data.length > 0);
+        } else {
+          setSuggestions([]);
+          setShowSuggestions(false);
         }
       } catch (error) {
         console.error('Error al buscar cédulas:', error);

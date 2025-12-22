@@ -10,7 +10,6 @@ import Select from './Select';
 import Button from '../ui/Button';
 import { ArrowRight, ArrowLeft, Calendar } from 'lucide-react';
 import DatePicker from './DatePicker';
-import { getApiHeaders } from '@/lib/utils/api-client';
 
 interface ApplicantFormModalProps {
   isOpen: boolean;
@@ -783,19 +782,12 @@ export default function ApplicantFormModal({
       }
 
       try {
-        const response = await fetch('/api/solicitantes', {
-          method: 'POST',
-          headers: getApiHeaders({
-            'Content-Type': 'application/json',
-          }),
-          body: JSON.stringify(formData),
-        });
+        const { createSolicitanteAction } = await import('@/app/actions/solicitantes');
+        const result = await createSolicitanteAction(formData);
 
-        const result = await response.json();
-
-        if (!response.ok) {
-          const errorMessage = result.error?.message || result.error || 'Error al registrar solicitante';
-          throw new Error(typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage));
+        if (!result.success) {
+          const errorMessage = result.error?.message || 'Error al registrar solicitante';
+          throw new Error(errorMessage);
         }
 
         // Llamar al callback de éxito (recarga la lista y maneja el modal de confirmación)
@@ -980,12 +972,9 @@ export default function ApplicantFormModal({
     const cedula = `${cedulaTipo}${cedulaNumero}`;
     
     try {
-      // Primero verificar si es solicitante
-      const solicitanteResponse = await fetch(
-        `/api/solicitantes/search?q=${encodeURIComponent(cedula)}&type=cedula`,
-        { headers: getApiHeaders() }
-      );
-      const solicitanteResult = await solicitanteResponse.json();
+      // Primero verificar si es solicitante usando Server Action
+      const { searchSolicitantesAction } = await import('@/app/actions/solicitantes');
+      const solicitanteResult = await searchSolicitantesAction(cedula, 'cedula');
 
       if (solicitanteResult.success && solicitanteResult.data) {
         // Buscar si hay una coincidencia exacta
@@ -1011,11 +1000,8 @@ export default function ApplicantFormModal({
         
         cedulaSearchTimeout.current = setTimeout(async () => {
           try {
-            const response = await fetch(
-              `/api/clientes/search?q=${encodeURIComponent(cedula)}&type=cedula&excludeSolicitantes=true`,
-              { headers: getApiHeaders() }
-            );
-            const result = await response.json();
+            const { searchClientesAction } = await import('@/app/actions/clientes');
+            const result = await searchClientesAction(cedula, true);
 
             if (result.success && result.data) {
             // Formatear fechas
@@ -1082,11 +1068,8 @@ export default function ApplicantFormModal({
     // Esperar 500ms después de que el usuario deje de escribir
     const timeout = setTimeout(async () => {
       try {
-        const response = await fetch(
-          `/api/solicitantes/search?q=${encodeURIComponent(email)}&type=email`,
-          { headers: getApiHeaders() }
-        );
-        const result = await response.json();
+        const { searchSolicitantesAction } = await import('@/app/actions/solicitantes');
+        const result = await searchSolicitantesAction(email, 'email');
 
         if (result.success && result.data && result.data.length > 0) {
           // El correo ya está asociado a otra persona (cliente)

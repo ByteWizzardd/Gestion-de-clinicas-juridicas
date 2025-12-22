@@ -5,7 +5,6 @@ import CalendarWidget from '@/components/ui/calendar/CalendarWidget';
 import AppointmentList from '@/components/cards/AppointmentList';
 import Spinner from '@/components/ui/feedback/Spinner';
 import type { Appointment } from '@/types/appointment';
-import { getApiHeaders } from '@/lib/utils/api-client';
 
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -16,24 +15,21 @@ export default function AppointmentsPage() {
     new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   );
 
-  // Cargar citas desde la API
+  // Cargar citas usando Server Action
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        const response = await fetch('/api/citas', {
-          headers: getApiHeaders(),
-        });
+        const { getCitasAction } = await import('@/app/actions/citas');
+        const result = await getCitasAction();
         
-        if (!response.ok) {
-          throw new Error('Error al cargar las citas');
+        if (!result.success) {
+          throw new Error(result.error?.message || 'Error al cargar las citas');
         }
         
-        const result = await response.json();
-        
-        if (result.success && result.data) {
+        if (result.data) {
           // Convertir las fechas de string a Date
           const appointmentsWithDates = result.data.map((apt: any) => ({
             ...apt,
@@ -41,7 +37,7 @@ export default function AppointmentsPage() {
           }));
           setAppointments(appointmentsWithDates);
         } else {
-          throw new Error('Formato de respuesta inválido');
+          setAppointments([]);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error desconocido');

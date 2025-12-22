@@ -60,21 +60,15 @@ export default function LoginPage() {
         setIsLoading(true);
 
         try {
-            const response = await fetch("/api/auth/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    nombreUsuario: formData.nombreUsuario,
-                    password: formData.password,
-                }),
-            });
+            const { loginAction } = await import('@/app/actions/auth');
+            const formDataToSend = new FormData();
+            formDataToSend.append('nombreUsuario', formData.nombreUsuario);
+            formDataToSend.append('password', formData.password);
 
-            const data = await response.json();
+            const result = await loginAction(formDataToSend);
 
-            if (!response.ok) {
-                throw new Error(data.error?.message || "Error al iniciar sesión");
+            if (!result.success) {
+                throw new Error(result.error?.message || "Error al iniciar sesión");
             }
 
             // Login exitoso

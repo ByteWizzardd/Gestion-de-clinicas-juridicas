@@ -26,14 +26,14 @@ export default function DashboardLayout({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Obtener información del usuario autenticado
+    // Obtener información del usuario autenticado usando Server Action
     const fetchUser = async () => {
       try {
-        const response = await fetch('/api/auth/me');
-        const data = await response.json();
+        const { getCurrentUserAction } = await import('@/app/actions/auth');
+        const result = await getCurrentUserAction();
 
-        if (data.success) {
-          setUser(data.data);
+        if (result.success && result.data) {
+          setUser(result.data);
         } else {
           // Si no hay sesión, redirigir al login
           router.push('/auth/login');

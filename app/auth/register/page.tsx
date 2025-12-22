@@ -74,24 +74,18 @@ export default function RegisterPage() {
         setIsLoading(true);
 
         try {
-            const response = await fetch("/api/auth/register", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    nombreCompleto: formData.nombreCompleto,
-                    cedula: formData.cedula,
-                    correo: formData.correo,
-                    password: formData.password,
-                    confirmPassword: formData.confirmPassword,
-                }),
-            });
+            const { registerAction } = await import('@/app/actions/auth');
+            const formDataToSend = new FormData();
+            formDataToSend.append('nombreCompleto', formData.nombreCompleto);
+            formDataToSend.append('cedula', formData.cedula);
+            formDataToSend.append('correo', formData.correo);
+            formDataToSend.append('password', formData.password);
+            formDataToSend.append('confirmPassword', formData.confirmPassword);
 
-            const data = await response.json();
+            const result = await registerAction(formDataToSend);
 
-            if (!response.ok) {
-                throw new Error(data.error?.message || "Error al registrar usuario");
+            if (!result.success) {
+                throw new Error(result.error?.message || "Error al registrar usuario");
             }
 
             // Registro exitoso

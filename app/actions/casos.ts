@@ -1,0 +1,338 @@
+'use server';
+
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/utils/security';
+import { casosService } from '@/lib/services/casos/casos.service';
+import { soportesQueries } from '@/lib/db/queries/soportes/soportes.queries';
+import { AppError, UnauthorizedError, ValidationError } from '@/lib/utils/errors';
+
+export interface CreateCasoResult {
+  success: boolean;
+  data?: any;
+  error?: {
+    message: string;
+    code?: string;
+    fields?: Record<string, string[]>;
+  };
+}
+
+export interface UploadSoportesResult {
+  success: boolean;
+  data?: {
+    mensaje: string;
+    soportes: Array<{
+      num_soporte: number;
+      nombre_archivo: string;
+    }>;
+  };
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+export interface GetCasosResult {
+  success: boolean;
+  data?: any[];
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+export interface GetNextCaseNumberResult {
+  success: boolean;
+  data?: {
+    nextNumber: number;
+  };
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+/**
+ * Server Action para crear un nuevo caso
+ */
+export async function createCasoAction(data: any): Promise<CreateCasoResult> {
+  try {
+    // Verificar autenticación
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      return {
+        success: false,
+        error: {
+          message: 'No hay sesión activa. Por favor, inicia sesión nuevamente.',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    // Verificar token y obtener cédula del usuario
+    let decoded;
+    try {
+      decoded = await verifyToken(token);
+    } catch (verifyError) {
+      return {
+        success: false,
+        error: {
+          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    const cedulaUsuario = decoded.cedula;
+    const nuevoCaso = await casosService.createCaso(data, cedulaUsuario);
+
+    return {
+      success: true,
+      data: nuevoCaso,
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'CASO_ERROR',
+          fields: (error as any).fields,
+        },
+      };
+    }
+
+    console.error('Error en createCasoAction:', error);
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al crear caso',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  }
+}
+
+/**
+ * Server Action para subir soportes/documentos a un caso
+ */
+export async function uploadSoportesAction(
+  idCaso: number,
+  formData: FormData
+): Promise<UploadSoportesResult> {
+  try {
+    // Verificar autenticación
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      return {
+        success: false,
+        error: {
+          message: 'No hay sesión activa',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    // Verificar token
+    await verifyToken(token);
+
+    if (isNaN(idCaso)) {
+      return {
+        success: false,
+        error: {
+          message: 'ID de caso inválido',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Obtener archivos del FormData
+    const files = formData.getAll('archivos') as File[];
+
+    if (files.length === 0) {
+      return {
+        success: false,
+        error: {
+          message: 'No se proporcionaron archivos',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Procesar cada archivo
+    const resultados = [];
+    for (const file of files) {
+      if (!file || file.size === 0) {
+        continue;
+      }
+
+      // Convertir el archivo a Buffer
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      // Crear el soporte en la base de datos
+      const soporte = await soportesQueries.create({
+        id_caso: idCaso,
+        documento_data: buffer,
+        nombre_archivo: file.name,
+        tipo_mime: file.type || 'application/octet-stream',
+        descripcion: undefined,
+        fecha_consignacion: new Date(),
+      });
+
+      resultados.push({
+        num_soporte: soporte.num_soporte,
+        nombre_archivo: soporte.nombre_archivo,
+      });
+    }
+
+    return {
+      success: true,
+      data: {
+        mensaje: `${resultados.length} archivo(s) subido(s) correctamente`,
+        soportes: resultados,
+      },
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'UPLOAD_ERROR',
+        },
+      };
+    }
+
+    console.error('Error en uploadSoportesAction:', error);
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al subir archivos',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  }
+}
+
+/**
+ * Server Action para obtener todos los casos
+ */
+export async function getCasosAction(): Promise<GetCasosResult> {
+  try {
+    // Verificar autenticación
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      return {
+        success: false,
+        error: {
+          message: 'No autorizado',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    try {
+      await verifyToken(token);
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    const casos = await casosService.getAllCasos();
+
+    return {
+      success: true,
+      data: casos,
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'CASO_ERROR',
+        },
+      };
+    }
+
+    console.error('Error en getCasosAction:', error);
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al obtener casos',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  }
+}
+
+/**
+ * Server Action para obtener el siguiente número de caso disponible
+ */
+export async function getNextCaseNumberAction(): Promise<GetNextCaseNumberResult> {
+  try {
+    // Verificar autenticación
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      return {
+        success: false,
+        error: {
+          message: 'No autorizado',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    try {
+      await verifyToken(token);
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    const nextNumber = await casosService.getNextCaseNumber();
+
+    return {
+      success: true,
+      data: { nextNumber },
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'CASO_ERROR',
+        },
+      };
+    }
+
+    console.error('Error en getNextCaseNumberAction:', error);
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al obtener siguiente número de caso',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  }
+}
+

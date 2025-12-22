@@ -33,11 +33,10 @@ export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarP
 
     setIsLoggingOut(true);
     try {
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
-      });
+      const { logoutAction } = await import('@/app/actions/auth');
+      const result = await logoutAction();
 
-      if (response.ok) {
+      if (result.success) {
         // Redirigir al login
         router.push('/auth/login');
       } else {

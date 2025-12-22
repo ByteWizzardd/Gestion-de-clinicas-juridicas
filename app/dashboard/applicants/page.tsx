@@ -7,7 +7,6 @@ import Table from "@/components/Table/Table";
 import Spinner from "@/components/ui/feedback/Spinner";
 import ApplicantFormModal from "@/components/forms/ApplicantFormModal";
 import ConfirmModal from "@/components/ui/feedback/ConfirmModal";
-import { getApiHeaders } from "@/lib/utils/api-client";
 
 interface Solicitante extends Record<string, unknown> {
   cedula: string;
@@ -32,20 +31,13 @@ export default function ApplicantsPage() {
   const fetchSolicitantes = async () => {
     setLoading(true); 
     try {
-      const response = await fetch("/api/solicitantes", {
-        headers: getApiHeaders(),
-      });
+      const { getSolicitantesAction } = await import('@/app/actions/solicitantes');
+      const result = await getSolicitantesAction();
       
-      // Verifica si la respuesta es exitosa
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      if (data.success) {
-        setSolicitantes(data.data);
+      if (result.success && result.data) {
+        setSolicitantes(result.data);
       } else {
-        console.error("Error fetching solicitantes:", data.message);
+        console.error("Error fetching solicitantes:", result.error?.message);
       }
     } catch (error) {
       console.error("Error fetching solicitantes:", error);
@@ -57,18 +49,14 @@ export default function ApplicantsPage() {
   // Cargar núcleos para el filtro
   const fetchNucleos = async () => {
     try {
-      const response = await fetch("/api/nucleos", {
-        headers: getApiHeaders(),
-      });
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          const options = result.data.map((n: { id_nucleo: number; nombre_nucleo: string }) => ({
-            value: n.nombre_nucleo,
-            label: n.nombre_nucleo,
-          }));
-          setNucleosOptions(options);
-        }
+      const { getNucleosAction } = await import('@/app/actions/nucleos');
+      const result = await getNucleosAction();
+      if (result.success && result.data) {
+        const options = result.data.map((n: { id_nucleo: number; nombre_nucleo: string }) => ({
+          value: n.nombre_nucleo,
+          label: n.nombre_nucleo,
+        }));
+        setNucleosOptions(options);
       }
     } catch (error) {
       console.error("Error fetching nucleos:", error);
