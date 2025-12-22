@@ -1,6 +1,6 @@
-import { casosQueries } from '@/lib/db/queries/casos/casos.queries';
-import { asignacionesQueries } from '@/lib/db/queries/asignaciones/asignaciones.queries';
-import { cambiosEstatusQueries } from '@/lib/db/queries/cambios-estatus/cambios-estatus.queries';
+import { casosQueries } from '@/lib/db/queries/casos.queries';
+import { asignacionesQueries } from '@/lib/db/queries/asignaciones.queries';
+import { cambiosEstatusQueries } from '@/lib/db/queries/cambios-estatus.queries';
 import { AppError, ValidationError, NotFoundError } from '@/lib/utils/errors';
 import { CreateCasoSchema, CreateCasoInput } from '@/lib/validations/casos.schema';
 import { ESTATUS_CASO } from '@/lib/constants/status';

@@ -3,7 +3,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { authService } from '@/lib/services/auth/auth.service';
-import { authQueries } from '@/lib/db/queries/auth/auth.queries';
+import { authQueries } from '@/lib/db/queries/auth.queries';
 import { jwtExpiresInToSeconds, verifyToken } from '@/lib/utils/security';
 import { AppError, UnauthorizedError } from '@/lib/utils/errors';
 

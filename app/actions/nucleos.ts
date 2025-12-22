@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/utils/security';
-import { nucleosQueries } from '@/lib/db/queries/nucleos/nucleos.queries';
+import { nucleosQueries } from '@/lib/db/queries/nucleos.queries';
 import { AppError, UnauthorizedError } from '@/lib/utils/errors';
 
 export interface GetNucleosResult {

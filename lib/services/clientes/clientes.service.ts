@@ -1,4 +1,4 @@
-import { clientesQueries } from '@/lib/db/queries/clientes/clientes.queries';
+import { clientesQueries } from '@/lib/db/queries/clientes.queries';
 import { AppError } from '@/lib/utils/errors';
 
 export class ClientesService {

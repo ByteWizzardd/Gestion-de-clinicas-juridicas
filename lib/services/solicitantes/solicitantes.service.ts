@@ -2,7 +2,7 @@ import { pool } from '@/lib/db/pool';
 import { loadSQL } from '@/lib/db/sql-loader';
 import { QueryResult } from 'pg';
 import { logger } from '@/lib/utils/logger';
-import { solicitantesQueries, type Solicitante } from '@/lib/db/queries/solicitantes/solicitantes.queries';
+import { solicitantesQueries, type Solicitante } from '@/lib/db/queries/solicitantes.queries';
 import { AppError } from '@/lib/utils/errors';
 
 interface ApplicantFormData {

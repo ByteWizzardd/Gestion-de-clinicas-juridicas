@@ -3,8 +3,8 @@
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/utils/security';
 import { solicitantesService } from '@/lib/services/solicitantes/solicitantes.service';
-import { solicitantesQueries } from '@/lib/db/queries/solicitantes/solicitantes.queries';
-import { clientesQueries } from '@/lib/db/queries/clientes/clientes.queries';
+import { solicitantesQueries } from '@/lib/db/queries/solicitantes.queries';
+import { clientesQueries } from '@/lib/db/queries/clientes.queries';
 import { ClientesService } from '@/lib/services/clientes/clientes.service';
 import { AppError, UnauthorizedError } from '@/lib/utils/errors';
 

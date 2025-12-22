@@ -3,7 +3,7 @@
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/utils/security';
 import { casosService } from '@/lib/services/casos/casos.service';
-import { soportesQueries } from '@/lib/db/queries/soportes/soportes.queries';
+import { soportesQueries } from '@/lib/db/queries/soportes.queries';
 import { AppError, UnauthorizedError, ValidationError } from '@/lib/utils/errors';
 
 export interface CreateCasoResult {

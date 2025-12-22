@@ -1,5 +1,5 @@
-import { loadSQL } from '../../sql-loader';
-import { pool } from '../../pool';
+import { loadSQL } from '../sql-loader';
+import { pool } from '../pool';
 import { QueryResult } from 'pg';
 
 /**
@@ -17,3 +17,4 @@ export const asignacionesQueries = {
         return result.rows[0] || null;
     },
 };
+

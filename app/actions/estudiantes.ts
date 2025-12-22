@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/utils/security';
-import { estudiantesQueries } from '@/lib/db/queries/estudiantes/estudiantes.queries';
+import { estudiantesQueries } from '@/lib/db/queries/estudiantes.queries';
 import { AppError, UnauthorizedError } from '@/lib/utils/errors';
 
 export interface SearchEstudiantesResult {

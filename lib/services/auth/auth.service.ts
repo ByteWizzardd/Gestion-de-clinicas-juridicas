@@ -1,4 +1,4 @@
-import { authQueries } from '@/lib/db/queries/auth/auth.queries';
+import { authQueries } from '@/lib/db/queries/auth.queries';
 import { hashPassword, comparePassword, generateToken } from '@/lib/utils/security';
 import { AppError, ValidationError, NotFoundError, UnauthorizedError } from '@/lib/utils/errors';
 

@@ -1,5 +1,5 @@
-import { pool } from '../../pool';
-import { loadSQL } from '../../sql-loader';
+import { pool } from '../pool';
+import { loadSQL } from '../sql-loader';
 import { QueryResult } from 'pg';
 import { z } from 'zod';
 
@@ -68,3 +68,4 @@ export const solicitantesQueries = {
         return result.rows;
     },
 };
+

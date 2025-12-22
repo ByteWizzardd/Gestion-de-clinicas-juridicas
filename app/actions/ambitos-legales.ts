@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/utils/security';
-import { ambitosLegalesQueries } from '@/lib/db/queries/ambitos-legales/ambitos-legales.queries';
+import { ambitosLegalesQueries } from '@/lib/db/queries/ambitos-legales.queries';
 import { AppError, UnauthorizedError } from '@/lib/utils/errors';
 
 export interface GetAmbitosLegalesResult {

@@ -1,4 +1,4 @@
-import { citasQueries } from '@/lib/db/queries/citas/citas.queries';
+import { citasQueries } from '@/lib/db/queries/citas.queries';
 import { AppError } from '@/lib/utils/errors';
 
 /**

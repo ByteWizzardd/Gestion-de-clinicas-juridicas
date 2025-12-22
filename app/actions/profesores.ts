@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/utils/security';
-import { profesoresQueries } from '@/lib/db/queries/profesores/profesores.queries';
+import { profesoresQueries } from '@/lib/db/queries/profesores.queries';
 import { AppError, UnauthorizedError } from '@/lib/utils/errors';
 
 export interface SearchProfesoresResult {
