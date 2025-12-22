@@ -4,8 +4,7 @@ import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/utils/security';
 import { solicitantesService } from '@/lib/services/solicitantes.service';
 import { solicitantesQueries } from '@/lib/db/queries/solicitantes.queries';
-import { clientesQueries } from '@/lib/db/queries/clientes.queries';
-import { ClientesService } from '@/lib/services/clientes.service';
+import { SolicitantesService } from '@/lib/services/solicitantes.service';
 import { AppError, UnauthorizedError } from '@/lib/utils/errors';
 import { revalidatePath } from 'next/cache';
 
@@ -48,6 +47,8 @@ export interface SearchSolicitantesResult {
 
 /**
  * Server Action para crear un nuevo solicitante
+ * Nota: Un solicitante es una persona que solicita servicios legales en la clínica.
+ * Esto es diferente de registrar un usuario (estudiante/profesor/coordinador).
  */
 export async function createSolicitanteAction(data: any): Promise<CreateSolicitanteResult> {
   try {
@@ -210,7 +211,7 @@ export async function getSolicitanteByIdAction(cedula: string): Promise<GetSolic
       };
     }
 
-    const solicitante = await ClientesService.getClienteCompleto(cedula);
+    const solicitante = await SolicitantesService.getSolicitanteCompleto(cedula);
 
     if (!solicitante) {
       return {
@@ -242,6 +243,81 @@ export async function getSolicitanteByIdAction(cedula: string): Promise<GetSolic
       success: false,
       error: {
         message: error instanceof Error ? error.message : 'Error al obtener solicitante',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  }
+}
+
+/**
+ * Server Action para buscar usuarios (excluyendo solicitantes) por cédula
+ * Útil para recomendaciones cuando se busca un usuario del sistema
+ */
+export async function searchUsuariosAction(
+  query: string,
+  excludeSolicitantes: boolean = true
+): Promise<SearchSolicitantesResult> {
+  try {
+    // Verificar autenticación
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      return {
+        success: false,
+        error: {
+          message: 'No autorizado',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    try {
+      await verifyToken(token);
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    if (!query || query.trim().length === 0) {
+      return {
+        success: true,
+        data: [],
+      };
+    }
+
+    let resultados;
+    if (excludeSolicitantes) {
+      resultados = await solicitantesQueries.searchUsuariosByCedulaExcludeSolicitantes(query.trim());
+    } else {
+      resultados = await solicitantesQueries.searchUsuariosByCedula(query.trim());
+    }
+
+    return {
+      success: true,
+      data: resultados,
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'SOLICITANTE_ERROR',
+        },
+      };
+    }
+
+    console.error('Error en searchUsuariosAction:', error);
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al buscar usuarios',
         code: 'UNKNOWN_ERROR',
       },
     };
@@ -293,8 +369,8 @@ export async function searchSolicitantesAction(
 
     let resultados;
     if (type === 'email') {
-      // Buscar en clientes directamente, no solo en solicitantes
-      resultados = await clientesQueries.searchByEmail(query.trim());
+      // Buscar usuarios por email (estudiantes, profesores, coordinadores)
+      resultados = await solicitantesQueries.searchUsuariosByEmail(query.trim());
     } else {
       // type === 'cedula' (por defecto)
       resultados = await solicitantesQueries.searchByCedula(query.trim());

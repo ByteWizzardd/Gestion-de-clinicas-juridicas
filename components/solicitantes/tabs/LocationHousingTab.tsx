@@ -3,7 +3,7 @@
 import { MapPin, Home, Droplet, Trash2, Sparkles } from 'lucide-react';
 
 interface LocationHousingTabProps {
-  cliente: {
+  solicitante: {
     nombre_estado?: string | null;
     nombre_municipio?: string | null;
     nombre_parroquia?: string | null;
@@ -19,11 +19,11 @@ interface LocationHousingTabProps {
   };
 }
 
-export default function LocationHousingTab({ cliente }: LocationHousingTabProps) {
+export default function LocationHousingTab({ solicitante }: LocationHousingTabProps) {
   // Verificar si hay información de ubicación o vivienda
-  const hasLocation = cliente.nombre_estado || cliente.nombre_municipio || cliente.nombre_parroquia;
-  const hasHousing = cliente.tipo_vivienda || cliente.cant_habitaciones !== null || cliente.cant_banos !== null;
-  const hasServices = cliente.agua_potable || cliente.eliminacion_aguas_n || cliente.aseo;
+  const hasLocation = solicitante.nombre_estado || solicitante.nombre_municipio || solicitante.nombre_parroquia;
+  const hasHousing = solicitante.tipo_vivienda || solicitante.cant_habitaciones !== null || solicitante.cant_banos !== null;
+  const hasServices = solicitante.agua_potable || solicitante.eliminacion_aguas_n || solicitante.aseo;
 
   if (!hasLocation && !hasHousing && !hasServices) {
     return (
@@ -43,22 +43,22 @@ export default function LocationHousingTab({ cliente }: LocationHousingTabProps)
             Ubicación Geográfica
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {cliente.nombre_estado && (
+          {solicitante.nombre_estado && (
             <div>
               <label className="text-sm font-medium text-gray-500">Estado</label>
-              <p className="text-base text-gray-900 mt-1">{cliente.nombre_estado}</p>
+              <p className="text-base text-gray-900 mt-1">{solicitante.nombre_estado}</p>
             </div>
           )}
-          {cliente.nombre_municipio && (
+          {solicitante.nombre_municipio && (
             <div>
               <label className="text-sm font-medium text-gray-500">Municipio</label>
-              <p className="text-base text-gray-900 mt-1">{cliente.nombre_municipio}</p>
+              <p className="text-base text-gray-900 mt-1">{solicitante.nombre_municipio}</p>
             </div>
           )}
-          {cliente.nombre_parroquia && (
+          {solicitante.nombre_parroquia && (
             <div>
               <label className="text-sm font-medium text-gray-500">Parroquia</label>
-              <p className="text-base text-gray-900 mt-1">{cliente.nombre_parroquia}</p>
+              <p className="text-base text-gray-900 mt-1">{solicitante.nombre_parroquia}</p>
             </div>
           )}
           </div>
@@ -73,40 +73,40 @@ export default function LocationHousingTab({ cliente }: LocationHousingTabProps)
             Características de la Vivienda
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {cliente.tipo_vivienda && (
+          {solicitante.tipo_vivienda && (
             <div>
               <label className="text-sm font-medium text-gray-500">Tipo de Vivienda</label>
-              <p className="text-base text-gray-900 mt-1">{cliente.tipo_vivienda}</p>
+              <p className="text-base text-gray-900 mt-1">{solicitante.tipo_vivienda}</p>
             </div>
           )}
-          {cliente.cant_habitaciones !== null && cliente.cant_habitaciones !== undefined && (
+          {solicitante.cant_habitaciones !== null && solicitante.cant_habitaciones !== undefined && (
             <div>
               <label className="text-sm font-medium text-gray-500">Habitaciones</label>
-              <p className="text-base text-gray-900 mt-1">{cliente.cant_habitaciones} habitaciones</p>
+              <p className="text-base text-gray-900 mt-1">{solicitante.cant_habitaciones} habitaciones</p>
             </div>
           )}
-          {cliente.cant_banos !== null && cliente.cant_banos !== undefined && (
+          {solicitante.cant_banos !== null && solicitante.cant_banos !== undefined && (
             <div>
               <label className="text-sm font-medium text-gray-500">Baños</label>
-              <p className="text-base text-gray-900 mt-1">{cliente.cant_banos} baños</p>
+              <p className="text-base text-gray-900 mt-1">{solicitante.cant_banos} baños</p>
             </div>
           )}
-          {cliente.material_piso && (
+          {solicitante.material_piso && (
             <div>
               <label className="text-sm font-medium text-gray-500">Material del Piso</label>
-              <p className="text-base text-gray-900 mt-1">{cliente.material_piso}</p>
+              <p className="text-base text-gray-900 mt-1">{solicitante.material_piso}</p>
             </div>
           )}
-          {cliente.material_paredes && (
+          {solicitante.material_paredes && (
             <div>
               <label className="text-sm font-medium text-gray-500">Material de las Paredes</label>
-              <p className="text-base text-gray-900 mt-1">{cliente.material_paredes}</p>
+              <p className="text-base text-gray-900 mt-1">{solicitante.material_paredes}</p>
             </div>
           )}
-          {cliente.material_techo && (
+          {solicitante.material_techo && (
             <div>
               <label className="text-sm font-medium text-gray-500">Material del Techo</label>
-              <p className="text-base text-gray-900 mt-1">{cliente.material_techo}</p>
+              <p className="text-base text-gray-900 mt-1">{solicitante.material_techo}</p>
             </div>
           )}
           </div>
@@ -121,30 +121,30 @@ export default function LocationHousingTab({ cliente }: LocationHousingTabProps)
             Servicios Básicos
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {cliente.agua_potable && (
+          {solicitante.agua_potable && (
             <div className="flex items-start gap-3">
               <Droplet className="w-5 h-5 text-primary mt-1" />
               <div>
                 <label className="text-sm font-medium text-gray-500">Agua Potable</label>
-                <p className="text-base text-gray-900 mt-1">{cliente.agua_potable}</p>
+                <p className="text-base text-gray-900 mt-1">{solicitante.agua_potable}</p>
               </div>
             </div>
           )}
-          {cliente.eliminacion_aguas_n && (
+          {solicitante.eliminacion_aguas_n && (
             <div className="flex items-start gap-3">
               <Trash2 className="w-5 h-5 text-primary mt-1" />
               <div>
                 <label className="text-sm font-medium text-gray-500">Eliminación de Aguas Negras</label>
-                <p className="text-base text-gray-900 mt-1">{cliente.eliminacion_aguas_n}</p>
+                <p className="text-base text-gray-900 mt-1">{solicitante.eliminacion_aguas_n}</p>
               </div>
             </div>
           )}
-          {cliente.aseo && (
+          {solicitante.aseo && (
             <div className="flex items-start gap-3">
               <Sparkles className="w-5 h-5 text-primary mt-1" />
               <div>
                 <label className="text-sm font-medium text-gray-500">Servicio de Aseo</label>
-                <p className="text-base text-gray-900 mt-1">{cliente.aseo}</p>
+                <p className="text-base text-gray-900 mt-1">{solicitante.aseo}</p>
               </div>
             </div>
             )}

@@ -10,46 +10,57 @@
  */
 
 // Tipos base de las tablas principales
-export interface Cliente {
+export interface Solicitante {
   cedula: string;
-  nombres: string | null;
-  apellidos: string | null;
-  fecha_nacimiento: Date | null;
+  nombres: string;
+  apellidos: string;
+  fecha_nacimiento: Date;
   telefono_local: string | null;
-  telefono_celular: string | null;
-  correo_electronico: string | null;
-  sexo: 'M' | 'F' | null;
-  nacionalidad: 'V' | 'Ext' | null;
-  estado_civil: 'Soltero' | 'Casado' | 'Divorciado' | 'Viudo' | null;
-  concubinato: boolean | null;
-  id_hogar: number | null;
-  id_nivel_educativo: number | null;
-  id_trabajo: number | null;
-  id_vivienda: number | null;
-  id_parroquia: number | null;
+  telefono_celular: string;
+  correo_electronico: string;
+  sexo: 'M' | 'F';
+  nacionalidad: 'V' | 'E';
+  estado_civil: 'Soltero' | 'Casado' | 'Divorciado' | 'Viudo' | 'Concubino';
+  concubinato: boolean;
+  tiempo_estudio: string;
+  id_nivel_educativo: number;
+  id_trabajo: number;
+  id_actividad: number;
+  id_estado: number;
+  num_municipio: number;
+  num_parroquia: number;
 }
 
 export interface Usuario {
   cedula: string;
+  nombres: string;
+  apellidos: string;
+  correo_electronico: string;
   nombre_usuario: string;
-  password_hash: string;
-  habilitado: boolean | null;
-  rol_sistema: 'Estudiante' | 'Profesor' | 'Coordinador' | null;
-  foto_perfil: Buffer | null;
+  contrasena: string;
+  telefono_celular: string | null;
+  habilitado_sistema: boolean;
+  tipo_usuario: 'Estudiante' | 'Profesor' | 'Coordinador';
+  // Campos legacy para compatibilidad (mapeados desde queries SQL)
+  password_hash?: string; // Alias de contrasena
+  habilitado?: boolean; // Alias de habilitado_sistema
+  rol_sistema?: 'Estudiante' | 'Profesor' | 'Coordinador'; // Alias de tipo_usuario
 }
 
 export interface Caso {
   id_caso: number;
-  fecha_inicio_caso: Date | null;
+  fecha_inicio_caso: Date;
   fecha_fin_caso: Date | null;
   fecha_solicitud: Date;
-  tramite: string | null;
-  estatus: string | null;
+  tramite: string;
   observaciones: string | null;
-  id_nucleo: number | null;
-  id_ambito_legal: number | null;
-  id_expediente: string | null;
-  cedula_cliente: string | null;
+  id_nucleo: number;
+  cedula: string; // Cédula del solicitante
+  id_materia: number;
+  num_categoria: number;
+  num_subcategoria: number;
+  num_ambito_legal: number;
+  // Nota: estatus y cant_beneficiarios son atributos derivados obtenidos de las vistas
 }
 
 export interface Seccion {
@@ -78,25 +89,32 @@ export interface Coordinador {
 
 // Tipos para relaciones y joins
 export interface CasoWithRelations extends Caso {
-  nombres_cliente?: string;
-  apellidos_cliente?: string;
+  estatus?: string; // Derivado de cambio_estatus
+  cant_beneficiarios?: number; // Derivado de conteo de beneficiarios
+  nombres_solicitante?: string;
+  apellidos_solicitante?: string;
+  nombre_completo_solicitante?: string;
   nombre_nucleo?: string;
-  materia_ambito?: string;
+  nombre_materia?: string;
+  nombre_categoria?: string;
+  nombre_subcategoria?: string;
+  nombre_responsable?: string | null;
 }
 
-export interface ClienteWithRelations extends Cliente {
+export interface SolicitanteWithRelations extends Solicitante {
   nombre_parroquia?: string;
   nombre_municipio?: string;
   nombre_estado?: string;
+  nombre_nucleo?: string;
 }
 
 // Tipos para inserts (sin campos auto-generados)
-export type CreateCliente = Omit<Cliente, never>;
+export type CreateSolicitante = Omit<Solicitante, never>;
 export type CreateCaso = Omit<Caso, 'id_caso' | 'fecha_inicio_caso'>;
 export type CreateUsuario = Omit<Usuario, never>;
 
 // Tipos para updates (todos los campos opcionales excepto PK)
-export type UpdateCliente = Partial<Omit<Cliente, 'cedula'>>;
+export type UpdateSolicitante = Partial<Omit<Solicitante, 'cedula'>>;
 export type UpdateCaso = Partial<Omit<Caso, 'id_caso'>>;
 export type UpdateUsuario = Partial<Omit<Usuario, 'cedula'>>;
 

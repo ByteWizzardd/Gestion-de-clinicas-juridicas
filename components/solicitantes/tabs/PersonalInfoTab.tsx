@@ -4,7 +4,7 @@ import { User, Calendar, MapPin, Building2 } from 'lucide-react';
 import { formatDate, calculateAge } from '@/lib/utils/date-formatter';
 
 interface PersonalInfoTabProps {
-  cliente: {
+  solicitante: {
     cedula?: string | null;
     nombres?: string | null;
     apellidos?: string | null;
@@ -21,7 +21,7 @@ interface PersonalInfoTabProps {
   };
 }
 
-export default function PersonalInfoTab({ cliente }: PersonalInfoTabProps) {
+export default function PersonalInfoTab({ solicitante }: PersonalInfoTabProps) {
   const formatNacionalidad = (nacionalidad: string | null) => {
     if (!nacionalidad) return 'No especificado';
     const map: Record<string, string> = {
@@ -45,7 +45,7 @@ export default function PersonalInfoTab({ cliente }: PersonalInfoTabProps) {
   };
 
   // Calcular edad si no viene del backend
-  const edad = cliente.edad ?? (cliente.fecha_nacimiento ? calculateAge(cliente.fecha_nacimiento) : null);
+  const edad = solicitante.edad ?? (solicitante.fecha_nacimiento ? calculateAge(solicitante.fecha_nacimiento) : null);
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -56,32 +56,32 @@ export default function PersonalInfoTab({ cliente }: PersonalInfoTabProps) {
           Datos Básicos
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {cliente.cedula && (
+          {solicitante.cedula && (
             <div>
               <label className="text-sm font-medium text-gray-500">Cédula</label>
               <p className="text-base text-gray-900 mt-1">
-                {getTipoCedula(cliente.cedula)}-{cliente.cedula.substring(1)}
+                {getTipoCedula(solicitante.cedula)}-{solicitante.cedula.substring(1)}
               </p>
             </div>
           )}
-          {cliente.nombres && (
+          {solicitante.nombres && (
             <div>
               <label className="text-sm font-medium text-gray-500">Nombres</label>
-              <p className="text-base text-gray-900 mt-1">{cliente.nombres}</p>
+              <p className="text-base text-gray-900 mt-1">{solicitante.nombres}</p>
             </div>
           )}
-          {cliente.apellidos && (
+          {solicitante.apellidos && (
             <div>
               <label className="text-sm font-medium text-gray-500">Apellidos</label>
-              <p className="text-base text-gray-900 mt-1">{cliente.apellidos}</p>
+              <p className="text-base text-gray-900 mt-1">{solicitante.apellidos}</p>
             </div>
           )}
-          {cliente.fecha_nacimiento && (
+          {solicitante.fecha_nacimiento && (
             <div>
               <label className="text-sm font-medium text-gray-500">Fecha de Nacimiento</label>
               <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-gray-400" />
-                {formatDate(cliente.fecha_nacimiento)}
+                {formatDate(solicitante.fecha_nacimiento)}
               </p>
             </div>
           )}
@@ -91,33 +91,33 @@ export default function PersonalInfoTab({ cliente }: PersonalInfoTabProps) {
               <p className="text-base text-gray-900 mt-1">{edad} años</p>
             </div>
           )}
-          {cliente.sexo && (
+          {solicitante.sexo && (
             <div>
               <label className="text-sm font-medium text-gray-500">Sexo</label>
-              <p className="text-base text-gray-900 mt-1">{formatSexo(cliente.sexo)}</p>
+              <p className="text-base text-gray-900 mt-1">{formatSexo(solicitante.sexo)}</p>
             </div>
           )}
-          {cliente.nacionalidad && (
+          {solicitante.nacionalidad && (
             <div>
               <label className="text-sm font-medium text-gray-500">Nacionalidad</label>
-              <p className="text-base text-gray-900 mt-1">{formatNacionalidad(cliente.nacionalidad)}</p>
+              <p className="text-base text-gray-900 mt-1">{formatNacionalidad(solicitante.nacionalidad)}</p>
             </div>
           )}
           <div>
             <label className="text-sm font-medium text-gray-500">Estado Civil</label>
-            <p className="text-base text-gray-900 mt-1">{cliente.estado_civil || 'No especificado'}</p>
+            <p className="text-base text-gray-900 mt-1">{solicitante.estado_civil || 'No especificado'}</p>
           </div>
           <div>
             <label className="text-sm font-medium text-gray-500">Concubinato</label>
             <p className="text-base text-gray-900 mt-1">
-              {cliente.concubinato === null ? 'No especificado' : cliente.concubinato ? 'Sí' : 'No'}
+              {solicitante.concubinato === null ? 'No especificado' : solicitante.concubinato ? 'Sí' : 'No'}
             </p>
           </div>
         </div>
       </div>
 
       {/* Núcleo Asignado Card */}
-      {cliente.nombre_nucleo && (
+      {solicitante.nombre_nucleo && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
           <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
             <Building2 className="w-5 h-5 text-primary" />
@@ -126,27 +126,27 @@ export default function PersonalInfoTab({ cliente }: PersonalInfoTabProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-gray-500">Núcleo</label>
-              <p className="text-base text-gray-900 mt-1">{cliente.nombre_nucleo}</p>
+              <p className="text-base text-gray-900 mt-1">{solicitante.nombre_nucleo}</p>
             </div>
-            {cliente.nombre_parroquia && (
+            {solicitante.nombre_parroquia && (
               <div>
                 <label className="text-sm font-medium text-gray-500">Parroquia</label>
                 <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-gray-400" />
-                  {cliente.nombre_parroquia}
+                  {solicitante.nombre_parroquia}
                 </p>
               </div>
             )}
-            {cliente.nombre_municipio && (
+            {solicitante.nombre_municipio && (
               <div>
                 <label className="text-sm font-medium text-gray-500">Municipio</label>
-                <p className="text-base text-gray-900 mt-1">{cliente.nombre_municipio}</p>
+                <p className="text-base text-gray-900 mt-1">{solicitante.nombre_municipio}</p>
               </div>
             )}
-            {cliente.nombre_estado && (
+            {solicitante.nombre_estado && (
               <div>
                 <label className="text-sm font-medium text-gray-500">Estado</label>
-                <p className="text-base text-gray-900 mt-1">{cliente.nombre_estado}</p>
+                <p className="text-base text-gray-900 mt-1">{solicitante.nombre_estado}</p>
               </div>
             )}
           </div>

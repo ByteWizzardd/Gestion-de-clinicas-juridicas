@@ -1,6 +1,6 @@
 import { casosQueries } from '@/lib/db/queries/casos.queries';
 import { cambiosEstatusQueries } from '@/lib/db/queries/cambios-estatus.queries';
-import { clientesQueries } from '@/lib/db/queries/clientes.queries';
+import { solicitantesQueries } from '@/lib/db/queries/solicitantes.queries';
 import { nucleosQueries } from '@/lib/db/queries/nucleos.queries';
 import { ambitosLegalesQueries } from '@/lib/db/queries/ambitos-legales.queries';
 import { AppError, ValidationError, NotFoundError } from '@/lib/utils/errors';
@@ -14,7 +14,7 @@ import { ESTATUS_CASO } from '@/lib/constants/status';
 export const casosService = {
     /**
      * Obtiene todos los casos con información enriquecida
-     * Incluye nombre del cliente y nombre del profesor responsable
+     * Incluye nombre del solicitante y nombre del profesor responsable
      * OPTIMIZADO: Usa una sola query con JOIN LATERAL en lugar de N+1 queries
      */
     getAllCasos: async () => {
@@ -55,20 +55,20 @@ export const casosService = {
     },
 
     /**
-     * Crea un nuevo caso
-     * Valida los datos y verifica que el cliente exista
-     * @param data Datos del caso a crear
-     * @param cedulaUsuario Cédula del usuario/estudiante que registra el caso
+     * Crea un nuevo caso asociado a un solicitante
+     * Valida los datos y verifica que el solicitante exista
+     * @param data Datos del caso a crear (incluye cedula del solicitante)
+     * @param cedulaUsuario Cédula del usuario (estudiante/profesor) que registra el caso
      */
     createCaso: async (data: unknown, cedulaUsuario: string) => {
         try {
             // Validar datos con Zod
             const validatedData = CreateCasoSchema.parse(data) as CreateCasoInput;
 
-            // Verificar que el cliente existe
-            const clienteExists = await clientesQueries.checkExists(validatedData.cedula_cliente);
-            if (!clienteExists) {
-                throw new NotFoundError(`Cliente con cédula ${validatedData.cedula_cliente} no encontrado`);
+            // Verificar que el solicitante existe
+            const solicitanteExists = await solicitantesQueries.getSolicitanteById(validatedData.cedula);
+            if (!solicitanteExists) {
+                throw new NotFoundError(`Solicitante con cédula ${validatedData.cedula} no encontrado`);
             }
 
             // Verificar que el núcleo existe
@@ -77,33 +77,40 @@ export const casosService = {
                 throw new NotFoundError(`Núcleo con ID ${validatedData.id_nucleo} no encontrado`);
             }
 
-            // Verificar que el ámbito legal existe
-            const ambitoExists = await ambitosLegalesQueries.checkExists(validatedData.id_ambito_legal);
+            // Verificar que el ámbito legal existe (usando la clave compuesta)
+            const ambitoExists = await ambitosLegalesQueries.checkExists(
+                validatedData.id_materia,
+                validatedData.num_categoria,
+                validatedData.num_subcategoria,
+                validatedData.num_ambito_legal
+            );
             if (!ambitoExists) {
-                throw new NotFoundError(`Ámbito legal con ID ${validatedData.id_ambito_legal} no encontrado`);
+                throw new NotFoundError(`Ámbito legal no encontrado`);
             }
 
             // Crear el caso
             // Si fecha_solicitud no se proporciona, se usa CURRENT_DATE en la BD
             const casoData = {
                 tramite: validatedData.tramite,
-                estatus: validatedData.estatus,
                 observaciones: validatedData.observaciones || undefined,
-                cedula_cliente: validatedData.cedula_cliente,
+                cedula: validatedData.cedula,
                 id_nucleo: validatedData.id_nucleo,
-                id_ambito_legal: validatedData.id_ambito_legal,
-                id_expediente: validatedData.id_expediente || undefined,
+                id_materia: validatedData.id_materia,
+                num_categoria: validatedData.num_categoria,
+                num_subcategoria: validatedData.num_subcategoria,
+                num_ambito_legal: validatedData.num_ambito_legal,
                 fecha_solicitud: validatedData.fecha_solicitud || undefined,
+                fecha_inicio_caso: validatedData.fecha_inicio_caso,
             };
             
             const nuevoCaso = await casosQueries.create(casoData);
 
-            // Registrar el cambio de estatus en la tabla cambios_estatus
+            // Registrar el cambio de estatus en la tabla cambio_estatus
             // El estatus inicial será el mismo que se asignó al caso
             await cambiosEstatusQueries.create(
-                cedulaUsuario,
                 nuevoCaso.id_caso,
-                validatedData.estatus
+                validatedData.estatus,
+                cedulaUsuario
             );
 
             return nuevoCaso;

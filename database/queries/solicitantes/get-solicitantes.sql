@@ -1,34 +1,30 @@
--- Retorna los clientes que son solicitantes
--- Un solicitante es un cliente que tiene todos los datos completos requeridos por el formulario:
--- estado_civil, concubinato, id_hogar, id_nivel_educativo, id_trabajo, id_vivienda
--- Y que tiene al menos un caso registrado (fecha_solicitud NOT NULL)
+-- Retorna todos los solicitantes
+-- Un solicitante es una persona que tiene todos los datos completos requeridos
+-- Y que tiene al menos un caso registrado
 
 SELECT 
-    c.cedula,
-    c.nombres,
-    c.apellidos,
-    c.telefono_celular,
+    s.cedula,
+    s.nombres,
+    s.apellidos,
+    s.telefono_celular,
+    vs.edad,
     (
         SELECT n.nombre_nucleo 
         FROM nucleos n 
         WHERE n.id_nucleo = (
-            SELECT ca.id_nucleo FROM casos ca WHERE ca.cedula_cliente = c.cedula 
+            SELECT ca.id_nucleo FROM casos ca WHERE ca.cedula = s.cedula 
             LIMIT 1
         )
         LIMIT 1
     ) AS nucleo,
     (
-        SELECT fecha_solicitud FROM casos ca WHERE ca.cedula_cliente = c.cedula 
+        SELECT fecha_solicitud FROM casos ca WHERE ca.cedula = s.cedula 
         ORDER BY fecha_solicitud DESC
         LIMIT 1
     ) AS fecha_solicitud
-FROM clientes c
-WHERE c.estado_civil IS NOT NULL
-  AND c.concubinato IS NOT NULL
-  AND c.id_hogar IS NOT NULL
-  AND c.id_nivel_educativo IS NOT NULL
-  AND c.id_trabajo IS NOT NULL
-  AND c.id_vivienda IS NOT NULL
-  AND EXISTS (
-      SELECT 1 FROM casos ca WHERE ca.cedula_cliente = c.cedula
-  );
+FROM solicitantes s
+INNER JOIN view_solicitantes_completo vs ON s.cedula = vs.cedula
+WHERE EXISTS (
+    SELECT 1 FROM casos ca WHERE ca.cedula = s.cedula
+)
+ORDER BY s.cedula;

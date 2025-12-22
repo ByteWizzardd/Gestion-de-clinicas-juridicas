@@ -16,24 +16,26 @@ export const citasService = {
 
       // Transformar los datos al formato esperado por el frontend
       const appointments = citas.map((cita) => {
-        const fechaCita = new Date(cita.fecha_cita);
+        const fechaCita = new Date(cita.fecha_encuentro);
         
         // Formatear hora como HH:mm
         const horas = fechaCita.getHours().toString().padStart(2, '0');
         const minutos = fechaCita.getMinutes().toString().padStart(2, '0');
         const time = `${horas}:${minutos}`;
 
-        // Nombre completo del cliente
-        const client = `${cita.nombres_cliente} ${cita.apellidos_cliente}`;
+        // Nombre completo del solicitante
+        const client = cita.nombre_completo_solicitante || 
+          `${cita.nombres_solicitante || ''} ${cita.apellidos_solicitante || ''}`.trim() || 
+          cita.cedula;
 
-        // Detalle del caso: C-{id_caso} (Nombre Cliente) - Nombre Núcleo
-        const caseDetail = `C-${cita.id_caso} (${cita.nombres_cliente} ${cita.apellidos_cliente}) - ${cita.nombre_nucleo}`;
+        // Detalle del caso: C-{id_caso} (Nombre Solicitante) - Nombre Núcleo
+        const caseDetail = `C-${cita.id_caso} (${client}) - ${cita.nombre_nucleo}`;
 
         // Título: Materia del ámbito legal
-        const title = cita.materia_ambito || cita.tramite;
+        const title = cita.nombre_materia || cita.tramite;
 
         return {
-          id: `cita-${cita.id_caso}-${fechaCita.getTime()}`,
+          id: `cita-${cita.num_cita}-${cita.id_caso}-${fechaCita.getTime()}`,
           title,
           date: fechaCita,
           time,

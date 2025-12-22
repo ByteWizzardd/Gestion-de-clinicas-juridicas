@@ -12,9 +12,12 @@ interface CasesTabProps {
     fecha_fin_caso: string | null;
     tramite: string | null;
     estatus: string | null;
+    cant_beneficiarios: number | null;
     observaciones: string | null;
     nombre_nucleo: string | null;
-    ambito_legal_materia: string | null;
+    nombre_materia: string | null;
+    nombre_categoria: string | null;
+    nombre_subcategoria: string | null;
   }>;
 }
 
@@ -108,7 +111,7 @@ export default function CasesTab({ casos }: CasesTabProps) {
                     </td>
                     <td className="px-3 sm:px-6 py-4 hidden lg:table-cell">
                       <span className="text-sm text-gray-900">
-                        {caso.ambito_legal_materia || 'N/A'}
+                        {caso.nombre_materia || 'N/A'}
                       </span>
                     </td>
                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap">

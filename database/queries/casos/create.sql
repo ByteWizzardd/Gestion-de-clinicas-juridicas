@@ -1,22 +1,26 @@
 -- Crear un nuevo caso
 -- Parámetros: 
 --   $1 = tramite
---   $2 = estatus
---   $3 = observaciones
---   $4 = cedula_cliente
---   $5 = id_nucleo (opcional, puede ser NULL)
---   $6 = id_ambito_legal (opcional, puede ser NULL)
---   $7 = id_expediente (opcional, puede ser NULL)
---   $8 = fecha_solicitud (si es NULL, se usa CURRENT_DATE)
+--   $2 = observaciones (opcional)
+--   $3 = cedula (del solicitante)
+--   $4 = id_nucleo
+--   $5 = id_materia
+--   $6 = num_categoria
+--   $7 = num_subcategoria
+--   $8 = num_ambito_legal
+--   $9 = fecha_solicitud (si es NULL, se usa CURRENT_DATE)
+--   $10 = fecha_inicio_caso
 INSERT INTO casos (
     tramite,
-    estatus,
     observaciones,
-    cedula_cliente,
+    cedula,
     id_nucleo,
-    id_ambito_legal,
-    id_expediente,
-    fecha_solicitud
-) VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, CURRENT_DATE))
+    id_materia,
+    num_categoria,
+    num_subcategoria,
+    num_ambito_legal,
+    fecha_solicitud,
+    fecha_inicio_caso
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, CURRENT_DATE), $10)
 RETURNING *;
 

@@ -1,79 +1,90 @@
 -- Obtener un solicitante completo por cédula con toda su información relacionada
+-- Usa la vista view_solicitantes_completo para obtener edad derivada
 -- Parámetros: $1 = cedula
 
 SELECT 
-    c.cedula,
-    c.nombres,
-    c.apellidos,
-    c.fecha_nacimiento,
-    c.telefono_local,
-    c.telefono_celular,
-    c.correo_electronico,
-    c.sexo,
-    c.nacionalidad,
-    c.estado_civil,
-    c.concubinato,
-    
-    -- Información del hogar
-    fh.id_hogar,
-    fh.cant_personas,
-    fh.cant_trabajadores,
-    fh.cant_ninos,
-    fh.cant_ninos_estudiando,
-    fh.jefe_hogar,
+    vs.cedula,
+    vs.nombres,
+    vs.apellidos,
+    vs.fecha_nacimiento,
+    vs.edad,
+    vs.telefono_local,
+    vs.telefono_celular,
+    vs.correo_electronico,
+    vs.sexo,
+    vs.nacionalidad,
+    vs.estado_civil,
+    vs.concubinato,
+    vs.tiempo_estudio,
     
     -- Información educativa
     ne.id_nivel_educativo,
-    ne.nivel AS nivel_educativo,
-    ne.anos_cursados,
-    ne.semestres_cursados,
-    ne.trimestres_cursados,
+    ne.descripcion AS nivel_educativo,
     
     -- Información laboral
-    t.id_trabajo,
-    t.condicion_actividad,
-    t.buscando_trabajo,
-    t.condicion_trabajo,
+    ct.id_trabajo,
+    ct.nombre_trabajo,
+    ca.id_actividad,
+    ca.nombre_actividad,
+    
+    -- Información del hogar
+    fh.cant_personas,
+    fh.cant_trabajadores,
+    fh.cant_no_trabajadores,
+    fh.cant_ninos,
+    fh.cant_ninos_estudiando,
+    fh.jefe_hogar,
+    fh.ingresos_mensuales,
+    fh.tiempo_estudio_jefe,
+    fh.id_nivel_educativo_jefe,
     
     -- Información de vivienda
-    v.id_vivienda,
-    v.tipo_vivienda,
     v.cant_habitaciones,
     v.cant_banos,
-    v.material_piso,
-    v.material_paredes,
-    v.material_techo,
-    v.agua_potable,
-    v.eliminacion_aguas_n,
-    v.aseo,
     
     -- Ubicación
-    p.id_parroquia,
+    p.id_estado,
+    p.num_municipio,
+    p.num_parroquia,
     p.nombre_parroquia,
-    m.id_municipio,
     m.nombre_municipio,
-    e.id_estado,
     e.nombre_estado,
     
-    -- Núcleo
-    n.id_nucleo,
-    n.nombre_nucleo,
+    -- Núcleo (obtenido del caso más reciente)
+    (
+        SELECT n.id_nucleo
+        FROM casos ca
+        INNER JOIN nucleos n ON ca.id_nucleo = n.id_nucleo
+        WHERE ca.cedula = vs.cedula
+        ORDER BY ca.fecha_solicitud DESC, ca.id_caso DESC
+        LIMIT 1
+    ) AS id_nucleo,
+    (
+        SELECT n.nombre_nucleo
+        FROM casos ca
+        INNER JOIN nucleos n ON ca.id_nucleo = n.id_nucleo
+        WHERE ca.cedula = vs.cedula
+        ORDER BY ca.fecha_solicitud DESC, ca.id_caso DESC
+        LIMIT 1
+    ) AS nombre_nucleo,
     
-    -- Casos asociados (agregado)
+    -- Casos asociados
     (
         SELECT COUNT(*) 
         FROM casos ca 
-        WHERE ca.cedula_cliente = c.cedula
+        WHERE ca.cedula = vs.cedula
     ) AS total_casos
 
-FROM clientes c
-LEFT JOIN familias_hogares fh ON c.id_hogar = fh.id_hogar
-LEFT JOIN niveles_educativos ne ON c.id_nivel_educativo = ne.id_nivel_educativo
-LEFT JOIN trabajos t ON c.id_trabajo = t.id_trabajo
-LEFT JOIN viviendas v ON c.id_vivienda = v.id_vivienda
-LEFT JOIN parroquias p ON c.id_parroquia = p.id_parroquia
-LEFT JOIN municipios m ON p.id_municipio = m.id_municipio
+FROM view_solicitantes_completo vs
+LEFT JOIN niveles_educativos ne ON vs.id_nivel_educativo = ne.id_nivel_educativo
+LEFT JOIN condicion_trabajo ct ON vs.id_trabajo = ct.id_trabajo
+LEFT JOIN condicion_actividad ca ON vs.id_actividad = ca.id_actividad
+LEFT JOIN familias_y_hogares fh ON vs.cedula = fh.cedula_solicitante
+LEFT JOIN viviendas v ON vs.cedula = v.cedula_solicitante
+LEFT JOIN parroquias p ON vs.id_estado = p.id_estado 
+    AND vs.num_municipio = p.num_municipio 
+    AND vs.num_parroquia = p.num_parroquia
+LEFT JOIN municipios m ON p.id_estado = m.id_estado AND p.num_municipio = m.num_municipio
 LEFT JOIN estados e ON m.id_estado = e.id_estado
-LEFT JOIN nucleos n ON c.id_nucleo = n.id_nucleo
-WHERE c.cedula = $1;
+WHERE vs.cedula = $1;
 

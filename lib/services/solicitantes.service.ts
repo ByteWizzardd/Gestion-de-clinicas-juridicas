@@ -30,7 +30,6 @@ interface ApplicantFormData {
   aguaPotable: string;
   eliminacionAguasN: string;
   aseo: string;
-  artefactos: string[];
   // Familia y Hogar
   cantPersonas: string;
   cantTrabajadores: string;
@@ -101,11 +100,36 @@ export class SolicitantesService {
       );
     }
   }
+
+  /**
+   * Obtiene un solicitante completo por su cédula con todas sus relaciones
+   * (núcleo, educación, trabajo, hogar, vivienda, casos)
+   * @param cedula - Cédula del solicitante
+   * @returns Promise<any | null> - Información completa del solicitante o null si no existe
+   * @throws {AppError} - Si ocurre un error al obtener los datos
+   */
+  static async getSolicitanteCompleto(cedula: string): Promise<any | null> {
+    try {
+      return await solicitantesQueries.getSolicitanteCompleto(cedula);
+    } catch (error) {
+      console.error('[SolicitantesService] Error fetching solicitante completo:', error);
+      if (error instanceof Error) {
+        console.error(`Error details: ${error.message}`);
+      }
+      throw new AppError(
+        'No se pudo obtener la información completa del solicitante. Por favor, intente más tarde.',
+        500,
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+  }
 }
 
 export const solicitantesService = {
   /**
-   * Registra un nuevo solicitante con todos sus datos
+   * Crea/registra un nuevo solicitante con todos sus datos completos
+   * Nota: Un solicitante es diferente de un usuario. Los usuarios son estudiantes/profesores/coordinadores
+   * que trabajan en la clínica, mientras que los solicitantes son las personas que solicitan servicios legales.
    */
   create: async (data: ApplicantFormData): Promise<any> => {
     const client = await pool.connect();
@@ -113,7 +137,7 @@ export const solicitantesService = {
     try {
       await client.query('BEGIN');
 
-      // 1. Crear o verificar cliente básico
+      // 1. Crear o verificar solicitante básico
       const cedula = `${data.cedulaTipo}${data.cedulaNumero}`;
       const sexo = data.sexo === 'Masculino' ? 'M' : 'F';
       
@@ -128,14 +152,14 @@ export const solicitantesService = {
         nacionalidad = data.nacionalidad || 'Ext'; // Por defecto extranjero si no se especifica
       }
       
-      // Verificar si el cliente ya existe
-      const checkClienteQuery = loadSQL('clientes/check-exists.sql');
-      const clienteExistente = await client.query(checkClienteQuery, [cedula]);
+      // Verificar si el solicitante ya existe
+      const checkSolicitanteQuery = loadSQL('solicitantes/check-exists.sql');
+      const solicitanteExistente = await client.query(checkSolicitanteQuery, [cedula]);
       
-      if (clienteExistente.rows.length === 0) {
-        // Crear cliente básico
-        const createClienteQuery = loadSQL('auth/create-cliente.sql');
-        await client.query(createClienteQuery, [
+      if (solicitanteExistente.rows.length === 0) {
+        // Crear solicitante básico
+        const createSolicitanteQuery = loadSQL('solicitantes/create.sql');
+        await client.query(createSolicitanteQuery, [
           cedula,
           data.nombres,
           data.apellidos,
@@ -150,15 +174,9 @@ export const solicitantesService = {
       // 2. Crear vivienda
       const createViviendaQuery = loadSQL('viviendas/create.sql');
       const viviendaResult: QueryResult = await client.query(createViviendaQuery, [
-        data.tipoVivienda,
+        cedula,
         parseInt(data.cantHabitaciones),
         parseInt(data.cantBanos),
-        data.materialPiso,
-        data.materialParedes,
-        data.materialTecho,
-        data.aguaPotable,
-        data.eliminacionAguasN,
-        data.aseo,
       ]);
       const vivienda = viviendaResult.rows[0];
 
@@ -184,82 +202,92 @@ export const solicitantesService = {
         nivelEducativoJefeHogar = nivelEducativoJefeHogarResult.rows[0];
       }
 
-      // 5. Crear trabajo
+      // 5. Obtener IDs de condicion_trabajo y condicion_actividad
+      // En el nuevo schema, solicitantes tiene id_trabajo e id_actividad directamente
+      // Necesitamos obtener los IDs de las tablas de catálogo
       const trabaja = data.trabaja === 'si';
-      const buscandoTrabajo = data.buscandoTrabajo === 'si';
+      let idTrabajo: number | null = null;
+      let idActividad: number | null = null;
       
-      // Determinar valores según la lógica del formulario
-      let condicionActividad: string | null = null;
-      let condicionTrabajo: string | null = null;
-      
-      if (trabaja) {
-        // Si trabaja, necesita condicion_trabajo
-        condicionTrabajo = data.condicionTrabajo || null;
-        // condicion_actividad es null cuando trabaja
-      } else if (buscandoTrabajo) {
-        // Si no trabaja pero busca trabajo, ambos son null
-        condicionActividad = null;
-        condicionTrabajo = null;
-      } else {
-        // Si no trabaja y no busca trabajo, necesita condicion_actividad
-        condicionActividad = data.condicionActividad || null;
-        // condicion_trabajo es null cuando no trabaja
+      if (trabaja && data.condicionTrabajo) {
+        // Buscar o usar ID de condicion_trabajo
+        // Por ahora usamos un ID por defecto, deberías buscar en la tabla condicion_trabajo
+        const trabajoResult = await client.query(
+          'SELECT id_trabajo FROM condicion_trabajo WHERE nombre_trabajo = $1 LIMIT 1',
+          [data.condicionTrabajo]
+        );
+        idTrabajo = trabajoResult.rows[0]?.id_trabajo || 1; // Fallback a 1 si no existe
+      } else if (!trabaja && data.condicionActividad) {
+        // Buscar o usar ID de condicion_actividad
+        const actividadResult = await client.query(
+          'SELECT id_actividad FROM condicion_actividad WHERE nombre_actividad = $1 LIMIT 1',
+          [data.condicionActividad]
+        );
+        idActividad = actividadResult.rows[0]?.id_actividad || 1; // Fallback a 1 si no existe
       }
       
-      const createTrabajoQuery = loadSQL('trabajos/create.sql');
-      const trabajoResult: QueryResult = await client.query(createTrabajoQuery, [
-        condicionActividad,
-        buscandoTrabajo,
-        condicionTrabajo,
-      ]);
-      const trabajo = trabajoResult.rows[0];
+      // Si no se encontró ninguno, usar valores por defecto
+      if (!idTrabajo) idTrabajo = 1; // Valor por defecto requerido por el schema
+      if (!idActividad) idActividad = 1; // Valor por defecto requerido por el schema
 
       // 6. Crear familia y hogar
       const createHogarQuery = loadSQL('familias-hogares/create.sql');
+      const cantTrabajadores = parseInt(data.cantTrabajadores);
+      const cantPersonas = parseInt(data.cantPersonas);
+      const cantNoTrabajadores = cantPersonas - cantTrabajadores;
       const hogarResult: QueryResult = await client.query(createHogarQuery, [
-        parseInt(data.cantPersonas),
-        parseInt(data.cantTrabajadores),
+        cedula,
+        cantPersonas,
+        cantTrabajadores,
+        cantNoTrabajadores,
         parseInt(data.cantNinos),
         parseInt(data.cantNinosEstudiando),
         data.jefeHogar === 'si',
-        nivelEducativoJefeHogar?.id_nivel_educativo || null,
         parseFloat(data.ingresosMensuales),
+        nivelEducativoJefeHogar ? (data.anosCursados || data.semestresCursados || data.trimestresCursados ? `${data.anosCursados || 0} años, ${data.semestresCursados || 0} semestres, ${data.trimestresCursados || 0} trimestres` : null) : null,
+        nivelEducativoJefeHogar?.id_nivel_educativo || null,
       ]);
       const hogar = hogarResult.rows[0];
 
-      // 7. Crear artefactos domésticos
-      if (data.artefactos && data.artefactos.length > 0) {
-        const createArtefactoQuery = loadSQL('artefactos-domesticos/create.sql');
-        for (const artefacto of data.artefactos) {
-          await client.query(createArtefactoQuery, [hogar.id_hogar, artefacto]);
-        }
-      }
+      // 7. Nota: Los artefactos domésticos ya no existen en el nuevo schema
 
-      // 8. Actualizar cliente con todos los datos
+      // 8. Actualizar solicitante con todos los datos
       const estadoCivil = data.estadoCivil || null;
       const concubinato = data.concubinato === 'si' ? true : (data.concubinato === 'no' ? false : null);
       
-      const updateClienteQuery = loadSQL('clientes/update-complete.sql');
-      const clienteResult: QueryResult = await client.query(updateClienteQuery, [
+      // Calcular tiempo_estudio del solicitante
+      const tiempoEstudioSolicitante = [
+        data.anosCursadosSolicitante ? `${data.anosCursadosSolicitante} años` : '',
+        data.semestresCursadosSolicitante ? `${data.semestresCursadosSolicitante} semestres` : '',
+        data.trimestresCursadosSolicitante ? `${data.trimestresCursadosSolicitante} trimestres` : '',
+      ].filter(Boolean).join(', ') || '';
+      
+      const updateSolicitanteQuery = loadSQL('solicitantes/update-complete.sql');
+      const solicitanteResult: QueryResult = await client.query(updateSolicitanteQuery, [
         cedula,
         data.telefonoLocal || null,
         `${data.codigoPaisCelular}${data.telefonoCelular}`,
         estadoCivil,
         concubinato,
-        hogar.id_hogar,
+        tiempoEstudioSolicitante || '',
         nivelEducativoSolicitante.id_nivel_educativo,
-        trabajo.id_trabajo,
-        vivienda.id_vivienda,
+        idTrabajo,
+        idActividad,
+        // TODO: Agregar id_estado, num_municipio, num_parroquia cuando estén disponibles en el formulario
+        1, // id_estado temporal
+        1, // num_municipio temporal
+        1, // num_parroquia temporal
       ]);
-      const clienteActualizado = clienteResult.rows[0];
+      const solicitanteActualizado = solicitanteResult.rows[0];
 
       await client.query('COMMIT');
       
       return {
-        cliente: clienteActualizado,
+        solicitante: solicitanteActualizado,
         vivienda,
         nivelEducativo: nivelEducativoSolicitante,
-        trabajo,
+        idTrabajo,
+        idActividad,
         hogar,
       };
     } catch (error: any) {

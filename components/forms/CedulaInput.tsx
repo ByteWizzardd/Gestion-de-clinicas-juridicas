@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ChevronDown } from 'lucide-react';
 
-interface Cliente {
+interface Solicitante {
   cedula: string;
   nombres: string;
   apellidos: string;
@@ -103,7 +103,7 @@ function SelectSmall({ value, onChange, options, className = '', error = false }
   );
 }
 
-type SearchType = 'cliente' | 'profesor' | 'estudiante';
+type SearchType = 'solicitante' | 'profesor' | 'estudiante';
 
 interface CedulaInputProps {
   label: string;
@@ -115,7 +115,7 @@ interface CedulaInputProps {
   error?: string;
   required?: boolean;
   onSelectCedula?: (cedula: string) => void;
-  searchType?: SearchType; // Tipo de búsqueda: cliente, profesor o estudiante
+  searchType?: SearchType; // Tipo de búsqueda: solicitante, profesor o estudiante
 }
 
 export default function CedulaInput({
@@ -128,9 +128,9 @@ export default function CedulaInput({
   error,
   required,
   onSelectCedula,
-  searchType = 'cliente',
+  searchType = 'solicitante',
 }: CedulaInputProps) {
-  const [suggestions, setSuggestions] = useState<Cliente[]>([]);
+  const [suggestions, setSuggestions] = useState<Solicitante[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -183,9 +183,9 @@ export default function CedulaInput({
           const { searchEstudiantesAction } = await import('@/app/actions/estudiantes');
           result = await searchEstudiantesAction(searchQuery);
         } else {
-          // searchType === 'cliente'
-          const { searchClientesAction } = await import('@/app/actions/clientes');
-          result = await searchClientesAction(searchQuery, false);
+          // searchType === 'solicitante'
+          const { searchSolicitantesAction } = await import('@/app/actions/solicitantes');
+          result = await searchSolicitantesAction(searchQuery, 'cedula');
         }
         
         if (result.success && result.data) {
@@ -211,16 +211,16 @@ export default function CedulaInput({
     };
   }, [value, tipoValue, searchType]);
 
-  const handleSelectSuggestion = (cliente: Cliente) => {
+  const handleSelectSuggestion = (solicitante: Solicitante) => {
     // Separar el tipo de cédula del número
     // La cédula puede venir como "V12345678" o solo "12345678"
     let tipoCedula = tipoValue;
-    let numeroCedula = cliente.cedula;
+    let numeroCedula = solicitante.cedula;
     
     // Si la cédula empieza con V, E, J o P, extraer el tipo
-    if (cliente.cedula.match(/^[VEJP]/)) {
-      tipoCedula = cliente.cedula[0];
-      numeroCedula = cliente.cedula.substring(1);
+    if (solicitante.cedula.match(/^[VEJP]/)) {
+      tipoCedula = solicitante.cedula[0];
+      numeroCedula = solicitante.cedula.substring(1);
     }
     
     // Actualizar el tipo si hay callback
@@ -237,7 +237,7 @@ export default function CedulaInput({
     setShowSuggestions(false);
     
     if (onSelectCedula) {
-      onSelectCedula(cliente.cedula);
+      onSelectCedula(solicitante.cedula);
     }
   };
 
@@ -309,18 +309,18 @@ export default function CedulaInput({
                     Buscando...
                   </motion.div>
                 )}
-                {!isSearching && suggestions.map((cliente, index) => (
+                {!isSearching && suggestions.map((solicitante, index) => (
                   <motion.button
-                    key={cliente.cedula}
+                    key={solicitante.cedula}
                     type="button"
-                    onClick={() => handleSelectSuggestion(cliente)}
+                    onClick={() => handleSelectSuggestion(solicitante)}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.03, duration: 0.15 }}
                     className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none transition-colors"
                   >
-                    <div className="font-medium text-gray-900">{cliente.cedula}</div>
-                    <div className="text-sm text-gray-600">{cliente.nombre_completo}</div>
+                    <div className="font-medium text-gray-900">{solicitante.cedula}</div>
+                    <div className="text-sm text-gray-600">{solicitante.nombre_completo}</div>
                   </motion.button>
                 ))}
               </motion.div>

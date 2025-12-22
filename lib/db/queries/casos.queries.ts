@@ -8,7 +8,7 @@ import { QueryResult } from 'pg';
  */
 export const casosQueries = {
   /**
-   * Obtiene todos los casos con información del cliente
+   * Obtiene todos los casos con información del solicitante
    */
   getAll: async (): Promise<any[]> => {
     const query = loadSQL('casos/get-all.sql');
@@ -17,7 +17,7 @@ export const casosQueries = {
   },
 
   /**
-   * Obtiene todos los casos con información del cliente y profesor responsable (optimizado)
+   * Obtiene todos los casos con información del solicitante y profesor responsable (optimizado)
    * Usa un JOIN LATERAL para evitar N+1 queries
    */
   getAllWithProfesor: async (): Promise<any[]> => {
@@ -36,42 +36,51 @@ export const casosQueries = {
   },
 
   /**
-   * Obtiene todos los casos de un cliente específico
+   * Obtiene todos los casos de un solicitante específico
+   * @param cedulaSolicitante - Cédula del solicitante
    */
-  getByCliente: async (cedulaCliente: string): Promise<any[]> => {
-    const query = loadSQL('casos/get-by-cliente.sql');
-    const result: QueryResult = await pool.query(query, [cedulaCliente]);
+  getBySolicitante: async (cedulaSolicitante: string): Promise<any[]> => {
+    const query = loadSQL('casos/get-by-solicitante.sql');
+    const result: QueryResult = await pool.query(query, [cedulaSolicitante]);
     return result.rows;
   },
 
   /**
    * Crea un nuevo caso
    * Si fecha_solicitud no se proporciona, se usa CURRENT_DATE en la base de datos
+   * Nota: El estatus se maneja mediante la tabla cambio_estatus, no directamente en casos
    */
   create: async (data: {
     tramite: string;
-    estatus: string;
     observaciones?: string;
-    cedula_cliente: string;
-    id_nucleo?: number;
-    id_ambito_legal?: number;
-    id_expediente?: string;
+    cedula: string;
+    id_nucleo: number;
+    id_materia: number;
+    num_categoria: number;
+    num_subcategoria: number;
+    num_ambito_legal: number;
     fecha_solicitud?: string | Date;
+    fecha_inicio_caso: string | Date;
   }): Promise<any> => {
     const query = loadSQL('casos/create.sql');
     const fechaSolicitudStr = data.fecha_solicitud
       ? (typeof data.fecha_solicitud === 'string' ? data.fecha_solicitud : data.fecha_solicitud.toISOString().split('T')[0])
       : null;
+    const fechaInicioStr = typeof data.fecha_inicio_caso === 'string' 
+      ? data.fecha_inicio_caso 
+      : data.fecha_inicio_caso.toISOString().split('T')[0];
     
     const result: QueryResult = await pool.query(query, [
       data.tramite,
-      data.estatus,
       data.observaciones || null,
-      data.cedula_cliente,
-      data.id_nucleo || null,
-      data.id_ambito_legal || null,
-      data.id_expediente || null,
+      data.cedula,
+      data.id_nucleo,
+      data.id_materia,
+      data.num_categoria,
+      data.num_subcategoria,
+      data.num_ambito_legal,
       fechaSolicitudStr,
+      fechaInicioStr,
     ]);
     return result.rows[0];
   },
@@ -87,17 +96,19 @@ export const casosQueries = {
 
   /**
    * Actualiza un caso existente
+   * Nota: El estatus se actualiza mediante la tabla cambio_estatus, no directamente aquí
    */
   update: async (
     id: number,
     data: {
       tramite?: string;
-      estatus?: string;
       observaciones?: string;
       fecha_fin_caso?: string;
       id_nucleo?: number;
-      id_ambito_legal?: number;
-      id_expediente?: string;
+      id_materia?: number;
+      num_categoria?: number;
+      num_subcategoria?: number;
+      num_ambito_legal?: number;
       fecha_solicitud?: string | Date;
     }
   ): Promise<any> => {
@@ -105,12 +116,13 @@ export const casosQueries = {
     const result: QueryResult = await pool.query(query, [
       id,
       data.tramite || null,
-      data.estatus || null,
       data.observaciones || null,
       data.fecha_fin_caso || null,
       data.id_nucleo || null,
-      data.id_ambito_legal || null,
-      data.id_expediente || null,
+      data.id_materia || null,
+      data.num_categoria || null,
+      data.num_subcategoria || null,
+      data.num_ambito_legal || null,
       data.fecha_solicitud ? (typeof data.fecha_solicitud === 'string' ? data.fecha_solicitud : data.fecha_solicitud.toISOString().split('T')[0]) : null,
     ]);
     return result.rows[0];

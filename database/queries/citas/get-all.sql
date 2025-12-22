@@ -1,26 +1,33 @@
 -- Obtiene todas las citas con información relacionada
--- Incluye: caso, cliente, núcleo, ámbito legal
+-- Incluye: caso, solicitante, núcleo, ámbito legal
+-- Usa la vista view_casos_completo para obtener estatus derivado
 SELECT 
-    c.fecha_cita,
+    c.num_cita,
     c.id_caso,
-    c.proxima_cita,
-    -- Información del caso
-    caso.tramite,
-    caso.estatus,
-    caso.cedula_cliente,
-    -- Información del cliente
-    cli.nombres AS nombres_cliente,
-    cli.apellidos AS apellidos_cliente,
+    c.fecha_encuentro,
+    c.fecha_proxima_cita,
+    c.orientacion,
+    c.fecha_registro,
+    c.id_usuario_orientacion,
+    -- Información del caso (desde vista)
+    vc.tramite,
+    vc.estatus,
+    vc.cedula,
+    vc.nombres_solicitante,
+    vc.apellidos_solicitante,
+    vc.nombre_completo_solicitante,
     -- Información del núcleo
-    n.id_nucleo,
-    n.nombre_nucleo,
+    vc.id_nucleo,
+    vc.nombre_nucleo,
     -- Información del ámbito legal
-    al.id_ambito_legal,
-    al.materia AS materia_ambito
+    vc.id_materia,
+    vc.num_categoria,
+    vc.num_subcategoria,
+    vc.num_ambito_legal,
+    vc.nombre_materia,
+    vc.nombre_categoria,
+    vc.nombre_subcategoria
 FROM citas c
-INNER JOIN casos caso ON c.id_caso = caso.id_caso
-INNER JOIN clientes cli ON caso.cedula_cliente = cli.cedula
-INNER JOIN nucleos n ON caso.id_nucleo = n.id_nucleo
-INNER JOIN ambitos_legales al ON caso.id_ambito_legal = al.id_ambito_legal
-ORDER BY c.fecha_cita DESC;
+INNER JOIN view_casos_detalle vc ON c.id_caso = vc.id_caso
+ORDER BY c.fecha_encuentro DESC;
 

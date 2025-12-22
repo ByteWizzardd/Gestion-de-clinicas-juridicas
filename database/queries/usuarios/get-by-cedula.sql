@@ -3,13 +3,12 @@
 -- IMPORTANTE: Ejecutar primero la migración add-password-to-usuarios.sql
 SELECT 
     u.cedula,
-    u.habilitado,
-    u.rol_sistema,
-    u.password_hash,
-    c.nombres,
-    c.apellidos,
-    c.correo_electronico
+    u.habilitado_sistema AS habilitado,
+    u.tipo_usuario AS rol_sistema,
+    u.contrasena AS password_hash,
+    u.nombres,
+    u.apellidos,
+    u.correo_electronico
 FROM usuarios u
-INNER JOIN clientes c ON u.cedula = c.cedula
 WHERE u.cedula = $1;
 

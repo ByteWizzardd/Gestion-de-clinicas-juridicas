@@ -1,34 +1,42 @@
--- Obtener todos los casos con información del cliente y profesor responsable
--- Incluye JOIN para obtener nombres completos y datos del cliente
+-- Obtener todos los casos con información del solicitante y profesor responsable
+-- Usa la vista view_casos_completo para obtener estatus y cant_beneficiarios derivados
 -- Incluye LEFT JOIN LATERAL para obtener el profesor responsable activo (optimizado para evitar N+1)
 -- Ordenado por id_caso descendente (más recientes primero)
 SELECT 
-    c.id_caso,
-    c.fecha_inicio_caso,
-    c.fecha_fin_caso,
-    c.fecha_solicitud,
-    c.tramite,
-    c.estatus,
-    c.observaciones,
-    c.id_nucleo,
-    c.id_ambito_legal,
-    c.id_expediente,
-    c.cedula_cliente,
-    cl.nombres AS nombres_cliente,
-    cl.apellidos AS apellidos_cliente,
-    cl.nombres || ' ' || cl.apellidos AS nombre_completo_cliente,
+    vc.id_caso,
+    vc.fecha_inicio_caso,
+    vc.fecha_fin_caso,
+    vc.fecha_solicitud,
+    vc.tramite,
+    vc.estatus,
+    vc.cant_beneficiarios,
+    vc.observaciones,
+    vc.id_nucleo,
+    vc.id_materia,
+    vc.num_categoria,
+    vc.num_subcategoria,
+    vc.num_ambito_legal,
+    vc.cedula,
+    vc.nombres_solicitante,
+    vc.apellidos_solicitante,
+    vc.nombre_completo_solicitante,
+    vc.nombre_nucleo,
+    vc.nombre_materia,
+    vc.nombre_categoria,
+    vc.nombre_subcategoria,
     prof.nombre_completo_profesor AS nombre_responsable
-FROM casos c
-INNER JOIN clientes cl ON c.cedula_cliente = cl.cedula
+FROM view_casos_detalle vc
 LEFT JOIN LATERAL (
     SELECT 
-        c_prof.nombres || ' ' || c_prof.apellidos AS nombre_completo_profesor
-    FROM asignaciones a
-    INNER JOIN clientes c_prof ON a.cedula_profesor = c_prof.cedula
-    WHERE a.id_caso = c.id_caso
-      AND (a.fecha_fin IS NULL OR a.fecha_fin >= CURRENT_DATE)
-    ORDER BY a.fecha_inicio DESC
+        u.nombres || ' ' || u.apellidos AS nombre_completo_profesor
+    FROM supervisa s
+    INNER JOIN profesores p ON s.term = p.term AND s.cedula_profesor = p.cedula_profesor
+    INNER JOIN usuarios u ON p.cedula_profesor = u.cedula
+    WHERE s.id_caso = vc.id_caso
+      AND s.habilitado = true
+      AND p.term = (SELECT term FROM semestres ORDER BY fecha_inicio DESC LIMIT 1)
+    ORDER BY s.term DESC
     LIMIT 1
 ) prof ON true
-ORDER BY c.id_caso DESC;
+ORDER BY vc.id_caso DESC;
 

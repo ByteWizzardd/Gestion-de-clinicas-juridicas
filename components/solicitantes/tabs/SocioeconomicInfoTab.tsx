@@ -3,7 +3,7 @@
 import { GraduationCap, Briefcase, Home, CheckCircle } from 'lucide-react';
 
 interface SocioeconomicInfoTabProps {
-  cliente: {
+  solicitante: {
     nivel?: number | null;
     anos_cursados?: number | null;
     semestres_cursados?: number | null;
@@ -16,17 +16,15 @@ interface SocioeconomicInfoTabProps {
     cant_ninos?: number | null;
     cant_ninos_estudiando?: number | null;
     jefe_hogar?: boolean | null;
-    artefactos?: string[];
   };
 }
 
-export default function SocioeconomicInfoTab({ cliente }: SocioeconomicInfoTabProps) {
-  const artefactosDisponibles = ['Nevera', 'Lavadora', 'Computadora', 'Cable Satelital', 'Internet', 'Carro', 'Moto'];
+export default function SocioeconomicInfoTab({ solicitante }: SocioeconomicInfoTabProps) {
 
   // Verificar si hay información socioeconómica
-  const hasEducation = cliente.nivel !== null && cliente.nivel !== undefined;
-  const hasWork = cliente.condicion_actividad || cliente.condicion_trabajo;
-  const hasHome = cliente.cant_personas !== null || cliente.cant_trabajadores !== null;
+  const hasEducation = solicitante.nivel !== null && solicitante.nivel !== undefined;
+  const hasWork = solicitante.condicion_actividad || solicitante.condicion_trabajo;
+  const hasHome = solicitante.cant_personas !== null || solicitante.cant_trabajadores !== null;
 
   if (!hasEducation && !hasWork && !hasHome) {
     return (
@@ -46,28 +44,28 @@ export default function SocioeconomicInfoTab({ cliente }: SocioeconomicInfoTabPr
             Educación
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {cliente.nivel !== null && cliente.nivel !== undefined && (
+          {solicitante.nivel !== null && solicitante.nivel !== undefined && (
             <div>
               <label className="text-sm font-medium text-gray-500">Nivel Educativo</label>
-              <p className="text-base text-gray-900 mt-1">Nivel {cliente.nivel}</p>
+              <p className="text-base text-gray-900 mt-1">Nivel {solicitante.nivel}</p>
             </div>
           )}
-          {cliente.anos_cursados !== null && cliente.anos_cursados !== undefined && (
+          {solicitante.anos_cursados !== null && solicitante.anos_cursados !== undefined && (
             <div>
               <label className="text-sm font-medium text-gray-500">Años Cursados</label>
-              <p className="text-base text-gray-900 mt-1">{cliente.anos_cursados} años</p>
+              <p className="text-base text-gray-900 mt-1">{solicitante.anos_cursados} años</p>
             </div>
           )}
-          {cliente.semestres_cursados !== null && cliente.semestres_cursados !== undefined && (
+          {solicitante.semestres_cursados !== null && solicitante.semestres_cursados !== undefined && (
             <div>
               <label className="text-sm font-medium text-gray-500">Semestres Cursados</label>
-              <p className="text-base text-gray-900 mt-1">{cliente.semestres_cursados} semestres</p>
+              <p className="text-base text-gray-900 mt-1">{solicitante.semestres_cursados} semestres</p>
             </div>
           )}
-          {cliente.trimestres_cursados !== null && cliente.trimestres_cursados !== undefined && (
+          {solicitante.trimestres_cursados !== null && solicitante.trimestres_cursados !== undefined && (
             <div>
               <label className="text-sm font-medium text-gray-500">Trimestres Cursados</label>
-              <p className="text-base text-gray-900 mt-1">{cliente.trimestres_cursados} trimestres</p>
+              <p className="text-base text-gray-900 mt-1">{solicitante.trimestres_cursados} trimestres</p>
             </div>
           )}
           </div>
@@ -82,27 +80,27 @@ export default function SocioeconomicInfoTab({ cliente }: SocioeconomicInfoTabPr
             Trabajo
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {cliente.condicion_actividad && (
+          {solicitante.condicion_actividad && (
             <div>
               <label className="text-sm font-medium text-gray-500">Condición de Actividad</label>
               <span className="inline-block mt-1 px-3 py-1 bg-primary-light text-primary rounded-full text-sm font-medium">
-                {cliente.condicion_actividad}
+                {solicitante.condicion_actividad}
               </span>
             </div>
           )}
-          {cliente.buscando_trabajo !== null && cliente.buscando_trabajo !== undefined && (
+          {solicitante.buscando_trabajo !== null && solicitante.buscando_trabajo !== undefined && (
             <div>
               <label className="text-sm font-medium text-gray-500">Buscando Trabajo</label>
               <p className="text-base text-gray-900 mt-1">
-                {cliente.buscando_trabajo ? 'Sí' : 'No'}
+                {solicitante.buscando_trabajo ? 'Sí' : 'No'}
               </p>
             </div>
           )}
-          {cliente.condicion_trabajo && (
+          {solicitante.condicion_trabajo && (
             <div>
               <label className="text-sm font-medium text-gray-500">Condición de Trabajo</label>
               <span className="inline-block mt-1 px-3 py-1 bg-secondary-light text-secondary rounded-full text-sm font-medium">
-                {cliente.condicion_trabajo}
+                {solicitante.condicion_trabajo}
               </span>
             </div>
           )}
@@ -118,62 +116,39 @@ export default function SocioeconomicInfoTab({ cliente }: SocioeconomicInfoTabPr
             Hogar Familiar
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          {cliente.cant_personas !== null && cliente.cant_personas !== undefined && (
+          {solicitante.cant_personas !== null && solicitante.cant_personas !== undefined && (
             <div>
               <label className="text-sm font-medium text-gray-500">Cantidad de Personas</label>
-              <p className="text-base text-gray-900 mt-1">{cliente.cant_personas} personas</p>
+              <p className="text-base text-gray-900 mt-1">{solicitante.cant_personas} personas</p>
             </div>
           )}
-          {cliente.cant_trabajadores !== null && cliente.cant_trabajadores !== undefined && (
+          {solicitante.cant_trabajadores !== null && solicitante.cant_trabajadores !== undefined && (
             <div>
               <label className="text-sm font-medium text-gray-500">Cantidad de Trabajadores</label>
-              <p className="text-base text-gray-900 mt-1">{cliente.cant_trabajadores} trabajadores</p>
+              <p className="text-base text-gray-900 mt-1">{solicitante.cant_trabajadores} trabajadores</p>
             </div>
           )}
-          {cliente.cant_ninos !== null && cliente.cant_ninos !== undefined && (
+          {solicitante.cant_ninos !== null && solicitante.cant_ninos !== undefined && (
             <div>
               <label className="text-sm font-medium text-gray-500">Cantidad de Niños</label>
-              <p className="text-base text-gray-900 mt-1">{cliente.cant_ninos} niños</p>
+              <p className="text-base text-gray-900 mt-1">{solicitante.cant_ninos} niños</p>
             </div>
           )}
-          {cliente.cant_ninos_estudiando !== null && cliente.cant_ninos_estudiando !== undefined && (
+          {solicitante.cant_ninos_estudiando !== null && solicitante.cant_ninos_estudiando !== undefined && (
             <div>
               <label className="text-sm font-medium text-gray-500">Niños Estudiando</label>
-              <p className="text-base text-gray-900 mt-1">{cliente.cant_ninos_estudiando} niños</p>
+              <p className="text-base text-gray-900 mt-1">{solicitante.cant_ninos_estudiando} niños</p>
             </div>
           )}
-          {cliente.jefe_hogar !== null && cliente.jefe_hogar !== undefined && (
+          {solicitante.jefe_hogar !== null && solicitante.jefe_hogar !== undefined && (
             <div>
               <label className="text-sm font-medium text-gray-500">Es Jefe de Hogar</label>
               <p className="text-base text-gray-900 mt-1">
-                {cliente.jefe_hogar ? 'Sí' : 'No'}
+                {solicitante.jefe_hogar ? 'Sí' : 'No'}
               </p>
             </div>
           )}
-        </div>
-
-          {/* Artefactos Domésticos */}
-          {cliente.artefactos && cliente.artefactos.length > 0 && (
-            <div className="mt-4">
-              <label className="text-sm font-medium text-gray-500 mb-2 block">Artefactos Domésticos</label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {artefactosDisponibles.map((artefacto) => {
-                const tiene = cliente.artefactos?.includes(artefacto);
-                return (
-                  <div
-                    key={artefacto}
-                    className={`flex items-center gap-2 p-2 rounded-lg ${
-                      tiene ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-400'
-                    }`}
-                  >
-                    <CheckCircle className={`w-4 h-4 ${tiene ? 'text-green-600' : 'text-gray-300'}`} />
-                    <span className="text-sm">{artefacto}</span>
-                  </div>
-                );
-                })}
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       )}
     </div>

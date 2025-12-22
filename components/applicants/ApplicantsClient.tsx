@@ -149,14 +149,14 @@ export default function ApplicantsClient({
           setRegisteredNombre('');
         }}
         onSubmit={async (data: unknown) => {
-          const cliente = (data as any).data?.cliente;
-          if (cliente && cliente.cedula) {
-            const cedulaCompleta = cliente.cedula;
+          const solicitante = (data as any).data?.solicitante;
+          if (solicitante && solicitante.cedula) {
+            const cedulaCompleta = solicitante.cedula;
             const tipo = cedulaCompleta.charAt(0);
             const numero = cedulaCompleta.substring(1);
             setRegisteredCedula({ tipo, numero });
-            setRegisteredNombre(cliente.nombres && cliente.apellidos 
-              ? `${cliente.nombres} ${cliente.apellidos}` 
+            setRegisteredNombre(solicitante.nombres && solicitante.apellidos 
+              ? `${solicitante.nombres} ${solicitante.apellidos}` 
               : '');
           }
           

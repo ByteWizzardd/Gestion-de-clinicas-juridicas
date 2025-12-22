@@ -9,7 +9,7 @@ import { QueryResult } from 'pg';
 export const citasQueries = {
   /**
    * Obtiene todas las citas con información relacionada
-   * Incluye: caso, cliente, núcleo, ámbito legal
+   * Incluye: caso, solicitante, núcleo, ámbito legal
    */
   getAll: async (): Promise<any[]> => {
     const query = loadSQL('citas/get-all.sql');

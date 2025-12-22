@@ -8,8 +8,9 @@ import { AppError, ValidationError, NotFoundError, UnauthorizedError } from '@/l
  */
 export const authService = {
   /**
-   * Registra un nuevo usuario
-   * Crea primero el cliente si no existe, luego el usuario
+   * Registra un nuevo usuario (estudiante, profesor o coordinador)
+   * Nota: Al registrar un usuario, también se crea un registro básico en la tabla solicitantes
+   * si no existe, ya que ambos comparten la misma cédula
    */
   register: async (data: {
     cedula: string;
@@ -75,24 +76,6 @@ export const authService = {
     const nombres = partesNombre.slice(0, Math.ceil(partesNombre.length / 2)).join(' ') || data.nombreCompleto;
     const apellidos = partesNombre.slice(Math.ceil(partesNombre.length / 2)).join(' ') || nombres;
 
-    // Valores por defecto para campos requeridos del cliente
-    const telefonoCelular = data.telefonoCelular || '0000-0000000';
-    const fechaNacimiento = data.fechaNacimiento || '1990-01-01';
-    const sexo = data.sexo || 'M';
-    const nacionalidad = data.nacionalidad || 'V';
-
-    // Crear o actualizar cliente primero (usar cédula normalizada)
-    await authQueries.createCliente({
-      cedula: cedulaNormalizada,
-      nombres,
-      apellidos,
-      correoElectronico: data.correo,
-      telefonoCelular,
-      fechaNacimiento,
-      sexo,
-      nacionalidad,
-    });
-
     // Hash de la contraseña
     const passwordHash = await hashPassword(data.password);
 
@@ -118,8 +101,12 @@ export const authService = {
     
     const user = await authQueries.createUser({
       cedula: cedulaNormalizada,
+      nombres,
+      apellidos,
+      correoElectronico: data.correo,
       passwordHash,
       rolSistema,
+      telefonoCelular: data.telefonoCelular,
     });
 
     // Generar token

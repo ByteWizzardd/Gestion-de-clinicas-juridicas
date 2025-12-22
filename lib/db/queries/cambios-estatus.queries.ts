@@ -9,20 +9,26 @@ import { QueryResult } from 'pg';
 export const cambiosEstatusQueries = {
   /**
    * Registra un cambio de estatus para un caso
-   * @param cedulaUsuario Cédula del usuario/estudiante que registra el cambio
    * @param idCaso ID del caso
-   * @param estatusNuevo Nuevo estatus del caso
+   * @param nuevoEstatus Nuevo estatus del caso
+   * @param idUsuarioCambia Cédula del usuario que registra el cambio
+   * @param motivo Motivo del cambio (opcional)
+   * @param numCambio Número de cambio (opcional, se calcula automáticamente si es NULL)
    */
   create: async (
-    cedulaUsuario: string,
     idCaso: number,
-    estatusNuevo: string
+    nuevoEstatus: string,
+    idUsuarioCambia: string,
+    motivo?: string,
+    numCambio?: number
   ): Promise<any> => {
     const query = loadSQL('cambios-estatus/create.sql');
     const result: QueryResult = await pool.query(query, [
-      cedulaUsuario,
       idCaso,
-      estatusNuevo,
+      nuevoEstatus,
+      idUsuarioCambia,
+      motivo || null,
+      numCambio || null,
     ]);
     return result.rows[0];
   },

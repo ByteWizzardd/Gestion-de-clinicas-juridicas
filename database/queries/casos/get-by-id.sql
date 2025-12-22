@@ -1,25 +1,28 @@
 -- Obtener un caso por ID con información completa
+-- Usa la vista view_casos_detalle para obtener estatus y cant_beneficiarios derivados
 -- Parámetros: $1 = id_caso
 SELECT 
-    c.id_caso,
-    c.fecha_inicio_caso,
-    c.fecha_fin_caso,
-    c.fecha_solicitud,
-    c.tramite,
-    c.estatus,
-    c.observaciones,
-    c.id_nucleo,
-    c.id_ambito_legal,
-    c.id_expediente,
-    c.cedula_cliente,
-    cl.nombres AS nombres_cliente,
-    cl.apellidos AS apellidos_cliente,
-    cl.nombres || ' ' || cl.apellidos AS nombre_completo_cliente,
-    n.nombre_nucleo,
-    al.materia AS ambito_legal_materia
-FROM casos c
-INNER JOIN clientes cl ON c.cedula_cliente = cl.cedula
-LEFT JOIN nucleos n ON c.id_nucleo = n.id_nucleo
-LEFT JOIN ambitos_legales al ON c.id_ambito_legal = al.id_ambito_legal
-WHERE c.id_caso = $1;
+    vc.id_caso,
+    vc.fecha_inicio_caso,
+    vc.fecha_fin_caso,
+    vc.fecha_solicitud,
+    vc.tramite,
+    vc.estatus,
+    vc.cant_beneficiarios,
+    vc.observaciones,
+    vc.id_nucleo,
+    vc.id_materia,
+    vc.num_categoria,
+    vc.num_subcategoria,
+    vc.num_ambito_legal,
+    vc.cedula,
+    vc.nombres_solicitante,
+    vc.apellidos_solicitante,
+    vc.nombre_completo_solicitante,
+    vc.nombre_nucleo,
+    vc.nombre_materia,
+    vc.nombre_categoria,
+    vc.nombre_subcategoria
+FROM view_casos_detalle vc
+WHERE vc.id_caso = $1;
 

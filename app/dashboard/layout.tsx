@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getCurrentUserAction } from '@/app/actions/auth';
+import { getCurrentUserAction, logoutAction } from '@/app/actions/auth';
 import DashboardLayoutClient from '@/components/dashboard/DashboardLayoutClient';
 
 export default async function DashboardLayout({
@@ -11,8 +11,10 @@ export default async function DashboardLayout({
   const result = await getCurrentUserAction();
 
   if (!result.success || !result.data) {
-    // Si no hay sesión, redirigir al login
-    redirect('/auth/login');
+    // Si no hay sesión válida, limpiar la cookie mediante logout y redirigir al login
+    // Usamos un parámetro especial para indicar al middleware que permita el acceso
+    await logoutAction();
+    redirect('/auth/login?invalid_token=true');
   }
 
   return (

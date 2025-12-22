@@ -55,6 +55,11 @@ export interface GetNextCaseNumberResult {
 /**
  * Server Action para crear un nuevo caso
  */
+/**
+ * Server Action para crear un nuevo caso
+ * Nota: Un caso se asocia a un SOLICITANTE (la persona que solicita el servicio legal).
+ * El usuario que registra el caso (estudiante/profesor) es diferente del solicitante asociado al caso.
+ */
 export async function createCasoAction(data: any): Promise<CreateCasoResult> {
   try {
     // Verificar autenticación
@@ -71,7 +76,7 @@ export async function createCasoAction(data: any): Promise<CreateCasoResult> {
       };
     }
 
-    // Verificar token y obtener cédula del usuario
+    // Verificar token y obtener cédula del usuario (quien registra el caso)
     let decoded;
     try {
       decoded = await verifyToken(token);

@@ -53,7 +53,7 @@ export default function DashboardAppointmentList({
       .map((apt): DashboardAppointment => ({
         time: formatTime(apt.time),
         title: apt.title,
-        client: `Cliente: ${apt.client.split(' ').slice(0, 2).join(' ')}.`, // Solo nombre y apellido inicial
+        client: `Solicitante: ${apt.client.split(' ').slice(0, 2).join(' ')}.`, // Solo nombre y apellido inicial
         reason: `Motivo: ${apt.title}` // El título ya contiene la materia/trámite
       }));
   }, [appointments, selectedDate]);

@@ -90,22 +90,22 @@ export default function ApplicantDetailPage() {
     {
       id: 'personal',
       label: 'Información Personal',
-      content: <PersonalInfoTab cliente={solicitante} />,
+      content: <PersonalInfoTab solicitante={solicitante} />,
     },
     {
       id: 'contacto',
       label: 'Información de Contacto',
-      content: <ContactInfoTab cliente={solicitante} />,
+      content: <ContactInfoTab solicitante={solicitante} />,
     },
     {
       id: 'socioeconomica',
       label: 'Información Socioeconómica',
-      content: <SocioeconomicInfoTab cliente={solicitante} />,
+      content: <SocioeconomicInfoTab solicitante={solicitante} />,
     },
     {
       id: 'ubicacion',
       label: 'Ubicación y Vivienda',
-      content: <LocationHousingTab cliente={solicitante} />,
+      content: <LocationHousingTab solicitante={solicitante} />,
     },
     {
       id: 'casos',

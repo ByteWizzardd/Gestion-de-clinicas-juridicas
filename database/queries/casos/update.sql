@@ -1,24 +1,27 @@
 -- Actualizar un caso existente
+-- Nota: El estatus se actualiza mediante la tabla cambio_estatus, no directamente en casos
 -- Parámetros:
 --   $1 = id_caso
 --   $2 = tramite (opcional)
---   $3 = estatus (opcional)
---   $4 = observaciones (opcional)
---   $5 = fecha_fin_caso (opcional)
---   $6 = id_nucleo (opcional)
---   $7 = id_ambito_legal (opcional)
---   $8 = id_expediente (opcional)
---   $9 = fecha_solicitud (opcional)
+--   $3 = observaciones (opcional)
+--   $4 = fecha_fin_caso (opcional)
+--   $5 = id_nucleo (opcional)
+--   $6 = id_materia (opcional)
+--   $7 = num_categoria (opcional)
+--   $8 = num_subcategoria (opcional)
+--   $9 = num_ambito_legal (opcional)
+--   $10 = fecha_solicitud (opcional)
 UPDATE casos
 SET 
     tramite = COALESCE($2, tramite),
-    estatus = COALESCE($3, estatus),
-    observaciones = COALESCE($4, observaciones),
-    fecha_fin_caso = COALESCE($5, fecha_fin_caso),
-    id_nucleo = COALESCE($6, id_nucleo),
-    id_ambito_legal = COALESCE($7, id_ambito_legal),
-    id_expediente = COALESCE($8, id_expediente),
-    fecha_solicitud = COALESCE($9, fecha_solicitud)
+    observaciones = COALESCE($3, observaciones),
+    fecha_fin_caso = COALESCE($4, fecha_fin_caso),
+    id_nucleo = COALESCE($5, id_nucleo),
+    id_materia = COALESCE($6, id_materia),
+    num_categoria = COALESCE($7, num_categoria),
+    num_subcategoria = COALESCE($8, num_subcategoria),
+    num_ambito_legal = COALESCE($9, num_ambito_legal),
+    fecha_solicitud = COALESCE($10, fecha_solicitud)
 WHERE id_caso = $1
 RETURNING *;
 

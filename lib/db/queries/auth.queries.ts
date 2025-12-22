@@ -6,7 +6,7 @@ import { logger } from '@/lib/utils/logger';
 
 /**
  * Queries para autenticación
- * Todas las queries SQL están en database/queries/auth/
+ * Nota: Las queries de usuarios están en database/queries/usuarios/
  */
 export const authQueries = {
   /**
@@ -14,7 +14,7 @@ export const authQueries = {
    */
   getUserByNombreUsuario: async (nombreUsuario: string): Promise<any | null> => {
     try {
-      const query = loadSQL('auth/get-user-by-nombre-usuario.sql');
+      const query = loadSQL('usuarios/get-by-nombre-usuario.sql');
       const result: QueryResult = await pool.query(query, [nombreUsuario]);
       return result.rows[0] || null;
     } catch (error: any) {
@@ -48,7 +48,7 @@ export const authQueries = {
    */
   getUserByEmail: async (email: string): Promise<any | null> => {
     try {
-      const query = loadSQL('auth/get-user-by-email.sql');
+      const query = loadSQL('usuarios/get-by-email.sql');
       const result: QueryResult = await pool.query(query, [email]);
       return result.rows[0] || null;
     } catch (error: any) {
@@ -73,7 +73,7 @@ export const authQueries = {
    */
   getUserByCedula: async (cedula: string): Promise<any | null> => {
     try {
-      const query = loadSQL('auth/get-user-by-cedula.sql');
+      const query = loadSQL('usuarios/get-by-cedula.sql');
       const result: QueryResult = await pool.query(query, [cedula]);
       return result.rows[0] || null;
     } catch (error: any) {
@@ -94,54 +94,27 @@ export const authQueries = {
   },
 
   /**
-   * Crea un nuevo cliente (mínimo para registro)
+   * Crea un nuevo usuario con contraseña hasheada
    */
-  createCliente: async (data: {
+  createUser: async (data: {
     cedula: string;
     nombres: string;
     apellidos: string;
     correoElectronico: string;
-    telefonoCelular: string;
-    fechaNacimiento: string;
-    sexo: 'M' | 'F';
-    nacionalidad: 'V' | 'E' | 'Ext';
+    passwordHash: string;
+    rolSistema: 'Estudiante' | 'Profesor' | 'Coordinador';
+    telefonoCelular?: string;
   }): Promise<any> => {
     try {
-      const query = loadSQL('auth/create-cliente.sql');
+      const query = loadSQL('usuarios/create.sql');
       const result: QueryResult = await pool.query(query, [
         data.cedula,
         data.nombres,
         data.apellidos,
         data.correoElectronico,
-        data.telefonoCelular,
-        data.fechaNacimiento,
-        data.sexo,
-        data.nacionalidad,
-      ]);
-      return result.rows[0];
-    } catch (error) {
-      logger.error('Error en createCliente', error);
-      throw new DatabaseError(
-        'Error al crear cliente',
-        error
-      );
-    }
-  },
-
-  /**
-   * Crea un nuevo usuario con contraseña hasheada
-   */
-  createUser: async (data: {
-    cedula: string;
-    passwordHash: string;
-    rolSistema: 'Estudiante' | 'Profesor' | 'Coordinador';
-  }): Promise<any> => {
-    try {
-      const query = loadSQL('auth/create-user.sql');
-      const result: QueryResult = await pool.query(query, [
-        data.cedula,
         data.passwordHash,
         data.rolSistema,
+        data.telefonoCelular || null,
       ]);
       return result.rows[0];
     } catch (error) {

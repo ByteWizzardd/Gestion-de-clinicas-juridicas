@@ -12,11 +12,12 @@ import type { NextRequest } from 'next/server';
  * Este middleware solo verifica la existencia del token para evitar redirecciones innecesarias.
  */
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
   const token = request.cookies.get('auth_token')?.value;
 
   const isAuthPage = pathname.startsWith('/auth');
   const isDashboardPage = pathname.startsWith('/dashboard');
+  const hasInvalidTokenParam = searchParams.get('invalid_token') === 'true';
 
   // Si está en dashboard sin token → redirigir a login
   if (isDashboardPage && !token) {
@@ -30,13 +31,25 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Si está en auth con token → redirigir a dashboard
-  // La verificación real del token se hace en getCurrentUserAction
-  if (isAuthPage && token) {
+  // Si está en auth sin token → permitir acceso normal (navegación entre login/register)
+  if (isAuthPage && !token) {
+    return NextResponse.next();
+  }
+
+  // Si está en auth con token pero viene de invalid_token → permitir acceso (el layout ya limpió la cookie)
+  // Esto evita loops de redirección cuando el token es inválido
+  if (isAuthPage && token && hasInvalidTokenParam) {
+    return NextResponse.next();
+  }
+
+  // Si está en auth con token válido → redirigir a dashboard
+  // Solo redirigir desde la página principal de auth, no desde login/register específicos
+  // para permitir que usuarios autenticados puedan hacer logout si lo desean
+  if (isAuthPage && token && pathname === '/auth') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // Permitir acceso normal
+  // Permitir acceso normal a todas las demás rutas de auth (login, register, etc.)
   return NextResponse.next();
 }
 

@@ -42,7 +42,6 @@ interface FormData {
   aguaPotable: string;
   eliminacionAguasN: string;
   aseo: string;
-  artefactos: string[]; // Array de artefactos seleccionados
   // Paso 3 - Familia y Hogar
   cantPersonas: string;
   cantTrabajadores: string;
@@ -166,7 +165,6 @@ const getInitialFormData = (): FormData => ({
   aguaPotable: '',
   eliminacionAguasN: '',
   aseo: '',
-  artefactos: [],
   cantPersonas: '',
   cantTrabajadores: '',
   cantNinos: '',
@@ -991,7 +989,7 @@ export default function ApplicantFormModal({
         }
       }
 
-      // Si no es solicitante, buscar recomendaciones de clientes/usuarios
+      // Si no es solicitante, buscar recomendaciones de usuarios del sistema
       // Permitir búsqueda con 1 carácter o más
       if (cedulaNumero.trim().length >= 1) {
         if (cedulaSearchTimeout.current) {
@@ -1000,8 +998,8 @@ export default function ApplicantFormModal({
         
         cedulaSearchTimeout.current = setTimeout(async () => {
           try {
-            const { searchClientesAction } = await import('@/app/actions/clientes');
-            const result = await searchClientesAction(cedula, true);
+            const { searchUsuariosAction } = await import('@/app/actions/solicitantes');
+            const result = await searchUsuariosAction(cedula, true);
 
             if (result.success && result.data) {
             // Formatear fechas
@@ -1015,7 +1013,7 @@ export default function ApplicantFormModal({
             // Si hay una coincidencia exacta, autocompletar automáticamente
             const exactMatch = formattedData.find((c: any) => c.cedula === cedula);
             if (exactMatch) {
-              autocompleteFromCliente(exactMatch);
+              autocompleteFromSolicitante(exactMatch);
             }
         } else {
               setCedulaSuggestions([]);
@@ -1072,7 +1070,7 @@ export default function ApplicantFormModal({
         const result = await searchSolicitantesAction(email, 'email');
 
         if (result.success && result.data && result.data.length > 0) {
-          // El correo ya está asociado a otra persona (cliente)
+          // El correo ya está asociado a otra persona (usuario o solicitante)
           setErrors((prev) => ({
             ...prev,
             correoElectronico: `El correo electrónico ${email} ya está asociado a otra persona`,
@@ -1093,8 +1091,8 @@ export default function ApplicantFormModal({
     setEmailCheckTimeout(timeout);
   };
 
-  // Función para autocompletar el formulario con datos de un cliente
-  const autocompleteFromCliente = (cliente: {
+  // Función para autocompletar el formulario con datos de un solicitante
+  const autocompleteFromSolicitante = (solicitante: {
     cedula: string;
     nombres: string;
     apellidos: string;
@@ -1106,7 +1104,7 @@ export default function ApplicantFormModal({
   }) => {
     // Extraer tipo y número de cédula
     let cedulaTipo = 'V';
-    let cedulaNumero = cliente.cedula || '';
+    let cedulaNumero = solicitante.cedula || '';
     if (cedulaNumero.match(/^[VEJP]/)) {
       cedulaTipo = cedulaNumero[0];
       cedulaNumero = cedulaNumero.substring(1);
@@ -1114,7 +1112,7 @@ export default function ApplicantFormModal({
 
     // Extraer código de país y número de teléfono celular
     let codigoPaisCelular = '+58';
-    let telefonoCelular = cliente.telefono_celular || '';
+    let telefonoCelular = solicitante.telefono_celular || '';
     if (telefonoCelular.startsWith('+58')) {
       codigoPaisCelular = '+58';
       telefonoCelular = telefonoCelular.substring(3);
@@ -1133,22 +1131,22 @@ export default function ApplicantFormModal({
     } else if (cedulaTipo === 'E') {
       nacionalidadAsignada = 'Ext'; // Extranjero
     } else if (cedulaTipo === 'P') {
-      // Si es pasaporte, usar la nacionalidad del cliente o dejar vacío
-      nacionalidadAsignada = cliente.nacionalidad || '';
+      // Si es pasaporte, usar la nacionalidad del solicitante o dejar vacío
+      nacionalidadAsignada = solicitante.nacionalidad || '';
     }
 
-    // Actualizar el formulario con los datos del cliente
+    // Actualizar el formulario con los datos del solicitante
     setFormData((prev) => ({
       ...prev,
       cedulaTipo,
       cedulaNumero,
-      nombres: cliente.nombres || '',
-      apellidos: cliente.apellidos || '',
-      fechaNacimiento: cliente.fecha_nacimiento || '',
-      sexo: cliente.sexo || '',
+      nombres: solicitante.nombres || '',
+      apellidos: solicitante.apellidos || '',
+      fechaNacimiento: solicitante.fecha_nacimiento || '',
+      sexo: solicitante.sexo || '',
       telefonoCelular,
       codigoPaisCelular,
-      correoElectronico: cliente.correo_electronico || '',
+      correoElectronico: solicitante.correo_electronico || '',
       nacionalidad: nacionalidadAsignada,
     }));
 
@@ -1174,15 +1172,6 @@ export default function ApplicantFormModal({
     setCedulaSuggestions([]);
   };
 
-  const handleArtefactoChange = (artefacto: string, checked: boolean) => {
-    setFormData((prev) => {
-      if (checked) {
-        return { ...prev, artefactos: [...prev.artefactos, artefacto] };
-      } else {
-        return { ...prev, artefactos: prev.artefactos.filter((a) => a !== artefacto) };
-      }
-    });
-  };
 
   const renderStep1 = () => (
     <div className="grid grid-cols-3 gap-x-6 gap-y-4">
@@ -1243,20 +1232,20 @@ export default function ApplicantFormModal({
               transition={{ duration: 0.2, ease: 'easeOut' }}
               className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
             >
-              {cedulaSuggestions.map((cliente, index) => (
+              {cedulaSuggestions.map((solicitante, index) => (
                 <motion.button
-                  key={cliente.cedula}
+                  key={solicitante.cedula}
                   type="button"
                   onClick={() => {
-                    autocompleteFromCliente(cliente);
+                    autocompleteFromSolicitante(solicitante);
                   }}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.03, duration: 0.15 }}
                   className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none transition-colors"
                 >
-                  <div className="font-medium text-gray-900">{cliente.cedula}</div>
-                  <div className="text-sm text-gray-600">{cliente.nombre_completo}</div>
+                  <div className="font-medium text-gray-900">{solicitante.cedula}</div>
+                  <div className="text-sm text-gray-600">{solicitante.nombre_completo}</div>
                 </motion.button>
               ))}
             </motion.div>
@@ -1553,50 +1542,6 @@ export default function ApplicantFormModal({
           error={errors.aseo}
           required
         />
-      </div>
-
-      {/* Fila 4: Artefactos Domésticos */}
-      <div className="col-span-3">
-        <div className="flex flex-col gap-1">
-          <label className="text-base font-normal text-foreground mb-1">Artefactos Domésticos</label>
-          <div className="grid grid-cols-4 gap-x-4 gap-y-1">
-            {['Nevera', 'Lavadora', 'Computadora', 'Cable Satelital', 'Internet', 'Carro', 'Moto'].map((artefacto) => {
-              const isChecked = formData.artefactos.includes(artefacto);
-              return (
-                <label
-                  key={artefacto}
-                  className="flex items-center gap-2 cursor-pointer py-0.5 px-2 rounded-full transition-colors"
-                >
-                  <div className="relative flex items-center justify-center">
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={(e) => handleArtefactoChange(artefacto, e.target.checked)}
-                      className="sr-only"
-                    />
-                    <div
-                      className={`
-                        w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
-                        ${isChecked 
-                          ? 'bg-primary border-primary' 
-                          : 'bg-[#E5E7EB] border-transparent'
-                        }
-                        focus-within:ring-1 focus-within:ring-primary
-                      `}
-                    >
-                      {isChecked && (
-                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </div>
-                  </div>
-                  <span className="text-base text-foreground">{artefacto}</span>
-                </label>
-              );
-            })}
-          </div>
-        </div>
       </div>
     </div>
   );

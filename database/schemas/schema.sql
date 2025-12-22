@@ -1,401 +1,345 @@
--- ==========================================================
--- 1. TABLAS MAESTRAS
--- ==========================================================
+-- =========================================================
+-- BLOQUE 1: CATÁLOGOS GLOBALES (8 Tablas)
+-- =========================================================
 
+-- 1) ESTADOS
 CREATE TABLE estados (
     id_estado SERIAL PRIMARY KEY,
     nombre_estado VARCHAR(100) NOT NULL
 );
 
+-- 2) NIVELES EDUCATIVOS
 CREATE TABLE niveles_educativos (
     id_nivel_educativo SERIAL PRIMARY KEY,
-    nivel INTEGER NOT NULL CHECK (nivel BETWEEN 0 AND 14),
-    anos_cursados INTEGER NOT NULL,
-    semestres_cursados INTEGER NOT NULL,
-    trimestres_cursados INTEGER NOT NULL
+    descripcion VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE trabajos (
+-- 3) CONDICIÓN TRABAJO
+CREATE TABLE condicion_trabajo (
     id_trabajo SERIAL PRIMARY KEY,
-    condicion_actividad VARCHAR(50) CHECK (condicion_actividad IN ('Ama de Casa', 'Estudiante', 'Pensionado', 'Jubilado', 'Otra')),
-    buscando_trabajo BOOLEAN NOT NULL,
-    condicion_trabajo VARCHAR(50) CHECK (condicion_trabajo IN ('Patrono', 'Empleado', 'Obrero', 'Cuenta propia'))
+    nombre_trabajo VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE familias_hogares (
-    id_hogar SERIAL PRIMARY KEY,
-    cant_personas INTEGER NOT NULL,
-    cant_trabajadores INTEGER NOT NULL,
-    cant_ninos INTEGER NOT NULL,
-    cant_ninos_estudiando INTEGER NOT NULL,
-    jefe_hogar BOOLEAN NOT NULL,
-    id_nivel_educativo INTEGER REFERENCES niveles_educativos(id_nivel_educativo),
-    ingresos_mensuales DECIMAL(10, 2) NOT NULL
+-- 4) CONDICIÓN ACTIVIDAD
+CREATE TABLE condicion_actividad (
+    id_actividad SERIAL PRIMARY KEY,
+    nombre_actividad VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE tribunales (
-    id_tribunal SERIAL PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    tipo VARCHAR(50) NOT NULL
+-- 5) TIPO CARACTERÍSTICAS
+CREATE TABLE tipo_caracteristicas (
+    id_tipo SERIAL PRIMARY KEY,
+    nombre_tipo_caracteristica VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE ambitos_legales (
-    id_ambito_legal SERIAL PRIMARY KEY,
-    materia VARCHAR(100) NOT NULL, 
-    tipo VARCHAR(50) NOT NULL,
-    descripcion TEXT NOT NULL
-);
-
-CREATE TABLE semestres (
-    term VARCHAR(20) PRIMARY KEY, 
-    periodo_meses VARCHAR(50) NOT NULL,
-    anos_academicos VARCHAR(20) NOT NULL
-);
-
+-- 6) MATERIAS
 CREATE TABLE materias (
-    nrc VARCHAR(20) PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL
+    id_materia SERIAL PRIMARY KEY,
+    nombre_materia VARCHAR(100) NOT NULL
 );
 
--- ==========================================================
--- 2. VIVIENDAS (VALIDACIONES ESTRICTAS)
--- ==========================================================
-
-CREATE TABLE viviendas (
-    id_vivienda SERIAL PRIMARY KEY,
-    
-    tipo_vivienda VARCHAR(50) NOT NULL CHECK (tipo_vivienda IN ('Quinta', 'Casa Urb', 'Apartamento', 'Bloque', 'Casa de Barrio', 'Casa Rural', 'Rancho', 'Refugio', 'Otros')),
-    cant_habitaciones INTEGER NOT NULL,
-    cant_banos INTEGER NOT NULL,
-    
-    material_piso VARCHAR(50) NOT NULL CHECK (material_piso IN ('Tierra', 'Cemento', 'Cerámica', 'Granito / Parquet / Mármol')),
-    material_paredes VARCHAR(50) NOT NULL CHECK (material_paredes IN ('Cartón / Palma / Desechos', 'Bahareque', 'Bloque sin frizar', 'Bloque frizado')),
-    material_techo VARCHAR(50) NOT NULL CHECK (material_techo IN ('Madera / Cartón / Palma', 'Zinc / Acerolit', 'Platabanda / Tejas')),
-    agua_potable VARCHAR(50) NOT NULL CHECK (agua_potable IN ('Dentro de la vivienda', 'Fuera de la vivienda', 'No tiene servicio')),
-    eliminacion_aguas_n VARCHAR(50) NOT NULL CHECK (eliminacion_aguas_n IN ('Poceta a cloaca / Pozo séptico', 'Poceta sin conexión', 'Excusado de hoyo o letrina', 'No tiene')),
-    aseo VARCHAR(50) NOT NULL CHECK (aseo IN ('Llega a la vivienda', 'No llega a la vivienda / Container', 'No tiene'))
+-- 7) SEMESTRES
+CREATE TABLE semestres (
+    term VARCHAR(20) PRIMARY KEY,
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NOT NULL,
+    CONSTRAINT chk_fechas CHECK (fecha_fin >= fecha_inicio)
 );
 
-CREATE TABLE artefactos_domesticos (
-    id_hogar INTEGER NOT NULL REFERENCES familias_hogares(id_hogar),
-    artefacto VARCHAR(50) NOT NULL CHECK (artefacto IN ('Nevera', 'Lavadora', 'Computadora', 'Cable Satelital', 'Internet', 'Carro', 'Moto')),
-    PRIMARY KEY (id_hogar, artefacto)
+-- 8) USUARIOS
+CREATE TABLE usuarios (
+    cedula VARCHAR(20) PRIMARY KEY,
+    nombres VARCHAR(100) NOT NULL,
+    apellidos VARCHAR(100) NOT NULL,
+    correo_electronico VARCHAR(100) NOT NULL UNIQUE,
+    nombre_usuario VARCHAR(50) NOT NULL UNIQUE,
+    contrasena VARCHAR(255) NOT NULL,
+    telefono_celular VARCHAR(20),
+    habilitado_sistema BOOLEAN NOT NULL DEFAULT TRUE,
+    tipo_usuario VARCHAR(20) NOT NULL CHECK (tipo_usuario IN ('Estudiante', 'Profesor', 'Coordinador'))
 );
 
--- ==========================================================
--- 3. UBICACIÓN GEOGRÁFICA
--- ==========================================================
+-- =========================================================
+-- BLOQUE 2: GEOGRAFÍA (Jerarquía Débil - 3 Tablas)
+-- =========================================================
 
+-- 9) MUNICIPIOS
 CREATE TABLE municipios (
-    id_municipio SERIAL,
-    id_estado INTEGER NOT NULL REFERENCES estados(id_estado),
+    id_estado INTEGER NOT NULL,
+    num_municipio INTEGER NOT NULL, 
     nombre_municipio VARCHAR(100) NOT NULL,
-    PRIMARY KEY (id_municipio, id_estado),
-    CONSTRAINT uq_municipio_id UNIQUE (id_municipio) 
+    
+    PRIMARY KEY (id_estado, num_municipio),
+    FOREIGN KEY (id_estado) REFERENCES estados(id_estado)
 );
 
+-- 10) PARROQUIAS
 CREATE TABLE parroquias (
-    id_parroquia SERIAL,
-    id_municipio INTEGER NOT NULL REFERENCES municipios(id_municipio),
+    id_estado INTEGER NOT NULL,
+    num_municipio INTEGER NOT NULL,
+    num_parroquia INTEGER NOT NULL,
     nombre_parroquia VARCHAR(100) NOT NULL,
-    PRIMARY KEY (id_parroquia, id_municipio),
-    CONSTRAINT uq_parroquia_id UNIQUE (id_parroquia) 
+    
+    PRIMARY KEY (id_estado, num_municipio, num_parroquia),
+    FOREIGN KEY (id_estado, num_municipio) REFERENCES municipios(id_estado, num_municipio)
 );
 
+-- 11) NÚCLEOS
 CREATE TABLE nucleos (
     id_nucleo SERIAL PRIMARY KEY,
     nombre_nucleo VARCHAR(100) NOT NULL,
-    id_parroquia INTEGER NOT NULL REFERENCES parroquias(id_parroquia) 
+    
+    id_estado INTEGER NOT NULL,
+    num_municipio INTEGER NOT NULL,
+    num_parroquia INTEGER NOT NULL,
+    
+    FOREIGN KEY (id_estado, num_municipio, num_parroquia) 
+    REFERENCES parroquias(id_estado, num_municipio, num_parroquia)
 );
 
--- ==========================================================
--- 4. CLIENTES
--- ==========================================================
+-- =========================================================
+-- BLOQUE 3: SOLICITANTES (3 Tablas)
+-- =========================================================
 
-CREATE TABLE clientes (
-    cedula VARCHAR(20) PRIMARY KEY, 
+-- 12) SOLICITANTES
+CREATE TABLE solicitantes (
+    cedula VARCHAR(20) PRIMARY KEY,
     nombres VARCHAR(100) NOT NULL,
     apellidos VARCHAR(100) NOT NULL,
     fecha_nacimiento DATE NOT NULL,
     telefono_local VARCHAR(20),
     telefono_celular VARCHAR(20) NOT NULL,
-    correo_electronico VARCHAR(100) NOT NULL UNIQUE, -- Clave alternativa
+    correo_electronico VARCHAR(100) NOT NULL,
     
-    sexo VARCHAR(1) NOT NULL CHECK (sexo IN ('M', 'F')),
-    nacionalidad VARCHAR(10) NOT NULL CHECK (nacionalidad IN ('V', 'Ext')),
-    estado_civil VARCHAR(20) CHECK (estado_civil IN ('Soltero', 'Casado', 'Divorciado', 'Viudo')),
-    concubinato BOOLEAN,
+    sexo VARCHAR(20) NOT NULL CHECK (sexo IN ('M', 'F')),
+    nacionalidad VARCHAR(20) NOT NULL CHECK (nacionalidad IN ('V', 'E')),
+    estado_civil VARCHAR(20) NOT NULL CHECK (estado_civil IN ('Soltero', 'Casado', 'Divorciado', 'Viudo', 'Concubino')),
     
-    id_hogar INTEGER REFERENCES familias_hogares(id_hogar),
-    id_nivel_educativo INTEGER REFERENCES niveles_educativos(id_nivel_educativo),
-    id_trabajo INTEGER REFERENCES trabajos(id_trabajo),
-    id_vivienda INTEGER REFERENCES viviendas(id_vivienda),
-    id_parroquia INTEGER REFERENCES parroquias(id_parroquia)
+    concubinato BOOLEAN NOT NULL,
+    tiempo_estudio VARCHAR(50) NOT NULL,
+    
+    id_nivel_educativo INTEGER NOT NULL REFERENCES niveles_educativos(id_nivel_educativo),
+    id_trabajo INTEGER NOT NULL REFERENCES condicion_trabajo(id_trabajo),
+    id_actividad INTEGER NOT NULL REFERENCES condicion_actividad(id_actividad),
+    
+    id_estado INTEGER NOT NULL,
+    num_municipio INTEGER NOT NULL,
+    num_parroquia INTEGER NOT NULL,
+    
+    FOREIGN KEY (id_estado, num_municipio, num_parroquia) 
+    REFERENCES parroquias(id_estado, num_municipio, num_parroquia)
 );
 
-CREATE VIEW view_clientes_info AS
-SELECT t.*, EXTRACT(YEAR FROM AGE(CURRENT_DATE, t.fecha_nacimiento))::INTEGER AS edad_calculada FROM clientes t;
+-- 13) VIVIENDAS
+CREATE TABLE viviendas (
+    cedula_solicitante VARCHAR(20) PRIMARY KEY,
+    cant_habitaciones INTEGER NOT NULL CHECK (cant_habitaciones >= 0),
+    cant_banos INTEGER NOT NULL CHECK (cant_banos >= 0),
+    FOREIGN KEY (cedula_solicitante) REFERENCES solicitantes(cedula)
+);
 
--- ==========================================================
--- 5. USUARIOS Y ACADÉMICO (ELIMINADO TIPO VINCULACIÓN)
--- ==========================================================
+-- 14) FAMILIAS Y HOGARES
+CREATE TABLE familias_y_hogares (
+    cedula_solicitante VARCHAR(20) PRIMARY KEY,
+    cant_personas INTEGER NOT NULL CHECK (cant_personas >= 0),
+    cant_trabajadores INTEGER NOT NULL CHECK (cant_trabajadores >= 0),
+    cant_no_trabajadores INTEGER NOT NULL CHECK (cant_no_trabajadores >= 0),
+    cant_ninos INTEGER NOT NULL CHECK (cant_ninos >= 0),
+    cant_ninos_estudiando INTEGER NOT NULL CHECK (cant_ninos_estudiando >= 0),
+    
+    jefe_hogar BOOLEAN NOT NULL, 
+    
+    ingresos_mensuales DECIMAL(10,2) NOT NULL CHECK (ingresos_mensuales >= 0),
+    tiempo_estudio_jefe VARCHAR(50),
+    id_nivel_educativo_jefe INTEGER REFERENCES niveles_educativos(id_nivel_educativo),
+    FOREIGN KEY (cedula_solicitante) REFERENCES solicitantes(cedula)
+);
 
-CREATE TABLE usuarios (
-    cedula VARCHAR(20) PRIMARY KEY REFERENCES clientes(cedula), 
-    nombre_usuario VARCHAR(100) NOT NULL UNIQUE, -- Nombre del correo UCAB sin el dominio (ej: juan.perez de juan.perez@ucab.edu.ve) - Clave alternativa
-    password_hash VARCHAR(255) NOT NULL,
+-- =========================================================
+-- BLOQUE 4: ACADÉMICO Y LEGAL (Jerarquías - 7 Tablas)
+-- =========================================================
+
+-- 15) CARACTERÍSTICAS
+CREATE TABLE caracteristicas (
+    id_tipo_caracteristica INTEGER NOT NULL,
+    num_caracteristica INTEGER NOT NULL,
     habilitado BOOLEAN NOT NULL DEFAULT TRUE,
-    rol_sistema VARCHAR(20) NOT NULL CHECK (rol_sistema IN ('Estudiante', 'Profesor', 'Coordinador')),
-    foto_perfil BYTEA
+    descripcion VARCHAR(200) NOT NULL,
+    PRIMARY KEY (id_tipo_caracteristica, num_caracteristica),
+    FOREIGN KEY (id_tipo_caracteristica) REFERENCES tipo_caracteristicas(id_tipo)
 );
 
+-- 16) CATEGORÍAS
+CREATE TABLE categorias (
+    id_materia INTEGER NOT NULL,
+    num_categoria INTEGER NOT NULL,
+    nombre_categoria VARCHAR(100) NOT NULL,
+    PRIMARY KEY (id_materia, num_categoria),
+    FOREIGN KEY (id_materia) REFERENCES materias(id_materia)
+);
+
+-- 17) SUBCATEGORÍAS
+CREATE TABLE subcategorias (
+    id_materia INTEGER NOT NULL,
+    num_categoria INTEGER NOT NULL,
+    num_subcategoria INTEGER NOT NULL,
+    nombre_subcategoria VARCHAR(100) NOT NULL,
+    PRIMARY KEY (id_materia, num_categoria, num_subcategoria),
+    FOREIGN KEY (id_materia, num_categoria) REFERENCES categorias(id_materia, num_categoria)
+);
+
+-- 18) ÁMBITOS LEGALES
+CREATE TABLE ambitos_legales (
+    id_materia INTEGER NOT NULL,
+    num_categoria INTEGER NOT NULL,
+    num_subcategoria INTEGER NOT NULL,
+    num_ambito_legal INTEGER NOT NULL,
+    PRIMARY KEY (id_materia, num_categoria, num_subcategoria, num_ambito_legal),
+    FOREIGN KEY (id_materia, num_categoria, num_subcategoria) 
+    REFERENCES subcategorias(id_materia, num_categoria, num_subcategoria)
+);
+
+-- 19) COORDINADORES
 CREATE TABLE coordinadores (
-    cedula_coordinador VARCHAR(20) PRIMARY KEY REFERENCES usuarios(cedula)
+    id_coordinador VARCHAR(20) PRIMARY KEY,
+    term VARCHAR(20) NOT NULL,
+    FOREIGN KEY (term) REFERENCES semestres(term),
+    FOREIGN KEY (id_coordinador) REFERENCES usuarios(cedula)
 );
 
-CREATE TABLE profesores (
-    cedula_profesor VARCHAR(20) PRIMARY KEY REFERENCES usuarios(cedula)
-);
-
-CREATE TABLE secciones (
-    num_seccion INTEGER NOT NULL, -- Autoincrementado por TRIGGER
-    nrc_materia VARCHAR(20) NOT NULL REFERENCES materias(nrc),
-    term_semestre VARCHAR(20) NOT NULL REFERENCES semestres(term),
-    cedula_profesor VARCHAR(20) NOT NULL REFERENCES profesores(cedula_profesor),
-    cedula_coordinador VARCHAR(20) NOT NULL REFERENCES coordinadores(cedula_coordinador),
-    
-    PRIMARY KEY (num_seccion, nrc_materia, term_semestre)
-);
-
+-- 20) ESTUDIANTES
 CREATE TABLE estudiantes (
-    cedula_estudiante VARCHAR(20) PRIMARY KEY REFERENCES usuarios(cedula),
-    tipo_estudiante VARCHAR(50) NOT NULL CHECK (tipo_estudiante IN ('Voluntario', 'Inscrito', 'Egresado')),
-    
-    num_seccion INTEGER NOT NULL, 
-    nrc_materia VARCHAR(20) NOT NULL,
-    term_semestre VARCHAR(20) NOT NULL,
-    FOREIGN KEY (num_seccion, nrc_materia, term_semestre) REFERENCES secciones(num_seccion, nrc_materia, term_semestre)
+    term VARCHAR(20) NOT NULL,
+    cedula_estudiante VARCHAR(20) NOT NULL,
+    tipo_estudiante VARCHAR(50) NOT NULL,
+    nrc VARCHAR(20) NOT NULL,
+    PRIMARY KEY (term, cedula_estudiante),
+    FOREIGN KEY (term) REFERENCES semestres(term),
+    FOREIGN KEY (cedula_estudiante) REFERENCES usuarios(cedula)
 );
 
--- ==========================================================
--- 6. CASOS LEGALES
--- ==========================================================
-
-CREATE TABLE expedientes (
-    id_expediente VARCHAR(50) PRIMARY KEY,
-    id_tribunal INTEGER NOT NULL REFERENCES tribunales(id_tribunal)
+-- 21) PROFESORES
+CREATE TABLE profesores (
+    term VARCHAR(20) NOT NULL,
+    cedula_profesor VARCHAR(20) NOT NULL,
+    tipo_profesor VARCHAR(50) NOT NULL,
+    PRIMARY KEY (term, cedula_profesor),
+    FOREIGN KEY (term) REFERENCES semestres(term),
+    FOREIGN KEY (cedula_profesor) REFERENCES usuarios(cedula)
 );
 
+-- =========================================================
+-- BLOQUE 5: CASOS Y OPERACIONES (8 Tablas)
+-- =========================================================
+
+-- 22) CASOS
 CREATE TABLE casos (
     id_caso SERIAL PRIMARY KEY,
-    fecha_inicio_caso DATE DEFAULT CURRENT_DATE,
-    fecha_fin_caso DATE,
     fecha_solicitud DATE NOT NULL DEFAULT CURRENT_DATE,
+    fecha_inicio_caso DATE NOT NULL,
+    fecha_fin_caso DATE,
     
-    tramite VARCHAR(100) NOT NULL CHECK (tramite IN (
-        'Asesoría', 
-        'Conciliación y Mediación', 
-        'Redacción documentos y/o convenio', 
-        'Asistencia Judicial - Casos externos'
-    )),
-    
-    estatus VARCHAR(50) NOT NULL CHECK (estatus IN ('En proceso', 'Archivado', 'Entregado', 'Asesoría')),
+    tramite VARCHAR(200) NOT NULL CHECK (tramite IN ('Asesoría', 'Conciliación y Mediación', 'Redacción documentos y/o convenio', 'Asistencia Judicial - Casos externos')),
     
     observaciones TEXT,
+    
     id_nucleo INTEGER NOT NULL REFERENCES nucleos(id_nucleo),
-    id_ambito_legal INTEGER NOT NULL REFERENCES ambitos_legales(id_ambito_legal),
-    id_expediente VARCHAR(50) REFERENCES expedientes(id_expediente),
-    cedula_cliente VARCHAR(20) NOT NULL REFERENCES clientes(cedula)
+    cedula VARCHAR(20) NOT NULL REFERENCES solicitantes(cedula),
+    
+    id_materia INTEGER NOT NULL,
+    num_categoria INTEGER NOT NULL,
+    num_subcategoria INTEGER NOT NULL,
+    num_ambito_legal INTEGER NOT NULL,
+    
+    FOREIGN KEY (id_materia, num_categoria, num_subcategoria, num_ambito_legal)
+    REFERENCES ambitos_legales(id_materia, num_categoria, num_subcategoria, num_ambito_legal)
 );
 
--- ==========================================================
--- 7. DETALLES DEL CASO (BYTEA Y PKs COMPUESTAS)
--- ==========================================================
+-- 23) CITAS
+CREATE TABLE citas (
+    num_cita INTEGER NOT NULL,
+    id_caso INTEGER NOT NULL REFERENCES casos(id_caso),
+    fecha_proxima_cita DATE,
+    fecha_encuentro DATE NOT NULL,
+    orientacion TEXT NOT NULL,
+    fecha_registro DATE NOT NULL DEFAULT CURRENT_DATE,
+    id_usuario_orientacion VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    PRIMARY KEY (num_cita, id_caso)
+);
 
+-- 24) ACCIONES
+CREATE TABLE acciones (
+    num_accion INTEGER NOT NULL,
+    id_caso INTEGER NOT NULL REFERENCES casos(id_caso),
+    detalle_accion TEXT NOT NULL,
+    comentario TEXT,
+    id_usuario_registra VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    fecha_registro DATE NOT NULL DEFAULT CURRENT_DATE,
+    id_usuario_ejecuta VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    fecha_accion DATE NOT NULL,
+    PRIMARY KEY (num_accion, id_caso)
+);
+
+-- 25) CAMBIO ESTATUS
+CREATE TABLE cambio_estatus (
+    num_cambio INTEGER NOT NULL,
+    id_caso INTEGER NOT NULL REFERENCES casos(id_caso),
+    motivo TEXT,
+    nuevo_estatus VARCHAR(50) NOT NULL CHECK (nuevo_estatus IN ('En proceso', 'Archivado', 'Entregado', 'Asesoría')),
+    fecha DATE NOT NULL DEFAULT CURRENT_DATE,
+    id_usuario_cambia VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    PRIMARY KEY (num_cambio, id_caso)
+);
+
+-- 26) SOPORTES
 CREATE TABLE soportes (
-    num_soporte INTEGER NOT NULL, 
+    num_soporte INTEGER NOT NULL,
     id_caso INTEGER NOT NULL REFERENCES casos(id_caso),
     
-    documento_data BYTEA, 
+    documento_data BYTEA, -- Almacena el archivo directamente en la base de datos
     nombre_archivo VARCHAR(150) NOT NULL,
     tipo_mime VARCHAR(100) NOT NULL,
     descripcion TEXT,
     
-    fecha_consignacion DATE NOT NULL,
+    fecha_consignacion DATE NOT NULL DEFAULT CURRENT_DATE,
     PRIMARY KEY (num_soporte, id_caso)
 );
 
-CREATE TABLE documentos (
-    num_documento INTEGER NOT NULL, 
-    id_expediente VARCHAR(50) NOT NULL REFERENCES expedientes(id_expediente),
-    folio_inicio INTEGER NOT NULL,
-    folio_fin INTEGER NOT NULL,
-    tipo VARCHAR(50) NOT NULL,
-    fecha DATE NOT NULL,
-    PRIMARY KEY (num_documento, id_expediente)
-);
-
-CREATE TABLE citas (
-    fecha_cita TIMESTAMP NOT NULL,
-    id_caso INTEGER NOT NULL REFERENCES casos(id_caso),
-    proxima_cita DATE NOT NULL,
-    PRIMARY KEY (fecha_cita, id_caso)
-);
-
-CREATE TABLE acciones (
-    num_accion INTEGER NOT NULL,
-    id_caso INTEGER NOT NULL REFERENCES casos(id_caso),
-    detalle_accion TEXT NOT NULL, 
-    cedula_usuario_registra VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
-    fecha_registro TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    cedula_usuario_ejecuta VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
-    fecha_accion TIMESTAMP NOT NULL,
-    PRIMARY KEY (num_accion, id_caso)
-);
-
-CREATE TABLE asignaciones (
-    fecha_inicio DATE NOT NULL,
-    id_caso INTEGER NOT NULL REFERENCES casos(id_caso),
-    term VARCHAR(20) NOT NULL REFERENCES semestres(term),
-    cedula_estudiante VARCHAR(20) NOT NULL REFERENCES estudiantes(cedula_estudiante),
-    cedula_profesor VARCHAR(20) NOT NULL REFERENCES profesores(cedula_profesor),
-    fecha_fin DATE NOT NULL,
-    PRIMARY KEY (fecha_inicio, id_caso, term, cedula_estudiante)
-);
-
+-- 27) BENEFICIARIOS (PARENTESCO LIBRE)
 CREATE TABLE beneficiarios (
-    cedula VARCHAR(20) NOT NULL REFERENCES clientes(cedula),
+    num_beneficiario INTEGER NOT NULL,
     id_caso INTEGER NOT NULL REFERENCES casos(id_caso),
+    cedula VARCHAR(20),
+    nombres VARCHAR(100) NOT NULL,
+    apellidos VARCHAR(100) NOT NULL,
+    fecha_nac DATE NOT NULL,
+    
+    sexo VARCHAR(20) NOT NULL CHECK (sexo IN ('M', 'F')),
     tipo_beneficiario VARCHAR(50) NOT NULL CHECK (tipo_beneficiario IN ('Directo', 'Indirecto')),
-    parentesco VARCHAR(50) NOT NULL,
-    PRIMARY KEY (cedula, id_caso)
+    parentesco VARCHAR(50) NOT NULL, 
+    PRIMARY KEY (num_beneficiario, id_caso)
 );
 
-CREATE TABLE cambios_estatus (
-    cedula_usuario VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+-- 28) SUPERVISA (PK COMPUESTA: TERM + PROFESOR + CASO)
+CREATE TABLE supervisa (
+    term VARCHAR(20) NOT NULL,
+    cedula_profesor VARCHAR(20) NOT NULL,
     id_caso INTEGER NOT NULL REFERENCES casos(id_caso),
-    estatus_nuevo VARCHAR(50) NOT NULL,
-    fecha_cambio TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (cedula_usuario, id_caso, estatus_nuevo, fecha_cambio)
+    
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
+    
+    PRIMARY KEY (term, cedula_profesor, id_caso),
+    FOREIGN KEY (term, cedula_profesor) REFERENCES profesores(term, cedula_profesor)
 );
 
-CREATE TABLE orientaciones (
-    cedula_usuario VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
-    fecha_cita TIMESTAMP NOT NULL,
-    id_caso INTEGER NOT NULL,
-    orientacion TEXT NOT NULL,
-    FOREIGN KEY (fecha_cita, id_caso) REFERENCES citas(fecha_cita, id_caso),
-    PRIMARY KEY (cedula_usuario, fecha_cita, id_caso)
+-- 29) SE LE ASIGNA (PK COMPUESTA: TERM + ESTUDIANTE + CASO)
+CREATE TABLE se_le_asigna (
+    term VARCHAR(20) NOT NULL,
+    cedula_estudiante VARCHAR(20) NOT NULL,
+    id_caso INTEGER NOT NULL REFERENCES casos(id_caso),
+    
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
+    
+    PRIMARY KEY (term, cedula_estudiante, id_caso),
+    FOREIGN KEY (term, cedula_estudiante) REFERENCES estudiantes(term, cedula_estudiante)
 );
-
--- ==========================================================
--- 8. FUNCIONES Y TRIGGERS PARA VALIDACIÓN DE SOLICITANTES
--- ==========================================================
-
--- Función para validar que un cliente solicitante tenga todos los campos completos
-CREATE OR REPLACE FUNCTION validate_solicitante_completo()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Si el cliente tiene al menos un caso, debe tener todos los campos relacionados
-    -- (todos los casos tienen fecha_solicitud obligatoria, por lo que el cliente debe ser un solicitante completo)
-    IF EXISTS (
-        SELECT 1 FROM casos 
-        WHERE cedula_cliente = NEW.cedula
-    ) THEN
-        IF NEW.id_nucleo IS NULL OR
-           NEW.id_hogar IS NULL OR
-           NEW.id_nivel_educativo IS NULL OR
-           NEW.id_trabajo IS NULL OR
-           NEW.id_vivienda IS NULL OR
-           NEW.id_parroquia IS NULL THEN
-            RAISE EXCEPTION 'El cliente es solicitante (tiene casos) y debe tener todos los campos relacionados completos: id_nucleo, id_hogar, id_nivel_educativo, id_trabajo, id_vivienda, id_parroquia';
-        END IF;
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Trigger para validar al insertar o actualizar clientes
-CREATE TRIGGER trigger_validate_solicitante_completo
-    BEFORE INSERT OR UPDATE ON clientes
-    FOR EACH ROW
-    EXECUTE FUNCTION validate_solicitante_completo();
-
--- Función para validar al insertar o actualizar casos
--- Como fecha_solicitud es obligatoria, siempre se debe validar que el cliente tenga todos los campos completos
-CREATE OR REPLACE FUNCTION validate_cliente_solicitante_on_caso()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Validar que el cliente tenga todos los campos relacionados completos
-    -- (todos los casos tienen fecha_solicitud, por lo que el cliente debe ser un solicitante completo)
-    IF NOT EXISTS (
-        SELECT 1 FROM clientes
-        WHERE cedula = NEW.cedula_cliente
-        AND id_nucleo IS NOT NULL
-        AND id_hogar IS NOT NULL
-        AND id_nivel_educativo IS NOT NULL
-        AND id_trabajo IS NOT NULL
-        AND id_vivienda IS NOT NULL
-        AND id_parroquia IS NOT NULL
-    ) THEN
-        RAISE EXCEPTION 'No se puede crear un caso para un cliente que no tiene todos los campos relacionados completos (id_nucleo, id_hogar, id_nivel_educativo, id_trabajo, id_vivienda, id_parroquia)';
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Trigger para validar al insertar o actualizar casos
-CREATE TRIGGER trigger_validate_cliente_solicitante_on_caso
-    BEFORE INSERT OR UPDATE ON casos
-    FOR EACH ROW
-    EXECUTE FUNCTION validate_cliente_solicitante_on_caso();
-
--- ==========================================================
--- 9. TRIGGER PARA ASIGNAR NOMBRE_USUARIO AUTOMÁTICAMENTE
--- ==========================================================
-
--- Función trigger para asignar nombre_usuario automáticamente desde el correo
-CREATE OR REPLACE FUNCTION assign_nombre_usuario_from_email()
-RETURNS TRIGGER AS $$
-DECLARE
-    cliente_correo VARCHAR(100);
-    nombre_usuario_extracted VARCHAR(100);
-BEGIN
-    -- Si nombre_usuario ya está asignado, no hacer nada
-    IF NEW.nombre_usuario IS NOT NULL AND NEW.nombre_usuario != '' THEN
-        RETURN NEW;
-    END IF;
-    
-    -- Obtener el correo electrónico del cliente relacionado
-    SELECT correo_electronico INTO cliente_correo
-    FROM clientes
-    WHERE cedula = NEW.cedula;
-    
-    -- Si no se encuentra el cliente o no tiene correo, lanzar error
-    IF cliente_correo IS NULL OR cliente_correo = '' THEN
-        RAISE EXCEPTION 'No se puede asignar nombre_usuario: el cliente con cédula % no tiene correo electrónico', NEW.cedula;
-    END IF;
-    
-    -- Extraer el nombre_usuario (parte antes del @)
-    -- Maneja tanto @ucab.edu.ve como @est.ucab.edu.ve
-    nombre_usuario_extracted := SPLIT_PART(cliente_correo, '@', 1);
-    
-    -- Validar que el nombre_usuario extraído no esté vacío
-    IF nombre_usuario_extracted IS NULL OR nombre_usuario_extracted = '' THEN
-        RAISE EXCEPTION 'No se puede extraer nombre_usuario del correo: %', cliente_correo;
-    END IF;
-    
-    -- Asignar el nombre_usuario extraído
-    NEW.nombre_usuario := nombre_usuario_extracted;
-    
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Trigger para asignar nombre_usuario automáticamente al insertar o actualizar usuarios
-CREATE TRIGGER trigger_assign_nombre_usuario
-    BEFORE INSERT OR UPDATE ON usuarios
-    FOR EACH ROW
-    WHEN (NEW.nombre_usuario IS NULL OR NEW.nombre_usuario = '')
-    EXECUTE FUNCTION assign_nombre_usuario_from_email();
-

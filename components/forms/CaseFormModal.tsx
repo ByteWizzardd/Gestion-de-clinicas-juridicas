@@ -61,7 +61,15 @@ export default function CaseFormModal({
 
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [nucleos, setNucleos] = useState<Array<{ id_nucleo: number; nombre_nucleo: string }>>([]);
-  const [ambitosLegales, setAmbitosLegales] = useState<Array<{ id_ambito_legal: number; materia: string; tipo: string }>>([]);
+  const [ambitosLegales, setAmbitosLegales] = useState<Array<{ 
+    id_materia: number; 
+    num_categoria: number; 
+    num_subcategoria: number; 
+    num_ambito_legal: number; 
+    materia: string; 
+    categoria: string; 
+    subcategoria: string;
+  }>>([]);
   const [loadingCatalogos, setLoadingCatalogos] = useState(false);
   const [loadingCaseNumber, setLoadingCaseNumber] = useState(false);
   const [archivos, setArchivos] = useState<File[]>([]);
@@ -166,13 +174,21 @@ export default function CaseFormModal({
   const handleSubmit = async () => {
     if (validateForm()) {
       // Mapear los datos del formulario a la estructura de la BD
+      // Nota: Se asocia un SOLICITANTE al caso (no un usuario)
+      // El solicitante es la persona que solicita el servicio legal
       // Combinar tipo y número de cédula del solicitante
       const cedulaCompletaSolicitante = `${formData.cedulaSolicitanteTipo}${formData.cedulaSolicitante}`;
       
+      // Parsear el ámbito legal (formato: "id_materia,num_categoria,num_subcategoria,num_ambito_legal")
+      const ambitoParts = formData.tipoCaso.split(',');
       const apiData = {
         fecha_solicitud: formData.fechaCaso || getCurrentDate(), // Requerido, usa la fecha del formulario o la actual por defecto
-        cedula_cliente: cedulaCompletaSolicitante,
-        id_ambito_legal: parseInt(formData.tipoCaso),
+        fecha_inicio_caso: formData.fechaCaso || getCurrentDate(), // Fecha de inicio del caso
+        cedula: cedulaCompletaSolicitante,
+        id_materia: parseInt(ambitoParts[0]),
+        num_categoria: parseInt(ambitoParts[1]),
+        num_subcategoria: parseInt(ambitoParts[2]),
+        num_ambito_legal: parseInt(ambitoParts[3]),
         tramite: formData.tramite,
         estatus: ESTATUS_CASO.ASESORIA, // Siempre 'Asesoría' para casos nuevos
         id_nucleo: parseInt(formData.nucleo),
@@ -290,8 +306,8 @@ export default function CaseFormModal({
               value={formData.tipoCaso}
               onChange={(e) => updateField('tipoCaso', e.target.value)}
               options={ambitosLegales.map((ambito) => ({
-                value: ambito.id_ambito_legal.toString(),
-                label: `${ambito.materia} (${ambito.tipo})`,
+                value: `${ambito.id_materia},${ambito.num_categoria},${ambito.num_subcategoria},${ambito.num_ambito_legal}`,
+                label: `${ambito.materia} - ${ambito.categoria} - ${ambito.subcategoria}`,
               }))}
               placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar tipo de caso"}
               error={errors.tipoCaso}

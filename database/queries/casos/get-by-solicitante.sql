@@ -1,6 +1,6 @@
--- Obtener todos los casos con información del solicitante
+-- Obtener todos los casos de un solicitante específico
 -- Usa la vista view_casos_completo para obtener estatus y cant_beneficiarios derivados
--- Ordenado por id_caso descendente (más recientes primero)
+-- Parámetros: $1 = cedula (del solicitante)
 SELECT 
     vc.id_caso,
     vc.fecha_inicio_caso,
@@ -15,14 +15,11 @@ SELECT
     vc.num_categoria,
     vc.num_subcategoria,
     vc.num_ambito_legal,
-    vc.cedula,
-    vc.nombres_solicitante,
-    vc.apellidos_solicitante,
-    vc.nombre_completo_solicitante,
     vc.nombre_nucleo,
     vc.nombre_materia,
     vc.nombre_categoria,
     vc.nombre_subcategoria
 FROM view_casos_detalle vc
-ORDER BY vc.id_caso DESC;
+WHERE vc.cedula = $1
+ORDER BY vc.fecha_inicio_caso DESC;
 

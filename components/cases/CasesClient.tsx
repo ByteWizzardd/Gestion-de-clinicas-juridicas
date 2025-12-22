@@ -14,14 +14,24 @@ interface Caso {
   id_caso: number;
   fecha_inicio_caso: string;
   fecha_fin_caso: string | null;
+  fecha_solicitud: string;
   tramite: string;
   estatus: string;
+  cant_beneficiarios: number;
   observaciones: string;
   id_nucleo: number;
-  id_ambito_legal: number;
-  id_expediente: string | null;
-  cedula_cliente: string;
-  nombre_completo_cliente: string;
+  id_materia: number;
+  num_categoria: number;
+  num_subcategoria: number;
+  num_ambito_legal: number;
+  cedula: string;
+  nombre_completo_solicitante: string;
+  nombres_solicitante: string;
+  apellidos_solicitante: string;
+  nombre_nucleo: string;
+  nombre_materia: string;
+  nombre_categoria: string;
+  nombre_subcategoria: string;
   nombre_responsable: string | null;
 }
 
@@ -114,9 +124,9 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       const normalizedSearch = normalizeText(searchValue);
       const matchesSearch = 
         !searchValue ||
-        caso.cedula_cliente.includes(searchValue) ||
-        normalizeText(caso.nombre_completo_cliente || '').includes(normalizedSearch) ||
-        caso.id_expediente?.includes(searchValue);
+        caso.cedula.includes(searchValue) ||
+        normalizeText(caso.nombre_completo_solicitante || '').includes(normalizedSearch) ||
+        caso.id_caso.toString().includes(searchValue);
 
       const matchesEstatus = !estatusFilter || caso.estatus === estatusFilter;
       const matchesTramite = !tramiteFilter || caso.tramite === tramiteFilter;
@@ -155,8 +165,12 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       
       const casoDataSinArchivos = {
         fecha_solicitud: caseData.fecha_solicitud,
-        cedula_cliente: caseData.cedula_cliente,
-        id_ambito_legal: caseData.id_ambito_legal,
+        fecha_inicio_caso: caseData.fecha_inicio_caso,
+        cedula: caseData.cedula,
+        id_materia: caseData.id_materia,
+        num_categoria: caseData.num_categoria,
+        num_subcategoria: caseData.num_subcategoria,
+        num_ambito_legal: caseData.num_ambito_legal,
         tramite: caseData.tramite,
         estatus: caseData.estatus,
         id_nucleo: caseData.id_nucleo,
@@ -250,9 +264,9 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       {!loading && (
         <Table
           data={filteredCasos.map((caso) => ({
-            codigo: caso.id_expediente || `C-${caso.id_caso}`,
-            solicitante: caso.nombre_completo_cliente || caso.cedula_cliente,
-            materia: caso.tramite || 'N/A',
+            codigo: `C-${caso.id_caso}`,
+            solicitante: caso.nombre_completo_solicitante || caso.cedula,
+            materia: caso.nombre_materia || caso.tramite || 'N/A',
             estatus: caso.estatus || 'N/A',
             responsable: caso.nombre_responsable || 'Sin asignar',
           }))}

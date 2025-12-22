@@ -6,6 +6,7 @@ import { TRAMITES, ESTATUS_CASO } from '@/lib/constants/status';
  */
 export const CreateCasoSchema = z.object({
   fecha_solicitud: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha inválida. Formato: YYYY-MM-DD').optional(),
+  fecha_inicio_caso: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha inválida. Formato: YYYY-MM-DD'),
   tramite: z.enum([
     TRAMITES.ASESORIA,
     TRAMITES.CONCILIACION_MEDIACION,
@@ -23,10 +24,12 @@ export const CreateCasoSchema = z.object({
     errorMap: () => ({ message: 'Estatus inválido' }),
   }),
   observaciones: z.string().optional().nullable(),
-  cedula_cliente: z.string().min(1, 'La cédula del cliente es requerida'),
+  cedula: z.string().min(1, 'La cédula del solicitante es requerida'),
   id_nucleo: z.number().int().positive('El núcleo es requerido'),
-  id_ambito_legal: z.number().int().positive('El ámbito legal es requerido'),
-  id_expediente: z.string().optional().nullable(),
+  id_materia: z.number().int().positive('La materia es requerida'),
+  num_categoria: z.number().int().positive('La categoría es requerida'),
+  num_subcategoria: z.number().int().positive('La subcategoría es requerida'),
+  num_ambito_legal: z.number().int().positive('El ámbito legal es requerido'),
 });
 
 export type CreateCasoInput = z.infer<typeof CreateCasoSchema>;
