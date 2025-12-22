@@ -129,10 +129,8 @@ export const solicitantesService = {
       }
       
       // Verificar si el cliente ya existe
-      const clienteExistente = await client.query(
-        'SELECT * FROM clientes WHERE cedula = $1',
-        [cedula]
-      );
+      const checkClienteQuery = loadSQL('clientes/check-exists.sql');
+      const clienteExistente = await client.query(checkClienteQuery, [cedula]);
       
       if (clienteExistente.rows.length === 0) {
         // Crear cliente básico
@@ -285,3 +283,4 @@ export const solicitantesService = {
     }
   },
 };
+

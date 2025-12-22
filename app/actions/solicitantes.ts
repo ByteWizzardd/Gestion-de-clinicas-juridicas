@@ -2,11 +2,12 @@
 
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/utils/security';
-import { solicitantesService } from '@/lib/services/solicitantes/solicitantes.service';
+import { solicitantesService } from '@/lib/services/solicitantes.service';
 import { solicitantesQueries } from '@/lib/db/queries/solicitantes.queries';
 import { clientesQueries } from '@/lib/db/queries/clientes.queries';
-import { ClientesService } from '@/lib/services/clientes/clientes.service';
+import { ClientesService } from '@/lib/services/clientes.service';
 import { AppError, UnauthorizedError } from '@/lib/utils/errors';
+import { revalidatePath } from 'next/cache';
 
 export interface CreateSolicitanteResult {
   success: boolean;
@@ -78,6 +79,9 @@ export async function createSolicitanteAction(data: any): Promise<CreateSolicita
     }
 
     const result = await solicitantesService.create(data);
+
+    // Revalidar cache de la página de solicitantes
+    revalidatePath('/dashboard/applicants');
 
     return {
       success: true,

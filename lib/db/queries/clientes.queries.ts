@@ -85,6 +85,15 @@ export const clientesQueries = {
   },
 
   /**
+   * Verifica si un cliente existe por su cédula
+   */
+  checkExists: async (cedula: string): Promise<boolean> => {
+    const query = loadSQL('clientes/check-exists.sql');
+    const result: QueryResult = await pool.query(query, [cedula]);
+    return result.rows.length > 0;
+  },
+
+  /**
    * Obtiene un cliente completo por su cédula con todas sus relaciones
    * (núcleo, educación, trabajo, hogar, vivienda, casos)
    */

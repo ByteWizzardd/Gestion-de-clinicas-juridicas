@@ -15,5 +15,14 @@ export const nucleosQueries = {
     const result: QueryResult = await pool.query(query);
     return result.rows;
   },
+
+  /**
+   * Verifica si un núcleo existe por su ID
+   */
+  checkExists: async (idNucleo: number): Promise<boolean> => {
+    const query = loadSQL('nucleos/check-exists.sql');
+    const result: QueryResult = await pool.query(query, [idNucleo]);
+    return result.rows.length > 0;
+  },
 };
 

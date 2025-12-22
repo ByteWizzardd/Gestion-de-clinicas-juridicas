@@ -2,7 +2,8 @@
 
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/utils/security';
-import { casosService } from '@/lib/services/casos/casos.service';
+import { casosService } from '@/lib/services/casos.service';
+import { revalidatePath } from 'next/cache';
 import { soportesQueries } from '@/lib/db/queries/soportes.queries';
 import { AppError, UnauthorizedError, ValidationError } from '@/lib/utils/errors';
 
@@ -86,6 +87,9 @@ export async function createCasoAction(data: any): Promise<CreateCasoResult> {
 
     const cedulaUsuario = decoded.cedula;
     const nuevoCaso = await casosService.createCaso(data, cedulaUsuario);
+
+    // Revalidar cache de la página de casos
+    revalidatePath('/dashboard/cases');
 
     return {
       success: true,
@@ -188,6 +192,9 @@ export async function uploadSoportesAction(
         nombre_archivo: soporte.nombre_archivo,
       });
     }
+
+    // Revalidar cache de la página de casos
+    revalidatePath('/dashboard/cases');
 
     return {
       success: true,

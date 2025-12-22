@@ -3,7 +3,7 @@
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/utils/security';
 import { clientesQueries } from '@/lib/db/queries/clientes.queries';
-import { ClientesService } from '@/lib/services/clientes/clientes.service';
+import { ClientesService } from '@/lib/services/clientes.service';
 import { AppError, UnauthorizedError } from '@/lib/utils/errors';
 
 export interface SearchClientesResult {

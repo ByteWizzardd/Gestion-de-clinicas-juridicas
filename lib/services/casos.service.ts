@@ -1,10 +1,11 @@
 import { casosQueries } from '@/lib/db/queries/casos.queries';
-import { asignacionesQueries } from '@/lib/db/queries/asignaciones.queries';
 import { cambiosEstatusQueries } from '@/lib/db/queries/cambios-estatus.queries';
+import { clientesQueries } from '@/lib/db/queries/clientes.queries';
+import { nucleosQueries } from '@/lib/db/queries/nucleos.queries';
+import { ambitosLegalesQueries } from '@/lib/db/queries/ambitos-legales.queries';
 import { AppError, ValidationError, NotFoundError } from '@/lib/utils/errors';
 import { CreateCasoSchema, CreateCasoInput } from '@/lib/validations/casos.schema';
 import { ESTATUS_CASO } from '@/lib/constants/status';
-import { pool } from '@/lib/db/pool';
 
 /**
  * Servicio para la entidad Casos
@@ -13,27 +14,19 @@ import { pool } from '@/lib/db/pool';
 export const casosService = {
     /**
      * Obtiene todos los casos con información enriquecida
-     * Incluye nombre del cliente (ya viene del query) y nombre del profesor responsable
+     * Incluye nombre del cliente y nombre del profesor responsable
+     * OPTIMIZADO: Usa una sola query con JOIN LATERAL en lugar de N+1 queries
      */
     getAllCasos: async () => {
         try {
-            // Obtener todos los casos (ya incluye nombre_completo_cliente del JOIN)
-            const casos = await casosQueries.getAll();
-
-            // Enriquecer cada caso con el nombre del profesor responsable
-            const casosEnriquecidos = await Promise.all(
-                casos.map(async (caso) => {
-                    // Obtener el profesor responsable activo del caso
-                    const profesor = await asignacionesQueries.getProfesorResponsableByCaso(caso.id_caso);
-
-                    return {
-                        ...caso,
-                        nombre_responsable: profesor ? profesor.nombre_completo_profesor : null,
-                    };
-                })
-            );
-
-            return casosEnriquecidos;
+            // Usar la query optimizada que incluye el profesor responsable en un JOIN
+            const casos = await casosQueries.getAllWithProfesor();
+            
+            // El nombre_responsable ya viene del JOIN, solo asegurar que sea null si está vacío
+            return casos.map(caso => ({
+                ...caso,
+                nombre_responsable: caso.nombre_responsable || null,
+            }));
         } catch (error) {
             throw new AppError(
                 'Error al obtener los casos',
@@ -73,32 +66,20 @@ export const casosService = {
             const validatedData = CreateCasoSchema.parse(data) as CreateCasoInput;
 
             // Verificar que el cliente existe
-            const clienteCheck = await pool.query(
-                'SELECT cedula FROM clientes WHERE cedula = $1',
-                [validatedData.cedula_cliente]
-            );
-
-            if (clienteCheck.rows.length === 0) {
+            const clienteExists = await clientesQueries.checkExists(validatedData.cedula_cliente);
+            if (!clienteExists) {
                 throw new NotFoundError(`Cliente con cédula ${validatedData.cedula_cliente} no encontrado`);
             }
 
             // Verificar que el núcleo existe
-            const nucleoCheck = await pool.query(
-                'SELECT id_nucleo FROM nucleos WHERE id_nucleo = $1',
-                [validatedData.id_nucleo]
-            );
-
-            if (nucleoCheck.rows.length === 0) {
+            const nucleoExists = await nucleosQueries.checkExists(validatedData.id_nucleo);
+            if (!nucleoExists) {
                 throw new NotFoundError(`Núcleo con ID ${validatedData.id_nucleo} no encontrado`);
             }
 
             // Verificar que el ámbito legal existe
-            const ambitoCheck = await pool.query(
-                'SELECT id_ambito_legal FROM ambitos_legales WHERE id_ambito_legal = $1',
-                [validatedData.id_ambito_legal]
-            );
-
-            if (ambitoCheck.rows.length === 0) {
+            const ambitoExists = await ambitosLegalesQueries.checkExists(validatedData.id_ambito_legal);
+            if (!ambitoExists) {
                 throw new NotFoundError(`Ámbito legal con ID ${validatedData.id_ambito_legal} no encontrado`);
             }
 
@@ -155,3 +136,4 @@ export const casosService = {
         }
     },
 };
+

@@ -50,15 +50,21 @@ Este proyecto utiliza una arquitectura en capas para separar responsabilidades y
 ```
 proyecto/
 ├── app/
-│   ├── api/                          # API Routes (endpoints REST)
-│   │   ├── auth/                     # Endpoints de autenticación
-│   │   ├── casos/                    # Endpoints de casos
-│   │   │   ├── route.ts              # GET, POST /api/casos
-│   │   │   ├── [id]/                 # GET, PUT, DELETE /api/casos/:id
-│   │   │   └── search/               # GET /api/casos/search
-│   │   ├── clientes/                 # Endpoints de clientes
-│   │   └── usuarios/                 # Endpoints de usuarios
-│   └── (frontend pages)              # Páginas del frontend
+│   ├── actions/                      # Server Actions (mutaciones y lecturas)
+│   │   ├── auth.ts                   # Acciones de autenticación
+│   │   ├── casos.ts                  # Acciones de casos
+│   │   ├── clientes.ts               # Acciones de clientes
+│   │   ├── solicitantes.ts           # Acciones de solicitantes
+│   │   └── ...                       # Más acciones por entidad
+│   ├── dashboard/                    # Páginas del dashboard (Server Components)
+│   │   ├── page.tsx                  # Página principal
+│   │   ├── cases/                    # Páginas de casos
+│   │   ├── applicants/               # Páginas de solicitantes
+│   │   └── ...                       # Más páginas
+│   ├── auth/                         # Páginas de autenticación
+│   │   ├── login/
+│   │   └── register/
+│   └── (otras páginas)               # Más páginas del frontend
 │
 ├── lib/
 │   ├── db/                           # Capa de base de datos
@@ -121,86 +127,216 @@ proyecto/
 
 ## 🔄 Flujo de Datos
 
+### Para Server Components (Lecturas)
+
 ```
-┌─────────────┐
-│   Frontend  │
-│  (Next.js)  │
-└──────┬──────┘
-       │ HTTP Request
-       ▼
-┌─────────────────┐
-│   API Route     │  app/api/[recurso]/route.ts
-│  (Controller)   │
-└──────┬──────────┘
-       │
-       ├─► Validación (Zod)
-       │
-       ├─► Middleware (Auth, Roles)
-       │
-       ▼
-┌─────────────────┐
-│    Service      │  lib/services/[recurso].service.ts
-│  (Lógica Negocio)│
-└──────┬──────────┘
-       │
-       ├─► Validaciones de negocio
-       ├─► Reglas de dominio
-       │
-       ▼
-┌─────────────────┐
-│     Query       │  lib/db/queries/[recurso].queries.ts
-│   Helper        │  (Carga archivos .sql)
-└──────┬──────────┘
-       │
-       ▼
-┌─────────────────┐
-│   SQL Loader    │  lib/db/sql-loader.ts
-│   (Carga .sql)   │  → database/queries/[recurso]/*.sql
-└──────┬──────────┘
-       │
-       ▼
-┌─────────────────┐
-│  PostgreSQL     │
-│   (Neon)        │
-└─────────────────┘
-       │
-       ▼
-┌─────────────────┐
-│   Response      │  JSON estándar
-└─────────────────┘
+┌─────────────────────┐
+│  Server Component   │  app/dashboard/[recurso]/page.tsx
+│   (Next.js)         │
+└──────────┬──────────┘
+           │
+           │ async/await
+           ▼
+┌─────────────────────┐
+│   Server Action     │  app/actions/[recurso].ts
+│   (Lectura)         │  get[Recurso]Action()
+└──────────┬──────────┘
+           │
+           ├─► Validación (Zod)
+           │
+           ├─► Autenticación (cookies)
+           │
+           ▼
+┌─────────────────────┐
+│    Service          │  lib/services/[recurso].service.ts
+│  (Lógica Negocio)   │
+└──────────┬──────────┘
+           │
+           ├─► Validaciones de negocio
+           ├─► Reglas de dominio
+           │
+           ▼
+┌─────────────────────┐
+│     Query           │  lib/db/queries/[recurso].queries.ts
+│   Helper            │  (Carga archivos .sql)
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│   SQL Loader        │  lib/db/sql-loader.ts
+│   (Carga .sql)       │  → database/queries/[recurso]/*.sql
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│  PostgreSQL         │
+│   (Neon)            │
+└─────────────────────┘
+           │
+           ▼
+┌─────────────────────┐
+│   Response          │  Datos tipados (TypeScript)
+└─────────────────────┘
+```
+
+### Para Client Components (Mutaciones)
+
+```
+┌─────────────────────┐
+│  Client Component    │  components/forms/[Form].tsx
+│   (React)            │
+└──────────┬──────────┘
+           │
+           │ formAction o action={...}
+           ▼
+┌─────────────────────┐
+│   Server Action     │  app/actions/[recurso].ts
+│   (Mutación)        │  create[Recurso]Action()
+└──────────┬──────────┘
+           │
+           ├─► Validación (Zod)
+           │
+           ├─► Autenticación (cookies)
+           │
+           ▼
+┌─────────────────────┐
+│    Service          │  lib/services/[recurso].service.ts
+│  (Lógica Negocio)   │
+└──────────┬──────────┘
+           │
+           ├─► Validaciones de negocio
+           ├─► Reglas de dominio
+           ├─► Transacciones
+           │
+           ▼
+┌─────────────────────┐
+│     Query           │  lib/db/queries/[recurso].queries.ts
+│   Helper            │  (Carga archivos .sql)
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│   SQL Loader        │  lib/db/sql-loader.ts
+│   (Carga .sql)       │  → database/queries/[recurso]/*.sql
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│  PostgreSQL         │
+│   (Neon)            │
+└─────────────────────┘
+           │
+           ├─► revalidatePath()
+           │
+           ▼
+┌─────────────────────┐
+│   Response          │  { success: boolean, data?: ..., error?: ... }
+└─────────────────────┘
 ```
 
 ---
 
 ## 🏗 Capas de la Arquitectura
 
-### 1. Capa de API Routes (`app/api/`)
+### 1. Capa de Server Actions (`app/actions/`)
 
-**Responsabilidad**: Recibir requests HTTP y retornar responses
+**Responsabilidad**: Funciones del servidor que manejan mutaciones y lecturas de datos
 
 **Características**:
-- Endpoints RESTful
-- Manejo de métodos HTTP (GET, POST, PUT, DELETE)
-- Validación inicial de requests
-- Manejo de errores centralizado
+- Funciones marcadas con `'use server'`
+- Type-safe con TypeScript
+- Manejo de autenticación mediante cookies
+- Validación de datos con Zod
+- Revalidación automática de cache después de mutaciones
+- Organizadas por entidad (un archivo por entidad)
 
 **Ejemplo de estructura**:
 ```typescript
-// app/api/casos/route.ts
-export async function GET() { ... }
-export async function POST() { ... }
+// app/actions/casos.ts
+'use server';
+
+import { revalidatePath } from 'next/cache';
+import { casosService } from '@/lib/services/casos.service';
+import { CreateCasoSchema } from '@/lib/validations/casos.schema';
+
+export async function createCasoAction(formData: FormData) {
+  try {
+    const data = CreateCasoSchema.parse({
+      // ... parse formData
+    });
+    const caso = await casosService.createCaso(data, cedulaUsuario);
+    revalidatePath('/dashboard/cases');
+    return { success: true, data: caso };
+  } catch (error) {
+    return { success: false, error: { message: '...' } };
+  }
+}
+
+export async function getCasosAction() {
+  try {
+    const casos = await casosService.getAllCasos();
+    return { success: true, data: casos };
+  } catch (error) {
+    return { success: false, error: { message: '...' } };
+  }
+}
 ```
 
-### 2. Capa de Middleware (`lib/middleware/`)
+**Ventajas de Server Actions**:
+- ✅ No requiere crear endpoints HTTP manualmente
+- ✅ Type-safe end-to-end
+- ✅ Integración directa con formularios
+- ✅ Revalidación automática de cache
+- ✅ Mejor rendimiento (menos código cliente)
 
-**Responsabilidad**: Interceptar requests para autenticación, autorización, etc.
+### 2. Capa de Server Components (`app/dashboard/`)
 
-**Middleware disponible**:
-- `requireAuth`: Verifica autenticación
+**Responsabilidad**: Componentes React que se renderizan en el servidor y pueden hacer fetch de datos directamente
+
+**Características**:
+- Componentes async que pueden hacer `await` directamente
+- Fetch de datos en el servidor (más rápido)
+- No envían JavaScript al cliente (mejor rendimiento)
+- Acceso directo a cookies, headers, etc.
+
+**Ejemplo**:
+```typescript
+// app/dashboard/cases/page.tsx
+import { getCasosAction } from '@/app/actions/casos';
+
+export default async function CasesPage() {
+  const result = await getCasosAction();
+  
+  if (!result.success) {
+    return <div>Error: {result.error?.message}</div>;
+  }
+  
+  return (
+    <div>
+      {result.data?.map(caso => (
+        <div key={caso.id_caso}>{caso.tramite}</div>
+      ))}
+    </div>
+  );
+}
+```
+
+### 3. Capa de Middleware (`middleware.ts` y `lib/middleware/`)
+
+**Responsabilidad**: Interceptar requests para autenticación, autorización y redirecciones
+
+**Middleware de Next.js (`middleware.ts`)**:
+- Protege rutas `/dashboard/*` requiriendo autenticación
+- Redirige usuarios no autenticados a `/auth/login`
+- Redirige usuarios autenticados desde `/auth/*` a `/dashboard`
+- Compatible con Edge Runtime
+
+**Middleware personalizado (`lib/middleware/`)**:
+- `requireAuth`: Verifica autenticación (para uso en Server Actions)
 - `requireRole`: Verifica rol específico
 - `requireEstudiante`, `requireProfesor`, `requireCoordinador`: Helpers de roles
 
-### 3. Capa de Validación (`lib/validations/`)
+### 4. Capa de Validación (`lib/validations/`)
 
 **Responsabilidad**: Validar estructura y tipos de datos de entrada
 
@@ -212,7 +348,7 @@ export async function POST() { ... }
 - Mensajes de error claros
 - Previene datos inválidos antes de llegar a la BD
 
-### 4. Capa de Servicios (`lib/services/`)
+### 5. Capa de Servicios (`lib/services/`)
 
 **Responsabilidad**: Lógica de negocio y orquestación
 
@@ -236,7 +372,7 @@ export const casosService = {
 }
 ```
 
-### 5. Capa de Queries (`lib/db/queries/`)
+### 6. Capa de Queries (`lib/db/queries/`)
 
 **Responsabilidad**: Helpers TypeScript que cargan y ejecutan archivos SQL
 
@@ -274,7 +410,7 @@ INNER JOIN clientes cl ON c.cedula_cliente = cl.cedula
 ORDER BY c.fecha_inicio_caso DESC;
 ```
 
-### 6. Capa de Base de Datos (`lib/db/`)
+### 7. Capa de Base de Datos (`lib/db/`)
 
 **Responsabilidad**: Gestión de conexiones, transacciones y carga de SQL
 
@@ -283,7 +419,7 @@ ORDER BY c.fecha_inicio_caso DESC;
 - `transactions.ts`: Helpers para transacciones
 - `sql-loader.ts`: Helper para cargar archivos `.sql` desde `database/queries/`
 
-### 7. Archivos SQL (`database/queries/`)
+### 8. Archivos SQL (`database/queries/`)
 
 **Responsabilidad**: Todas las queries SQL (DML) organizadas por entidad
 
@@ -316,7 +452,7 @@ database/queries/
 Separa la lógica de negocio de la lógica de acceso a datos.
 
 ```
-API Route → Service → Query → Database
+Server Action → Service → Query → Database
 ```
 
 ### 2. Repository Pattern (Implícito)
@@ -394,9 +530,10 @@ await withTransaction(async (client) => {
 
 ### 2. Autenticación
 
-- JWT tokens (a implementar)
-- Middleware de autenticación
-- Verificación de tokens
+- **JWT tokens**: Implementado con cookies HTTP-only
+- **Middleware de Next.js**: Protege rutas automáticamente
+- **Verificación de tokens**: En Server Actions y Server Components
+- **Cookies seguras**: Tokens almacenados en cookies HTTP-only
 
 ### 3. Autorización
 
@@ -515,29 +652,132 @@ export const nuevoRecursoService = {
 };
 ```
 
-#### Paso 4: Crear API Route
+#### Paso 4: Crear Server Actions
 
 ```typescript
-// app/api/nuevo_recurso/route.ts
-export async function GET() {
+// app/actions/nuevo_recurso.ts
+'use server';
+
+import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/utils/security';
+import { nuevoRecursoService } from '@/lib/services/nuevo_recurso.service';
+import { CreateNuevoRecursoSchema } from '@/lib/validations/nuevo_recurso.schema';
+
+export async function getNuevoRecursoAction() {
   try {
+    // Verificar autenticación
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+    if (!token) {
+      return { success: false, error: { message: 'No autenticado', code: 'UNAUTHORIZED' } };
+    }
+    await verifyToken(token);
+
     const data = await nuevoRecursoService.getAll();
-    return successResponse(data);
+    return { success: true, data };
   } catch (error) {
-    return errorResponse(error);
+    return { 
+      success: false, 
+      error: { 
+        message: error instanceof Error ? error.message : 'Error desconocido' 
+      } 
+    };
+  }
+}
+
+export async function createNuevoRecursoAction(formData: FormData) {
+  try {
+    // Verificar autenticación
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+    if (!token) {
+      return { success: false, error: { message: 'No autenticado', code: 'UNAUTHORIZED' } };
+    }
+    const decoded = await verifyToken(token);
+
+    // Validar datos
+    const data = CreateNuevoRecursoSchema.parse({
+      campo1: formData.get('campo1'),
+      campo2: formData.get('campo2'),
+    });
+
+    const nuevo = await nuevoRecursoService.create(data);
+    revalidatePath('/dashboard/nuevo-recurso'); // Revalidar cache
+    return { success: true, data: nuevo };
+  } catch (error) {
+    return { 
+      success: false, 
+      error: { 
+        message: error instanceof Error ? error.message : 'Error desconocido' 
+      } 
+    };
   }
 }
 ```
 
-### 2. Agregar Autenticación a un Endpoint
+#### Paso 5: Usar en Server Component
 
 ```typescript
-export async function POST(request: NextRequest) {
+// app/dashboard/nuevo-recurso/page.tsx
+import { getNuevoRecursoAction } from '@/app/actions/nuevo_recurso';
+
+export default async function NuevoRecursoPage() {
+  const result = await getNuevoRecursoAction();
+  
+  if (!result.success) {
+    return <div>Error: {result.error?.message}</div>;
+  }
+  
+  return (
+    <div>
+      {result.data?.map(item => (
+        <div key={item.id}>{item.campo1}</div>
+      ))}
+    </div>
+  );
+}
+```
+
+#### Paso 6: Usar en Client Component (para formularios)
+
+```typescript
+// components/forms/NuevoRecursoForm.tsx
+'use client';
+
+import { createNuevoRecursoAction } from '@/app/actions/nuevo_recurso';
+import { useFormState } from 'react-dom';
+
+export function NuevoRecursoForm() {
+  const [state, formAction] = useFormState(createNuevoRecursoAction, null);
+
+  return (
+    <form action={formAction}>
+      <input name="campo1" />
+      <input name="campo2" />
+      <button type="submit">Crear</button>
+      {state?.error && <div>{state.error.message}</div>}
+    </form>
+  );
+}
+```
+
+### 2. Agregar Autenticación a una Server Action
+
+La autenticación se maneja dentro de cada Server Action:
+
+```typescript
+export async function createAction(formData: FormData) {
   try {
-    await requireAuth(request); // Requiere autenticación
-    // ... resto del código
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+    if (!token) {
+      return { success: false, error: { message: 'No autenticado', code: 'UNAUTHORIZED' } };
+    }
+    const decoded = await verifyToken(token);
+    // ... resto del código usando decoded.cedula, decoded.rol, etc.
   } catch (error) {
-    return errorResponse(error);
+    return { success: false, error: { message: '...' } };
   }
 }
 ```
@@ -545,12 +785,23 @@ export async function POST(request: NextRequest) {
 ### 3. Agregar Autorización por Rol
 
 ```typescript
-export async function DELETE(request: NextRequest) {
+export async function deleteAction(id: number) {
   try {
-    await requireCoordinador(request); // Solo coordinadores
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+    if (!token) {
+      return { success: false, error: { message: 'No autenticado', code: 'UNAUTHORIZED' } };
+    }
+    const decoded = await verifyToken(token);
+    
+    // Verificar rol
+    if (decoded.rol !== 'coordinador') {
+      return { success: false, error: { message: 'Sin permisos', code: 'FORBIDDEN' } };
+    }
+    
     // ... resto del código
   } catch (error) {
-    return errorResponse(error);
+    return { success: false, error: { message: '...' } };
   }
 }
 ```
@@ -565,13 +816,16 @@ export async function DELETE(request: NextRequest) {
 - **Query Helpers**: `[recurso].queries.ts` en `lib/db/queries/`
 - **Services**: `[recurso].service.ts` en `lib/services/`
 - **Validations**: `[recurso].schema.ts` en `lib/validations/`
-- **API Routes**: `route.ts` dentro de `app/api/[recurso]/`
+- **Server Actions**: `[recurso].ts` en `app/actions/` (un archivo por entidad)
+- **Server Components**: `page.tsx` en `app/dashboard/[recurso]/`
+- **Client Components**: `[Component].tsx` en `components/`
 
 ### Nombres de Funciones
 
 - **Queries**: `getAll`, `getById`, `create`, `update`, `delete`, `search`
 - **Services**: Mismos nombres que queries
-- **API Routes**: `GET`, `POST`, `PUT`, `DELETE`
+- **Server Actions**: `get[Recurso]Action`, `create[Recurso]Action`, `update[Recurso]Action`, `delete[Recurso]Action`
+  - Ejemplo: `getCasosAction`, `createCasoAction`, `getSolicitantesAction`
 
 ### SQL
 
@@ -581,19 +835,49 @@ export async function DELETE(request: NextRequest) {
 
 ---
 
+## 🚀 Características Avanzadas
+
+### Revalidación de Cache
+
+Después de mutaciones, se revalida automáticamente el cache de Next.js:
+
+```typescript
+import { revalidatePath } from 'next/cache';
+
+export async function createCasoAction(data: FormData) {
+  // ... crear caso
+  revalidatePath('/dashboard/cases'); // Revalida esta ruta
+  return { success: true, data: nuevoCaso };
+}
+```
+
+### Server Components vs Client Components
+
+- **Server Components**: Para páginas que solo muestran datos (mejor rendimiento)
+- **Client Components**: Para formularios e interactividad (`'use client'`)
+
+### Optimización de Queries
+
+- Uso de `LEFT JOIN LATERAL` para evitar N+1 queries
+- Queries optimizadas con JOINs apropiados
+- Índices en la base de datos para campos frecuentemente consultados
+
 ## 🚀 Próximos Pasos
 
-1. **Implementar Autenticación**: JWT tokens
-2. **Crear Módulos**: Empezar con casos, clientes, usuarios
-3. **Testing**: Unit tests para servicios, integration tests para API
-4. **Documentación API**: Swagger/OpenAPI
+1. ✅ **Autenticación**: JWT tokens implementado
+2. ✅ **Server Actions**: Implementado para todas las operaciones
+3. ✅ **Server Components**: Migrado para mejor rendimiento
+4. **Testing**: Unit tests para servicios, integration tests para Server Actions
 5. **Logging**: Integración con servicio externo (Sentry, etc.)
+6. **Optimización**: Más queries optimizadas según necesidad
 
 ---
 
 ## 📖 Referencias
 
-- [Next.js API Routes](https://nextjs.org/docs/app/building-your-application/routing/route-handlers)
+- [Next.js Server Actions](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations)
+- [Next.js Server Components](https://nextjs.org/docs/app/building-your-application/rendering/server-components)
+- [Next.js Middleware](https://nextjs.org/docs/app/building-your-application/routing/middleware)
 - [PostgreSQL Node.js Driver](https://node-postgres.com/)
 - [Zod Documentation](https://zod.dev/)
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
@@ -601,4 +885,18 @@ export async function DELETE(request: NextRequest) {
 ---
 
 **Última actualización**: Diciembre 2024
+
+---
+
+## 📝 Notas de Migración
+
+Este proyecto migró de API Routes a Server Actions para aprovechar mejor las características de Next.js 16:
+
+- ✅ **Mejor rendimiento**: Menos JavaScript enviado al cliente
+- ✅ **Type safety**: Type-safe end-to-end sin necesidad de tipos de API
+- ✅ **Menos código**: No necesitas crear endpoints HTTP manualmente
+- ✅ **Mejor UX**: Revalidación automática de cache
+- ✅ **Más simple**: Integración directa con formularios
+
+La arquitectura mantiene la misma separación de capas, pero ahora usa Server Actions como punto de entrada en lugar de API Routes.
 

@@ -17,6 +17,16 @@ export const casosQueries = {
   },
 
   /**
+   * Obtiene todos los casos con información del cliente y profesor responsable (optimizado)
+   * Usa un JOIN LATERAL para evitar N+1 queries
+   */
+  getAllWithProfesor: async (): Promise<any[]> => {
+    const query = loadSQL('casos/get-all-with-profesor.sql');
+    const result: QueryResult = await pool.query(query);
+    return result.rows;
+  },
+
+  /**
    * Obtiene un caso por su ID con información completa
    */
   getById: async (id: number): Promise<any | null> => {

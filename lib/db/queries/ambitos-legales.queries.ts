@@ -20,5 +20,14 @@ export const ambitosLegalesQueries = {
     const result: QueryResult = await pool.query(query);
     return result.rows;
   },
+
+  /**
+   * Verifica si un ámbito legal existe por su ID
+   */
+  checkExists: async (idAmbitoLegal: number): Promise<boolean> => {
+    const query = loadSQL('ambitos-legales/check-exists.sql');
+    const result: QueryResult = await pool.query(query, [idAmbitoLegal]);
+    return result.rows.length > 0;
+  },
 };
 

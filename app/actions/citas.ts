@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/utils/security';
-import { citasService } from '@/lib/services/citas/citas.service';
+import { citasService } from '@/lib/services/citas.service';
 import { AppError, UnauthorizedError } from '@/lib/utils/errors';
 
 export interface GetCitasResult {
