@@ -1,0 +1,276 @@
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import CaseTools from '@/components/CaseTools/CaseTools';
+import Table from '@/components/Table/Table';
+import CaseFormModal from '@/components/forms/CaseFormModal';
+import Spinner from '@/components/ui/feedback/Spinner';
+import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
+import { getCasosAction } from '@/app/actions/casos';
+import { createCasoAction, uploadSoportesAction } from '@/app/actions/casos';
+
+interface Caso {
+  id_caso: number;
+  fecha_inicio_caso: string;
+  fecha_fin_caso: string | null;
+  tramite: string;
+  estatus: string;
+  observaciones: string;
+  id_nucleo: number;
+  id_ambito_legal: number;
+  id_expediente: string | null;
+  cedula_cliente: string;
+  nombre_completo_cliente: string;
+  nombre_responsable: string | null;
+}
+
+interface TableRow extends Record<string, unknown> {
+  codigo: string;
+  solicitante: string;
+  materia: string;
+  estatus: string;
+  responsable: string;
+}
+
+interface CasesClientProps {
+  initialCasos: Caso[];
+}
+
+export default function CasesClient({ initialCasos }: CasesClientProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [casos, setCasos] = useState<Caso[]>(initialCasos);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
+  const [estatusFilter, setEstatusFilter] = useState('');
+  const [tramiteFilter, setTramiteFilter] = useState('');
+  const [initialCedula, setInitialCedula] = useState<string>('');
+  const [initialCedulaTipo, setInitialCedulaTipo] = useState<string>('V');
+
+  const estatusOptions = [
+    { value: ESTATUS_CASO.EN_PROCESO, label: ESTATUS_CASO.EN_PROCESO },
+    { value: ESTATUS_CASO.ARCHIVADO, label: ESTATUS_CASO.ARCHIVADO },
+    { value: ESTATUS_CASO.ENTREGADO, label: ESTATUS_CASO.ENTREGADO },
+    { value: ESTATUS_CASO.ASESORIA, label: ESTATUS_CASO.ASESORIA },
+  ];
+
+  const tramiteOptions = [
+    { value: TRAMITES.ASESORIA, label: TRAMITES.ASESORIA },
+    { value: TRAMITES.CONCILIACION_MEDIACION, label: TRAMITES.CONCILIACION_MEDIACION },
+    { value: TRAMITES.REDACCION_DOCUMENTOS, label: TRAMITES.REDACCION_DOCUMENTOS },
+    { value: TRAMITES.ASISTENCIA_JUDICIAL, label: TRAMITES.ASISTENCIA_JUDICIAL },
+  ];
+
+  const fetchCasos = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await getCasosAction();
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Error al cargar los casos');
+      }
+      if (result.data) {
+        setCasos(result.data);
+      } else {
+        setCasos([]);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error desconocido');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Leer parámetros de URL para abrir modal con cédula prellenada
+  useEffect(() => {
+    const cedula = searchParams.get('cedula');
+    const cedulaTipo = searchParams.get('cedulaTipo');
+    
+    if (cedula && cedulaTipo) {
+      const cedulaNumero = cedula.startsWith(cedulaTipo) ? cedula.substring(cedulaTipo.length) : cedula;
+      setInitialCedula(cedulaNumero);
+      setInitialCedulaTipo(cedulaTipo);
+      setIsModalOpen(true);
+      router.replace('/dashboard/cases');
+    }
+  }, [searchParams, router]);
+
+  const normalizeText = (text: string): string => {
+    return text
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+  };
+
+  const filteredCasos = useMemo(() => {
+    if (!searchValue && !estatusFilter && !tramiteFilter) {
+      return casos;
+    }
+
+    return casos.filter((caso) => {
+      const normalizedSearch = normalizeText(searchValue);
+      const matchesSearch = 
+        !searchValue ||
+        caso.cedula_cliente.includes(searchValue) ||
+        normalizeText(caso.nombre_completo_cliente || '').includes(normalizedSearch) ||
+        caso.id_expediente?.includes(searchValue);
+
+      const matchesEstatus = !estatusFilter || caso.estatus === estatusFilter;
+      const matchesTramite = !tramiteFilter || caso.tramite === tramiteFilter;
+
+      return matchesSearch && matchesEstatus && matchesTramite;
+    });
+  }, [casos, searchValue, estatusFilter, tramiteFilter]);
+
+  const handleView = (data: Record<string, unknown>) => {
+    const caso = data as TableRow;
+    router.push(`/dashboard/cases/${caso.codigo}`);
+  };
+
+  const handleEdit = (data: Record<string, unknown>) => {
+    const caso = data as TableRow;
+    alert(`Editar caso: ${caso.codigo}`);
+  };
+
+  const handleDelete = (data: Record<string, unknown>) => {
+    const caso = data as TableRow;
+    alert(`Eliminar caso: ${caso.codigo}`);
+  };
+
+  const handleAddCase = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleSubmitCase = async (data: unknown) => {
+    try {
+      const caseData = data as any;
+      const archivos = Array.isArray(caseData.archivos) ? caseData.archivos : [];
+      
+      const casoDataSinArchivos = {
+        fecha_solicitud: caseData.fecha_solicitud,
+        cedula_cliente: caseData.cedula_cliente,
+        id_ambito_legal: caseData.id_ambito_legal,
+        tramite: caseData.tramite,
+        estatus: caseData.estatus,
+        id_nucleo: caseData.id_nucleo,
+        observaciones: caseData.observaciones,
+      };
+      
+      const result = await createCasoAction(casoDataSinArchivos);
+
+      if (!result.success) {
+        const errorMessage = result.error?.message || 'Error al crear el caso';
+        const errorCode = result.error?.code || 'UNKNOWN_ERROR';
+        const errorFields = result.error?.fields;
+        
+        if (errorFields) {
+          const fieldErrors = Object.entries(errorFields)
+            .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+            .join('\n');
+          alert(`Error de validación:\n${fieldErrors}`);
+        } else {
+          alert(`Error: ${errorMessage}\nCódigo: ${errorCode}`);
+        }
+        return;
+      }
+
+      if (archivos.length > 0 && result.success && result.data) {
+        const idCaso = result.data.id_caso || (result.data as any).id_caso;
+        
+        if (!idCaso || isNaN(Number(idCaso))) {
+          alert('Caso creado exitosamente, pero no se pudo obtener el ID del caso para subir los archivos');
+          setIsModalOpen(false);
+          fetchCasos();
+          return;
+        }
+        
+        const formData = new FormData();
+        archivos.forEach((archivo: File) => {
+          formData.append('archivos', archivo);
+        });
+
+        try {
+          const uploadResult = await uploadSoportesAction(Number(idCaso), formData);
+          
+          if (!uploadResult.success) {
+            alert(`Caso creado exitosamente, pero hubo un error al subir los archivos: ${uploadResult.error?.message || 'Error desconocido'}`);
+          }
+        } catch (uploadErr) {
+          alert('Caso creado exitosamente, pero hubo un error al subir los archivos');
+        }
+      }
+
+      alert('Caso registrado exitosamente');
+      setIsModalOpen(false);
+      fetchCasos();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+      alert(`Error al crear el caso: ${errorMessage}`);
+    }
+  };
+
+  return (
+    <>
+      <h1 className="text-4xl m-3 font-semibold font-primary">Casos</h1>
+      <p className="mb-6 ml-3">Listado y gestión de todos los casos registrados.</p>
+      <CaseTools 
+        addLabel="Añadir Caso" 
+        onAddClick={handleAddCase}
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+        estatusFilter={estatusFilter}
+        onEstatusChange={setEstatusFilter}
+        estatusOptions={estatusOptions}
+        tramiteFilter={tramiteFilter}
+        onTramiteChange={setTramiteFilter}
+        tramiteOptions={tramiteOptions}
+      />
+      <div className="mt-10"></div>
+
+      {loading && (
+        <div className="flex flex-col justify-center items-center py-12 min-h-[400px]">
+          <Spinner />
+          <p className="text-on-border mt-4">Cargando casos...</p>
+        </div>
+      )}
+
+      {error && !loading && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+          <strong>Error: </strong>{error}
+        </div>
+      )}
+
+      {!loading && (
+        <Table
+          data={filteredCasos.map((caso) => ({
+            codigo: caso.id_expediente || `C-${caso.id_caso}`,
+            solicitante: caso.nombre_completo_cliente || caso.cedula_cliente,
+            materia: caso.tramite || 'N/A',
+            estatus: caso.estatus || 'N/A',
+            responsable: caso.nombre_responsable || 'Sin asignar',
+          }))}
+          columns={["Código", "Solicitante", "Materia", "Estatus", "Responsable"]}
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      )}
+
+      <CaseFormModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSubmit={handleSubmitCase}
+        initialCedula={initialCedula}
+        initialCedulaTipo={initialCedulaTipo}
+      />
+    </>
+  );
+}
+
