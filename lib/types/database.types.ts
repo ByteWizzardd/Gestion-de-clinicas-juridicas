@@ -63,6 +63,21 @@ export interface Caso {
   // Nota: estatus y cant_beneficiarios son atributos derivados obtenidos de las vistas
 }
 
+export interface Cita {
+  num_cita: number;
+  id_caso: number;
+  fecha_proxima_cita: Date | null;
+  fecha_encuentro: Date;
+  orientacion: string;
+}
+
+export interface Atiende {
+  id_usuario: string;
+  num_cita: number;
+  id_caso: number;
+  fecha_registro: Date;
+}
+
 export interface Seccion {
   num_seccion: number;
   nrc_materia: string;
@@ -108,13 +123,41 @@ export interface SolicitanteWithRelations extends Solicitante {
   nombre_nucleo?: string;
 }
 
+export interface CitaWithRelations extends Cita {
+  // Información del caso
+  tramite?: string;
+  estatus?: string;
+  cedula?: string;
+  nombres_solicitante?: string;
+  apellidos_solicitante?: string;
+  nombre_completo_solicitante?: string;
+  // Información del núcleo
+  id_nucleo?: number;
+  nombre_nucleo?: string;
+  // Información del ámbito legal
+  id_materia?: number;
+  num_categoria?: number;
+  num_subcategoria?: number;
+  num_ambito_legal?: number;
+  nombre_materia?: string;
+  nombre_categoria?: string;
+  nombre_subcategoria?: string;
+  // Información de la orientación
+  fecha_registro?: Date;
+  id_usuario_orientacion?: string;
+  nombre_usuario_orientacion?: string;
+}
+
 // Tipos para inserts (sin campos auto-generados)
 export type CreateSolicitante = Omit<Solicitante, never>;
 export type CreateCaso = Omit<Caso, 'id_caso' | 'fecha_inicio_caso'>;
 export type CreateUsuario = Omit<Usuario, never>;
+export type CreateCita = Omit<Cita, never>;
+export type CreateAtiende = Omit<Atiende, 'fecha_registro'>;
 
 // Tipos para updates (todos los campos opcionales excepto PK)
 export type UpdateSolicitante = Partial<Omit<Solicitante, 'cedula'>>;
 export type UpdateCaso = Partial<Omit<Caso, 'id_caso'>>;
 export type UpdateUsuario = Partial<Omit<Usuario, 'cedula'>>;
+export type UpdateCita = Partial<Omit<Cita, 'num_cita' | 'id_caso'>>;
 

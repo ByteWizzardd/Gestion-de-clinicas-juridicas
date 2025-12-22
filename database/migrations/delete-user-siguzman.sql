@@ -51,12 +51,20 @@ BEGIN
         RAISE NOTICE 'Secciones eliminadas';
     END IF;
     
-    -- Paso 3: Eliminar referencias en asignaciones (si es estudiante o profesor)
-    DELETE FROM asignaciones 
-    WHERE cedula_estudiante = usuario_cedula OR cedula_profesor = usuario_cedula;
+    -- Paso 3: Eliminar referencias en supervisa y se_le_asigna (si es estudiante o profesor)
+    -- Nota: La tabla asignaciones ya no existe, se usa supervisa y se_le_asigna
+    DELETE FROM supervisa 
+    WHERE cedula_profesor = usuario_cedula;
     
     IF FOUND THEN
-        RAISE NOTICE 'Referencias eliminadas de la tabla asignaciones';
+        RAISE NOTICE 'Referencias eliminadas de la tabla supervisa';
+    END IF;
+    
+    DELETE FROM se_le_asigna 
+    WHERE cedula_estudiante = usuario_cedula;
+    
+    IF FOUND THEN
+        RAISE NOTICE 'Referencias eliminadas de la tabla se_le_asigna';
     END IF;
     
     -- Paso 4: Eliminar referencias en acciones

@@ -262,9 +262,19 @@ CREATE TABLE citas (
     fecha_proxima_cita DATE,
     fecha_encuentro DATE NOT NULL,
     orientacion TEXT NOT NULL,
-    fecha_registro DATE NOT NULL DEFAULT CURRENT_DATE,
-    id_usuario_orientacion VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
     PRIMARY KEY (num_cita, id_caso)
+);
+
+-- 30) ATIENDEN
+CREATE TABLE atienden (
+    id_usuario VARCHAR(20) NOT NULL,
+    num_cita INTEGER NOT NULL,
+    id_caso INTEGER NOT NULL,
+    fecha_registro DATE NOT NULL DEFAULT CURRENT_DATE,
+    
+    PRIMARY KEY (num_cita, id_caso, id_usuario),
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(cedula),
+    FOREIGN KEY (num_cita, id_caso) REFERENCES citas(num_cita, id_caso)
 );
 
 -- 24) ACCIONES
