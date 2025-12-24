@@ -104,24 +104,34 @@ ON CONFLICT DO NOTHING;
 -- ==========================================================
 -- 6. CONDICIÓN TRABAJO (Tabla maestra, sin dependencias)
 -- ==========================================================
-INSERT INTO condicion_trabajo (nombre_trabajo) VALUES
-('Patrono'),
-('Empleado'),
-('Obrero'),
-('Cuenta propia'),
-('Desempleado')
-ON CONFLICT DO NOTHING;
+-- IDs específicos: 0 no trabaja, 1 Patrono, 2 Empleado, 3 Obrero, 4 Cuenta propia
+INSERT INTO condicion_trabajo (id_trabajo, nombre_trabajo) VALUES
+(0, 'No trabaja'),
+(1, 'Patrono'),
+(2, 'Empleado'),
+(3, 'Obrero'),
+(4, 'Cuenta propia')
+ON CONFLICT (id_trabajo) DO UPDATE
+SET nombre_trabajo = EXCLUDED.nombre_trabajo;
+
+-- Ajustar la secuencia para que el próximo ID sea 5
+SELECT setval('condicion_trabajo_id_trabajo_seq', 4, true);
 
 -- ==========================================================
 -- 7. CONDICIÓN ACTIVIDAD (Tabla maestra, sin dependencias)
 -- ==========================================================
-INSERT INTO condicion_actividad (nombre_actividad) VALUES
-('Ama de Casa'),
-('Estudiante'),
-('Pensionado'),
-('Jubilado'),
-('Otra')
-ON CONFLICT DO NOTHING;
+-- IDs específicos: 0 buscando trabajo, 1 Ama de Casa, 2 Estudiante, 3 Pensionado/Jubilado, 4 Otra
+INSERT INTO condicion_actividad (id_actividad, nombre_actividad) VALUES
+(0, 'Buscando trabajo'),
+(1, 'Ama de Casa'),
+(2, 'Estudiante'),
+(3, 'Pensionado/Jubilado'),
+(4, 'Otra')
+ON CONFLICT (id_actividad) DO UPDATE
+SET nombre_actividad = EXCLUDED.nombre_actividad;
+
+-- Ajustar la secuencia para que el próximo ID sea 5
+SELECT setval('condicion_actividad_id_actividad_seq', 4, true);
 
 -- ==========================================================
 -- 8. MATERIAS, CATEGORÍAS, SUBCATEGORÍAS Y ÁMBITOS LEGALES
@@ -240,15 +250,15 @@ INSERT INTO solicitantes (
 ('V-45678901', 'Carlos', 'Martínez', '1992-03-25', NULL, '0424-4567890', 
  'carlos.martinez@email.com', 'M', 'V', 'Soltero', false, 'Años',
  (SELECT id_nivel_educativo FROM niveles_educativos WHERE descripcion = 'Secundaria incompleta' LIMIT 1),
- (SELECT id_trabajo FROM condicion_trabajo WHERE nombre_trabajo = 'Desempleado' LIMIT 1),
- (SELECT id_actividad FROM condicion_actividad WHERE nombre_actividad = 'Pensionado' LIMIT 1),
+ (SELECT id_trabajo FROM condicion_trabajo WHERE nombre_trabajo = 'no trabaja' LIMIT 1),
+ (SELECT id_actividad FROM condicion_actividad WHERE nombre_actividad = 'Pensionado/Jubilado' LIMIT 1),
  (SELECT id_estado FROM estados WHERE nombre_estado = 'Miranda' LIMIT 1), 2, 1),
 -- Solicitante 5
 ('V-56789012', 'Ana', 'López', '1987-07-10', '0212-5559012', '0412-5678901', 
  'ana.lopez@email.com', 'F', 'V', 'Casado', true, 'Años',
  (SELECT id_nivel_educativo FROM niveles_educativos WHERE descripcion = 'Secundaria completa' LIMIT 1),
  (SELECT id_trabajo FROM condicion_trabajo WHERE nombre_trabajo = 'Patrono' LIMIT 1),
- (SELECT id_actividad FROM condicion_actividad WHERE nombre_actividad = 'Jubilado' LIMIT 1),
+ (SELECT id_actividad FROM condicion_actividad WHERE nombre_actividad = 'Pensionado/Jubilado' LIMIT 1),
  (SELECT id_estado FROM estados WHERE nombre_estado = 'Carabobo' LIMIT 1), 1, 1)
 ON CONFLICT (cedula) DO UPDATE
 SET nombres = EXCLUDED.nombres,
