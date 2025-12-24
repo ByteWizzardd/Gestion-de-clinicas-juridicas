@@ -28,13 +28,6 @@ export default function AuthHome (){
         }, prefersReducedMotion ? 0 : 150);
     }
 
-    const handleRegister = () => {
-        setIsExiting(true);
-        setTimeout(() => {
-            router.push("/auth/register");
-        }, prefersReducedMotion ? 0 : 150);
-    }
-
     return(
         <div className="bg-background relative overflow-hidden h-screen">
             <AnimatePresence>
@@ -97,9 +90,8 @@ export default function AuthHome (){
                         </p>
                     </div>
                             <div className="flex flex-col gap-4 mt-10 w-full max-w-xs">
-                                {/* Botones de Iniciar Sesión y Registrarse */}
+                                {/* Botón de Iniciar Sesión */}
                                 <Button children="Iniciar sesion" variant="primary" size="lg" isLoading={false} className="!rounded-3xl !text-xl" onClick={handleLogin}/>
-                                <Button children="Registrarse" variant="outline" size="lg" isLoading={false} className="!rounded-3xl !text-xl" onClick={handleRegister}/>
                             </div>
                         </motion.div>
                     )}

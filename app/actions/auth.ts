@@ -26,21 +26,6 @@ export interface LoginResult {
   };
 }
 
-export interface RegisterResult {
-  success: boolean;
-  data?: {
-    user: {
-      cedula: string;
-      rol: string;
-    };
-  };
-  error?: {
-    message: string;
-    code?: string;
-    fields?: Record<string, string[]>;
-  };
-}
-
 export interface GetCurrentUserResult {
   success: boolean;
   data?: {
@@ -112,83 +97,6 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
       success: false,
       error: {
         message: error instanceof Error ? error.message : 'Error al iniciar sesión',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
-  }
-}
-
-/**
- * Server Action para registrar un nuevo usuario
- */
-export async function registerAction(formData: FormData): Promise<RegisterResult> {
-  try {
-    const nombreCompleto = formData.get('nombreCompleto') as string;
-    const cedula = formData.get('cedula') as string;
-    const correo = formData.get('correo') as string;
-    const password = formData.get('password') as string;
-    const confirmPassword = formData.get('confirmPassword') as string;
-
-    if (!nombreCompleto || !cedula || !correo || !password || !confirmPassword) {
-      return {
-        success: false,
-        error: {
-          message: 'Todos los campos son requeridos',
-          code: 'VALIDATION_ERROR',
-        },
-      };
-    }
-
-    // Extraer nombre completo y dividirlo en nombres y apellidos
-    const partesNombre = nombreCompleto.trim().split(' ');
-    const nombres = partesNombre.slice(0, Math.ceil(partesNombre.length / 2)).join(' ');
-    const apellidos = partesNombre.slice(Math.ceil(partesNombre.length / 2)).join(' ') || nombres;
-
-    const result = await authService.register({
-      cedula,
-      correo,
-      password,
-      confirmPassword,
-      nombreCompleto,
-    });
-
-    // Configurar cookie HTTP-only
-    const cookieStore = await cookies();
-    const cookieMaxAge = jwtExpiresInToSeconds(JWT_EXPIRES_IN);
-    
-    cookieStore.set('auth_token', result.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: cookieMaxAge,
-      path: '/',
-    });
-
-    return {
-      success: true,
-      data: {
-        user: {
-          cedula: result.user.cedula,
-          rol: result.user.rol,
-        },
-      },
-    };
-  } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'REGISTRATION_ERROR',
-          fields: (error as any).fields,
-        },
-      };
-    }
-
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al registrar usuario',
         code: 'UNKNOWN_ERROR',
       },
     };

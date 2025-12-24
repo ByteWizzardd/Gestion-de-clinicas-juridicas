@@ -92,38 +92,4 @@ export const authQueries = {
       );
     }
   },
-
-  /**
-   * Crea un nuevo usuario con contraseña hasheada
-   */
-  createUser: async (data: {
-    cedula: string;
-    nombres: string;
-    apellidos: string;
-    correoElectronico: string;
-    passwordHash: string;
-    rolSistema: 'Estudiante' | 'Profesor' | 'Coordinador';
-    telefonoCelular?: string;
-  }): Promise<any> => {
-    try {
-      const query = loadSQL('usuarios/create.sql');
-      const result: QueryResult = await pool.query(query, [
-        data.cedula,
-        data.nombres,
-        data.apellidos,
-        data.correoElectronico,
-        data.passwordHash,
-        data.rolSistema,
-        data.telefonoCelular || null,
-      ]);
-      return result.rows[0];
-    } catch (error) {
-      logger.error('Error en createUser', error);
-      throw new DatabaseError(
-        'Error al crear usuario',
-        error
-      );
-    }
-  },
 };
-

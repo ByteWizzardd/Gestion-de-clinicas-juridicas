@@ -160,9 +160,6 @@ export default function LoginPage() {
                                     type="submit"
                                     disabled={isLoading}
                                 />
-                                <p className="text-base text-center text-foreground">
-                                    ¿No tiene una cuenta? <Link href="/auth/register" className="text-primary hover:underline">Regístrese acá</Link>
-                                </p>
                             </div>
                         </form>
                     </motion.div>

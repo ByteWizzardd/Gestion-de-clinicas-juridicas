@@ -4,123 +4,9 @@ import { AppError, ValidationError, NotFoundError, UnauthorizedError } from '@/l
 
 /**
  * Servicio de autenticación
- * Contiene la lógica de negocio para login y registro
+ * Contiene la lógica de negocio para login
  */
 export const authService = {
-  /**
-   * Registra un nuevo usuario (estudiante, profesor o coordinador)
-   * Nota: Al registrar un usuario, también se crea un registro básico en la tabla solicitantes
-   * si no existe, ya que ambos comparten la misma cédula
-   */
-  register: async (data: {
-    cedula: string;
-    correo: string;
-    password: string;
-    confirmPassword: string;
-    nombreCompleto: string;
-    telefonoCelular?: string;
-    fechaNacimiento?: string;
-    sexo?: 'M' | 'F';
-    nacionalidad?: 'V' | 'E' | 'Ext';
-    rolSistema?: 'Estudiante' | 'Profesor' | 'Coordinador';
-  }) => {
-    // Validaciones
-    if (!data.cedula || !data.correo || !data.password) {
-      throw new ValidationError('Todos los campos son requeridos');
-    }
-
-    if (data.password !== data.confirmPassword) {
-      throw new ValidationError('Las contraseñas no coinciden');
-    }
-
-    if (data.password.length < 6) {
-      throw new ValidationError('La contraseña debe tener al menos 6 caracteres');
-    }
-
-    // Normalizar la cédula al formato "V66666666" (tipo + número)
-    // Si la cédula no empieza con V, E, J o P, asumir que es V
-    let cedulaNormalizada = data.cedula.trim().toUpperCase();
-    if (!cedulaNormalizada.match(/^[VEJP]/)) {
-      // Si no tiene tipo, agregar V por defecto
-      cedulaNormalizada = 'V' + cedulaNormalizada;
-    }
-
-    // Verificar si el usuario ya existe
-    let existingUser;
-    try {
-      existingUser = await authQueries.getUserByCedula(cedulaNormalizada);
-    } catch (error) {
-      // Si hay error de conexión, lanzarlo
-      throw error;
-    }
-    
-    if (existingUser && existingUser.password_hash) {
-      throw new ValidationError('Ya existe un usuario con esta cédula');
-    }
-
-    // Verificar si el correo ya está en uso
-    let existingEmail;
-    try {
-      existingEmail = await authQueries.getUserByEmail(data.correo);
-    } catch (error) {
-      // Si hay error de conexión, lanzarlo
-      throw error;
-    }
-    
-    if (existingEmail && existingEmail.password_hash) {
-      throw new ValidationError('Ya existe un usuario con este correo');
-    }
-
-    // Dividir nombre completo en nombres y apellidos
-    const partesNombre = data.nombreCompleto.trim().split(' ');
-    const nombres = partesNombre.slice(0, Math.ceil(partesNombre.length / 2)).join(' ') || data.nombreCompleto;
-    const apellidos = partesNombre.slice(Math.ceil(partesNombre.length / 2)).join(' ') || nombres;
-
-    // Hash de la contraseña
-    const passwordHash = await hashPassword(data.password);
-
-    // Determinar rol según el dominio del correo
-    // Si el correo tiene "est." al inicio del dominio → Estudiante
-    // Si no tiene "est." al inicio del dominio → Profesor
-    let rolSistema: 'Estudiante' | 'Profesor' | 'Coordinador';
-    
-    if (data.rolSistema) {
-      // Si se especifica un rol manualmente, usarlo
-      rolSistema = data.rolSistema;
-    } else {
-      // Extraer el dominio del correo
-      const emailDomain = data.correo.split('@')[1]?.toLowerCase() || '';
-      
-      // Verificar si el dominio comienza con "est." (ej: est.ucab.edu.ve)
-      if (emailDomain.startsWith('est.')) {
-        rolSistema = 'Estudiante';
-      } else {
-        rolSistema = 'Profesor';
-      }
-    }
-    
-    const user = await authQueries.createUser({
-      cedula: cedulaNormalizada,
-      nombres,
-      apellidos,
-      correoElectronico: data.correo,
-      passwordHash,
-      rolSistema,
-      telefonoCelular: data.telefonoCelular,
-    });
-
-    // Generar token
-    const token = generateToken(user.cedula, user.rol_sistema);
-
-    return {
-      user: {
-        cedula: user.cedula,
-        rol: user.rol_sistema,
-      },
-      token,
-    };
-  },
-
   /**
    * Inicia sesión de un usuario
    */
@@ -169,4 +55,3 @@ export const authService = {
     };
   },
 };
-
