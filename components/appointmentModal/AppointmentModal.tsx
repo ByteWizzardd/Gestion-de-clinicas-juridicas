@@ -1,25 +1,65 @@
 'use client';
 
 import DatePicker from "../forms/DatePicker";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Modal from "../ui/feedback/Modal";
 import Select from "../forms/Select";
-
+import { createCitaAction } from "@/app/actions/citas";
+import { getCaseIdsAction } from "@/app/actions/casos";
 import ModalFooter from "../ui/ModalFooter";
 import TextArea from "../forms/TextArea";
-
-const casos = [
-  { value: "1", label: "Caso 1" },
-  { value: "2", label: "Caso 2" },
-
-];
 
 export function AppointmentModal() {
   const [date, setDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
+  const [selectedCaseID, setSelectedCaseID] = useState<string>("");
+  const [orientacion, setOrientacion] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState(true);
-  const [SelectedCaseID, setSelectedCaseID] = useState<string>("");
-  const [notes, setNotes] = useState<string>("");
+  const [caseOptions, setCaseOptions] = useState<{ value: string; label: string }[]>([]);
+
+  useEffect(() => {
+    async function fetchCaseIds() {
+      const result = await getCaseIdsAction();
+      console.log("Resultado de getCaseIdsAction:", result);
+      if (result.success && result.data) {
+        setCaseOptions(
+          result.data.map((id) => ({
+            value: id.toString(),
+            label: `Caso #${id}`,
+          }))
+        );
+      } else {
+        setCaseOptions([]);
+      }
+    }
+    fetchCaseIds();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(false);
+    setLoading(true);
+
+    const result = await createCitaAction({
+      caseId: Number(selectedCaseID),
+      date: date ? date.toISOString().slice(0, 10) : "",
+      endDate: endDate ? endDate.toISOString().slice(0, 10) : undefined,
+      orientacion,
+    });
+
+    setLoading(false);
+
+    if (result.success) {
+      setSuccess(true);
+      // Opcional: limpiar el formulario o cerrar el modal
+    } else {
+      setError(result.error?.message || "Error al crear la cita");
+    }
+  };
 
   return (
     <Modal
@@ -45,51 +85,56 @@ export function AppointmentModal() {
         </h2>
 
         {/* Formulario */}
-        <div className="font-primary grid grid-cols-1 gap-y-4 sm:gap-y-6 mb-6">
+        <form onSubmit={handleSubmit} className="font-primary grid grid-cols-1 gap-y-4 sm:gap-y-6 mb-6">
           <div>
             <Select
               label="Caso *"
-              options={casos}
-              value={SelectedCaseID}
+              options={caseOptions}
+              value={selectedCaseID}
               onChange={(e) => setSelectedCaseID(e.target.value)}
               required
               className="w-full"
             />
           </div>
 
-            <label className="text-base font-primary font-normal text-foreground mb-1 block">Fecha de Encuentro <span className="text-danger">*</span></label>
-            <DatePicker
-              value={date ? date.toISOString().slice(0, 10) : ""}
-              onChange={(value: string) => setDate(value ? new Date(value) : null)}
-              required
-            />
+          <label className="text-base font-primary font-normal text-foreground mb-1 block">
+            Fecha de Encuentro <span className="text-danger">*</span>
+          </label>
+          <DatePicker
+            value={date ? date.toISOString().slice(0, 10) : ""}
+            onChange={(value: string) => setDate(value ? new Date(value) : null)}
+            required
+          />
 
-            <label className="text-base font-primary font-normal text-foreground mb-1 block">Fecha de Próxima cita</label>
-            <DatePicker
-              value={endDate ? endDate.toISOString().slice(0, 10) : ""}
-              onChange={(value: string) => setEndDate(value ? new Date(value) : null)}
-            />
+          <label className="text-base font-primary font-normal text-foreground mb-1 block">
+            Fecha de Próxima cita
+          </label>
+          <DatePicker
+            value={endDate ? endDate.toISOString().slice(0, 10) : ""}
+            onChange={(value: string) => setEndDate(value ? new Date(value) : null)}
+          />
 
-            <label className="text-base font-primary font-normal text-foreground mb-1 block">
-              Descripción de la cita <span className="text-danger">*</span>
-            </label>
-              <TextArea
-                placeholder="Escribe aquí los detalles de la cita..."
-                minLength={10}
-                maxLength={5000}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                required
-                className="w-full"
-              />
-              <div className="text-xs text-gray-500 text-right mt-1 select-none">
-                {/*Esto de minimo y Máximo podemos generalizar*/}
-                {notes.length}/500
-              </div>
-            </div>
-          {/* Footer*/}
-          <ModalFooter onSave={() => setIsOpen(false)} saveLabel="Guardar cita" />
-        </div>
-      </Modal>
+          <label className="text-base font-primary font-normal text-foreground mb-1 block">
+            Descripción de la cita <span className="text-danger">*</span>
+          </label>
+          <TextArea
+            placeholder="Escribe aquí los detalles de la cita..."
+            minLength={10}
+            maxLength={500}
+            value={orientacion}
+            onChange={(e) => setOrientacion(e.target.value)}
+            required
+            className="w-full"
+          />
+          <div className="text-xs text-gray-500 text-right mt-1 select-none">
+            {orientacion.length}/500
+          </div>
+          {error && <div className="text-danger mb-2">{error}</div>}
+          {success && <div className="text-success mb-2">¡Cita creada exitosamente!</div>}
+        </form>
+        {/* Footer opcional */}
+        <ModalFooter onSave={() => setIsOpen(false)} saveLabel="Cerrar" />
+      </div>
+    </Modal>
   );
 }

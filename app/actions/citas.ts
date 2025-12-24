@@ -8,7 +8,7 @@ import { appointmentSchema } from '@/lib/validations/appointment.schema';
 
 export interface GetCitasResult {
   success: boolean;
-  data?: unknown[];
+  data?: unknown | unknown[];
   error?: {
     message: string;
     code?: string;
@@ -108,7 +108,7 @@ export async function getCitasAction(): Promise<GetCitasResult> {
 
     try {
       await verifyToken(token);
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: {

@@ -6,6 +6,18 @@ import { ambitosLegalesQueries } from '@/lib/db/queries/ambitos-legales.queries'
 import { AppError, ValidationError, NotFoundError } from '@/lib/utils/errors';
 import { CreateCasoSchema, CreateCasoInput } from '@/lib/validations/casos.schema';
 import { ESTATUS_CASO } from '@/lib/constants/status';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+const getCasoByIdQuery = readFileSync(
+  join(process.cwd(), 'database/queries/casos/get-by-id.sql'),
+  'utf8'
+);
+
+const getCaseIdsQuery = readFileSync(
+  join(process.cwd(), 'database/queries/casos/get-by-id-case.sql'),
+  'utf8'
+);
 
 /**
  * Servicio para la entidad Casos
@@ -141,6 +153,15 @@ export const casosService = {
                 error instanceof Error ? error.message : 'Error desconocido'
             );
         }
+    },
+
+    async getCasoById(idCaso: number): Promise<unknown> {
+        return await casosQueries.getById(idCaso);
+    },
+
+    async getAllCaseIds(): Promise<number[]> {
+        const ids = await casosQueries.getAllIds();
+        return ids;
     },
 };
 

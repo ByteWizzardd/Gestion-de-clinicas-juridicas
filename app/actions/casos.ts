@@ -52,6 +52,11 @@ export interface GetNextCaseNumberResult {
   };
 }
 
+export interface CasoOption {
+  value: string;
+  label: string;
+}
+
 /**
  * Server Action para crear un nuevo caso
  */
@@ -344,6 +349,71 @@ export async function getNextCaseNumberAction(): Promise<GetNextCaseNumberResult
         message: error instanceof Error ? error.message : 'Error al obtener siguiente número de caso',
         code: 'UNKNOWN_ERROR',
       },
+    };
+  }
+}
+
+export async function getCasoByIdAction(idCaso: number): Promise<unknown> {
+  try {
+    // Verificar autenticación
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      throw new UnauthorizedError('No autorizado');
+    }
+
+    try {
+      await verifyToken(token);
+    } catch (error) {
+      throw new UnauthorizedError('Sesión expirada. Por favor, inicia sesión nuevamente.');
+    }
+
+    const caso = await casosService.getCasoById(idCaso);
+    return caso;
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'CASO_ERROR',
+        },
+      };
+    }
+
+    console.error('Error en getCasoByIdAction:', error);
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al obtener caso por ID',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  }
+}
+
+/**
+ * Server Action para obtener todos los IDs de los casos
+ */
+export async function getCaseIdsAction(): Promise<{ success: boolean; data?: number[]; error?: { message: string; code?: string } }> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+    if (!token) {
+      return {
+        success: false,
+        error: { message: 'No autorizado', code: 'UNAUTHORIZED' },
+      };
+    }
+    await verifyToken(token);
+
+    const ids = await casosService.getAllCaseIds();
+    return { success: true, data: ids };
+  } catch (error) {
+    return {
+      success: false,
+      error: { message: error instanceof Error ? error.message : 'Error al obtener IDs de casos', code: 'CASO_ERROR' },
     };
   }
 }
