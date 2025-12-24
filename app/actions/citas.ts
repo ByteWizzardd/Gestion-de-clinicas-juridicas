@@ -31,7 +31,10 @@ export async function createCitaAction(params: CreateCitaParams): Promise<GetCit
     const cookieStore = await cookies();
     const token = cookieStore.get('auth_token')?.value;
     const parseResult = appointmentSchema.safeParse(params);
+    console.log('DEBUG createCitaAction params:', params);
+    console.log('DEBUG createCitaAction parseResult:', parseResult);
     if (!parseResult.success) {
+      console.error('Validación fallida en createCitaAction:', parseResult.error);
       return {
         success: false,
         error: {
@@ -62,7 +65,11 @@ export async function createCitaAction(params: CreateCitaParams): Promise<GetCit
         },
       };
     }
-    const newCita = await citasService.createAppointment(params);
+    // Convertir caseId a número antes de guardar en la base de datos
+    const newCita = await citasService.createAppointment({
+      ...params,
+      caseId: Number(params.caseId),
+    });
 
     return {
       success: true,

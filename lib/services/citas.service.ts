@@ -67,15 +67,19 @@ export const citasService = {
    * Crea una nueva cita en la base de datos
    */
   async createAppointment(params: {
-    caseId: number;
+    caseId: string | number;
     date: string;
     endDate?: string;
     orientacion: string;
   }): Promise<{ num_cita: number; id_caso: number }> {
     try {
+      const caseIdNumber = typeof params.caseId === 'string' ? parseInt(params.caseId, 10) : params.caseId;
+      if (isNaN(caseIdNumber)) {
+        throw new AppError('El ID del caso no es válido', 400);
+      }
       const result = await citasQueries.create(
         createCitaQuery,
-        params.caseId,
+        caseIdNumber,
         params.date,
         params.endDate || null,
         params.orientacion
@@ -85,6 +89,9 @@ export const citasService = {
       }
       return result.rows[0]; // { num_cita, id_caso }
     } catch (error) {
+      // Log detallado para depuración
+      // eslint-disable-next-line no-console
+      console.error('Error al crear la cita (detalle DB):', error);
       throw new AppError(
         "Error al crear la cita",
         500,

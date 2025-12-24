@@ -3,3 +3,4 @@ import { AppointmentModal } from "../../../../components/appointmentModal/Appoin
 export default function AppointmentModalPage() {
     return <AppointmentModal />;
 }
+
