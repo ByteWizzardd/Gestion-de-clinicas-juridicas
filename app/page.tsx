@@ -1,6 +1,6 @@
-import { redirect } from "next/navigation";
 
-export default function Home() {
-  // redirigir directamente al dashboard
-  redirect("/dashboard");
+import { AppointmentModal } from "@/components/appointmentModal/AppointmentModal";
+
+export default function HomePage() {
+    return <AppointmentModal />;
 }
