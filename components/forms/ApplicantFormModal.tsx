@@ -967,7 +967,8 @@ export default function ApplicantFormModal({
       return;
     }
 
-    const cedula = `${cedulaTipo}${cedulaNumero}`;
+    // Construir cédula con formato V-XXXX (con guión)
+    const cedula = `${cedulaTipo}-${cedulaNumero}`;
     
     try {
       // Primero verificar si es solicitante usando Server Action
@@ -1103,9 +1104,17 @@ export default function ApplicantFormModal({
     nacionalidad: string;
   }) => {
     // Extraer tipo y número de cédula
+    // La cédula viene como "V-12345678" (con guión)
     let cedulaTipo = 'V';
     let cedulaNumero = solicitante.cedula || '';
-    if (cedulaNumero.match(/^[VEJP]/)) {
+    
+    // Si la cédula tiene formato "V-XXXX", extraer el tipo y el número
+    const cedulaMatch = cedulaNumero.match(/^([VEJP])-?(.+)$/);
+    if (cedulaMatch) {
+      cedulaTipo = cedulaMatch[1];
+      cedulaNumero = cedulaMatch[2]; // Ya viene sin el guión después del tipo
+    } else if (cedulaNumero.match(/^[VEJP]/)) {
+      // Fallback: si viene como "V12345678" (sin guión), extraer el tipo
       cedulaTipo = cedulaNumero[0];
       cedulaNumero = cedulaNumero.substring(1);
     }

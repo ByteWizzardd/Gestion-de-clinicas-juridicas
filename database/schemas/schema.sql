@@ -31,6 +31,8 @@ CREATE TABLE tipo_caracteristicas (
     id_tipo SERIAL PRIMARY KEY,
     nombre_tipo_caracteristica VARCHAR(100) NOT NULL
 );
+-- Tipos: tipo_vivienda, material_piso, material_paredes, material_techo, 
+--        agua_potable, aseo, eliminacion_aguas_n, artefactos_domesticos
 
 -- 6) MATERIAS
 CREATE TABLE materias (
@@ -113,7 +115,7 @@ CREATE TABLE solicitantes (
     
     sexo VARCHAR(20) NOT NULL CHECK (sexo IN ('M', 'F')),
     nacionalidad VARCHAR(20) NOT NULL CHECK (nacionalidad IN ('V', 'E')),
-    estado_civil VARCHAR(20) NOT NULL CHECK (estado_civil IN ('Soltero', 'Casado', 'Divorciado', 'Viudo', 'Concubino')),
+    estado_civil VARCHAR(20) NOT NULL CHECK (estado_civil IN ('Soltero', 'Casado', 'Divorciado', 'Viudo')),
     
     concubinato BOOLEAN NOT NULL,
     tiempo_estudio VARCHAR(50) NOT NULL,
@@ -136,6 +138,18 @@ CREATE TABLE viviendas (
     cant_habitaciones INTEGER NOT NULL CHECK (cant_habitaciones >= 0),
     cant_banos INTEGER NOT NULL CHECK (cant_banos >= 0),
     FOREIGN KEY (cedula_solicitante) REFERENCES solicitantes(cedula)
+);
+
+-- 31) ASIGNADAS_A (Relación entre Viviendas y Características)
+CREATE TABLE asignadas_a (
+    cedula_solicitante VARCHAR(20) NOT NULL,
+    id_tipo_caracteristica INTEGER NOT NULL,
+    num_caracteristica INTEGER NOT NULL,
+    
+    PRIMARY KEY (cedula_solicitante, id_tipo_caracteristica, num_caracteristica),
+    FOREIGN KEY (cedula_solicitante) REFERENCES viviendas(cedula_solicitante),
+    FOREIGN KEY (id_tipo_caracteristica, num_caracteristica) 
+        REFERENCES caracteristicas(id_tipo_caracteristica, num_caracteristica)
 );
 
 -- 14) FAMILIAS Y HOGARES
@@ -194,6 +208,7 @@ CREATE TABLE ambitos_legales (
     num_categoria INTEGER NOT NULL,
     num_subcategoria INTEGER NOT NULL,
     num_ambito_legal INTEGER NOT NULL,
+    nombre_ambito_legal VARCHAR(200) NOT NULL,
     PRIMARY KEY (id_materia, num_categoria, num_subcategoria, num_ambito_legal),
     FOREIGN KEY (id_materia, num_categoria, num_subcategoria) 
     REFERENCES subcategorias(id_materia, num_categoria, num_subcategoria)
@@ -285,9 +300,19 @@ CREATE TABLE acciones (
     comentario TEXT,
     id_usuario_registra VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
     fecha_registro DATE NOT NULL DEFAULT CURRENT_DATE,
-    id_usuario_ejecuta VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
-    fecha_accion DATE NOT NULL,
     PRIMARY KEY (num_accion, id_caso)
+);
+
+-- 32) EJECUTAN (Relación entre Usuarios y Acciones)
+CREATE TABLE ejecutan (
+    id_usuario_ejecuta VARCHAR(20) NOT NULL,
+    num_accion INTEGER NOT NULL,
+    id_caso INTEGER NOT NULL,
+    fecha_ejecucion DATE NOT NULL DEFAULT CURRENT_DATE,
+    
+    PRIMARY KEY (id_usuario_ejecuta, num_accion, id_caso),
+    FOREIGN KEY (id_usuario_ejecuta) REFERENCES usuarios(cedula),
+    FOREIGN KEY (num_accion, id_caso) REFERENCES acciones(num_accion, id_caso)
 );
 
 -- 25) CAMBIO ESTATUS

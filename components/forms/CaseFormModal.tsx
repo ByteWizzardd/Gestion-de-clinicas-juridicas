@@ -24,7 +24,10 @@ interface FormData {
   casoNumero: number | string; // Autogenerado, read-only (solo número)
   cedulaSolicitanteTipo: string;
   cedulaSolicitante: string;
-  tipoCaso: string;
+  materia: string; // id_materia
+  categoria: string; // num_categoria (solo para Civil)
+  subcategoria: string; // num_subcategoria (solo para Civil)
+  ambitoLegal: string; // num_ambito_legal
   tramite: string;
   nucleo: string;
   observaciones: string;
@@ -53,7 +56,10 @@ export default function CaseFormModal({
     casoNumero: '', // Se cargará automáticamente al abrir el modal
     cedulaSolicitanteTipo: 'V',
     cedulaSolicitante: '',
-    tipoCaso: '',
+    materia: '',
+    categoria: '',
+    subcategoria: '',
+    ambitoLegal: '',
     tramite: '',
     nucleo: '',
     observaciones: '',
@@ -61,14 +67,12 @@ export default function CaseFormModal({
 
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [nucleos, setNucleos] = useState<Array<{ id_nucleo: number; nombre_nucleo: string }>>([]);
+  const [materias, setMaterias] = useState<Array<{ id_materia: number; nombre_materia: string }>>([]);
+  const [categorias, setCategorias] = useState<Array<{ num_categoria: number; nombre_categoria: string }>>([]);
+  const [subcategorias, setSubcategorias] = useState<Array<{ num_subcategoria: number; nombre_subcategoria: string }>>([]);
   const [ambitosLegales, setAmbitosLegales] = useState<Array<{ 
-    id_materia: number; 
-    num_categoria: number; 
-    num_subcategoria: number; 
     num_ambito_legal: number; 
-    materia: string; 
-    categoria: string; 
-    subcategoria: string;
+    nombre_ambito_legal: string;
   }>>([]);
   const [loadingCatalogos, setLoadingCatalogos] = useState(false);
   const [loadingCaseNumber, setLoadingCaseNumber] = useState(false);
@@ -91,13 +95,19 @@ export default function CaseFormModal({
         casoNumero: '',
         cedulaSolicitanteTipo: initialCedulaTipo || 'V',
         cedulaSolicitante: initialCedula || '',
-        tipoCaso: '',
+        materia: '',
+        categoria: '',
+        subcategoria: '',
+        ambitoLegal: '',
         tramite: '',
         nucleo: '',
         observaciones: '',
       });
       setErrors({});
       setArchivos([]);
+      setCategorias([]);
+      setSubcategorias([]);
+      setAmbitosLegales([]);
       
       loadCatalogos();
       loadNextCaseNumber();
@@ -127,23 +137,89 @@ export default function CaseFormModal({
     try {
       setLoadingCatalogos(true);
       const { getNucleosAction } = await import('@/app/actions/nucleos');
-      const { getAmbitosLegalesAction } = await import('@/app/actions/ambitos-legales');
-      const [nucleosResult, ambitosResult] = await Promise.all([
+      const { getMateriasAction } = await import('@/app/actions/materias');
+      const [nucleosResult, materiasResult] = await Promise.all([
         getNucleosAction(),
-        getAmbitosLegalesAction(),
+        getMateriasAction(),
       ]);
 
       if (nucleosResult.success && nucleosResult.data) {
         setNucleos(nucleosResult.data);
       }
 
-      if (ambitosResult.success && ambitosResult.data) {
-        setAmbitosLegales(ambitosResult.data);
+      if (materiasResult.success && materiasResult.data) {
+        setMaterias(materiasResult.data);
       }
     } catch (error) {
       // Error al cargar catálogos
     } finally {
       setLoadingCatalogos(false);
+    }
+  };
+
+  // Cargar categorías cuando se selecciona una materia (solo para Civil)
+  const loadCategorias = async (idMateria: number) => {
+    if (idMateria !== 1) {
+      // Para materias no-Civil, no hay categorías (solo "Sin Categoría")
+      setCategorias([]);
+      setSubcategorias([]);
+      setAmbitosLegales([]);
+      return;
+    }
+
+    try {
+      const { getCategoriasByMateriaAction } = await import('@/app/actions/categorias');
+      const result = await getCategoriasByMateriaAction(idMateria);
+      
+      if (result.success && result.data) {
+        setCategorias(result.data);
+      }
+    } catch (error) {
+      // Error al cargar categorías
+    }
+  };
+
+  // Cargar subcategorías cuando se selecciona una categoría (solo para Civil)
+  const loadSubcategorias = async (idMateria: number, numCategoria: number) => {
+    if (idMateria !== 1) {
+      setSubcategorias([]);
+      setAmbitosLegales([]);
+      return;
+    }
+
+    try {
+      const { getSubcategoriasByMateriaCategoriaAction } = await import('@/app/actions/subcategorias');
+      const result = await getSubcategoriasByMateriaCategoriaAction(idMateria, numCategoria);
+      
+      if (result.success && result.data) {
+        setSubcategorias(result.data);
+      }
+    } catch (error) {
+      // Error al cargar subcategorías
+    }
+  };
+
+  // Cargar ámbitos legales según la materia seleccionada
+  const loadAmbitosLegales = async (
+    idMateria: number,
+    numCategoria: number = 0,
+    numSubcategoria: number = 0
+  ) => {
+    try {
+      const { getAmbitosLegalesByMateriaCategoriaSubcategoriaAction } = await import('@/app/actions/ambitos-legales');
+      const result = await getAmbitosLegalesByMateriaCategoriaSubcategoriaAction(
+        idMateria,
+        numCategoria,
+        numSubcategoria
+      );
+      
+      if (result.success && result.data) {
+        setAmbitosLegales(result.data);
+      } else {
+        setAmbitosLegales([]);
+      }
+    } catch (error) {
+      setAmbitosLegales([]);
     }
   };
 
@@ -157,8 +233,19 @@ export default function CaseFormModal({
       newErrors.cedulaSolicitante = 'Este campo es requerido';
     }
     // Nota: cedulaSolicitanteTipo siempre tiene un valor por defecto 'V'
-    if (!formData.tipoCaso) {
-      newErrors.tipoCaso = 'Este campo es requerido';
+    if (!formData.materia) {
+      newErrors.materia = 'Este campo es requerido';
+    }
+    if (formData.materia === '1') {
+      if (!formData.categoria) {
+        newErrors.categoria = 'Este campo es requerido';
+      }
+      if (!formData.subcategoria) {
+        newErrors.subcategoria = 'Este campo es requerido';
+      }
+    }
+    if (!formData.ambitoLegal) {
+      newErrors.ambitoLegal = 'Este campo es requerido';
     }
     if (!formData.tramite) {
       newErrors.tramite = 'Este campo es requerido';
@@ -176,19 +263,21 @@ export default function CaseFormModal({
       // Mapear los datos del formulario a la estructura de la BD
       // Nota: Se asocia un SOLICITANTE al caso (no un usuario)
       // El solicitante es la persona que solicita el servicio legal
-      // Combinar tipo y número de cédula del solicitante
-      const cedulaCompletaSolicitante = `${formData.cedulaSolicitanteTipo}${formData.cedulaSolicitante}`;
+      // Combinar tipo y número de cédula del solicitante con formato V-XXXX (con guión)
+      const cedulaCompletaSolicitante = `${formData.cedulaSolicitanteTipo}-${formData.cedulaSolicitante}`;
       
-      // Parsear el ámbito legal (formato: "id_materia,num_categoria,num_subcategoria,num_ambito_legal")
-      const ambitoParts = formData.tipoCaso.split(',');
+      // Para materias no-Civil, usar valores por defecto (0 para categoría y subcategoría)
+      const numCategoria = formData.materia === '1' ? parseInt(formData.categoria) : 0;
+      const numSubcategoria = formData.materia === '1' ? parseInt(formData.subcategoria) : 0;
+      
       const apiData = {
         fecha_solicitud: formData.fechaCaso || getCurrentDate(), // Requerido, usa la fecha del formulario o la actual por defecto
         fecha_inicio_caso: formData.fechaCaso || getCurrentDate(), // Fecha de inicio del caso
         cedula: cedulaCompletaSolicitante,
-        id_materia: parseInt(ambitoParts[0]),
-        num_categoria: parseInt(ambitoParts[1]),
-        num_subcategoria: parseInt(ambitoParts[2]),
-        num_ambito_legal: parseInt(ambitoParts[3]),
+        id_materia: parseInt(formData.materia),
+        num_categoria: numCategoria,
+        num_subcategoria: numSubcategoria,
+        num_ambito_legal: parseInt(formData.ambitoLegal),
         tramite: formData.tramite,
         estatus: ESTATUS_CASO.ASESORIA, // Siempre 'Asesoría' para casos nuevos
         id_nucleo: parseInt(formData.nucleo),
@@ -206,13 +295,19 @@ export default function CaseFormModal({
       casoNumero: '', // Se recargará al abrir el modal nuevamente
       cedulaSolicitanteTipo: 'V',
       cedulaSolicitante: '',
-      tipoCaso: '',
+      materia: '',
+      categoria: '',
+      subcategoria: '',
+      ambitoLegal: '',
       tramite: '',
       nucleo: '',
       observaciones: '',
     });
     setErrors({});
     setArchivos([]);
+    setCategorias([]);
+    setSubcategorias([]);
+    setAmbitosLegales([]);
     onClose();
   };
 
@@ -228,7 +323,52 @@ export default function CaseFormModal({
   };
 
   const updateField = (field: keyof FormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const newData = { ...prev, [field]: value };
+      
+      // Si cambia la materia, limpiar categoría, subcategoría y ámbito legal
+      if (field === 'materia') {
+        newData.categoria = '';
+        newData.subcategoria = '';
+        newData.ambitoLegal = '';
+        setCategorias([]);
+        setSubcategorias([]);
+        setAmbitosLegales([]);
+        
+        // Cargar categorías si es Civil
+        if (value === '1') {
+          loadCategorias(parseInt(value));
+        } else if (value) {
+          // Para otras materias, cargar directamente los ámbitos legales (categoría 0, subcategoría 0)
+          loadAmbitosLegales(parseInt(value), 0, 0);
+        }
+      }
+      
+      // Si cambia la categoría (solo para Civil), limpiar subcategoría y ámbito legal
+      if (field === 'categoria' && prev.materia === '1') {
+        newData.subcategoria = '';
+        newData.ambitoLegal = '';
+        setSubcategorias([]);
+        setAmbitosLegales([]);
+        
+        if (value) {
+          loadSubcategorias(parseInt(prev.materia), parseInt(value));
+        }
+      }
+      
+      // Si cambia la subcategoría (solo para Civil), limpiar ámbito legal
+      if (field === 'subcategoria' && prev.materia === '1') {
+        newData.ambitoLegal = '';
+        setAmbitosLegales([]);
+        
+        if (value && prev.categoria) {
+          loadAmbitosLegales(parseInt(prev.materia), parseInt(prev.categoria), parseInt(value));
+        }
+      }
+      
+      return newData;
+    });
+    
     // Limpiar error del campo cuando se modifica
     if (errors[field]) {
       setErrors((prev) => {
@@ -299,21 +439,7 @@ export default function CaseFormModal({
             />
           </div>
 
-          {/* Fila 2: Tipo de Caso, Trámite */}
-          <div className="col-span-1">
-            <Select
-              label="Tipo de Caso *"
-              value={formData.tipoCaso}
-              onChange={(e) => updateField('tipoCaso', e.target.value)}
-              options={ambitosLegales.map((ambito) => ({
-                value: `${ambito.id_materia},${ambito.num_categoria},${ambito.num_subcategoria},${ambito.num_ambito_legal}`,
-                label: `${ambito.materia} - ${ambito.categoria} - ${ambito.subcategoria}`,
-              }))}
-              placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar tipo de caso"}
-              error={errors.tipoCaso}
-              required
-            />
-          </div>
+          {/* Fila 2: Trámite, Núcleo, Materia (Materia siempre después de Núcleo) */}
           <div className="col-span-1">
             <Select
               label="Trámite *"
@@ -330,8 +456,6 @@ export default function CaseFormModal({
               required
             />
           </div>
-
-          {/* Fila 3: Núcleo */}
           <div className="col-span-1">
             <Select
               label="Núcleo *"
@@ -346,6 +470,89 @@ export default function CaseFormModal({
               required
             />
           </div>
+          <div className="col-span-1">
+            <Select
+              label="Materia *"
+              value={formData.materia}
+              onChange={(e) => updateField('materia', e.target.value)}
+              options={materias.map((materia) => ({
+                value: materia.id_materia.toString(),
+                label: materia.nombre_materia,
+              }))}
+              placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar materia"}
+              error={errors.materia}
+              required
+            />
+          </div>
+
+          {/* Fila 3: Campos condicionales según materia */}
+          {/* Para Civil: Categoría, Subcategoría, Ámbito Legal */}
+          {formData.materia === '1' && (
+            <>
+              <div className="col-span-1">
+                <Select
+                  label="Categoría *"
+                  value={formData.categoria}
+                  onChange={(e) => updateField('categoria', e.target.value)}
+                  options={categorias.map((cat) => ({
+                    value: cat.num_categoria.toString(),
+                    label: cat.nombre_categoria,
+                  }))}
+                  placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar categoría"}
+                  error={errors.categoria}
+                  required
+                />
+              </div>
+              <div className="col-span-1">
+                <Select
+                  label="Subcategoría *"
+                  value={formData.subcategoria}
+                  onChange={(e) => updateField('subcategoria', e.target.value)}
+                  options={subcategorias.map((sub) => ({
+                    value: sub.num_subcategoria.toString(),
+                    label: sub.nombre_subcategoria,
+                  }))}
+                  placeholder={formData.categoria ? "Seleccionar subcategoría" : "Primero seleccione categoría"}
+                  error={errors.subcategoria}
+                  required
+                  disabled={!formData.categoria}
+                />
+              </div>
+              <div className="col-span-1">
+                <Select
+                  label="Ámbito Legal *"
+                  value={formData.ambitoLegal}
+                  onChange={(e) => updateField('ambitoLegal', e.target.value)}
+                  options={ambitosLegales.map((ambito) => ({
+                    value: ambito.num_ambito_legal.toString(),
+                    label: ambito.nombre_ambito_legal,
+                  }))}
+                  placeholder={formData.subcategoria ? "Seleccionar ámbito legal" : "Primero seleccione subcategoría"}
+                  error={errors.ambitoLegal}
+                  required
+                  disabled={!formData.subcategoria}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Para otras materias: Solo Ámbito Legal */}
+          {formData.materia && formData.materia !== '1' && (
+            <div className="col-span-1">
+              <Select
+                label="Ámbito Legal *"
+                value={formData.ambitoLegal}
+                onChange={(e) => updateField('ambitoLegal', e.target.value)}
+                options={ambitosLegales.map((ambito) => ({
+                  value: ambito.num_ambito_legal.toString(),
+                  label: ambito.nombre_ambito_legal,
+                }))}
+                placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar ámbito legal"}
+                error={errors.ambitoLegal}
+                required
+              />
+            </div>
+          )}
 
           {/* Fila 4: Observaciones (ocupa todo el ancho) */}
           <div className="col-span-3">

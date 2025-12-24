@@ -42,5 +42,25 @@ export const ambitosLegalesQueries = {
     ]);
     return result.rows.length > 0;
   },
+
+  /**
+   * Obtiene los ámbitos legales de una materia, categoría y subcategoría específicas
+   */
+  getByMateriaCategoriaSubcategoria: async (
+    idMateria: number,
+    numCategoria: number,
+    numSubcategoria: number
+  ): Promise<Array<{
+    num_ambito_legal: number;
+    nombre_ambito_legal: string;
+  }>> => {
+    const query = loadSQL('ambitos-legales/get-by-materia-categoria-subcategoria.sql');
+    const result: QueryResult = await pool.query(query, [
+      idMateria,
+      numCategoria,
+      numSubcategoria,
+    ]);
+    return result.rows;
+  },
 };
 

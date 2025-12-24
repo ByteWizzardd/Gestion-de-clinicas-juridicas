@@ -73,3 +73,70 @@ export async function getAmbitosLegalesAction(): Promise<GetAmbitosLegalesResult
   }
 }
 
+/**
+ * Server Action para obtener ámbitos legales por materia, categoría y subcategoría
+ */
+export async function getAmbitosLegalesByMateriaCategoriaSubcategoriaAction(
+  idMateria: number,
+  numCategoria: number,
+  numSubcategoria: number
+): Promise<GetAmbitosLegalesResult> {
+  try {
+    // Verificar autenticación
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      return {
+        success: false,
+        error: {
+          message: 'No autorizado',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    try {
+      await verifyToken(token);
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    const ambitos = await ambitosLegalesQueries.getByMateriaCategoriaSubcategoria(
+      idMateria,
+      numCategoria,
+      numSubcategoria
+    );
+
+    return {
+      success: true,
+      data: ambitos,
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'AMBITO_LEGAL_ERROR',
+        },
+      };
+    }
+
+    console.error('Error en getAmbitosLegalesByMateriaCategoriaSubcategoriaAction:', error);
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al obtener ámbitos legales',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  }
+}
+

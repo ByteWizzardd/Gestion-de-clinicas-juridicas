@@ -172,8 +172,8 @@ export default function CedulaInput({
     timeoutRef.current = setTimeout(async () => {
       try {
         setIsSearching(true);
-        // Buscar con el tipo de cédula incluido
-        const searchQuery = tipoValue ? `${tipoValue}${value.trim()}` : value.trim();
+        // Buscar con el tipo de cédula incluido y el guión (formato: V-XXXX)
+        const searchQuery = tipoValue ? `${tipoValue}-${value.trim()}` : value.trim();
         
         let result;
         if (searchType === 'profesor') {
@@ -213,12 +213,17 @@ export default function CedulaInput({
 
   const handleSelectSuggestion = (solicitante: Solicitante) => {
     // Separar el tipo de cédula del número
-    // La cédula puede venir como "V12345678" o solo "12345678"
+    // La cédula viene como "V-12345678" (con guión)
     let tipoCedula = tipoValue;
     let numeroCedula = solicitante.cedula;
     
-    // Si la cédula empieza con V, E, J o P, extraer el tipo
-    if (solicitante.cedula.match(/^[VEJP]/)) {
+    // Si la cédula tiene formato "V-XXXX", extraer el tipo y el número
+    const cedulaMatch = solicitante.cedula.match(/^([VEJP])-?(.+)$/);
+    if (cedulaMatch) {
+      tipoCedula = cedulaMatch[1];
+      numeroCedula = cedulaMatch[2]; // Ya viene sin el guión después del tipo
+    } else if (solicitante.cedula.match(/^[VEJP]/)) {
+      // Fallback: si viene como "V12345678" (sin guión), extraer el tipo
       tipoCedula = solicitante.cedula[0];
       numeroCedula = solicitante.cedula.substring(1);
     }

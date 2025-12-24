@@ -138,7 +138,8 @@ export const solicitantesService = {
       await client.query('BEGIN');
 
       // 1. Crear o verificar solicitante básico
-      const cedula = `${data.cedulaTipo}${data.cedulaNumero}`;
+      // Construir cédula con formato V-XXXX (con guión)
+      const cedula = `${data.cedulaTipo}-${data.cedulaNumero}`;
       const sexo = data.sexo === 'Masculino' ? 'M' : 'F';
       
       // Asignar nacionalidad según el tipo de cédula
