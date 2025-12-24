@@ -718,9 +718,9 @@ SET fecha_registro = EXCLUDED.fecha_registro;
 -- 25. PROFESORES (Depende de usuarios y semestres)
 -- ==========================================================
 INSERT INTO profesores (term, cedula_profesor, tipo_profesor) VALUES
-('2025-1', 'V-44444444', 'Profesor Responsable'),
-('2025-1', 'V-55555555', 'Profesor Responsable'),
-('2025-1', 'V-66666666', 'Profesor Responsable')
+('2025-1', 'V-44444444', 'Asesor'),
+('2025-1', 'V-55555555', 'Asesor'),
+('2025-1', 'V-66666666', 'Voluntario')
 ON CONFLICT (term, cedula_profesor) DO UPDATE
 SET tipo_profesor = EXCLUDED.tipo_profesor;
 
@@ -728,9 +728,9 @@ SET tipo_profesor = EXCLUDED.tipo_profesor;
 -- 26. ESTUDIANTES (Depende de usuarios y semestres)
 -- ==========================================================
 INSERT INTO estudiantes (term, cedula_estudiante, tipo_estudiante, nrc) VALUES
-('2025-1', 'V-11111111', 'Estudiante', '12345'),
-('2025-1', 'V-22222222', 'Estudiante', '12345'),
-('2025-1', 'V-33333333', 'Estudiante', '12346')
+('2025-1', 'V-11111111', 'Inscrito', '12345'),
+('2025-1', 'V-22222222', 'Inscrito', '12345'),
+('2025-1', 'V-33333333', 'Voluntario', '12346')
 ON CONFLICT (term, cedula_estudiante) DO UPDATE
 SET tipo_estudiante = EXCLUDED.tipo_estudiante,
     nrc = EXCLUDED.nrc;
