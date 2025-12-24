@@ -28,8 +28,8 @@ export const citasService = {
           `${cita.nombres_solicitante || ''} ${cita.apellidos_solicitante || ''}`.trim() || 
           cita.cedula;
 
-        // Detalle del caso: C-{id_caso} (Nombre Solicitante) - Nombre Núcleo
-        const caseDetail = `C-${cita.id_caso} (${client}) - ${cita.nombre_nucleo}`;
+        // Detalle del caso: {id_caso} (Nombre Solicitante) - Nombre Núcleo
+        const caseDetail = `${cita.id_caso} (${client}) - ${cita.nombre_nucleo}`;
 
         // Título: Materia del ámbito legal
         const title = cita.nombre_materia || cita.tramite;

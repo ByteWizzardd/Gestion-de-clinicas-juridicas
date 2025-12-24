@@ -52,6 +52,15 @@ export interface GetNextCaseNumberResult {
   };
 }
 
+export interface GetCasoByIdResult {
+  success: boolean;
+  data?: any;
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
 /**
  * Server Action para crear un nuevo caso
  */
@@ -342,6 +351,65 @@ export async function getNextCaseNumberAction(): Promise<GetNextCaseNumberResult
       success: false,
       error: {
         message: error instanceof Error ? error.message : 'Error al obtener siguiente número de caso',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  }
+}
+
+/**
+ * Server Action para obtener un caso por ID con toda su información relacionada
+ */
+export async function getCasoByIdAction(idCaso: number): Promise<GetCasoByIdResult> {
+  try {
+    // Verificar autenticación
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      return {
+        success: false,
+        error: {
+          message: 'No autorizado',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    try {
+      await verifyToken(token);
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    const caso = await casosService.getCasoByIdCompleto(idCaso);
+
+    return {
+      success: true,
+      data: caso,
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'CASO_ERROR',
+        },
+      };
+    }
+
+    console.error('Error en getCasoByIdAction:', error);
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al obtener el caso',
         code: 'UNKNOWN_ERROR',
       },
     };

@@ -46,12 +46,6 @@ export default function CasesTab({ casos }: CasesTabProps) {
     const idCaso = data.id_caso as number;
     if (idCaso) {
       router.push(`/dashboard/cases/${idCaso}`);
-    } else {
-      const codigo = data.codigo as string;
-      if (codigo && codigo.startsWith('C-')) {
-        const id = codigo.substring(2);
-        router.push(`/dashboard/cases/${id}`);
-      }
     }
   };
 
@@ -65,9 +59,9 @@ export default function CasesTab({ casos }: CasesTabProps) {
   const handleDelete = (data: Record<string, unknown>) => {
     const idCaso = data.id_caso as number;
     if (idCaso) {
-      const confirmDelete = window.confirm(`¿Está seguro de que desea eliminar el caso C-${idCaso}?`);
+      const confirmDelete = window.confirm(`¿Está seguro de que desea eliminar el caso ${idCaso}?`);
       if (confirmDelete) {
-        alert(`Eliminar caso C-${idCaso}`);
+        alert(`Eliminar caso ${idCaso}`);
       }
     }
   };

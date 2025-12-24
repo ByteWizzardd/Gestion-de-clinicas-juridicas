@@ -32,5 +32,24 @@ export const cambiosEstatusQueries = {
     ]);
     return result.rows[0];
   },
+
+  /**
+   * Obtiene todos los cambios de estatus de un caso específico
+   */
+  getByCaso: async (idCaso: number): Promise<Array<{
+    num_cambio: number;
+    id_caso: number;
+    motivo: string | null;
+    nuevo_estatus: string;
+    fecha: string;
+    id_usuario_cambia: string;
+    nombres_usuario: string;
+    apellidos_usuario: string;
+    nombre_completo_usuario: string;
+  }>> => {
+    const query = loadSQL('cambios-estatus/get-by-caso.sql');
+    const result: QueryResult = await pool.query(query, [idCaso]);
+    return result.rows;
+  },
 };
 

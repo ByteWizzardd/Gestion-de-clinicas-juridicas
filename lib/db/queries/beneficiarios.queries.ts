@@ -38,5 +38,25 @@ export const beneficiariosQueries = {
     const result: QueryResult = await pool.query(query, [cedula]);
     return result.rows[0] || null;
   },
+
+  /**
+   * Obtiene todos los beneficiarios de un caso específico
+   */
+  getByCaso: async (idCaso: number): Promise<Array<{
+    num_beneficiario: number;
+    id_caso: number;
+    cedula: string | null;
+    nombres: string;
+    apellidos: string;
+    fecha_nac: string;
+    sexo: string;
+    tipo_beneficiario: string;
+    parentesco: string;
+    nombre_completo: string;
+  }>> => {
+    const query = loadSQL('beneficiarios/get-by-caso.sql');
+    const result: QueryResult = await pool.query(query, [idCaso]);
+    return result.rows;
+  },
 };
 

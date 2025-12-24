@@ -128,7 +128,6 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
         !searchValue ||
         // Código (id_caso)
         caso.id_caso.toString().includes(searchValue) ||
-        `C-${caso.id_caso}`.includes(searchValue) ||
         // Solicitante (cedula y nombre completo)
         caso.cedula.includes(searchValue) ||
         normalizeText(caso.nombre_completo_solicitante || '').includes(normalizedSearch) ||
@@ -282,7 +281,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       {!loading && (
         <Table
           data={filteredCasos.map((caso) => ({
-            codigo: `C-${caso.id_caso}`,
+            codigo: caso.id_caso.toString(),
             solicitante: caso.nombre_completo_solicitante || caso.cedula,
             materia: caso.nombre_materia || caso.tramite || 'N/A',
             estatus: caso.estatus || 'N/A',

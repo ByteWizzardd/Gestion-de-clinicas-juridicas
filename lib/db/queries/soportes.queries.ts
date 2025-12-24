@@ -36,5 +36,22 @@ export const soportesQueries = {
     ]);
     return result.rows[0];
   },
+
+  /**
+   * Obtiene todos los soportes/documentos de un caso específico
+   */
+  getByCaso: async (idCaso: number): Promise<Array<{
+    num_soporte: number;
+    id_caso: number;
+    nombre_archivo: string;
+    tipo_mime: string;
+    descripcion: string | null;
+    fecha_consignacion: string;
+    tamano_bytes: number;
+  }>> => {
+    const query = loadSQL('soportes/get-by-caso.sql');
+    const result: QueryResult = await pool.query(query, [idCaso]);
+    return result.rows;
+  },
 };
 

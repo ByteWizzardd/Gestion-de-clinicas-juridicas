@@ -3,6 +3,11 @@ import { cambiosEstatusQueries } from '@/lib/db/queries/cambios-estatus.queries'
 import { solicitantesQueries } from '@/lib/db/queries/solicitantes.queries';
 import { nucleosQueries } from '@/lib/db/queries/nucleos.queries';
 import { ambitosLegalesQueries } from '@/lib/db/queries/ambitos-legales.queries';
+import { beneficiariosQueries } from '@/lib/db/queries/beneficiarios.queries';
+import { accionesQueries } from '@/lib/db/queries/acciones.queries';
+import { citasQueries } from '@/lib/db/queries/citas.queries';
+import { soportesQueries } from '@/lib/db/queries/soportes.queries';
+import { asignacionesQueries } from '@/lib/db/queries/asignaciones.queries';
 import { AppError, ValidationError, NotFoundError } from '@/lib/utils/errors';
 import { CreateCasoSchema, CreateCasoInput } from '@/lib/validations/casos.schema';
 import { ESTATUS_CASO } from '@/lib/constants/status';
@@ -137,6 +142,56 @@ export const casosService = {
 
             throw new AppError(
                 'Error al crear el caso',
+                500,
+                error instanceof Error ? error.message : 'Error desconocido'
+            );
+        }
+    },
+
+    /**
+     * Obtiene un caso por ID con toda su información relacionada
+     * Incluye: caso, solicitante, beneficiarios, equipo, acciones, citas, cambios de estatus, soportes
+     */
+    getCasoByIdCompleto: async (idCaso: number) => {
+        try {
+            // Obtener el caso base
+            const caso = await casosQueries.getById(idCaso);
+            if (!caso) {
+                throw new NotFoundError(`Caso con ID ${idCaso} no encontrado`);
+            }
+
+            // Obtener información relacionada en paralelo
+            const [
+                beneficiarios,
+                equipo,
+                acciones,
+                citas,
+                cambiosEstatus,
+                soportes
+            ] = await Promise.all([
+                beneficiariosQueries.getByCaso(idCaso),
+                asignacionesQueries.getEquipoByCaso(idCaso),
+                accionesQueries.getByCaso(idCaso),
+                citasQueries.getByCaso(idCaso),
+                cambiosEstatusQueries.getByCaso(idCaso),
+                soportesQueries.getByCaso(idCaso)
+            ]);
+
+            return {
+                ...caso,
+                beneficiarios,
+                equipo,
+                acciones,
+                citas,
+                cambiosEstatus,
+                soportes
+            };
+        } catch (error) {
+            if (error instanceof NotFoundError) {
+                throw error;
+            }
+            throw new AppError(
+                'Error al obtener el caso completo',
                 500,
                 error instanceof Error ? error.message : 'Error desconocido'
             );
