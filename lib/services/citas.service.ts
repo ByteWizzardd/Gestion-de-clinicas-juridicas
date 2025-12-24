@@ -1,5 +1,12 @@
 import { citasQueries } from '@/lib/db/queries/citas.queries';
 import { AppError } from '@/lib/utils/errors';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+const createCitaQuery = readFileSync(
+  join(process.cwd(), "database", "queries", "citas", "create.sql"),
+  "utf-8"
+);
 
 /**
  * Servicio para la entidad Citas
@@ -8,30 +15,28 @@ import { AppError } from '@/lib/utils/errors';
 export const citasService = {
   /**
    * Obtiene todas las citas formateadas para el frontend
-   * Transforma los datos de la BD al formato esperado por el componente Appointment
    */
-  getAllAppointments: async () => {
+  async getAllAppointments(): Promise<Array<{
+    id: string;
+    title: string;
+    date: Date;
+    time: string;
+    caseDetail: string;
+    client: string;
+    location: string;
+  }>> {
     try {
       const citas = await citasQueries.getAll();
 
-      // Transformar los datos al formato esperado por el frontend
-      const appointments = citas.map((cita) => {
+      return citas.map((cita) => {
         const fechaCita = new Date(cita.fecha_encuentro);
-        
-        // Formatear hora como HH:mm
         const horas = fechaCita.getHours().toString().padStart(2, '0');
         const minutos = fechaCita.getMinutes().toString().padStart(2, '0');
         const time = `${horas}:${minutos}`;
-
-        // Nombre completo del solicitante
-        const client = cita.nombre_completo_solicitante || 
-          `${cita.nombres_solicitante || ''} ${cita.apellidos_solicitante || ''}`.trim() || 
+        const client = cita.nombre_completo_solicitante ||
+          `${cita.nombres_solicitante || ''} ${cita.apellidos_solicitante || ''}`.trim() ||
           cita.cedula;
-
-        // Detalle del caso: C-{id_caso} (Nombre Solicitante) - Nombre Núcleo
         const caseDetail = `C-${cita.id_caso} (${client}) - ${cita.nombre_nucleo}`;
-
-        // Título: Materia del ámbito legal
         const title = cita.nombre_materia || cita.tramite;
 
         return {
@@ -44,8 +49,6 @@ export const citasService = {
           location: cita.nombre_nucleo,
         };
       });
-
-      return appointments;
     } catch (error) {
       throw new AppError(
         'Error al obtener las citas',
@@ -54,5 +57,30 @@ export const citasService = {
       );
     }
   },
+
+  /**
+   * Crea una nueva cita en la base de datos
+   */
+  async createAppointment(params: { caseId: number; date: string; endDate?: string; orientacion: string }): Promise<{ num_cita: number; id_caso: number }> {
+    try {
+      const result = await citasQueries.create(
+        createCitaQuery,
+        params.caseId,
+        params.date,
+        params.endDate || null,
+        params.orientacion
+      );
+      if (!result.rows || result.rows.length === 0) {
+        throw new AppError('No se pudo crear la cita', 500);
+      }
+      return result.rows[0]; // { num_cita, id_caso }
+    } catch (error) {
+      throw new AppError(
+        'Error al crear la cita',
+        500,
+        error instanceof Error ? error.message : 'Error desconocido'
+      );
+    }
+  }
 };
 

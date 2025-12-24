@@ -16,5 +16,10 @@ export const citasQueries = {
     const result: QueryResult = await pool.query(query);
     return result.rows;
   },
+
+  async create(query: string, caseId: number, date: string, endDate: string | null, orientacion: string): Promise<any> {
+    return await pool.query(query, [caseId, date, endDate, orientacion]);
+  }
 };
+
 
