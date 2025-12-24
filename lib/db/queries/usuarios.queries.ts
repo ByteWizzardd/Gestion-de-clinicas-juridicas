@@ -52,6 +52,22 @@ export const usuariosQueries = {
     const result: QueryResult = await pool.query(query, [email]);
     return result.rows;
   },
+
+  /**
+   * Obtiene un usuario completo por cédula con todos los campos necesarios para autocompletar
+   */
+  getCompleteByCedula: async (cedula: string): Promise<{
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+    correo_electronico: string;
+    telefono_celular: string | null;
+    nombre_completo: string;
+  } | null> => {
+    const query = loadSQL('usuarios/get-complete-by-cedula.sql');
+    const result: QueryResult = await pool.query(query, [cedula]);
+    return result.rows[0] || null;
+  },
 };
 
 

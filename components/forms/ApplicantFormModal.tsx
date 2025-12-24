@@ -206,12 +206,13 @@ export default function ApplicantFormModal({
     cedula: string;
     nombres: string;
     apellidos: string;
-    fecha_nacimiento: string;
-    telefono_celular: string;
-    correo_electronico: string;
-    sexo: string;
-    nacionalidad: string;
+    fecha_nacimiento?: string | null;
+    telefono_celular?: string | null;
+    correo_electronico?: string;
+    sexo?: string;
+    nacionalidad?: string;
     nombre_completo: string;
+    source?: 'usuario' | 'beneficiario';
   }>>([]);
   const [showCedulaSuggestions, setShowCedulaSuggestions] = useState(false);
   const cedulaInputRef = useRef<HTMLDivElement>(null);
@@ -990,7 +991,29 @@ export default function ApplicantFormModal({
         }
       }
 
-      // Si no es solicitante, buscar recomendaciones de usuarios del sistema
+      // Si no es solicitante, buscar en usuarios y beneficiarios para autocompletar
+      // Si hay una coincidencia exacta, autocompletar automáticamente
+      if (cedulaNumero.trim().length >= 4) {
+        // Buscar en usuarios
+        const { getUsuarioCompleteByCedulaAction } = await import('@/app/actions/usuarios');
+        const usuarioResult = await getUsuarioCompleteByCedulaAction(cedula);
+        
+        if (usuarioResult.success && usuarioResult.data) {
+          autocompleteFromUsuario(usuarioResult.data);
+          return;
+        }
+
+        // Buscar en beneficiarios
+        const { getBeneficiarioByCedulaAction } = await import('@/app/actions/beneficiarios');
+        const beneficiarioResult = await getBeneficiarioByCedulaAction(cedula);
+        
+        if (beneficiarioResult.success && beneficiarioResult.data) {
+          autocompleteFromBeneficiario(beneficiarioResult.data);
+          return;
+        }
+      }
+
+      // Si no hay coincidencia exacta, buscar recomendaciones de usuarios del sistema
       // Permitir búsqueda con 1 carácter o más
       if (cedulaNumero.trim().length >= 1) {
         if (cedulaSearchTimeout.current) {
@@ -1000,25 +1023,49 @@ export default function ApplicantFormModal({
         cedulaSearchTimeout.current = setTimeout(async () => {
           try {
             const { searchUsuariosAction } = await import('@/app/actions/solicitantes');
-            const result = await searchUsuariosAction(cedula, true);
+            const { searchBeneficiariosByCedulaAction } = await import('@/app/actions/beneficiarios');
+            
+            const [usuariosResult, beneficiariosResult] = await Promise.all([
+              searchUsuariosAction(cedula, true),
+              searchBeneficiariosByCedulaAction(cedula),
+            ]);
 
-            if (result.success && result.data) {
-            // Formatear fechas
-            const formattedData = result.data.map((c: any) => ({
-              ...c,
-              fecha_nacimiento: c.fecha_nacimiento ? new Date(c.fecha_nacimiento).toISOString().split('T')[0] : null,
-            }));
-            setCedulaSuggestions(formattedData);
-            setShowCedulaSuggestions(formattedData.length > 0 && !errors.cedulaNumero);
+            // Combinar resultados de usuarios y beneficiarios
+            const allSuggestions: any[] = [];
+            
+            if (usuariosResult.success && usuariosResult.data) {
+              const formattedUsuarios = usuariosResult.data.map((c: any) => ({
+                ...c,
+                fecha_nacimiento: c.fecha_nacimiento ? new Date(c.fecha_nacimiento).toISOString().split('T')[0] : null,
+                source: 'usuario',
+              }));
+              allSuggestions.push(...formattedUsuarios);
+            }
+            
+            if (beneficiariosResult.success && beneficiariosResult.data) {
+              const formattedBeneficiarios = beneficiariosResult.data.map((c: any) => ({
+                ...c,
+                fecha_nacimiento: c.fecha_nacimiento ? new Date(c.fecha_nacimiento).toISOString().split('T')[0] : null,
+                source: 'beneficiario',
+              }));
+              allSuggestions.push(...formattedBeneficiarios);
+            }
+
+            setCedulaSuggestions(allSuggestions);
+            setShowCedulaSuggestions(allSuggestions.length > 0 && !errors.cedulaNumero);
             
             // Si hay una coincidencia exacta, autocompletar automáticamente
-            const exactMatch = formattedData.find((c: any) => c.cedula === cedula);
+            const exactMatch = allSuggestions.find((c: any) => c.cedula === cedula);
             if (exactMatch) {
-              autocompleteFromSolicitante(exactMatch);
-            }
-        } else {
-              setCedulaSuggestions([]);
-              setShowCedulaSuggestions(false);
+              if (exactMatch.source === 'usuario') {
+                const { getUsuarioCompleteByCedulaAction } = await import('@/app/actions/usuarios');
+                const usuarioResult = await getUsuarioCompleteByCedulaAction(cedula);
+                if (usuarioResult.success && usuarioResult.data) {
+                  autocompleteFromUsuario(usuarioResult.data);
+                }
+              } else if (exactMatch.source === 'beneficiario') {
+                autocompleteFromBeneficiario(exactMatch);
+              }
             }
           } catch (error) {
             setCedulaSuggestions([]);
@@ -1031,11 +1078,11 @@ export default function ApplicantFormModal({
       }
 
       // Limpiar el error si la cédula no existe como solicitante
-          setErrors((prev) => {
-            const newErrors = { ...prev };
-            delete newErrors.cedulaNumero;
-            return newErrors;
-          });
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.cedulaNumero;
+        return newErrors;
+      });
     } catch (error) {
       // No mostrar error al usuario si falla la verificación
     }
@@ -1149,27 +1196,30 @@ export default function ApplicantFormModal({
       ...prev,
       cedulaTipo,
       cedulaNumero,
-      nombres: solicitante.nombres || '',
-      apellidos: solicitante.apellidos || '',
-      fechaNacimiento: solicitante.fecha_nacimiento || '',
-      sexo: solicitante.sexo || '',
-      telefonoCelular,
-      codigoPaisCelular,
-      correoElectronico: solicitante.correo_electronico || '',
-      nacionalidad: nacionalidadAsignada,
+      nombres: solicitante.nombres || prev.nombres,
+      apellidos: solicitante.apellidos || prev.apellidos,
+      fechaNacimiento: solicitante.fecha_nacimiento || prev.fechaNacimiento,
+      sexo: solicitante.sexo || prev.sexo,
+      telefonoCelular: telefonoCelular || prev.telefonoCelular,
+      codigoPaisCelular: telefonoCelular ? codigoPaisCelular : prev.codigoPaisCelular,
+      correoElectronico: solicitante.correo_electronico || prev.correoElectronico,
+      nacionalidad: nacionalidadAsignada || prev.nacionalidad,
     }));
 
-    // Bloquear los campos autocompletados (incluyendo correo, pero cédula sigue editable)
-    setLockedFields(new Set([
-      'nombres',
-      'apellidos',
-      'fechaNacimiento',
-      'sexo',
-      'telefonoCelular',
-      'codigoPaisCelular',
-      'correoElectronico',
-      'nacionalidad',
-    ]));
+    // Bloquear solo los campos que tienen datos
+    const camposBloqueados = new Set<keyof FormData>();
+    if (solicitante.nombres) camposBloqueados.add('nombres');
+    if (solicitante.apellidos) camposBloqueados.add('apellidos');
+    if (solicitante.fecha_nacimiento) camposBloqueados.add('fechaNacimiento');
+    if (solicitante.sexo) camposBloqueados.add('sexo');
+    if (telefonoCelular) {
+      camposBloqueados.add('telefonoCelular');
+      camposBloqueados.add('codigoPaisCelular');
+    }
+    if (solicitante.correo_electronico) camposBloqueados.add('correoElectronico');
+    if (nacionalidadAsignada) camposBloqueados.add('nacionalidad');
+    
+    setLockedFields(camposBloqueados);
 
     // Limpiar errores y ocultar sugerencias
     setErrors((prev) => {
@@ -1181,6 +1231,151 @@ export default function ApplicantFormModal({
     setCedulaSuggestions([]);
   };
 
+  // Función para autocompletar desde un usuario
+  const autocompleteFromUsuario = (usuario: {
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+    correo_electronico: string;
+    telefono_celular: string | null;
+    nombre_completo: string;
+  }) => {
+    // Extraer tipo y número de cédula
+    let cedulaTipo = 'V';
+    let cedulaNumero = usuario.cedula || '';
+    
+    const cedulaMatch = cedulaNumero.match(/^([VEJP])-?(.+)$/);
+    if (cedulaMatch) {
+      cedulaTipo = cedulaMatch[1];
+      cedulaNumero = cedulaMatch[2];
+    } else if (cedulaNumero.match(/^[VEJP]/)) {
+      cedulaTipo = cedulaNumero[0];
+      cedulaNumero = cedulaNumero.substring(1);
+    }
+
+    // Extraer código de país y número de teléfono celular
+    let codigoPaisCelular = '+58';
+    let telefonoCelular = usuario.telefono_celular || '';
+    if (telefonoCelular.startsWith('+58')) {
+      codigoPaisCelular = '+58';
+      telefonoCelular = telefonoCelular.substring(3);
+    } else if (telefonoCelular.startsWith('+')) {
+      const match = telefonoCelular.match(/^(\+\d{1,3})(.+)$/);
+      if (match) {
+        codigoPaisCelular = match[1];
+        telefonoCelular = match[2];
+      }
+    }
+
+    // Asignar nacionalidad según el tipo de cédula
+    let nacionalidadAsignada = '';
+    if (cedulaTipo === 'V' || cedulaTipo === 'J') {
+      nacionalidadAsignada = 'V';
+    } else if (cedulaTipo === 'E') {
+      nacionalidadAsignada = 'Ext';
+    } else if (cedulaTipo === 'P') {
+      nacionalidadAsignada = '';
+    }
+
+    // Actualizar el formulario con los datos del usuario
+    setFormData((prev) => ({
+      ...prev,
+      cedulaTipo,
+      cedulaNumero,
+      nombres: usuario.nombres || prev.nombres,
+      apellidos: usuario.apellidos || prev.apellidos,
+      telefonoCelular: telefonoCelular || prev.telefonoCelular,
+      codigoPaisCelular: telefonoCelular ? codigoPaisCelular : prev.codigoPaisCelular,
+      correoElectronico: usuario.correo_electronico || prev.correoElectronico,
+      nacionalidad: nacionalidadAsignada || prev.nacionalidad,
+    }));
+
+    // Bloquear solo los campos que tienen datos
+    const camposBloqueados = new Set<keyof FormData>();
+    if (usuario.nombres) camposBloqueados.add('nombres');
+    if (usuario.apellidos) camposBloqueados.add('apellidos');
+    if (telefonoCelular) {
+      camposBloqueados.add('telefonoCelular');
+      camposBloqueados.add('codigoPaisCelular');
+    }
+    if (usuario.correo_electronico) camposBloqueados.add('correoElectronico');
+    if (nacionalidadAsignada) camposBloqueados.add('nacionalidad');
+    
+    setLockedFields(camposBloqueados);
+
+    // Limpiar errores y ocultar sugerencias
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors.cedulaNumero;
+      return newErrors;
+    });
+    setShowCedulaSuggestions(false);
+    setCedulaSuggestions([]);
+  };
+
+  // Función para autocompletar desde un beneficiario
+  const autocompleteFromBeneficiario = (beneficiario: {
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+    fecha_nacimiento?: string | null;
+    sexo?: string;
+    nombre_completo: string;
+  }) => {
+    // Extraer tipo y número de cédula
+    let cedulaTipo = 'V';
+    let cedulaNumero = beneficiario.cedula || '';
+    
+    const cedulaMatch = cedulaNumero.match(/^([VEJP])-?(.+)$/);
+    if (cedulaMatch) {
+      cedulaTipo = cedulaMatch[1];
+      cedulaNumero = cedulaMatch[2];
+    } else if (cedulaNumero.match(/^[VEJP]/)) {
+      cedulaTipo = cedulaNumero[0];
+      cedulaNumero = cedulaNumero.substring(1);
+    }
+
+    // Asignar nacionalidad según el tipo de cédula
+    let nacionalidadAsignada = '';
+    if (cedulaTipo === 'V' || cedulaTipo === 'J') {
+      nacionalidadAsignada = 'V';
+    } else if (cedulaTipo === 'E') {
+      nacionalidadAsignada = 'Ext';
+    } else if (cedulaTipo === 'P') {
+      nacionalidadAsignada = '';
+    }
+
+    // Actualizar el formulario con los datos del beneficiario
+    setFormData((prev) => ({
+      ...prev,
+      cedulaTipo,
+      cedulaNumero,
+      nombres: beneficiario.nombres || prev.nombres,
+      apellidos: beneficiario.apellidos || prev.apellidos,
+      fechaNacimiento: beneficiario.fecha_nacimiento || prev.fechaNacimiento,
+      sexo: beneficiario.sexo || prev.sexo,
+      nacionalidad: nacionalidadAsignada || prev.nacionalidad,
+    }));
+
+    // Bloquear solo los campos que tienen datos
+    const camposBloqueados = new Set<keyof FormData>();
+    if (beneficiario.nombres) camposBloqueados.add('nombres');
+    if (beneficiario.apellidos) camposBloqueados.add('apellidos');
+    if (beneficiario.fecha_nacimiento) camposBloqueados.add('fechaNacimiento');
+    if (beneficiario.sexo) camposBloqueados.add('sexo');
+    if (nacionalidadAsignada) camposBloqueados.add('nacionalidad');
+    
+    setLockedFields(camposBloqueados);
+
+    // Limpiar errores y ocultar sugerencias
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors.cedulaNumero;
+      return newErrors;
+    });
+    setShowCedulaSuggestions(false);
+    setCedulaSuggestions([]);
+  };
 
   const renderStep1 = () => (
     <div className="grid grid-cols-3 gap-x-6 gap-y-4">
@@ -1241,20 +1436,40 @@ export default function ApplicantFormModal({
               transition={{ duration: 0.2, ease: 'easeOut' }}
               className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
             >
-              {cedulaSuggestions.map((solicitante, index) => (
+              {cedulaSuggestions.map((item, index) => (
                 <motion.button
-                  key={solicitante.cedula}
+                  key={`${item.cedula}-${index}`}
                   type="button"
-                  onClick={() => {
-                    autocompleteFromSolicitante(solicitante);
+                  onClick={async () => {
+                    if (item.source === 'usuario') {
+                      const { getUsuarioCompleteByCedulaAction } = await import('@/app/actions/usuarios');
+                      const usuarioResult = await getUsuarioCompleteByCedulaAction(item.cedula);
+                      if (usuarioResult.success && usuarioResult.data) {
+                        autocompleteFromUsuario(usuarioResult.data);
+                      }
+                    } else if (item.source === 'beneficiario') {
+                      autocompleteFromBeneficiario(item);
+                    } else {
+                      // Fallback para compatibilidad con sugerencias antiguas
+                      autocompleteFromSolicitante(item as any);
+                    }
                   }}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.03, duration: 0.15 }}
                   className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none transition-colors"
                 >
-                  <div className="font-medium text-gray-900">{solicitante.cedula}</div>
-                  <div className="text-sm text-gray-600">{solicitante.nombre_completo}</div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-gray-900">{item.cedula}</div>
+                      <div className="text-sm text-gray-600">{item.nombre_completo}</div>
+                    </div>
+                    {item.source && (
+                      <span className="text-xs text-gray-500 capitalize ml-2">
+                        {item.source === 'usuario' ? 'Usuario' : item.source === 'beneficiario' ? 'Beneficiario' : ''}
+                      </span>
+                    )}
+                  </div>
                 </motion.button>
               ))}
             </motion.div>
