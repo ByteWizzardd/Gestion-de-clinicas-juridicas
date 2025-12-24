@@ -34,19 +34,41 @@ export default function CasesTab({ casos }: CasesTabProps) {
     );
   }
   const tableData = casos.map((caso) => ({
-    codigo: caso.id_caso, // Primera columna
-    fecha_solicitud: caso.fecha_solicitud ? formatDate(caso.fecha_solicitud) : 'N/A', // Segunda columna
-    tramite: caso.tramite || 'N/A', // Tercera columna
-    estatus: caso.estatus || 'N/A', // Cuarta columna
-    nucleo: caso.nombre_nucleo || 'N/A', // Quinta columna
-    materia: caso.nombre_materia || 'N/A', // Sexta columna
+    id_caso: caso.id_caso,
+    fecha_solicitud: caso.fecha_solicitud ? formatDate(caso.fecha_solicitud) : 'N/A',
+    tramite: caso.tramite || 'N/A',
+    estatus: caso.estatus || 'N/A',
+    nucleo: caso.nombre_nucleo || 'N/A',
+    materia: caso.nombre_materia || 'N/A'
   }));
 
   const handleView = (data: Record<string, unknown>) => {
-    const codigo = data.codigo as string;
-    if (codigo && codigo.startsWith('C-')) {
-      const idCaso = codigo.substring(2);
+    const idCaso = data.id_caso as number;
+    if (idCaso) {
       router.push(`/dashboard/cases/${idCaso}`);
+    } else {
+      const codigo = data.codigo as string;
+      if (codigo && codigo.startsWith('C-')) {
+        const id = codigo.substring(2);
+        router.push(`/dashboard/cases/${id}`);
+      }
+    }
+  };
+
+  const handleEdit = (data: Record<string, unknown>) => {
+    const idCaso = data.id_caso as number;
+    if (idCaso) {
+      router.push(`/dashboard/cases/${idCaso}?edit=true`);
+    }
+  };
+
+  const handleDelete = (data: Record<string, unknown>) => {
+    const idCaso = data.id_caso as number;
+    if (idCaso) {
+      const confirmDelete = window.confirm(`¿Está seguro de que desea eliminar el caso C-${idCaso}?`);
+      if (confirmDelete) {
+        alert(`Eliminar caso C-${idCaso}`);
+      }
     }
   };
 
@@ -56,6 +78,8 @@ export default function CasesTab({ casos }: CasesTabProps) {
         data={tableData}
         columns={['Código', 'Fecha Solicitud', 'Trámite', 'Estatus', 'Núcleo', 'Materia']}
         onView={handleView}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
         rowsPerPage={10}
       />
     </div>
