@@ -41,4 +41,3 @@ WHERE sla.id_caso = $1
   AND sla.habilitado = true
 
 ORDER BY tipo, nombre_completo;
-
