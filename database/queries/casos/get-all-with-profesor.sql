@@ -32,10 +32,10 @@ LEFT JOIN LATERAL (
     FROM supervisa s
     INNER JOIN profesores p ON s.term = p.term AND s.cedula_profesor = p.cedula_profesor
     INNER JOIN usuarios u ON p.cedula_profesor = u.cedula
+    INNER JOIN semestres sem ON p.term = sem.term
     WHERE s.id_caso = vc.id_caso
       AND s.habilitado = true
-      AND p.term = (SELECT term FROM semestres ORDER BY fecha_inicio DESC LIMIT 1)
-    ORDER BY s.term DESC
+    ORDER BY sem.fecha_inicio DESC, s.term DESC
     LIMIT 1
 ) prof ON true
 ORDER BY vc.id_caso DESC;

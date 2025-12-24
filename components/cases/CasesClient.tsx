@@ -122,11 +122,29 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
     return casos.filter((caso) => {
       const normalizedSearch = normalizeText(searchValue);
+      
+      // Buscar en todos los campos visibles en la tabla
       const matchesSearch = 
         !searchValue ||
+        // Código (id_caso)
+        caso.id_caso.toString().includes(searchValue) ||
+        `C-${caso.id_caso}`.includes(searchValue) ||
+        // Solicitante (cedula y nombre completo)
         caso.cedula.includes(searchValue) ||
         normalizeText(caso.nombre_completo_solicitante || '').includes(normalizedSearch) ||
-        caso.id_caso.toString().includes(searchValue);
+        normalizeText(caso.nombres_solicitante || '').includes(normalizedSearch) ||
+        normalizeText(caso.apellidos_solicitante || '').includes(normalizedSearch) ||
+        // Materia
+        normalizeText(caso.nombre_materia || '').includes(normalizedSearch) ||
+        normalizeText(caso.tramite || '').includes(normalizedSearch) ||
+        normalizeText(caso.nombre_categoria || '').includes(normalizedSearch) ||
+        normalizeText(caso.nombre_subcategoria || '').includes(normalizedSearch) ||
+        // Estatus
+        normalizeText(caso.estatus || '').includes(normalizedSearch) ||
+        // Responsable
+        normalizeText(caso.nombre_responsable || '').includes(normalizedSearch) ||
+        // Núcleo
+        normalizeText(caso.nombre_nucleo || '').includes(normalizedSearch);
 
       const matchesEstatus = !estatusFilter || caso.estatus === estatusFilter;
       const matchesTramite = !tramiteFilter || caso.tramite === tramiteFilter;

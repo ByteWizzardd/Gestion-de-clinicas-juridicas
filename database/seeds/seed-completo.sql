@@ -515,7 +515,11 @@ SELECT
     'Primera consulta. Se explicaron los pasos del proceso de divorcio. Cliente debe traer documentación.'
 FROM casos c
 WHERE c.cedula = 'V-12345678' AND c.fecha_inicio_caso = '2024-01-15' AND c.fecha_fin_caso IS NULL
-LIMIT 1;
+LIMIT 1
+ON CONFLICT (num_cita, id_caso) DO UPDATE
+SET fecha_proxima_cita = EXCLUDED.fecha_proxima_cita,
+    fecha_encuentro = EXCLUDED.fecha_encuentro,
+    orientacion = EXCLUDED.orientacion;
 
 INSERT INTO citas (num_cita, id_caso, fecha_proxima_cita, fecha_encuentro, orientacion)
 SELECT 
@@ -526,7 +530,11 @@ SELECT
     'Revisión de documentación. Pendiente certificado de matrimonio.'
 FROM casos c
 WHERE c.cedula = 'V-12345678' AND c.fecha_inicio_caso = '2024-01-15' AND c.fecha_fin_caso IS NULL
-LIMIT 1;
+LIMIT 1
+ON CONFLICT (num_cita, id_caso) DO UPDATE
+SET fecha_proxima_cita = EXCLUDED.fecha_proxima_cita,
+    fecha_encuentro = EXCLUDED.fecha_encuentro,
+    orientacion = EXCLUDED.orientacion;
 
 INSERT INTO citas (num_cita, id_caso, fecha_proxima_cita, fecha_encuentro, orientacion)
 SELECT 
@@ -537,7 +545,11 @@ SELECT
     'Inicio de proceso de mediación. Se contactará a la contraparte.'
 FROM casos c
 WHERE c.cedula = 'V-23456789' AND c.fecha_inicio_caso = '2024-02-20'
-LIMIT 1;
+LIMIT 1
+ON CONFLICT (num_cita, id_caso) DO UPDATE
+SET fecha_proxima_cita = EXCLUDED.fecha_proxima_cita,
+    fecha_encuentro = EXCLUDED.fecha_encuentro,
+    orientacion = EXCLUDED.orientacion;
 
 INSERT INTO citas (num_cita, id_caso, fecha_proxima_cita, fecha_encuentro, orientacion)
 SELECT 
@@ -548,7 +560,11 @@ SELECT
     'Seguimiento. Esperando respuesta de la contraparte.'
 FROM casos c
 WHERE c.cedula = 'V-23456789' AND c.fecha_inicio_caso = '2024-02-20'
-LIMIT 1;
+LIMIT 1
+ON CONFLICT (num_cita, id_caso) DO UPDATE
+SET fecha_proxima_cita = EXCLUDED.fecha_proxima_cita,
+    fecha_encuentro = EXCLUDED.fecha_encuentro,
+    orientacion = EXCLUDED.orientacion;
 
 INSERT INTO citas (num_cita, id_caso, fecha_proxima_cita, fecha_encuentro, orientacion)
 SELECT 
@@ -559,7 +575,11 @@ SELECT
     'Revisión de documentos para convenio. Pendiente firma de ambas partes.'
 FROM casos c
 WHERE c.cedula = 'V-34567890' AND c.fecha_inicio_caso = '2024-03-05'
-LIMIT 1;
+LIMIT 1
+ON CONFLICT (num_cita, id_caso) DO UPDATE
+SET fecha_proxima_cita = EXCLUDED.fecha_proxima_cita,
+    fecha_encuentro = EXCLUDED.fecha_encuentro,
+    orientacion = EXCLUDED.orientacion;
 
 INSERT INTO citas (num_cita, id_caso, fecha_proxima_cita, fecha_encuentro, orientacion)
 SELECT 
@@ -570,7 +590,11 @@ SELECT
     'Preparación para audiencia. Revisión de documentos laborales.'
 FROM casos c
 WHERE c.cedula = 'V-45678901' AND c.fecha_inicio_caso = '2024-04-10'
-LIMIT 1;
+LIMIT 1
+ON CONFLICT (num_cita, id_caso) DO UPDATE
+SET fecha_proxima_cita = EXCLUDED.fecha_proxima_cita,
+    fecha_encuentro = EXCLUDED.fecha_encuentro,
+    orientacion = EXCLUDED.orientacion;
 
 INSERT INTO citas (num_cita, id_caso, fecha_proxima_cita, fecha_encuentro, orientacion)
 SELECT 
@@ -581,7 +605,11 @@ SELECT
     'Consulta inicial. Caso resuelto satisfactoriamente.'
 FROM casos c
 WHERE c.cedula = 'V-12345678' AND c.fecha_inicio_caso = '2023-12-01'
-LIMIT 1;
+LIMIT 1
+ON CONFLICT (num_cita, id_caso) DO UPDATE
+SET fecha_proxima_cita = EXCLUDED.fecha_proxima_cita,
+    fecha_encuentro = EXCLUDED.fecha_encuentro,
+    orientacion = EXCLUDED.orientacion;
 
 -- ==========================================================
 -- 24. ATIENDEN (Depende de citas y usuarios)
@@ -592,77 +620,224 @@ SELECT 'V-11111111', 1, c.id_caso, '2025-12-10'
 FROM casos c
 INNER JOIN citas ci ON c.id_caso = ci.id_caso AND ci.num_cita = 1
 WHERE c.cedula = 'V-12345678' AND c.fecha_inicio_caso = '2024-01-15' AND c.fecha_fin_caso IS NULL
-LIMIT 1;
+LIMIT 1
+ON CONFLICT (num_cita, id_caso, id_usuario) DO UPDATE
+SET fecha_registro = EXCLUDED.fecha_registro;
 
 INSERT INTO atienden (id_usuario, num_cita, id_caso, fecha_registro)
 SELECT 'V-44444444', 1, c.id_caso, '2025-12-10'
 FROM casos c
 INNER JOIN citas ci ON c.id_caso = ci.id_caso AND ci.num_cita = 1
 WHERE c.cedula = 'V-12345678' AND c.fecha_inicio_caso = '2024-01-15' AND c.fecha_fin_caso IS NULL
-LIMIT 1;
+LIMIT 1
+ON CONFLICT (num_cita, id_caso, id_usuario) DO UPDATE
+SET fecha_registro = EXCLUDED.fecha_registro;
 
 INSERT INTO atienden (id_usuario, num_cita, id_caso, fecha_registro)
 SELECT 'V-11111111', 2, c.id_caso, '2025-12-17'
 FROM casos c
 INNER JOIN citas ci ON c.id_caso = ci.id_caso AND ci.num_cita = 2
 WHERE c.cedula = 'V-12345678' AND c.fecha_inicio_caso = '2024-01-15' AND c.fecha_fin_caso IS NULL
-LIMIT 1;
+LIMIT 1
+ON CONFLICT (num_cita, id_caso, id_usuario) DO UPDATE
+SET fecha_registro = EXCLUDED.fecha_registro;
 
 INSERT INTO atienden (id_usuario, num_cita, id_caso, fecha_registro)
 SELECT 'V-22222222', 1, c.id_caso, '2025-12-11'
 FROM casos c
 INNER JOIN citas ci ON c.id_caso = ci.id_caso AND ci.num_cita = 1
 WHERE c.cedula = 'V-23456789' AND c.fecha_inicio_caso = '2024-02-20'
-LIMIT 1;
+LIMIT 1
+ON CONFLICT (num_cita, id_caso, id_usuario) DO UPDATE
+SET fecha_registro = EXCLUDED.fecha_registro;
 
 INSERT INTO atienden (id_usuario, num_cita, id_caso, fecha_registro)
 SELECT 'V-55555555', 1, c.id_caso, '2025-12-11'
 FROM casos c
 INNER JOIN citas ci ON c.id_caso = ci.id_caso AND ci.num_cita = 1
 WHERE c.cedula = 'V-23456789' AND c.fecha_inicio_caso = '2024-02-20'
-LIMIT 1;
+LIMIT 1
+ON CONFLICT (num_cita, id_caso, id_usuario) DO UPDATE
+SET fecha_registro = EXCLUDED.fecha_registro;
 
 INSERT INTO atienden (id_usuario, num_cita, id_caso, fecha_registro)
 SELECT 'V-22222222', 2, c.id_caso, '2025-12-18'
 FROM casos c
 INNER JOIN citas ci ON c.id_caso = ci.id_caso AND ci.num_cita = 2
 WHERE c.cedula = 'V-23456789' AND c.fecha_inicio_caso = '2024-02-20'
-LIMIT 1;
+LIMIT 1
+ON CONFLICT (num_cita, id_caso, id_usuario) DO UPDATE
+SET fecha_registro = EXCLUDED.fecha_registro;
 
 INSERT INTO atienden (id_usuario, num_cita, id_caso, fecha_registro)
 SELECT 'V-33333333', 1, c.id_caso, '2025-12-12'
 FROM casos c
 INNER JOIN citas ci ON c.id_caso = ci.id_caso AND ci.num_cita = 1
 WHERE c.cedula = 'V-34567890' AND c.fecha_inicio_caso = '2024-03-05'
-LIMIT 1;
+LIMIT 1
+ON CONFLICT (num_cita, id_caso, id_usuario) DO UPDATE
+SET fecha_registro = EXCLUDED.fecha_registro;
 
 INSERT INTO atienden (id_usuario, num_cita, id_caso, fecha_registro)
 SELECT 'V-66666666', 1, c.id_caso, '2025-12-12'
 FROM casos c
 INNER JOIN citas ci ON c.id_caso = ci.id_caso AND ci.num_cita = 1
 WHERE c.cedula = 'V-34567890' AND c.fecha_inicio_caso = '2024-03-05'
-LIMIT 1;
+LIMIT 1
+ON CONFLICT (num_cita, id_caso, id_usuario) DO UPDATE
+SET fecha_registro = EXCLUDED.fecha_registro;
 
 INSERT INTO atienden (id_usuario, num_cita, id_caso, fecha_registro)
 SELECT 'V-11111111', 1, c.id_caso, '2025-12-13'
 FROM casos c
 INNER JOIN citas ci ON c.id_caso = ci.id_caso AND ci.num_cita = 1
 WHERE c.cedula = 'V-45678901' AND c.fecha_inicio_caso = '2024-04-10'
-LIMIT 1;
+LIMIT 1
+ON CONFLICT (num_cita, id_caso, id_usuario) DO UPDATE
+SET fecha_registro = EXCLUDED.fecha_registro;
 
 INSERT INTO atienden (id_usuario, num_cita, id_caso, fecha_registro)
 SELECT 'V-44444444', 1, c.id_caso, '2025-12-13'
 FROM casos c
 INNER JOIN citas ci ON c.id_caso = ci.id_caso AND ci.num_cita = 1
 WHERE c.cedula = 'V-45678901' AND c.fecha_inicio_caso = '2024-04-10'
-LIMIT 1;
+LIMIT 1
+ON CONFLICT (num_cita, id_caso, id_usuario) DO UPDATE
+SET fecha_registro = EXCLUDED.fecha_registro;
 
 INSERT INTO atienden (id_usuario, num_cita, id_caso, fecha_registro)
 SELECT 'V-22222222', 1, c.id_caso, '2023-12-05'
 FROM casos c
 INNER JOIN citas ci ON c.id_caso = ci.id_caso AND ci.num_cita = 1
 WHERE c.cedula = 'V-12345678' AND c.fecha_inicio_caso = '2023-12-01'
-LIMIT 1;
+LIMIT 1
+ON CONFLICT (num_cita, id_caso, id_usuario) DO UPDATE
+SET fecha_registro = EXCLUDED.fecha_registro;
+
+-- ==========================================================
+-- 25. PROFESORES (Depende de usuarios y semestres)
+-- ==========================================================
+INSERT INTO profesores (term, cedula_profesor, tipo_profesor) VALUES
+('2025-1', 'V-44444444', 'Profesor Responsable'),
+('2025-1', 'V-55555555', 'Profesor Responsable'),
+('2025-1', 'V-66666666', 'Profesor Responsable')
+ON CONFLICT (term, cedula_profesor) DO UPDATE
+SET tipo_profesor = EXCLUDED.tipo_profesor;
+
+-- ==========================================================
+-- 26. ESTUDIANTES (Depende de usuarios y semestres)
+-- ==========================================================
+INSERT INTO estudiantes (term, cedula_estudiante, tipo_estudiante, nrc) VALUES
+('2025-1', 'V-11111111', 'Estudiante', '12345'),
+('2025-1', 'V-22222222', 'Estudiante', '12345'),
+('2025-1', 'V-33333333', 'Estudiante', '12346')
+ON CONFLICT (term, cedula_estudiante) DO UPDATE
+SET tipo_estudiante = EXCLUDED.tipo_estudiante,
+    nrc = EXCLUDED.nrc;
+
+-- ==========================================================
+-- 27. SUPERVISA (Asignación de Profesores a Casos)
+-- ==========================================================
+-- Caso 1: Divorcio contencioso - Asignado a Profesor González
+INSERT INTO supervisa (term, cedula_profesor, id_caso, habilitado)
+SELECT '2025-1', 'V-44444444', c.id_caso, TRUE
+FROM casos c
+WHERE c.cedula = 'V-12345678' AND c.fecha_inicio_caso = '2024-01-15' AND c.fecha_fin_caso IS NULL
+LIMIT 1
+ON CONFLICT (term, cedula_profesor, id_caso) DO UPDATE
+SET habilitado = EXCLUDED.habilitado;
+
+-- Caso 2: Obligación de Manutención - Asignado a Profesora Pérez
+INSERT INTO supervisa (term, cedula_profesor, id_caso, habilitado)
+SELECT '2025-1', 'V-55555555', c.id_caso, TRUE
+FROM casos c
+WHERE c.cedula = 'V-23456789' AND c.fecha_inicio_caso = '2024-02-20'
+LIMIT 1
+ON CONFLICT (term, cedula_profesor, id_caso) DO UPDATE
+SET habilitado = EXCLUDED.habilitado;
+
+-- Caso 3: Compra-venta de bienes inmuebles - Asignado a Profesor Sánchez
+INSERT INTO supervisa (term, cedula_profesor, id_caso, habilitado)
+SELECT '2025-1', 'V-66666666', c.id_caso, TRUE
+FROM casos c
+WHERE c.cedula = 'V-34567890' AND c.fecha_inicio_caso = '2024-03-05'
+LIMIT 1
+ON CONFLICT (term, cedula_profesor, id_caso) DO UPDATE
+SET habilitado = EXCLUDED.habilitado;
+
+-- Caso 4: Calificación de Despido - Asignado a Profesor González
+INSERT INTO supervisa (term, cedula_profesor, id_caso, habilitado)
+SELECT '2025-1', 'V-44444444', c.id_caso, TRUE
+FROM casos c
+WHERE c.cedula = 'V-45678901' AND c.fecha_inicio_caso = '2024-04-10'
+LIMIT 1
+ON CONFLICT (term, cedula_profesor, id_caso) DO UPDATE
+SET habilitado = EXCLUDED.habilitado;
+
+-- Caso 5: Rectificación de Actas (archivado) - Asignado a Profesora Pérez
+INSERT INTO supervisa (term, cedula_profesor, id_caso, habilitado)
+SELECT '2025-1', 'V-55555555', c.id_caso, TRUE
+FROM casos c
+WHERE c.cedula = 'V-12345678' AND c.fecha_inicio_caso = '2023-12-01' AND c.fecha_fin_caso = '2024-01-30'
+LIMIT 1
+ON CONFLICT (term, cedula_profesor, id_caso) DO UPDATE
+SET habilitado = EXCLUDED.habilitado;
+
+-- ==========================================================
+-- 28. SE LE ASIGNA (Asignación de Estudiantes a Casos)
+-- ==========================================================
+-- Caso 1: Divorcio contencioso - Asignado a Ana Martínez y Carlos Rodríguez
+INSERT INTO se_le_asigna (term, cedula_estudiante, id_caso, habilitado)
+SELECT '2025-1', 'V-11111111', c.id_caso, TRUE
+FROM casos c
+WHERE c.cedula = 'V-12345678' AND c.fecha_inicio_caso = '2024-01-15' AND c.fecha_fin_caso IS NULL
+LIMIT 1
+ON CONFLICT (term, cedula_estudiante, id_caso) DO UPDATE
+SET habilitado = EXCLUDED.habilitado;
+
+INSERT INTO se_le_asigna (term, cedula_estudiante, id_caso, habilitado)
+SELECT '2025-1', 'V-22222222', c.id_caso, TRUE
+FROM casos c
+WHERE c.cedula = 'V-12345678' AND c.fecha_inicio_caso = '2024-01-15' AND c.fecha_fin_caso IS NULL
+LIMIT 1
+ON CONFLICT (term, cedula_estudiante, id_caso) DO UPDATE
+SET habilitado = EXCLUDED.habilitado;
+
+-- Caso 2: Obligación de Manutención - Asignado a Carlos Rodríguez
+INSERT INTO se_le_asigna (term, cedula_estudiante, id_caso, habilitado)
+SELECT '2025-1', 'V-22222222', c.id_caso, TRUE
+FROM casos c
+WHERE c.cedula = 'V-23456789' AND c.fecha_inicio_caso = '2024-02-20'
+LIMIT 1
+ON CONFLICT (term, cedula_estudiante, id_caso) DO UPDATE
+SET habilitado = EXCLUDED.habilitado;
+
+-- Caso 3: Compra-venta de bienes inmuebles - Asignado a María Fernández
+INSERT INTO se_le_asigna (term, cedula_estudiante, id_caso, habilitado)
+SELECT '2025-1', 'V-33333333', c.id_caso, TRUE
+FROM casos c
+WHERE c.cedula = 'V-34567890' AND c.fecha_inicio_caso = '2024-03-05'
+LIMIT 1
+ON CONFLICT (term, cedula_estudiante, id_caso) DO UPDATE
+SET habilitado = EXCLUDED.habilitado;
+
+-- Caso 4: Calificación de Despido - Asignado a Ana Martínez
+INSERT INTO se_le_asigna (term, cedula_estudiante, id_caso, habilitado)
+SELECT '2025-1', 'V-11111111', c.id_caso, TRUE
+FROM casos c
+WHERE c.cedula = 'V-45678901' AND c.fecha_inicio_caso = '2024-04-10'
+LIMIT 1
+ON CONFLICT (term, cedula_estudiante, id_caso) DO UPDATE
+SET habilitado = EXCLUDED.habilitado;
+
+-- Caso 5: Rectificación de Actas (archivado) - Asignado a Carlos Rodríguez
+INSERT INTO se_le_asigna (term, cedula_estudiante, id_caso, habilitado)
+SELECT '2025-1', 'V-22222222', c.id_caso, TRUE
+FROM casos c
+WHERE c.cedula = 'V-12345678' AND c.fecha_inicio_caso = '2023-12-01' AND c.fecha_fin_caso = '2024-01-30'
+LIMIT 1
+ON CONFLICT (term, cedula_estudiante, id_caso) DO UPDATE
+SET habilitado = EXCLUDED.habilitado;
 
 COMMIT;
 
