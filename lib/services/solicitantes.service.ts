@@ -143,14 +143,17 @@ export const solicitantesService = {
       const sexo = data.sexo === 'Masculino' ? 'M' : 'F';
       
       // Asignar nacionalidad según el tipo de cédula
+      // NOTA: El schema solo permite 'V' (Venezolano) o 'E' (Extranjero)
       let nacionalidad = 'V'; // Por defecto venezolano
       if (data.cedulaTipo === 'V' || data.cedulaTipo === 'J') {
         nacionalidad = 'V'; // Venezolano
       } else if (data.cedulaTipo === 'E') {
-        nacionalidad = 'Ext'; // Extranjero
+        nacionalidad = 'E'; // Extranjero (el schema usa 'E', no 'Ext')
       } else if (data.cedulaTipo === 'P') {
         // Si es pasaporte, usar la nacionalidad del formulario
-        nacionalidad = data.nacionalidad || 'Ext'; // Por defecto extranjero si no se especifica
+        // Convertir 'Ext' a 'E' si viene del formulario
+        const nacionalidadForm = data.nacionalidad || 'E';
+        nacionalidad = nacionalidadForm === 'Ext' ? 'E' : (nacionalidadForm === 'V' ? 'V' : 'E');
       }
       
       // Verificar si el solicitante ya existe

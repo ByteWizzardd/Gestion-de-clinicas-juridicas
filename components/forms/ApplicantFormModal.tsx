@@ -434,7 +434,7 @@ export default function ApplicantFormModal({
     if (formData.cedulaTipo === 'P') {
       if (!formData.nacionalidad || formData.nacionalidad.trim() === '') {
         newErrors.nacionalidad = 'Este campo es requerido';
-      } else if (!['V', 'Ext'].includes(formData.nacionalidad)) {
+      } else if (!['V', 'E'].includes(formData.nacionalidad)) {
         newErrors.nacionalidad = 'Nacionalidad inválida';
       }
     }
@@ -898,7 +898,7 @@ export default function ApplicantFormModal({
       if (value === 'V' || value === 'J') {
         nacionalidadAsignada = 'V'; // Venezolano
       } else if (value === 'E') {
-        nacionalidadAsignada = 'Ext'; // Extranjero
+        nacionalidadAsignada = 'E'; // Extranjero (el schema usa 'E')
       } else if (value === 'P') {
         nacionalidadAsignada = ''; // Dejar vacío para que el usuario elija
       }
@@ -1185,7 +1185,7 @@ export default function ApplicantFormModal({
     if (cedulaTipo === 'V' || cedulaTipo === 'J') {
       nacionalidadAsignada = 'V'; // Venezolano
     } else if (cedulaTipo === 'E') {
-      nacionalidadAsignada = 'Ext'; // Extranjero
+      nacionalidadAsignada = 'E'; // Extranjero (el schema usa 'E')
     } else if (cedulaTipo === 'P') {
       // Si es pasaporte, usar la nacionalidad del solicitante o dejar vacío
       nacionalidadAsignada = solicitante.nacionalidad || '';
@@ -1272,7 +1272,7 @@ export default function ApplicantFormModal({
     if (cedulaTipo === 'V' || cedulaTipo === 'J') {
       nacionalidadAsignada = 'V';
     } else if (cedulaTipo === 'E') {
-      nacionalidadAsignada = 'Ext';
+      nacionalidadAsignada = 'E'; // Extranjero (el schema usa 'E')
     } else if (cedulaTipo === 'P') {
       nacionalidadAsignada = '';
     }
@@ -1340,7 +1340,7 @@ export default function ApplicantFormModal({
     if (cedulaTipo === 'V' || cedulaTipo === 'J') {
       nacionalidadAsignada = 'V';
     } else if (cedulaTipo === 'E') {
-      nacionalidadAsignada = 'Ext';
+      nacionalidadAsignada = 'E'; // Extranjero (el schema usa 'E')
     } else if (cedulaTipo === 'P') {
       nacionalidadAsignada = '';
     }
@@ -1610,7 +1610,7 @@ export default function ApplicantFormModal({
             onChange={(e) => updateField('nacionalidad', e.target.value)}
             options={[
               { value: 'V', label: 'Venezolano/a' },
-              { value: 'Ext', label: 'Extranjero/a' },
+              { value: 'E', label: 'Extranjero/a' },
             ]}
             placeholder="Seleccionar nacionalidad"
             error={errors.nacionalidad}

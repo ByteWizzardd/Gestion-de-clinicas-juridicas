@@ -27,7 +27,7 @@ export default function PersonalInfoTab({ solicitante }: PersonalInfoTabProps) {
     const map: Record<string, string> = {
       'V': 'Venezolano',
       'E': 'Extranjero',
-      'Ext': 'Extranjero'
+      'Ext': 'Extranjero' // Mantener compatibilidad con datos antiguos
     };
     return map[nacionalidad] || nacionalidad;
   };
@@ -41,7 +41,7 @@ export default function PersonalInfoTab({ solicitante }: PersonalInfoTabProps) {
     if (!cedula) return '';
     if (cedula.startsWith('V')) return 'V';
     if (cedula.startsWith('E')) return 'E';
-    return 'Ext';
+    return 'E'; // Por defecto extranjero (el schema usa 'E')
   };
 
   // Calcular edad si no viene del backend
@@ -155,4 +155,3 @@ export default function PersonalInfoTab({ solicitante }: PersonalInfoTabProps) {
     </div>
   );
 }
-
