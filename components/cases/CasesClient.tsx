@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { motion } from 'motion/react';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import CaseFormModal from '@/components/forms/CaseFormModal';
@@ -59,6 +60,19 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   const [tramiteFilter, setTramiteFilter] = useState('');
   const [initialCedula, setInitialCedula] = useState<string>('');
   const [initialCedulaTipo, setInitialCedulaTipo] = useState<string>('V');
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mediaQuery.matches);
+    
+    const handleChange = (e: MediaQueryListEvent) => {
+      setPrefersReducedMotion(e.matches);
+    };
+    
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
 
   const estatusOptions = [
     { value: ESTATUS_CASO.EN_PROCESO, label: ESTATUS_CASO.EN_PROCESO },
@@ -251,20 +265,33 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
   return (
     <>
-      <h1 className="text-4xl m-3 font-semibold font-primary">Casos</h1>
-      <p className="mb-6 ml-3">Listado y gestión de todos los casos registrados.</p>
-      <CaseTools 
-        addLabel="Añadir Caso" 
-        onAddClick={handleAddCase}
-        searchValue={searchValue}
-        onSearchChange={setSearchValue}
-        estatusFilter={estatusFilter}
-        onEstatusChange={setEstatusFilter}
-        estatusOptions={estatusOptions}
-        tramiteFilter={tramiteFilter}
-        onTramiteChange={setTramiteFilter}
-        tramiteOptions={tramiteOptions}
-      />
+      <motion.div 
+        className="mb-4 md:mb-6 mt-4"
+        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
+      >
+        <h1 className="text-4xl m-3 font-semibold font-primary">Casos</h1>
+        <p className="mb-6 ml-3">Listado y gestión de todos los casos registrados.</p>
+      </motion.div>
+      <motion.div
+        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: prefersReducedMotion ? 0 : 0.2, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
+      >
+        <CaseTools 
+          addLabel="Añadir Caso" 
+          onAddClick={handleAddCase}
+          searchValue={searchValue}
+          onSearchChange={setSearchValue}
+          estatusFilter={estatusFilter}
+          onEstatusChange={setEstatusFilter}
+          estatusOptions={estatusOptions}
+          tramiteFilter={tramiteFilter}
+          onTramiteChange={setTramiteFilter}
+          tramiteOptions={tramiteOptions}
+        />
+      </motion.div>
       <div className="mt-10"></div>
 
       {loading && (
@@ -281,19 +308,25 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       )}
 
       {!loading && (
-        <Table
-          data={filteredCasos.map((caso) => ({
-            codigo: caso.id_caso.toString(),
-            solicitante: caso.nombre_completo_solicitante || caso.cedula,
-            materia: caso.nombre_materia || caso.tramite || 'N/A',
-            estatus: caso.estatus || 'N/A',
-            responsable: caso.nombre_responsable || 'Sin asignar',
-          }))}
-          columns={["Código", "Solicitante", "Materia", "Estatus", "Responsable"]}
-          onView={handleView}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        <motion.div
+          initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.2, delay: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
+        >
+          <Table
+            data={filteredCasos.map((caso) => ({
+              codigo: caso.id_caso.toString(),
+              solicitante: caso.nombre_completo_solicitante || caso.cedula,
+              materia: caso.nombre_materia || caso.tramite || 'N/A',
+              estatus: caso.estatus || 'N/A',
+              responsable: caso.nombre_responsable || 'Sin asignar',
+            }))}
+            columns={["Código", "Solicitante", "Materia", "Estatus", "Responsable"]}
+            onView={handleView}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        </motion.div>
       )}
 
       <CaseFormModal

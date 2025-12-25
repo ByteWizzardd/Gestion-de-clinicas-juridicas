@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { FileBarChart, Clock, User, Briefcase } from 'lucide-react';
 import ReportCard from '@/components/cards/ReportCard';
 import FilterBar, { ReportFilters } from '@/components/reports/FilterBar';
@@ -22,6 +23,19 @@ export default function ReportsPage() {
         nucleo: 'all',
         term: 'all'
     });
+    const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+        setPrefersReducedMotion(mediaQuery.matches);
+        
+        const handleChange = (e: MediaQueryListEvent) => {
+            setPrefersReducedMotion(e.matches);
+        };
+        
+        mediaQuery.addEventListener("change", handleChange);
+        return () => mediaQuery.removeEventListener("change", handleChange);
+    }, []);
 
     // Get filtered data based on selected nucleo
     const currentDistributionData = nucleoDistributionData[filters.nucleo] || distributionData;
@@ -35,13 +49,23 @@ export default function ReportsPage() {
     return (
         <div className="p-6 space-y-6">
             {/* Header */}
-            <div className="mb-4">
+            <motion.div 
+                className="mb-4"
+                initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
+            >
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl m-3 font-semibold font-primary">Reportes</h1>
                 <p className="mb-6 ml-3 text-base">Presentación de las métricas clave a través de gráficas y cuadros.</p>
-            </div>
+            </motion.div>
 
             {/* Report Generation Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <motion.div 
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+                initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.2, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
+            >
                 <ReportCard
                     title="Informe Global de Actividad"
                     icon={<FileBarChart className="w-full h-full" strokeWidth={1.5} />}
@@ -66,18 +90,29 @@ export default function ReportsPage() {
                     onGenerate={() => handleGenerateReport('Informe de Casos en Particular')}
                     buttonColor="orange"
                 />
-            </div>
+            </motion.div>
 
             {/* Filter Bar with View Switcher */}
-            <FilterBar
-                filters={filters}
-                onFilterChange={setFilters}
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
-            />
+            <motion.div
+                initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.2, delay: prefersReducedMotion ? 0 : 0.15, ease: "easeOut" }}
+            >
+                <FilterBar
+                    filters={filters}
+                    onFilterChange={setFilters}
+                    viewMode={viewMode}
+                    onViewModeChange={setViewMode}
+                />
+            </motion.div>
 
             {/* Dynamic Content Area */}
-            <div className="transition-all duration-300 mt-6">
+            <motion.div 
+                className="transition-all duration-300 mt-6"
+                initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.2, delay: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
+            >
                 {viewMode === 'charts' ? (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <DistributionChart data={currentDistributionData} />
@@ -86,7 +121,7 @@ export default function ReportsPage() {
                 ) : (
                     <KPIDashboard />
                 )}
-            </div>
+            </motion.div>
         </div>
     );
 }
