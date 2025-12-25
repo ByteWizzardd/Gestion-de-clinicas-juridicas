@@ -34,11 +34,18 @@ function groupDataByMateriaSubcategoria(
     const categoria = item.nombre_categoria?.trim() || '';
     const subcategoria = item.nombre_subcategoria?.trim() || '';
     
+    const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría';
+    const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría';
+    
     let key = item.nombre_materia;
-    if (categoria) {
+    if (hasCategoria && hasSubcategoria) {
+      // Si hay ambas: "Materia - Categoría Subcategoría" (sin guión entre categoría y subcategoría)
+      key += ` - ${categoria} ${subcategoria}`;
+    } else if (hasCategoria) {
+      // Si solo hay categoría: "Materia - Categoría"
       key += ` - ${categoria}`;
-    }
-    if (subcategoria) {
+    } else if (hasSubcategoria) {
+      // Si solo hay subcategoría: "Materia - Subcategoría"
       key += ` - ${subcategoria}`;
     }
 

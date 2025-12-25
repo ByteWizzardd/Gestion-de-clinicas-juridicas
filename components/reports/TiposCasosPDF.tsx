@@ -82,16 +82,17 @@ const styles = StyleSheet.create({
   // Banner rojo con título y fechas
   titleBanner: {
     backgroundColor: '#9c2327',
-    paddingVertical: 8,
+    paddingVertical: 5,
     paddingHorizontal: 20,
     marginBottom: 15,
     borderRadius: 5,
-    width: '100%',
+    width: '80%',
+    alignSelf: 'center',
     justifyContent: 'center',
     alignItems: 'center',
   },
   titleText: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 700, // Bold
     fontStyle: 'normal', // NO italic
     color: '#FFFFFF',
@@ -100,10 +101,28 @@ const styles = StyleSheet.create({
   },
   // Subtítulo (Materia - Categoría)
   sectionTitle: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: 600, // SemiBold
     color: '#000000',
     marginBottom: 15,
+    textAlign: 'center',
+    fontFamily: 'League Spartan',
+  },
+  // Contenedor centrado verticalmente para páginas sin encabezado
+  centeredContent: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flex: 1,
+    width: '100%',
+    minHeight: '100%',
+  },
+  // Título de sección para páginas sin encabezado (sin margen inferior)
+  sectionTitleCentered: {
+    fontSize: 18,
+    fontWeight: 600, // SemiBold
+    color: '#000000',
+    marginBottom: 10,
     textAlign: 'center',
     fontFamily: 'League Spartan',
   },
@@ -114,6 +133,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
     maxHeight: 400, // Limitar altura máxima para evitar desbordamiento
+  },
+  // Contenedor del gráfico para páginas centradas (sin margen superior)
+  chartContainerCentered: {
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    marginTop: 0,
+    maxHeight: 400,
   },
   chartWrapper: {
     alignItems: 'center',
@@ -171,11 +198,18 @@ function groupDataByMateriaSubcategoria(
     const categoria = item.nombre_categoria?.trim() || '';
     const subcategoria = item.nombre_subcategoria?.trim() || '';
     
+    const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría';
+    const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría';
+    
     let key = item.nombre_materia;
-    if (categoria) {
+    if (hasCategoria && hasSubcategoria) {
+      // Si hay ambas: "Materia - Categoría Subcategoría" (sin guión entre categoría y subcategoría)
+      key += ` - ${categoria} ${subcategoria}`;
+    } else if (hasCategoria) {
+      // Si solo hay categoría: "Materia - Categoría"
       key += ` - ${categoria}`;
-    }
-    if (subcategoria) {
+    } else if (hasSubcategoria) {
+      // Si solo hay subcategoría: "Materia - Subcategoría"
       key += ` - ${subcategoria}`;
     }
 
@@ -194,12 +228,21 @@ function groupDataByMateriaSubcategoria(
 function formatGroupTitle(item: CasosGroupedData): string {
   let title = item.nombre_materia;
   
-  if (item.nombre_categoria?.trim()) {
-    title += ` - ${item.nombre_categoria.trim()}`;
-  }
+  const categoria = item.nombre_categoria?.trim();
+  const subcategoria = item.nombre_subcategoria?.trim();
   
-  if (item.nombre_subcategoria?.trim()) {
-    title += ` - ${item.nombre_subcategoria.trim()}`;
+  const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría';
+  const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría';
+  
+  if (hasCategoria && hasSubcategoria) {
+    // Si hay ambas: "Materia - Categoría Subcategoría" (sin guión entre categoría y subcategoría)
+    title += ` - ${categoria} ${subcategoria}`;
+  } else if (hasCategoria) {
+    // Si solo hay categoría: "Materia - Categoría"
+    title += ` - ${categoria}`;
+  } else if (hasSubcategoria) {
+    // Si solo hay subcategoría: "Materia - Subcategoría"
+    title += ` - ${subcategoria}`;
   }
 
   return title;
@@ -228,74 +271,124 @@ export const TiposCasosPDF: React.FC<TiposCasosPDFProps> = ({
   return (
     // @ts-ignore - React PDF types issue
     <Document>
-      {Object.entries(groupedData).map(([key, groupData]) => {
+      {Object.entries(groupedData).map(([key, groupData], pageIndex) => {
         const pieData = {
           labels: groupData.map(item => item.nombre_ambito_legal),
           values: groupData.map(item => item.cantidad_casos),
           colors: CHART_COLORS.slice(0, groupData.length),
         };
         const chartImage = chartImages[key] || '';
+        const isFirstPage = pageIndex === 0;
 
         return (
           // @ts-ignore - React PDF types issue
           <Page key={key} size="A4" orientation="landscape" style={styles.page}>
-            {/* Header con logo */}
-            {/* @ts-ignore */}
-            <View style={styles.header}>
-              {/* @ts-ignore */}
-              <Image
-                src={logoBase64 || "/logo clinica juridica.png"}
-                style={styles.logo}
-              />
-            </View>
+            {isFirstPage ? (
+              <>
+                {/* Header con logo - Solo en la primera página */}
+                {/* @ts-ignore */}
+                <View style={styles.header}>
+                  {/* @ts-ignore */}
+                  <Image
+                    src={logoBase64 || "/logo clinica juridica.png"}
+                    style={styles.logo}
+                  />
+                </View>
 
-            {/* Banner rojo con título y fechas */}
-            {/* @ts-ignore */}
-            <View style={styles.titleBanner}>
-              {/* @ts-ignore */}
-              <Text style={styles.titleText}>
-                Tipos de Casos{fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : ''}
-              </Text>
-            </View>
+                {/* Banner rojo con título y fechas - Solo en la primera página */}
+                {/* @ts-ignore */}
+                <View style={styles.titleBanner}>
+                  {/* @ts-ignore */}
+                  <Text style={styles.titleText}>
+                    Tipos de Casos{fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : ''}
+                  </Text>
+                </View>
 
-            {/* Subtítulo (Materia - Categoría - Subcategoría) */}
-            {/* @ts-ignore */}
-            <Text style={styles.sectionTitle}>
-              {formatGroupTitle(groupData[0])}
-            </Text>
+                {/* Subtítulo (Materia - Categoría - Subcategoría) */}
+                {/* @ts-ignore */}
+                <Text style={styles.sectionTitle}>
+                  {formatGroupTitle(groupData[0])}
+                </Text>
 
-            {/* Gráfico */}
-            {/* @ts-ignore */}
-            <View style={styles.chartContainer}>
-              {/* @ts-ignore */}
-              <View style={styles.chartWrapper}>
-                {chartImage && (
-                  // @ts-ignore
-                  <Image src={chartImage} style={styles.chartImage} />
-                )}
-              </View>
-
-              {/* Leyenda inferior */}
-              {/* @ts-ignore */}
-              <View style={styles.legendContainer}>
-                {groupData.map((item, index) => (
-                  // @ts-ignore
-                  <View key={index} style={styles.legendItem}>
-                    {/* @ts-ignore */}
-                    <View
-                      style={[
-                        styles.legendDot,
-                        { backgroundColor: pieData.colors[index] },
-                      ]}
-                    />
-                    {/* @ts-ignore */}
-                    <Text style={styles.legendText}>
-                      {item.nombre_ambito_legal}
-                    </Text>
+                {/* Gráfico */}
+                {/* @ts-ignore */}
+                <View style={styles.chartContainer}>
+                  {/* @ts-ignore */}
+                  <View style={styles.chartWrapper}>
+                    {chartImage && (
+                      // @ts-ignore
+                      <Image src={chartImage} style={styles.chartImage} />
+                    )}
                   </View>
-                ))}
+
+                  {/* Leyenda inferior */}
+                  {/* @ts-ignore */}
+                  <View style={styles.legendContainer}>
+                    {groupData.map((item, index) => (
+                      // @ts-ignore
+                      <View key={index} style={styles.legendItem}>
+                        {/* @ts-ignore */}
+                        <View
+                          style={[
+                            styles.legendDot,
+                            { backgroundColor: pieData.colors[index] },
+                          ]}
+                        />
+                        {/* @ts-ignore */}
+                        <Text style={styles.legendText}>
+                          {item.nombre_ambito_legal}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              </>
+            ) : (
+              <>
+                {/* Contenido centrado verticalmente para páginas sin encabezado */}
+                {/* @ts-ignore */}
+                <View style={styles.centeredContent}>
+                {/* Subtítulo (Materia - Categoría - Subcategoría) */}
+                {/* @ts-ignore */}
+                <Text style={styles.sectionTitleCentered}>
+                  {formatGroupTitle(groupData[0])}
+                </Text>
+
+                {/* Gráfico */}
+                {/* @ts-ignore */}
+                <View style={styles.chartContainerCentered}>
+                  {/* @ts-ignore */}
+                  <View style={styles.chartWrapper}>
+                    {chartImage && (
+                      // @ts-ignore
+                      <Image src={chartImage} style={styles.chartImage} />
+                    )}
+                  </View>
+
+                  {/* Leyenda inferior */}
+                  {/* @ts-ignore */}
+                  <View style={styles.legendContainer}>
+                    {groupData.map((item, index) => (
+                      // @ts-ignore
+                      <View key={index} style={styles.legendItem}>
+                        {/* @ts-ignore */}
+                        <View
+                          style={[
+                            styles.legendDot,
+                            { backgroundColor: pieData.colors[index] },
+                          ]}
+                        />
+                        {/* @ts-ignore */}
+                        <Text style={styles.legendText}>
+                          {item.nombre_ambito_legal}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
               </View>
-            </View>
+              </>
+            )}
           </Page>
         );
       })}
