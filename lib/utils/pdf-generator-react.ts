@@ -59,8 +59,8 @@ function groupDataByMateriaSubcategoria(
 }
 
 /**
- * Genera una imagen base64 de un gráfico donut con efecto 3D
- * Diseño exacto basado en la imagen de referencia
+ * Genera una imagen base64 de un gráfico donut estilo iChart de Figma
+ * Alta calidad con devicePixelRatio y renderizado optimizado
  */
 function generatePieChartImage(
   labels: string[],
@@ -68,145 +68,195 @@ function generatePieChartImage(
   colors: string[],
   total: number
 ): string {
+  // Usar alta resolución para mejor calidad
+  const pixelRatio = 3; // 3x para máxima calidad en PDF
+  // Aumentar el tamaño del canvas para que quepan todos los callouts
+  const baseWidth = 750;
+  const baseHeight = 500;
+  
   const canvas = document.createElement('canvas');
-  canvas.width = 550;
-  canvas.height = 350;
-  const ctx = canvas.getContext('2d');
+  canvas.width = baseWidth * pixelRatio;
+  canvas.height = baseHeight * pixelRatio;
+  canvas.style.width = `${baseWidth}px`;
+  canvas.style.height = `${baseHeight}px`;
+  
+  const ctx = canvas.getContext('2d', { 
+    alpha: true,
+    desynchronized: false 
+  });
   
   if (!ctx) {
     return '';
   }
 
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2 - 10;
-  const outerRadius = 140;
-  const innerRadius = 65;
-  const depth = 15; // Profundidad del efecto 3D
+  // Escalar el contexto para alta resolución
+  ctx.scale(pixelRatio, pixelRatio);
+  
+  // Configurar suavizado de alta calidad
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+
+  // Centrar el donut con más margen para los callouts
+  const centerX = baseWidth / 2;
+  const centerY = baseHeight / 2;
+  // Donut elíptico como en Figma (proporción ~1.43:1)
+  const outerRadiusX = 200;
+  const outerRadiusY = 140;
+  const innerRadiusX = 90;
+  const innerRadiusY = 63;
+  const depth = 22;
 
   let currentAngle = -Math.PI / 2;
-  const sliceAngles: { start: number; end: number; midAngle: number; value: number; color: string }[] = [];
+  const sliceAngles: { 
+    start: number; 
+    end: number; 
+    midAngle: number; 
+    value: number; 
+    color: string;
+    percentage: string;
+  }[] = [];
 
-  // Calcular ángulos para cada segmento
+  // Calcular ángulos para cada segmento (sin separación, pegados)
   values.forEach((value, index) => {
     const sliceAngle = (value / total) * 2 * Math.PI;
+    const percentage = ((value / total) * 100).toFixed(2);
     sliceAngles.push({
       start: currentAngle,
       end: currentAngle + sliceAngle,
       midAngle: currentAngle + sliceAngle / 2,
       value,
-      color: colors[index % colors.length]
+      color: colors[index % colors.length],
+      percentage
     });
     currentAngle += sliceAngle;
   });
 
-  // Dibujar efecto 3D (capas inferiores)
+  // Función auxiliar para dibujar un arco de elipse
+  const drawEllipseArc = (cx: number, cy: number, rx: number, ry: number, startAngle: number, endAngle: number) => {
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, startAngle, endAngle);
+    ctx.lineTo(cx, cy);
+    ctx.closePath();
+  };
+
+  // Dibujar efecto 3D (sombra inferior) - minimalista y sutil
   for (let d = depth; d > 0; d -= 2) {
     sliceAngles.forEach((slice) => {
-      ctx.beginPath();
-      ctx.moveTo(centerX, centerY + d);
-      ctx.arc(centerX, centerY + d, outerRadius, slice.start, slice.end);
-      ctx.lineTo(centerX, centerY + d);
-      ctx.closePath();
-      
-      // Color más oscuro para el efecto 3D
-      ctx.fillStyle = darkenColor(slice.color, 0.3 + (d / depth) * 0.2);
+      const darkness = 0.12 + (d / depth) * 0.2;
+      drawEllipseArc(centerX, centerY + d, outerRadiusX, outerRadiusY, slice.start, slice.end);
+      ctx.fillStyle = darkenColor(slice.color, darkness);
       ctx.fill();
     });
   }
 
-  // Dibujar segmentos principales del donut
-  sliceAngles.forEach((slice, index) => {
-    // Gradiente para efecto de brillo
-    const gradient = ctx.createRadialGradient(
+  // Dibujar segmentos principales del donut (elipse) con textura plástica minimalista
+  sliceAngles.forEach((slice) => {
+    // Gradiente radial minimalista sin brillos
+    const baseGradient = ctx.createRadialGradient(
       centerX - 25, centerY - 25, 0,
-      centerX, centerY, outerRadius
+      centerX, centerY, outerRadiusX
     );
-    gradient.addColorStop(0, lightenColor(slice.color, 0.3));
-    gradient.addColorStop(0.5, slice.color);
-    gradient.addColorStop(1, darkenColor(slice.color, 0.1));
+    baseGradient.addColorStop(0, lightenColor(slice.color, 0.15));
+    baseGradient.addColorStop(0.6, slice.color);
+    baseGradient.addColorStop(1, darkenColor(slice.color, 0.1));
 
-    // Segmento exterior
-    ctx.beginPath();
-    ctx.moveTo(centerX, centerY);
-    ctx.arc(centerX, centerY, outerRadius, slice.start, slice.end);
-    ctx.closePath();
-    ctx.fillStyle = gradient;
+    drawEllipseArc(centerX, centerY, outerRadiusX, outerRadiusY, slice.start, slice.end);
+    ctx.fillStyle = baseGradient;
     ctx.fill();
-    
-    // Borde blanco
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 2;
-    ctx.stroke();
   });
 
-  // Dibujar el hueco interior (para hacer el donut)
+  // Dibujar el hueco interior (elipse)
   ctx.beginPath();
-  ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
+  ctx.ellipse(centerX, centerY, innerRadiusX, innerRadiusY, 0, 0, 2 * Math.PI);
   ctx.fillStyle = '#FFFFFF';
   ctx.fill();
 
-  // Sombra interior sutil
-  const innerGradient = ctx.createRadialGradient(
-    centerX, centerY, innerRadius - 20,
-    centerX, centerY, innerRadius
-  );
-  innerGradient.addColorStop(0, 'rgba(0,0,0,0)');
-  innerGradient.addColorStop(1, 'rgba(0,0,0,0.05)');
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
-  ctx.fillStyle = innerGradient;
-  ctx.fill();
-
-  // Dibujar líneas de guía y valores
+  // Dibujar líneas de guía y valores con cantidad y porcentaje
   sliceAngles.forEach((slice) => {
     const midAngle = slice.midAngle;
     
-    // Punto de inicio en el borde del donut
-    const startX = centerX + Math.cos(midAngle) * outerRadius;
-    const startY = centerY + Math.sin(midAngle) * outerRadius;
+    // Punto de inicio en el borde de la elipse
+    const startX = centerX + Math.cos(midAngle) * outerRadiusX;
+    const startY = centerY + Math.sin(midAngle) * outerRadiusY;
     
-    // Punto medio (primera parte de la línea)
-    const midX = centerX + Math.cos(midAngle) * (outerRadius + 25);
-    const midY = centerY + Math.sin(midAngle) * (outerRadius + 25);
+    // Punto de inflexión - ajustar distancia según el ángulo (usando proporción elíptica)
+    const bendDistance = 55;
+    const bendX = centerX + Math.cos(midAngle) * (outerRadiusX + bendDistance);
+    const bendY = centerY + Math.sin(midAngle) * (outerRadiusY + bendDistance * 0.7);
     
-    // Punto final (línea horizontal)
+    // Dirección horizontal
     const direction = Math.cos(midAngle) > 0 ? 1 : -1;
-    const endX = midX + direction * 25;
-    const endY = midY;
     
-    // Dibujar línea de guía (dos segmentos)
-    ctx.strokeStyle = '#666666';
-    ctx.lineWidth = 1;
+    // Ajustar la longitud horizontal según la posición para evitar salirse del canvas
+    // Calcular el espacio disponible
+    const availableSpace = direction > 0 
+      ? baseWidth - bendX - 20  // Espacio a la derecha
+      : bendX - 20;              // Espacio a la izquierda
+    
+    const horizontalLength = Math.min(70, availableSpace);
+    const endX = bendX + direction * horizontalLength;
+    const endY = bendY;
+    
+    // Dibujar línea de guía con el color del segmento
+    ctx.strokeStyle = slice.color;
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
     ctx.setLineDash([]);
     
-    // Primera parte: diagonal desde el donut
+    // Línea diagonal
     ctx.beginPath();
     ctx.moveTo(startX, startY);
-    ctx.lineTo(midX, midY);
+    ctx.lineTo(bendX, bendY);
     ctx.stroke();
     
-    // Segunda parte: horizontal
+    // Línea horizontal
     ctx.beginPath();
-    ctx.moveTo(midX, midY);
+    ctx.moveTo(bendX, bendY);
     ctx.lineTo(endX, endY);
     ctx.stroke();
     
-    // Valor numérico al final (color del segmento, tamaño 10, Semi Bold)
+    // Posición del texto - asegurar que esté dentro del canvas
+    const textPadding = 8;
+    const textX = Math.max(
+      textPadding,
+      Math.min(baseWidth - textPadding, endX + direction * textPadding)
+    );
+    
+    // Medir el ancho del texto para asegurar que quepa
+    ctx.font = '600 14px Inter, Arial, sans-serif';
+    const valueText = slice.value.toString();
+    const valueWidth = ctx.measureText(valueText).width;
+    const percentageText = `${slice.percentage}%`;
+    ctx.font = '400 12px Inter, Arial, sans-serif';
+    const percentageWidth = ctx.measureText(percentageText).width;
+    const maxTextWidth = Math.max(valueWidth, percentageWidth);
+    
+    // Ajustar posición si el texto se sale del canvas
+    const finalTextX = direction > 0
+      ? Math.min(textX, baseWidth - maxTextWidth - textPadding)
+      : Math.max(textX, maxTextWidth + textPadding);
+    
+    // Valor numérico (cantidad) - Semi Bold 600, 14px (más grande)
     ctx.fillStyle = slice.color;
-    ctx.font = '600 10px Inter, Arial'; // Semi Bold
+    ctx.font = '600 14px Inter, Arial, sans-serif';
     ctx.textAlign = direction > 0 ? 'left' : 'right';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(slice.value.toString(), endX + direction * 5, endY);
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(valueText, finalTextX, endY - 1);
+    
+    // Porcentaje debajo - Regular 400, 12px (más grande)
+    ctx.font = '400 12px Inter, Arial, sans-serif';
+    ctx.textBaseline = 'top';
+    ctx.fillText(percentageText, finalTextX, endY + 2);
   });
 
-  // Total en el centro (opacidad 0.9, tamaño 18, Semi Bold)
+  // Total en el centro - Semi Bold 600, 32px, opacidad 0.9 (más grande para el donut más grande)
   ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
-  ctx.font = '600 18px Inter, Arial'; // Semi Bold
+  ctx.font = '600 32px Inter, Arial, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(total.toString(), centerX, centerY);
 
-  return canvas.toDataURL('image/png');
+  return canvas.toDataURL('image/png', 1.0);
 }
 
 /**

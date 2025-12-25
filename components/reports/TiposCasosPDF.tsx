@@ -148,8 +148,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   chartImage: {
-    width: 550,
-    height: 350,
+    width: 750,
+    height: 500,
     objectFit: 'contain',
   },
   // Leyenda inferior
