@@ -68,8 +68,8 @@ function generatePieChartImage(
   colors: string[],
   total: number
 ): string {
-  // Usar alta resolución para mejor calidad
-  const pixelRatio = 3; // 3x para máxima calidad en PDF
+  // Usar alta resolución para mejor calidad del texto
+  const pixelRatio = 4; // 4x para máxima calidad en PDF, especialmente para texto
   // Aumentar el tamaño del canvas para que quepan todos los callouts
   const baseWidth = 750;
   const baseHeight = 500;
@@ -95,6 +95,9 @@ function generatePieChartImage(
   // Configurar suavizado de alta calidad
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
+  
+  // Configurar renderizado de texto de alta calidad
+  // Usar coordenadas alineadas a píxeles para mejor renderizado
 
   // Centrar el donut con más margen para los callouts
   const centerX = baseWidth / 2;
@@ -187,15 +190,25 @@ function generatePieChartImage(
     // Dirección horizontal
     const direction = Math.cos(midAngle) > 0 ? 1 : -1;
     
-    // Ajustar la longitud horizontal según la posición para evitar salirse del canvas
-    // Calcular el espacio disponible
-    const availableSpace = direction > 0 
-      ? baseWidth - bendX - 20  // Espacio a la derecha
-      : bendX - 20;              // Espacio a la izquierda
+    // Medir el ancho del texto para calcular la longitud de la línea
+    ctx.font = '600 14px Inter, Arial, sans-serif';
+    const valueText = slice.value.toString();
+    const valueWidth = ctx.measureText(valueText).width;
+    const percentageText = `${slice.percentage}%`;
+    ctx.font = '400 12px Inter, Arial, sans-serif';
+    const percentageWidth = ctx.measureText(percentageText).width;
+    const maxTextWidth = Math.max(valueWidth, percentageWidth);
     
-    const horizontalLength = Math.min(70, availableSpace);
-    const endX = bendX + direction * horizontalLength;
-    const endY = bendY;
+    // Calcular la longitud de la línea horizontal
+    const horizontalLength = 70;
+    const lineEndX = bendX + direction * horizontalLength;
+    const lineY = bendY; // La línea horizontal está en bendY
+    
+    // Asegurar que el final de la línea esté dentro del canvas
+    const textPadding = 8;
+    const finalLineEndX = direction > 0
+      ? Math.min(lineEndX, baseWidth - textPadding)
+      : Math.max(lineEndX, textPadding);
     
     // Dibujar línea de guía con el color del segmento
     ctx.strokeStyle = slice.color;
@@ -209,44 +222,32 @@ function generatePieChartImage(
     ctx.lineTo(bendX, bendY);
     ctx.stroke();
     
-    // Línea horizontal
+    // Línea horizontal que se extiende hasta el final (actúa como separador)
     ctx.beginPath();
     ctx.moveTo(bendX, bendY);
-    ctx.lineTo(endX, endY);
+    ctx.lineTo(finalLineEndX, lineY);
     ctx.stroke();
     
-    // Posición del texto - asegurar que esté dentro del canvas
-    const textPadding = 8;
-    const textX = Math.max(
-      textPadding,
-      Math.min(baseWidth - textPadding, endX + direction * textPadding)
-    );
-    
-    // Medir el ancho del texto para asegurar que quepa
-    ctx.font = '600 14px Inter, Arial, sans-serif';
-    const valueText = slice.value.toString();
-    const valueWidth = ctx.measureText(valueText).width;
-    const percentageText = `${slice.percentage}%`;
-    ctx.font = '400 12px Inter, Arial, sans-serif';
-    const percentageWidth = ctx.measureText(percentageText).width;
-    const maxTextWidth = Math.max(valueWidth, percentageWidth);
-    
-    // Ajustar posición si el texto se sale del canvas
-    const finalTextX = direction > 0
-      ? Math.min(textX, baseWidth - maxTextWidth - textPadding)
-      : Math.max(textX, maxTextWidth + textPadding);
-    
-    // Valor numérico (cantidad) - Semi Bold 600, 14px (más grande)
+    // Valor numérico (cantidad) - Semi Bold 600, 14px (más grande) - ARRIBA de la línea
+    // Alineado al final de la línea: derecha si direction > 0, izquierda si direction < 0
     ctx.fillStyle = slice.color;
     ctx.font = '600 14px Inter, Arial, sans-serif';
-    ctx.textAlign = direction > 0 ? 'left' : 'right';
+    ctx.textAlign = direction > 0 ? 'right' : 'left'; // Alineado al final de la línea
     ctx.textBaseline = 'bottom';
-    ctx.fillText(valueText, finalTextX, endY - 1);
+    // Alinear coordenadas a píxeles para mejor calidad
+    const valueY = Math.round((lineY - 2) * pixelRatio) / pixelRatio;
+    const valueX = Math.round(finalLineEndX * pixelRatio) / pixelRatio;
+    ctx.fillText(valueText, valueX, valueY);
     
-    // Porcentaje debajo - Regular 400, 12px (más grande)
+    // Porcentaje debajo de la línea - Regular 400, 12px (más grande)
+    // Alineado al final de la línea: derecha si direction > 0, izquierda si direction < 0
     ctx.font = '400 12px Inter, Arial, sans-serif';
+    ctx.textAlign = direction > 0 ? 'right' : 'left'; // Alineado al final de la línea
     ctx.textBaseline = 'top';
-    ctx.fillText(percentageText, finalTextX, endY + 2);
+    // Alinear coordenadas a píxeles para mejor calidad
+    const percentageY = Math.round((lineY + 2) * pixelRatio) / pixelRatio;
+    const percentageX = Math.round(finalLineEndX * pixelRatio) / pixelRatio;
+    ctx.fillText(percentageText, percentageX, percentageY);
   });
 
   // Total en el centro - Semi Bold 600, 32px, opacidad 0.9 (más grande para el donut más grande)
@@ -254,7 +255,10 @@ function generatePieChartImage(
   ctx.font = '600 32px Inter, Arial, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(total.toString(), centerX, centerY);
+  // Alinear coordenadas a píxeles para mejor calidad
+  const totalX = Math.round(centerX * pixelRatio) / pixelRatio;
+  const totalY = Math.round(centerY * pixelRatio) / pixelRatio;
+  ctx.fillText(total.toString(), totalX, totalY);
 
   return canvas.toDataURL('image/png', 1.0);
 }
