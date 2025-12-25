@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Select from '@/components/forms/Select';
 import ViewSwitcher, { ViewMode } from '../ui/navigation/ViewSwitcher';
 import { Calendar } from 'lucide-react';
@@ -17,53 +18,79 @@ interface FilterBarProps {
     onViewModeChange: (mode: ViewMode) => void;
 }
 
+interface FilterOptions {
+    dateRangeOptions: { value: string; label: string }[];
+    nucleoOptions: { value: string; label: string }[];
+    termOptions: { value: string; label: string }[];
+}
+
 export default function FilterBar({
     filters,
     onFilterChange,
     viewMode,
     onViewModeChange
 }: FilterBarProps) {
+    const [filterOptions, setFilterOptions] = useState<FilterOptions>({
+        dateRangeOptions: [{ value: 'last-month', label: 'Último mes' }],
+        nucleoOptions: [{ value: 'all', label: 'Todos los núcleos' }],
+        termOptions: [{ value: 'all', label: 'Todos los periodos' }],
+    });
+
+    useEffect(() => {
+        // Fetch filter options from API
+        const fetchFilterOptions = async () => {
+            try {
+                const response = await fetch('/api/reports/filters');
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    setFilterOptions(result.data);
+                }
+            } catch (error) {
+                console.error('Error fetching filter options:', error);
+            }
+        };
+
+        fetchFilterOptions();
+    }, []);
+
     const handleFilterUpdate = (key: keyof ReportFilters, value: string) => {
         onFilterChange({ ...filters, [key]: value });
     };
-
-    const dateRangeOptions: { value: string; label: string }[] = [];
-    const nucleoOptions: { value: string; label: string }[] = [];
-    const termOptions: { value: string; label: string }[] = [];
 
     return (
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-4 justify-between">
             {/* Filters Section */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-3 flex-1">
                 <div className="flex-1 sm:flex-initial sm:w-[320px]">
-                <Select
-                    options={dateRangeOptions}
-                    value={filters.dateRange}
-                    onChange={(e) => handleFilterUpdate('dateRange', e.target.value)}
-                    placeholder="Rango de Fechas"
+                    <Select
+                        options={filterOptions.dateRangeOptions}
+                        value={filters.dateRange}
+                        onChange={(e) => handleFilterUpdate('dateRange', e.target.value)}
+                        placeholder="Rango de Fechas"
                         className="text-md w-full"
                         icon={<Calendar className="w-5 h-5 text-neutral-700" />}
-                />
+                    />
                 </div>
 
                 <div className="flex-1 sm:flex-initial sm:w-[280px]">
-                <Select
-                    options={nucleoOptions}
-                    value={filters.nucleo}
-                    onChange={(e) => handleFilterUpdate('nucleo', e.target.value)}
-                    placeholder="Núcleo"
+                    <Select
+                        options={filterOptions.nucleoOptions}
+                        value={filters.nucleo}
+                        onChange={(e) => handleFilterUpdate('nucleo', e.target.value)}
+                        placeholder="Núcleo"
                         className="text-md w-full"
-                />
+                    />
                 </div>
 
                 <div className="flex-1 sm:flex-initial sm:w-[300px]">
-                <Select
-                    options={termOptions}
-                    value={filters.term}
-                    onChange={(e) => handleFilterUpdate('term', e.target.value)}
-                    placeholder="TERM - Periodo"
+                    <Select
+                        options={filterOptions.termOptions}
+                        value={filters.term}
+                        onChange={(e) => handleFilterUpdate('term', e.target.value)}
+                        placeholder="TERM - Periodo"
                         className="text-md w-full"
-                />
+                    />
                 </div>
             </div>
 
