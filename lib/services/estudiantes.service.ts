@@ -99,24 +99,63 @@ function validateEmailDomain(email: string): boolean {
 }
 
 /**
+ * Función helper para parsear una línea CSV considerando comillas
+ */
+function parseCSVLine(line: string): string[] {
+  const values: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let j = 0; j < line.length; j++) {
+    const char = line[j];
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if ((char === ',' || char === ';' || char === '\t') && !inQuotes) {
+      values.push(current.trim().replace(/^"|"$/g, ''));
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  values.push(current.trim().replace(/^"|"$/g, ''));
+  return values;
+}
+
+/**
  * Parsea un archivo CSV
  */
 async function parseCSV(file: File): Promise<any[]> {
   const text = await file.text();
-  const lines = text.split('\n').filter(line => line.trim().length > 0);
+  // Remover BOM si existe
+  const textWithoutBOM = text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
+  const lines = textWithoutBOM.split(/\r?\n/).filter(line => line.trim().length > 0);
   
   if (lines.length === 0) {
     throw new ValidationError('El archivo CSV está vacío');
   }
   
-  // Leer encabezados (primera línea)
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  // Leer encabezados (primera línea) usando el mismo algoritmo de parsing
+  const headerLine = lines[0];
+  const headers = parseCSVLine(headerLine).map(h => h.trim());
   
-  // Buscar índices de las columnas necesarias
+  // Debug: mostrar headers encontrados
+  console.log('Headers encontrados en CSV:', headers);
+  
+  // Buscar índices de las columnas necesarias (búsqueda case-insensitive y flexible)
   const getIndex = (name: string): number => {
-    const index = headers.findIndex(h => h.toUpperCase() === name.toUpperCase());
+    const nameUpper = name.toUpperCase().trim();
+    const index = headers.findIndex(h => {
+      const headerUpper = h.toUpperCase().trim();
+      return headerUpper === nameUpper || 
+             headerUpper.includes(nameUpper) || 
+             nameUpper.includes(headerUpper);
+    });
     if (index === -1) {
-      throw new ValidationError(`Columna requerida no encontrada: ${name}`);
+      // Mostrar headers disponibles para debug
+      throw new ValidationError(
+        `Columna requerida no encontrada: ${name}. ` +
+        `Headers encontrados: ${headers.join(', ')}`
+      );
     }
     return index;
   };
@@ -131,23 +170,8 @@ async function parseCSV(file: File): Promise<any[]> {
   const rows: any[] = [];
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i];
-    // Parsear CSV considerando comillas
-    const values: string[] = [];
-    let current = '';
-    let inQuotes = false;
-    
-    for (let j = 0; j < line.length; j++) {
-      const char = line[j];
-      if (char === '"') {
-        inQuotes = !inQuotes;
-      } else if (char === ',' && !inQuotes) {
-        values.push(current.trim().replace(/^"|"$/g, ''));
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-    values.push(current.trim().replace(/^"|"$/g, ''));
+    // Parsear CSV usando la misma función helper
+    const values = parseCSVLine(line);
     
     if (values.length > Math.max(cedulaIndex, nombreIndex, emailIndex, usuarioIndex, crnIndex)) {
       rows.push({
