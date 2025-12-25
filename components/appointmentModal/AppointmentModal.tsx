@@ -8,9 +8,14 @@ import { createCitaAction } from "@/app/actions/citas";
 import { getCaseIdsAction } from "@/app/actions/casos";
 import ModalFooter from "../ui/ModalFooter";
 import TextArea from "../forms/TextArea";
+interface AppointmentModalProps {
+  onClose: () => void;
+  onSave: () => void;
+  initialDate?: Date;
+}
 
-export function AppointmentModal() {
-  const [date, setDate] = useState<Date | null>(null);
+export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentModalProps) {
+  const [date, setDate] = useState<Date | null>(initialDate || null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [selectedCaseID, setSelectedCaseID] = useState<string>("");
   const [orientacion, setOrientacion] = useState<string>("");
@@ -38,13 +43,14 @@ export function AppointmentModal() {
   }, []);
 
   const handleClose = () => {
-    setDate(null);
+    setDate(initialDate || null);
     setEndDate(null);
     setSelectedCaseID("");
     setOrientacion("");
     setError(null);
     setSuccess(false);
     setIsOpen(false);
+    if (onClose) onClose();
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -61,14 +67,15 @@ export function AppointmentModal() {
     });
 
     setLoading(false);
-
-    if (result.success) {
+    if (result.success && result.data) {
       setSuccess(true);
       // Limpiar el formulario tras éxito
-      setDate(null);
+      setDate(initialDate || null);
       setEndDate(null);
       setSelectedCaseID("");
       setOrientacion("");
+      onSave();
+      if (onClose) onClose();
     } else {
       setError(result.error?.message || "Error al crear la cita");
     }
@@ -158,23 +165,18 @@ export function AppointmentModal() {
           )}
         </form>
 
-        {/* Footer con nota y botón */}
-        <div className="flex flex-col border-t border-gray-200 pt-2">
-          <div className="flex items-center gap-1 pb-4">
-            <span className="text-danger font-medium text-sm">*</span>
-            <span className="text-sm text-gray-600">Campo obligatorio</span>
-          </div>
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              className="bg-primary text-white font-semibold rounded-full px-8 py-3 text-base shadow hover:bg-primary-dark transition-colors disabled:opacity-60"
-              onClick={handleSubmit}
-              disabled={loading}
-            >
-              {loading ? 'Guardando...' : 'Guardar'}
-            </button>
-          </div>
-        </div>
+        {/* Footer con ModalFooter y nota de campo obligatorio */}
+        <ModalFooter
+          onSave={handleSubmit}
+          saveLabel={loading ? 'Guardando...' : 'Guardar'}
+          disabled={loading}
+          note={
+            <>
+              <span className="text-danger font-medium text-sm">*</span>
+              <span className="text-sm text-gray-600">Campo obligatorio</span>
+            </>
+          }
+        />
       </div>
     </Modal>
   );

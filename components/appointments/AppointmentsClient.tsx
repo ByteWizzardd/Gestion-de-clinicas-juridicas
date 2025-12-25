@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { getCitasAction } from '@/app/actions/citas';
 import CalendarWidget from '@/components/ui/calendar/CalendarWidget';
 import AppointmentList from '@/components/cards/AppointmentList';
 import type { Appointment } from '@/types/appointment';
+import { AppointmentModal } from '../appointmentModal/AppointmentModal';
 
 interface AppointmentsClientProps {
   initialAppointments: Appointment[];
@@ -14,14 +16,11 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
   const [selectedMonth, setSelectedMonth] = useState(
     new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   );
-
-  // Convertir fechas de string a Date
-  const appointments = useMemo(() => {
-    return initialAppointments.map((apt: any) => ({
-      ...apt,
-      date: new Date(apt.date),
-    }));
-  }, [initialAppointments]);
+  const [appointments, setAppointments] = useState<Appointment[]>(
+    initialAppointments.map((apt) => ({ ...apt, date: new Date(apt.date) }))
+  );
+  const [showModal, setShowModal] = useState(false);
+  const [modalDate, setModalDate] = useState<Date | null>(null);
 
   // Filtrar citas del mes seleccionado
   const monthAppointments = useMemo(() => {
@@ -51,13 +50,33 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
     const newMonth = new Date(date.getFullYear(), date.getMonth(), 1);
     setSelectedMonth(newMonth);
   };
-
+  // Abrir modal para agregar nueva cita
   const handleAddAppointment = () => {
-    // TODO: Implementar lógica para añadir nueva cita
+    setModalDate(selectedDate);
+    setShowModal(true);
+  };
+  // Cerrar modal
+  const handleModalClose = () => {
+    setShowModal(false);
+    setModalDate(null);
+  };
+
+  const handleModalSave = async () => {
+    // Recargar citas desde el backend
+    const result = await getCitasAction();
+    if (result.success && result.data) {
+      if (Array.isArray(result.data)) {
+        setAppointments(result.data.map((apt: Appointment) => ({ ...apt, date: new Date(apt.date) })));
+      } else {
+        setAppointments([]);
+      }
+    }
+    setShowModal(false);
+    setModalDate(null);
   };
 
   return (
-    <div className="h-full">
+    <div className="h-full relative">
       <div className="mb-6 mt-4">
         <h1 className="text-3xl font-medium text-foreground mb-1" style={{ fontFamily: 'var(--font-league-spartan)' }}>
           Programación y Consultas
@@ -85,6 +104,16 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
           />
         </div>
       </div>
+
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <AppointmentModal
+            onClose={handleModalClose}
+            onSave={handleModalSave}
+            initialDate={modalDate || selectedDate}
+          />
+        </div>
+      )}
     </div>
   );
 }
