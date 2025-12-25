@@ -68,6 +68,53 @@ export const usuariosQueries = {
     const result: QueryResult = await pool.query(query, [cedula]);
     return result.rows[0] || null;
   },
+
+  /**
+   * Crea o actualiza un usuario
+   */
+  createOrUpdate: async (data: {
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+    correo_electronico: string;
+    nombre_usuario: string;
+    contrasena: string;
+    telefono_celular?: string | null;
+  }): Promise<any> => {
+    const query = loadSQL('usuarios/create-or-update.sql');
+    const result: QueryResult = await pool.query(query, [
+      data.cedula,
+      data.nombres,
+      data.apellidos,
+      data.correo_electronico,
+      data.nombre_usuario,
+      data.contrasena,
+      data.telefono_celular || null,
+    ]);
+    return result.rows[0];
+  },
+
+  /**
+   * Obtiene todos los usuarios con información adicional
+   */
+  getAll: async (): Promise<Array<{
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+    nombre_completo: string;
+    correo_electronico: string;
+    nombre_usuario: string;
+    telefono_celular: string | null;
+    habilitado_sistema: boolean;
+    tipo_usuario: string;
+    info_estudiante: string | null;
+    info_profesor: string | null;
+    info_coordinador: string | null;
+  }>> => {
+    const query = loadSQL('usuarios/get-all.sql');
+    const result: QueryResult = await pool.query(query);
+    return result.rows;
+  },
 };
 
 

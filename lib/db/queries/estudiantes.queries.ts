@@ -20,5 +20,24 @@ export const estudiantesQueries = {
     const result: QueryResult = await pool.query(query, [cedula]);
     return result.rows;
   },
+
+  /**
+   * Crea o actualiza un estudiante
+   */
+  createOrUpdate: async (data: {
+    term: string;
+    cedula_estudiante: string;
+    tipo_estudiante: string;
+    nrc: string;
+  }): Promise<any> => {
+    const query = loadSQL('estudiantes/create-or-update.sql');
+    const result: QueryResult = await pool.query(query, [
+      data.term,
+      data.cedula_estudiante,
+      data.tipo_estudiante,
+      data.nrc,
+    ]);
+    return result.rows[0];
+  },
 };
 
