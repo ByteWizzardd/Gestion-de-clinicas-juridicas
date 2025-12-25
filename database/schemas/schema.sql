@@ -111,7 +111,7 @@ CREATE TABLE solicitantes (
     fecha_nacimiento DATE NOT NULL,
     telefono_local VARCHAR(20),
     telefono_celular VARCHAR(20) NOT NULL,
-    correo_electronico VARCHAR(100) NOT NULL,
+    correo_electronico VARCHAR(100) NOT NULL UNIQUE,
     
     sexo VARCHAR(20) NOT NULL CHECK (sexo IN ('M', 'F')),
     nacionalidad VARCHAR(20) NOT NULL CHECK (nacionalidad IN ('V', 'E')),
@@ -121,8 +121,8 @@ CREATE TABLE solicitantes (
     tiempo_estudio VARCHAR(50) NOT NULL,
     
     id_nivel_educativo INTEGER NOT NULL REFERENCES niveles_educativos(id_nivel_educativo),
-    id_trabajo INTEGER NOT NULL REFERENCES condicion_trabajo(id_trabajo),
-    id_actividad INTEGER NOT NULL REFERENCES condicion_actividad(id_actividad),
+    id_trabajo INTEGER REFERENCES condicion_trabajo(id_trabajo),
+    id_actividad INTEGER REFERENCES condicion_actividad(id_actividad),
     
     id_estado INTEGER NOT NULL,
     num_municipio INTEGER NOT NULL,

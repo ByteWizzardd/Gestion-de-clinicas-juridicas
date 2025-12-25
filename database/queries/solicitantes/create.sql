@@ -8,13 +8,13 @@
 -- $6 = fecha_nacimiento
 -- $7 = sexo ('M' o 'F')
 -- $8 = nacionalidad ('V' o 'E')
+-- $9 = id_trabajo (opcional, puede ser NULL)
+-- $10 = id_actividad (opcional, puede ser NULL)
 -- 
 -- Nota: Este query crea un solicitante con valores por defecto para los campos requeridos.
 -- Los valores por defecto deben existir en las tablas de referencia.
 -- IMPORTANTE: Asegúrate de que existan registros con id=1 en:
 -- - niveles_educativos
--- - condicion_trabajo
--- - condicion_actividad
 -- - estados, municipios, parroquias (id_estado=1, num_municipio=1, num_parroquia=1)
 
 INSERT INTO solicitantes (
@@ -40,8 +40,8 @@ INSERT INTO solicitantes (
     false, -- concubinato por defecto
     '', -- tiempo_estudio por defecto (vacío)
     1, -- id_nivel_educativo (debe existir en niveles_educativos)
-    1, -- id_trabajo (debe existir en condicion_trabajo)
-    1, -- id_actividad (debe existir en condicion_actividad)
+    $9, -- id_trabajo (puede ser NULL)
+    $10, -- id_actividad (puede ser NULL)
     1, -- id_estado (debe existir en estados)
     1, -- num_municipio (debe existir en municipios con id_estado=1)
     1  -- num_parroquia (debe existir en parroquias con id_estado=1, num_municipio=1)

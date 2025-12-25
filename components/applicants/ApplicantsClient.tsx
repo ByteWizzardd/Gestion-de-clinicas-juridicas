@@ -153,7 +153,8 @@ export default function ApplicantsClient({
           if (solicitante && solicitante.cedula) {
             const cedulaCompleta = solicitante.cedula;
             const tipo = cedulaCompleta.charAt(0);
-            const numero = cedulaCompleta.substring(1);
+            // Extraer solo los números, eliminando guiones y cualquier otro carácter
+            const numero = cedulaCompleta.substring(1).replace(/[^0-9]/g, '');
             setRegisteredCedula({ tipo, numero });
             setRegisteredNombre(solicitante.nombres && solicitante.apellidos 
               ? `${solicitante.nombres} ${solicitante.apellidos}` 

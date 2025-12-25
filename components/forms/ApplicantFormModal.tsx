@@ -799,7 +799,20 @@ export default function ApplicantFormModal({
         const result = await createSolicitanteAction(formData);
 
         if (!result.success) {
+          const errorCode = result.error?.code;
           const errorMessage = result.error?.message || 'Error al registrar solicitante';
+          
+          // Si es un error de correo duplicado, mostrarlo en el campo correspondiente
+          if (errorCode === 'EMAIL_DUPLICADO' || errorMessage.includes('correo electrónico') || errorMessage.includes('ya está asociado')) {
+            setErrors((prev) => ({
+              ...prev,
+              correoElectronico: errorMessage,
+            }));
+            // Ir al paso 1 donde está el campo de correo
+            setCurrentStep(0);
+            return;
+          }
+          
           throw new Error(errorMessage);
         }
 
@@ -808,7 +821,17 @@ export default function ApplicantFormModal({
         onSubmit(result);
       } catch (error: any) {
         const errorMessage = error?.message || 'Error al registrar solicitante. Por favor, intente nuevamente.';
-        alert(errorMessage);
+        
+        // Si el error contiene información sobre correo duplicado, mostrarlo en el campo
+        if (errorMessage.includes('correo electrónico') || errorMessage.includes('ya está asociado')) {
+          setErrors((prev) => ({
+            ...prev,
+            correoElectronico: errorMessage,
+          }));
+          setCurrentStep(0);
+        } else {
+          alert(errorMessage);
+        }
       }
     }
   };
@@ -1221,14 +1244,16 @@ export default function ApplicantFormModal({
     // Esperar 500ms después de que el usuario deje de escribir
     const timeout = setTimeout(async () => {
       try {
-        const { searchSolicitantesAction } = await import('@/app/actions/solicitantes');
-        const result = await searchSolicitantesAction(email, 'email');
+        const { checkEmailExistsAction } = await import('@/app/actions/solicitantes');
+        // Siempre verificar si el correo existe, sin excluir ninguna cédula
+        // Si el correo existe, mostrar el error
+        const result = await checkEmailExistsAction(email);
 
-        if (result.success && result.data && result.data.length > 0) {
-          // El correo ya está asociado a otra persona (usuario o solicitante)
+        if (result.success && result.exists) {
+          // El correo ya está asociado a otro solicitante
           setErrors((prev) => ({
             ...prev,
-            correoElectronico: `El correo electrónico ${email} ya está asociado a otra persona`,
+            correoElectronico: `El correo electrónico ${email} ya está registrado para otro solicitante`,
           }));
         } else {
           // Limpiar el error si el correo no existe como solicitante
@@ -1237,10 +1262,10 @@ export default function ApplicantFormModal({
             delete newErrors.correoElectronico;
             return newErrors;
           });
+        }
+      } catch (error) {
+        // No mostrar error al usuario si falla la verificación
       }
-    } catch (error) {
-      // No mostrar error al usuario si falla la verificación
-    }
     }, 500);
 
     setEmailCheckTimeout(timeout);

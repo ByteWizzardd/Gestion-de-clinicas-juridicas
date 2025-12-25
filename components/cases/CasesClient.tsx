@@ -100,7 +100,9 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
     const cedulaTipo = searchParams.get('cedulaTipo');
     
     if (cedula && cedulaTipo) {
-      const cedulaNumero = cedula.startsWith(cedulaTipo) ? cedula.substring(cedulaTipo.length) : cedula;
+      // Extraer solo los números, eliminando guiones y cualquier otro carácter
+      let cedulaNumero = cedula.startsWith(cedulaTipo) ? cedula.substring(cedulaTipo.length) : cedula;
+      cedulaNumero = cedulaNumero.replace(/[^0-9]/g, '');
       setInitialCedula(cedulaNumero);
       setInitialCedulaTipo(cedulaTipo);
       setIsModalOpen(true);

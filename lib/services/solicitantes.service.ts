@@ -199,26 +199,116 @@ export const solicitantesService = {
         nacionalidad = nacionalidadForm === 'Ext' ? 'E' : (nacionalidadForm === 'V' ? 'V' : 'E');
       }
       
-      // Verificar si el solicitante ya existe
+      // 1. Obtener IDs de condicion_trabajo y condicion_actividad ANTES de crear/actualizar solicitante
+      // Ambos pueden ser NULL si no se especifica
+      let idTrabajo: number | null = null;
+      let idActividad: number | null = null;
+      
+      if (data.trabaja === 'si' && data.condicionTrabajo) {
+        // Si trabaja: buscar ID de condicion_trabajo
+        const trabajoResult = await client.query(
+          'SELECT id_trabajo FROM condicion_trabajo WHERE nombre_trabajo = $1 LIMIT 1',
+          [data.condicionTrabajo]
+        );
+        idTrabajo = trabajoResult.rows[0]?.id_trabajo || null;
+      } else if (data.trabaja === 'no') {
+        // Si no trabaja: id_trabajo = 0 (no trabaja)
+        idTrabajo = 0;
+        
+        if (data.buscandoTrabajo === 'si') {
+          // Si está buscando trabajo: id_actividad = 0 (buscando trabajo)
+          idActividad = 0;
+        } else if (data.condicionActividad) {
+          // Si no está buscando trabajo y tiene condición de actividad: buscar ID
+          const actividadResult = await client.query(
+            'SELECT id_actividad FROM condicion_actividad WHERE nombre_actividad = $1 LIMIT 1',
+            [data.condicionActividad]
+          );
+          idActividad = actividadResult.rows[0]?.id_actividad || null;
+        }
+        // Si no trabaja y no tiene condición de actividad, ambos pueden ser NULL
+      }
+      // Si no se especifica si trabaja o no, ambos pueden ser NULL
+
+      // 2. Buscar o crear nivel educativo del solicitante
+      const descripcionNivelSolicitante = getNivelEducativoDescripcion(data.numeroEducativoSolicitante);
+      const nivelEducativoSolicitante = await findOrCreateNivelEducativo(client, descripcionNivelSolicitante);
+
+      // 3. Verificar si el solicitante ya existe
       const checkSolicitanteQuery = loadSQL('solicitantes/check-exists.sql');
       const solicitanteExistente = await client.query(checkSolicitanteQuery, [cedula]);
       
       if (solicitanteExistente.rows.length === 0) {
+        // Verificar si el correo electrónico ya existe en otro solicitante antes de crear
+        const checkEmailQuery = loadSQL('solicitantes/check-email-exists.sql');
+        const emailExistente = await client.query(checkEmailQuery, [data.correoElectronico]);
+        
+        if (emailExistente.rows.length > 0) {
+          await client.query('ROLLBACK');
+          throw new AppError(
+            `El correo electrónico ${data.correoElectronico} ya está asociado a otro solicitante`,
+            400,
+            'EMAIL_DUPLICADO'
+          );
+        }
+        
         // Crear solicitante básico
         const createSolicitanteQuery = loadSQL('solicitantes/create.sql');
-        await client.query(createSolicitanteQuery, [
-          cedula,
-          data.nombres,
-          data.apellidos,
-          data.correoElectronico,
-          `${data.codigoPaisCelular}${data.telefonoCelular}`,
-          data.fechaNacimiento,
-          sexo,
-          nacionalidad,
-        ]);
+        try {
+          await client.query(createSolicitanteQuery, [
+            cedula,
+            data.nombres,
+            data.apellidos,
+            data.correoElectronico,
+            `${data.codigoPaisCelular}${data.telefonoCelular}`,
+            data.fechaNacimiento,
+            sexo,
+            nacionalidad,
+            idTrabajo, // Puede ser NULL
+            idActividad, // Puede ser NULL
+          ]);
+        } catch (error: any) {
+          // Si es un error de unique constraint en correo_electronico
+          if (error.code === '23505' && error.constraint === 'solicitantes_correo_electronico_unique') {
+            await client.query('ROLLBACK');
+            throw new AppError(
+              `El correo electrónico ${data.correoElectronico} ya está asociado a otro solicitante`,
+              400,
+              'EMAIL_DUPLICADO'
+            );
+          }
+          throw error;
+        }
+      } else {
+        // Si el solicitante ya existe, verificar que el correo no haya cambiado a uno que ya existe
+        const solicitanteActual = solicitanteExistente.rows[0];
+        if (solicitanteActual.correo_electronico !== data.correoElectronico) {
+          // El correo está cambiando, verificar que el nuevo no exista en otro solicitante
+          const checkNuevoEmailQuery = loadSQL('solicitantes/check-email-exists.sql');
+          const nuevoEmailExistente = await client.query(checkNuevoEmailQuery, [data.correoElectronico]);
+          
+          // Si el correo existe y no es del mismo solicitante, error
+          if (nuevoEmailExistente.rows.length > 0) {
+            const otroSolicitante = nuevoEmailExistente.rows[0];
+            if (otroSolicitante.cedula !== cedula) {
+              await client.query('ROLLBACK');
+              throw new AppError(
+                `El correo electrónico ${data.correoElectronico} ya está asociado a otro solicitante`,
+                400,
+                'EMAIL_DUPLICADO'
+              );
+            }
+          }
+        }
+        
+        // Actualizar id_trabajo e id_actividad si el solicitante ya existe
+        await client.query(
+          'UPDATE solicitantes SET id_trabajo = $1, id_actividad = $2 WHERE cedula = $3',
+          [idTrabajo, idActividad, cedula]
+        );
       }
 
-      // 2. Crear vivienda
+      // 4. Crear vivienda
       const createViviendaQuery = loadSQL('viviendas/create.sql');
       const viviendaResult: QueryResult = await client.query(createViviendaQuery, [
         cedula,
@@ -227,53 +317,20 @@ export const solicitantesService = {
       ]);
       const vivienda = viviendaResult.rows[0];
 
-      // 3. Buscar o crear nivel educativo del solicitante
-      const descripcionNivelSolicitante = getNivelEducativoDescripcion(data.numeroEducativoSolicitante);
-      const nivelEducativoSolicitante = await findOrCreateNivelEducativo(client, descripcionNivelSolicitante);
-
-      // 4. Buscar o crear nivel educativo del jefe de hogar (si aplica)
+      // 5. Buscar o crear nivel educativo del jefe de hogar (si aplica)
       let nivelEducativoJefeHogar = null;
       if (data.jefeHogar === 'no' && data.numeroEducativo) {
         const descripcionNivelJefe = getNivelEducativoDescripcion(data.numeroEducativo);
         nivelEducativoJefeHogar = await findOrCreateNivelEducativo(client, descripcionNivelJefe);
       }
 
-      // 5. Obtener IDs de condicion_trabajo y condicion_actividad
-      // En el nuevo schema, solicitantes tiene id_trabajo e id_actividad directamente
-      // Necesitamos obtener los IDs de las tablas de catálogo
-      const trabaja = data.trabaja === 'si';
-      let idTrabajo: number | null = null;
-      let idActividad: number | null = null;
-      
-      if (trabaja && data.condicionTrabajo) {
-        // Si trabaja: buscar ID de condicion_trabajo
-        const trabajoResult = await client.query(
-          'SELECT id_trabajo FROM condicion_trabajo WHERE nombre_trabajo = $1 LIMIT 1',
-          [data.condicionTrabajo]
-        );
-        idTrabajo = trabajoResult.rows[0]?.id_trabajo || 1; // Fallback a 1 (Patrono) si no existe
-      } else if (!trabaja) {
-        // Si no trabaja: id_trabajo = 0 (no trabaja)
-        idTrabajo = 0;
-        
-        if (data.buscandoTrabajo === 'si') {
-          // Si está buscando trabajo: id_actividad = 0 (buscando trabajo)
-          idActividad = 0;
-        } else if (data.condicionActividad) {
-          // Si no está buscando trabajo: buscar ID de condicion_actividad
-          const actividadResult = await client.query(
-            'SELECT id_actividad FROM condicion_actividad WHERE nombre_actividad = $1 LIMIT 1',
-            [data.condicionActividad]
-          );
-          idActividad = actividadResult.rows[0]?.id_actividad || 1; // Fallback a 1 (Ama de Casa) si no existe
-        }
-      }
-      
-      // Si no se encontró ninguno, usar valores por defecto
-      if (idTrabajo === null) idTrabajo = 0; // Valor por defecto: no trabaja
-      if (idActividad === null) idActividad = 1; // Valor por defecto: Ama de Casa
+      // 6. Actualizar nivel educativo del solicitante
+      await client.query(
+        'UPDATE solicitantes SET id_nivel_educativo = $1 WHERE cedula = $2',
+        [nivelEducativoSolicitante.id_nivel_educativo, cedula]
+      );
 
-      // 6. Crear familia y hogar
+      // 7. Crear familia y hogar
       const createHogarQuery = loadSQL('familias-hogares/create.sql');
       const cantTrabajadores = parseInt(data.cantTrabajadores);
       const cantPersonas = parseInt(data.cantPersonas);
@@ -292,7 +349,7 @@ export const solicitantesService = {
       ]);
       const hogar = hogarResult.rows[0];
 
-      // 7. Guardar características de vivienda en asignadas_a
+      // 8. Guardar características de vivienda en asignadas_a
       // Mapear descripciones a num_caracteristica según el catálogo
       const guardarCaracteristica = async (
         descripcion: string,
