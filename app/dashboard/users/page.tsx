@@ -1,7 +1,9 @@
-export default function UsersPage() {
-    return (
-        <div>
-            <h1>Gestión de Usuarios</h1>
-        </div>
-    );
+import UsersClient from '@/components/users/UsersClient';
+import { getUsuariosAction } from '@/app/actions/usuarios';
+
+export default async function UsersPage() {
+    const usuariosResult = await getUsuariosAction();
+    const usuarios = usuariosResult.success ? usuariosResult.data || [] : [];
+
+    return <UsersClient initialUsuarios={usuarios} />;
 }
