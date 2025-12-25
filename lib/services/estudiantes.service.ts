@@ -138,9 +138,6 @@ async function parseCSV(file: File): Promise<any[]> {
   const headerLine = lines[0];
   const headers = parseCSVLine(headerLine).map(h => h.trim());
   
-  // Debug: mostrar headers encontrados
-  console.log('Headers encontrados en CSV:', headers);
-  
   // Buscar índices de las columnas necesarias (búsqueda case-insensitive y flexible)
   const getIndex = (name: string): number => {
     const nameUpper = name.toUpperCase().trim();
