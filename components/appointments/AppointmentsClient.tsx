@@ -15,6 +15,7 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
   const [selectedMonth, setSelectedMonth] = useState(
     new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   );
+  const [filterByDate, setFilterByDate] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -37,16 +38,28 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
     }));
   }, [initialAppointments]);
 
-  // Filtrar citas del mes seleccionado
-  const monthAppointments = useMemo(() => {
-    return appointments.filter((apt) => {
-      const aptDate = new Date(apt.date);
-      return (
-        aptDate.getFullYear() === selectedMonth.getFullYear() &&
-        aptDate.getMonth() === selectedMonth.getMonth()
-      );
-    });
-  }, [appointments, selectedMonth]);
+  // Filtrar citas según el modo: por día específico o por mes completo
+  const displayedAppointments = useMemo(() => {
+    if (filterByDate) {
+      // Filtrar solo las citas del día seleccionado
+      return appointments.filter((apt) => {
+        const aptDate = new Date(apt.date);
+        const selectedDateOnly = new Date(selectedDate);
+        selectedDateOnly.setHours(0, 0, 0, 0);
+        aptDate.setHours(0, 0, 0, 0);
+        return aptDate.getTime() === selectedDateOnly.getTime();
+      });
+    } else {
+      // Filtrar citas del mes seleccionado
+      return appointments.filter((apt) => {
+        const aptDate = new Date(apt.date);
+        return (
+          aptDate.getFullYear() === selectedMonth.getFullYear() &&
+          aptDate.getMonth() === selectedMonth.getMonth()
+        );
+      });
+    }
+  }, [appointments, selectedMonth, selectedDate, filterByDate]);
 
   // Preparar datos para el calendario (solo fechas)
   const calendarAppointments = useMemo(() => {
@@ -59,6 +72,13 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
     setSelectedDate(date);
     const newMonth = new Date(date.getFullYear(), date.getMonth(), 1);
     setSelectedMonth(newMonth);
+    // Activar filtro por día cuando se selecciona un día específico
+    setFilterByDate(true);
+  };
+
+  const handleShowAllMonth = () => {
+    // Desactivar filtro por día para mostrar todas las citas del mes
+    setFilterByDate(false);
   };
 
   const handleMonthChange = (date: Date) => {
@@ -108,9 +128,11 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
           transition={{ duration: prefersReducedMotion ? 0 : 0.2, delay: prefersReducedMotion ? 0 : 0.15, ease: "easeOut" }}
         >
           <AppointmentList
-            appointments={monthAppointments}
+            appointments={displayedAppointments}
             selectedMonth={selectedMonth}
+            selectedDate={filterByDate ? selectedDate : null}
             onAddAppointment={handleAddAppointment}
+            onShowAllMonth={filterByDate ? handleShowAllMonth : undefined}
           />
         </motion.div>
       </div>

@@ -162,7 +162,7 @@ export default function CalendarWidget({
       <div className="flex items-center justify-between mb-6 flex-shrink-0">
         <button
           onClick={handlePrevMonth}
-          className="p-2 hover:bg-gray-100 rounded-md transition-colors"
+          className="p-2 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
           aria-label="Mes anterior"
         >
           <ChevronLeft className="w-5 h-5 text-foreground" />
@@ -172,7 +172,7 @@ export default function CalendarWidget({
         </h2>
         <button
           onClick={handleNextMonth}
-          className="p-2 hover:bg-gray-100 rounded-md transition-colors"
+          className="p-2 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
           aria-label="Mes siguiente"
         >
           <ChevronRight className="w-5 h-5 text-foreground" />
@@ -213,7 +213,7 @@ export default function CalendarWidget({
                 <button
                   key={`prev-${day}`}
                   onClick={() => handleDayClick(day, false)}
-                  className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-base text-left ${
+                  className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-base text-left cursor-pointer ${
                     isLastInRow ? 'border-r-0' : ''
                   }`}
                 >
@@ -236,14 +236,14 @@ export default function CalendarWidget({
                   key={day}
                   onClick={() => handleDayClick(day, true)}
                   className={`
- p-2 border-r border-b border-gray-300 transition-colors text-base text-left relative
+ p-2 border-r border-b border-gray-300 transition-all duration-200 ease-in-out text-base text-left relative cursor-pointer
                     ${isLastInRow ? 'border-r-0' : ''}
                     ${
                       isCurrentDay
                         ? 'bg-primary text-white font-semibold hover:bg-primary-dark'
                         : hasApts
                         ? 'bg-primary-light text-primary font-medium hover:bg-primary-light/80'
-                        : 'text-foreground hover:bg-gray-50'
+                        : 'text-foreground hover:bg-gray-200 hover:font-medium'
                     }
                   `}
                 >
@@ -265,7 +265,7 @@ export default function CalendarWidget({
                 <button
                   key={`next-${day}`}
                   onClick={() => handleDayClick(day, false)}
-                  className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-base text-left ${
+                  className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-base text-left cursor-pointer ${
                     isLastInRow ? 'border-r-0' : ''
                   }`}
                 >
