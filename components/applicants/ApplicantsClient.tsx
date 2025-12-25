@@ -83,11 +83,13 @@ export default function ApplicantsClient({
 
     return solicitantes.filter((solicitante) => {
       const normalizedSearch = normalizeText(searchValue);
+      const nucleoDisplay = solicitante.nucleo || 'Sin núcleo';
       const matchesSearch = 
         !searchValue ||
         solicitante.cedula.includes(searchValue) ||
         normalizeText(solicitante.nombre_completo || '').includes(normalizedSearch) ||
-        normalizeText(solicitante.telefono_celular || '').includes(normalizedSearch);
+        normalizeText(solicitante.telefono_celular || '').includes(normalizedSearch) ||
+        normalizeText(nucleoDisplay).includes(normalizedSearch);
 
       const matchesNucleo = !nucleoFilter || solicitante.nucleo === nucleoFilter;
 

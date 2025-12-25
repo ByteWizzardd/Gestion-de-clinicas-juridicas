@@ -140,6 +140,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       const normalizedSearch = normalizeText(searchValue);
       
       // Buscar en todos los campos visibles en la tabla
+      const responsableDisplay = caso.nombre_responsable || 'Sin asignar';
       const matchesSearch = 
         !searchValue ||
         // Código (id_caso)
@@ -156,8 +157,8 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
         normalizeText(caso.nombre_subcategoria || '').includes(normalizedSearch) ||
         // Estatus
         normalizeText(caso.estatus || '').includes(normalizedSearch) ||
-        // Responsable
-        normalizeText(caso.nombre_responsable || '').includes(normalizedSearch) ||
+        // Responsable (incluye "Sin asignar" cuando es null)
+        normalizeText(responsableDisplay).includes(normalizedSearch) ||
         // Núcleo
         normalizeText(caso.nombre_nucleo || '').includes(normalizedSearch);
 
