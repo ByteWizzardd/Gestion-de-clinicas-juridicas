@@ -50,60 +50,60 @@ export default function ReportsPage() {
             setError(null);
 
             try {
-                // Build query parameters
-                const params = new URLSearchParams();
+                // Import server actions
+                const {
+                    getDistributionByNucleo,
+                    getTopCases,
+                    getDistributionByStatus,
+                    getCaseLoadTrend,
+                    getKPIStats
+                } = await import('@/app/actions/reports');
+
+                // Build parameters
+                let fechaInicio: string | undefined;
+                let fechaFin: string | undefined;
+                let idNucleo: number | undefined;
+                let term: string | undefined;
 
                 if (filters.dateRange !== 'all') {
-                    const fechaInicio = getDateFromRange(filters.dateRange);
-                    const fechaFin = new Date().toISOString().split('T')[0];
-                    params.append('fechaInicio', fechaInicio);
-                    params.append('fechaFin', fechaFin);
+                    fechaInicio = getDateFromRange(filters.dateRange);
+                    fechaFin = new Date().toISOString().split('T')[0];
                 }
 
                 if (filters.nucleo !== 'all') {
-                    params.append('idNucleo', filters.nucleo);
+                    idNucleo = parseInt(filters.nucleo);
                 }
 
                 if (filters.term !== 'all') {
-                    params.append('term', filters.term);
+                    term = filters.term;
                 }
 
-                const queryString = params.toString();
-
-                // Fetch all data in parallel
-                const [distributionRes, topCasesRes, statusDistRes, trendRes, kpiRes] = await Promise.all([
-                    fetch(`/api/reports/distribution?${queryString}`),
-                    fetch(`/api/reports/top-cases?${queryString}`),
-                    fetch(`/api/reports/status-distribution?${queryString}`),
-                    fetch(`/api/reports/case-load-trend?${queryString}`),
-                    fetch(`/api/reports/kpi?${queryString}`)
-                ]);
-
+                // Fetch all data in parallel using server actions
                 const [distributionResult, topCasesResult, statusDistResult, trendResult, kpiResult] = await Promise.all([
-                    distributionRes.json(),
-                    topCasesRes.json(),
-                    statusDistRes.json(),
-                    trendRes.json(),
-                    kpiRes.json()
+                    getDistributionByNucleo(fechaInicio, fechaFin, idNucleo, term),
+                    getTopCases(fechaInicio, fechaFin, idNucleo, term),
+                    getDistributionByStatus(fechaInicio, fechaFin, idNucleo, term),
+                    getCaseLoadTrend(fechaInicio, fechaFin, idNucleo, term),
+                    getKPIStats(fechaInicio, fechaFin, idNucleo, term)
                 ]);
 
-                if (distributionResult.success) {
+                if (distributionResult.success && distributionResult.data) {
                     setDistributionData(distributionResult.data);
                 }
 
-                if (topCasesResult.success) {
+                if (topCasesResult.success && topCasesResult.data) {
                     setTopCasesData(topCasesResult.data);
                 }
 
-                if (statusDistResult.success) {
+                if (statusDistResult.success && statusDistResult.data) {
                     setStatusDistributionData(statusDistResult.data);
                 }
 
-                if (trendResult.success) {
+                if (trendResult.success && trendResult.data) {
                     setCaseLoadTrendData(trendResult.data);
                 }
 
-                if (kpiResult.success) {
+                if (kpiResult.success && kpiResult.data) {
                     setKPIData(kpiResult.data);
                 }
 
@@ -121,23 +121,12 @@ export default function ReportsPage() {
     const handleGenerateReport = async (reportType: string) => {
         if (reportType === 'Tipos de Casos') {
             try {
-                // Obtener datos agrupados
-                const response = await fetch('/api/reports/tipos-casos', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        fechaInicio: filters.dateRange !== 'all' ? getDateFromRange(filters.dateRange) : undefined,
-                        fechaFin: filters.dateRange !== 'all' ? new Date().toISOString().split('T')[0] : undefined,
-                    }),
-                });
-
-                if (!response.ok) {
-                    throw new Error('Error al obtener datos');
-                }
-
-                const result = await response.json();
+                // Obtener datos agrupados usando server action
+                const { getCasosGroupedByAmbitoLegal } = await import('@/app/actions/reports');
+                const result = await getCasosGroupedByAmbitoLegal(
+                    filters.dateRange !== 'all' ? getDateFromRange(filters.dateRange) : undefined,
+                    filters.dateRange !== 'all' ? new Date().toISOString().split('T')[0] : undefined
+                );
 
                 if (result.success && result.data) {
                     // Importar y usar la función de generación de PDF con React PDF

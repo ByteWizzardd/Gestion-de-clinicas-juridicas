@@ -37,11 +37,11 @@ export default function FilterBar({
     });
 
     useEffect(() => {
-        // Fetch filter options from API
+        // Fetch filter options from server action
         const fetchFilterOptions = async () => {
             try {
-                const response = await fetch('/api/reports/filters');
-                const result = await response.json();
+                const { getFilterOptions } = await import('@/app/actions/reports');
+                const result = await getFilterOptions();
 
                 if (result.success && result.data) {
                     setFilterOptions(result.data);
