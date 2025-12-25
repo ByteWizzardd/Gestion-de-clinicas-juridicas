@@ -200,7 +200,9 @@ export const solicitantesService = {
       }
       
       // 1. Obtener IDs de condicion_trabajo y condicion_actividad ANTES de crear/actualizar solicitante
-      // Ambos pueden ser NULL si no se especifica
+      // Lógica:
+      // - Si TRABAJA: id_trabajo = valor (1,2,3,4), id_actividad = NULL (no aplica, ya está trabajando)
+      // - Si NO TRABAJA: id_trabajo = 0, id_actividad puede ser 0 (buscando trabajo) u otro valor (1,2,3,4) o NULL
       let idTrabajo: number | null = null;
       let idActividad: number | null = null;
       
@@ -211,6 +213,8 @@ export const solicitantesService = {
           [data.condicionTrabajo]
         );
         idTrabajo = trabajoResult.rows[0]?.id_trabajo || null;
+        // Si trabaja, id_actividad debe ser NULL (no tiene sentido que esté buscando trabajo si ya trabaja)
+        idActividad = null;
       } else if (data.trabaja === 'no') {
         // Si no trabaja: id_trabajo = 0 (no trabaja)
         idTrabajo = 0;
@@ -226,7 +230,7 @@ export const solicitantesService = {
           );
           idActividad = actividadResult.rows[0]?.id_actividad || null;
         }
-        // Si no trabaja y no tiene condición de actividad, ambos pueden ser NULL
+        // Si no trabaja y no tiene condición de actividad, id_actividad puede ser NULL
       }
       // Si no se especifica si trabaja o no, ambos pueden ser NULL
 

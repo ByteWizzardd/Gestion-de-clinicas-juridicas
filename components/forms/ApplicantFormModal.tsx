@@ -1897,43 +1897,61 @@ export default function ApplicantFormModal({
 
       {/* Fila 4: Artefactos Domésticos */}
       <div className="col-span-3">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Artefactos Domésticos
-        </label>
-        <div className="grid grid-cols-4 gap-4">
-          {[
-            { value: 'Nevera', label: 'Nevera' },
-            { value: 'Lavadora', label: 'Lavadora' },
-            { value: 'Computadora', label: 'Computadora' },
-            { value: 'Cable Satelital', label: 'Cable Satelital' },
-            { value: 'Internet', label: 'Internet' },
-            { value: 'Carro', label: 'Carro' },
-            { value: 'Moto', label: 'Moto' },
-          ].map((artefacto) => (
-            <label key={artefacto.value} className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.artefactosDomesticos.includes(artefacto.value)}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setFormData((prev) => ({
-                      ...prev,
-                      artefactosDomesticos: [...prev.artefactosDomesticos, artefacto.value],
-                    }));
-                  } else {
-                    setFormData((prev) => ({
-                      ...prev,
-                      artefactosDomesticos: prev.artefactosDomesticos.filter(
-                        (a) => a !== artefacto.value
-                      ),
-                    }));
-                  }
-                }}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700">{artefacto.label}</span>
-            </label>
-          ))}
+        <div className="flex flex-col gap-1">
+          <label className="text-base font-normal text-foreground mb-1">
+            Artefactos Domésticos
+          </label>
+          <div className="grid grid-cols-4 gap-x-4 gap-y-1">
+            {['Nevera', 'Lavadora', 'Computadora', 'Cable Satelital', 'Internet', 'Carro', 'Moto'].map((artefacto) => {
+              const isChecked = formData.artefactosDomesticos.includes(artefacto);
+              return (
+                <label
+                  key={artefacto}
+                  className="flex items-center gap-2 cursor-pointer py-0.5 px-2 rounded-full transition-colors"
+                >
+                  <div className="relative flex items-center justify-center">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData((prev) => ({
+                            ...prev,
+                            artefactosDomesticos: [...prev.artefactosDomesticos, artefacto],
+                          }));
+                        } else {
+                          setFormData((prev) => ({
+                            ...prev,
+                            artefactosDomesticos: prev.artefactosDomesticos.filter(
+                              (a) => a !== artefacto
+                            ),
+                          }));
+                        }
+                      }}
+                      className="sr-only"
+                    />
+                    <div
+                      className={`
+                        w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
+                        ${isChecked 
+                          ? 'bg-primary border-primary' 
+                          : 'bg-[#E5E7EB] border-transparent'
+                        }
+                        focus-within:ring-1 focus-within:ring-primary
+                      `}
+                    >
+                      {isChecked && (
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-base text-foreground">{artefacto}</span>
+                </label>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
