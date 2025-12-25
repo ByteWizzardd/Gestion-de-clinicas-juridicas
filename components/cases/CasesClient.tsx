@@ -202,8 +202,8 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
         fecha_inicio_caso: caseData.fecha_inicio_caso,
         cedula: caseData.cedula,
         id_materia: caseData.id_materia,
-        num_categoria: caseData.num_categoria,
-        num_subcategoria: caseData.num_subcategoria,
+        num_categoria: caseData.num_categoria ?? 0, // Usar 0 si es null/undefined
+        num_subcategoria: caseData.num_subcategoria ?? 0, // Usar 0 si es null/undefined
         num_ambito_legal: caseData.num_ambito_legal,
         tramite: caseData.tramite,
         estatus: caseData.estatus,

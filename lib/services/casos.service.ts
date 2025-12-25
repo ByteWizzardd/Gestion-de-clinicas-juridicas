@@ -95,14 +95,15 @@ export const casosService = {
 
             // Crear el caso
             // Si fecha_solicitud no se proporciona, se usa CURRENT_DATE en la BD
+            // Si no hay categoría o subcategoría, usar 0 en lugar de null/undefined
             const casoData = {
                 tramite: validatedData.tramite,
                 observaciones: validatedData.observaciones || undefined,
                 cedula: validatedData.cedula,
                 id_nucleo: validatedData.id_nucleo,
                 id_materia: validatedData.id_materia,
-                num_categoria: validatedData.num_categoria,
-                num_subcategoria: validatedData.num_subcategoria,
+                num_categoria: validatedData.num_categoria ?? 0,
+                num_subcategoria: validatedData.num_subcategoria ?? 0,
                 num_ambito_legal: validatedData.num_ambito_legal,
                 fecha_solicitud: validatedData.fecha_solicitud || undefined,
                 fecha_inicio_caso: validatedData.fecha_inicio_caso,

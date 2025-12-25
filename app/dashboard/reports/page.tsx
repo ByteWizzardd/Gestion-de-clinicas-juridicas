@@ -41,9 +41,69 @@ export default function ReportsPage() {
     const currentDistributionData = nucleoDistributionData[filters.nucleo] || distributionData;
     const currentTopCasesData = nucleoTopCasesData[filters.nucleo] || topCasesData;
 
-    const handleGenerateReport = (reportType: string) => {
-        // TODO: Implement actual report generation logic
-        alert(`Generando ${reportType}...`);
+    const handleGenerateReport = async (reportType: string) => {
+        if (reportType === 'Tipos de Casos') {
+            try {
+                // Obtener datos agrupados
+                const response = await fetch('/api/reports/tipos-casos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        fechaInicio: filters.dateRange !== 'all' ? getDateFromRange(filters.dateRange) : undefined,
+                        fechaFin: filters.dateRange !== 'all' ? new Date().toISOString().split('T')[0] : undefined,
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al obtener datos');
+                }
+
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    // Importar y usar la función de generación de PDF con React PDF
+                    const { generateTiposCasosPDFReact } = await import('@/lib/utils/pdf-generator-react');
+                    await generateTiposCasosPDFReact(
+                        result.data,
+                        filters.dateRange !== 'all' ? getDateFromRange(filters.dateRange) : undefined,
+                        filters.dateRange !== 'all' ? new Date().toISOString().split('T')[0] : undefined
+                    );
+                } else {
+                    alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
+                }
+            } catch (error) {
+                console.error('Error al generar reporte:', error);
+                alert('Error al generar el reporte. Por favor, intente nuevamente.');
+            }
+        } else {
+            alert(`Generando ${reportType}...`);
+        }
+    };
+
+    const getDateFromRange = (range: string): string => {
+        const today = new Date();
+        const date = new Date();
+        
+        switch (range) {
+            case 'last-week':
+                date.setDate(today.getDate() - 7);
+                break;
+            case 'last-month':
+                date.setMonth(today.getMonth() - 1);
+                break;
+            case 'last-3-months':
+                date.setMonth(today.getMonth() - 3);
+                break;
+            case 'last-year':
+                date.setFullYear(today.getFullYear() - 1);
+                break;
+            default:
+                return today.toISOString().split('T')[0];
+        }
+        
+        return date.toISOString().split('T')[0];
     };
 
     return (
@@ -85,9 +145,9 @@ export default function ReportsPage() {
                     buttonColor="red"
                 />
                 <ReportCard
-                    title="Informe de Casos en Particular"
+                    title="Tipos de Casos"
                     icon={<Briefcase className="w-full h-full" strokeWidth={1.5} />}
-                    onGenerate={() => handleGenerateReport('Informe de Casos en Particular')}
+                    onGenerate={() => handleGenerateReport('Tipos de Casos')}
                     buttonColor="orange"
                 />
             </motion.div>

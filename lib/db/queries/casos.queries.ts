@@ -76,8 +76,8 @@ export const casosQueries = {
       data.cedula,
       data.id_nucleo,
       data.id_materia,
-      data.num_categoria,
-      data.num_subcategoria,
+      data.num_categoria ?? 0, // Usar 0 si es null/undefined
+      data.num_subcategoria ?? 0, // Usar 0 si es null/undefined
       data.num_ambito_legal,
       fechaSolicitudStr,
       fechaInicioStr,
@@ -126,6 +126,37 @@ export const casosQueries = {
       data.fecha_solicitud ? (typeof data.fecha_solicitud === 'string' ? data.fecha_solicitud : data.fecha_solicitud.toISOString().split('T')[0]) : null,
     ]);
     return result.rows[0];
+  },
+
+  /**
+   * Obtiene casos agrupados por materia, categoría, subcategoría y ámbito legal con conteos
+   * @param fechaInicio - Fecha de inicio del rango (opcional)
+   * @param fechaFin - Fecha de fin del rango (opcional)
+   */
+  getGroupedByAmbitoLegal: async (
+    fechaInicio?: string | Date,
+    fechaFin?: string | Date
+  ): Promise<Array<{
+    id_materia: number;
+    num_categoria: number;
+    num_subcategoria: number;
+    num_ambito_legal: number;
+    nombre_materia: string;
+    nombre_categoria: string;
+    nombre_subcategoria: string;
+    nombre_ambito_legal: string;
+    cantidad_casos: number;
+  }>> => {
+    const query = loadSQL('casos/get-grouped-by-ambito-legal.sql');
+    const fechaInicioStr = fechaInicio 
+      ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
+      : null;
+    const fechaFinStr = fechaFin 
+      ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
+      : null;
+    
+    const result: QueryResult = await pool.query(query, [fechaInicioStr, fechaFinStr]);
+    return result.rows;
   },
 };
 

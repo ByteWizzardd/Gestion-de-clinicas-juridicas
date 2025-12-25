@@ -1,0 +1,304 @@
+import React from 'react';
+// @ts-ignore - React PDF types issue with React 19
+import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
+import { CasosGroupedData } from '@/app/actions/reports';
+
+// Registrar League Spartan desde archivos locales
+// Los archivos están en: public/fonts/league-spartan/static/
+try {
+  Font.register({
+    family: 'League Spartan',
+    fonts: [
+      {
+        src: '/fonts/league-spartan/static/LeagueSpartan-Regular.ttf',
+        fontWeight: 400,
+        fontStyle: 'normal',
+      },
+      {
+        // Si no hay italic, usamos Regular como fallback
+        src: '/fonts/league-spartan/static/LeagueSpartan-Regular.ttf',
+        fontWeight: 400,
+        fontStyle: 'italic',
+      },
+      {
+        src: '/fonts/league-spartan/static/LeagueSpartan-Bold.ttf',
+        fontWeight: 700,
+        fontStyle: 'normal',
+      },
+      {
+        // SemiBold (600) - usar Bold como aproximación si no existe
+        src: '/fonts/league-spartan/static/LeagueSpartan-Bold.ttf',
+        fontWeight: 600,
+        fontStyle: 'normal',
+      },
+      {
+        // Si no hay BoldItalic, usamos Bold como fallback
+        src: '/fonts/league-spartan/static/LeagueSpartan-Bold.ttf',
+        fontWeight: 700,
+        fontStyle: 'italic',
+      },
+    ],
+  });
+} catch (error) {
+  console.warn('No se pudo cargar League Spartan, usando Helvetica como fallback');
+}
+
+interface TiposCasosPDFProps {
+  data: CasosGroupedData[];
+  fechaInicio?: string;
+  fechaFin?: string;
+  chartImages?: Record<string, string>;
+  logoBase64?: string; // Logo en base64 para preservar transparencia
+}
+
+// Colores exactos del diseño de Figma (debe coincidir con pdf-generator-react.ts)
+const CHART_COLORS = [
+  '#8979ff', '#ff928a', '#3cc3df', '#ffae4c', '#537ff1',
+  '#6fd195', '#8c63da', '#2bb7dc', '#1f94ff', '#f4cf3b',
+  '#55c4ae', '#6186cc',
+];
+
+// Estilos del PDF - Ajustados para A4 landscape (842x595 puntos)
+const styles = StyleSheet.create({
+  page: {
+    flexDirection: 'column',
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    fontFamily: 'League Spartan',
+    overflow: 'hidden', // Evitar desbordamiento que cause páginas adicionales
+  },
+  // Header con logo
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 15,
+    backgroundColor: 'transparent',
+  },
+  logo: {
+    width: 200,
+    height: 35,
+    objectFit: 'contain',
+  },
+  // Banner rojo con título y fechas
+  titleBanner: {
+    backgroundColor: '#9c2327',
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    marginBottom: 15,
+    borderRadius: 5,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  titleText: {
+    fontSize: 24,
+    fontWeight: 700, // Bold
+    fontStyle: 'normal', // NO italic
+    color: '#FFFFFF',
+    textAlign: 'center',
+    fontFamily: 'League Spartan',
+  },
+  // Subtítulo (Materia - Categoría)
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: 600, // SemiBold
+    color: '#000000',
+    marginBottom: 15,
+    textAlign: 'center',
+    fontFamily: 'League Spartan',
+  },
+  // Contenedor del gráfico
+  chartContainer: {
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    marginTop: 10,
+    maxHeight: 400, // Limitar altura máxima para evitar desbordamiento
+  },
+  chartWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  chartImage: {
+    width: 550,
+    height: 350,
+    objectFit: 'contain',
+  },
+  // Leyenda inferior
+  legendContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    paddingTop: 10,
+    paddingHorizontal: 10,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+    marginRight: 15,
+    marginTop: 5,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 4,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+  },
+  legendText: {
+    fontSize: 10,
+    color: '#000000',
+    opacity: 0.7,
+    fontFamily: 'Helvetica', // Inter no está disponible, usamos Helvetica
+    fontWeight: 400, // Regular
+  },
+});
+
+/**
+ * Agrupa los datos por materia y subcategoría
+ */
+function groupDataByMateriaSubcategoria(
+  data: CasosGroupedData[]
+): Record<string, CasosGroupedData[]> {
+  const grouped: Record<string, CasosGroupedData[]> = {};
+
+  for (const item of data) {
+    const categoria = item.nombre_categoria?.trim() || '';
+    const subcategoria = item.nombre_subcategoria?.trim() || '';
+    
+    let key = item.nombre_materia;
+    if (categoria) {
+      key += ` - ${categoria}`;
+    }
+    if (subcategoria) {
+      key += ` - ${subcategoria}`;
+    }
+
+    if (!grouped[key]) {
+      grouped[key] = [];
+    }
+    grouped[key].push(item);
+  }
+
+  return grouped;
+}
+
+/**
+ * Formatea el título del grupo (solo muestra categoría/subcategoría si existen)
+ */
+function formatGroupTitle(item: CasosGroupedData): string {
+  let title = item.nombre_materia;
+  
+  if (item.nombre_categoria?.trim()) {
+    title += ` - ${item.nombre_categoria.trim()}`;
+  }
+  
+  if (item.nombre_subcategoria?.trim()) {
+    title += ` - ${item.nombre_subcategoria.trim()}`;
+  }
+
+  return title;
+}
+
+/**
+ * Formatea una fecha a DD/MM/YYYY
+ */
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+export const TiposCasosPDF: React.FC<TiposCasosPDFProps> = ({ 
+  data, 
+  fechaInicio, 
+  fechaFin, 
+  chartImages = {},
+  logoBase64
+}) => {
+  const groupedData = groupDataByMateriaSubcategoria(data);
+
+  return (
+    // @ts-ignore - React PDF types issue
+    <Document>
+      {Object.entries(groupedData).map(([key, groupData]) => {
+        const pieData = {
+          labels: groupData.map(item => item.nombre_ambito_legal),
+          values: groupData.map(item => item.cantidad_casos),
+          colors: CHART_COLORS.slice(0, groupData.length),
+        };
+        const chartImage = chartImages[key] || '';
+
+        return (
+          // @ts-ignore - React PDF types issue
+          <Page key={key} size="A4" orientation="landscape" style={styles.page}>
+            {/* Header con logo */}
+            {/* @ts-ignore */}
+            <View style={styles.header}>
+              {/* @ts-ignore */}
+              <Image
+                src={logoBase64 || "/logo clinica juridica.png"}
+                style={styles.logo}
+              />
+            </View>
+
+            {/* Banner rojo con título y fechas */}
+            {/* @ts-ignore */}
+            <View style={styles.titleBanner}>
+              {/* @ts-ignore */}
+              <Text style={styles.titleText}>
+                Tipos de Casos{fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : ''}
+              </Text>
+            </View>
+
+            {/* Subtítulo (Materia - Categoría - Subcategoría) */}
+            {/* @ts-ignore */}
+            <Text style={styles.sectionTitle}>
+              {formatGroupTitle(groupData[0])}
+            </Text>
+
+            {/* Gráfico */}
+            {/* @ts-ignore */}
+            <View style={styles.chartContainer}>
+              {/* @ts-ignore */}
+              <View style={styles.chartWrapper}>
+                {chartImage && (
+                  // @ts-ignore
+                  <Image src={chartImage} style={styles.chartImage} />
+                )}
+              </View>
+
+              {/* Leyenda inferior */}
+              {/* @ts-ignore */}
+              <View style={styles.legendContainer}>
+                {groupData.map((item, index) => (
+                  // @ts-ignore
+                  <View key={index} style={styles.legendItem}>
+                    {/* @ts-ignore */}
+                    <View
+                      style={[
+                        styles.legendDot,
+                        { backgroundColor: pieData.colors[index] },
+                      ]}
+                    />
+                    {/* @ts-ignore */}
+                    <Text style={styles.legendText}>
+                      {item.nombre_ambito_legal}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </Page>
+        );
+      })}
+    </Document>
+  );
+};

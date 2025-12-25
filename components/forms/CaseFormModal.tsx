@@ -267,8 +267,13 @@ export default function CaseFormModal({
       const cedulaCompletaSolicitante = `${formData.cedulaSolicitanteTipo}-${formData.cedulaSolicitante}`;
       
       // Para materias no-Civil, usar valores por defecto (0 para categoría y subcategoría)
-      const numCategoria = formData.materia === '1' ? parseInt(formData.categoria) : 0;
-      const numSubcategoria = formData.materia === '1' ? parseInt(formData.subcategoria) : 0;
+      // Si no hay categoría o subcategoría, usar 0 en lugar de null/NaN
+      const numCategoria = formData.materia === '1' && formData.categoria 
+        ? (parseInt(formData.categoria) || 0) 
+        : 0;
+      const numSubcategoria = formData.materia === '1' && formData.subcategoria 
+        ? (parseInt(formData.subcategoria) || 0) 
+        : 0;
       
       const apiData = {
         fecha_solicitud: formData.fechaCaso || getCurrentDate(), // Requerido, usa la fecha del formulario o la actual por defecto
