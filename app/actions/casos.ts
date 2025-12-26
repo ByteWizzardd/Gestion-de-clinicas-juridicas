@@ -299,6 +299,99 @@ export async function getCasosAction(): Promise<GetCasosResult> {
 }
 
 /**
+ * Server Action para obtener casos del usuario actual
+ */
+export async function getCasosByUsuarioAction(): Promise<GetCasosResult> {
+  try {
+    // Verificar autenticación
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      return {
+        success: false,
+        error: {
+          message: 'No autorizado',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    let decodedToken: any;
+    try {
+      decodedToken = await verifyToken(token);
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    const cedulaUsuario = decodedToken.cedula;
+    console.log('🔍 Buscando casos para usuario:', cedulaUsuario);
+    
+    // Debug: Verificar si hay asignaciones en se_le_asigna
+    const { pool } = await import('@/lib/db/pool');
+    const debugQuery = await pool.query(
+      'SELECT term, cedula_estudiante, id_caso, habilitado FROM se_le_asigna WHERE cedula_estudiante = $1',
+      [cedulaUsuario]
+    );
+    console.log('📋 Asignaciones en se_le_asigna:', debugQuery.rows.length);
+    if (debugQuery.rows.length > 0) {
+      console.log('   Asignaciones encontradas:', debugQuery.rows);
+    } else {
+      console.log('   ⚠️  No hay asignaciones en se_le_asigna para esta cédula');
+    }
+    
+    const { casosQueries } = await import('@/lib/db/queries/casos.queries');
+    const casos = await casosQueries.getByUsuario(cedulaUsuario);
+    
+    console.log('📊 Casos encontrados por query:', casos.length);
+    if (casos.length > 0) {
+      console.log('   Primer caso:', JSON.stringify(casos[0], null, 2));
+    } else {
+      console.log('   ⚠️  No se encontraron casos asignados para este usuario');
+      // Debug adicional: verificar si los casos existen
+      const casosDebug = await pool.query(
+        'SELECT c.id_caso, c.tramite FROM casos c INNER JOIN se_le_asigna sla ON c.id_caso = sla.id_caso WHERE sla.cedula_estudiante = $1 AND sla.habilitado = true',
+        [cedulaUsuario]
+      );
+      console.log('   🔍 Casos directos (sin JOINs complejos):', casosDebug.rows.length);
+      if (casosDebug.rows.length > 0) {
+        console.log('   Casos directos:', casosDebug.rows);
+      }
+    }
+
+    return {
+      success: true,
+      data: casos,
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'CASO_ERROR',
+        },
+      };
+    }
+
+    console.error('Error en getCasosByUsuarioAction:', error);
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al obtener casos del usuario',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  }
+}
+
+/**
  * Server Action para obtener el siguiente número de caso disponible
  */
 export async function getNextCaseNumberAction(): Promise<GetNextCaseNumberResult> {
