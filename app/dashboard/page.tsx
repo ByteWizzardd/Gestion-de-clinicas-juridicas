@@ -10,8 +10,8 @@ export default async function DashboardPage() {
     getCasosByUsuarioAction(),
   ]);
   
-  const appointments = citasResult.success ? citasResult.data || [] : [];
-  const casos = casosResult.success ? casosResult.data || [] : [];
+  const appointments = citasResult.success && Array.isArray(citasResult.data) ? citasResult.data : [];
+  const casos = casosResult.success && Array.isArray(casosResult.data) ? casosResult.data : [];
 
   // Debug logging
   if (!casosResult.success) {

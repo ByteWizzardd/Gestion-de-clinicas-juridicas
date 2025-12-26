@@ -5,6 +5,10 @@ import { verifyToken } from '@/lib/utils/security';
 import { casosService } from '@/lib/services/casos.service';
 import { revalidatePath } from 'next/cache';
 import { soportesQueries } from '@/lib/db/queries/soportes.queries';
+import { accionesQueries } from '@/lib/db/queries/acciones.queries';
+import { cambiosEstatusQueries } from '@/lib/db/queries/cambios-estatus.queries';
+import { pool } from '@/lib/db/pool';
+import { loadSQL } from '@/lib/db/sql-loader';
 import { AppError, UnauthorizedError, ValidationError } from '@/lib/utils/errors';
 
 export interface CreateCasoResult {
@@ -539,3 +543,194 @@ export async function getCaseIdsAction(): Promise<{ success: boolean; data?: num
   }
 }
 
+/**
+ * Server Action para crear una acción para un caso
+ * @param ejecutores Array de objetos con idUsuario y fechaEjecucion
+ */
+export async function createAccionAction(
+  idCaso: number,
+  detalleAccion: string,
+  comentario?: string,
+  ejecutores?: Array<{ idUsuario: string; fechaEjecucion: string }>
+): Promise<{ success: boolean; data?: any; error?: { message: string; code?: string } }> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      await client.query('ROLLBACK');
+      return {
+        success: false,
+        error: {
+          message: 'No hay sesión activa',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    let decoded;
+    try {
+      decoded = await verifyToken(token);
+    } catch {
+      await client.query('ROLLBACK');
+      return {
+        success: false,
+        error: {
+          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    if (!detalleAccion || detalleAccion.trim() === '') {
+      await client.query('ROLLBACK');
+      return {
+        success: false,
+        error: {
+          message: 'El detalle de la acción es requerido',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    const cedulaUsuario = decoded.cedula;
+    
+    // Crear la acción usando el cliente de la transacción
+    const createAccionQuery = loadSQL('acciones/create.sql');
+    const accionResult = await client.query(createAccionQuery, [
+      idCaso,
+      detalleAccion.trim(),
+      comentario?.trim() || null,
+      cedulaUsuario,
+      null, // numAccion se calcula automáticamente
+    ]);
+    const accion = accionResult.rows[0];
+
+    // Crear registros de ejecutores si se proporcionaron
+    if (ejecutores && ejecutores.length > 0) {
+      const createEjecutanQuery = loadSQL('ejecutan/create.sql');
+      for (const ejecutor of ejecutores) {
+        const fechaEjecucion = new Date(ejecutor.fechaEjecucion);
+        await client.query(createEjecutanQuery, [
+          ejecutor.idUsuario,
+          accion.num_accion,
+          idCaso,
+          fechaEjecucion,
+        ]);
+      }
+    }
+
+    await client.query('COMMIT');
+    revalidatePath(`/dashboard/cases/${idCaso}`);
+
+    return {
+      success: true,
+      data: accion,
+    };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'ACCION_ERROR',
+        },
+      };
+    }
+
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al crear la acción',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Server Action para cambiar el estatus de un caso
+ */
+export async function changeStatusAction(
+  idCaso: number,
+  nuevoEstatus: string,
+  motivo?: string
+): Promise<{ success: boolean; data?: any; error?: { message: string; code?: string } }> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      return {
+        success: false,
+        error: {
+          message: 'No hay sesión activa',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    let decoded;
+    try {
+      decoded = await verifyToken(token);
+    } catch {
+      return {
+        success: false,
+        error: {
+          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    const estatusValidos = ['En proceso', 'Archivado', 'Entregado', 'Asesoría'];
+    if (!estatusValidos.includes(nuevoEstatus)) {
+      return {
+        success: false,
+        error: {
+          message: 'Estatus inválido',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    const cedulaUsuario = decoded.cedula;
+    const cambioEstatus = await cambiosEstatusQueries.create(
+      idCaso,
+      nuevoEstatus,
+      cedulaUsuario,
+      motivo?.trim() || undefined
+    );
+
+    revalidatePath(`/dashboard/cases/${idCaso}`);
+
+    return {
+      success: true,
+      data: cambioEstatus,
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'STATUS_ERROR',
+        },
+      };
+    }
+
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al cambiar el estatus',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  }
+}

@@ -1,0 +1,164 @@
+'use client';
+
+import { useState } from 'react';
+import Modal from '@/components/ui/feedback/Modal';
+import Button from '@/components/ui/Button';
+import { Upload, File, X } from 'lucide-react';
+import { uploadSoportesAction } from '@/app/actions/casos';
+
+interface AddDocumentModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  idCaso: number;
+  onSuccess?: () => void;
+}
+
+export default function AddDocumentModal({ isOpen, onClose, idCaso, onSuccess }: AddDocumentModalProps) {
+  const [files, setFiles] = useState<File[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setFiles((prev) => [...prev, ...newFiles]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (files.length === 0) {
+      setError('Debe seleccionar al menos un archivo');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      files.forEach((file) => {
+        formData.append('archivos', file);
+      });
+
+      const result = await uploadSoportesAction(idCaso, formData);
+      
+      if (!result.success) {
+        setError(result.error?.message || 'Error al subir los documentos');
+        return;
+      }
+
+      setFiles([]);
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al subir los documentos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (!loading) {
+      setFiles([]);
+      setError(null);
+      onClose();
+    }
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Agregar Documento"
+      size="md"
+    >
+      <form onSubmit={handleSubmit} className="px-6 pb-6">
+        <div className="mb-6">
+          <div className="flex flex-col gap-1">
+            <label className="text-base font-normal text-foreground mb-1">
+              Archivos
+            </label>
+            <div className="relative">
+              <input
+                type="file"
+                multiple
+                onChange={handleFileChange}
+                className="hidden"
+                id="file-upload"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.mp3,.wav,.ogg,.mp4,.avi,.mov,.wmv,.flv,.webm,.m4a,.aac,.wma"
+                disabled={loading}
+              />
+              <label
+                htmlFor="file-upload"
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border ${
+                  error && files.length === 0 ? 'border-danger' : 'border-gray-300'
+                } bg-[#E5E7EB] cursor-pointer hover:bg-gray-200 transition-colors ${
+                  loading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                <Upload className="w-5 h-5 text-gray-600" />
+                <span className="text-base text-foreground">
+                  Seleccionar archivos
+                </span>
+              </label>
+            </div>
+            {error && (
+              <p className="text-xs text-danger mt-1">{error}</p>
+            )}
+          </div>
+        </div>
+
+        {files.length > 0 && (
+          <div className={`mb-6 space-y-2 ${files.length >= 4 ? 'max-h-[200px] overflow-y-auto pr-2' : ''}`}>
+            {files.map((file, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200"
+              >
+                <File className="w-4 h-4 text-gray-500" />
+                <span className="flex-1 text-sm text-gray-700 truncate">
+                  {file.name}
+                </span>
+                <span className="text-xs text-gray-500">
+                  ({(file.size / 1024).toFixed(2)} KB)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeFile(index)}
+                  className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                  disabled={loading}
+                >
+                  <X className="w-4 h-4 cursor-pointer" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex justify-end gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleClose}
+            disabled={loading}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={loading || files.length === 0}
+            isLoading={loading}
+          >
+            Subir Documentos
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}

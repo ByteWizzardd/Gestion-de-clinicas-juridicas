@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import Tabs from '@/components/ui/Tabs';
@@ -11,7 +11,12 @@ import ActionsHistoryTab from '@/components/cases/tabs/ActionsHistoryTab';
 import AppointmentsTab from '@/components/cases/tabs/AppointmentsTab';
 import StatusChangesTab from '@/components/cases/tabs/StatusChangesTab';
 import DocumentsTab from '@/components/cases/tabs/DocumentsTab';
-import { getCasoByIdAction } from '@/app/actions/casos';
+import { getCasoByIdAction, changeStatusAction } from '@/app/actions/casos';
+import { ESTATUS_CASO } from '@/lib/constants/status';
+import Button from '@/components/ui/Button';
+import DropdownMenu from '@/components/ui/navigation/DropdownMenu';
+import AddDocumentModal from '@/components/cases/modals/AddDocumentModal';
+import { FileText, ChevronDown } from 'lucide-react';
 
 export default function CaseDetailPage() {
   const params = useParams();
@@ -21,14 +26,10 @@ export default function CaseDetailPage() {
   const [caso, setCaso] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAddDocumentModal, setShowAddDocumentModal] = useState(false);
+  const [changingStatus, setChangingStatus] = useState(false);
 
-  useEffect(() => {
-    if (id) {
-      fetchCaso();
-    }
-  }, [id]);
-
-  const fetchCaso = async () => {
+  const fetchCaso = useCallback(async () => {
     const idCaso = parseInt(id, 10);
     if (isNaN(idCaso)) {
       setError('ID de caso inválido');
@@ -58,7 +59,13 @@ export default function CaseDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchCaso();
+    }
+  }, [id, fetchCaso]);
 
   if (loading) {
     return (
@@ -123,6 +130,49 @@ export default function CaseDetailPage() {
 
   const codigoCaso = caso.id_caso.toString();
   const nombreSolicitante = caso.nombre_completo_solicitante || 'Caso sin solicitante';
+  
+  const getStatusColor = (estatus: string | null) => {
+    if (!estatus) return 'bg-gray-100 text-gray-800';
+    const colors: Record<string, string> = {
+      'En proceso': 'bg-blue-100 text-blue-800',
+      'Archivado': 'bg-gray-100 text-gray-800',
+      'Entregado': 'bg-green-100 text-green-800',
+      'Asesoría': 'bg-purple-100 text-purple-800',
+    };
+    return colors[estatus] || 'bg-gray-100 text-gray-800';
+  };
+
+  const handleStatusChange = async (nuevoEstatus: string) => {
+    if (!caso) return;
+    
+    setChangingStatus(true);
+    try {
+      const result = await changeStatusAction(caso.id_caso, nuevoEstatus);
+      
+      if (!result.success) {
+        alert(result.error?.message || 'Error al cambiar el estatus');
+        return;
+      }
+
+      // Recargar el caso para actualizar el estatus
+      await fetchCaso();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Error al cambiar el estatus');
+    } finally {
+      setChangingStatus(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    fetchCaso();
+  };
+
+  const estatusOptions = [
+    { value: ESTATUS_CASO.EN_PROCESO, label: ESTATUS_CASO.EN_PROCESO },
+    { value: ESTATUS_CASO.ARCHIVADO, label: ESTATUS_CASO.ARCHIVADO },
+    { value: ESTATUS_CASO.ENTREGADO, label: ESTATUS_CASO.ENTREGADO },
+    { value: ESTATUS_CASO.ASESORIA, label: ESTATUS_CASO.ASESORIA },
+  ].filter(opt => opt.value !== caso?.estatus);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -133,14 +183,72 @@ export default function CaseDetailPage() {
         ]}
       />
       
-      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-2" style={{ fontFamily: 'var(--font-league-spartan)' }}>
-        {codigoCaso}
-      </h1>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold" style={{ fontFamily: 'var(--font-league-spartan)' }}>
+            {codigoCaso}
+          </h1>
+          {caso.estatus && (
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(caso.estatus)}`}>
+              {caso.estatus}
+            </span>
+          )}
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button
+            variant="primary"
+            size="md"
+            onClick={() => setShowAddDocumentModal(true)}
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Agregar Documento
+          </Button>
+          
+          <DropdownMenu
+            trigger={
+              <Button
+                variant="outline"
+                size="md"
+                disabled={changingStatus}
+              >
+                Cambiar Estatus
+                <ChevronDown className="w-4 h-4 ml-2" />
+              </Button>
+            }
+            align="right"
+            menuClassName="bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[200px]"
+          >
+            {estatusOptions.length > 0 ? (
+              estatusOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => handleStatusChange(option.value)}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                >
+                  {option.label}
+                </button>
+              ))
+            ) : (
+              <div className="px-4 py-2 text-sm text-gray-500">
+                No hay otros estatus disponibles
+              </div>
+            )}
+          </DropdownMenu>
+        </div>
+      </div>
       {nombreSolicitante && (
         <p className="text-sm sm:text-base text-gray-500 mb-6 sm:mb-8">
           Solicitante: {nombreSolicitante}
         </p>
       )}
+
+      <AddDocumentModal
+        isOpen={showAddDocumentModal}
+        onClose={() => setShowAddDocumentModal(false)}
+        idCaso={caso.id_caso}
+        onSuccess={handleRefresh}
+      />
 
       <Tabs tabs={tabs} defaultTab="general" />
     </div>
