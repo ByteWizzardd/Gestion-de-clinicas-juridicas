@@ -13,9 +13,9 @@ interface TableProps<T> {
   onDelete?: (data: T) => void;
 }
 
-export default function Table<T extends Record<string, unknown>>({ 
-  data, 
-  rowsPerPage: initialRowsPerPage = 10, 
+export default function Table<T extends Record<string, unknown>>({
+  data,
+  rowsPerPage: initialRowsPerPage = 10,
   columns,
   onView,
   onEdit,
@@ -58,13 +58,13 @@ export default function Table<T extends Record<string, unknown>>({
   return (
     <div className="relative overflow-visible">
       <TableContainer>
-        <TableHeader title={columns}/>
+        <TableHeader title={columns} />
         <tbody className="border-t-2 border-t-transparent">
           {paginatedData.length > 0 ? (
             paginatedData.map((row, idx) => (
-              <TableRow 
-                key={startIndex + idx} 
-                data={row} 
+              <TableRow
+                key={startIndex + idx}
+                data={row}
                 rowIndex={startIndex + idx}
                 onView={onView}
                 onEdit={onEdit}
