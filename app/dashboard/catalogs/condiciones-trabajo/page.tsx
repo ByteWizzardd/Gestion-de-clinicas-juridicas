@@ -11,7 +11,7 @@ export default async function CondicionesTrabajoPage() {
       <p className="mb-6 ml-3">Tipos de condiciones laborales de los solicitantes</p>
       <CatalogDetailClient
         data={condiciones}
-        columns={["ID", "Nombre de Condición"]}
+        columns={["ID", "Nombre"]}
         addLabel="Añadir Condición"
       />
     </>

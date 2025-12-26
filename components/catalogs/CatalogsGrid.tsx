@@ -153,18 +153,29 @@ export default function CatalogsGrid({ counts, searchQuery = '' }: CatalogsGridP
         }
     ];
 
+    const filteredCatalogs = catalogs.filter(catalog =>
+        catalog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        catalog.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            {catalogs.map((catalog) => (
-                <CatalogCard
-                    key={catalog.id}
-                    title={catalog.title}
-                    description={catalog.description}
-                    count={catalog.count}
-                    icon={catalog.icon}
-                    href={catalog.href}
-                />
-            ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+            {filteredCatalogs.length > 0 ? (
+                filteredCatalogs.map((catalog) => (
+                    <CatalogCard
+                        key={catalog.id}
+                        title={catalog.title}
+                        description={catalog.description}
+                        count={catalog.count}
+                        icon={catalog.icon}
+                        href={catalog.href}
+                    />
+                ))
+            ) : (
+                <div className="col-span-full text-center py-12 text-gray-500">
+                    No se encontraron catálogos que coincidan con "{searchQuery}"
+                </div>
+            )}
         </div>
     );
 }

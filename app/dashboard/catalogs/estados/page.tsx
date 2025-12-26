@@ -11,7 +11,7 @@ export default async function EstadosPage() {
             <p className="mb-6 ml-3">Estados del país registrados en el sistema</p>
             <CatalogDetailClient
                 data={estados}
-                columns={["ID", "Nombre de Estado"]}
+                columns={["ID", "Nombre"]}
                 addLabel="Añadir Estado"
             />
         </>

@@ -11,7 +11,7 @@ export default async function CategoriasPage() {
             <p className="mb-6 ml-3">Clasificaciones dentro de cada materia legal</p>
             <CatalogDetailClient
                 data={categorias}
-                columns={["ID Materia", "Número", "Nombre de Categoría", "Materia"]}
+                columns={["ID Materia", "Número", "Nombre", "Materia"]}
                 addLabel="Añadir Categoría"
                 filterField="nombre_materia"
                 autoGenerateFilter={true}

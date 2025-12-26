@@ -11,7 +11,7 @@ export default async function MunicipiosPage() {
       <p className="mb-6 ml-3">Municipios asociados a cada estado</p>
       <CatalogDetailClient
         data={municipios}
-        columns={["ID Estado", "Número", "Nombre de Municipio", "Estado"]}
+        columns={["ID Estado", "Número", "Nombre", "Estado"]}
         addLabel="Añadir Municipio"
         filterField="nombre_estado"
         autoGenerateFilter={true}

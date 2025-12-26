@@ -11,7 +11,7 @@ export default async function MateriasPage() {
             <p className="mb-6 ml-3">Áreas principales del derecho que se manejan en el sistema</p>
             <CatalogDetailClient
                 data={materias}
-                columns={["ID", "Nombre de Materia"]}
+                columns={["ID", "Nombre"]}
                 addLabel="Añadir Materia"
             />
         </>

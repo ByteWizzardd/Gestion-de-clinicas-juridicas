@@ -11,7 +11,7 @@ export default async function AmbitosLegalesPage() {
             <p className="mb-6 ml-3">Ámbitos específicos de aplicación legal</p>
             <CatalogDetailClient
                 data={ambitos}
-                columns={["ID Mat.", "Núm. Cat.", "Núm. Subcat.", "Núm. Ámbito", "Nombre", "Subcategoría", "Categoría", "Materia"]}
+                columns={["ID Mat.", "Núm. Cat.", "Núm. Sub.", "Núm. Ámb.", "Nombre", "Subcategoría", "Categoría", "Materia"]}
                 addLabel="Añadir Ámbito Legal"
                 filterField="nombre_materia"
                 autoGenerateFilter={true}

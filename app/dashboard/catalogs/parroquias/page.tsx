@@ -11,7 +11,7 @@ export default async function ParroquiasPage() {
       <p className="mb-6 ml-3">Parroquias asociadas a cada municipio</p>
       <CatalogDetailClient
         data={parroquias}
-        columns={["ID Estado", "Num. Municipio", "Num. Parroquia", "Nombre", "Municipio", "Estado"]}
+        columns={["ID Estado", "Núm. Mun.", "Núm. Parr.", "Nombre", "Municipio", "Estado"]}
         addLabel="Anadir Parroquia"
         filterField="nombre_estado"
         autoGenerateFilter={true}

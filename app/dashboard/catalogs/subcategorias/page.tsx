@@ -11,7 +11,7 @@ export default async function SubcategoriasPage() {
             <p className="mb-6 ml-3">Subdivisiones específicas de las categorías</p>
             <CatalogDetailClient
                 data={subcategorias}
-                columns={["ID Materia", "Núm. Categoría", "Núm. Subcategoría", "Nombre", "Categoría", "Materia"]}
+                columns={["ID Materia", "Núm. Cat.", "Núm. Subcat.", "Nombre", "Categoría", "Materia"]}
                 addLabel="Añadir Subcategoría"
                 filterField="nombre_materia"
                 autoGenerateFilter={true}

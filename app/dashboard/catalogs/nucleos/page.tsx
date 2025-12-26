@@ -19,7 +19,7 @@ export default async function NucleosPage() {
             <p className="mb-6 ml-3">Centros de atención donde se pueden originar los casos</p>
             <CatalogDetailClient
                 data={tableData}
-                columns={["Código", "Nombre de Núcleo", "Ubicación"]}
+                columns={["ID", "Nombre", "Ubicación"]}
                 addLabel="Añadir Núcleo"
                 filterField="nombre_estado"
                 autoGenerateFilter={true}

@@ -16,7 +16,7 @@ export default async function CaracteristicasPage() {
       <p className="mb-6 ml-3">Características específicas de viviendas</p>
       <CatalogDetailClient
         data={caracteristicas}
-        columns={["ID Tipo", "Número", "Descripción", "Habilitado", "Tipo"]}
+        columns={["ID Tipo", "Número", "Descripción", "Tipo", "Habilitado"]}
         addLabel="Añadir Característica"
         filterField="habilitado"
         filterOptions={filterOptions}
