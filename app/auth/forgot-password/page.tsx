@@ -13,6 +13,7 @@ export default function ForgotPasswordPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    const [result, setResult] = useState<{ data?: { message?: string; emailFound?: boolean } } | null>(null);
     const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
     const [formData, setFormData] = useState({
         email: "",
@@ -51,6 +52,7 @@ export default function ForgotPasswordPage() {
         e.preventDefault();
         setError(null);
         setSuccess(false);
+        setResult(null);
 
         if (!formData.email || formData.email.trim() === '') {
             setError("Por favor ingrese su correo electrónico");
@@ -64,20 +66,28 @@ export default function ForgotPasswordPage() {
             const formDataToSend = new FormData();
             formDataToSend.append('email', formData.email);
 
-            const result = await forgotPasswordAction(formDataToSend);
+            const actionResult = await forgotPasswordAction(formDataToSend);
 
-            if (!result.success) {
-                throw new Error(result.error?.message || "Error al procesar la solicitud");
+            if (!actionResult.success) {
+                throw new Error(actionResult.error?.message || "Error al procesar la solicitud");
             }
 
+            setResult(actionResult);
             setSuccess(true);
-            // Redirigir a verify-code después de 2 segundos
-            setTimeout(() => {
-                setIsExiting(true);
+            
+            // Solo redirigir si el correo existe (emailFound === true)
+            if (actionResult.data?.emailFound) {
+                // Redirigir a verify-code después de 2 segundos solo si el correo existe
                 setTimeout(() => {
-                    router.push(`/auth/verify-code?email=${encodeURIComponent(formData.email)}`);
-                }, prefersReducedMotion ? 0 : 150);
-            }, 2000);
+                    setIsExiting(true);
+                    setTimeout(() => {
+                        router.push(`/auth/verify-code?email=${encodeURIComponent(formData.email)}`);
+                    }, prefersReducedMotion ? 0 : 150);
+                }, 2000);
+            } else {
+                // Si el correo no existe, permitir que el usuario intente de nuevo
+                setIsLoading(false);
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : "Error al procesar la solicitud");
             setIsLoading(false);
@@ -128,8 +138,12 @@ export default function ForgotPasswordPage() {
                             </div>
                         )}
                         {success && (
-                            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-green-700 text-sm">
-                                {success ? "Si el correo existe en nuestro sistema, recibirás instrucciones para restablecer tu contraseña." : ""}
+                            <div className={`rounded-lg p-3 text-sm ${
+                                result?.data?.emailFound === false 
+                                    ? "bg-yellow-50 border border-yellow-200 text-yellow-700" 
+                                    : "bg-green-50 border border-green-200 text-green-700"
+                            }`}>
+                                {result?.data?.message || "Si el correo existe en nuestro sistema, recibirás instrucciones para restablecer tu contraseña."}
                             </div>
                         )}
                         <div className="flex flex-col gap-4 !font-urbanist">

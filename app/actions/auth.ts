@@ -193,6 +193,7 @@ export interface ForgotPasswordResult {
   success: boolean;
   data?: {
     message: string;
+    emailFound?: boolean; // Flag interno para saber si debe redirigir (sin revelar en el mensaje)
   };
   error?: {
     message: string;
@@ -251,21 +252,34 @@ export async function forgotPasswordAction(formData: FormData): Promise<ForgotPa
       };
     }
 
+    // Normalizar el correo: trim, lowercase, y eliminar espacios extra
+    const normalizedEmail = email.trim().toLowerCase().replace(/\s+/g, '');
+
+    console.log(`🔍 Buscando usuario con correo: "${normalizedEmail}" (original: "${email}")`);
+
     // Verificar que el correo existe y obtener la cédula
     const { usuariosQueries } = await import('@/lib/db/queries/usuarios.queries');
-    const usuarios = await usuariosQueries.searchByEmail(email.trim());
+    const usuarios = await usuariosQueries.searchByEmail(normalizedEmail);
 
-    // Por seguridad, siempre retornamos el mismo mensaje
-    const successMessage = 'Si el correo existe en nuestro sistema, recibirás un código de verificación por correo electrónico.';
+    console.log(`📊 Resultados encontrados: ${usuarios.length} usuario(s)`);
+    if (usuarios.length > 0) {
+      console.log(`   Usuario encontrado: ${usuarios[0].nombre_completo} (${usuarios[0].cedula})`);
+      console.log(`   Correo en BD: "${usuarios[0].correo_electronico}"`);
+    }
 
     if (usuarios.length === 0) {
+      console.log(`⚠️  Correo "${normalizedEmail}" NO existe en la base de datos`);
       return {
         success: true,
         data: {
-          message: successMessage,
+          message: 'El correo electrónico ingresado no está registrado en nuestro sistema. Por favor, verifique el correo e intente nuevamente.',
+          emailFound: false, // No redirigir si el correo no existe
         },
       };
     }
+
+    // Por seguridad, siempre retornamos el mismo mensaje cuando el correo existe
+    const successMessage = 'Si el correo existe en nuestro sistema, recibirás un código de verificación por correo electrónico.';
 
     const usuario = usuarios[0];
     const cedula = usuario.cedula;
@@ -286,14 +300,18 @@ export async function forgotPasswordAction(formData: FormData): Promise<ForgotPa
       fecha_expiracion: fechaExpiracion,
     });
 
-    // Enviar email con el código
+    // Enviar email con el código (usar el correo normalizado)
     const { emailService } = await import('@/lib/services/email.service');
-    await emailService.sendPasswordResetCode(email.trim(), codigo, nombre);
+    // Usar el correo de la BD para asegurar que coincida exactamente
+    const emailToSend = usuario.correo_electronico || normalizedEmail;
+    console.log(`📧 Enviando código a: "${emailToSend}"`);
+    await emailService.sendPasswordResetCode(emailToSend, codigo, nombre);
 
     return {
       success: true,
       data: {
         message: successMessage,
+        emailFound: true, // Redirigir solo si el correo existe
       },
     };
   } catch (error) {

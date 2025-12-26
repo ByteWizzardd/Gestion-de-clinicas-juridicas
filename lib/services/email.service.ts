@@ -1,6 +1,9 @@
 /**
- * Servicio de envío de emails usando Resend API
+ * Servicio de envío de emails usando Gmail SMTP con nodemailer
+ * Requiere variables de entorno: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
  */
+
+import nodemailer from 'nodemailer';
 
 interface EmailOptions {
   to: string;
@@ -49,50 +52,81 @@ function generateResetPasswordEmail(codigo: string, nombre: string): string {
 }
 
 /**
- * Envía un email usando Resend API
- * Requiere variable de entorno RESEND_API_KEY
- * Documentación: https://resend.com/docs/api-reference/emails/send-email
+ * Crea y retorna un transporter de nodemailer configurado para Gmail SMTP
  */
-async function sendEmailViaResend(options: EmailOptions): Promise<boolean> {
-  const apiKey = process.env.RESEND_API_KEY;
-  
-  // Usar dominio de prueba de Resend por defecto
-  // Puedes configurar SMTP_FROM en .env para usar otro dominio
-  const fromEmail = process.env.SMTP_FROM || 'onboarding@resend.dev';
+function createTransporter() {
+  const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const smtpPort = parseInt(process.env.SMTP_PORT || '587');
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
 
-  if (!apiKey) {
+  if (!smtpUser || !smtpPass) {
+    console.error('❌ SMTP_USER y SMTP_PASS deben estar configurados en las variables de entorno');
+    return null;
+  }
+
+  return nodemailer.createTransport({
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpPort === 465, // true para 465, false para otros puertos
+    auth: {
+      user: smtpUser,
+      pass: smtpPass, // Contraseña de aplicación de Google
+    },
+  });
+}
+
+/**
+ * Envía un email usando Gmail SMTP con nodemailer
+ * Requiere variables de entorno: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
+ */
+async function sendEmailViaGmail(options: EmailOptions): Promise<boolean> {
+  const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER;
+
+  if (!fromEmail) {
+    console.error('❌ SMTP_FROM o SMTP_USER debe estar configurado');
+    return false;
+  }
+
+  const transporter = createTransporter();
+  if (!transporter) {
     return false;
   }
 
   try {
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: options.to,
-        subject: options.subject,
-        html: options.html,
-        text: options.text || options.html.replace(/<[^>]*>/g, ''),
-      }),
+    console.log(`📤 Enviando email desde ${fromEmail} hacia ${options.to}`);
+
+    const info = await transporter.sendMail({
+      from: `"Sistema de Recuperación" <${fromEmail}>`,
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+      text: options.text || options.html.replace(/<[^>]*>/g, ''),
     });
 
-    const responseData = await response.json();
-
-    if (!response.ok) {
-      return false;
-    }
-
-    // Resend devuelve { id: string } en caso de éxito
-    if (responseData.id) {
-      return true;
-    }
-
+    console.log(`✅ Email enviado exitosamente (Message ID: ${info.messageId}) a ${options.to}`);
     return true;
   } catch (error) {
+    console.error('❌ Error al enviar email vía Gmail SMTP:');
+    console.error('   Destinatario:', options.to);
+    
+    if (error instanceof Error) {
+      console.error('   Error:', error.message);
+      
+      // Errores comunes de Gmail
+      if (error.message.includes('Invalid login')) {
+        console.error('   💡 Posible problema: Usuario o contraseña de aplicación incorrectos');
+      }
+      if (error.message.includes('Connection timeout')) {
+        console.error('   💡 Posible problema: Problema de conexión con el servidor SMTP');
+      }
+      if (error.message.includes('rate limit') || error.message.includes('quota')) {
+        console.error('   💡 Posible problema: Límite de emails alcanzado (500/día en Gmail)');
+      }
+    } else {
+      console.error('   Error:', error);
+    }
+    
     return false;
   }
 }
@@ -109,18 +143,26 @@ export const emailService = {
     codigo: string,
     nombre: string
   ): Promise<boolean> => {
+    console.log(`📧 Intentando enviar código a: ${email}`);
+    
     const subject = 'Código de Verificación - Recuperación de Contraseña';
     const html = generateResetPasswordEmail(codigo, nombre);
     const text = `Hola ${nombre},\n\nHas solicitado restablecer tu contraseña. Utiliza el siguiente código de verificación:\n\n${codigo}\n\nEste código expirará en 24 horas.\n\nSi no solicitaste este cambio, puedes ignorar este correo.`;
 
     const emailOptions = {
-      to: email,
+      to: email.trim().toLowerCase(),
       subject,
       html,
       text,
     };
 
-    return await sendEmailViaResend(emailOptions);
+    const result = await sendEmailViaGmail(emailOptions);
+    
+    if (!result) {
+      console.error(`❌ No se pudo enviar el email a ${email}`);
+    }
+    
+    return result;
   },
 };
 
