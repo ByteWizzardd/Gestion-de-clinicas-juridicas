@@ -32,7 +32,11 @@ interface FormData {
   estadoCivil: string;
   concubinato: string;
   nacionalidad: string;
-  // Paso 2 - Vivienda
+  // Paso 2 - Ubicación
+  idEstado: string;
+  numMunicipio: string;
+  numParroquia: string;
+  // Paso 3 - Vivienda
   tipoVivienda: string;
   cantHabitaciones: string;
   cantBanos: string;
@@ -43,7 +47,7 @@ interface FormData {
   eliminacionAguasN: string;
   aseo: string;
   artefactosDomesticos: string[]; // Array de artefactos seleccionados
-  // Paso 3 - Familia y Hogar
+  // Paso 4 - Familia y Hogar
   cantPersonas: string;
   cantTrabajadores: string;
   cantNinos: string;
@@ -55,13 +59,13 @@ interface FormData {
   tipoTiempoEstudioJefe: string; // Tipo de tiempo: 'Años', 'Semestres', 'Trimestres'
   tiempoEstudioJefe: string; // Cantidad de tiempo de estudio del jefe
   ingresosMensuales: string;
-  // Paso 4 - Nivel Educativo del Solicitante
+  // Paso 5 - Nivel Educativo del Solicitante
   tipoEducativoSolicitante: string; // Tipo de educación del solicitante
   numeroEducativoSolicitante: string; // Número/grado específico del solicitante
   nivelEducativoSolicitante: string; // Se mantiene para compatibilidad, se calculará desde tipo y número
   tipoTiempoEstudioSolicitante: string; // Tipo de tiempo: 'Años', 'Semestres', 'Trimestres'
   tiempoEstudioSolicitante: string; // Cantidad de tiempo de estudio
-  // Paso 5 - Trabajo
+  // Paso 6 - Trabajo
   trabaja: string; // ¿Trabaja? (si/no)
   condicionTrabajo: string; // Condición en el trabajo (si trabaja)
   buscandoTrabajo: string; // ¿Está buscando trabajo? (si no trabaja)
@@ -69,7 +73,8 @@ interface FormData {
 }
 
 const STEPS = [
-  'Identificación', 
+  'Identificación',
+  'Ubicación',
   'Nivel Educativo',
   'Trabajo',
   'Vivienda y Servicios Conexos', 
@@ -155,6 +160,9 @@ const getInitialFormData = (): FormData => ({
   estadoCivil: '',
   concubinato: '',
   nacionalidad: 'V', // Por defecto venezolano cuando el tipo es 'V'
+  idEstado: '',
+  numMunicipio: '',
+  numParroquia: '',
   tipoVivienda: '',
   cantHabitaciones: '',
   cantBanos: '',
@@ -187,13 +195,83 @@ const getInitialFormData = (): FormData => ({
   condicionActividad: '',
 });
 
+const STORAGE_KEY = 'applicant_form_data';
+const STORAGE_STEP_KEY = 'applicant_form_current_step';
+
+// Función para cargar datos del localStorage
+const loadFormDataFromStorage = (): FormData | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored) as FormData;
+    }
+  } catch (error) {
+    console.error('Error al cargar datos del formulario desde localStorage:', error);
+  }
+  return null;
+};
+
+// Función para cargar el paso actual del localStorage
+const loadCurrentStepFromStorage = (): number => {
+  if (typeof window === 'undefined') return 0;
+  try {
+    const stored = localStorage.getItem(STORAGE_STEP_KEY);
+    if (stored) {
+      const step = parseInt(stored, 10);
+      return isNaN(step) ? 0 : Math.max(0, Math.min(step, STEPS.length - 1));
+    }
+  } catch (error) {
+    console.error('Error al cargar el paso actual desde localStorage:', error);
+  }
+  return 0;
+};
+
+// Función para guardar datos en localStorage
+const saveFormDataToStorage = (data: FormData) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (error) {
+    console.error('Error al guardar datos del formulario en localStorage:', error);
+  }
+};
+
+// Función para guardar el paso actual en localStorage
+const saveCurrentStepToStorage = (step: number) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_STEP_KEY, step.toString());
+  } catch (error) {
+    console.error('Error al guardar el paso actual en localStorage:', error);
+  }
+};
+
+// Función para limpiar datos del localStorage
+const clearFormDataFromStorage = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_STEP_KEY);
+  } catch (error) {
+    console.error('Error al limpiar datos del formulario de localStorage:', error);
+  }
+};
+
 export default function ApplicantFormModal({
   isOpen,
   onClose,
   onSubmit,
 }: ApplicantFormModalProps) {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState<FormData>(getInitialFormData());
+  // Cargar el paso actual desde localStorage
+  const [currentStep, setCurrentStep] = useState(() => loadCurrentStepFromStorage());
+  const [shouldClearOnClose, setShouldClearOnClose] = useState(false);
+  
+  // Cargar datos guardados o usar datos iniciales
+  const [formData, setFormData] = useState<FormData>(() => {
+    const stored = loadFormDataFromStorage();
+    return stored || getInitialFormData();
+  });
 
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [cedulaCheckTimeout, setCedulaCheckTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -232,6 +310,9 @@ export default function ApplicantFormModal({
   const [eliminacionAguasN, setEliminacionAguasN] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
   const [artefactosDomesticos, setArtefactosDomesticos] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
   const [nivelesEducativos, setNivelesEducativos] = useState<Array<{ id_nivel_educativo: number; descripcion: string }>>([]);
+  const [estados, setEstados] = useState<Array<{ id_estado: number; nombre_estado: string }>>([]);
+  const [municipios, setMunicipios] = useState<Array<{ id_estado: number; num_municipio: number; nombre_municipio: string }>>([]);
+  const [parroquias, setParroquias] = useState<Array<{ id_estado: number; num_municipio: number; num_parroquia: number; nombre_parroquia: string }>>([]);
   const [loadingCatalogos, setLoadingCatalogos] = useState(false);
 
   // Helper para limpiar errores de campos específicos
@@ -448,6 +529,28 @@ export default function ApplicantFormModal({
       } else if (!['V', 'E'].includes(formData.nacionalidad)) {
         newErrors.nacionalidad = 'Nacionalidad inválida';
       }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStepUbicacion = (): boolean => {
+    const newErrors: Partial<Record<keyof FormData, string>> = {};
+
+    // Validar estado
+    if (!formData.idEstado || formData.idEstado.trim() === '') {
+      newErrors.idEstado = 'Este campo es requerido';
+    }
+
+    // Validar municipio
+    if (!formData.numMunicipio || formData.numMunicipio.trim() === '') {
+      newErrors.numMunicipio = 'Este campo es requerido';
+    }
+
+    // Validar parroquia
+    if (!formData.numParroquia || formData.numParroquia.trim() === '') {
+      newErrors.numParroquia = 'Este campo es requerido';
     }
 
     setErrors(newErrors);
@@ -673,32 +776,40 @@ export default function ApplicantFormModal({
         return;
       }
     }
-    // Paso 1: Nivel Educativo del Solicitante
+    // Paso 1: Ubicación
     if (currentStep === 1) {
+      const isValid = validateStepUbicacion();
+      if (!isValid) {
+        // No avanzar si hay errores de validación
+        return;
+      }
+    }
+    // Paso 2: Nivel Educativo del Solicitante
+    if (currentStep === 2) {
       const isValid = validateStep4();
       if (!isValid) {
         // No avanzar si hay errores de validación
         return;
       }
     }
-    // Paso 2: Trabajo
-    if (currentStep === 2) {
+    // Paso 3: Trabajo
+    if (currentStep === 3) {
       const isValid = validateStep5();
       if (!isValid) {
         // No avanzar si hay errores de validación
         return;
       }
     }
-    // Paso 3: Vivienda
-    if (currentStep === 3) {
+    // Paso 4: Vivienda
+    if (currentStep === 4) {
       const isValid = validateStep2();
       if (!isValid) {
         // No avanzar si hay errores de validación
         return;
       }
     }
-    // Paso 4: Familia y Hogar
-    if (currentStep === 4) {
+    // Paso 5: Familia y Hogar
+    if (currentStep === 5) {
       const isValid = validateStep3();
       if (!isValid) {
         // No avanzar si hay errores de validación
@@ -720,7 +831,7 @@ export default function ApplicantFormModal({
 
   const handleSubmit = async () => {
     if (currentStep === STEPS.length - 1) {
-      // Validar el paso 4 (Familia y Hogar) antes de enviar
+      // Validar el paso 5 (Familia y Hogar) antes de enviar
       const isValid = validateStep3();
       if (!isValid) {
         // No enviar si hay errores de validación
@@ -751,16 +862,9 @@ export default function ApplicantFormModal({
 
         // Llamar al callback de éxito (recarga la lista y maneja el modal de confirmación)
         // El componente padre ahora maneja el modal de confirmación
+        // Marcar que se debe limpiar el formulario cuando el modal se cierre
+        setShouldClearOnClose(true);
         onSubmit(result);
-        
-        // Limpiar el formulario después de un registro exitoso
-        setFormData(getInitialFormData());
-        setErrors({});
-        setCurrentStep(0);
-        setLockedFields(new Set());
-        setCedulaSuggestions([]);
-        setShowCedulaSuggestions(false);
-        setCedulaDropdownPosition(null);
       } catch (error: any) {
         const errorMessage = error?.message || 'Error al registrar solicitante. Por favor, intente nuevamente.';
         
@@ -808,6 +912,67 @@ export default function ApplicantFormModal({
     };
   }, [cedulaCheckTimeout, emailCheckTimeout]);
 
+
+  // Cargar municipios y parroquias cuando se cargan datos desde localStorage
+  useEffect(() => {
+    const loadLocationData = async () => {
+      if (formData.idEstado) {
+        try {
+          const { getMunicipiosAction } = await import('@/app/actions/ubicacion');
+          const result = await getMunicipiosAction(parseInt(formData.idEstado));
+          if (result.success && result.data) {
+            setMunicipios(result.data);
+            
+            // Si hay un municipio guardado, cargar las parroquias
+            if (formData.numMunicipio) {
+              const { getParroquiasAction } = await import('@/app/actions/ubicacion');
+              const parroquiasResult = await getParroquiasAction(parseInt(formData.idEstado), parseInt(formData.numMunicipio));
+              if (parroquiasResult.success && parroquiasResult.data) {
+                setParroquias(parroquiasResult.data);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error al cargar datos de ubicación:', error);
+        }
+      }
+    };
+    
+    // Solo cargar si el modal está abierto y hay datos de estado
+    if (isOpen && formData.idEstado) {
+      loadLocationData();
+    }
+  }, [isOpen, formData.idEstado, formData.numMunicipio]);
+
+  // Guardar datos en localStorage cada vez que formData cambie
+  useEffect(() => {
+    if (formData) {
+      saveFormDataToStorage(formData);
+    }
+  }, [formData]);
+
+  // Guardar el paso actual en localStorage cada vez que cambie
+  useEffect(() => {
+    saveCurrentStepToStorage(currentStep);
+  }, [currentStep]);
+
+  // Limpiar el formulario solo cuando el modal se cierra después de un registro exitoso
+  useEffect(() => {
+    if (!isOpen && shouldClearOnClose) {
+      // Limpiar el formulario solo cuando el modal se cierra después de un registro exitoso
+      const initialData = getInitialFormData();
+      setFormData(initialData);
+      clearFormDataFromStorage(); // Limpiar localStorage
+      setErrors({});
+      setCurrentStep(0);
+      setLockedFields(new Set());
+      setCedulaSuggestions([]);
+      setShowCedulaSuggestions(false);
+      setCedulaDropdownPosition(null);
+      setShouldClearOnClose(false); // Resetear el flag
+    }
+  }, [isOpen, shouldClearOnClose]);
+
   // Cargar catálogos cuando se abre el modal
   useEffect(() => {
     if (isOpen) {
@@ -831,6 +996,7 @@ export default function ApplicantFormModal({
             eliminacionAguasNResult,
             artefactosDomesticosResult,
             nivelesEducativosResult,
+            estadosResult,
           ] = await Promise.all([
             getCondicionTrabajoAction(),
             getCondicionActividadAction(),
@@ -843,6 +1009,10 @@ export default function ApplicantFormModal({
             getCaracteristicasByTipoAction(7), // eliminacion_aguas_n
             getCaracteristicasByTipoAction(8), // artefactos_domesticos
             getNivelesEducativosAction(),
+            (async () => {
+              const { getEstadosAction } = await import('@/app/actions/ubicacion');
+              return getEstadosAction();
+            })(),
           ]);
 
           if (trabajoResult.success && trabajoResult.data) {
@@ -906,6 +1076,12 @@ export default function ApplicantFormModal({
             setNivelesEducativos(nivelesEducativosResult.data);
           } else {
             console.error('Error al cargar niveles educativos:', nivelesEducativosResult.error);
+          }
+
+          if (estadosResult.success && estadosResult.data) {
+            setEstados(estadosResult.data);
+          } else {
+            console.error('Error al cargar estados:', estadosResult.error);
           }
         } catch (error) {
           console.error('Error al cargar catálogos:', error);
@@ -987,10 +1163,22 @@ export default function ApplicantFormModal({
       setCedulaCheckTimeout(null);
     }
     
-    setCurrentStep(0);
-    setFormData(getInitialFormData());
-    setErrors({});
+    // NO limpiar el formulario aquí - los datos deben persistir
+    // Solo cerrar el modal
     onClose();
+  };
+
+  const handleClearForm = () => {
+    // Limpiar todo el formulario y volver al principio
+    const initialData = getInitialFormData();
+    setFormData(initialData);
+    clearFormDataFromStorage(); // Limpiar localStorage
+    setErrors({});
+    setCurrentStep(0);
+    setLockedFields(new Set());
+    setCedulaSuggestions([]);
+    setShowCedulaSuggestions(false);
+    setCedulaDropdownPosition(null);
   };
 
   // Función para filtrar solo letras (incluyendo espacios y acentos)
@@ -1416,10 +1604,20 @@ export default function ApplicantFormModal({
     
     setLockedFields(camposBloqueados);
 
-    // Limpiar errores y ocultar sugerencias
+    // Limpiar errores de todos los campos que se autocompletaron
     setErrors((prev) => {
       const newErrors = { ...prev };
       delete newErrors.cedulaNumero;
+      if (solicitante.nombres) delete newErrors.nombres;
+      if (solicitante.apellidos) delete newErrors.apellidos;
+      if (solicitante.fecha_nacimiento) delete newErrors.fechaNacimiento;
+      if (solicitante.sexo) delete newErrors.sexo;
+      if (telefonoCelular) {
+        delete newErrors.telefonoCelular;
+        delete newErrors.codigoPaisCelular;
+      }
+      if (solicitante.correo_electronico) delete newErrors.correoElectronico;
+      if (nacionalidadAsignada) delete newErrors.nacionalidad;
       return newErrors;
     });
     setShowCedulaSuggestions(false);
@@ -1499,10 +1697,18 @@ export default function ApplicantFormModal({
     
     setLockedFields(camposBloqueados);
 
-    // Limpiar errores y ocultar sugerencias
+    // Limpiar errores de todos los campos que se autocompletaron
     setErrors((prev) => {
       const newErrors = { ...prev };
       delete newErrors.cedulaNumero;
+      if (usuario.nombres) delete newErrors.nombres;
+      if (usuario.apellidos) delete newErrors.apellidos;
+      if (telefonoCelular) {
+        delete newErrors.telefonoCelular;
+        delete newErrors.codigoPaisCelular;
+      }
+      if (usuario.correo_electronico) delete newErrors.correoElectronico;
+      if (nacionalidadAsignada) delete newErrors.nacionalidad;
       return newErrors;
     });
     setShowCedulaSuggestions(false);
@@ -1564,10 +1770,15 @@ export default function ApplicantFormModal({
     
     setLockedFields(camposBloqueados);
 
-    // Limpiar errores y ocultar sugerencias
+    // Limpiar errores de todos los campos que se autocompletaron
     setErrors((prev) => {
       const newErrors = { ...prev };
       delete newErrors.cedulaNumero;
+      if (beneficiario.nombres) delete newErrors.nombres;
+      if (beneficiario.apellidos) delete newErrors.apellidos;
+      if (beneficiario.fecha_nacimiento) delete newErrors.fechaNacimiento;
+      if (beneficiario.sexo) delete newErrors.sexo;
+      if (nacionalidadAsignada) delete newErrors.nacionalidad;
       return newErrors;
     });
     setShowCedulaSuggestions(false);
@@ -1826,6 +2037,116 @@ export default function ApplicantFormModal({
       )}
     </div>
   );
+
+  const renderStepUbicacion = () => {
+    // Cargar municipios cuando se selecciona un estado
+    const handleEstadoChange = async (idEstado: string) => {
+      // Actualizar estado y limpiar municipio y parroquia
+      setFormData((prev) => ({
+        ...prev,
+        idEstado,
+        numMunicipio: '',
+        numParroquia: '',
+      }));
+      clearErrors(['numMunicipio', 'numParroquia']);
+      
+      if (idEstado) {
+        try {
+          const { getMunicipiosAction } = await import('@/app/actions/ubicacion');
+          const result = await getMunicipiosAction(parseInt(idEstado));
+          if (result.success && result.data) {
+            setMunicipios(result.data);
+          } else {
+            setMunicipios([]);
+          }
+        } catch (error) {
+          console.error('Error al cargar municipios:', error);
+          setMunicipios([]);
+        }
+      } else {
+        setMunicipios([]);
+        setParroquias([]);
+      }
+    };
+
+    // Cargar parroquias cuando se selecciona un municipio
+    const handleMunicipioChange = async (numMunicipio: string) => {
+      // Actualizar municipio y limpiar parroquia
+      setFormData((prev) => ({
+        ...prev,
+        numMunicipio,
+        numParroquia: '',
+      }));
+      clearErrors(['numParroquia']);
+      
+      if (numMunicipio && formData.idEstado) {
+        try {
+          const { getParroquiasAction } = await import('@/app/actions/ubicacion');
+          const result = await getParroquiasAction(parseInt(formData.idEstado), parseInt(numMunicipio));
+          if (result.success && result.data) {
+            setParroquias(result.data);
+          } else {
+            setParroquias([]);
+          }
+        } catch (error) {
+          console.error('Error al cargar parroquias:', error);
+          setParroquias([]);
+        }
+      } else {
+        setParroquias([]);
+      }
+    };
+
+    return (
+      <div className="grid grid-cols-3 gap-x-6 gap-y-4">
+        <div className="col-span-1">
+          <Select
+            label="Estado *"
+            value={formData.idEstado}
+            onChange={(e) => handleEstadoChange(e.target.value)}
+            options={estados.map(estado => ({
+              value: estado.id_estado.toString(),
+              label: estado.nombre_estado,
+            }))}
+            placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar estado"}
+            error={errors.idEstado}
+            required
+            disabled={loadingCatalogos}
+          />
+        </div>
+        <div className="col-span-1">
+          <Select
+            label="Municipio *"
+            value={formData.numMunicipio}
+            onChange={(e) => handleMunicipioChange(e.target.value)}
+            options={municipios.map(municipio => ({
+              value: municipio.num_municipio.toString(),
+              label: municipio.nombre_municipio,
+            }))}
+            placeholder={formData.idEstado ? (loadingCatalogos ? "Cargando..." : "Seleccionar municipio") : "Primero seleccione un estado"}
+            error={errors.numMunicipio}
+            required
+            disabled={!formData.idEstado || loadingCatalogos}
+          />
+        </div>
+        <div className="col-span-1">
+          <Select
+            label="Parroquia *"
+            value={formData.numParroquia}
+            onChange={(e) => updateField('numParroquia', e.target.value)}
+            options={parroquias.map(parroquia => ({
+              value: parroquia.num_parroquia.toString(),
+              label: parroquia.nombre_parroquia,
+            }))}
+            placeholder={formData.numMunicipio ? (loadingCatalogos ? "Cargando..." : "Seleccionar parroquia") : "Primero seleccione un municipio"}
+            error={errors.numParroquia}
+            required
+            disabled={!formData.numMunicipio || loadingCatalogos}
+          />
+        </div>
+      </div>
+    );
+  };
 
   const renderStep2 = () => (
     <div className="grid grid-cols-3 gap-x-6 gap-y-4">
@@ -2388,12 +2709,14 @@ export default function ApplicantFormModal({
       case 0:
         return renderStep1(); // Identificación
       case 1:
-        return renderStep4(); // Nivel Educativo del Solicitante
+        return renderStepUbicacion(); // Ubicación
       case 2:
-        return renderStep5(); // Trabajo
+        return renderStep4(); // Nivel Educativo del Solicitante
       case 3:
-        return renderStep2(); // Vivienda
+        return renderStep5(); // Trabajo
       case 4:
+        return renderStep2(); // Vivienda
+      case 5:
         return renderStep3(); // Familia y Hogar
       default:
         return null;
@@ -2438,23 +2761,31 @@ export default function ApplicantFormModal({
             <span className="text-sm text-gray-600">Campo obligatorio</span>
           </div>
           
-          <div className="flex justify-end gap-4">
-            {currentStep > 0 && (
-              <Button variant="outline" size="xl" onClick={handleBack}>
-                <ArrowLeft className="w-5 h-5 mr-2" />
-                Atrás
-              </Button>
-            )}
-            {currentStep < STEPS.length - 1 ? (
-              <Button variant="primary" size="xl" onClick={handleNext}>
-                Siguiente
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            ) : (
-              <Button variant="primary" size="xl" onClick={handleSubmit}>
-                Registrar
-              </Button>
-            )}
+          <div className="flex justify-between items-center gap-4">
+            <button
+              onClick={handleClearForm}
+              className="text-sm text-gray-500 hover:text-gray-700 underline cursor-pointer transition-colors"
+            >
+              Limpiar Formulario
+            </button>
+            <div className="flex gap-4">
+              {currentStep > 0 && (
+                <Button variant="outline" size="xl" onClick={handleBack}>
+                  <ArrowLeft className="w-5 h-5 mr-2" />
+                  Atrás
+                </Button>
+              )}
+              {currentStep < STEPS.length - 1 ? (
+                <Button variant="primary" size="xl" onClick={handleNext}>
+                  Siguiente
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              ) : (
+                <Button variant="primary" size="xl" onClick={handleSubmit}>
+                  Registrar
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>

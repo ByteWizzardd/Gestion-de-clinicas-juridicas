@@ -48,6 +48,10 @@ interface ApplicantFormData {
   nivelEducativoSolicitante: string;
   tipoTiempoEstudioSolicitante: string;
   tiempoEstudioSolicitante: string;
+  // Ubicación
+  idEstado: string;
+  numMunicipio: string;
+  numParroquia: string;
   // Trabajo
   trabaja: string;
   condicionTrabajo: string;
@@ -412,10 +416,9 @@ export const solicitantesService = {
         nivelEducativoSolicitante.id_nivel_educativo,
         idTrabajo,
         idActividad,
-        // TODO: Agregar id_estado, num_municipio, num_parroquia cuando estén disponibles en el formulario
-        1, // id_estado temporal
-        1, // num_municipio temporal
-        1, // num_parroquia temporal
+        data.idEstado ? parseInt(data.idEstado) : 1, // id_estado
+        data.numMunicipio ? parseInt(data.numMunicipio) : 1, // num_municipio
+        data.numParroquia ? parseInt(data.numParroquia) : 1, // num_parroquia
       ]);
       const solicitanteActualizado = solicitanteResult.rows[0];
 

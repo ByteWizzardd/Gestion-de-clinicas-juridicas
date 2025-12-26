@@ -33,6 +33,24 @@ export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarP
 
     setIsLoggingOut(true);
     try {
+      // Limpiar todos los datos del formulario de solicitante del localStorage
+      try {
+        // Limpiar la clave específica del formulario y el paso actual
+        localStorage.removeItem('applicant_form_data');
+        localStorage.removeItem('applicant_form_current_step');
+        // También limpiar cualquier clave antigua que pueda existir (por compatibilidad)
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('applicant_form_data')) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+      } catch (error) {
+        console.error('Error al limpiar localStorage:', error);
+      }
+
       const { logoutAction } = await import('@/app/actions/auth');
       const result = await logoutAction();
 
