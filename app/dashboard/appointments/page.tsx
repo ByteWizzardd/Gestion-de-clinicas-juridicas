@@ -4,7 +4,7 @@ import AppointmentsClient from '@/components/appointments/AppointmentsClient';
 export default async function AppointmentsPage() {
   // Cargar citas en el servidor
   const result = await getCitasAction();
-  const appointments = result.success ? result.data || [] : [];
+  const appointments = result.success && Array.isArray(result.data) ? result.data : [];
 
   return <AppointmentsClient initialAppointments={appointments} />;
 }

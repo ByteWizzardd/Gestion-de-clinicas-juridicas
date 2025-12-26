@@ -94,6 +94,12 @@ export const casosQueries = {
     return result.rows[0]?.last_id || 0;
   },
 
+  getAllIds: async (): Promise<number[]> => {
+    const query = loadSQL('casos/get-by-id-case.sql');
+    const result: QueryResult = await pool.query(query);
+    return result.rows.map(row => row.id_caso);
+  },
+
   /**
    * Actualiza un caso existente
    * Nota: El estatus se actualiza mediante la tabla cambio_estatus, no directamente aquí

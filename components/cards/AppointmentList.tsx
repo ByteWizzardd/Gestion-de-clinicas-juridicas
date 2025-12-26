@@ -74,7 +74,7 @@ export default function AppointmentList({
       return (
         <button
           onClick={onAddAppointment}
-          className="h-7 w-7 bg-primary text-white rounded-full flex items-center justify-center hover:bg-primary-dark transition-colors mb-1"
+          className="h-7 w-7 bg-primary text-white rounded-full flex items-center justify-center hover:bg-primary-dark transition-colors mb-1 cursor-pointer"
           aria-label="Añadir cita"
         >
           <Plus className="w-5 h-5" strokeWidth={4} />

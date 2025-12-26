@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
+import { getCitasAction } from '@/app/actions/citas';
 import CalendarWidget from '@/components/ui/calendar/CalendarWidget';
 import AppointmentList from '@/components/cards/AppointmentList';
 import type { Appointment } from '@/types/appointment';
+import { AppointmentModal } from '../appointmentModal/AppointmentModal';
 
 interface AppointmentsClientProps {
   initialAppointments: Appointment[];
@@ -17,6 +19,11 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
   );
   const [filterByDate, setFilterByDate] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [appointments, setAppointments] = useState<Appointment[]>(
+    initialAppointments.map((apt) => ({ ...apt, date: new Date(apt.date) }))
+  );
+  const [showModal, setShowModal] = useState(false);
+  const [modalDate, setModalDate] = useState<Date | null>(null);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -29,14 +36,6 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
-
-  // Convertir fechas de string a Date
-  const appointments = useMemo(() => {
-    return initialAppointments.map((apt: any) => ({
-      ...apt,
-      date: new Date(apt.date),
-    }));
-  }, [initialAppointments]);
 
   // Filtrar citas según el modo: por día específico o por mes completo
   const displayedAppointments = useMemo(() => {
@@ -85,13 +84,33 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
     const newMonth = new Date(date.getFullYear(), date.getMonth(), 1);
     setSelectedMonth(newMonth);
   };
-
+  // Abrir modal para agregar nueva cita
   const handleAddAppointment = () => {
-    // TODO: Implementar lógica para añadir nueva cita
+    setModalDate(selectedDate);
+    setShowModal(true);
+  };
+  // Cerrar modal
+  const handleModalClose = () => {
+    setShowModal(false);
+    setModalDate(null);
+  };
+
+  const handleModalSave = async () => {
+    // Recargar citas desde el backend
+    const result = await getCitasAction();
+    if (result.success && result.data) {
+      if (Array.isArray(result.data)) {
+        setAppointments(result.data.map((apt: Appointment) => ({ ...apt, date: new Date(apt.date) })));
+      } else {
+        setAppointments([]);
+      }
+    }
+    setShowModal(false);
+    setModalDate(null);
   };
 
   return (
-    <div className="h-full">
+    <div className="h-full relative">
       <motion.div 
         className="mb-4 md:mb-6 mt-4"
         initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
@@ -136,6 +155,16 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
           />
         </motion.div>
       </div>
+
+      <AnimatePresence>
+        {showModal && (
+          <AppointmentModal
+            onClose={handleModalClose}
+            onSave={handleModalSave}
+            initialDate={modalDate || selectedDate}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
