@@ -300,7 +300,7 @@ export const TiposCasosPDF: React.FC<TiposCasosPDFProps> = ({
                 <View style={styles.titleBanner}>
                   {/* @ts-ignore */}
                   <Text style={styles.titleText}>
-                    Tipos de Casos{fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : ''}
+                    Tipos de Caso{fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : ''}
                   </Text>
                 </View>
 

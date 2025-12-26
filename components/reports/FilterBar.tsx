@@ -59,10 +59,10 @@ export default function FilterBar({
     };
 
     return (
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-4 justify-between">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-4 justify-between w-full min-w-0">
             {/* Filters Section */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-3 flex-1">
-                <div className="flex-1 sm:flex-initial sm:w-[320px]">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-3 flex-1 min-w-0">
+                <div className="flex-1 sm:flex-initial sm:min-w-0 sm:max-w-[320px] w-full">
                     <Select
                         options={filterOptions.dateRangeOptions}
                         value={filters.dateRange}
@@ -73,7 +73,7 @@ export default function FilterBar({
                     />
                 </div>
 
-                <div className="flex-1 sm:flex-initial sm:w-[280px]">
+                <div className="flex-1 sm:flex-initial sm:min-w-0 sm:max-w-[280px] w-full">
                     <Select
                         options={filterOptions.nucleoOptions}
                         value={filters.nucleo}
@@ -83,7 +83,7 @@ export default function FilterBar({
                     />
                 </div>
 
-                <div className="flex-1 sm:flex-initial sm:w-[300px]">
+                <div className="flex-1 sm:flex-initial sm:min-w-0 sm:max-w-[300px] w-full">
                     <Select
                         options={filterOptions.termOptions}
                         value={filters.term}

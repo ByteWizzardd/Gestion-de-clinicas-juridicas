@@ -25,7 +25,7 @@ export default function ReportsPage() {
     });
     const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
     
-    // Estados para el modal de fechas del reporte "Tipos de Casos"
+    // Estados para el modal de fechas del reporte "Tipos de Caso"
     const [showDateModal, setShowDateModal] = useState(false);
     const [fechaInicioReporte, setFechaInicioReporte] = useState('');
     const [fechaFinReporte, setFechaFinReporte] = useState('');
@@ -128,7 +128,7 @@ export default function ReportsPage() {
     }, [filters]);
 
     const handleGenerateReport = async (reportType: string) => {
-        if (reportType === 'Tipos de Casos') {
+        if (reportType === 'Tipos de Caso') {
             // Mostrar modal para seleccionar rango de fechas
             setShowDateModal(true);
             // Inicializar fechas con valores por defecto (último mes)
@@ -214,10 +214,10 @@ export default function ReportsPage() {
     };
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="pt-2 px-6 pb-6 space-y-6 overflow-x-hidden max-w-full">
             {/* Header */}
             <motion.div
-                className="mb-4"
+                className="mb-4 md:mb-6"
                 initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
@@ -228,7 +228,7 @@ export default function ReportsPage() {
 
             {/* Report Generation Cards */}
             <motion.div
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 w-full min-w-0"
                 initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: prefersReducedMotion ? 0 : 0.2, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
@@ -252,9 +252,9 @@ export default function ReportsPage() {
                     buttonColor="red"
                 />
                 <ReportCard
-                    title="Tipos de Casos"
+                    title="Tipos de Caso"
                     icon={<Briefcase className="w-full h-full" strokeWidth={1.5} />}
-                    onGenerate={() => handleGenerateReport('Tipos de Casos')}
+                    onGenerate={() => handleGenerateReport('Tipos de Caso')}
                     buttonColor="orange"
                 />
             </motion.div>
@@ -298,11 +298,19 @@ export default function ReportsPage() {
                             ))}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <DistributionChart data={distributionData} />
-                            <TopCasesChart data={topCasesData} />
-                            <StatusDistributionChart data={statusDistributionData} />
-                            <CaseLoadTrendChart data={caseLoadTrendData} />
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full min-w-0">
+                            <div className="w-full min-w-0">
+                                <DistributionChart data={distributionData} />
+                            </div>
+                            <div className="w-full min-w-0">
+                                <TopCasesChart data={topCasesData} />
+                            </div>
+                            <div className="w-full min-w-0">
+                                <StatusDistributionChart data={statusDistributionData} />
+                            </div>
+                            <div className="w-full min-w-0">
+                                <CaseLoadTrendChart data={caseLoadTrendData} />
+                            </div>
                         </div>
                     )
                 ) : (
@@ -310,7 +318,7 @@ export default function ReportsPage() {
                 )}
             </motion.div>
 
-            {/* Modal para seleccionar rango de fechas del reporte "Tipos de Casos" */}
+            {/* Modal para seleccionar rango de fechas del reporte "Tipos de Caso" */}
             <Modal
                 isOpen={showDateModal}
                 onClose={() => {
