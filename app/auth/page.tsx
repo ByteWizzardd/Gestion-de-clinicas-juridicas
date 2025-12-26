@@ -75,24 +75,31 @@ export default function AuthHome (){
                     {!isExiting && (
                         <motion.div 
                             key="card"
-                            className="w-1/3 bg-[#FCFCFC] h-1/2 rounded-4xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col items-center justify-center p-5"
+                            className="w-full max-w-md bg-[#FCFCFC] rounded-4xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col items-center justify-center p-8 py-12"
                             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut"}}>
-                    <div className="text-foreground text-center">
+                    <div className="text-foreground text-center mb-8">
                         {/*Textos*/}
-                        <p className="text-5xl font-semibold font-primary">
+                        <p className="text-5xl font-semibold font-primary mb-2">
                             Clínica Jurídica
                         </p>
                         <p className="text-xl font-normal font-primary">
                             UCAB - Ext. Guayana
                         </p>
                     </div>
-                            <div className="flex flex-col gap-4 mt-10 w-full max-w-xs">
-                                {/* Botón de Iniciar Sesión */}
-                                <Button children="Iniciar sesion" variant="primary" size="lg" isLoading={false} className="!rounded-3xl !text-xl" onClick={handleLogin}/>
-                            </div>
+                    <div className="flex flex-col gap-4 w-full max-w-xs">
+                        {/* Botón de Iniciar Sesión */}
+                        <Button 
+                            children="Iniciar sesión" 
+                            variant="primary" 
+                            size="lg" 
+                            isLoading={false} 
+                            className="!rounded-3xl !text-xl w-full" 
+                            onClick={handleLogin}
+                        />
+                    </div>
                         </motion.div>
                     )}
                 </AnimatePresence>

@@ -378,3 +378,20 @@ CREATE TABLE se_le_asigna (
     PRIMARY KEY (term, cedula_estudiante, id_caso),
     FOREIGN KEY (term, cedula_estudiante) REFERENCES estudiantes(term, cedula_estudiante)
 );
+
+-- 33) TOKENS DE RECUPERACIÓN DE CONTRASEÑA
+CREATE TABLE password_reset_tokens (
+    id_token SERIAL PRIMARY KEY,
+    cedula_usuario VARCHAR(20) NOT NULL,
+    codigo_verificacion VARCHAR(10) NOT NULL,
+    fecha_expiracion DATE NOT NULL,
+    usado BOOLEAN NOT NULL DEFAULT FALSE,
+    fecha_creacion DATE NOT NULL DEFAULT CURRENT_DATE,
+    
+    FOREIGN KEY (cedula_usuario) REFERENCES usuarios(cedula)
+);
+
+-- Índices para búsquedas rápidas
+CREATE INDEX idx_password_reset_cedula ON password_reset_tokens(cedula_usuario);
+CREATE INDEX idx_password_reset_code ON password_reset_tokens(codigo_verificacion);
+CREATE INDEX idx_password_reset_expired ON password_reset_tokens(fecha_expiracion, usado);
