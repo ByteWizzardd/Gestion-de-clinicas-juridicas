@@ -27,8 +27,8 @@ export const CreateCasoSchema = z.object({
   cedula: z.string().min(1, 'La cédula del solicitante es requerida'),
   id_nucleo: z.number().int().positive('El núcleo es requerido'),
   id_materia: z.number().int().positive('La materia es requerida'),
-  num_categoria: z.number().int().positive('La categoría es requerida'),
-  num_subcategoria: z.number().int().positive('La subcategoría es requerida'),
+  num_categoria: z.number().int().nonnegative('La categoría debe ser un número no negativo').default(0),
+  num_subcategoria: z.number().int().nonnegative('La subcategoría debe ser un número no negativo').default(0),
   num_ambito_legal: z.number().int().positive('El ámbito legal es requerido'),
 });
 

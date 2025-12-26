@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, TooltipProps } from 'recharts';
 
 interface TopCasesData {
     name: string;
@@ -10,6 +10,18 @@ interface TopCasesData {
 interface TopCasesChartProps {
     data: TopCasesData[];
 }
+
+const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg">
+                <p className="text-sm font-medium text-gray-700 mb-1">{label}</p>
+                <p className="text-base font-semibold text-gray-900">{payload[0].value}</p>
+            </div>
+        );
+    }
+    return null;
+};
 
 export default function TopCasesChart({ data }: TopCasesChartProps) {
     return (
@@ -28,12 +40,7 @@ export default function TopCasesChart({ data }: TopCasesChartProps) {
                         axisLine={{ stroke: '#d1d5db' }}
                     />
                     <Tooltip
-                        contentStyle={{
-                            backgroundColor: '#fff',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '8px',
-                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                        }}
+                        content={<CustomTooltip />}
                         cursor={{ fill: 'rgba(99, 102, 241, 0.1)' }}
                     />
                     <Bar

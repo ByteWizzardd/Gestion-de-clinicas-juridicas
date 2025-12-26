@@ -37,6 +37,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
     return { start: startYear, end: startYear + 9 };
   });
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [openUpward, setOpenUpward] = useState(false);
 
   const monthNames = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -171,9 +172,9 @@ export default function DatePicker({ value, onChange, error, required, disabled 
     }
   };
 
-  // Resetear a vista de año cuando se abre el picker (solo cuando cambia isOpen)
+  // Resetear a vista de año cuando se abre el picker y calcular posición
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && dropdownRef.current) {
       setViewMode('year');
       // Obtener el año actual sin depender de currentMonth en las dependencias
       let yearToUse: number;
@@ -190,8 +191,14 @@ export default function DatePicker({ value, onChange, error, required, disabled 
       }
       const startYear = Math.floor(yearToUse / 10) * 10;
       setYearRange({ start: startYear, end: startYear + 9 });
+
+      // Calcular si hay espacio suficiente abajo
+      const rect = dropdownRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const calendarHeight = 400; // Altura aproximada del calendario
+      setOpenUpward(spaceBelow < calendarHeight && rect.top > calendarHeight);
     }
-  }, [isOpen]);
+  }, [isOpen, value]);
 
   const handleDayClick = (day: number, isCurrentMonth: boolean) => {
     let clickedDate: Date;
@@ -324,11 +331,14 @@ export default function DatePicker({ value, onChange, error, required, disabled 
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="absolute top-full left-0 mt-2 bg-white border border-gray-300 rounded-2xl shadow-lg z-50 p-4 w-80"
+            className={`absolute left-0 bg-white border border-gray-300 rounded-2xl shadow-lg z-[60] p-4 w-80 ${
+              openUpward ? 'bottom-full mb-2' : 'top-full mt-2'
+            }`}
           >
           {/* Header con navegación */}
           <div className="flex items-center justify-between mb-4">
             <button
+              type="button"
               onClick={viewMode === 'calendar' ? handlePrevMonth : viewMode === 'month' ? handlePrevYear : handlePrevYearRange}
               className="p-1 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
               aria-label={viewMode === 'calendar' ? 'Mes anterior' : viewMode === 'month' ? 'Año anterior' : 'Década anterior'}
@@ -336,6 +346,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
               <ChevronLeft className="w-5 h-5 text-foreground" />
             </button>
             <button
+              type="button"
               onClick={handleHeaderClick}
               className="px-3 py-1 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
             >
@@ -346,6 +357,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
               </h3>
             </button>
             <button
+              type="button"
               onClick={viewMode === 'calendar' ? handleNextMonth : viewMode === 'month' ? handleNextYear : handleNextYearRange}
               className="p-1 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
               aria-label={viewMode === 'calendar' ? 'Mes siguiente' : viewMode === 'month' ? 'Año siguiente' : 'Década siguiente'}
@@ -372,6 +384,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
                 const day = daysInPrevMonth - startingDayOfWeek + i + 1;
                 return (
                   <button
+                    type="button"
                     key={`prev-${day}`}
                     onClick={() => handleDayClick(day, false)}
                     className="text-base text-gray-400 hover:bg-gray-100 rounded-md py-2 transition-colors cursor-pointer"
@@ -390,6 +403,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
                   : 'hover:bg-gray-100';
                 return (
                   <button
+                    type="button"
                     key={day}
                     onClick={() => handleDayClick(day, true)}
                     className={`text-base ${todayClass} ${selectedClass} rounded-md py-2 transition-colors cursor-pointer ${
@@ -406,6 +420,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
                 const day = i + 1;
                 return (
                   <button
+                    type="button"
                     key={`next-${day}`}
                     onClick={() => handleDayClick(day, false)}
                     className="text-base text-gray-400 hover:bg-gray-100 rounded-md py-2 transition-colors cursor-pointer"
@@ -424,6 +439,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
                 const isCurrentMonth = index === currentMonth.getMonth();
                 return (
                   <button
+                    type="button"
                     key={month}
                     onClick={() => handleMonthClick(index)}
                     className={`px-3 py-2 text-sm rounded-md transition-colors cursor-pointer ${
@@ -449,6 +465,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
                 const isThisYear = year === currentYear;
                 return (
                   <button
+                    type="button"
                     key={year}
                     onClick={() => handleYearClick(year)}
                     className={`px-3 py-2 text-sm rounded-md transition-colors cursor-pointer ${

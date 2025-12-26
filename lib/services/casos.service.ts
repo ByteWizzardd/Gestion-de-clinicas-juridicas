@@ -11,6 +11,18 @@ import { asignacionesQueries } from '@/lib/db/queries/asignaciones.queries';
 import { AppError, ValidationError, NotFoundError } from '@/lib/utils/errors';
 import { CreateCasoSchema, CreateCasoInput } from '@/lib/validations/casos.schema';
 import { ESTATUS_CASO } from '@/lib/constants/status';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+const getCasoByIdQuery = readFileSync(
+  join(process.cwd(), 'database/queries/casos/get-by-id.sql'),
+  'utf8'
+);
+
+const getCaseIdsQuery = readFileSync(
+  join(process.cwd(), 'database/queries/casos/get-by-id-case.sql'),
+  'utf8'
+);
 
 /**
  * Servicio para la entidad Casos
@@ -95,14 +107,15 @@ export const casosService = {
 
             // Crear el caso
             // Si fecha_solicitud no se proporciona, se usa CURRENT_DATE en la BD
+            // Si no hay categoría o subcategoría, usar 0 en lugar de null/undefined
             const casoData = {
                 tramite: validatedData.tramite,
                 observaciones: validatedData.observaciones || undefined,
                 cedula: validatedData.cedula,
                 id_nucleo: validatedData.id_nucleo,
                 id_materia: validatedData.id_materia,
-                num_categoria: validatedData.num_categoria,
-                num_subcategoria: validatedData.num_subcategoria,
+                num_categoria: validatedData.num_categoria ?? 0,
+                num_subcategoria: validatedData.num_subcategoria ?? 0,
                 num_ambito_legal: validatedData.num_ambito_legal,
                 fecha_solicitud: validatedData.fecha_solicitud || undefined,
                 fecha_inicio_caso: validatedData.fecha_inicio_caso,
@@ -196,6 +209,21 @@ export const casosService = {
                 error instanceof Error ? error.message : 'Error desconocido'
             );
         }
+    },
+
+    /**
+     * Obtiene un caso por ID (versión simple, sin información relacionada)
+     */
+    getCasoById: async (idCaso: number): Promise<unknown> => {
+        return await casosQueries.getById(idCaso);
+    },
+
+    /**
+     * Obtiene todos los IDs de los casos
+     */
+    getAllCaseIds: async (): Promise<number[]> => {
+        const ids = await casosQueries.getAllIds();
+        return ids;
     },
 };
 

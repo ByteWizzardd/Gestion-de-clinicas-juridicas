@@ -27,7 +27,7 @@ export const fullMenu: MenuItem[] = [
     },
   },
   {
-    label: 'Listado de Casos',
+    label: 'Casos',
     href: '/dashboard/cases',
     icon: Briefcase,
     roles: ['admin', 'professor', 'student'],
@@ -39,7 +39,7 @@ export const fullMenu: MenuItem[] = [
     roles: ['admin', 'professor', 'student'],
   },
   {
-    label: 'Programación y Consultas',
+    label: 'Citas',
     href: '/dashboard/appointments',
     icon: Calendar,
     roles: ['admin', 'professor', 'student'],

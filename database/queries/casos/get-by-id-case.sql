@@ -1,0 +1,1 @@
+SELECT id_caso FROM casos;

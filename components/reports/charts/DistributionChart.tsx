@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, TooltipProps } from 'recharts';
 
 interface DistributionData {
     name: string;
@@ -11,6 +11,18 @@ interface DistributionData {
 interface DistributionChartProps {
     data: DistributionData[];
 }
+
+const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg">
+                <p className="text-sm font-medium text-gray-700 mb-1">{label}</p>
+                <p className="text-base font-semibold text-gray-900">{payload[0].value}</p>
+            </div>
+        );
+    }
+    return null;
+};
 
 export default function DistributionChart({ data }: DistributionChartProps) {
     return (
@@ -29,12 +41,7 @@ export default function DistributionChart({ data }: DistributionChartProps) {
                         axisLine={{ stroke: '#d1d5db' }}
                     />
                     <Tooltip
-                        contentStyle={{
-                            backgroundColor: '#fff',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '8px',
-                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                        }}
+                        content={<CustomTooltip />}
                         cursor={{ fill: 'rgba(156, 35, 39, 0.1)' }}
                     />
                     <Bar dataKey="value" radius={[8, 8, 0, 0]}>

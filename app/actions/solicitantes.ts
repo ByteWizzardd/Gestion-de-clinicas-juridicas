@@ -402,3 +402,53 @@ export async function searchSolicitantesAction(
   }
 }
 
+/**
+ * Server Action para verificar si un correo electrónico ya existe en otro solicitante
+ */
+export async function checkEmailExistsAction(
+  email: string
+): Promise<{ success: boolean; exists: boolean; data?: { cedula: string; nombres: string; apellidos: string } }> {
+  try {
+    // Verificar autenticación
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      return {
+        success: false,
+        exists: false,
+      };
+    }
+
+    try {
+      await verifyToken(token);
+    } catch (error) {
+      return {
+        success: false,
+        exists: false,
+      };
+    }
+
+    if (!email || email.trim().length === 0) {
+      return {
+        success: true,
+        exists: false,
+      };
+    }
+
+    const result = await solicitantesQueries.checkEmailExists(email.trim());
+
+    return {
+      success: true,
+      exists: result !== null,
+      data: result || undefined,
+    };
+  } catch (error) {
+    console.error('Error en checkEmailExistsAction:', error);
+    return {
+      success: false,
+      exists: false,
+    };
+  }
+}
+

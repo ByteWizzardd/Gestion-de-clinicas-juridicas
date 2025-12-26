@@ -42,6 +42,7 @@ interface FormData {
   aguaPotable: string;
   eliminacionAguasN: string;
   aseo: string;
+  artefactosDomesticos: string[]; // Array de artefactos seleccionados
   // Paso 3 - Familia y Hogar
   cantPersonas: string;
   cantTrabajadores: string;
@@ -165,6 +166,7 @@ const getInitialFormData = (): FormData => ({
   aguaPotable: '',
   eliminacionAguasN: '',
   aseo: '',
+  artefactosDomesticos: [],
   cantPersonas: '',
   cantTrabajadores: '',
   cantNinos: '',
@@ -220,6 +222,18 @@ export default function ApplicantFormModal({
   
   // Estado para controlar qué campos están bloqueados (autocompletados)
   const [lockedFields, setLockedFields] = useState<Set<keyof FormData>>(new Set());
+
+  // Estados para catálogos
+  const [condicionesTrabajo, setCondicionesTrabajo] = useState<Array<{ id_trabajo: number; nombre_trabajo: string }>>([]);
+  const [condicionesActividad, setCondicionesActividad] = useState<Array<{ id_actividad: number; nombre_actividad: string }>>([]);
+  const [tiposVivienda, setTiposVivienda] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
+  const [materialesPiso, setMaterialesPiso] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
+  const [materialesParedes, setMaterialesParedes] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
+  const [materialesTecho, setMaterialesTecho] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
+  const [aguaPotable, setAguaPotable] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
+  const [aseo, setAseo] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
+  const [eliminacionAguasN, setEliminacionAguasN] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
+  const [loadingCatalogos, setLoadingCatalogos] = useState(false);
 
   // Helper para limpiar errores de campos específicos
   const clearErrors = (fieldNames: (keyof FormData)[]) => {
@@ -785,7 +799,20 @@ export default function ApplicantFormModal({
         const result = await createSolicitanteAction(formData);
 
         if (!result.success) {
+          const errorCode = result.error?.code;
           const errorMessage = result.error?.message || 'Error al registrar solicitante';
+          
+          // Si es un error de correo duplicado, mostrarlo en el campo correspondiente
+          if (errorCode === 'EMAIL_DUPLICADO' || errorMessage.includes('correo electrónico') || errorMessage.includes('ya está asociado')) {
+            setErrors((prev) => ({
+              ...prev,
+              correoElectronico: errorMessage,
+            }));
+            // Ir al paso 1 donde está el campo de correo
+            setCurrentStep(0);
+            return;
+          }
+          
           throw new Error(errorMessage);
         }
 
@@ -794,7 +821,17 @@ export default function ApplicantFormModal({
         onSubmit(result);
       } catch (error: any) {
         const errorMessage = error?.message || 'Error al registrar solicitante. Por favor, intente nuevamente.';
-        alert(errorMessage);
+        
+        // Si el error contiene información sobre correo duplicado, mostrarlo en el campo
+        if (errorMessage.includes('correo electrónico') || errorMessage.includes('ya está asociado')) {
+          setErrors((prev) => ({
+            ...prev,
+            correoElectronico: errorMessage,
+          }));
+          setCurrentStep(0);
+        } else {
+          alert(errorMessage);
+        }
       }
     }
   };
@@ -827,6 +864,99 @@ export default function ApplicantFormModal({
       }
     };
   }, [cedulaCheckTimeout, emailCheckTimeout]);
+
+  // Cargar catálogos cuando se abre el modal
+  useEffect(() => {
+    if (isOpen) {
+      const loadCatalogos = async () => {
+        try {
+          setLoadingCatalogos(true);
+          const { getCondicionTrabajoAction } = await import('@/app/actions/condicion-trabajo');
+          const { getCondicionActividadAction } = await import('@/app/actions/condicion-actividad');
+          const { getCaracteristicasByTipoAction } = await import('@/app/actions/caracteristicas');
+          
+          const [
+            trabajoResult, 
+            actividadResult,
+            tipoViviendaResult,
+            materialPisoResult,
+            materialParedesResult,
+            materialTechoResult,
+            aguaPotableResult,
+            aseoResult,
+            eliminacionAguasNResult,
+          ] = await Promise.all([
+            getCondicionTrabajoAction(),
+            getCondicionActividadAction(),
+            getCaracteristicasByTipoAction(1), // tipo_vivienda
+            getCaracteristicasByTipoAction(2), // material_piso
+            getCaracteristicasByTipoAction(3), // material_paredes
+            getCaracteristicasByTipoAction(4), // material_techo
+            getCaracteristicasByTipoAction(5), // agua_potable
+            getCaracteristicasByTipoAction(6), // aseo
+            getCaracteristicasByTipoAction(7), // eliminacion_aguas_n
+          ]);
+
+          if (trabajoResult.success && trabajoResult.data) {
+            setCondicionesTrabajo(trabajoResult.data);
+          }
+
+          if (actividadResult.success && actividadResult.data) {
+            setCondicionesActividad(actividadResult.data);
+          }
+
+          if (tipoViviendaResult.success && tipoViviendaResult.data) {
+            setTiposVivienda(tipoViviendaResult.data);
+            console.log('Tipos de vivienda cargados:', tipoViviendaResult.data);
+          } else {
+            console.error('Error al cargar tipos de vivienda:', tipoViviendaResult.error);
+          }
+
+          if (materialPisoResult.success && materialPisoResult.data) {
+            setMaterialesPiso(materialPisoResult.data);
+          } else {
+            console.error('Error al cargar materiales de piso:', materialPisoResult.error);
+          }
+
+          if (materialParedesResult.success && materialParedesResult.data) {
+            setMaterialesParedes(materialParedesResult.data);
+          } else {
+            console.error('Error al cargar materiales de paredes:', materialParedesResult.error);
+          }
+
+          if (materialTechoResult.success && materialTechoResult.data) {
+            setMaterialesTecho(materialTechoResult.data);
+          } else {
+            console.error('Error al cargar materiales de techo:', materialTechoResult.error);
+          }
+
+          if (aguaPotableResult.success && aguaPotableResult.data) {
+            setAguaPotable(aguaPotableResult.data);
+          } else {
+            console.error('Error al cargar agua potable:', aguaPotableResult.error);
+          }
+
+          if (aseoResult.success && aseoResult.data) {
+            setAseo(aseoResult.data);
+          } else {
+            console.error('Error al cargar aseo:', aseoResult.error);
+          }
+
+          if (eliminacionAguasNResult.success && eliminacionAguasNResult.data) {
+            setEliminacionAguasN(eliminacionAguasNResult.data);
+          } else {
+            console.error('Error al cargar eliminación de aguas negras:', eliminacionAguasNResult.error);
+          }
+        } catch (error) {
+          console.error('Error al cargar catálogos:', error);
+        } finally {
+          setLoadingCatalogos(false);
+        }
+      };
+
+      loadCatalogos();
+    }
+  }, [isOpen]);
 
   const handleClose = () => {
     // Limpiar timeouts al cerrar
@@ -1114,14 +1244,16 @@ export default function ApplicantFormModal({
     // Esperar 500ms después de que el usuario deje de escribir
     const timeout = setTimeout(async () => {
       try {
-        const { searchSolicitantesAction } = await import('@/app/actions/solicitantes');
-        const result = await searchSolicitantesAction(email, 'email');
+        const { checkEmailExistsAction } = await import('@/app/actions/solicitantes');
+        // Siempre verificar si el correo existe, sin excluir ninguna cédula
+        // Si el correo existe, mostrar el error
+        const result = await checkEmailExistsAction(email);
 
-        if (result.success && result.data && result.data.length > 0) {
-          // El correo ya está asociado a otra persona (usuario o solicitante)
+        if (result.success && result.exists) {
+          // El correo ya está asociado a otro solicitante
           setErrors((prev) => ({
             ...prev,
-            correoElectronico: `El correo electrónico ${email} ya está asociado a otra persona`,
+            correoElectronico: `El correo electrónico ${email} ya está registrado para otro solicitante`,
           }));
         } else {
           // Limpiar el error si el correo no existe como solicitante
@@ -1130,10 +1262,10 @@ export default function ApplicantFormModal({
             delete newErrors.correoElectronico;
             return newErrors;
           });
+        }
+      } catch (error) {
+        // No mostrar error al usuario si falla la verificación
       }
-    } catch (error) {
-      // No mostrar error al usuario si falla la verificación
-    }
     }, 500);
 
     setEmailCheckTimeout(timeout);
@@ -1401,6 +1533,7 @@ export default function ApplicantFormModal({
           }}
           inputValue={formData.cedulaNumero}
           onInputChange={(value) => {
+            // El InputGroup ya filtra solo números si numbersOnly=true
             updateField('cedulaNumero', value);
             // Verificar cédula cuando se ingresa el número (con debounce)
             if (value && formData.cedulaTipo) {
@@ -1423,6 +1556,7 @@ export default function ApplicantFormModal({
               });
             }
           }}
+          numbersOnly={true}
           inputPlaceholder="Ingrese cédula"
           error={errors.cedulaNumero}
         />
@@ -1630,20 +1764,16 @@ export default function ApplicantFormModal({
           label="Tipo de Vivienda *"
           value={formData.tipoVivienda}
           onChange={(e) => updateField('tipoVivienda', e.target.value)}
-          options={[
-            { value: 'Quinta', label: 'Quinta' },
-            { value: 'Casa Urb', label: 'Casa Urb' },
-            { value: 'Apartamento', label: 'Apartamento' },
-            { value: 'Bloque', label: 'Bloque' },
-            { value: 'Casa de Barrio', label: 'Casa de Barrio' },
-            { value: 'Casa Rural', label: 'Casa Rural' },
-            { value: 'Rancho', label: 'Rancho' },
-            { value: 'Refugio', label: 'Refugio' },
-            { value: 'Otros', label: 'Otros' },
-          ]}
-          placeholder="Seleccionar tipo de vivienda"
+          options={tiposVivienda && tiposVivienda.length > 0 
+            ? tiposVivienda.map(tv => ({
+                value: tv.descripcion,
+                label: tv.descripcion,
+              }))
+            : []}
+          placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar tipo de vivienda"}
           error={errors.tipoVivienda}
           required
+          disabled={loadingCatalogos}
         />
       </div>
       <div className="col-span-1">
@@ -1677,15 +1807,14 @@ export default function ApplicantFormModal({
           label="Material del Piso *"
           value={formData.materialPiso}
           onChange={(e) => updateField('materialPiso', e.target.value)}
-          options={[
-            { value: 'Tierra', label: 'Tierra' },
-            { value: 'Cemento', label: 'Cemento' },
-            { value: 'Cerámica', label: 'Cerámica' },
-            { value: 'Granito / Parquet / Mármol', label: 'Granito / Parquet / Mármol' },
-          ]}
-          placeholder="Seleccionar material"
+          options={materialesPiso.map(mp => ({
+            value: mp.descripcion,
+            label: mp.descripcion,
+          }))}
+          placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar material"}
           error={errors.materialPiso}
           required
+          disabled={loadingCatalogos}
         />
       </div>
       <div className="col-span-1">
@@ -1693,15 +1822,14 @@ export default function ApplicantFormModal({
           label="Material de Paredes *"
           value={formData.materialParedes}
           onChange={(e) => updateField('materialParedes', e.target.value)}
-          options={[
-            { value: 'Cartón / Palma / Desechos', label: 'Cartón / Palma / Desechos' },
-            { value: 'Bahareque', label: 'Bahareque' },
-            { value: 'Bloque sin frizar', label: 'Bloque sin frizar' },
-            { value: 'Bloque frizado', label: 'Bloque frizado' },
-          ]}
-          placeholder="Seleccionar material"
+          options={materialesParedes.map(mp => ({
+            value: mp.descripcion,
+            label: mp.descripcion,
+          }))}
+          placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar material"}
           error={errors.materialParedes}
           required
+          disabled={loadingCatalogos}
         />
       </div>
       <div className="col-span-1">
@@ -1709,14 +1837,14 @@ export default function ApplicantFormModal({
           label="Material de Techo *"
           value={formData.materialTecho}
           onChange={(e) => updateField('materialTecho', e.target.value)}
-          options={[
-            { value: 'Madera / Cartón / Palma', label: 'Madera / Cartón / Palma' },
-            { value: 'Zinc / Acerolit', label: 'Zinc / Acerolit' },
-            { value: 'Platabanda / Tejas', label: 'Platabanda / Tejas' },
-          ]}
-          placeholder="Seleccionar material"
+          options={materialesTecho.map(mt => ({
+            value: mt.descripcion,
+            label: mt.descripcion,
+          }))}
+          placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar material"}
           error={errors.materialTecho}
           required
+          disabled={loadingCatalogos}
         />
       </div>
 
@@ -1726,14 +1854,14 @@ export default function ApplicantFormModal({
           label="Agua Potable *"
           value={formData.aguaPotable}
           onChange={(e) => updateField('aguaPotable', e.target.value)}
-          options={[
-            { value: 'Dentro de la vivienda', label: 'Dentro de la vivienda' },
-            { value: 'Fuera de la vivienda', label: 'Fuera de la vivienda' },
-            { value: 'No tiene servicio', label: 'No tiene servicio' },
-          ]}
-          placeholder="Seleccionar opción"
+          options={aguaPotable.map(ap => ({
+            value: ap.descripcion,
+            label: ap.descripcion,
+          }))}
+          placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar opción"}
           error={errors.aguaPotable}
           required
+          disabled={loadingCatalogos}
         />
       </div>
       <div className="col-span-1">
@@ -1741,15 +1869,14 @@ export default function ApplicantFormModal({
           label="Eliminación de Aguas Negras *"
           value={formData.eliminacionAguasN}
           onChange={(e) => updateField('eliminacionAguasN', e.target.value)}
-          options={[
-            { value: 'Poceta a cloaca / Pozo séptico', label: 'Poceta a cloaca / Pozo séptico' },
-            { value: 'Poceta sin conexión', label: 'Poceta sin conexión' },
-            { value: 'Excusado de hoyo o letrina', label: 'Excusado de hoyo o letrina' },
-            { value: 'No tiene', label: 'No tiene' },
-          ]}
-          placeholder="Seleccionar opción"
+          options={eliminacionAguasN.map(ean => ({
+            value: ean.descripcion,
+            label: ean.descripcion,
+          }))}
+          placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar opción"}
           error={errors.eliminacionAguasN}
           required
+          disabled={loadingCatalogos}
         />
       </div>
       <div className="col-span-1">
@@ -1757,15 +1884,75 @@ export default function ApplicantFormModal({
           label="Aseo *"
           value={formData.aseo}
           onChange={(e) => updateField('aseo', e.target.value)}
-          options={[
-            { value: 'Llega a la vivienda', label: 'Llega a la vivienda' },
-            { value: 'No llega a la vivienda / Container', label: 'No llega a la vivienda / Container' },
-            { value: 'No tiene', label: 'No tiene' },
-          ]}
-          placeholder="Seleccionar opción"
+          options={aseo.map(a => ({
+            value: a.descripcion,
+            label: a.descripcion,
+          }))}
+          placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar opción"}
           error={errors.aseo}
           required
+          disabled={loadingCatalogos}
         />
+      </div>
+
+      {/* Fila 4: Artefactos Domésticos */}
+      <div className="col-span-3">
+        <div className="flex flex-col gap-1">
+          <label className="text-base font-normal text-foreground mb-1">
+            Artefactos Domésticos
+          </label>
+          <div className="grid grid-cols-4 gap-x-4 gap-y-1">
+            {['Nevera', 'Lavadora', 'Computadora', 'Cable Satelital', 'Internet', 'Carro', 'Moto'].map((artefacto) => {
+              const isChecked = formData.artefactosDomesticos.includes(artefacto);
+              return (
+                <label
+                  key={artefacto}
+                  className="flex items-center gap-2 cursor-pointer py-0.5 px-2 rounded-full transition-colors"
+                >
+                  <div className="relative flex items-center justify-center">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData((prev) => ({
+                            ...prev,
+                            artefactosDomesticos: [...prev.artefactosDomesticos, artefacto],
+                          }));
+                        } else {
+                          setFormData((prev) => ({
+                            ...prev,
+                            artefactosDomesticos: prev.artefactosDomesticos.filter(
+                              (a) => a !== artefacto
+                            ),
+                          }));
+                        }
+                      }}
+                      className="sr-only"
+                    />
+                    <div
+                      className={`
+                        w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
+                        ${isChecked 
+                          ? 'bg-primary border-primary' 
+                          : 'bg-[#E5E7EB] border-transparent'
+                        }
+                        focus-within:ring-1 focus-within:ring-primary
+                      `}
+                    >
+                      {isChecked && (
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-base text-foreground">{artefacto}</span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -2086,15 +2273,16 @@ export default function ApplicantFormModal({
             label="Condición en el Trabajo *"
             value={formData.condicionTrabajo}
             onChange={(e) => updateField('condicionTrabajo', e.target.value)}
-            options={[
-              { value: 'Patrono', label: 'Patrono' },
-              { value: 'Empleado', label: 'Empleado' },
-              { value: 'Obrero', label: 'Obrero' },
-              { value: 'Cuenta propia', label: 'Cuenta propia' },
-            ]}
-            placeholder="Seleccionar condición"
+            options={condicionesTrabajo
+              .filter(ct => ct.id_trabajo !== 0) // Excluir "no trabaja"
+              .map(ct => ({
+                value: ct.nombre_trabajo,
+                label: ct.nombre_trabajo,
+              }))}
+            placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar condición"}
             error={errors.condicionTrabajo}
             required
+            disabled={loadingCatalogos}
           />
         </div>
       )}
@@ -2139,16 +2327,16 @@ export default function ApplicantFormModal({
             label="Condición de Actividad *"
             value={formData.condicionActividad}
             onChange={(e) => updateField('condicionActividad', e.target.value)}
-            options={[
-              { value: 'Ama de Casa', label: 'Ama de Casa' },
-              { value: 'Estudiante', label: 'Estudiante' },
-              { value: 'Pensionado', label: 'Pensionado' },
-              { value: 'Jubilado', label: 'Jubilado' },
-              { value: 'Otra', label: 'Otra' },
-            ]}
-            placeholder="Seleccionar condición"
+            options={condicionesActividad
+              .filter(ca => ca.id_actividad !== 0) // Excluir "buscando trabajo"
+              .map(ca => ({
+                value: ca.nombre_actividad,
+                label: ca.nombre_actividad,
+              }))}
+            placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar condición"}
             error={errors.condicionActividad}
             required
+            disabled={loadingCatalogos}
           />
         </div>
       )}

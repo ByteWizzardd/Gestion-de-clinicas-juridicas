@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@react-pdf/renderer": "^4.3.1",
     "bcryptjs": "^3.0.3",
     "exceljs": "^4.4.0",
     "js-cookie": "^3.0.5",

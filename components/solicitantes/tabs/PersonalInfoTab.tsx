@@ -37,13 +37,6 @@ export default function PersonalInfoTab({ solicitante }: PersonalInfoTabProps) {
     return sexo === 'M' ? 'Masculino' : 'Femenino';
   };
 
-  const getTipoCedula = (cedula: string | null | undefined) => {
-    if (!cedula) return '';
-    if (cedula.startsWith('V')) return 'V';
-    if (cedula.startsWith('E')) return 'E';
-    return 'E'; // Por defecto extranjero (el schema usa 'E')
-  };
-
   // Calcular edad si no viene del backend
   const edad = solicitante.edad ?? (solicitante.fecha_nacimiento ? calculateAge(solicitante.fecha_nacimiento) : null);
 
@@ -60,7 +53,7 @@ export default function PersonalInfoTab({ solicitante }: PersonalInfoTabProps) {
             <div>
               <label className="text-sm font-medium text-gray-500">Cédula</label>
               <p className="text-base text-gray-900 mt-1">
-                {getTipoCedula(solicitante.cedula)}-{solicitante.cedula.substring(1)}
+                {solicitante.cedula}
               </p>
             </div>
           )}

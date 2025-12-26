@@ -172,7 +172,7 @@ export default function CompactCalendar({
       <div className="flex items-center justify-between mb-2 md:mb-3 flex-shrink-0">
         <button
           onClick={handlePrevMonth}
-          className="p-0.5 md:p-1 hover:bg-gray-100 rounded-md transition-colors"
+          className="p-0.5 md:p-1 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
           aria-label="Mes anterior"
         >
           <ChevronLeft className="w-3 h-3 md:w-4 md:h-4 text-foreground" />
@@ -182,7 +182,7 @@ export default function CompactCalendar({
         </h2>
         <button
           onClick={handleNextMonth}
-          className="p-0.5 md:p-1 hover:bg-gray-100 rounded-md transition-colors"
+          className="p-0.5 md:p-1 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
           aria-label="Mes siguiente"
         >
           <ChevronRight className="w-3 h-3 md:w-4 md:h-4 text-foreground" />
@@ -218,7 +218,7 @@ export default function CompactCalendar({
                 <button
                   key={`prev-${day}`}
                   onClick={() => handleDayClick(day, false)}
-                  className={`p-0.5 md:p-1 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-[10px] md:text-xs text-center ${
+                  className={`p-0.5 md:p-1 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-[10px] md:text-xs text-center cursor-pointer ${
                     isLastInRow ? 'border-r-0' : ''
                   }`}
                 >
@@ -241,7 +241,7 @@ export default function CompactCalendar({
                   key={day}
                   onClick={() => handleDayClick(day, true)}
                   className={`
-                    p-0.5 md:p-1 border-r border-b border-gray-300 transition-colors text-[10px] md:text-xs text-center relative
+                    p-0.5 md:p-1 border-r border-b border-gray-300 transition-colors text-[10px] md:text-xs text-center relative cursor-pointer
                     ${isLastInRow ? 'border-r-0' : ''}
                     ${
                       isCurrentDay
@@ -270,7 +270,7 @@ export default function CompactCalendar({
                 <button
                   key={`next-${day}`}
                   onClick={() => handleDayClick(day, false)}
-                  className={`p-0.5 md:p-1 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-[10px] md:text-xs text-center ${
+                  className={`p-0.5 md:p-1 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-[10px] md:text-xs text-center cursor-pointer ${
                     isLastInRow ? 'border-r-0' : ''
                   }`}
                 >

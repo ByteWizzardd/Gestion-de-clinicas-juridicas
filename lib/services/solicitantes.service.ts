@@ -55,6 +55,49 @@ interface ApplicantFormData {
   condicionTrabajo: string;
   buscandoTrabajo: string;
   condicionActividad: string;
+  artefactosDomesticos?: string[]; // Array de artefactos seleccionados
+}
+
+/**
+ * Genera la descripción del nivel educativo basándose en el número educativo
+ * @param numeroEducativo - Número educativo del 0 al 14
+ * @returns Descripción del nivel educativo (solo los 7 niveles básicos)
+ */
+function getNivelEducativoDescripcion(numeroEducativo: string): string {
+  const num = parseInt(numeroEducativo);
+  
+  if (num === 0) return 'Sin Nivel';
+  if (num >= 1 && num <= 6) return 'Primaria';
+  if (num >= 7 && num <= 9) return 'Básica';
+  if (num === 10 || num === 11) return 'Media Diversificada';
+  if (num === 12) return 'Técnico Medio';
+  if (num === 13) return 'Técnico Superior';
+  if (num === 14) return 'Universitaria';
+  
+  return 'Sin Nivel'; // Fallback
+}
+
+/**
+ * Busca o crea un nivel educativo por su descripción
+ * @param client - Cliente de base de datos
+ * @param descripcion - Descripción del nivel educativo
+ * @returns Nivel educativo encontrado o creado
+ */
+async function findOrCreateNivelEducativo(client: any, descripcion: string): Promise<any> {
+  // Primero intentar buscar
+  const findResult: QueryResult = await client.query(
+    'SELECT * FROM niveles_educativos WHERE descripcion = $1 LIMIT 1',
+    [descripcion]
+  );
+  
+  if (findResult.rows.length > 0) {
+    return findResult.rows[0];
+  }
+  
+  // Si no existe, crearlo
+  const createNivelEducativoQuery = loadSQL('niveles-educativos/create.sql');
+  const createResult: QueryResult = await client.query(createNivelEducativoQuery, [descripcion]);
+  return createResult.rows[0];
 }
 
 export class SolicitantesService {
@@ -156,26 +199,120 @@ export const solicitantesService = {
         nacionalidad = nacionalidadForm === 'Ext' ? 'E' : (nacionalidadForm === 'V' ? 'V' : 'E');
       }
       
-      // Verificar si el solicitante ya existe
+      // 1. Obtener IDs de condicion_trabajo y condicion_actividad ANTES de crear/actualizar solicitante
+      // Lógica:
+      // - Si TRABAJA: id_trabajo = valor (1,2,3,4), id_actividad = NULL (no aplica, ya está trabajando)
+      // - Si NO TRABAJA: id_trabajo = 0, id_actividad puede ser 0 (buscando trabajo) u otro valor (1,2,3,4) o NULL
+      let idTrabajo: number | null = null;
+      let idActividad: number | null = null;
+      
+      if (data.trabaja === 'si' && data.condicionTrabajo) {
+        // Si trabaja: buscar ID de condicion_trabajo
+        const trabajoResult = await client.query(
+          'SELECT id_trabajo FROM condicion_trabajo WHERE nombre_trabajo = $1 LIMIT 1',
+          [data.condicionTrabajo]
+        );
+        idTrabajo = trabajoResult.rows[0]?.id_trabajo || null;
+        // Si trabaja, id_actividad debe ser NULL (no tiene sentido que esté buscando trabajo si ya trabaja)
+        idActividad = null;
+      } else if (data.trabaja === 'no') {
+        // Si no trabaja: id_trabajo = 0 (no trabaja)
+        idTrabajo = 0;
+        
+        if (data.buscandoTrabajo === 'si') {
+          // Si está buscando trabajo: id_actividad = 0 (buscando trabajo)
+          idActividad = 0;
+        } else if (data.condicionActividad) {
+          // Si no está buscando trabajo y tiene condición de actividad: buscar ID
+          const actividadResult = await client.query(
+            'SELECT id_actividad FROM condicion_actividad WHERE nombre_actividad = $1 LIMIT 1',
+            [data.condicionActividad]
+          );
+          idActividad = actividadResult.rows[0]?.id_actividad || null;
+        }
+        // Si no trabaja y no tiene condición de actividad, id_actividad puede ser NULL
+      }
+      // Si no se especifica si trabaja o no, ambos pueden ser NULL
+
+      // 2. Buscar o crear nivel educativo del solicitante
+      const descripcionNivelSolicitante = getNivelEducativoDescripcion(data.numeroEducativoSolicitante);
+      const nivelEducativoSolicitante = await findOrCreateNivelEducativo(client, descripcionNivelSolicitante);
+
+      // 3. Verificar si el solicitante ya existe
       const checkSolicitanteQuery = loadSQL('solicitantes/check-exists.sql');
       const solicitanteExistente = await client.query(checkSolicitanteQuery, [cedula]);
       
       if (solicitanteExistente.rows.length === 0) {
+        // Verificar si el correo electrónico ya existe en otro solicitante antes de crear
+        const checkEmailQuery = loadSQL('solicitantes/check-email-exists.sql');
+        const emailExistente = await client.query(checkEmailQuery, [data.correoElectronico]);
+        
+        if (emailExistente.rows.length > 0) {
+          await client.query('ROLLBACK');
+          throw new AppError(
+            `El correo electrónico ${data.correoElectronico} ya está asociado a otro solicitante`,
+            400,
+            'EMAIL_DUPLICADO'
+          );
+        }
+        
         // Crear solicitante básico
         const createSolicitanteQuery = loadSQL('solicitantes/create.sql');
-        await client.query(createSolicitanteQuery, [
-          cedula,
-          data.nombres,
-          data.apellidos,
-          data.correoElectronico,
-          `${data.codigoPaisCelular}${data.telefonoCelular}`,
-          data.fechaNacimiento,
-          sexo,
-          nacionalidad,
-        ]);
+        try {
+          await client.query(createSolicitanteQuery, [
+            cedula,
+            data.nombres,
+            data.apellidos,
+            data.correoElectronico,
+            `${data.codigoPaisCelular}${data.telefonoCelular}`,
+            data.fechaNacimiento,
+            sexo,
+            nacionalidad,
+            idTrabajo, // Puede ser NULL
+            idActividad, // Puede ser NULL
+          ]);
+        } catch (error: any) {
+          // Si es un error de unique constraint en correo_electronico
+          if (error.code === '23505' && error.constraint === 'solicitantes_correo_electronico_unique') {
+            await client.query('ROLLBACK');
+            throw new AppError(
+              `El correo electrónico ${data.correoElectronico} ya está asociado a otro solicitante`,
+              400,
+              'EMAIL_DUPLICADO'
+            );
+          }
+          throw error;
+        }
+      } else {
+        // Si el solicitante ya existe, verificar que el correo no haya cambiado a uno que ya existe
+        const solicitanteActual = solicitanteExistente.rows[0];
+        if (solicitanteActual.correo_electronico !== data.correoElectronico) {
+          // El correo está cambiando, verificar que el nuevo no exista en otro solicitante
+          const checkNuevoEmailQuery = loadSQL('solicitantes/check-email-exists.sql');
+          const nuevoEmailExistente = await client.query(checkNuevoEmailQuery, [data.correoElectronico]);
+          
+          // Si el correo existe y no es del mismo solicitante, error
+          if (nuevoEmailExistente.rows.length > 0) {
+            const otroSolicitante = nuevoEmailExistente.rows[0];
+            if (otroSolicitante.cedula !== cedula) {
+              await client.query('ROLLBACK');
+              throw new AppError(
+                `El correo electrónico ${data.correoElectronico} ya está asociado a otro solicitante`,
+                400,
+                'EMAIL_DUPLICADO'
+              );
+            }
+          }
+        }
+        
+        // Actualizar id_trabajo e id_actividad si el solicitante ya existe
+        await client.query(
+          'UPDATE solicitantes SET id_trabajo = $1, id_actividad = $2 WHERE cedula = $3',
+          [idTrabajo, idActividad, cedula]
+        );
       }
 
-      // 2. Crear vivienda
+      // 4. Crear vivienda
       const createViviendaQuery = loadSQL('viviendas/create.sql');
       const viviendaResult: QueryResult = await client.query(createViviendaQuery, [
         cedula,
@@ -184,57 +321,20 @@ export const solicitantesService = {
       ]);
       const vivienda = viviendaResult.rows[0];
 
-      // 3. Crear nivel educativo del solicitante
-      const createNivelEducativoQuery = loadSQL('niveles-educativos/create.sql');
-      const nivelEducativoSolicitanteResult: QueryResult = await client.query(createNivelEducativoQuery, [
-        parseInt(data.numeroEducativoSolicitante),
-        parseInt(data.anosCursadosSolicitante || '0'),
-        parseInt(data.semestresCursadosSolicitante || '0'),
-        parseInt(data.trimestresCursadosSolicitante || '0'),
-      ]);
-      const nivelEducativoSolicitante = nivelEducativoSolicitanteResult.rows[0];
-
-      // 4. Crear nivel educativo del jefe de hogar (si aplica)
+      // 5. Buscar o crear nivel educativo del jefe de hogar (si aplica)
       let nivelEducativoJefeHogar = null;
       if (data.jefeHogar === 'no' && data.numeroEducativo) {
-        const nivelEducativoJefeHogarResult: QueryResult = await client.query(createNivelEducativoQuery, [
-          parseInt(data.numeroEducativo),
-          parseInt(data.anosCursados || '0'),
-          parseInt(data.semestresCursados || '0'),
-          parseInt(data.trimestresCursados || '0'),
-        ]);
-        nivelEducativoJefeHogar = nivelEducativoJefeHogarResult.rows[0];
+        const descripcionNivelJefe = getNivelEducativoDescripcion(data.numeroEducativo);
+        nivelEducativoJefeHogar = await findOrCreateNivelEducativo(client, descripcionNivelJefe);
       }
 
-      // 5. Obtener IDs de condicion_trabajo y condicion_actividad
-      // En el nuevo schema, solicitantes tiene id_trabajo e id_actividad directamente
-      // Necesitamos obtener los IDs de las tablas de catálogo
-      const trabaja = data.trabaja === 'si';
-      let idTrabajo: number | null = null;
-      let idActividad: number | null = null;
-      
-      if (trabaja && data.condicionTrabajo) {
-        // Buscar o usar ID de condicion_trabajo
-        // Por ahora usamos un ID por defecto, deberías buscar en la tabla condicion_trabajo
-        const trabajoResult = await client.query(
-          'SELECT id_trabajo FROM condicion_trabajo WHERE nombre_trabajo = $1 LIMIT 1',
-          [data.condicionTrabajo]
-        );
-        idTrabajo = trabajoResult.rows[0]?.id_trabajo || 1; // Fallback a 1 si no existe
-      } else if (!trabaja && data.condicionActividad) {
-        // Buscar o usar ID de condicion_actividad
-        const actividadResult = await client.query(
-          'SELECT id_actividad FROM condicion_actividad WHERE nombre_actividad = $1 LIMIT 1',
-          [data.condicionActividad]
-        );
-        idActividad = actividadResult.rows[0]?.id_actividad || 1; // Fallback a 1 si no existe
-      }
-      
-      // Si no se encontró ninguno, usar valores por defecto
-      if (!idTrabajo) idTrabajo = 1; // Valor por defecto requerido por el schema
-      if (!idActividad) idActividad = 1; // Valor por defecto requerido por el schema
+      // 6. Actualizar nivel educativo del solicitante
+      await client.query(
+        'UPDATE solicitantes SET id_nivel_educativo = $1 WHERE cedula = $2',
+        [nivelEducativoSolicitante.id_nivel_educativo, cedula]
+      );
 
-      // 6. Crear familia y hogar
+      // 7. Crear familia y hogar
       const createHogarQuery = loadSQL('familias-hogares/create.sql');
       const cantTrabajadores = parseInt(data.cantTrabajadores);
       const cantPersonas = parseInt(data.cantPersonas);
@@ -253,7 +353,59 @@ export const solicitantesService = {
       ]);
       const hogar = hogarResult.rows[0];
 
-      // 7. Nota: Los artefactos domésticos ya no existen en el nuevo schema
+      // 8. Guardar características de vivienda en asignadas_a
+      // Mapear descripciones a num_caracteristica según el catálogo
+      const guardarCaracteristica = async (
+        descripcion: string,
+        idTipo: number
+      ) => {
+        if (!descripcion) return;
+        
+        const result = await client.query(
+          'SELECT num_caracteristica FROM caracteristicas WHERE id_tipo_caracteristica = $1 AND descripcion = $2 LIMIT 1',
+          [idTipo, descripcion]
+        );
+        
+        if (result.rows.length > 0) {
+          await client.query(
+            'INSERT INTO asignadas_a (cedula_solicitante, id_tipo_caracteristica, num_caracteristica) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING',
+            [cedula, idTipo, result.rows[0].num_caracteristica]
+          );
+        }
+      };
+
+      // Guardar todas las características de vivienda
+      await guardarCaracteristica(data.tipoVivienda, 1); // tipo_vivienda
+      await guardarCaracteristica(data.materialPiso, 2); // material_piso
+      await guardarCaracteristica(data.materialParedes, 3); // material_paredes
+      await guardarCaracteristica(data.materialTecho, 4); // material_techo
+      await guardarCaracteristica(data.aguaPotable, 5); // agua_potable
+      await guardarCaracteristica(data.aseo, 6); // aseo
+      await guardarCaracteristica(data.eliminacionAguasN, 7); // eliminacion_aguas_n
+
+      // 8. Guardar artefactos domésticos como características (tipo 8) en asignadas_a
+      if (data.artefactosDomesticos && data.artefactosDomesticos.length > 0) {
+        // Mapear nombres de artefactos a num_caracteristica según el seed
+        const artefactosMap: Record<string, number> = {
+          'Nevera': 1,
+          'Lavadora': 2,
+          'Computadora': 3,
+          'Cable Satelital': 4,
+          'Internet': 5,
+          'Carro': 6,
+          'Moto': 7,
+        };
+
+        for (const artefactoNombre of data.artefactosDomesticos) {
+          const numCaracteristica = artefactosMap[artefactoNombre];
+          if (numCaracteristica) {
+            await client.query(
+              'INSERT INTO asignadas_a (cedula_solicitante, id_tipo_caracteristica, num_caracteristica) VALUES ($1, 8, $2) ON CONFLICT DO NOTHING',
+              [cedula, numCaracteristica]
+            );
+          }
+        }
+      }
 
       // 8. Actualizar solicitante con todos los datos
       const estadoCivil = data.estadoCivil || null;

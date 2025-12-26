@@ -114,6 +114,7 @@ interface InputGroupProps {
   selectWidth?: string;
   editableCode?: boolean; // Si es true, el código de país será un input editable
   disabled?: boolean; // Si es true, deshabilita ambos campos (select e input)
+  numbersOnly?: boolean; // Si es true, solo permite números en el input
 }
 
 export default function InputGroup({
@@ -128,6 +129,7 @@ export default function InputGroup({
   selectWidth = 'w-14',
   editableCode = false,
   disabled = false,
+  numbersOnly = false,
 }: InputGroupProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [filteredOptions, setFilteredOptions] = useState<{ value: string; label: string }[]>([]);
@@ -309,10 +311,18 @@ export default function InputGroup({
         {/* Input */}
         <div className="flex-1">
           <input
+            type={numbersOnly ? 'text' : 'text'}
+            inputMode={numbersOnly ? 'numeric' : 'text'}
             value={inputValue}
             onChange={(e) => {
               if (disabled) return;
-              onInputChange(e.target.value);
+              // Si numbersOnly es true, filtrar solo números
+              if (numbersOnly) {
+                const soloNumeros = e.target.value.replace(/\D/g, '');
+                onInputChange(soloNumeros);
+              } else {
+                onInputChange(e.target.value);
+              }
             }}
             placeholder={inputPlaceholder}
             disabled={disabled}

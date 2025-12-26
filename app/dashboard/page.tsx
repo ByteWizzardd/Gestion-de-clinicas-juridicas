@@ -1,6 +1,7 @@
 import { getCitasAction } from '@/app/actions/citas';
 import { getCasosByUsuarioAction } from '@/app/actions/casos';
 import DashboardClient from '@/components/dashboard/DashboardClient';
+import type { Appointment } from '@/types/appointment';
 
 export default async function DashboardPage() {
   // Cargar citas y casos en el servidor

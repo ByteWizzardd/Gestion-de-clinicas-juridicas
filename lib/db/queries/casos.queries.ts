@@ -77,18 +77,18 @@ export const casosQueries = {
     const fechaSolicitudStr = data.fecha_solicitud
       ? (typeof data.fecha_solicitud === 'string' ? data.fecha_solicitud : data.fecha_solicitud.toISOString().split('T')[0])
       : null;
-    const fechaInicioStr = typeof data.fecha_inicio_caso === 'string' 
-      ? data.fecha_inicio_caso 
+    const fechaInicioStr = typeof data.fecha_inicio_caso === 'string'
+      ? data.fecha_inicio_caso
       : data.fecha_inicio_caso.toISOString().split('T')[0];
-    
+
     const result: QueryResult = await pool.query(query, [
       data.tramite,
       data.observaciones || null,
       data.cedula,
       data.id_nucleo,
       data.id_materia,
-      data.num_categoria,
-      data.num_subcategoria,
+      data.num_categoria ?? 0, // Usar 0 si es null/undefined
+      data.num_subcategoria ?? 0, // Usar 0 si es null/undefined
       data.num_ambito_legal,
       fechaSolicitudStr,
       fechaInicioStr,
@@ -103,6 +103,12 @@ export const casosQueries = {
     const query = loadSQL('casos/get-last-id.sql');
     const result: QueryResult = await pool.query(query);
     return result.rows[0]?.last_id || 0;
+  },
+
+  getAllIds: async (): Promise<number[]> => {
+    const query = loadSQL('casos/get-by-id-case.sql');
+    const result: QueryResult = await pool.query(query);
+    return result.rows.map(row => row.id_caso);
   },
 
   /**
@@ -137,6 +143,203 @@ export const casosQueries = {
       data.fecha_solicitud ? (typeof data.fecha_solicitud === 'string' ? data.fecha_solicitud : data.fecha_solicitud.toISOString().split('T')[0]) : null,
     ]);
     return result.rows[0];
+  },
+
+  /**
+   * Obtiene casos agrupados por materia, categoría, subcategoría y ámbito legal con conteos
+   * @param fechaInicio - Fecha de inicio del rango (opcional)
+   * @param fechaFin - Fecha de fin del rango (opcional)
+   */
+  getGroupedByAmbitoLegal: async (
+    fechaInicio?: string | Date,
+    fechaFin?: string | Date
+  ): Promise<Array<{
+    id_materia: number;
+    num_categoria: number;
+    num_subcategoria: number;
+    num_ambito_legal: number;
+    nombre_materia: string;
+    nombre_categoria: string;
+    nombre_subcategoria: string;
+    nombre_ambito_legal: string;
+    cantidad_casos: number;
+  }>> => {
+    const query = loadSQL('casos/get-grouped-by-ambito-legal.sql');
+    const fechaInicioStr = fechaInicio
+      ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
+      : null;
+    const fechaFinStr = fechaFin
+      ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
+      : null;
+
+    const result: QueryResult = await pool.query(query, [fechaInicioStr, fechaFinStr]);
+    return result.rows;
+  },
+
+  /**
+   * Obtiene la distribución de casos por núcleo
+   * @param fechaInicio - Fecha de inicio del rango (opcional)
+   * @param fechaFin - Fecha de fin del rango (opcional)
+   * @param idNucleo - ID del núcleo para filtrar (opcional)
+   * @param term - TERM para filtrar (opcional)
+   */
+  getDistributionByNucleo: async (
+    fechaInicio?: string | Date,
+    fechaFin?: string | Date,
+    idNucleo?: number,
+    term?: string
+  ): Promise<Array<{ nombre_nucleo: string; cantidad: number }>> => {
+    const query = loadSQL('casos/get-distribution-by-nucleo.sql');
+    const fechaInicioStr = fechaInicio
+      ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
+      : null;
+    const fechaFinStr = fechaFin
+      ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
+      : null;
+
+    const result: QueryResult = await pool.query(query, [
+      fechaInicioStr,
+      fechaFinStr,
+      idNucleo || null,
+      term || null,
+    ]);
+    return result.rows;
+  },
+
+  /**
+   * Obtiene el top 5 de tipos de casos por materia
+   * @param fechaInicio - Fecha de inicio del rango (opcional)
+   * @param fechaFin - Fecha de fin del rango (opcional)
+   * @param idNucleo - ID del núcleo para filtrar (opcional)
+   * @param term - TERM para filtrar (opcional)
+   */
+  getTopMaterias: async (
+    fechaInicio?: string | Date,
+    fechaFin?: string | Date,
+    idNucleo?: number,
+    term?: string
+  ): Promise<Array<{ nombre_materia: string; cantidad: number }>> => {
+    const query = loadSQL('casos/get-top-materias.sql');
+    const fechaInicioStr = fechaInicio
+      ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
+      : null;
+    const fechaFinStr = fechaFin
+      ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
+      : null;
+
+    const result: QueryResult = await pool.query(query, [
+      fechaInicioStr,
+      fechaFinStr,
+      idNucleo || null,
+      term || null,
+    ]);
+    return result.rows;
+  },
+
+  /**
+   * Obtiene estadísticas KPI para el dashboard
+   * @param fechaInicio - Fecha de inicio del rango (opcional)
+   * @param fechaFin - Fecha de fin del rango (opcional)
+   * @param idNucleo - ID del núcleo para filtrar (opcional)
+   * @param term - TERM para filtrar (opcional)
+   */
+  getKPIStats: async (
+    fechaInicio?: string | Date,
+    fechaFin?: string | Date,
+    idNucleo?: number,
+    term?: string
+  ): Promise<{
+    total_casos: number;
+    casos_en_riesgo: number;
+    total_acciones: number;
+    casos_archivados: number;
+    materia_mas_comun: string;
+    cantidad_materia_comun: number;
+    tasa_cierre_porcentaje: number;
+  }> => {
+    const query = loadSQL('casos/get-kpi-stats.sql');
+    const fechaInicioStr = fechaInicio
+      ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
+      : null;
+    const fechaFinStr = fechaFin
+      ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
+      : null;
+
+    const result: QueryResult = await pool.query(query, [
+      fechaInicioStr,
+      fechaFinStr,
+      idNucleo || null,
+      term || null,
+    ]);
+    return result.rows[0] || {
+      total_casos: 0,
+      casos_en_riesgo: 0,
+      total_acciones: 0,
+      casos_archivados: 0,
+      materia_mas_comun: '',
+      cantidad_materia_comun: 0,
+      tasa_cierre_porcentaje: 0,
+    };
+  },
+
+  /**
+   * Obtiene la distribución de casos por estatus
+   * @param fechaInicio - Fecha de inicio del rango (opcional)
+   * @param fechaFin - Fecha de fin del rango (opcional)
+   * @param idNucleo - ID del núcleo para filtrar (opcional)
+   * @param term - TERM para filtrar (opcional)
+   */
+  getDistributionByStatus: async (
+    fechaInicio?: string | Date,
+    fechaFin?: string | Date,
+    idNucleo?: number,
+    term?: string
+  ): Promise<Array<{ nombre_estatus: string; cantidad: number }>> => {
+    const query = loadSQL('casos/get-distribution-by-status.sql');
+    const fechaInicioStr = fechaInicio
+      ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
+      : null;
+    const fechaFinStr = fechaFin
+      ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
+      : null;
+
+    const result: QueryResult = await pool.query(query, [
+      fechaInicioStr,
+      fechaFinStr,
+      idNucleo || null,
+      term || null,
+    ]);
+    return result.rows;
+  },
+
+  /**
+   * Obtiene la tendencia de carga de casos por mes
+   * @param fechaInicio - Fecha de inicio del rango (opcional)
+   * @param fechaFin - Fecha de fin del rango (opcional)
+   * @param idNucleo - ID del núcleo para filtrar (opcional)
+   * @param term - TERM para filtrar (opcional)
+   */
+  getCaseLoadTrend: async (
+    fechaInicio?: string | Date,
+    fechaFin?: string | Date,
+    idNucleo?: number,
+    term?: string
+  ): Promise<Array<{ mes: string; estatus: string; cantidad: number }>> => {
+    const query = loadSQL('casos/get-case-load-trend.sql');
+    const fechaInicioStr = fechaInicio
+      ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
+      : null;
+    const fechaFinStr = fechaFin
+      ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
+      : null;
+
+    const result: QueryResult = await pool.query(query, [
+      fechaInicioStr,
+      fechaFinStr,
+      idNucleo || null,
+      term || null,
+    ]);
+    return result.rows;
   },
 };
 

@@ -41,7 +41,7 @@ export default function ReportCard({
             <div className="mt-auto flex justify-center pt-2">
                 <button
                     onClick={onGenerate}
-                    className={`${buttonStyles[buttonColor]} h-9 w-40 rounded-lg text-white text-base font-normal transition-colors`}
+                    className={`${buttonStyles[buttonColor]} h-9 w-40 rounded-lg text-white text-base font-normal transition-colors cursor-pointer`}
                 >
                     Generar Informe
                 </button>
