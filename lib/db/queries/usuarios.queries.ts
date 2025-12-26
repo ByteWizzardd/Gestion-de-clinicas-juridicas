@@ -115,7 +115,20 @@ export const usuariosQueries = {
     const result: QueryResult = await pool.query(query);
     return result.rows;
   },
+
+  /**
+   * Actualiza la contraseña de un usuario por correo electrónico
+   */
+  updatePasswordByEmail: async (email: string, passwordHash: string): Promise<any> => {
+    const query = loadSQL('usuarios/update-password.sql');
+    const result: QueryResult = await pool.query(query, [email, passwordHash]);
+    return result.rows[0];
+  },
 };
+
+
+
+
 
 
 

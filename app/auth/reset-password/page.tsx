@@ -4,18 +4,22 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/forms/Input";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 
-export default function LoginPage() {
+export default function ResetPasswordPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [isExiting, setIsExiting] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState(false);
     const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
     const [formData, setFormData] = useState({
-        nombreUsuario: "",
-        password: "",
+        cedula: "",
+        email: "",
+        newPassword: "",
+        confirmPassword: "",
     });
 
     useEffect(() => {
@@ -30,11 +34,22 @@ export default function LoginPage() {
         return () => mediaQuery.removeEventListener("change", handleChange);
     }, []);
 
+    useEffect(() => {
+        const cedula = searchParams.get('cedula');
+        const email = searchParams.get('email');
+        if (cedula) {
+            setFormData(prev => ({ ...prev, cedula: decodeURIComponent(cedula) }));
+        }
+        if (email) {
+            setFormData(prev => ({ ...prev, email: decodeURIComponent(email) }));
+        }
+    }, [searchParams]);
+
     const handleBack = (e: React.MouseEvent) => {
         e.preventDefault();
         setIsExiting(true);
         setTimeout(() => {
-            router.push("/auth");
+            router.push("/auth/login");
         }, prefersReducedMotion ? 0 : 150);
     };
 
@@ -47,44 +62,53 @@ export default function LoginPage() {
         setError(null);
     };
 
-    const handleLogin = async (e?: React.MouseEvent) => {
-        if (e) e.preventDefault();
-        
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
         setError(null);
-        
-        if (!formData.nombreUsuario || !formData.password) {
+        setSuccess(false);
+
+        if (!formData.cedula || !formData.newPassword || !formData.confirmPassword) {
             setError("Por favor complete todos los campos");
+            return;
+        }
+
+        if (formData.newPassword !== formData.confirmPassword) {
+            setError("Las contraseñas no coinciden");
+            return;
+        }
+
+        if (formData.newPassword.length < 6) {
+            setError("La contraseña debe tener al menos 6 caracteres");
             return;
         }
 
         setIsLoading(true);
 
         try {
-            const { loginAction } = await import('@/app/actions/auth');
+            const { resetPasswordAction } = await import('@/app/actions/auth');
             const formDataToSend = new FormData();
-            formDataToSend.append('nombreUsuario', formData.nombreUsuario);
-            formDataToSend.append('password', formData.password);
+            formDataToSend.append('cedula', formData.cedula);
+            formDataToSend.append('newPassword', formData.newPassword);
+            formDataToSend.append('confirmPassword', formData.confirmPassword);
 
-            const result = await loginAction(formDataToSend);
+            const result = await resetPasswordAction(formDataToSend);
 
             if (!result.success) {
-                throw new Error(result.error?.message || "Error al iniciar sesión");
+                throw new Error(result.error?.message || "Error al restablecer la contraseña");
             }
 
-            // Login exitoso
-            setIsExiting(true);
+            setSuccess(true);
+            // Redirigir a login después de 2 segundos
             setTimeout(() => {
-                router.push("/dashboard");
-            }, prefersReducedMotion ? 0 : 150);
+                setIsExiting(true);
+                setTimeout(() => {
+                    router.push("/auth/login");
+                }, prefersReducedMotion ? 0 : 150);
+            }, 2000);
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error al iniciar sesión");
+            setError(err instanceof Error ? err.message : "Error al restablecer la contraseña");
             setIsLoading(false);
         }
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        handleLogin();
     };
 
     return(
@@ -97,7 +121,7 @@ export default function LoginPage() {
                         animate={{ opacity: 1 }}
                         exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                         transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.15, ease: "easeOut" }}>
-                        <Link href="/auth" onClick={handleBack}
+                        <Link href="/auth/login" onClick={handleBack}
                             className="absolute top-10 left-8 z-30 p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
                         >
                             <ArrowLeft className="w-8 h-8 text-foreground hover:text-primary transition-colors" />
@@ -111,7 +135,7 @@ export default function LoginPage() {
                 <AnimatePresence>
                     {!isExiting && (
                         <motion.div 
-                            key="login-form"
+                            key="reset-password-form"
                             className="w-full max-w-md pl-15"
                             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -119,7 +143,7 @@ export default function LoginPage() {
                             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}>
                     <form onSubmit={handleSubmit} className="flex flex-col gap-6 w-full">
                         <div className="mb-5">
-                            <h1 className="text-5xl font-normal text-foreground mb-2 text-center font-primary">Iniciar Sesión</h1>
+                            <h1 className="text-5xl font-normal text-foreground mb-2 text-center font-primary">Restablecer Contraseña</h1>
                             <div className="w-full h-0.5 bg-secondary mt-5"/>
                         </div>
                         {error && (
@@ -127,41 +151,54 @@ export default function LoginPage() {
                                 {error}
                             </div>
                         )}
-                        <div className="flex flex-col gap-4 !font-urbanist">
-                            <Input 
-                                label="Nombre de usuario" 
-                                placeholder="Ingrese su nombre de usuario" 
-                                className="bg-gray-100 text-base"
-                                name="nombreUsuario"
-                                type="text"
-                                value={formData.nombreUsuario}
-                                onChange={handleInputChange}
-                                required
-                            />
-                            <Input 
-                                label="Contraseña" 
-                                placeholder="Ingrese su contraseña" 
-                                className="bg-gray-200 !text-base"
-                                name="password"
-                                type="password"
-                                value={formData.password}
-                                onChange={handleInputChange}
-                                required
-                            />
-                            <Link href="/auth/forgot-password" className="text-base text-primary text-right -mt-2 hover:underline">¿Olvidó su contraseña?</Link>
-                        </div>
-                            <div className="flex flex-col gap-2 mt-4 !font-urbanist">
-                                <Button 
-                                    children="Ingresar a tu cuenta" 
-                                    variant="primary" 
-                                    size="lg" 
-                                    isLoading={isLoading}  
-                                    className="!rounded-3xl !text-xl w-full" 
-                                    type="submit"
-                                    disabled={isLoading}
-                                />
+                        {success && (
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-green-700 text-sm">
+                                Contraseña actualizada exitosamente. Redirigiendo al inicio de sesión...
                             </div>
-                        </form>
+                        )}
+                        <div className="flex flex-col gap-4 !font-urbanist">
+                            {formData.email && (
+                                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700">
+                                    <strong>Correo:</strong> {formData.email}
+                                </div>
+                            )}
+                            {/* Campo oculto para cedula */}
+                            <input type="hidden" name="cedula" value={formData.cedula} />
+                            <Input 
+                                label="Nueva contraseña" 
+                                placeholder="Ingrese su nueva contraseña" 
+                                className="bg-gray-100 text-base"
+                                name="newPassword"
+                                type="password"
+                                value={formData.newPassword}
+                                onChange={handleInputChange}
+                                required
+                                disabled={success}
+                            />
+                            <Input 
+                                label="Confirmar contraseña" 
+                                placeholder="Confirme su nueva contraseña" 
+                                className="bg-gray-200 !text-base"
+                                name="confirmPassword"
+                                type="password"
+                                value={formData.confirmPassword}
+                                onChange={handleInputChange}
+                                required
+                                disabled={success}
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2 mt-4 !font-urbanist">
+                            <Button 
+                                children={success ? "Redirigiendo..." : "Restablecer contraseña"} 
+                                variant="primary" 
+                                size="lg" 
+                                isLoading={isLoading}  
+                                className="!rounded-3xl !text-xl w-full" 
+                                type="submit"
+                                disabled={isLoading || success}
+                            />
+                        </div>
+                    </form>
                     </motion.div>
                     )}
                 </AnimatePresence>
@@ -186,3 +223,4 @@ export default function LoginPage() {
         </div>
     );
 }
+

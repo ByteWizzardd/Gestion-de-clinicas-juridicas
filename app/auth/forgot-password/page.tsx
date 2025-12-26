@@ -7,15 +7,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 
-export default function LoginPage() {
+export default function ForgotPasswordPage() {
     const router = useRouter();
     const [isExiting, setIsExiting] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState(false);
+    const [result, setResult] = useState<{ data?: { message?: string; emailFound?: boolean } } | null>(null);
     const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
     const [formData, setFormData] = useState({
-        nombreUsuario: "",
-        password: "",
+        email: "",
     });
 
     useEffect(() => {
@@ -34,7 +35,7 @@ export default function LoginPage() {
         e.preventDefault();
         setIsExiting(true);
         setTimeout(() => {
-            router.push("/auth");
+            router.push("/auth/login");
         }, prefersReducedMotion ? 0 : 150);
     };
 
@@ -47,44 +48,50 @@ export default function LoginPage() {
         setError(null);
     };
 
-    const handleLogin = async (e?: React.MouseEvent) => {
-        if (e) e.preventDefault();
-        
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
         setError(null);
-        
-        if (!formData.nombreUsuario || !formData.password) {
-            setError("Por favor complete todos los campos");
+        setSuccess(false);
+        setResult(null);
+
+        if (!formData.email || formData.email.trim() === '') {
+            setError("Por favor ingrese su correo electrónico");
             return;
         }
 
         setIsLoading(true);
 
         try {
-            const { loginAction } = await import('@/app/actions/auth');
+            const { forgotPasswordAction } = await import('@/app/actions/auth');
             const formDataToSend = new FormData();
-            formDataToSend.append('nombreUsuario', formData.nombreUsuario);
-            formDataToSend.append('password', formData.password);
+            formDataToSend.append('email', formData.email);
 
-            const result = await loginAction(formDataToSend);
+            const actionResult = await forgotPasswordAction(formDataToSend);
 
-            if (!result.success) {
-                throw new Error(result.error?.message || "Error al iniciar sesión");
+            if (!actionResult.success) {
+                throw new Error(actionResult.error?.message || "Error al procesar la solicitud");
             }
 
-            // Login exitoso
-            setIsExiting(true);
-            setTimeout(() => {
-                router.push("/dashboard");
-            }, prefersReducedMotion ? 0 : 150);
+            setResult(actionResult);
+            setSuccess(true);
+            
+            // Solo redirigir si el correo existe (emailFound === true)
+            if (actionResult.data?.emailFound) {
+                // Redirigir a verify-code después de 2 segundos solo si el correo existe
+                setTimeout(() => {
+                    setIsExiting(true);
+                    setTimeout(() => {
+                        router.push(`/auth/verify-code?email=${encodeURIComponent(formData.email)}`);
+                    }, prefersReducedMotion ? 0 : 150);
+                }, 2000);
+            } else {
+                // Si el correo no existe, permitir que el usuario intente de nuevo
+                setIsLoading(false);
+            }
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error al iniciar sesión");
+            setError(err instanceof Error ? err.message : "Error al procesar la solicitud");
             setIsLoading(false);
         }
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        handleLogin();
     };
 
     return(
@@ -97,7 +104,7 @@ export default function LoginPage() {
                         animate={{ opacity: 1 }}
                         exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                         transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.15, ease: "easeOut" }}>
-                        <Link href="/auth" onClick={handleBack}
+                        <Link href="/auth/login" onClick={handleBack}
                             className="absolute top-10 left-8 z-30 p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
                         >
                             <ArrowLeft className="w-8 h-8 text-foreground hover:text-primary transition-colors" />
@@ -111,7 +118,7 @@ export default function LoginPage() {
                 <AnimatePresence>
                     {!isExiting && (
                         <motion.div 
-                            key="login-form"
+                            key="forgot-password-form"
                             className="w-full max-w-md pl-15"
                             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -119,49 +126,51 @@ export default function LoginPage() {
                             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}>
                     <form onSubmit={handleSubmit} className="flex flex-col gap-6 w-full">
                         <div className="mb-5">
-                            <h1 className="text-5xl font-normal text-foreground mb-2 text-center font-primary">Iniciar Sesión</h1>
+                            <h1 className="text-5xl font-normal text-foreground mb-2 text-center font-primary">¿Olvidó su contraseña?</h1>
                             <div className="w-full h-0.5 bg-secondary mt-5"/>
                         </div>
+                        <p className="text-base text-gray-600 text-center mb-2">
+                            Ingrese su correo electrónico y le enviaremos instrucciones para restablecer su contraseña.
+                        </p>
                         {error && (
                             <div className="bg-danger-light border border-danger rounded-lg p-3 text-danger text-sm">
                                 {error}
                             </div>
                         )}
+                        {success && (
+                            <div className={`rounded-lg p-3 text-sm ${
+                                result?.data?.emailFound === false 
+                                    ? "bg-yellow-50 border border-yellow-200 text-yellow-700" 
+                                    : "bg-green-50 border border-green-200 text-green-700"
+                            }`}>
+                                {result?.data?.message || "Si el correo existe en nuestro sistema, recibirás instrucciones para restablecer tu contraseña."}
+                            </div>
+                        )}
                         <div className="flex flex-col gap-4 !font-urbanist">
                             <Input 
-                                label="Nombre de usuario" 
-                                placeholder="Ingrese su nombre de usuario" 
+                                label="Correo electrónico" 
+                                placeholder="Ingrese su correo electrónico" 
                                 className="bg-gray-100 text-base"
-                                name="nombreUsuario"
-                                type="text"
-                                value={formData.nombreUsuario}
+                                name="email"
+                                type="email"
+                                value={formData.email}
                                 onChange={handleInputChange}
                                 required
+                                disabled={success}
                             />
-                            <Input 
-                                label="Contraseña" 
-                                placeholder="Ingrese su contraseña" 
-                                className="bg-gray-200 !text-base"
-                                name="password"
-                                type="password"
-                                value={formData.password}
-                                onChange={handleInputChange}
-                                required
-                            />
-                            <Link href="/auth/forgot-password" className="text-base text-primary text-right -mt-2 hover:underline">¿Olvidó su contraseña?</Link>
                         </div>
-                            <div className="flex flex-col gap-2 mt-4 !font-urbanist">
-                                <Button 
-                                    children="Ingresar a tu cuenta" 
-                                    variant="primary" 
-                                    size="lg" 
-                                    isLoading={isLoading}  
-                                    className="!rounded-3xl !text-xl w-full" 
-                                    type="submit"
-                                    disabled={isLoading}
-                                />
-                            </div>
-                        </form>
+                        <div className="flex flex-col gap-2 mt-4 !font-urbanist">
+                            <Button 
+                                children={success ? "Redirigiendo..." : "Enviar instrucciones"} 
+                                variant="primary" 
+                                size="lg" 
+                                isLoading={isLoading}  
+                                className="!rounded-3xl !text-xl w-full" 
+                                type="submit"
+                                disabled={isLoading || success}
+                            />
+                        </div>
+                    </form>
                     </motion.div>
                     )}
                 </AnimatePresence>
@@ -186,3 +195,4 @@ export default function LoginPage() {
         </div>
     );
 }
+
