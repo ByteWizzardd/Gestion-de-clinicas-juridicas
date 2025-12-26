@@ -140,7 +140,7 @@ export default function DashboardClient({ initialAppointments, initialCasos }: D
             <div className="flex flex-col md:flex-row gap-4 md:gap-6 flex-1 min-h-0">
               <div className="w-full md:w-1/2 flex flex-col min-h-0">
                 <h3 className="text-xl md:text-2xl font-semibold text-neutral-800 mb-3 md:mb-4 flex-shrink-0">
-              Tu Agenda
+              Mi Agenda
             </h3>
                 <div className="flex-1 overflow-y-auto pr-2 min-h-[200px] md:min-h-0">
                   <DashboardAppointmentList 
