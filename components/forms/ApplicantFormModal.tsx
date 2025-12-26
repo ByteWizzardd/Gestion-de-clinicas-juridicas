@@ -52,17 +52,15 @@ interface FormData {
   tipoEducativo: string; // Tipo de educación del jefe de hogar
   numeroEducativo: string; // Número/grado específico del jefe de hogar
   nivelEducativo: string; // Se mantiene para compatibilidad, se calculará desde tipo y número
-  anosCursados: string;
-  semestresCursados: string;
-  trimestresCursados: string;
+  tipoTiempoEstudioJefe: string; // Tipo de tiempo: 'Años', 'Semestres', 'Trimestres'
+  tiempoEstudioJefe: string; // Cantidad de tiempo de estudio del jefe
   ingresosMensuales: string;
   // Paso 4 - Nivel Educativo del Solicitante
   tipoEducativoSolicitante: string; // Tipo de educación del solicitante
   numeroEducativoSolicitante: string; // Número/grado específico del solicitante
   nivelEducativoSolicitante: string; // Se mantiene para compatibilidad, se calculará desde tipo y número
-  anosCursadosSolicitante: string;
-  semestresCursadosSolicitante: string;
-  trimestresCursadosSolicitante: string;
+  tipoTiempoEstudioSolicitante: string; // Tipo de tiempo: 'Años', 'Semestres', 'Trimestres'
+  tiempoEstudioSolicitante: string; // Cantidad de tiempo de estudio
   // Paso 5 - Trabajo
   trabaja: string; // ¿Trabaja? (si/no)
   condicionTrabajo: string; // Condición en el trabajo (si trabaja)
@@ -175,16 +173,14 @@ const getInitialFormData = (): FormData => ({
   tipoEducativo: '',
   numeroEducativo: '',
   nivelEducativo: '',
-  anosCursados: '',
-  semestresCursados: '',
-  trimestresCursados: '',
+  tipoTiempoEstudioJefe: '',
+  tiempoEstudioJefe: '',
   ingresosMensuales: '',
   tipoEducativoSolicitante: '',
   numeroEducativoSolicitante: '',
   nivelEducativoSolicitante: '',
-  anosCursadosSolicitante: '',
-  semestresCursadosSolicitante: '',
-  trimestresCursadosSolicitante: '',
+  tipoTiempoEstudioSolicitante: '',
+  tiempoEstudioSolicitante: '',
   trabaja: '',
   condicionTrabajo: '',
   buscandoTrabajo: '',
@@ -217,6 +213,7 @@ export default function ApplicantFormModal({
     source?: 'usuario' | 'beneficiario';
   }>>([]);
   const [showCedulaSuggestions, setShowCedulaSuggestions] = useState(false);
+  const [cedulaDropdownPosition, setCedulaDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const cedulaInputRef = useRef<HTMLDivElement>(null);
   const cedulaSearchTimeout = useRef<NodeJS.Timeout | null>(null);
   
@@ -233,6 +230,8 @@ export default function ApplicantFormModal({
   const [aguaPotable, setAguaPotable] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
   const [aseo, setAseo] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
   const [eliminacionAguasN, setEliminacionAguasN] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
+  const [artefactosDomesticos, setArtefactosDomesticos] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
+  const [nivelesEducativos, setNivelesEducativos] = useState<Array<{ id_nivel_educativo: number; descripcion: string }>>([]);
   const [loadingCatalogos, setLoadingCatalogos] = useState(false);
 
   // Helper para limpiar errores de campos específicos
@@ -249,19 +248,17 @@ export default function ApplicantFormModal({
     if (prefix === 'Solicitante') {
       setFormData((prev) => ({
         ...prev,
-        anosCursadosSolicitante: '',
-        semestresCursadosSolicitante: '',
-        trimestresCursadosSolicitante: '',
+        tipoTiempoEstudioSolicitante: '',
+        tiempoEstudioSolicitante: '',
       }));
-      clearErrors(['anosCursadosSolicitante', 'semestresCursadosSolicitante', 'trimestresCursadosSolicitante']);
+      clearErrors(['tipoTiempoEstudioSolicitante', 'tiempoEstudioSolicitante']);
     } else {
       setFormData((prev) => ({
         ...prev,
-        anosCursados: '',
-        semestresCursados: '',
-        trimestresCursados: '',
+        tipoTiempoEstudioJefe: '',
+        tiempoEstudioJefe: '',
       }));
-      clearErrors(['anosCursados', 'semestresCursados', 'trimestresCursados']);
+      clearErrors(['tipoTiempoEstudioJefe', 'tiempoEstudioJefe']);
     }
   };
 
@@ -583,53 +580,20 @@ export default function ApplicantFormModal({
 
     // Solo validar nivel educativo si NO es jefe de hogar
     if (formData.jefeHogar === 'no') {
-      if (!formData.tipoEducativo || formData.tipoEducativo.trim() === '') {
-        newErrors.tipoEducativo = 'Este campo es requerido';
+      if (!formData.nivelEducativo || formData.nivelEducativo.trim() === '') {
+        newErrors.nivelEducativo = 'Este campo es requerido';
       }
-      if (!formData.numeroEducativo || formData.numeroEducativo.trim() === '') {
-        newErrors.numeroEducativo = 'Este campo es requerido';
-      }
-      // Solo validar años/semestres/trimestres si el nivel es 12, 13 o 14
-      const nivelNum = Number(formData.numeroEducativo);
-      if (nivelNum === 12 || nivelNum === 13 || nivelNum === 14) {
-        let anosValue = 0;
-        let semestresValue = 0;
-        let trimestresValue = 0;
-        
-        if (!formData.anosCursados || formData.anosCursados.trim() === '') {
-          newErrors.anosCursados = 'Este campo es requerido';
-        } else {
-          anosValue = Number(formData.anosCursados);
-          if (isNaN(anosValue) || anosValue < 0) {
-            newErrors.anosCursados = 'Debe ser un número válido';
-          }
+      // Solo validar tipo y tiempo de estudio si el nivel es técnico o universitario
+      if (formData.nivelEducativo && (formData.nivelEducativo.includes('Técnico') || formData.nivelEducativo.includes('Universitaria'))) {
+        if (!formData.tipoTiempoEstudioJefe || formData.tipoTiempoEstudioJefe.trim() === '') {
+          newErrors.tipoTiempoEstudioJefe = 'Este campo es requerido';
         }
-        if (!formData.semestresCursados || formData.semestresCursados.trim() === '') {
-          newErrors.semestresCursados = 'Este campo es requerido';
+        if (!formData.tiempoEstudioJefe || formData.tiempoEstudioJefe.trim() === '') {
+          newErrors.tiempoEstudioJefe = 'Este campo es requerido';
         } else {
-          semestresValue = Number(formData.semestresCursados);
-          if (isNaN(semestresValue) || semestresValue < 0) {
-            newErrors.semestresCursados = 'Debe ser un número válido';
-          } else if (!newErrors.anosCursados && semestresValue > anosValue * 2) {
-            // 1 año = 2 semestres, los semestres no pueden ser más de 2 veces los años
-            newErrors.semestresCursados = `Los semestres no pueden ser más de ${anosValue * 2} (2 semestres por año)`;
-          }
-        }
-        if (!formData.trimestresCursados || formData.trimestresCursados.trim() === '') {
-          newErrors.trimestresCursados = 'Este campo es requerido';
-        } else {
-          trimestresValue = Number(formData.trimestresCursados);
-          if (isNaN(trimestresValue) || trimestresValue < 0) {
-            newErrors.trimestresCursados = 'Debe ser un número válido';
-          } else {
-            // Validar congruencia con años (1 año = 4 trimestres)
-            if (!newErrors.anosCursados && trimestresValue > anosValue * 4) {
-              newErrors.trimestresCursados = `Los trimestres no pueden ser más de ${anosValue * 4} (4 trimestres por año)`;
-            }
-            // Validar congruencia con semestres (1 semestre = 2 trimestres)
-            if (!newErrors.semestresCursados && trimestresValue > semestresValue * 2) {
-              newErrors.trimestresCursados = `Los trimestres no pueden ser más de ${semestresValue * 2} (2 trimestres por semestre)`;
-            }
+          const tiempoValue = Number(formData.tiempoEstudioJefe);
+          if (isNaN(tiempoValue) || tiempoValue < 0) {
+            newErrors.tiempoEstudioJefe = 'Debe ser un número válido mayor o igual a 0';
           }
         }
       }
@@ -642,53 +606,22 @@ export default function ApplicantFormModal({
   const validateStep4 = (): boolean => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
 
-    if (!formData.tipoEducativoSolicitante || formData.tipoEducativoSolicitante.trim() === '') {
-      newErrors.tipoEducativoSolicitante = 'Este campo es requerido';
+    // Validar nivel educativo del solicitante
+    if (!formData.nivelEducativoSolicitante || formData.nivelEducativoSolicitante.trim() === '') {
+      newErrors.nivelEducativoSolicitante = 'Este campo es requerido';
     }
-    if (!formData.numeroEducativoSolicitante || formData.numeroEducativoSolicitante.trim() === '') {
-      newErrors.numeroEducativoSolicitante = 'Este campo es requerido';
-    }
-    // Solo validar años/semestres/trimestres si el nivel es 12, 13 o 14
-    const nivelNum = Number(formData.numeroEducativoSolicitante);
-    if (nivelNum === 12 || nivelNum === 13 || nivelNum === 14) {
-      let anosValue = 0;
-      let semestresValue = 0;
-      let trimestresValue = 0;
-      
-      if (!formData.anosCursadosSolicitante || formData.anosCursadosSolicitante.trim() === '') {
-        newErrors.anosCursadosSolicitante = 'Este campo es requerido';
-      } else {
-        anosValue = Number(formData.anosCursadosSolicitante);
-        if (isNaN(anosValue) || anosValue < 0) {
-          newErrors.anosCursadosSolicitante = 'Debe ser un número válido';
-        }
+    
+    // Solo validar tipo y tiempo de estudio si el nivel es técnico o universitario
+    if (formData.nivelEducativoSolicitante && (formData.nivelEducativoSolicitante.includes('Técnico') || formData.nivelEducativoSolicitante.includes('Universitaria'))) {
+      if (!formData.tipoTiempoEstudioSolicitante || formData.tipoTiempoEstudioSolicitante.trim() === '') {
+        newErrors.tipoTiempoEstudioSolicitante = 'Este campo es requerido';
       }
-      if (!formData.semestresCursadosSolicitante || formData.semestresCursadosSolicitante.trim() === '') {
-        newErrors.semestresCursadosSolicitante = 'Este campo es requerido';
+      if (!formData.tiempoEstudioSolicitante || formData.tiempoEstudioSolicitante.trim() === '') {
+        newErrors.tiempoEstudioSolicitante = 'Este campo es requerido';
       } else {
-        semestresValue = Number(formData.semestresCursadosSolicitante);
-        if (isNaN(semestresValue) || semestresValue < 0) {
-          newErrors.semestresCursadosSolicitante = 'Debe ser un número válido';
-        } else if (!newErrors.anosCursadosSolicitante && semestresValue > anosValue * 2) {
-          // 1 año = 2 semestres, los semestres no pueden ser más de 2 veces los años
-          newErrors.semestresCursadosSolicitante = `Los semestres no pueden ser más de ${anosValue * 2} (2 semestres por año)`;
-        }
-      }
-      if (!formData.trimestresCursadosSolicitante || formData.trimestresCursadosSolicitante.trim() === '') {
-        newErrors.trimestresCursadosSolicitante = 'Este campo es requerido';
-      } else {
-        trimestresValue = Number(formData.trimestresCursadosSolicitante);
-        if (isNaN(trimestresValue) || trimestresValue < 0) {
-          newErrors.trimestresCursadosSolicitante = 'Debe ser un número válido';
-        } else {
-          // Validar congruencia con años (1 año = 4 trimestres)
-          if (!newErrors.anosCursadosSolicitante && trimestresValue > anosValue * 4) {
-            newErrors.trimestresCursadosSolicitante = `Los trimestres no pueden ser más de ${anosValue * 4} (4 trimestres por año)`;
-          }
-          // Validar congruencia con semestres (1 semestre = 2 trimestres)
-          if (!newErrors.semestresCursadosSolicitante && trimestresValue > semestresValue * 2) {
-            newErrors.trimestresCursadosSolicitante = `Los trimestres no pueden ser más de ${semestresValue * 2} (2 trimestres por semestre)`;
-          }
+        const tiempoValue = Number(formData.tiempoEstudioSolicitante);
+        if (isNaN(tiempoValue) || tiempoValue < 0) {
+          newErrors.tiempoEstudioSolicitante = 'Debe ser un número válido mayor o igual a 0';
         }
       }
     }
@@ -819,6 +752,15 @@ export default function ApplicantFormModal({
         // Llamar al callback de éxito (recarga la lista y maneja el modal de confirmación)
         // El componente padre ahora maneja el modal de confirmación
         onSubmit(result);
+        
+        // Limpiar el formulario después de un registro exitoso
+        setFormData(getInitialFormData());
+        setErrors({});
+        setCurrentStep(0);
+        setLockedFields(new Set());
+        setCedulaSuggestions([]);
+        setShowCedulaSuggestions(false);
+        setCedulaDropdownPosition(null);
       } catch (error: any) {
         const errorMessage = error?.message || 'Error al registrar solicitante. Por favor, intente nuevamente.';
         
@@ -841,6 +783,7 @@ export default function ApplicantFormModal({
     const handleClickOutside = (event: MouseEvent) => {
       if (cedulaInputRef.current && !cedulaInputRef.current.contains(event.target as Node)) {
         setShowCedulaSuggestions(false);
+        setCedulaDropdownPosition(null);
       }
     };
 
@@ -874,6 +817,7 @@ export default function ApplicantFormModal({
           const { getCondicionTrabajoAction } = await import('@/app/actions/condicion-trabajo');
           const { getCondicionActividadAction } = await import('@/app/actions/condicion-actividad');
           const { getCaracteristicasByTipoAction } = await import('@/app/actions/caracteristicas');
+          const { getNivelesEducativosAction } = await import('@/app/actions/niveles-educativos');
           
           const [
             trabajoResult, 
@@ -885,6 +829,8 @@ export default function ApplicantFormModal({
             aguaPotableResult,
             aseoResult,
             eliminacionAguasNResult,
+            artefactosDomesticosResult,
+            nivelesEducativosResult,
           ] = await Promise.all([
             getCondicionTrabajoAction(),
             getCondicionActividadAction(),
@@ -895,6 +841,8 @@ export default function ApplicantFormModal({
             getCaracteristicasByTipoAction(5), // agua_potable
             getCaracteristicasByTipoAction(6), // aseo
             getCaracteristicasByTipoAction(7), // eliminacion_aguas_n
+            getCaracteristicasByTipoAction(8), // artefactos_domesticos
+            getNivelesEducativosAction(),
           ]);
 
           if (trabajoResult.success && trabajoResult.data) {
@@ -947,6 +895,18 @@ export default function ApplicantFormModal({
           } else {
             console.error('Error al cargar eliminación de aguas negras:', eliminacionAguasNResult.error);
           }
+
+          if (artefactosDomesticosResult.success && artefactosDomesticosResult.data) {
+            setArtefactosDomesticos(artefactosDomesticosResult.data);
+          } else {
+            console.error('Error al cargar artefactos domésticos:', artefactosDomesticosResult.error);
+          }
+
+          if (nivelesEducativosResult.success && nivelesEducativosResult.data) {
+            setNivelesEducativos(nivelesEducativosResult.data);
+          } else {
+            console.error('Error al cargar niveles educativos:', nivelesEducativosResult.error);
+          }
         } catch (error) {
           console.error('Error al cargar catálogos:', error);
         } finally {
@@ -957,6 +917,68 @@ export default function ApplicantFormModal({
       loadCatalogos();
     }
   }, [isOpen]);
+
+  // Efecto para actualizar posición del dropdown cuando hay scroll, resize o cambios en errores
+  useEffect(() => {
+    if (showCedulaSuggestions && cedulaInputRef.current) {
+      const updatePosition = () => {
+        if (cedulaInputRef.current) {
+          const container = cedulaInputRef.current;
+          
+          // Buscar el InputGroup dentro del contenedor
+          const inputGroup = container.querySelector('div.flex.flex-col.gap-1');
+          
+          // Buscar el mensaje de error dentro del InputGroup
+          let targetElement: Element = container;
+          if (inputGroup) {
+            const errorMessage = inputGroup.querySelector('p.text-danger');
+            // Si hay mensaje de error, usar su posición, si no, usar el InputGroup completo
+            if (errorMessage) {
+              targetElement = errorMessage;
+            } else {
+              // Buscar el contenedor del input (div.flex.items-center.gap-2)
+              const inputContainer = inputGroup.querySelector('div.flex.items-center.gap-2');
+              if (inputContainer) {
+                targetElement = inputContainer;
+              } else {
+                targetElement = inputGroup;
+              }
+            }
+          }
+          
+          const rect = targetElement.getBoundingClientRect();
+          setCedulaDropdownPosition({
+            top: rect.bottom + 4,
+            left: rect.left,
+            width: rect.width,
+          });
+        }
+      };
+
+      // Actualizar posición inmediatamente
+      updatePosition();
+
+      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('resize', updatePosition);
+      
+      // Observar cambios en el DOM para detectar cuando aparece/desaparece el mensaje de error
+      const observer = new MutationObserver(updatePosition);
+      if (cedulaInputRef.current) {
+        observer.observe(cedulaInputRef.current, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['class', 'style'],
+        });
+      }
+      
+      return () => {
+        window.removeEventListener('scroll', updatePosition, true);
+        window.removeEventListener('resize', updatePosition);
+        observer.disconnect();
+      };
+    }
+  }, [showCedulaSuggestions, errors.cedulaNumero]);
 
   const handleClose = () => {
     // Limpiar timeouts al cerrar
@@ -1013,6 +1035,7 @@ export default function ApplicantFormModal({
       // Limpiar sugerencias
       setCedulaSuggestions([]);
       setShowCedulaSuggestions(false);
+      setCedulaDropdownPosition(null);
       // Limpiar errores
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -1095,6 +1118,7 @@ export default function ApplicantFormModal({
     if (!cedulaNumero || cedulaNumero.trim() === '') {
       setCedulaSuggestions([]);
       setShowCedulaSuggestions(false);
+      setCedulaDropdownPosition(null);
       return;
     }
 
@@ -1117,6 +1141,7 @@ export default function ApplicantFormModal({
           }));
           setCedulaSuggestions([]);
           setShowCedulaSuggestions(false);
+          setCedulaDropdownPosition(null);
           return; // No buscar recomendaciones si es solicitante
         }
       }
@@ -1182,7 +1207,43 @@ export default function ApplicantFormModal({
             }
 
             setCedulaSuggestions(allSuggestions);
-            setShowCedulaSuggestions(allSuggestions.length > 0 && !errors.cedulaNumero);
+            
+            // Calcular posición del dropdown usando fixed positioning
+            if (cedulaInputRef.current && allSuggestions.length > 0 && !errors.cedulaNumero) {
+              const container = cedulaInputRef.current;
+              
+              // Buscar el InputGroup dentro del contenedor
+              const inputGroup = container.querySelector('div.flex.flex-col.gap-1');
+              
+              // Buscar el mensaje de error dentro del InputGroup
+              let targetElement: Element = container;
+              if (inputGroup) {
+                const errorMessage = inputGroup.querySelector('p.text-danger');
+                // Si hay mensaje de error, usar su posición, si no, usar el InputGroup completo
+                if (errorMessage) {
+                  targetElement = errorMessage;
+                } else {
+                  // Buscar el contenedor del input (div.flex.items-center.gap-2)
+                  const inputContainer = inputGroup.querySelector('div.flex.items-center.gap-2');
+                  if (inputContainer) {
+                    targetElement = inputContainer;
+                  } else {
+                    targetElement = inputGroup;
+                  }
+                }
+              }
+              
+              const rect = targetElement.getBoundingClientRect();
+              setCedulaDropdownPosition({
+                top: rect.bottom + 4, // 4px de margen (mt-1)
+                left: rect.left,
+                width: rect.width,
+              });
+              setShowCedulaSuggestions(true);
+            } else {
+              setShowCedulaSuggestions(false);
+              setCedulaDropdownPosition(null);
+            }
             
             // Si hay una coincidencia exacta, autocompletar automáticamente
             const exactMatch = allSuggestions.find((c: any) => c.cedula === cedula);
@@ -1200,11 +1261,13 @@ export default function ApplicantFormModal({
           } catch (error) {
             setCedulaSuggestions([]);
             setShowCedulaSuggestions(false);
+            setCedulaDropdownPosition(null);
           }
         }, 300);
       } else {
         setCedulaSuggestions([]);
         setShowCedulaSuggestions(false);
+        setCedulaDropdownPosition(null);
       }
 
       // Limpiar el error si la cédula no existe como solicitante
@@ -1361,6 +1424,7 @@ export default function ApplicantFormModal({
     });
     setShowCedulaSuggestions(false);
     setCedulaSuggestions([]);
+    setCedulaDropdownPosition(null);
   };
 
   // Función para autocompletar desde un usuario
@@ -1443,6 +1507,7 @@ export default function ApplicantFormModal({
     });
     setShowCedulaSuggestions(false);
     setCedulaSuggestions([]);
+    setCedulaDropdownPosition(null);
   };
 
   // Función para autocompletar desde un beneficiario
@@ -1507,6 +1572,7 @@ export default function ApplicantFormModal({
     });
     setShowCedulaSuggestions(false);
     setCedulaSuggestions([]);
+    setCedulaDropdownPosition(null);
   };
 
   const renderStep1 = () => (
@@ -1562,13 +1628,18 @@ export default function ApplicantFormModal({
         />
         {/* Lista de sugerencias de cédula */}
         <AnimatePresence>
-          {showCedulaSuggestions && cedulaSuggestions.length > 0 && !errors.cedulaNumero && (
+          {showCedulaSuggestions && cedulaSuggestions.length > 0 && !errors.cedulaNumero && cedulaDropdownPosition && (
             <motion.div
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+              className="fixed z-[100] bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+              style={{
+                top: `${cedulaDropdownPosition.top}px`,
+                left: `${cedulaDropdownPosition.left}px`,
+                width: `${cedulaDropdownPosition.width}px`,
+              }}
             >
               {cedulaSuggestions.map((item, index) => (
                 <motion.button
@@ -1902,11 +1973,11 @@ export default function ApplicantFormModal({
             Artefactos Domésticos
           </label>
           <div className="grid grid-cols-4 gap-x-4 gap-y-1">
-            {['Nevera', 'Lavadora', 'Computadora', 'Cable Satelital', 'Internet', 'Carro', 'Moto'].map((artefacto) => {
-              const isChecked = formData.artefactosDomesticos.includes(artefacto);
+            {artefactosDomesticos.map((artefacto) => {
+              const isChecked = formData.artefactosDomesticos.includes(artefacto.descripcion);
               return (
                 <label
-                  key={artefacto}
+                  key={artefacto.num_caracteristica}
                   className="flex items-center gap-2 cursor-pointer py-0.5 px-2 rounded-full transition-colors"
                 >
                   <div className="relative flex items-center justify-center">
@@ -1917,13 +1988,13 @@ export default function ApplicantFormModal({
                         if (e.target.checked) {
                           setFormData((prev) => ({
                             ...prev,
-                            artefactosDomesticos: [...prev.artefactosDomesticos, artefacto],
+                            artefactosDomesticos: [...prev.artefactosDomesticos, artefacto.descripcion],
                           }));
                         } else {
                           setFormData((prev) => ({
                             ...prev,
                             artefactosDomesticos: prev.artefactosDomesticos.filter(
-                              (a) => a !== artefacto
+                              (a) => a !== artefacto.descripcion
                             ),
                           }));
                         }
@@ -1947,7 +2018,7 @@ export default function ApplicantFormModal({
                       )}
                     </div>
                   </div>
-                  <span className="text-base text-foreground">{artefacto}</span>
+                  <span className="text-base text-foreground">{artefacto.descripcion}</span>
                 </label>
               );
             })}
@@ -2036,11 +2107,10 @@ export default function ApplicantFormModal({
                 tipoEducativo: '',
                 numeroEducativo: '',
                 nivelEducativo: '',
-                anosCursados: '',
-                semestresCursados: '',
-                trimestresCursados: '',
+                tipoTiempoEstudioJefe: '',
+                tiempoEstudioJefe: '',
               }));
-              clearErrors(['tipoEducativo', 'numeroEducativo', 'nivelEducativo', 'anosCursados', 'semestresCursados', 'trimestresCursados']);
+              clearErrors(['tipoEducativo', 'numeroEducativo', 'nivelEducativo', 'tipoTiempoEstudioJefe', 'tiempoEstudioJefe']);
             }
           }}
           options={[
@@ -2058,80 +2128,65 @@ export default function ApplicantFormModal({
         <>
           <div className="col-span-1">
             <Select
-              label="Tipo de Educación del Jefe de Hogar *"
-              value={formData.tipoEducativo}
-              onChange={(e) => handleTipoEducativoChange(e.target.value, 'JefeHogar')}
-              options={TIPOS_EDUCACION}
-              placeholder="Seleccionar tipo de educación"
-              error={errors.tipoEducativo}
+              label="Nivel Educativo del Jefe de Hogar *"
+              value={formData.nivelEducativo}
+              onChange={(e) => {
+                updateField('nivelEducativo', e.target.value);
+                // Limpiar campos relacionados
+                setFormData((prev) => ({
+                  ...prev,
+                  tipoEducativo: '',
+                  numeroEducativo: '',
+                  tipoTiempoEstudioJefe: '',
+                  tiempoEstudioJefe: '',
+                }));
+                clearErrors(['tipoEducativo', 'numeroEducativo', 'tipoTiempoEstudioJefe', 'tiempoEstudioJefe']);
+              }}
+              options={nivelesEducativos.map((nivel) => ({
+                value: nivel.descripcion,
+                label: nivel.descripcion,
+              }))}
+              placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar nivel educativo"}
+              error={errors.nivelEducativo}
               required
+              disabled={loadingCatalogos}
             />
           </div>
-          {formData.tipoEducativo && (
-            <>
-              {getNumerosPorTipo(formData.tipoEducativo).length > 1 ? (
-                <div className="col-span-1">
-                  <Select
-                    label="Grado/Número del Jefe de Hogar *"
-                    value={formData.numeroEducativo}
-                    onChange={(e) => handleNumeroEducativoChange(e.target.value, 'JefeHogar')}
-                    options={getNumerosPorTipo(formData.tipoEducativo)}
-                    placeholder="Seleccionar grado/número"
-                    error={errors.numeroEducativo}
-                    required
-                  />
-                </div>
-              ) : (
-                <div className="col-span-1">
-                  <Input
-                    label="Grado/Número del Jefe de Hogar *"
-                    type="text"
-                    value={formData.numeroEducativo || ''}
-                    readOnly
-                    className="bg-gray-100 cursor-not-allowed"
-                    placeholder="Asignado automáticamente"
-                  />
-                </div>
-              )}
-            </>
-          )}
-          {/* Solo mostrar campos de duración si el nivel es 12, 13 o 14 */}
-          {(Number(formData.numeroEducativo) === 12 || 
-            Number(formData.numeroEducativo) === 13 || 
-            Number(formData.numeroEducativo) === 14) && (
+          {/* Solo mostrar campos de duración para niveles técnicos y universitarios */}
+          {formData.nivelEducativo && 
+            (formData.nivelEducativo.includes('Técnico') || formData.nivelEducativo.includes('Universitaria')) && (
             <>
               <div className="col-span-1">
-                <Input
-                  label="Años Cursados del Jefe de Hogar *"
-                  type="number"
-                  value={formData.anosCursados}
-                  onChange={(e) => handleAnosChange(e.target.value, 'JefeHogar')}
-                  placeholder="Ingrese años"
-                  error={errors.anosCursados}
+                <Select
+                  label="Tipo de Tiempo del Jefe de Hogar *"
+                  value={formData.tipoTiempoEstudioJefe}
+                  onChange={(e) => {
+                    updateField('tipoTiempoEstudioJefe', e.target.value);
+                    // Limpiar tiempo de estudio cuando cambia el tipo
+                    setFormData((prev) => ({
+                      ...prev,
+                      tiempoEstudioJefe: '',
+                    }));
+                    clearErrors(['tiempoEstudioJefe']);
+                  }}
+                  options={[
+                    { value: 'Años', label: 'Años' },
+                    { value: 'Semestres', label: 'Semestres' },
+                    { value: 'Trimestres', label: 'Trimestres' },
+                  ]}
+                  placeholder="Seleccionar tipo"
+                  error={errors.tipoTiempoEstudioJefe}
                   required
-                  min="0"
                 />
               </div>
               <div className="col-span-1">
                 <Input
-                  label="Semestres Cursados del Jefe de Hogar *"
+                  label="Tiempo de Estudio del Jefe de Hogar *"
                   type="number"
-                  value={formData.semestresCursados}
-                  onChange={(e) => handleSemestresChange(e.target.value, 'JefeHogar')}
-                  placeholder="Ingrese semestres"
-                  error={errors.semestresCursados}
-                  required
-                  min="0"
-                />
-              </div>
-              <div className="col-span-1">
-                <Input
-                  label="Trimestres Cursados del Jefe de Hogar *"
-                  type="number"
-                  value={formData.trimestresCursados}
-                  onChange={(e) => updateField('trimestresCursados', e.target.value)}
-                  placeholder="Ingrese trimestres"
-                  error={errors.trimestresCursados}
+                  value={formData.tiempoEstudioJefe}
+                  onChange={(e) => updateField('tiempoEstudioJefe', e.target.value)}
+                  placeholder={`Ingrese ${formData.tipoTiempoEstudioJefe.toLowerCase() || 'cantidad'}`}
+                  error={errors.tiempoEstudioJefe}
                   required
                   min="0"
                 />
@@ -2145,83 +2200,68 @@ export default function ApplicantFormModal({
 
   const renderStep4 = () => (
     <div className="grid grid-cols-3 gap-x-6 gap-y-4">
-      {/* Fila 1: Tipo de Educación y Número */}
+      {/* Fila 1: Nivel Educativo */}
       <div className="col-span-1">
         <Select
-          label="Tipo de Educación *"
-          value={formData.tipoEducativoSolicitante}
-          onChange={(e) => handleTipoEducativoChange(e.target.value, 'Solicitante')}
-          options={TIPOS_EDUCACION}
-          placeholder="Seleccionar tipo de educación"
-          error={errors.tipoEducativoSolicitante}
+          label="Nivel Educativo *"
+          value={formData.nivelEducativoSolicitante}
+          onChange={(e) => {
+            updateField('nivelEducativoSolicitante', e.target.value);
+            // Limpiar campos relacionados
+            setFormData((prev) => ({
+              ...prev,
+              tipoEducativoSolicitante: '',
+              numeroEducativoSolicitante: '',
+              tipoTiempoEstudioSolicitante: '',
+              tiempoEstudioSolicitante: '',
+            }));
+            clearErrors(['tipoEducativoSolicitante', 'numeroEducativoSolicitante', 'tipoTiempoEstudioSolicitante', 'tiempoEstudioSolicitante']);
+          }}
+          options={nivelesEducativos.map((nivel) => ({
+            value: nivel.descripcion,
+            label: nivel.descripcion,
+          }))}
+          placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar nivel educativo"}
+          error={errors.nivelEducativoSolicitante}
           required
+          disabled={loadingCatalogos}
         />
       </div>
-      {formData.tipoEducativoSolicitante && (
-        <>
-          {getNumerosPorTipo(formData.tipoEducativoSolicitante).length > 1 ? (
-            <div className="col-span-1">
-              <Select
-                label="Grado/Número *"
-                value={formData.numeroEducativoSolicitante}
-                onChange={(e) => handleNumeroEducativoChange(e.target.value, 'Solicitante')}
-                options={getNumerosPorTipo(formData.tipoEducativoSolicitante)}
-                placeholder="Seleccionar grado/número"
-                error={errors.numeroEducativoSolicitante}
-                required
-              />
-            </div>
-          ) : (
-            <div className="col-span-1">
-              <Input
-                label="Grado/Número *"
-                type="text"
-                value={formData.numeroEducativoSolicitante || ''}
-                readOnly
-                className="bg-gray-100 cursor-not-allowed"
-                placeholder="Asignado automáticamente"
-              />
-            </div>
-          )}
-        </>
-      )}
-      {/* Solo mostrar campos de duración si el nivel es 12, 13 o 14 */}
-      {(Number(formData.numeroEducativoSolicitante) === 12 || 
-        Number(formData.numeroEducativoSolicitante) === 13 || 
-        Number(formData.numeroEducativoSolicitante) === 14) && (
+      {/* Solo mostrar campos de duración para niveles técnicos y universitarios */}
+      {formData.nivelEducativoSolicitante && 
+        (formData.nivelEducativoSolicitante.includes('Técnico') || formData.nivelEducativoSolicitante.includes('Universitaria')) && (
         <>
           <div className="col-span-1">
-            <Input
-              label="Años Cursados *"
-              type="number"
-              value={formData.anosCursadosSolicitante}
-              onChange={(e) => handleAnosChange(e.target.value, 'Solicitante')}
-              placeholder="Ingrese años"
-              error={errors.anosCursadosSolicitante}
+            <Select
+              label="Tipo de Tiempo *"
+              value={formData.tipoTiempoEstudioSolicitante}
+              onChange={(e) => {
+                updateField('tipoTiempoEstudioSolicitante', e.target.value);
+                // Limpiar tiempo de estudio cuando cambia el tipo
+                setFormData((prev) => ({
+                  ...prev,
+                  tiempoEstudioSolicitante: '',
+                }));
+                clearErrors(['tiempoEstudioSolicitante']);
+              }}
+              options={[
+                { value: 'Años', label: 'Años' },
+                { value: 'Semestres', label: 'Semestres' },
+                { value: 'Trimestres', label: 'Trimestres' },
+              ]}
+              placeholder="Seleccionar tipo"
+              error={errors.tipoTiempoEstudioSolicitante}
               required
-              min="0"
             />
           </div>
           <div className="col-span-1">
             <Input
-              label="Semestres Cursados *"
+              label="Tiempo de Estudio *"
               type="number"
-              value={formData.semestresCursadosSolicitante}
-              onChange={(e) => handleSemestresChange(e.target.value, 'Solicitante')}
-              placeholder="Ingrese semestres"
-              error={errors.semestresCursadosSolicitante}
-              required
-              min="0"
-            />
-          </div>
-          <div className="col-span-1">
-            <Input
-              label="Trimestres Cursados *"
-              type="number"
-              value={formData.trimestresCursadosSolicitante}
-              onChange={(e) => updateField('trimestresCursadosSolicitante', e.target.value)}
-              placeholder="Ingrese trimestres"
-              error={errors.trimestresCursadosSolicitante}
+              value={formData.tiempoEstudioSolicitante}
+              onChange={(e) => updateField('tiempoEstudioSolicitante', e.target.value)}
+              placeholder={`Ingrese ${formData.tipoTiempoEstudioSolicitante.toLowerCase() || 'cantidad'}`}
+              error={errors.tiempoEstudioSolicitante}
               required
               min="0"
             />

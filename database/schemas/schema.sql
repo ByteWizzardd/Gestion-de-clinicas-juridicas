@@ -118,7 +118,8 @@ CREATE TABLE solicitantes (
     estado_civil VARCHAR(20) NOT NULL CHECK (estado_civil IN ('Soltero', 'Casado', 'Divorciado', 'Viudo')),
     
     concubinato BOOLEAN NOT NULL,
-    tiempo_estudio VARCHAR(50) NOT NULL,
+    tipo_tiempo_estudio VARCHAR(20) CHECK (tipo_tiempo_estudio IN ('Años', 'Semestres', 'Trimestres')),
+    tiempo_estudio INTEGER CHECK (tiempo_estudio >= 0),
     
     id_nivel_educativo INTEGER NOT NULL REFERENCES niveles_educativos(id_nivel_educativo),
     id_trabajo INTEGER REFERENCES condicion_trabajo(id_trabajo),
@@ -164,7 +165,8 @@ CREATE TABLE familias_y_hogares (
     jefe_hogar BOOLEAN NOT NULL, 
     
     ingresos_mensuales DECIMAL(10,2) NOT NULL CHECK (ingresos_mensuales >= 0),
-    tiempo_estudio_jefe VARCHAR(50),
+    tipo_tiempo_estudio_jefe VARCHAR(20) CHECK (tipo_tiempo_estudio_jefe IN ('Años', 'Semestres', 'Trimestres')),
+    tiempo_estudio_jefe INTEGER CHECK (tiempo_estudio_jefe >= 0),
     id_nivel_educativo_jefe INTEGER REFERENCES niveles_educativos(id_nivel_educativo),
     FOREIGN KEY (cedula_solicitante) REFERENCES solicitantes(cedula)
 );

@@ -51,8 +51,10 @@ export default function Select({ label, error, options, placeholder = "Seleccion
         <button
             type="button"
             className={`
-                w-full h-10 ${icon ? 'pl-4 pr-4' : 'pl-5 pr-4'} rounded-3xl shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] overflow-hidden flex items-center gap-3 justify-between
+                w-full h-10 ${icon ? 'pl-4 pr-4' : 'pl-5 pr-4'} rounded-3xl border overflow-hidden flex items-center gap-3 justify-between
+                ${error ? 'border-danger' : 'border-transparent shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)]'}
                 outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0
+                ${error ? 'focus:ring-1 focus:ring-danger' : ''}
                 bg-white cursor-pointer
                 text-neutral-800/90 text-left font-normal
                 ${className || 'text-base'}

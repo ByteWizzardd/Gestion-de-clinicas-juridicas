@@ -8,8 +8,9 @@
 -- $6 = cant_ninos_estudiando
 -- $7 = jefe_hogar (BOOLEAN)
 -- $8 = ingresos_mensuales
--- $9 = tiempo_estudio_jefe (opcional)
--- $10 = id_nivel_educativo_jefe (opcional)
+-- $9 = tipo_tiempo_estudio_jefe (opcional)
+-- $10 = tiempo_estudio_jefe (opcional, INTEGER)
+-- $11 = id_nivel_educativo_jefe (opcional)
 
 INSERT INTO familias_y_hogares (
     cedula_solicitante,
@@ -20,8 +21,9 @@ INSERT INTO familias_y_hogares (
     cant_ninos_estudiando,
     jefe_hogar,
     ingresos_mensuales,
+    tipo_tiempo_estudio_jefe,
     tiempo_estudio_jefe,
     id_nivel_educativo_jefe
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 RETURNING *;
 
