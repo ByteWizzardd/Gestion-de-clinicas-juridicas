@@ -8,14 +8,10 @@ import FilterBar, { ReportFilters } from '@/components/reports/FilterBar';
 import { ViewMode } from '@/components/ui/navigation/ViewSwitcher';
 import DistributionChart from '@/components/reports/charts/DistributionChart';
 import TopCasesChart from '@/components/reports/charts/TopCasesChart';
+import StatusDistributionChart from '@/components/reports/charts/StatusDistributionChart';
+import CaseLoadTrendChart from '@/components/reports/charts/CaseLoadTrendChart';
 import KPIDashboard from '@/components/reports/KPIDashboard';
-import {
-    nucleoDistributionData,
-    nucleoTopCasesData,
-    distributionData,
-    topCasesData
-} from './mockData';
-import { getCasosGroupedByAmbitoLegal } from '@/app/actions/reports';
+import type { DistributionData, TopCasesData, KPIData, StatusDistributionData, CaseLoadTrendData } from '@/lib/utils/reports-data-mapper';
 
 export default function ReportsPage() {
     const [viewMode, setViewMode] = useState<ViewMode>('charts');
@@ -26,31 +22,115 @@ export default function ReportsPage() {
     });
     const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
+    // Data states
+    const [distributionData, setDistributionData] = useState<DistributionData[]>([]);
+    const [topCasesData, setTopCasesData] = useState<TopCasesData[]>([]);
+    const [statusDistributionData, setStatusDistributionData] = useState<StatusDistributionData[]>([]);
+    const [caseLoadTrendData, setCaseLoadTrendData] = useState<CaseLoadTrendData[]>([]);
+    const [kpiData, setKPIData] = useState<KPIData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
     useEffect(() => {
         const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
         setPrefersReducedMotion(mediaQuery.matches);
-        
+
         const handleChange = (e: MediaQueryListEvent) => {
             setPrefersReducedMotion(e.matches);
         };
-        
+
         mediaQuery.addEventListener("change", handleChange);
         return () => mediaQuery.removeEventListener("change", handleChange);
     }, []);
 
-    // Get filtered data based on selected nucleo
-    const currentDistributionData = nucleoDistributionData[filters.nucleo] || distributionData;
-    const currentTopCasesData = nucleoTopCasesData[filters.nucleo] || topCasesData;
+    // Fetch data when filters change
+    useEffect(() => {
+        const fetchReportsData = async () => {
+            setLoading(true);
+            setError(null);
+
+            try {
+                // Import server actions
+                const {
+                    getDistributionByNucleo,
+                    getTopCases,
+                    getDistributionByStatus,
+                    getCaseLoadTrend,
+                    getKPIStats
+                } = await import('@/app/actions/reports');
+
+                // Build parameters
+                let fechaInicio: string | undefined;
+                let fechaFin: string | undefined;
+                let idNucleo: number | undefined;
+                let term: string | undefined;
+
+                if (filters.dateRange !== 'all') {
+                    fechaInicio = getDateFromRange(filters.dateRange);
+                    fechaFin = new Date().toISOString().split('T')[0];
+                }
+
+                if (filters.nucleo !== 'all') {
+                    idNucleo = parseInt(filters.nucleo);
+                }
+
+                if (filters.term !== 'all') {
+                    term = filters.term;
+                }
+
+                // Fetch all data in parallel using server actions
+                const [distributionResult, topCasesResult, statusDistResult, trendResult, kpiResult] = await Promise.all([
+                    getDistributionByNucleo(fechaInicio, fechaFin, idNucleo, term),
+                    getTopCases(fechaInicio, fechaFin, idNucleo, term),
+                    getDistributionByStatus(fechaInicio, fechaFin, idNucleo, term),
+                    getCaseLoadTrend(fechaInicio, fechaFin, idNucleo, term),
+                    getKPIStats(fechaInicio, fechaFin, idNucleo, term)
+                ]);
+
+                if (distributionResult.success && distributionResult.data) {
+                    setDistributionData(distributionResult.data);
+                }
+
+                if (topCasesResult.success && topCasesResult.data) {
+                    setTopCasesData(topCasesResult.data);
+                }
+
+                if (statusDistResult.success && statusDistResult.data) {
+                    setStatusDistributionData(statusDistResult.data);
+                }
+
+                if (trendResult.success && trendResult.data) {
+                    setCaseLoadTrendData(trendResult.data);
+                }
+
+                if (kpiResult.success && kpiResult.data) {
+                    setKPIData(kpiResult.data);
+                }
+
+            } catch (err) {
+                console.error('Error fetching reports data:', err);
+                setError('Error al cargar datos de reportes');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchReportsData();
+    }, [filters]);
 
     const handleGenerateReport = async (reportType: string) => {
         if (reportType === 'Tipos de Casos') {
             try {
-                // Obtener datos agrupados directamente desde la server action
+                // Obtener datos agrupados usando server action
                 const fechaInicio = filters.dateRange !== 'all' ? getDateFromRange(filters.dateRange) : undefined;
                 const fechaFin = filters.dateRange !== 'all' ? new Date().toISOString().split('T')[0] : undefined;
                 
-                const result = await getCasosGroupedByAmbitoLegal(fechaInicio, fechaFin);
-                
+                const { getCasosGroupedByAmbitoLegal } = await import('@/app/actions/reports');
+                const result = await getCasosGroupedByAmbitoLegal(
+                    fechaInicio,
+                    fechaFin
+                );
+
                 if (result.success && result.data) {
                     // Importar y usar la función de generación de PDF con React PDF
                     const { generateTiposCasosPDFReact } = await import('@/lib/utils/pdf-generator-react');
@@ -74,7 +154,7 @@ export default function ReportsPage() {
     const getDateFromRange = (range: string): string => {
         const today = new Date();
         const date = new Date();
-        
+
         switch (range) {
             case 'last-week':
                 date.setDate(today.getDate() - 7);
@@ -91,14 +171,14 @@ export default function ReportsPage() {
             default:
                 return today.toISOString().split('T')[0];
         }
-        
+
         return date.toISOString().split('T')[0];
     };
 
     return (
         <div className="p-6 space-y-6">
             {/* Header */}
-            <motion.div 
+            <motion.div
                 className="mb-4"
                 initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -109,7 +189,7 @@ export default function ReportsPage() {
             </motion.div>
 
             {/* Report Generation Cards */}
-            <motion.div 
+            <motion.div
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
                 initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -155,20 +235,40 @@ export default function ReportsPage() {
                 />
             </motion.div>
 
+            {/* Error State */}
+            {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+                    {error}
+                </div>
+            )}
+
             {/* Dynamic Content Area */}
-            <motion.div 
+            <motion.div
                 className="transition-all duration-300 mt-6"
                 initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: prefersReducedMotion ? 0 : 0.2, delay: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
             >
                 {viewMode === 'charts' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <DistributionChart data={currentDistributionData} />
-                        <TopCasesChart data={currentTopCasesData} />
-                    </div>
+                    loading ? (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {[1, 2, 3, 4].map((i) => (
+                                <div key={i} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm h-96 animate-pulse">
+                                    <div className="h-6 bg-gray-200 rounded w-1/2 mx-auto mb-4"></div>
+                                    <div className="h-64 bg-gray-100 rounded"></div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <DistributionChart data={distributionData} />
+                            <TopCasesChart data={topCasesData} />
+                            <StatusDistributionChart data={statusDistributionData} />
+                            <CaseLoadTrendChart data={caseLoadTrendData} />
+                        </div>
+                    )
                 ) : (
-                    <KPIDashboard />
+                    <KPIDashboard data={kpiData || undefined} loading={loading} />
                 )}
             </motion.div>
         </div>
