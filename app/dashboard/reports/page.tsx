@@ -15,6 +15,7 @@ import {
     distributionData,
     topCasesData
 } from './mockData';
+import { getCasosGroupedByAmbitoLegal } from '@/app/actions/reports';
 
 export default function ReportsPage() {
     const [viewMode, setViewMode] = useState<ViewMode>('charts');
@@ -44,31 +45,19 @@ export default function ReportsPage() {
     const handleGenerateReport = async (reportType: string) => {
         if (reportType === 'Tipos de Casos') {
             try {
-                // Obtener datos agrupados
-                const response = await fetch('/api/reports/tipos-casos', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        fechaInicio: filters.dateRange !== 'all' ? getDateFromRange(filters.dateRange) : undefined,
-                        fechaFin: filters.dateRange !== 'all' ? new Date().toISOString().split('T')[0] : undefined,
-                    }),
-                });
-
-                if (!response.ok) {
-                    throw new Error('Error al obtener datos');
-                }
-
-                const result = await response.json();
+                // Obtener datos agrupados directamente desde la server action
+                const fechaInicio = filters.dateRange !== 'all' ? getDateFromRange(filters.dateRange) : undefined;
+                const fechaFin = filters.dateRange !== 'all' ? new Date().toISOString().split('T')[0] : undefined;
+                
+                const result = await getCasosGroupedByAmbitoLegal(fechaInicio, fechaFin);
                 
                 if (result.success && result.data) {
                     // Importar y usar la función de generación de PDF con React PDF
                     const { generateTiposCasosPDFReact } = await import('@/lib/utils/pdf-generator-react');
                     await generateTiposCasosPDFReact(
                         result.data,
-                        filters.dateRange !== 'all' ? getDateFromRange(filters.dateRange) : undefined,
-                        filters.dateRange !== 'all' ? new Date().toISOString().split('T')[0] : undefined
+                        fechaInicio,
+                        fechaFin
                     );
                 } else {
                     alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
