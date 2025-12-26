@@ -1,6 +1,6 @@
 'use client';
 
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, TooltipProps } from 'recharts';
 
 interface StatusDistributionData {
     name: string;
@@ -11,6 +11,18 @@ interface StatusDistributionData {
 interface StatusDistributionChartProps {
     data: StatusDistributionData[];
 }
+
+const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg">
+                <p className="text-sm font-medium text-gray-700 mb-1">{payload[0].name}</p>
+                <p className="text-base font-semibold text-gray-900">{payload[0].value}</p>
+            </div>
+        );
+    }
+    return null;
+};
 
 export default function StatusDistributionChart({ data }: StatusDistributionChartProps) {
     // Transform data to match Recharts expected format
@@ -37,14 +49,7 @@ export default function StatusDistributionChart({ data }: StatusDistributionChar
                             <Cell key={`cell-${index}`} fill={entry.fill} />
                         ))}
                     </Pie>
-                    <Tooltip
-                        contentStyle={{
-                            backgroundColor: '#fff',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '8px',
-                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                        }}
-                    />
+                    <Tooltip content={<CustomTooltip />} />
                     <Legend
                         verticalAlign="bottom"
                         height={36}

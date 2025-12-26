@@ -37,6 +37,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
     return { start: startYear, end: startYear + 9 };
   });
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [openUpward, setOpenUpward] = useState(false);
 
   const monthNames = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -171,9 +172,9 @@ export default function DatePicker({ value, onChange, error, required, disabled 
     }
   };
 
-  // Resetear a vista de año cuando se abre el picker (solo cuando cambia isOpen)
+  // Resetear a vista de año cuando se abre el picker y calcular posición
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && dropdownRef.current) {
       setViewMode('year');
       // Obtener el año actual sin depender de currentMonth en las dependencias
       let yearToUse: number;
@@ -190,8 +191,14 @@ export default function DatePicker({ value, onChange, error, required, disabled 
       }
       const startYear = Math.floor(yearToUse / 10) * 10;
       setYearRange({ start: startYear, end: startYear + 9 });
+
+      // Calcular si hay espacio suficiente abajo
+      const rect = dropdownRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const calendarHeight = 400; // Altura aproximada del calendario
+      setOpenUpward(spaceBelow < calendarHeight && rect.top > calendarHeight);
     }
-  }, [isOpen]);
+  }, [isOpen, value]);
 
   const handleDayClick = (day: number, isCurrentMonth: boolean) => {
     let clickedDate: Date;
@@ -324,7 +331,9 @@ export default function DatePicker({ value, onChange, error, required, disabled 
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="absolute top-full left-0 mt-2 bg-white border border-gray-300 rounded-2xl shadow-lg z-50 p-4 w-80"
+            className={`absolute left-0 bg-white border border-gray-300 rounded-2xl shadow-lg z-[60] p-4 w-80 ${
+              openUpward ? 'bottom-full mb-2' : 'top-full mt-2'
+            }`}
           >
           {/* Header con navegación */}
           <div className="flex items-center justify-between mb-4">

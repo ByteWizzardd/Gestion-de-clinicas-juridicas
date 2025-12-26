@@ -87,13 +87,14 @@ export default function Modal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/50 z-40"
+            className="fixed top-0 left-0 right-0 bottom-0 w-full h-full bg-black/50 z-40"
+            style={{ minHeight: '100vh', height: '100%' }}
             onClick={handleOverlayClick}
             aria-hidden="true"
           />
 
           {/* Modal */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+          <div className="fixed top-0 left-0 right-0 bottom-0 w-full h-full z-50 flex items-center justify-center p-4 pointer-events-none" style={{ minHeight: '100vh' }}>
             <motion.div
               ref={modalRef}
               initial={{ opacity: 0, scale: 0.95, y: 20 }}

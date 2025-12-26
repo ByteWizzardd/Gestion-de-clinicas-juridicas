@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { FileBarChart, Clock, User, Briefcase } from 'lucide-react';
+import { FileBarChart, Clock, User, Briefcase, X, Calendar } from 'lucide-react';
 import ReportCard from '@/components/cards/ReportCard';
 import FilterBar, { ReportFilters } from '@/components/reports/FilterBar';
 import { ViewMode } from '@/components/ui/navigation/ViewSwitcher';
@@ -11,6 +11,9 @@ import TopCasesChart from '@/components/reports/charts/TopCasesChart';
 import StatusDistributionChart from '@/components/reports/charts/StatusDistributionChart';
 import CaseLoadTrendChart from '@/components/reports/charts/CaseLoadTrendChart';
 import KPIDashboard from '@/components/reports/KPIDashboard';
+import Modal from '@/components/ui/feedback/Modal';
+import DatePicker from '@/components/forms/DatePicker';
+import Button from '@/components/ui/Button';
 import type { DistributionData, TopCasesData, KPIData, StatusDistributionData, CaseLoadTrendData } from '@/lib/utils/reports-data-mapper';
 
 export default function ReportsPage() {
@@ -21,6 +24,12 @@ export default function ReportsPage() {
         term: 'all'
     });
     const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+    
+    // Estados para el modal de fechas del reporte "Tipos de Casos"
+    const [showDateModal, setShowDateModal] = useState(false);
+    const [fechaInicioReporte, setFechaInicioReporte] = useState('');
+    const [fechaFinReporte, setFechaFinReporte] = useState('');
+    const [dateError, setDateError] = useState<string | null>(null);
 
     // Data states
     const [distributionData, setDistributionData] = useState<DistributionData[]>([]);
@@ -120,34 +129,63 @@ export default function ReportsPage() {
 
     const handleGenerateReport = async (reportType: string) => {
         if (reportType === 'Tipos de Casos') {
-            try {
-                // Obtener datos agrupados usando server action
-                const fechaInicio = filters.dateRange !== 'all' ? getDateFromRange(filters.dateRange) : undefined;
-                const fechaFin = filters.dateRange !== 'all' ? new Date().toISOString().split('T')[0] : undefined;
-                
-                const { getCasosGroupedByAmbitoLegal } = await import('@/app/actions/reports');
-                const result = await getCasosGroupedByAmbitoLegal(
-                    fechaInicio,
-                    fechaFin
-                );
-
-                if (result.success && result.data) {
-                    // Importar y usar la función de generación de PDF con React PDF
-                    const { generateTiposCasosPDFReact } = await import('@/lib/utils/pdf-generator-react');
-                    await generateTiposCasosPDFReact(
-                        result.data,
-                        fechaInicio,
-                        fechaFin
-                    );
-                } else {
-                    alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
-                }
-            } catch (error) {
-                console.error('Error al generar reporte:', error);
-                alert('Error al generar el reporte. Por favor, intente nuevamente.');
-            }
+            // Mostrar modal para seleccionar rango de fechas
+            setShowDateModal(true);
+            // Inicializar fechas con valores por defecto (último mes)
+            const today = new Date();
+            const lastMonth = new Date();
+            lastMonth.setMonth(today.getMonth() - 1);
+            setFechaInicioReporte(lastMonth.toISOString().split('T')[0]);
+            setFechaFinReporte(today.toISOString().split('T')[0]);
+            setDateError(null);
         } else {
             alert(`Generando ${reportType}...`);
+        }
+    };
+
+    const handleGenerateTiposCasosReport = async () => {
+        // Validar que ambas fechas estén seleccionadas
+        if (!fechaInicioReporte || !fechaFinReporte) {
+            setDateError('Por favor, seleccione ambas fechas');
+            return;
+        }
+
+        // Validar que fecha inicio sea menor o igual a fecha fin
+        if (new Date(fechaInicioReporte) > new Date(fechaFinReporte)) {
+            setDateError('La fecha de fin debe ser mayor o igual a la fecha de inicio');
+            return;
+        }
+
+        setDateError(null);
+        setShowDateModal(false);
+
+        try {
+            const { getCasosGroupedByAmbitoLegal } = await import('@/app/actions/reports');
+            const result = await getCasosGroupedByAmbitoLegal(
+                fechaInicioReporte,
+                fechaFinReporte
+            );
+
+            if (result.success && result.data) {
+                // Verificar si hay datos para el reporte
+                if (result.data.length === 0 || result.data.every(item => item.cantidad_casos === 0)) {
+                    alert('No hay casos registrados para el período seleccionado. Por favor, seleccione otro rango de fechas.');
+                    return;
+                }
+
+                // Importar y usar la función de generación de PDF con React PDF
+                const { generateTiposCasosPDFReact } = await import('@/lib/utils/pdf-generator-react');
+                await generateTiposCasosPDFReact(
+                    result.data,
+                    fechaInicioReporte,
+                    fechaFinReporte
+                );
+            } else {
+                alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
+            }
+        } catch (error) {
+            console.error('Error al generar reporte:', error);
+            alert('Error al generar el reporte. Por favor, intente nuevamente.');
         }
     };
 
@@ -271,6 +309,111 @@ export default function ReportsPage() {
                     <KPIDashboard data={kpiData || undefined} loading={loading} />
                 )}
             </motion.div>
+
+            {/* Modal para seleccionar rango de fechas del reporte "Tipos de Casos" */}
+            <Modal
+                isOpen={showDateModal}
+                onClose={() => {
+                    setShowDateModal(false);
+                    setDateError(null);
+                }}
+                size="md"
+                showCloseButton={false}
+            >
+                <div className="p-6 relative">
+                    {/* Botón de cerrar */}
+                    <button
+                        onClick={() => {
+                            setShowDateModal(false);
+                            setDateError(null);
+                        }}
+                        className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
+                        aria-label="Cerrar modal"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+                    
+                    {/* Título */}
+                    <h2 className="text-xl font-normal text-foreground mb-4">Seleccionar Rango de Fechas</h2>
+
+                    {/* Grid de formulario */}
+                    <div className="grid grid-cols-1 gap-4 mb-4">
+                        {/* Fecha de Inicio */}
+                        <div>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-base font-normal text-foreground mb-1">
+                                    Fecha de Inicio <span className="text-danger">*</span>
+                                </label>
+                                <div className="relative">
+                                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600 pointer-events-none z-10" />
+                                    <DatePicker
+                                        value={fechaInicioReporte}
+                                        onChange={(value) => {
+                                            setFechaInicioReporte(value);
+                                            setDateError(null);
+                                        }}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Fecha de Fin */}
+                        <div>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-base font-normal text-foreground mb-1">
+                                    Fecha de Fin <span className="text-danger">*</span>
+                                </label>
+                                <div className="relative">
+                                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600 pointer-events-none z-10" />
+                                    <DatePicker
+                                        value={fechaFinReporte}
+                                        onChange={(value) => {
+                                            setFechaFinReporte(value);
+                                            setDateError(null);
+                                        }}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Mensaje de error */}
+                    {dateError && (
+                        <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+                            {dateError}
+                        </div>
+                    )}
+
+                    {/* Footer con botón */}
+                    <div className="flex flex-col border-t border-gray-200 pt-4">
+                        {/* Nota sobre campos obligatorios */}
+                        <div className="flex items-center gap-1 mb-3">
+                            <span className="text-danger font-medium text-sm">*</span>
+                            <span className="text-sm text-gray-600">Campo obligatorio</span>
+                        </div>
+                        
+                        <div className="flex justify-end gap-3">
+                            <Button
+                                onClick={() => {
+                                    setShowDateModal(false);
+                                    setDateError(null);
+                                }}
+                                variant="outline"
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                onClick={handleGenerateTiposCasosReport}
+                                variant="primary"
+                            >
+                                Generar Reporte
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

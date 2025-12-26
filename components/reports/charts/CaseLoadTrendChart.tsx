@@ -47,11 +47,20 @@ export default function CaseLoadTrendChart({ data }: CaseLoadTrendChartProps) {
                         axisLine={{ stroke: '#d1d5db' }}
                     />
                     <Tooltip
-                        contentStyle={{
-                            backgroundColor: '#fff',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '8px',
-                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        content={({ active, payload, label }) => {
+                            if (active && payload && payload.length) {
+                                return (
+                                    <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg">
+                                        <p className="text-sm font-medium text-gray-700 mb-2">{label}</p>
+                                        {payload.map((entry, index) => (
+                                            <p key={index} className="text-base font-semibold text-gray-900">
+                                                {entry.name}: {entry.value}
+                                            </p>
+                                        ))}
+                                    </div>
+                                );
+                            }
+                            return null;
                         }}
                     />
                     <Legend
