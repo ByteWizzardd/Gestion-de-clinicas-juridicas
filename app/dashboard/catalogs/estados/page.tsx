@@ -1,9 +1,38 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
+import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
 import { getEstados } from "@/app/actions/catalogos";
 
-export default async function EstadosPage() {
-    const result = await getEstados();
-    const estados = result.success ? result.data : [];
+export default function EstadosPage() {
+    const [estados, setEstados] = useState<any[]>([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    useEffect(() => {
+        loadEstados();
+    }, []);
+
+    const loadEstados = async () => {
+        const result = await getEstados();
+        if (result.success && result.data) {
+            setEstados(result.data);
+        }
+    };
+
+    const handleAdd = async (data: Record<string, string>) => {
+        const { createEstado } = await import('@/app/actions/catalogos');
+        const result = await createEstado(data as { nombre_estado: string });
+
+        if (result.success) {
+            console.log('✅ Estado añadido, recargando lista...');
+            setIsModalOpen(false);
+            await loadEstados();
+        } else {
+            console.error('Error al añadir estado:', result.error);
+            alert(result.error || 'Error al añadir estado');
+        }
+    };
 
     return (
         <>
@@ -13,6 +42,17 @@ export default async function EstadosPage() {
                 data={estados}
                 columns={["ID", "Nombre"]}
                 addLabel="Añadir Estado"
+                onAddClick={() => setIsModalOpen(true)}
+                disableFilter={true}
+            />
+            <CatalogFormModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSubmit={handleAdd}
+                title="Añadir Estado"
+                fields={[
+                    { name: 'nombre_estado', label: 'Nombre del Estado', required: true }
+                ]}
             />
         </>
     );

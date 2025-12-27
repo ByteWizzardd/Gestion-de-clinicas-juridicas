@@ -9,11 +9,13 @@ interface CatalogDetailClientProps {
     columns: string[];
     addLabel: string;
     searchPlaceholder?: string;
+    onAddClick?: () => void; // Handler for add button click
     // Filter options - can be provided or auto-generated
     filterField?: string; // Campo por el cual filtrar (ej: 'habilitado', 'nombre_estado')
     filterOptions?: { value: string; label: string }[];
     filterLabel?: string; // Label para el filtro (ej: 'Estado', 'Habilitado')
     autoGenerateFilter?: boolean; // Si es true, genera opciones automáticamente desde los datos
+    disableFilter?: boolean; // Si es true, no muestra filtro aunque haya opciones
 }
 
 export default function CatalogDetailClient({
@@ -21,10 +23,12 @@ export default function CatalogDetailClient({
     columns,
     addLabel,
     searchPlaceholder = "Buscar...",
+    onAddClick,
     filterField,
     filterOptions,
     filterLabel = "Filtro",
-    autoGenerateFilter = false
+    autoGenerateFilter = false,
+    disableFilter = false
 }: CatalogDetailClientProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterValue, setFilterValue] = useState('');
@@ -83,13 +87,14 @@ export default function CatalogDetailClient({
         return result;
     }, [data, searchQuery, filterValue, filterField]);
 
-    // Only show filter if options are available
-    const hasFilter = generatedFilterOptions.length > 0 && filterField;
+    // Only show filter if options are available and not explicitly disabled
+    const hasFilter = !disableFilter && generatedFilterOptions.length > 0 && filterField;
 
     return (
         <>
             <CaseTools
                 addLabel={addLabel}
+                onAddClick={onAddClick}
                 searchValue={searchQuery}
                 onSearchChange={setSearchQuery}
                 {...(hasFilter && {

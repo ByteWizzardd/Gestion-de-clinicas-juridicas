@@ -1,18 +1,76 @@
-import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
-import { getMaterias } from "@/app/actions/catalogos";
+'use client';
 
-export default async function MateriasPage() {
-    const result = await getMaterias();
-    const materias = result.success ? result.data : [];
+import { useState, useEffect } from 'react';
+import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
+import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
+import { getMaterias } from "@/app/actions/catalogos";
+import { verifyMaterias } from "@/app/actions/verify-db";
+
+export default function MateriasPage() {
+    const [materias, setMaterias] = useState<any[]>([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    useEffect(() => {
+        loadMaterias();
+    }, []);
+
+    const loadMaterias = async () => {
+        const result = await getMaterias();
+        if (result.success && result.data) {
+            setMaterias(result.data);
+        }
+    };
+
+    const handleAdd = async (data: Record<string, string>) => {
+        const { createMateria } = await import('@/app/actions/catalogos');
+        const result = await createMateria(data as { nombre_materia: string });
+
+        if (result.success) {
+            console.log('✅ Materia añadida, recargando lista...');
+            setIsModalOpen(false);
+            // Force reload the data
+            await loadMaterias();
+        } else {
+            console.error('Error al añadir materia:', result.error);
+            alert(result.error || 'Error al añadir materia');
+        }
+    };
+
+    const handleVerifyDB = async () => {
+        const result = await verifyMaterias();
+        if (result.success) {
+            console.log('📊 Materias en BD:', result.data);
+            alert(`Hay ${result.count} materias en la base de datos. Ver consola para detalles.`);
+        }
+    };
 
     return (
         <>
             <h1 className="text-4xl m-3 font-semibold font-primary">Materias</h1>
             <p className="mb-6 ml-3">Áreas principales del derecho que se manejan en el sistema</p>
+
+            <button
+                onClick={handleVerifyDB}
+                className="ml-3 mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+                🔍 Verificar BD
+            </button>
+
             <CatalogDetailClient
                 data={materias}
                 columns={["ID", "Nombre"]}
                 addLabel="Añadir Materia"
+                onAddClick={() => setIsModalOpen(true)}
+                disableFilter={true}
+            />
+            <CatalogFormModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSubmit={handleAdd}
+                title="Añadir Materia"
+                fields={[
+                    { name: 'nombre_materia', label: 'Nombre de la Materia', required: true }
+                ]}
             />
         </>
     );
