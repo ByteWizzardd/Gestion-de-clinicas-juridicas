@@ -1,7 +1,6 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/utils/security';
 import { usuariosQueries } from '@/lib/db/queries/usuarios.queries';
 import { AppError } from '@/lib/utils/errors';
 
@@ -35,18 +34,6 @@ export async function getUsuarioCompleteByCedulaAction(cedula: string): Promise<
         success: false,
         error: {
           message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
           code: 'UNAUTHORIZED',
         },
       };
@@ -116,18 +103,6 @@ export async function getUsuariosAction(): Promise<GetUsuariosResult> {
         success: false,
         error: {
           message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
           code: 'UNAUTHORIZED',
         },
       };

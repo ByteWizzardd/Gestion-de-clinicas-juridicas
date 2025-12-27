@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import ConfirmModal from '../ui/feedback/ConfirmModal';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import BulkUploadModal from './BulkUploadModal';
@@ -9,14 +10,9 @@ import { getUsuariosAction } from '@/app/actions/usuarios';
 interface Usuario extends Record<string, unknown> {
   cedula: string;
   nombre_completo: string;
-  correo_electronico: string;
   nombre_usuario: string;
-  telefono_celular: string | null;
   habilitado_sistema: boolean;
   tipo_usuario: string;
-  info_estudiante: string | null;
-  info_profesor: string | null;
-  info_coordinador: string | null;
 }
 
 interface UsersClientProps {
@@ -24,6 +20,8 @@ interface UsersClientProps {
 }
 
 export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<Usuario | null>(null);
   const [usuarios, setUsuarios] = useState<Usuario[]>(initialUsuarios);
   const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
@@ -35,7 +33,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
     if (initialUsuarios.length === 0) {
       loadUsuarios();
     }
-  }, []);
+  }, [initialUsuarios.length]);
 
   const loadUsuarios = async () => {
     setLoading(true);
@@ -85,9 +83,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         !searchValue ||
         usuario.cedula.includes(searchValue) ||
         normalizeText(usuario.nombre_completo || '').includes(normalizedSearch) ||
-        normalizeText(usuario.correo_electronico || '').includes(normalizedSearch) ||
-        normalizeText(usuario.nombre_usuario || '').includes(normalizedSearch) ||
-        (usuario.telefono_celular && normalizeText(usuario.telefono_celular).includes(normalizedSearch));
+        normalizeText(usuario.nombre_usuario || '').includes(normalizedSearch);
 
       const matchesTipo = !tipoFilter || usuario.tipo_usuario === tipoFilter;
 
@@ -107,12 +103,24 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
 
   const handleDelete = (data: Record<string, unknown>) => {
     const usuario = data as Usuario;
-    const confirmDelete = window.confirm(
-      `¿Está seguro de que desea eliminar al usuario ${usuario.nombre_completo}?`
-    );
-    if (confirmDelete) {
-      alert(`Eliminar usuario: ${usuario.nombre_completo}`);
-    }
+    setItemToDelete(usuario);
+    setShowConfirm(true);
+  };
+
+  
+
+
+  // Función para eliminar usuario (debes implementar la lógica real de eliminación)
+  
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+    // Aquí deberías llamar a tu acción de eliminación, por ejemplo:
+    // await deleteUsuarioAction(itemToDelete.cedula);
+    // Por ahora solo lo quitamos del estado local:
+    setUsuarios((prev) => prev.filter(u => u.cedula !== itemToDelete.cedula));
+    setShowConfirm(false);
+    setItemToDelete(null);
+    // Si necesitas recargar desde el backend, puedes llamar a loadUsuarios();
   };
 
   const handleBulkUploadSuccess = () => {
@@ -120,19 +128,27 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
   };
 
   // Formatear información adicional para mostrar en la tabla
+  /* 
   const formatInfo = (usuario: Usuario): string => {
     if (usuario.tipo_usuario === 'Estudiante' && usuario.info_estudiante) {
-      return usuario.info_estudiante;
+      return typeof usuario.info_estudiante === 'string'
+        ? usuario.info_estudiante
+        : JSON.stringify(usuario.info_estudiante);
     }
     if (usuario.tipo_usuario === 'Profesor' && usuario.info_profesor) {
-      return usuario.info_profesor;
+      return typeof usuario.info_profesor === 'string'
+        ? usuario.info_profesor
+        : JSON.stringify(usuario.info_profesor);
     }
     if (usuario.tipo_usuario === 'Coordinador' && usuario.info_coordinador) {
-      return usuario.info_coordinador;
+      return typeof usuario.info_coordinador === 'string'
+        ? usuario.info_coordinador
+        : JSON.stringify(usuario.info_coordinador);
     }
     return '-';
   };
-
+  */
+ 
   return (
     <>
       <h1 className="text-4xl m-3 font-semibold font-primary">Gestión de Usuarios</h1>
@@ -164,14 +180,11 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
           data={filteredUsuarios.map((u) => ({
             cedula: u.cedula,
             nombre_completo: u.nombre_completo,
-            correo_electronico: u.correo_electronico,
             nombre_usuario: u.nombre_usuario,
-            telefono_celular: u.telefono_celular || 'N/A',
             tipo_usuario: u.tipo_usuario,
             estado: u.habilitado_sistema ? 'Habilitado' : 'Deshabilitado',
-            informacion: formatInfo(u),
           }))}
-          columns={["Cédula", "Nombre Completo", "Correo", "Usuario", "Teléfono", "Tipo", "Estado", "Información"]}
+          columns={["Cédula", "Nombre Completo", "Usuario", "Tipo", "Estado"]}
           onView={handleView}
           onEdit={handleEdit}
           onDelete={handleDelete}
@@ -182,6 +195,16 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         isOpen={isBulkUploadModalOpen}
         onClose={() => setIsBulkUploadModalOpen(false)}
         onSuccess={handleBulkUploadSuccess}
+      />
+
+      <ConfirmModal
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={handleConfirmDelete}
+        title="Confirmar eliminación"
+        message={`¿Está seguro de que desea eliminar al usuario ${itemToDelete?.nombre_completo || ''}?`}
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
       />
     </>
   );
