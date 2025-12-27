@@ -126,11 +126,25 @@ export const usuariosQueries = {
   },
 
   /**
-   * 
    * Elimina un usuario y guarda su cédula
    */
   deleteByCedula: async (cedula: string): Promise<void> => {
     await pool.query('SELECT eliminar_usuario($1)', [cedula]);
+  },
+
+  /**
+   * Elimina físicamente un usuario y todas sus referencias
+   */
+  deleteFisico: async (
+    cedula_usuario: string,
+    cedula_actor: string,
+    motivo: string
+  ): Promise<void> => {
+    await pool.query('SELECT eliminar_usuario_fisico($1, $2, $3)', [
+      cedula_usuario,
+      cedula_actor,
+      motivo,
+    ]);
   },
 
 };

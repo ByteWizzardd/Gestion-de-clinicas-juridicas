@@ -3,6 +3,7 @@
 import { getAuthTokenFromCookies } from '@/lib/utils/auth';
 import { usuariosQueries } from '@/lib/db/queries/usuarios.queries';
 import { AppError } from '@/lib/utils/errors';
+import { getCurrentUserAction } from './auth';
 
 
 
@@ -142,41 +143,40 @@ export interface deleteUsuarioResult {
   };
 }
 
-export async function deleteUsuarioAction(cedula: string): Promise<deleteUsuarioResult> {
-  try {
-    // Verificar autenticación
-    const token = getAuthTokenFromCookies();
-    if (!token) {
-      return {
-        success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
 
-    // Eliminar usuario por cédula (clave primaria)
-    await usuariosQueries.deleteByCedula(cedula);
-
-    return { success: true };
-  } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'USUARIO_ERROR',
-        },
-      };
-    }
-    console.error('Error en deleteUsuarioAction:', error);
+export async function deleteUsuarioFisicoAction(
+  cedula_usuario: string,
+  motivo: string
+): Promise<{ success: boolean; error?: { message: string } }> {
+  // 1. Obtener usuario actor desde la cookie JWT
+  const userResult = await getCurrentUserAction();
+  if (!userResult.success || !userResult.data) {
     return {
       success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al eliminar usuario',
-        code: 'UNKNOWN_ERROR',
-      },
+      error: { message: 'No se pudo determinar el usuario actor' }
+    };
+  }
+
+  // 2. Validar que sea coordinador
+  if (userResult.data.rol !== 'Coordinador') {
+    return {
+      success: false,
+      error: { message: 'Solo los coordinadores pueden eliminar usuarios permanentemente.' }
+    };
+  }
+
+  try {
+    // 3. Ejecutar la eliminación física
+    await usuariosQueries.deleteFisico(
+      cedula_usuario,
+      userResult.data.cedula,
+      motivo
+    );
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: { message: error instanceof Error ? error.message : 'Error al eliminar usuario' }
     };
   }
 }

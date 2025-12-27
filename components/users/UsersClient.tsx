@@ -5,7 +5,16 @@ import ConfirmModal from '../ui/feedback/ConfirmModal';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import BulkUploadModal from './BulkUploadModal';
-import { getUsuariosAction } from '@/app/actions/usuarios';
+import { getUsuariosAction, deleteUsuarioFisicoAction } from '@/app/actions/usuarios';
+
+// Simulación: obtener tipo de usuario actual (debería venir de contexto/auth real)
+function getCurrentUserTipo(): string {
+  // TODO: Reemplazar por lógica real de autenticación
+  if (typeof window !== 'undefined') {
+    return window.localStorage.getItem('tipo_usuario') || '';
+  }
+  return '';
+}
 
 interface Usuario extends Record<string, unknown> {
   cedula: string;
@@ -22,6 +31,8 @@ interface UsersClientProps {
 export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<Usuario | null>(null);
+  const [deleteMotivo, setDeleteMotivo] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [usuarios, setUsuarios] = useState<Usuario[]>(initialUsuarios);
   const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
@@ -103,24 +114,37 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
 
   const handleDelete = (data: Record<string, unknown>) => {
     const usuario = data as Usuario;
+    // Solo permitir si el usuario actual es coordinador
+    if (getCurrentUserTipo() !== 'Coordinador') {
+      alert('Solo los coordinadores pueden eliminar usuarios permanentemente.');
+      return;
+    }
     setItemToDelete(usuario);
     setShowConfirm(true);
   };
 
-  
-
-
   // Función para eliminar usuario (debes implementar la lógica real de eliminación)
-  
   const handleConfirmDelete = async () => {
     if (!itemToDelete) return;
-    // Aquí deberías llamar a tu acción de eliminación, por ejemplo:
-    // await deleteUsuarioAction(itemToDelete.cedula);
-    // Por ahora solo lo quitamos del estado local:
+    setDeleteLoading(true);
+
+    const result = await deleteUsuarioFisicoAction(
+      itemToDelete.cedula,
+      deleteMotivo
+    );
+
+    setDeleteLoading(false);
+
+    if (!result.success) {
+      alert(result.error?.message || 'Error al eliminar usuario');
+      return;
+    }
+
+    // Actualiza la lista de usuarios o recarga
     setUsuarios((prev) => prev.filter(u => u.cedula !== itemToDelete.cedula));
     setShowConfirm(false);
     setItemToDelete(null);
-    // Si necesitas recargar desde el backend, puedes llamar a loadUsuarios();
+    setDeleteMotivo('');
   };
 
   const handleBulkUploadSuccess = () => {
@@ -199,12 +223,30 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
 
       <ConfirmModal
         isOpen={showConfirm}
-        onClose={() => setShowConfirm(false)}
+        onClose={() => {
+          setShowConfirm(false);
+          setDeleteMotivo('');
+        }}
         onConfirm={handleConfirmDelete}
-        title="Confirmar eliminación"
-        message={`¿Está seguro de que desea eliminar al usuario ${itemToDelete?.nombre_completo || ''}?`}
-        confirmLabel="Eliminar"
+        title="Eliminar usuario permanentemente"
+        message={
+          <div>
+            <p>¿Está seguro de que desea eliminar al usuario <b>{itemToDelete?.nombre_completo || ''}</b>?</p>
+            <p className="mt-2 text-red-600 font-semibold">Esta acción es irreversible y solo puede realizarla un coordinador.</p>
+            <label className="block mt-4 mb-2 font-medium">Motivo de la eliminación:</label>
+            <textarea
+              className="w-full border rounded p-2"
+              rows={3}
+              value={deleteMotivo}
+              onChange={e => setDeleteMotivo(e.target.value)}
+              placeholder="Describe el motivo..."
+              disabled={deleteLoading}
+            />
+          </div>
+        }
+        confirmLabel={deleteLoading ? 'Eliminando...' : 'Eliminar permanentemente'}
         cancelLabel="Cancelar"
+        disabled={deleteLoading}
       />
     </>
   );
