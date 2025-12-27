@@ -173,6 +173,9 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
   };
   */
  
+  // Validación de motivo
+  const isMotivoValido = deleteMotivo.trim().length > 0;
+
   return (
     <>
       <h1 className="text-4xl m-3 font-semibold font-primary">Gestión de Usuarios</h1>
@@ -232,21 +235,26 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         message={
           <div>
             <p>¿Está seguro de que desea eliminar al usuario <b>{itemToDelete?.nombre_completo || ''}</b>?</p>
-            <p className="mt-2 text-red-600 font-semibold">Esta acción es irreversible y solo puede realizarla un coordinador.</p>
+            <p className="mt-2 text-danger font-semibold">Esta acción es irreversible y solo puede realizarla un coordinador.</p>
             <label className="block mt-4 mb-2 font-medium">Motivo de la eliminación:</label>
             <textarea
               className="w-full border rounded p-2"
               rows={3}
+              maxLength={250}
               value={deleteMotivo}
               onChange={e => setDeleteMotivo(e.target.value)}
               placeholder="Describe el motivo..."
               disabled={deleteLoading}
             />
+            <div className="text-right text-xs text-gray-500 mt-1">
+              {deleteMotivo.length} / 250 caracteres
+              {!isMotivoValido && ' - El motivo es obligatorio.'}
+            </div>
           </div>
         }
         confirmLabel={deleteLoading ? 'Eliminando...' : 'Eliminar permanentemente'}
         cancelLabel="Cancelar"
-        disabled={deleteLoading}
+        disabled={deleteLoading || !isMotivoValido}
       />
     </>
   );
