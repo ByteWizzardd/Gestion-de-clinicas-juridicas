@@ -33,6 +33,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
   const [itemToDelete, setItemToDelete] = useState<Usuario | null>(null);
   const [deleteMotivo, setDeleteMotivo] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [disableLoading, setDisableLoading] = useState(false);
   const [usuarios, setUsuarios] = useState<Usuario[]>(initialUsuarios);
   const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
@@ -111,6 +112,11 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
     const usuario = data as Usuario;
     alert(`Editar usuario: ${usuario.nombre_completo}`);
   };
+
+  const handleDisable = (data: Record<string, unknown>) => {
+    const usuario = data as Usuario;
+    alert(`Deshabilitar/Habilitar usuario: ${usuario.nombre_completo}`);
+  }
 
   const handleDelete = (data: Record<string, unknown>) => {
     const usuario = data as Usuario;
@@ -214,6 +220,35 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
           columns={["Cédula", "Nombre Completo", "Usuario", "Tipo", "Estado"]}
           onView={handleView}
           onEdit={handleEdit}
+          actions={[
+            {
+              label: (row: unknown) => {
+                const estado = (row as { estado: string }).estado;
+                return (
+                  <span className="flex items-center gap-2">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-4 h-4 text-gray-500 group-hover:text-yellow-600 transition-colors"
+                    >
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                      <path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z" />
+                      <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" />
+                      <path d="M8 11v-4a4 4 0 1 1 8 0v4" />
+                    </svg>
+                    {estado === 'Habilitado' ? 'Deshabilitar' : 'Habilitar'}
+                  </span>
+                );
+              },
+              onClick: handleDisable,
+            },
+          ]}
           onDelete={handleDelete}
         />
       )}
