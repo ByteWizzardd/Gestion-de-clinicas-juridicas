@@ -80,7 +80,7 @@ export const usuariosQueries = {
     nombre_usuario: string;
     contrasena: string;
     telefono_celular?: string | null;
-  }): Promise<any> => {
+  }): Promise<unknown> => {
     const query = loadSQL('usuarios/create-or-update.sql');
     const result: QueryResult = await pool.query(query, [
       data.cedula,
@@ -119,11 +119,20 @@ export const usuariosQueries = {
   /**
    * Actualiza la contraseña de un usuario por correo electrónico
    */
-  updatePasswordByEmail: async (email: string, passwordHash: string): Promise<any> => {
+  updatePasswordByEmail: async (email: string, passwordHash: string): Promise<unknown> => {
     const query = loadSQL('usuarios/update-password.sql');
     const result: QueryResult = await pool.query(query, [email, passwordHash]);
     return result.rows[0];
   },
+
+  /**
+   * 
+   * Elimina un usuario y guarda su cédula
+   */
+  deleteByCedula: async (cedula: string): Promise<void> => {
+    await pool.query('SELECT eliminar_usuario($1)', [cedula]);
+  },
+
 };
 
 

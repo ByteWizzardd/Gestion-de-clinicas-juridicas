@@ -12,22 +12,22 @@ export const authQueries = {
   /**
    * Obtiene un usuario por su nombre_usuario
    */
-  getUserByNombreUsuario: async (nombreUsuario: string): Promise<any | null> => {
+  getUserByNombreUsuario: async (nombreUsuario: string): Promise<unknown | null> => {
     try {
       const query = loadSQL('usuarios/get-by-nombre-usuario.sql');
       const result: QueryResult = await pool.query(query, [nombreUsuario]);
       return result.rows[0] || null;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Detectar si el error es porque falta la columna password_hash o nombre_usuario
-      if (error?.code === '42703') {
-        if (error?.message?.includes('password_hash')) {
+      if (typeof error === 'object' && error !== null && 'code' in error && error.code === '42703') {
+        if (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string' && error.message.includes('password_hash')) {
           logger.error('La columna password_hash no existe. Ejecuta la migración primero.');
           throw new DatabaseError(
             'La columna password_hash no existe en la tabla usuarios. Por favor ejecuta la migración: database/migrations/add-password-to-usuarios.sql o visita /api/auth/migrate',
             error
           );
         }
-        if (error?.message?.includes('nombre_usuario')) {
+        if (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string' && error.message.includes('nombre_usuario')) {
           logger.error('La columna nombre_usuario no existe. Ejecuta la migración primero.');
           throw new DatabaseError(
             'La columna nombre_usuario no existe en la tabla usuarios. Por favor ejecuta la migración: database/migrations/add-nombre-usuario-to-usuarios.sql',
@@ -46,14 +46,14 @@ export const authQueries = {
   /**
    * Obtiene un usuario por su correo electrónico (mantenido para compatibilidad)
    */
-  getUserByEmail: async (email: string): Promise<any | null> => {
+  getUserByEmail: async (email: string): Promise<unknown | null> => {
     try {
       const query = loadSQL('usuarios/get-by-email.sql');
       const result: QueryResult = await pool.query(query, [email]);
       return result.rows[0] || null;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Detectar si el error es porque falta la columna password_hash
-      if (error?.code === '42703' && error?.message?.includes('password_hash')) {
+      if ( typeof error === 'object' && error !== null && 'code' in error && error.code === '42703' && typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string' && error.message.includes('password_hash')) {
         logger.error('La columna password_hash no existe. Ejecuta la migración primero.');
         throw new DatabaseError(
           'La columna password_hash no existe en la tabla usuarios. Por favor ejecuta la migración: database/migrations/add-password-to-usuarios.sql o visita /api/auth/migrate',
@@ -71,14 +71,14 @@ export const authQueries = {
   /**
    * Obtiene un usuario por su cédula
    */
-  getUserByCedula: async (cedula: string): Promise<any | null> => {
+  getUserByCedula: async (cedula: string): Promise<unknown | null> => {
     try {
       const query = loadSQL('usuarios/get-by-cedula.sql');
       const result: QueryResult = await pool.query(query, [cedula]);
       return result.rows[0] || null;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Detectar si el error es porque falta la columna password_hash
-      if (error?.code === '42703' && error?.message?.includes('password_hash')) {
+      if (typeof error === 'object' && error !== null && 'code' in error && error.code === '42703' && typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string' && error.message.includes('password_hash')) {
         logger.error('La columna password_hash no existe. Ejecuta la migración primero.');
         throw new DatabaseError(
           'La columna password_hash no existe en la tabla usuarios. Por favor ejecuta la migración: database/migrations/add-password-to-usuarios.sql o visita /api/auth/migrate',

@@ -7,7 +7,6 @@ import CalendarWidget from '@/components/ui/calendar/CalendarWidget';
 import AppointmentList from '@/components/cards/AppointmentList';
 import type { Appointment } from '@/types/appointment';
 import { AppointmentModal } from '../appointmentModal/AppointmentModal';
-import ConfirmModal from '../ui/feedback/ConfirmModal';
 
 interface AppointmentsClientProps {
   initialAppointments: Appointment[];

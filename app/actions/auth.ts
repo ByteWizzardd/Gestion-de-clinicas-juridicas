@@ -1,11 +1,12 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { authService } from '@/lib/services/auth.service';
 import { authQueries } from '@/lib/db/queries/auth.queries';
 import { jwtExpiresInToSeconds, verifyToken } from '@/lib/utils/security';
 import { AppError, UnauthorizedError } from '@/lib/utils/errors';
+import crypto from "crypto";
+
 
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '30d';
 
@@ -118,7 +119,7 @@ export async function logoutAction(): Promise<{ success: boolean }> {
     });
 
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false };
   }
 }
@@ -146,7 +147,13 @@ export async function getCurrentUserAction(): Promise<GetCurrentUserResult> {
     const decoded = await verifyToken(token);
 
     // Obtener información completa del usuario
-    const user = await authQueries.getUserByCedula(decoded.cedula);
+    const user = await authQueries.getUserByCedula(decoded.cedula) as {
+      cedula: string;
+      nombres: string;
+      apellidos: string;
+      correo_electronico: string;
+      rol_sistema?: string;
+    } | null;
 
     if (!user) {
       return {
@@ -229,7 +236,6 @@ export interface VerifyCodeResult {
  */
 function generateVerificationCode(): string {
   // Generar código de 6 dígitos usando crypto de Node.js (más seguro)
-  const crypto = require('crypto');
   const randomBytes = crypto.randomBytes(3); // 3 bytes = 24 bits, suficiente para 6 dígitos
   const randomNum = parseInt(randomBytes.toString('hex'), 16) % 900000 + 100000; // Entre 100000 y 999999
   return randomNum.toString();

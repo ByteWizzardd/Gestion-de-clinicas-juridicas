@@ -1,8 +1,10 @@
 'use server';
 
-import { cookies } from 'next/headers';
+import { getAuthTokenFromCookies } from '@/lib/utils/auth';
 import { usuariosQueries } from '@/lib/db/queries/usuarios.queries';
 import { AppError } from '@/lib/utils/errors';
+
+
 
 export interface GetUsuarioCompleteByCedulaResult {
   success: boolean;
@@ -26,9 +28,7 @@ export interface GetUsuarioCompleteByCedulaResult {
 export async function getUsuarioCompleteByCedulaAction(cedula: string): Promise<GetUsuarioCompleteByCedulaResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
+    const token = getAuthTokenFromCookies();
     if (!token) {
       return {
         success: false,
@@ -95,9 +95,7 @@ export interface GetUsuariosResult {
 export async function getUsuariosAction(): Promise<GetUsuariosResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
+    const token = getAuthTokenFromCookies();
     if (!token) {
       return {
         success: false,
@@ -136,3 +134,49 @@ export async function getUsuariosAction(): Promise<GetUsuariosResult> {
   }
 }
 
+export interface deleteUsuarioResult {
+  success: boolean;
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+export async function deleteUsuarioAction(cedula: string): Promise<deleteUsuarioResult> {
+  try {
+    // Verificar autenticación
+    const token = getAuthTokenFromCookies();
+    if (!token) {
+      return {
+        success: false,
+        error: {
+          message: 'No autorizado',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    // Eliminar usuario por cédula (clave primaria)
+    await usuariosQueries.deleteByCedula(cedula);
+
+    return { success: true };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'USUARIO_ERROR',
+        },
+      };
+    }
+    console.error('Error en deleteUsuarioAction:', error);
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al eliminar usuario',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  }
+}

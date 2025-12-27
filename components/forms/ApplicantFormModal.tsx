@@ -1585,7 +1585,7 @@ export default function ApplicantFormModal({
                       autocompleteFromBeneficiario(item);
                     } else {
                       // Fallback para compatibilidad con sugerencias antiguas
-                      autocompleteFromSolicitante(item as any);
+                      autocompleteFromSolicitante(item);
                     }
                   }}
                   initial={{ opacity: 0, x: -10 }}
