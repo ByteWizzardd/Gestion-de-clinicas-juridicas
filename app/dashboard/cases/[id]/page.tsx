@@ -203,8 +203,8 @@ export default function CaseDetailPage() {
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold" style={{ fontFamily: 'var(--font-league-spartan)' }}>
-            {codigoCaso}
-          </h1>
+        {codigoCaso}
+      </h1>
           {caso.estatus && (
             <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(caso.estatus)}`}>
               {caso.estatus}

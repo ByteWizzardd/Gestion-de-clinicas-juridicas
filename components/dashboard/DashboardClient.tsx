@@ -122,7 +122,7 @@ export default function DashboardClient({ initialAppointments, initialCasos }: D
                 {casos.length} {casos.length === 1 ? 'caso' : 'casos'}
               </span>
             </div>
-            <div className="flex-1 overflow-y-auto pr-2 min-h-[200px] md:min-h-0">
+            <div className="flex-1 pr-2 flex items-center">
               <CasosList 
                 casos={casos}
                 loading={false}

@@ -47,10 +47,10 @@ export default function CasosList({ casos, loading, error }: CasosListProps) {
 
   if (!casos || casos.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-        <Briefcase className="w-12 h-12 mb-4 opacity-50" />
-        <p className="text-lg font-medium">No tienes casos asignados</p>
-        <p className="text-sm mt-2">Los casos donde participas aparecerán aquí</p>
+      <div className="w-full flex flex-col items-center justify-center text-gray-500">
+        <Briefcase className="w-16 h-16 mb-4 opacity-40" />
+        <p className="text-lg font-medium text-gray-600">No tienes casos asignados</p>
+        <p className="text-sm mt-2 text-gray-500">Los casos donde participas aparecerán aquí</p>
       </div>
     );
   }
