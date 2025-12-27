@@ -13,10 +13,11 @@ import StatusChangesTab from '@/components/cases/tabs/StatusChangesTab';
 import DocumentsTab from '@/components/cases/tabs/DocumentsTab';
 import { getCasoByIdAction, changeStatusAction } from '@/app/actions/casos';
 import { ESTATUS_CASO } from '@/lib/constants/status';
-import Button from '@/components/ui/Button';
 import DropdownMenu from '@/components/ui/navigation/DropdownMenu';
 import AddDocumentModal from '@/components/cases/modals/AddDocumentModal';
-import { FileText, ChevronDown } from 'lucide-react';
+import AssignTeamModal from '@/components/cases/modals/AssignTeamModal';
+import { ChevronDown, Plus, Pencil } from 'lucide-react';
+import { getCurrentUserAction } from '@/app/actions/auth';
 
 export default function CaseDetailPage() {
   const params = useParams();
@@ -27,7 +28,9 @@ export default function CaseDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddDocumentModal, setShowAddDocumentModal] = useState(false);
+  const [showAssignTeamModal, setShowAssignTeamModal] = useState(false);
   const [changingStatus, setChangingStatus] = useState(false);
+  const [userRol, setUserRol] = useState<string | null>(null);
 
   const fetchCaso = useCallback(async () => {
     const idCaso = parseInt(id, 10);
@@ -66,6 +69,20 @@ export default function CaseDetailPage() {
       fetchCaso();
     }
   }, [id, fetchCaso]);
+
+  useEffect(() => {
+    const loadUserRol = async () => {
+      try {
+        const result = await getCurrentUserAction();
+        if (result.success && result.data) {
+          setUserRol(result.data.rol);
+        }
+      } catch (err) {
+        console.error('Error al obtener rol del usuario:', err);
+      }
+    };
+    loadUserRol();
+  }, []);
 
   if (loading) {
     return (
@@ -196,25 +213,39 @@ export default function CaseDetailPage() {
         </div>
         
         <div className="flex items-center gap-2">
-          <Button
-            variant="primary"
-            size="md"
+          {userRol && userRol !== 'Estudiante' && (
+            <button 
+              onClick={() => setShowAssignTeamModal(true)}
+              className="h-10 cursor-pointer px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors"
+            >
+              {caso.equipo && caso.equipo.length > 0 ? (
+                <Pencil className="w-[18px] h-[18px] text-[#414040]" />
+              ) : (
+                <Plus className="w-[18px] h-[18px] text-[#414040]" />
+              )}
+              <span className="text-base text-center">
+                {caso.equipo && caso.equipo.length > 0 ? 'Modificar Equipo' : 'Asignar Equipo'}
+              </span>
+            </button>
+          )}
+
+          <button 
             onClick={() => setShowAddDocumentModal(true)}
+            className="h-10 cursor-pointer px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors"
           >
-            <FileText className="w-4 h-4 mr-2" />
-            Agregar Documento
-          </Button>
+            <Plus className="w-[18px] h-[18px] text-[#414040]" />
+            <span className="text-base text-center">Agregar Documento</span>
+          </button>
           
           <DropdownMenu
             trigger={
-              <Button
-                variant="outline"
-                size="md"
+              <button
                 disabled={changingStatus}
+                className="h-10 cursor-pointer px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Cambiar Estatus
-                <ChevronDown className="w-4 h-4 ml-2" />
-              </Button>
+                <span className="text-base text-center">Cambiar Estatus</span>
+                <ChevronDown className="w-[18px] h-[18px] text-[#414040]" />
+              </button>
             }
             align="right"
             menuClassName="bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[200px]"
@@ -247,6 +278,14 @@ export default function CaseDetailPage() {
         isOpen={showAddDocumentModal}
         onClose={() => setShowAddDocumentModal(false)}
         idCaso={caso.id_caso}
+        onSuccess={handleRefresh}
+      />
+
+      <AssignTeamModal
+        isOpen={showAssignTeamModal}
+        onClose={() => setShowAssignTeamModal(false)}
+        idCaso={caso.id_caso}
+        equipoActual={caso.equipo}
         onSuccess={handleRefresh}
       />
 

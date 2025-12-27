@@ -20,5 +20,43 @@ export const profesoresQueries = {
     const result: QueryResult = await pool.query(query, [cedula]);
     return result.rows;
   },
+
+  /**
+   * Obtiene todos los profesores de un semestre específico
+   */
+  getByTerm: async (term: string): Promise<Array<{
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+    nombre_completo: string;
+    correo_electronico: string | null;
+    telefono_celular: string | null;
+    term: string;
+    tipo_profesor: string;
+    habilitado_sistema: boolean;
+  }>> => {
+    const query = loadSQL('profesores/get-by-term.sql');
+    const result: QueryResult = await pool.query(query, [term]);
+    return result.rows;
+  },
+
+  /**
+   * Obtiene todos los profesores activos de todos los semestres
+   */
+  getAllActive: async (): Promise<Array<{
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+    nombre_completo: string;
+    correo_electronico: string | null;
+    telefono_celular: string | null;
+    term: string;
+    tipo_profesor: string;
+    habilitado_sistema: boolean;
+  }>> => {
+    const query = loadSQL('profesores/get-all-active.sql');
+    const result: QueryResult = await pool.query(query);
+    return result.rows;
+  },
 };
 
