@@ -5,6 +5,14 @@ import { verifyToken } from '@/lib/utils/security';
 import { casosService } from '@/lib/services/casos.service';
 import { revalidatePath } from 'next/cache';
 import { soportesQueries } from '@/lib/db/queries/soportes.queries';
+import { accionesQueries } from '@/lib/db/queries/acciones.queries';
+import { cambiosEstatusQueries } from '@/lib/db/queries/cambios-estatus.queries';
+import { asignacionesQueries } from '@/lib/db/queries/asignaciones.queries';
+import { profesoresQueries } from '@/lib/db/queries/profesores.queries';
+import { estudiantesQueries } from '@/lib/db/queries/estudiantes.queries';
+import { semestresQueries } from '@/lib/db/queries/semestres.queries';
+import { pool } from '@/lib/db/pool';
+import { loadSQL } from '@/lib/db/sql-loader';
 import { AppError, UnauthorizedError, ValidationError } from '@/lib/utils/errors';
 
 export interface CreateCasoResult {
@@ -304,6 +312,99 @@ export async function getCasosAction(): Promise<GetCasosResult> {
 }
 
 /**
+ * Server Action para obtener casos del usuario actual
+ */
+export async function getCasosByUsuarioAction(): Promise<GetCasosResult> {
+  try {
+    // Verificar autenticación
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      return {
+        success: false,
+        error: {
+          message: 'No autorizado',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    let decodedToken: any;
+    try {
+      decodedToken = await verifyToken(token);
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    const cedulaUsuario = decodedToken.cedula;
+    console.log('🔍 Buscando casos para usuario:', cedulaUsuario);
+    
+    // Debug: Verificar si hay asignaciones en se_le_asigna
+    const { pool } = await import('@/lib/db/pool');
+    const debugQuery = await pool.query(
+      'SELECT term, cedula_estudiante, id_caso, habilitado FROM se_le_asigna WHERE cedula_estudiante = $1',
+      [cedulaUsuario]
+    );
+    console.log('📋 Asignaciones en se_le_asigna:', debugQuery.rows.length);
+    if (debugQuery.rows.length > 0) {
+      console.log('   Asignaciones encontradas:', debugQuery.rows);
+    } else {
+      console.log('   ⚠️  No hay asignaciones en se_le_asigna para esta cédula');
+    }
+    
+    const { casosQueries } = await import('@/lib/db/queries/casos.queries');
+    const casos = await casosQueries.getByUsuario(cedulaUsuario);
+    
+    console.log('📊 Casos encontrados por query:', casos.length);
+    if (casos.length > 0) {
+      console.log('   Primer caso:', JSON.stringify(casos[0], null, 2));
+    } else {
+      console.log('   ⚠️  No se encontraron casos asignados para este usuario');
+      // Debug adicional: verificar si los casos existen
+      const casosDebug = await pool.query(
+        'SELECT c.id_caso, c.tramite FROM casos c INNER JOIN se_le_asigna sla ON c.id_caso = sla.id_caso WHERE sla.cedula_estudiante = $1 AND sla.habilitado = true',
+        [cedulaUsuario]
+      );
+      console.log('   🔍 Casos directos (sin JOINs complejos):', casosDebug.rows.length);
+      if (casosDebug.rows.length > 0) {
+        console.log('   Casos directos:', casosDebug.rows);
+      }
+    }
+
+    return {
+      success: true,
+      data: casos,
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'CASO_ERROR',
+        },
+      };
+    }
+
+    console.error('Error en getCasosByUsuarioAction:', error);
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al obtener casos del usuario',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  }
+}
+
+/**
  * Server Action para obtener el siguiente número de caso disponible
  */
 export async function getNextCaseNumberAction(): Promise<GetNextCaseNumberResult> {
@@ -446,3 +547,484 @@ export async function getCaseIdsAction(): Promise<{ success: boolean; data?: num
   }
 }
 
+/**
+ * Server Action para crear una acción para un caso
+ * @param ejecutores Array de objetos con idUsuario y fechaEjecucion
+ */
+export async function createAccionAction(
+  idCaso: number,
+  detalleAccion: string,
+  comentario?: string,
+  ejecutores?: Array<{ idUsuario: string; fechaEjecucion: string }>
+): Promise<{ success: boolean; data?: any; error?: { message: string; code?: string } }> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      await client.query('ROLLBACK');
+      return {
+        success: false,
+        error: {
+          message: 'No hay sesión activa',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    let decoded;
+    try {
+      decoded = await verifyToken(token);
+    } catch {
+      await client.query('ROLLBACK');
+      return {
+        success: false,
+        error: {
+          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    if (!detalleAccion || detalleAccion.trim() === '') {
+      await client.query('ROLLBACK');
+      return {
+        success: false,
+        error: {
+          message: 'El detalle de la acción es requerido',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    const cedulaUsuario = decoded.cedula;
+    
+    // Crear la acción usando el cliente de la transacción
+    const createAccionQuery = loadSQL('acciones/create.sql');
+    const accionResult = await client.query(createAccionQuery, [
+      idCaso,
+      detalleAccion.trim(),
+      comentario?.trim() || null,
+      cedulaUsuario,
+      null, // numAccion se calcula automáticamente
+    ]);
+    const accion = accionResult.rows[0];
+
+    // Crear registros de ejecutores si se proporcionaron
+    if (ejecutores && ejecutores.length > 0) {
+      const createEjecutanQuery = loadSQL('ejecutan/create.sql');
+      for (const ejecutor of ejecutores) {
+        const fechaEjecucion = new Date(ejecutor.fechaEjecucion);
+        await client.query(createEjecutanQuery, [
+          ejecutor.idUsuario,
+          accion.num_accion,
+          idCaso,
+          fechaEjecucion,
+        ]);
+      }
+    }
+
+    await client.query('COMMIT');
+    revalidatePath(`/dashboard/cases/${idCaso}`);
+
+    return {
+      success: true,
+      data: accion,
+    };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'ACCION_ERROR',
+        },
+      };
+    }
+
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al crear la acción',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Server Action para cambiar el estatus de un caso
+ */
+export async function changeStatusAction(
+  idCaso: number,
+  nuevoEstatus: string,
+  motivo?: string
+): Promise<{ success: boolean; data?: any; error?: { message: string; code?: string } }> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      return {
+        success: false,
+        error: {
+          message: 'No hay sesión activa',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    let decoded;
+    try {
+      decoded = await verifyToken(token);
+    } catch {
+      return {
+        success: false,
+        error: {
+          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    const estatusValidos = ['En proceso', 'Archivado', 'Entregado', 'Asesoría'];
+    if (!estatusValidos.includes(nuevoEstatus)) {
+      return {
+        success: false,
+        error: {
+          message: 'Estatus inválido',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    const cedulaUsuario = decoded.cedula;
+    const cambioEstatus = await cambiosEstatusQueries.create(
+      idCaso,
+      nuevoEstatus,
+      cedulaUsuario,
+      motivo?.trim() || undefined
+    );
+
+    revalidatePath(`/dashboard/cases/${idCaso}`);
+
+    return {
+      success: true,
+      data: cambioEstatus,
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'STATUS_ERROR',
+        },
+      };
+    }
+
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al cambiar el estatus',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  }
+}
+
+export interface GetEquipoDisponibleResult {
+  success: boolean;
+  data?: {
+    profesores: Array<{
+      cedula: string;
+      nombres: string;
+      apellidos: string;
+      nombre_completo: string;
+      correo_electronico: string | null;
+      telefono_celular: string | null;
+      term: string;
+      tipo_profesor: string;
+    }>;
+    estudiantes: Array<{
+      cedula: string;
+      nombres: string;
+      apellidos: string;
+      nombre_completo: string;
+      correo_electronico: string | null;
+      telefono_celular: string | null;
+      term: string;
+      tipo_estudiante: string;
+      nrc: string;
+    }>;
+    term: string;
+  };
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+export async function getEquipoDisponibleAction(): Promise<GetEquipoDisponibleResult> {
+  try {
+    // Obtener el semestre actual (el más reciente)
+    const semestres = await semestresQueries.getAll();
+    if (semestres.length === 0) {
+      return {
+        success: false,
+        error: {
+          message: 'No hay semestres disponibles',
+          code: 'NO_SEMESTRES',
+        },
+      };
+    }
+
+    const currentTerm = semestres[0].term; // El primero es el más reciente
+
+    // Obtener profesores y estudiantes activos de todos los semestres
+    // Esto permite encontrar profesores/estudiantes aunque no estén en el semestre actual
+    const [profesoresAll, estudiantesAll] = await Promise.all([
+      profesoresQueries.getAllActive(),
+      estudiantesQueries.getAllActive(),
+    ]);
+
+    // Priorizar profesores y estudiantes del semestre actual
+    const profesoresCurrentTerm = profesoresAll.filter(p => p.term === currentTerm);
+    const estudiantesCurrentTerm = estudiantesAll.filter(e => e.term === currentTerm);
+
+    // Combinar: primero los del semestre actual, luego los demás (sin duplicados)
+    const profesoresMap = new Map<string, typeof profesoresAll[0]>();
+    const estudiantesMap = new Map<string, typeof estudiantesAll[0]>();
+
+    // Agregar primero los del semestre actual
+    profesoresCurrentTerm.forEach(p => profesoresMap.set(p.cedula, p));
+    estudiantesCurrentTerm.forEach(e => estudiantesMap.set(e.cedula, e));
+
+    // Agregar los demás si no están ya incluidos
+    profesoresAll.forEach(p => {
+      if (!profesoresMap.has(p.cedula)) {
+        profesoresMap.set(p.cedula, p);
+      }
+    });
+    estudiantesAll.forEach(e => {
+      if (!estudiantesMap.has(e.cedula)) {
+        estudiantesMap.set(e.cedula, e);
+      }
+    });
+
+    const profesores = Array.from(profesoresMap.values());
+    const estudiantes = Array.from(estudiantesMap.values());
+
+    return {
+      success: true,
+      data: {
+        profesores,
+        estudiantes,
+        term: currentTerm,
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al obtener equipo disponible',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  }
+}
+
+export interface AsignarEquipoResult {
+  success: boolean;
+  data?: {
+    mensaje: string;
+  };
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+export async function asignarEquipoAction(
+  idCaso: number,
+  profesores: string[],
+  estudiantes: string[]
+): Promise<AsignarEquipoResult> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      throw new UnauthorizedError('No autorizado');
+    }
+
+    const decoded = await verifyToken(token);
+
+    // Obtener el semestre actual
+    const semestres = await semestresQueries.getAll();
+    if (semestres.length === 0) {
+      return {
+        success: false,
+        error: {
+          message: 'No hay semestres disponibles',
+          code: 'NO_SEMESTRES',
+        },
+      };
+    }
+
+    const currentTerm = semestres[0].term;
+
+    // Usar transacción para asegurar atomicidad
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Obtener asignaciones actuales del caso
+      const equipoActual = await asignacionesQueries.getEquipoByCaso(idCaso);
+      const profesoresActuales = equipoActual
+        .filter(m => m.tipo === 'profesor' && m.habilitado)
+        .map(m => m.cedula);
+      const estudiantesActuales = equipoActual
+        .filter(m => m.tipo === 'estudiante' && m.habilitado)
+        .map(m => m.cedula);
+
+      // Identificar profesores nuevos (que no estaban asignados antes)
+      const profesoresNuevos = profesores.filter(cedula => !profesoresActuales.includes(cedula));
+      
+      // Identificar estudiantes nuevos (que no estaban asignados antes)
+      const estudiantesNuevos = estudiantes.filter(cedula => !estudiantesActuales.includes(cedula));
+
+      // Obtener todos los profesores activos para verificar disponibilidad
+      const profesoresAllActive = await profesoresQueries.getAllActive();
+      const profesoresAllActiveCedulas = new Set(profesoresAllActive.map(p => p.cedula));
+      const profesoresAllActiveMap = new Map(profesoresAllActive.map(p => [p.cedula, p]));
+
+      // Obtener todos los estudiantes activos para verificar disponibilidad
+      const estudiantesAllActive = await estudiantesQueries.getAllActive();
+      const estudiantesAllActiveCedulas = new Set(estudiantesAllActive.map(e => e.cedula));
+      const estudiantesAllActiveMap = new Map(estudiantesAllActive.map(e => [e.cedula, e]));
+
+      // Verificar que los profesores nuevos existan (en cualquier semestre)
+      if (profesoresNuevos.length > 0) {
+        const profesoresInvalidos = profesoresNuevos.filter(cedula => !profesoresAllActiveCedulas.has(cedula));
+        
+        if (profesoresInvalidos.length > 0) {
+          await client.query('ROLLBACK');
+          return {
+            success: false,
+            error: {
+              message: `Los siguientes profesores no están disponibles: ${profesoresInvalidos.join(', ')}`,
+              code: 'PROFESORES_INVALIDOS',
+            },
+          };
+        }
+      }
+
+      // Verificar que los estudiantes nuevos existan (en cualquier semestre)
+      if (estudiantesNuevos.length > 0) {
+        const estudiantesInvalidos = estudiantesNuevos.filter(cedula => !estudiantesAllActiveCedulas.has(cedula));
+        
+        if (estudiantesInvalidos.length > 0) {
+          await client.query('ROLLBACK');
+          return {
+            success: false,
+            error: {
+              message: `Los siguientes estudiantes no están disponibles: ${estudiantesInvalidos.join(', ')}`,
+              code: 'ESTUDIANTES_INVALIDOS',
+            },
+          };
+        }
+      }
+
+      // Deshabilitar profesores que ya no están en la lista
+      for (const cedula of profesoresActuales) {
+        if (!profesores.includes(cedula)) {
+          // Obtener el term del profesor actual para deshabilitarlo correctamente
+          const profesorActual = equipoActual.find(m => m.tipo === 'profesor' && m.cedula === cedula);
+          const termProfesor = profesorActual?.term || currentTerm;
+          await asignacionesQueries.removeSupervisa(termProfesor, cedula, idCaso);
+        }
+      }
+
+      // Deshabilitar estudiantes que ya no están en la lista
+      for (const cedula of estudiantesActuales) {
+        if (!estudiantes.includes(cedula)) {
+          // Obtener el term del estudiante actual para deshabilitarlo correctamente
+          const estudianteActual = equipoActual.find(m => m.tipo === 'estudiante' && m.cedula === cedula);
+          const termEstudiante = estudianteActual?.term || currentTerm;
+          await asignacionesQueries.removeSeLeAsigna(termEstudiante, cedula, idCaso);
+        }
+      }
+
+      // Crear o actualizar asignaciones de profesores nuevos
+      // Usar el term del semestre actual si el profesor está en ese semestre, 
+      // de lo contrario usar el term más reciente donde esté registrado
+      for (const cedula of profesoresNuevos) {
+        const profesorInfo = profesoresAllActiveMap.get(cedula);
+        if (profesorInfo) {
+          // Si el profesor está en el semestre actual, usar ese term
+          // Si no, usar el term más reciente donde esté registrado
+          const termToUse = profesorInfo.term === currentTerm 
+            ? currentTerm 
+            : profesorInfo.term;
+          await asignacionesQueries.createSupervisa(termToUse, cedula, idCaso, true);
+        }
+      }
+
+      // Crear o actualizar asignaciones de estudiantes nuevos
+      // Usar el term del semestre actual si el estudiante está en ese semestre,
+      // de lo contrario usar el term más reciente donde esté registrado
+      for (const cedula of estudiantesNuevos) {
+        const estudianteInfo = estudiantesAllActiveMap.get(cedula);
+        if (estudianteInfo) {
+          // Si el estudiante está en el semestre actual, usar ese term
+          // Si no, usar el term más reciente donde esté registrado
+          const termToUse = estudianteInfo.term === currentTerm 
+            ? currentTerm 
+            : estudianteInfo.term;
+          await asignacionesQueries.createSeLeAsigna(termToUse, cedula, idCaso, true);
+        }
+      }
+
+      await client.query('COMMIT');
+
+      revalidatePath(`/dashboard/cases/${idCaso}`);
+
+      return {
+        success: true,
+        data: {
+          mensaje: 'Equipo asignado exitosamente',
+        },
+      };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'ASIGNACION_ERROR',
+        },
+      };
+    }
+
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al asignar equipo',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  }
+}

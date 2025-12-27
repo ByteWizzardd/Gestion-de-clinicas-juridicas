@@ -85,7 +85,7 @@ export default function DropdownMenu({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className={`absolute ${alignClasses[align]} mt-2 z-[100] ${menuClassName}`}
+            className={`absolute ${alignClasses[align]} mt-2 z-30 ${menuClassName}`}
             onClick={(e) => {
               // Si el clic es en un botón dentro del menú, cerrar el dropdown inmediatamente
               const target = e.target as HTMLElement;

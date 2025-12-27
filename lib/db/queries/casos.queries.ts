@@ -46,6 +46,17 @@ export const casosQueries = {
   },
 
   /**
+   * Obtiene todos los casos donde el usuario participa
+   * Incluye casos donde está asignado, ejecuta acciones, atiende citas o supervisa
+   * @param cedulaUsuario - Cédula del usuario
+   */
+  getByUsuario: async (cedulaUsuario: string): Promise<any[]> => {
+    const query = loadSQL('casos/get-by-usuario.sql');
+    const result: QueryResult = await pool.query(query, [cedulaUsuario]);
+    return result.rows;
+  },
+
+  /**
    * Crea un nuevo caso
    * Si fecha_solicitud no se proporciona, se usa CURRENT_DATE en la base de datos
    * Nota: El estatus se maneja mediante la tabla cambio_estatus, no directamente en casos

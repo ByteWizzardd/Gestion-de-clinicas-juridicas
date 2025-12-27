@@ -8,6 +8,27 @@ import { QueryResult } from 'pg';
  */
 export const accionesQueries = {
   /**
+   * Crea una nueva acción para un caso
+   */
+  create: async (
+    idCaso: number,
+    detalleAccion: string,
+    idUsuarioRegistra: string,
+    comentario?: string,
+    numAccion?: number
+  ): Promise<any> => {
+    const query = loadSQL('acciones/create.sql');
+    const result: QueryResult = await pool.query(query, [
+      idCaso,
+      detalleAccion,
+      comentario || null,
+      idUsuarioRegistra,
+      numAccion || null,
+    ]);
+    return result.rows[0];
+  },
+
+  /**
    * Obtiene todas las acciones realizadas para un caso específico
    */
   getByCaso: async (idCaso: number): Promise<Array<{
@@ -39,4 +60,3 @@ export const accionesQueries = {
     }));
   },
 };
-

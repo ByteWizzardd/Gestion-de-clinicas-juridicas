@@ -51,7 +51,75 @@ SELECT
     
     -- Información de la vivienda
     v.cant_habitaciones,
-    v.cant_banos
+    v.cant_banos,
+    
+    -- Características de vivienda desde asignadas_a
+    (SELECT c.descripcion 
+     FROM asignadas_a aa 
+     INNER JOIN caracteristicas c ON aa.id_tipo_caracteristica = c.id_tipo_caracteristica 
+         AND aa.num_caracteristica = c.num_caracteristica 
+     WHERE aa.cedula_solicitante = vs.cedula 
+       AND aa.id_tipo_caracteristica = 1 
+     LIMIT 1) AS tipo_vivienda,
+    
+    (SELECT c.descripcion 
+     FROM asignadas_a aa 
+     INNER JOIN caracteristicas c ON aa.id_tipo_caracteristica = c.id_tipo_caracteristica 
+         AND aa.num_caracteristica = c.num_caracteristica 
+     WHERE aa.cedula_solicitante = vs.cedula 
+       AND aa.id_tipo_caracteristica = 2 
+     LIMIT 1) AS material_piso,
+    
+    (SELECT c.descripcion 
+     FROM asignadas_a aa 
+     INNER JOIN caracteristicas c ON aa.id_tipo_caracteristica = c.id_tipo_caracteristica 
+         AND aa.num_caracteristica = c.num_caracteristica 
+     WHERE aa.cedula_solicitante = vs.cedula 
+       AND aa.id_tipo_caracteristica = 3 
+     LIMIT 1) AS material_paredes,
+    
+    (SELECT c.descripcion 
+     FROM asignadas_a aa 
+     INNER JOIN caracteristicas c ON aa.id_tipo_caracteristica = c.id_tipo_caracteristica 
+         AND aa.num_caracteristica = c.num_caracteristica 
+     WHERE aa.cedula_solicitante = vs.cedula 
+       AND aa.id_tipo_caracteristica = 4 
+     LIMIT 1) AS material_techo,
+    
+    (SELECT c.descripcion 
+     FROM asignadas_a aa 
+     INNER JOIN caracteristicas c ON aa.id_tipo_caracteristica = c.id_tipo_caracteristica 
+         AND aa.num_caracteristica = c.num_caracteristica 
+     WHERE aa.cedula_solicitante = vs.cedula 
+       AND aa.id_tipo_caracteristica = 5 
+     LIMIT 1) AS agua_potable,
+    
+    (SELECT c.descripcion 
+     FROM asignadas_a aa 
+     INNER JOIN caracteristicas c ON aa.id_tipo_caracteristica = c.id_tipo_caracteristica 
+         AND aa.num_caracteristica = c.num_caracteristica 
+     WHERE aa.cedula_solicitante = vs.cedula 
+       AND aa.id_tipo_caracteristica = 6 
+     LIMIT 1) AS aseo,
+    
+    (SELECT c.descripcion 
+     FROM asignadas_a aa 
+     INNER JOIN caracteristicas c ON aa.id_tipo_caracteristica = c.id_tipo_caracteristica 
+         AND aa.num_caracteristica = c.num_caracteristica 
+     WHERE aa.cedula_solicitante = vs.cedula 
+       AND aa.id_tipo_caracteristica = 7 
+     LIMIT 1) AS eliminacion_aguas_n,
+    
+    -- Artefactos domésticos (puede tener múltiples, se agregan como array JSON)
+    COALESCE(
+        (SELECT json_agg(c.descripcion ORDER BY c.descripcion)
+         FROM asignadas_a aa 
+         INNER JOIN caracteristicas c ON aa.id_tipo_caracteristica = c.id_tipo_caracteristica 
+             AND aa.num_caracteristica = c.num_caracteristica 
+         WHERE aa.cedula_solicitante = vs.cedula 
+           AND aa.id_tipo_caracteristica = 8),
+        '[]'::json
+    ) AS artefactos_domesticos
 FROM view_solicitantes_completo vs
 -- Obtener núcleo desde el caso más reciente del solicitante
 LEFT JOIN LATERAL (
