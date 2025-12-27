@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
 import { getMaterias } from "@/app/actions/catalogos";
-import { verifyMaterias } from "@/app/actions/verify-db";
 
 export default function MateriasPage() {
     const [materias, setMaterias] = useState<any[]>([]);
@@ -36,25 +35,14 @@ export default function MateriasPage() {
         }
     };
 
-    const handleVerifyDB = async () => {
-        const result = await verifyMaterias();
-        if (result.success) {
-            console.log('📊 Materias en BD:', result.data);
-            alert(`Hay ${result.count} materias en la base de datos. Ver consola para detalles.`);
-        }
-    };
+
 
     return (
         <>
             <h1 className="text-4xl m-3 font-semibold font-primary">Materias</h1>
             <p className="mb-6 ml-3">Áreas principales del derecho que se manejan en el sistema</p>
 
-            <button
-                onClick={handleVerifyDB}
-                className="ml-3 mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-                🔍 Verificar BD
-            </button>
+
 
             <CatalogDetailClient
                 data={materias}
