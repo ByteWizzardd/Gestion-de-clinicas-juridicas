@@ -18,7 +18,6 @@ casos_con_estatus AS (
         m.id_caso,
         COALESCE(ce.nuevo_estatus, 'En proceso') AS estatus
     FROM meses m
-    LEFT JOIN se_le_asigna sla ON m.id_caso = sla.id_caso
     LEFT JOIN (
         SELECT DISTINCT ON (id_caso) 
             id_caso, 
@@ -26,7 +25,15 @@ casos_con_estatus AS (
         FROM cambio_estatus
         ORDER BY id_caso, num_cambio DESC
     ) ce ON m.id_caso = ce.id_caso
-    WHERE ($4::VARCHAR IS NULL OR sla.term = $4)
+    WHERE (
+        $4::VARCHAR IS NULL 
+        OR EXISTS (
+            SELECT 1 
+            FROM se_le_asigna sla 
+            WHERE sla.id_caso = m.id_caso 
+            AND sla.term = $4
+        )
+    )
 )
 SELECT 
     TO_CHAR(mes, 'YYYY-MM') AS mes,

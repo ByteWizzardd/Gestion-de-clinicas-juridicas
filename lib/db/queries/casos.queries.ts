@@ -72,28 +72,54 @@ export const casosQueries = {
     num_ambito_legal: number;
     fecha_solicitud?: string | Date;
     fecha_inicio_caso: string | Date;
+    id_usuario_registra?: string;
   }): Promise<any> => {
-    const query = loadSQL('casos/create.sql');
-    const fechaSolicitudStr = data.fecha_solicitud
-      ? (typeof data.fecha_solicitud === 'string' ? data.fecha_solicitud : data.fecha_solicitud.toISOString().split('T')[0])
-      : null;
-    const fechaInicioStr = typeof data.fecha_inicio_caso === 'string'
-      ? data.fecha_inicio_caso
-      : data.fecha_inicio_caso.toISOString().split('T')[0];
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      
+      // Establecer la variable de sesión con la cédula del usuario que registra el caso
+      // Nota: SET LOCAL no acepta parámetros preparados, así que validamos y escapamos el valor
+      if (data.id_usuario_registra) {
+        // Validar que la cédula solo contenga caracteres alfanuméricos, guiones y puntos
+        if (!/^[A-Za-z0-9.\-]+$/.test(data.id_usuario_registra)) {
+          throw new Error('Formato de cédula inválido');
+        }
+        // Escapar comillas simples para prevenir SQL injection
+        const cedulaEscapada = data.id_usuario_registra.replace(/'/g, "''");
+        // Usar SET LOCAL dentro de la transacción para que esté disponible en el trigger
+        await client.query(`SET LOCAL app.usuario_registra = '${cedulaEscapada}'`);
+      }
+      
+      const query = loadSQL('casos/create.sql');
+      const fechaSolicitudStr = data.fecha_solicitud
+        ? (typeof data.fecha_solicitud === 'string' ? data.fecha_solicitud : data.fecha_solicitud.toISOString().split('T')[0])
+        : null;
+      const fechaInicioStr = typeof data.fecha_inicio_caso === 'string'
+        ? data.fecha_inicio_caso
+        : data.fecha_inicio_caso.toISOString().split('T')[0];
 
-    const result: QueryResult = await pool.query(query, [
-      data.tramite,
-      data.observaciones || null,
-      data.cedula,
-      data.id_nucleo,
-      data.id_materia,
-      data.num_categoria ?? 0, // Usar 0 si es null/undefined
-      data.num_subcategoria ?? 0, // Usar 0 si es null/undefined
-      data.num_ambito_legal,
-      fechaSolicitudStr,
-      fechaInicioStr,
-    ]);
-    return result.rows[0];
+      const result: QueryResult = await client.query(query, [
+        data.tramite,
+        data.observaciones || null,
+        data.cedula,
+        data.id_nucleo,
+        data.id_materia,
+        data.num_categoria ?? 0, // Usar 0 si es null/undefined
+        data.num_subcategoria ?? 0, // Usar 0 si es null/undefined
+        data.num_ambito_legal,
+        fechaSolicitudStr,
+        fechaInicioStr,
+      ]);
+      
+      await client.query('COMMIT');
+      return result.rows[0];
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   },
 
   /**
@@ -233,6 +259,33 @@ export const casosQueries = {
       idNucleo || null,
       term || null,
     ]);
+    return result.rows;
+  },
+
+  /**
+   * Obtiene casos agrupados por estatus para generar reportes
+   * @param fechaInicio - Fecha de inicio del rango (opcional)
+   * @param fechaFin - Fecha de fin del rango (opcional)
+   */
+  getGroupedByEstatus: async (
+    fechaInicio?: string | Date,
+    fechaFin?: string | Date
+  ): Promise<Array<{
+    nombre_estatus: string;
+    cantidad_casos: number;
+    id_caso_ejemplo: number;
+    fecha_solicitud_min: string;
+    fecha_solicitud_max: string;
+  }>> => {
+    const query = loadSQL('casos/get-grouped-by-estatus.sql');
+    const fechaInicioStr = fechaInicio
+      ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
+      : null;
+    const fechaFinStr = fechaFin
+      ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
+      : null;
+
+    const result: QueryResult = await pool.query(query, [fechaInicioStr, fechaFinStr]);
     return result.rows;
   },
 

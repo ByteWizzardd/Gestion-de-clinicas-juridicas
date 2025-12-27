@@ -3,6 +3,7 @@
 import React from 'react';
 import { pdf } from '@react-pdf/renderer/lib/react-pdf.browser';
 import { TiposCasosPDF } from '@/components/reports/TiposCasosPDF';
+import { EstatusCasosPDF, EstatusGroupedData } from '@/components/reports/EstatusCasosPDF';
 import { CasosGroupedData } from '@/app/actions/reports';
 
 // Colores exactos del diseño de Figma
@@ -56,6 +57,122 @@ function groupDataByMateriaSubcategoria(
   }
 
   return grouped;
+}
+
+// Colores fijos para los estatus
+const ESTATUS_COLORS: Record<string, string> = {
+  'En proceso': '#4A90E2', // Azul
+  'Archivado': '#7B68EE',   // Morado
+  'Entregado': '#50C878',   // Verde
+  'Asesoría': '#D2691E',    // Naranja/Marrón
+};
+
+/**
+ * Genera una imagen base64 de un gráfico de barras estilo Figma
+ * Barras planas con overlay blanco en la mitad izquierda
+ * Alta calidad con devicePixelRatio y renderizado optimizado
+ */
+function generateBarChartImage(
+  labels: string[],
+  values: number[],
+  colors: string[]
+): string {
+  // Usar alta resolución para mejor calidad del texto
+  const pixelRatio = 4;
+  const baseWidth = 1353;
+  const baseHeight = 581;
+  
+  const canvas = document.createElement('canvas');
+  canvas.width = baseWidth * pixelRatio;
+  canvas.height = baseHeight * pixelRatio;
+  canvas.style.width = `${baseWidth}px`;
+  canvas.style.height = `${baseHeight}px`;
+  
+  const ctx = canvas.getContext('2d', { 
+    alpha: true,
+    desynchronized: false 
+  });
+  
+  if (!ctx) {
+    return '';
+  }
+
+  // Escalar el contexto para alta resolución
+  ctx.scale(pixelRatio, pixelRatio);
+  
+  // Configurar suavizado de alta calidad
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  
+  // Configuración del gráfico según Figma
+  const padding = { top: 30, right: 20, bottom: 50, left: 20 };
+  const chartWidth = baseWidth - padding.left - padding.right;
+  const chartHeight = baseHeight - padding.top - padding.bottom;
+  const barSpacing = chartWidth / labels.length;
+  const barWidth = barSpacing * 0.68; // ~232px de 338px según Figma
+  const maxValue = Math.max(...values, 1);
+  const gridLines = 10;
+  
+  const baseY = padding.top + chartHeight;
+  
+  // Dibujar líneas de grid horizontales (según Figma: 10-11 líneas con opacidad 0.15)
+  ctx.strokeStyle = 'rgba(0, 0, 26, 0.15)';
+  ctx.lineWidth = 1;
+  
+  for (let i = 0; i <= gridLines; i++) {
+    const y = padding.top + (chartHeight / gridLines) * i;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(padding.left + chartWidth, y);
+    ctx.stroke();
+  }
+  
+  // Dibujar línea base más oscura (opacidad 0.3 según Figma)
+  ctx.strokeStyle = 'rgba(0, 0, 26, 0.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padding.left, baseY);
+  ctx.lineTo(padding.left + chartWidth, baseY);
+  ctx.stroke();
+  
+  // Dibujar barras (sin efecto 3D, solo barras planas con overlay)
+  labels.forEach((label, index) => {
+    const value = values[index];
+    if (value <= 0) return;
+    
+    const color = colors[index % colors.length];
+    const barHeight = (value / maxValue) * chartHeight;
+    const x = padding.left + barSpacing * index + (barSpacing - barWidth) / 2;
+    const y = baseY - barHeight;
+    
+    // Dibujar barra principal (color sólido)
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, barWidth, barHeight);
+    
+    // Overlay blanco en la mitad izquierda (opacidad 0.3 según Figma)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.fillRect(x, y, barWidth / 2, barHeight);
+    
+    // Etiqueta de valor encima de la barra (opacidad 0.7 según Figma)
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.font = '400 16px Inter, Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    const labelY = Math.round((y - 8) * pixelRatio) / pixelRatio;
+    const labelX = Math.round((x + barWidth / 2) * pixelRatio) / pixelRatio;
+    ctx.fillText(value.toString(), labelX, labelY);
+    
+    // Etiqueta del eje X (nombre del estatus, opacidad 0.7 según Figma)
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.font = '400 12px Inter, Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    const labelXPos = Math.round((x + barWidth / 2) * pixelRatio) / pixelRatio;
+    const labelYPos = Math.round((baseY + 8) * pixelRatio) / pixelRatio;
+    ctx.fillText(label, labelXPos, labelYPos);
+  });
+  
+  return canvas.toDataURL('image/png', 1.0);
 }
 
 /**
@@ -352,6 +469,65 @@ export async function generateTiposCasosPDFReact(
     URL.revokeObjectURL(url);
   } catch (error) {
     console.error('Error al generar PDF:', error);
+    throw error;
+  }
+}
+
+/**
+ * Genera y descarga un PDF con gráfica donut de estatus de casos
+ */
+export async function generateEstatusCasosPDFReact(
+  data: EstatusGroupedData[],
+  fechaInicio?: string,
+  fechaFin?: string
+): Promise<void> {
+  try {
+    // Cargar el logo como base64 para preservar la transparencia
+    const logoBase64 = await imageToBase64('/logo clinica juridica.png');
+    
+    // Colores fijos para los estatus
+    const ESTATUS_COLORS: Record<string, string> = {
+      'En proceso': '#4A90E2',
+      'Archivado': '#7B68EE',
+      'Entregado': '#50C878',
+      'Asesoría': '#D2691E',
+    };
+    
+    // Preparar datos para el gráfico
+    const values = data.map(item => Number(item.cantidad_casos) || 0);
+    const barData = {
+      labels: data.map(item => item.nombre_estatus),
+      values: values,
+      colors: data.map(item => ESTATUS_COLORS[item.nombre_estatus] || '#9E9E9E'),
+    };
+    
+    // Generar imagen del gráfico de barras
+    const chartImage = generateBarChartImage(barData.labels, barData.values, barData.colors);
+    
+    // Generar el documento PDF
+    const doc = React.createElement(EstatusCasosPDF, { 
+      data, 
+      fechaInicio, 
+      fechaFin, 
+      chartImage, 
+      logoBase64 
+    });
+    
+    // Crear el blob del PDF
+    // @ts-ignore - React PDF types issue with React 19
+    const blob = await pdf(doc).toBlob();
+    
+    // Crear URL y descargar
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Estatus_de_Casos_${fechaInicio || 'all'}_${fechaFin || 'all'}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error al generar PDF de estatus:', error);
     throw error;
   }
 }

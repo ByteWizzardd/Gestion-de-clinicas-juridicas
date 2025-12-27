@@ -24,6 +24,11 @@ export interface CasosGroupedData {
   cantidad_casos: number;
 }
 
+export interface EstatusGroupedData {
+  nombre_estatus: string;
+  cantidad_casos: number;
+}
+
 /**
  * Obtiene casos agrupados por ámbito legal para generar reportes
  */
@@ -403,6 +408,56 @@ export async function getTopCases(
     return { success: true, data: chartData };
   } catch (error) {
     console.error('Error al obtener datos de top casos:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error desconocido',
+    };
+  }
+}
+
+/**
+ * Obtiene casos agrupados por estatus para generar reportes
+ */
+export async function getCasosGroupedByEstatus(
+  fechaInicio?: string,
+  fechaFin?: string
+): Promise<{ success: boolean; data?: EstatusGroupedData[]; error?: string }> {
+  try {
+    // Verificar autenticación
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      return {
+        success: false,
+        error: 'No autorizado',
+      };
+    }
+
+    // Verificar token
+    try {
+      await verifyToken(token);
+    } catch (error) {
+      return {
+        success: false,
+        error: 'Token inválido o expirado',
+      };
+    }
+
+    const dbData = await casosQueries.getGroupedByEstatus(
+      fechaInicio || undefined,
+      fechaFin || undefined
+    );
+
+    // Mapear a EstatusGroupedData
+    const data: EstatusGroupedData[] = dbData.map(item => ({
+      nombre_estatus: item.nombre_estatus,
+      cantidad_casos: Number(item.cantidad_casos),
+    }));
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error al obtener casos agrupados por estatus:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Error desconocido',

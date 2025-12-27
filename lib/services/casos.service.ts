@@ -119,17 +119,14 @@ export const casosService = {
                 num_ambito_legal: validatedData.num_ambito_legal,
                 fecha_solicitud: validatedData.fecha_solicitud || undefined,
                 fecha_inicio_caso: validatedData.fecha_inicio_caso,
+                id_usuario_registra: cedulaUsuario, // Pasar la cédula del usuario que registra
             };
             
+            // Crear el caso - el trigger automáticamente creará el cambio_estatus inicial
             const nuevoCaso = await casosQueries.create(casoData);
 
-            // Registrar el cambio de estatus en la tabla cambio_estatus
-            // El estatus inicial será el mismo que se asignó al caso
-            await cambiosEstatusQueries.create(
-                nuevoCaso.id_caso,
-                validatedData.estatus,
-                cedulaUsuario
-            );
+            // El cambio de estatus se crea automáticamente mediante el trigger
+            // con estatus 'Asesoría' y motivo 'Registro del caso'
 
             return nuevoCaso;
         } catch (error) {

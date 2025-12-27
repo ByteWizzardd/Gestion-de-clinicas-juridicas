@@ -19,17 +19,18 @@ import type { DistributionData, TopCasesData, KPIData, StatusDistributionData, C
 export default function ReportsPage() {
     const [viewMode, setViewMode] = useState<ViewMode>('charts');
     const [filters, setFilters] = useState<ReportFilters>({
-        dateRange: 'last-month',
+        dateRange: 'all',
         nucleo: 'all',
         term: 'all'
     });
     const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
     
-    // Estados para el modal de fechas del reporte "Tipos de Caso"
+    // Estados para el modal de fechas del reporte "Tipos de Caso" y "Estatus de Casos"
     const [showDateModal, setShowDateModal] = useState(false);
     const [fechaInicioReporte, setFechaInicioReporte] = useState('');
     const [fechaFinReporte, setFechaFinReporte] = useState('');
     const [dateError, setDateError] = useState<string | null>(null);
+    const [tipoReporteActual, setTipoReporteActual] = useState<string>('');
 
     // Data states
     const [distributionData, setDistributionData] = useState<DistributionData[]>([]);
@@ -128,15 +129,14 @@ export default function ReportsPage() {
     }, [filters]);
 
     const handleGenerateReport = async (reportType: string) => {
-        if (reportType === 'Tipos de Caso') {
+        if (reportType === 'Tipos de Caso' || reportType === 'Reporte de Estatus de Casos') {
+            // Guardar el tipo de reporte actual
+            setTipoReporteActual(reportType);
             // Mostrar modal para seleccionar rango de fechas
             setShowDateModal(true);
-            // Inicializar fechas con valores por defecto (último mes)
-            const today = new Date();
-            const lastMonth = new Date();
-            lastMonth.setMonth(today.getMonth() - 1);
-            setFechaInicioReporte(lastMonth.toISOString().split('T')[0]);
-            setFechaFinReporte(today.toISOString().split('T')[0]);
+            // Sin fechas por defecto - si no se seleccionan, el reporte es histórico
+            setFechaInicioReporte('');
+            setFechaFinReporte('');
             setDateError(null);
         } else {
             alert(`Generando ${reportType}...`);
@@ -144,14 +144,14 @@ export default function ReportsPage() {
     };
 
     const handleGenerateTiposCasosReport = async () => {
-        // Validar que ambas fechas estén seleccionadas
-        if (!fechaInicioReporte || !fechaFinReporte) {
-            setDateError('Por favor, seleccione ambas fechas');
+        // Si se proporciona una fecha, ambas deben estar presentes
+        if ((fechaInicioReporte && !fechaFinReporte) || (!fechaInicioReporte && fechaFinReporte)) {
+            setDateError('Si selecciona una fecha, debe seleccionar ambas');
             return;
         }
 
-        // Validar que fecha inicio sea menor o igual a fecha fin
-        if (new Date(fechaInicioReporte) > new Date(fechaFinReporte)) {
+        // Validar que fecha inicio sea menor o igual a fecha fin (solo si hay fechas)
+        if (fechaInicioReporte && fechaFinReporte && new Date(fechaInicioReporte) > new Date(fechaFinReporte)) {
             setDateError('La fecha de fin debe ser mayor o igual a la fecha de inicio');
             return;
         }
@@ -160,28 +160,60 @@ export default function ReportsPage() {
         setShowDateModal(false);
 
         try {
-            const { getCasosGroupedByAmbitoLegal } = await import('@/app/actions/reports');
-            const result = await getCasosGroupedByAmbitoLegal(
-                fechaInicioReporte,
-                fechaFinReporte
-            );
+            // Convertir fechas vacías a undefined para reporte histórico
+            const fechaInicio = fechaInicioReporte || undefined;
+            const fechaFin = fechaFinReporte || undefined;
 
-            if (result.success && result.data) {
-                // Verificar si hay datos para el reporte
-                if (result.data.length === 0 || result.data.every(item => item.cantidad_casos === 0)) {
-                    alert('No hay casos registrados para el período seleccionado. Por favor, seleccione otro rango de fechas.');
-                    return;
-                }
-
-                // Importar y usar la función de generación de PDF con React PDF
-                const { generateTiposCasosPDFReact } = await import('@/lib/utils/pdf-generator-react');
-                await generateTiposCasosPDFReact(
-                    result.data,
-                    fechaInicioReporte,
-                    fechaFinReporte
+            if (tipoReporteActual === 'Reporte de Estatus de Casos') {
+                // Generar reporte de estatus
+                const { getCasosGroupedByEstatus } = await import('@/app/actions/reports');
+                const result = await getCasosGroupedByEstatus(
+                    fechaInicio,
+                    fechaFin
                 );
+
+                if (result.success && result.data) {
+                    // Verificar si hay datos para el reporte
+                    if (result.data.length === 0 || result.data.every(item => item.cantidad_casos === 0)) {
+                        alert('No hay casos registrados. Por favor, registre casos antes de generar el reporte.');
+                        return;
+                    }
+
+                    // Importar y usar la función de generación de PDF
+                    const { generateEstatusCasosPDFReact } = await import('@/lib/utils/pdf-generator-react');
+                    await generateEstatusCasosPDFReact(
+                        result.data,
+                        fechaInicio,
+                        fechaFin
+                    );
+                } else {
+                    alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
+                }
             } else {
-                alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
+                // Generar reporte de tipos de caso (comportamiento original)
+                const { getCasosGroupedByAmbitoLegal } = await import('@/app/actions/reports');
+                const result = await getCasosGroupedByAmbitoLegal(
+                    fechaInicio,
+                    fechaFin
+                );
+
+                if (result.success && result.data) {
+                    // Verificar si hay datos para el reporte
+                    if (result.data.length === 0 || result.data.every(item => item.cantidad_casos === 0)) {
+                        alert('No hay casos registrados. Por favor, registre casos antes de generar el reporte.');
+                        return;
+                    }
+
+                    // Importar y usar la función de generación de PDF con React PDF
+                    const { generateTiposCasosPDFReact } = await import('@/lib/utils/pdf-generator-react');
+                    await generateTiposCasosPDFReact(
+                        result.data,
+                        fechaInicio,
+                        fechaFin
+                    );
+                } else {
+                    alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
+                }
             }
         } catch (error) {
             console.error('Error al generar reporte:', error);
@@ -342,7 +374,11 @@ export default function ReportsPage() {
                     </button>
                     
                     {/* Título */}
-                    <h2 className="text-xl font-normal text-foreground mb-4">Seleccionar Rango de Fechas</h2>
+                    <h2 className="text-xl font-normal text-foreground mb-4">
+                        {tipoReporteActual === 'Reporte de Estatus de Casos' 
+                            ? 'Rango de Fechas - Estatus de Casos'
+                            : 'Rango de Fechas - Tipos de Caso'}
+                    </h2>
 
                     {/* Grid de formulario */}
                     <div className="grid grid-cols-1 gap-4 mb-4">
@@ -350,7 +386,7 @@ export default function ReportsPage() {
                         <div>
                             <div className="flex flex-col gap-1">
                                 <label className="text-base font-normal text-foreground mb-1">
-                                    Fecha de Inicio <span className="text-danger">*</span>
+                                    Fecha de Inicio
                                 </label>
                                 <div className="relative">
                                     <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600 pointer-events-none z-10" />
@@ -360,7 +396,6 @@ export default function ReportsPage() {
                                             setFechaInicioReporte(value);
                                             setDateError(null);
                                         }}
-                                        required
                                     />
                                 </div>
                             </div>
@@ -370,7 +405,7 @@ export default function ReportsPage() {
                         <div>
                             <div className="flex flex-col gap-1">
                                 <label className="text-base font-normal text-foreground mb-1">
-                                    Fecha de Fin <span className="text-danger">*</span>
+                                    Fecha de Fin
                                 </label>
                                 <div className="relative">
                                     <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600 pointer-events-none z-10" />
@@ -380,12 +415,16 @@ export default function ReportsPage() {
                                             setFechaFinReporte(value);
                                             setDateError(null);
                                         }}
-                                        required
                                     />
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    {/* Mensaje informativo sobre histórico */}
+                    <p className="text-sm text-gray-500 mb-4">
+                        Si no selecciona fechas, se generará un reporte histórico con todos los casos.
+                    </p>
 
                     {/* Mensaje de error */}
                     {dateError && (
@@ -396,12 +435,6 @@ export default function ReportsPage() {
 
                     {/* Footer con botón */}
                     <div className="flex flex-col border-t border-gray-200 pt-4">
-                        {/* Nota sobre campos obligatorios */}
-                        <div className="flex items-center gap-1 mb-3">
-                            <span className="text-danger font-medium text-sm">*</span>
-                            <span className="text-sm text-gray-600">Campo obligatorio</span>
-                        </div>
-                        
                         <div className="flex justify-end gap-3">
                             <Button
                                 onClick={() => {

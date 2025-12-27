@@ -43,3 +43,61 @@ CREATE TRIGGER trigger_assign_nombre_usuario
     WHEN (NEW.nombre_usuario IS NULL OR NEW.nombre_usuario = '')
     EXECUTE FUNCTION assign_nombre_usuario_from_email();
 
+-- Función trigger para crear automáticamente cambio_estatus al registrar un caso
+CREATE OR REPLACE FUNCTION trigger_crear_cambio_estatus_inicial()
+RETURNS TRIGGER AS $$
+DECLARE
+    num_cambio_actual INTEGER;
+    cedula_usuario VARCHAR(20);
+BEGIN
+    -- Obtener la cédula del usuario desde la variable de sesión
+    -- Esta variable se establece antes de insertar el caso
+    BEGIN
+        cedula_usuario := current_setting('app.usuario_registra', true);
+    EXCEPTION
+        WHEN OTHERS THEN
+            -- Si no se puede leer la variable, lanzar error
+            RAISE EXCEPTION 'No se puede crear cambio de estatus: no se proporcionó la cédula del usuario que registra el caso. Error: %', SQLERRM;
+    END;
+    
+    -- Si no hay variable de sesión, usar NULL (permitirá que falle si es necesario)
+    IF cedula_usuario IS NULL OR cedula_usuario = '' THEN
+        RAISE EXCEPTION 'No se puede crear cambio de estatus: no se proporcionó la cédula del usuario que registra el caso (variable vacía)';
+    END IF;
+    
+    -- Log para debugging (solo en desarrollo)
+    -- RAISE NOTICE 'Trigger: cédula_usuario = %', cedula_usuario;
+    
+    -- Calcular el num_cambio (será 1 para el primer cambio)
+    SELECT COALESCE(MAX(num_cambio), 0) + 1 INTO num_cambio_actual
+    FROM cambio_estatus
+    WHERE id_caso = NEW.id_caso;
+    
+    -- Insertar el cambio de estatus inicial con estatus 'Asesoría'
+    INSERT INTO cambio_estatus (
+        num_cambio,
+        id_caso,
+        nuevo_estatus,
+        id_usuario_cambia,
+        motivo,
+        fecha
+    ) VALUES (
+        num_cambio_actual,
+        NEW.id_caso,
+        'Asesoría',
+        cedula_usuario,
+        'Registro del caso',
+        COALESCE(NEW.fecha_solicitud, CURRENT_DATE)
+    );
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger para crear automáticamente cambio_estatus al insertar un caso
+DROP TRIGGER IF EXISTS trigger_crear_cambio_estatus_inicial ON casos;
+CREATE TRIGGER trigger_crear_cambio_estatus_inicial
+    AFTER INSERT ON casos
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_crear_cambio_estatus_inicial();
+
