@@ -1,6 +1,6 @@
 'use client';
 
-import { Phone, Mail, Copy, Check } from 'lucide-react';
+import { Copy, Check, Phone } from 'lucide-react';
 import { useState } from 'react';
 
 interface ContactInfoTabProps {
@@ -34,22 +34,22 @@ export default function ContactInfoTab({ solicitante }: ContactInfoTabProps) {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-        <h3 className="text-lg sm:text-xl font-semibold mb-4">Información de Contacto</h3>
+        <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+          <Phone className="w-5 h-5 text-primary" />
+          Información de Contacto
+        </h3>
         <div className="space-y-4">
           {/* Teléfono Local */}
           {solicitante.telefono_local && (
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <Phone className="w-5 h-5 text-primary" />
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Teléfono Local</label>
-                  <a 
-                    href={`tel:${solicitante.telefono_local}`}
-                    className="text-base text-primary hover:underline block mt-1"
-                  >
-                    {solicitante.telefono_local}
-                  </a>
-                </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Teléfono Local</label>
+                <a 
+                  href={`tel:${solicitante.telefono_local}`}
+                  className="text-base text-primary hover:underline block mt-1"
+                >
+                  {solicitante.telefono_local}
+                </a>
               </div>
               <button
                 onClick={() => copyToClipboard(solicitante.telefono_local!, 'local')}
@@ -68,17 +68,14 @@ export default function ContactInfoTab({ solicitante }: ContactInfoTabProps) {
           {/* Teléfono Celular */}
           {solicitante.telefono_celular && (
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <Phone className="w-5 h-5 text-primary flex-shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <label className="text-sm font-medium text-gray-500">Teléfono Celular</label>
-                  <a 
-                    href={`tel:${solicitante.telefono_celular}`}
-                    className="text-sm sm:text-base text-primary hover:underline block mt-1 break-words"
-                  >
-                    {solicitante.telefono_celular}
-                  </a>
-                </div>
+              <div className="min-w-0 flex-1">
+                <label className="text-sm font-medium text-gray-500">Teléfono Celular</label>
+                <a 
+                  href={`tel:${solicitante.telefono_celular}`}
+                  className="text-sm sm:text-base text-primary hover:underline block mt-1 break-words"
+                >
+                  {solicitante.telefono_celular}
+                </a>
               </div>
               <button
                 onClick={() => copyToClipboard(solicitante.telefono_celular!, 'celular')}
@@ -97,17 +94,14 @@ export default function ContactInfoTab({ solicitante }: ContactInfoTabProps) {
           {/* Correo Electrónico */}
           {solicitante.correo_electronico && (
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <Mail className="w-5 h-5 text-primary flex-shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <label className="text-sm font-medium text-gray-500">Correo Electrónico</label>
-                  <a 
-                    href={`mailto:${solicitante.correo_electronico}`}
-                    className="text-sm sm:text-base text-primary hover:underline block mt-1 break-words"
-                  >
-                    {solicitante.correo_electronico}
-                  </a>
-                </div>
+              <div className="min-w-0 flex-1">
+                <label className="text-sm font-medium text-gray-500">Correo Electrónico</label>
+                <a 
+                  href={`mailto:${solicitante.correo_electronico}`}
+                  className="text-sm sm:text-base text-primary hover:underline block mt-1 break-words"
+                >
+                  {solicitante.correo_electronico}
+                </a>
               </div>
               <button
                 onClick={() => copyToClipboard(solicitante.correo_electronico, 'email')}
