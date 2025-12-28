@@ -5,6 +5,7 @@ import { casosQueries } from '@/lib/db/queries/casos.queries';
 import { solicitantesQueries } from '@/lib/db/queries/solicitantes.queries';
 import { estudiantesQueries } from '@/lib/db/queries/estudiantes.queries';
 import { profesoresQueries } from '@/lib/db/queries/profesores.queries';
+import { beneficiariosQueries } from '@/lib/db/queries/beneficiarios.queries';
 import { verifyToken } from '@/lib/utils/security';
 import { pool } from '@/lib/db/pool';
 import {
@@ -30,6 +31,17 @@ export interface CasosGroupedData {
 export interface EstatusGroupedData {
   nombre_estatus: string;
   cantidad_casos: number;
+}
+
+export interface BeneficiariosGroupedData {
+  tipo_beneficiario: string;
+  id_materia: number;
+  num_categoria: number;
+  num_subcategoria: number;
+  nombre_materia: string;
+  nombre_categoria: string;
+  nombre_subcategoria: string;
+  cantidad_beneficiarios: number;
 }
 
 /**
@@ -477,7 +489,15 @@ export async function getInformeResumenData(
 ): Promise<{
   success: boolean;
   data?: {
-    casosPorMateria: Array<{ nombre_materia: string; cantidad_casos: number }>;
+    casosPorMateria: Array<{ 
+      id_materia: number;
+      num_categoria: number;
+      num_subcategoria: number;
+      nombre_materia: string;
+      nombre_categoria: string;
+      nombre_subcategoria: string;
+      cantidad_casos: number;
+    }>;
     solicitantesPorGenero: Array<{ genero: string; cantidad_solicitantes: number }>;
     solicitantesPorParroquia: Array<{ nombre_parroquia: string; cantidad_solicitantes: number }>;
     casosPorAmbitoLegal: Array<{ nombre_ambito_legal: string; cantidad_casos: number }>;
@@ -494,6 +514,8 @@ export async function getInformeResumenData(
       cantidad_profesores: number 
     }>;
     tiposDeCaso: CasosGroupedData[];
+    beneficiariosPorTipo: BeneficiariosGroupedData[];
+    beneficiariosPorParentesco: Array<{ parentesco: string; cantidad_beneficiarios: number }>;
   };
   error?: string;
 }> {
@@ -527,14 +549,18 @@ export async function getInformeResumenData(
       estudiantesPorMateria,
       profesoresPorMateria,
       tiposDeCaso,
+      beneficiariosPorTipo,
+      beneficiariosPorParentesco,
     ] = await Promise.all([
-      casosQueries.getByMateria(fechaInicio, fechaFin),
+      casosQueries.getByMateriaGrouped(fechaInicio, fechaFin),
       solicitantesQueries.getByGenero(fechaInicio, fechaFin),
       solicitantesQueries.getByParroquia(fechaInicio, fechaFin),
       casosQueries.getByAmbitoLegalTotal(fechaInicio, fechaFin),
       estudiantesQueries.getByMateria(fechaInicio, fechaFin),
       profesoresQueries.getByMateria(fechaInicio, fechaFin),
       casosQueries.getGroupedByAmbitoLegal(fechaInicio, fechaFin),
+      beneficiariosQueries.getByTipoGrouped(fechaInicio, fechaFin),
+      beneficiariosQueries.getByParentesco(fechaInicio, fechaFin),
     ]);
 
     return {
@@ -547,6 +573,8 @@ export async function getInformeResumenData(
         estudiantesPorMateria,
         profesoresPorMateria,
         tiposDeCaso,
+        beneficiariosPorTipo,
+        beneficiariosPorParentesco,
       },
     };
   } catch (error) {

@@ -443,5 +443,38 @@ export const casosQueries = {
     ]);
     return result.rows;
   },
+
+  /**
+   * Obtiene casos agrupados por materia, categoría y subcategoría
+   * (similar a BeneficiariosGroupedData pero para casos)
+   * @param fechaInicio - Fecha de inicio del rango (opcional)
+   * @param fechaFin - Fecha de fin del rango (opcional)
+   */
+  getByMateriaGrouped: async (
+    fechaInicio?: string | Date,
+    fechaFin?: string | Date
+  ): Promise<Array<{ 
+    id_materia: number;
+    num_categoria: number;
+    num_subcategoria: number;
+    nombre_materia: string;
+    nombre_categoria: string;
+    nombre_subcategoria: string;
+    cantidad_casos: number;
+  }>> => {
+    const query = loadSQL('casos/get-by-materia-grouped.sql');
+    const fechaInicioStr = fechaInicio
+      ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
+      : null;
+    const fechaFinStr = fechaFin
+      ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
+      : null;
+
+    const result: QueryResult = await pool.query(query, [
+      fechaInicioStr,
+      fechaFinStr,
+    ]);
+    return result.rows;
+  },
 };
 

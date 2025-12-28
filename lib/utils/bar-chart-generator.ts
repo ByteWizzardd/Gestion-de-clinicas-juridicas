@@ -21,8 +21,8 @@ export function generateBarChartImage(
   values: number[],
   colors: string[]
 ): string {
-  // Usar alta resolución para mejor calidad del texto
-  const pixelRatio = 4;
+  // Usar resolución 2x para consistencia con el generador de pie charts
+  const pixelRatio = 2;
   const baseWidth = 1353;
   const baseHeight = 581;
   
@@ -49,7 +49,8 @@ export function generateBarChartImage(
   ctx.imageSmoothingQuality = 'high';
   
   // Configuración del gráfico según Figma
-  const padding = { top: 30, right: 20, bottom: 50, left: 20 };
+  // Aumentar padding inferior para múltiples líneas de texto
+  const padding = { top: 30, right: 20, bottom: 70, left: 20 };
   const chartWidth = baseWidth - padding.left - padding.right;
   const chartHeight = baseHeight - padding.top - padding.bottom;
   const barSpacing = chartWidth / labels.length;
@@ -57,6 +58,26 @@ export function generateBarChartImage(
   const maxValue = Math.max(...values, 1);
   
   const baseY = padding.top + chartHeight;
+  
+  // Función para dividir texto en múltiples líneas
+  const wrapText = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] => {
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let currentLine = words[0];
+
+    for (let i = 1; i < words.length; i++) {
+      const word = words[i];
+      const width = ctx.measureText(currentLine + ' ' + word).width;
+      if (width < maxWidth) {
+        currentLine += ' ' + word;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
+      }
+    }
+    lines.push(currentLine);
+    return lines;
+  };
   
   // Solo dibujar línea base (sin líneas de grid horizontales)
   ctx.strokeStyle = 'rgba(0, 0, 26, 0.3)';
@@ -95,14 +116,24 @@ export function generateBarChartImage(
     const valueText = Math.round(Number(value)).toString();
     ctx.fillText(valueText, labelX, labelY);
     
-    // Etiqueta del eje X (nombre del estatus, opacidad 0.7 según Figma)
+    // Etiqueta del eje X (con saltos de línea para evitar que se crucen)
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     ctx.font = '400 14px Inter, Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     const labelXPos = Math.round((x + barWidth / 2) * pixelRatio) / pixelRatio;
     const labelYPos = Math.round((baseY + 8) * pixelRatio) / pixelRatio;
-    ctx.fillText(label, labelXPos, labelYPos);
+    
+    // Dividir el texto en múltiples líneas si es necesario
+    const maxLabelWidth = barWidth * 0.9; // 90% del ancho de la barra
+    const wrappedLines = wrapText(ctx, label, maxLabelWidth);
+    const lineHeight = 16; // Altura de cada línea
+    
+    // Dibujar cada línea del texto
+    wrappedLines.forEach((line, lineIndex) => {
+      const y = labelYPos + (lineIndex * lineHeight);
+      ctx.fillText(line, labelXPos, y);
+    });
   });
   
   return canvas.toDataURL('image/png', 1.0);

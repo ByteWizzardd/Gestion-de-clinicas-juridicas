@@ -24,6 +24,9 @@ const CHART_COLORS = [
   '#6186cc', // Color adicional
 ];
 
+// Helper para ceder el control al hilo principal con un respiro real para que el Spinner no se congele
+const yieldToUI = (ms = 30) => new Promise(resolve => setTimeout(resolve, ms));
+
 /**
  * Agrupa los datos por materia y subcategoría
  * Solo incluye categoría y subcategoría si tienen valores
@@ -61,6 +64,89 @@ function groupDataByMateriaSubcategoria(
   return grouped;
 }
 
+/**
+ * Agrupa beneficiarios por materia y subcategoría (igual que tipos de caso)
+ */
+function groupBeneficiariosByMateriaSubcategoria(
+  data: Array<{
+    tipo_beneficiario: string;
+    id_materia: number;
+    num_categoria: number;
+    num_subcategoria: number;
+    nombre_materia: string;
+    nombre_categoria: string;
+    nombre_subcategoria: string;
+    cantidad_beneficiarios: number;
+  }>
+): Record<string, typeof data> {
+  const grouped: Record<string, typeof data> = {};
+
+  for (const item of data) {
+    const categoria = item.nombre_categoria?.trim() || '';
+    const subcategoria = item.nombre_subcategoria?.trim() || '';
+    
+    const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría';
+    const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría';
+    
+    let key = item.nombre_materia;
+    if (hasCategoria && hasSubcategoria) {
+      key += ` - ${categoria} ${subcategoria}`;
+    } else if (hasCategoria) {
+      key += ` - ${categoria}`;
+    } else if (hasSubcategoria) {
+      key += ` - ${subcategoria}`;
+    }
+
+    if (!grouped[key]) {
+      grouped[key] = [];
+    }
+    grouped[key].push(item);
+  }
+
+  return grouped;
+}
+
+/**
+ * Agrupa casos por materia y subcategoría (igual que beneficiarios)
+ */
+function groupCasosByMateriaSubcategoria(
+  data: Array<{
+    id_materia: number;
+    num_categoria: number;
+    num_subcategoria: number;
+    nombre_materia: string;
+    nombre_categoria: string;
+    nombre_subcategoria: string;
+    cantidad_casos: number;
+  }>
+): Record<string, typeof data> {
+  const grouped: Record<string, typeof data> = {};
+
+  for (const item of data) {
+    const categoria = item.nombre_categoria?.trim() || '';
+    const subcategoria = item.nombre_subcategoria?.trim() || '';
+    
+    const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría';
+    const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría';
+    
+    let key = item.nombre_materia;
+    if (hasCategoria && hasSubcategoria) {
+      key += ` - ${categoria} ${subcategoria}`;
+    } else if (hasCategoria) {
+      key += ` - ${categoria}`;
+    } else if (hasSubcategoria) {
+      key += ` - ${subcategoria}`;
+    }
+
+    if (!grouped[key]) {
+      grouped[key] = [];
+    }
+    grouped[key].push(item);
+  }
+
+  return grouped;
+}
+
 // Colores fijos para los estatus
 const ESTATUS_COLORS: Record<string, string> = {
   'En proceso': '#4A90E2', // Azul
@@ -79,8 +165,8 @@ function generatePieChartImage(
   colors: string[],
   total: number
 ): string {
-  // Usar alta resolución para mejor calidad del texto
-  const pixelRatio = 4; // 4x para máxima calidad en PDF, especialmente para texto
+  // Resolución optimizada (1.5x es el punto dulce entre calidad y fluidez de la UI)
+  const pixelRatio = 2; 
   // Aumentar el tamaño del canvas para que quepan todos los callouts
   const baseWidth = 750;
   const baseHeight = 500;
@@ -333,6 +419,9 @@ export async function generateTiposCasosPDFReact(
     // Generar imágenes de gráficas para cada grupo
     const chartImages: Record<string, string> = {};
     for (const [key, groupData] of Object.entries(groupedData)) {
+      // Ceder control a la UI
+      await yieldToUI();
+
       // Asegurar que los valores sean números
       const values = groupData.map(item => Number(item.cantidad_casos) || 0);
       const pieData = {
@@ -345,6 +434,8 @@ export async function generateTiposCasosPDFReact(
       chartImages[key] = generatePieChartImage(pieData.labels, pieData.values, pieData.colors, total);
     }
     
+    await new Promise(resolve => setTimeout(resolve, 0));
+
     // Generar el documento PDF
     const doc = React.createElement(TiposCasosPDF, { data, fechaInicio, fechaFin, chartImages, logoBase64 });
     
@@ -392,6 +483,8 @@ export async function generateEstatusCasosPDFReact(
     // Generar imagen del pie chart 3D (mismo estilo que tipos de casos)
     const chartImage = generatePieChartImage(pieData.labels, pieData.values, pieData.colors, total);
     
+    await yieldToUI();
+
     // Generar el documento PDF
     const doc = React.createElement(EstatusCasosPDF, { 
       data, 
@@ -447,6 +540,9 @@ export async function generateInformeResumenPDFReact(
       estudiantesPorMateria?: Record<string, string>;
       profesoresPorMateria?: Record<string, string>;
       tiposDeCaso?: Record<string, string>;
+      beneficiariosDirectos?: string;
+      beneficiariosIndirectos?: string;
+      beneficiariosPorParentesco?: string;
     } = {};
 
     // 1. PRIMERO: Tipos de Caso (pie charts agrupados, igual que el reporte de tipos de caso)
@@ -457,6 +553,9 @@ export async function generateInformeResumenPDFReact(
       // Generar imágenes de gráficas para cada grupo (igual que generateTiposCasosPDFReact)
       chartImages.tiposDeCaso = {};
       for (const [key, groupData] of Object.entries(groupedData)) {
+        // Ceder control a la UI
+        await yieldToUI();
+
         const values = groupData.map(item => Number(item.cantidad_casos) || 0);
         const pieData = {
           labels: groupData.map(item => item.nombre_ambito_legal),
@@ -468,16 +567,31 @@ export async function generateInformeResumenPDFReact(
       }
     }
 
-    // 2. Casos por Materia (barras)
+    // 2. Casos por Materia (barras agrupadas por materia, categoría y subcategoría)
     if (data.casosPorMateria && data.casosPorMateria.length > 0) {
-      const labels = data.casosPorMateria.map(item => item.nombre_materia);
-      const values = data.casosPorMateria.map(item => item.cantidad_casos);
+      await yieldToUI();
+
+      // Agrupar por materia, categoría y subcategoría (igual que beneficiarios)
+      const groupedCasos = groupCasosByMateriaSubcategoria(data.casosPorMateria);
+      const labels: string[] = [];
+      const values: number[] = [];
+      
+      for (const [key, groupData] of Object.entries(groupedCasos)) {
+        // El key ya tiene el formato "Materia - Categoría Subcategoría"
+        labels.push(key);
+        // Sumar todas las cantidades del grupo
+        const total = groupData.reduce((sum, item) => sum + Number(item.cantidad_casos || 0), 0);
+        values.push(total);
+      }
+      
       const colors = BAR_COLORS.slice(0, labels.length);
       chartImages.casosPorMateria = generateBarChartImage(labels, values, colors);
     }
 
     // 3. Solicitantes por Género (barras)
     if (data.solicitantesPorGenero && data.solicitantesPorGenero.length > 0) {
+      await yieldToUI();
+
       const labels = data.solicitantesPorGenero.map(item => item.genero === 'M' ? 'Masculino' : 'Femenino');
       const values = data.solicitantesPorGenero.map(item => item.cantidad_solicitantes);
       const colors = BAR_COLORS.slice(0, labels.length);
@@ -486,6 +600,8 @@ export async function generateInformeResumenPDFReact(
 
     // 4. Solicitantes por Parroquia (barras)
     if (data.solicitantesPorParroquia && data.solicitantesPorParroquia.length > 0) {
+      await yieldToUI();
+
       const labels = data.solicitantesPorParroquia.map(item => item.nombre_parroquia);
       const values = data.solicitantesPorParroquia.map(item => item.cantidad_solicitantes);
       const colors = BAR_COLORS.slice(0, labels.length);
@@ -494,6 +610,8 @@ export async function generateInformeResumenPDFReact(
 
     // 5. Estudiantes por Materia (un solo diagrama de barras con todas las materias)
     if (data.estudiantesPorMateria && data.estudiantesPorMateria.length > 0) {
+      await yieldToUI();
+
       // Agrupar solo por materia (sumando todos los estudiantes de cada materia)
       const groupedByMateria: Record<string, number> = {};
       for (const item of data.estudiantesPorMateria) {
@@ -515,6 +633,8 @@ export async function generateInformeResumenPDFReact(
 
     // 6. Profesores por Materia (un solo diagrama de barras con todas las materias)
     if (data.profesoresPorMateria && data.profesoresPorMateria.length > 0) {
+      await yieldToUI();
+
       // Agrupar solo por materia (sumando todos los profesores de cada materia)
       const groupedByMateria: Record<string, number> = {};
       for (const item of data.profesoresPorMateria) {
@@ -534,6 +654,66 @@ export async function generateInformeResumenPDFReact(
       };
     }
 
+    // 7. Beneficiarios Directos (un solo diagrama de barras con todas las combinaciones materia-categoría-subcategoría)
+    if (data.beneficiariosPorTipo && data.beneficiariosPorTipo.length > 0) {
+      await yieldToUI();
+
+      const directos = data.beneficiariosPorTipo.filter(item => item.tipo_beneficiario === 'Directo');
+      if (directos.length > 0) {
+        // Agrupar por materia, categoría y subcategoría y sumar cantidades
+        const groupedDirectos = groupBeneficiariosByMateriaSubcategoria(directos);
+        const labels: string[] = [];
+        const values: number[] = [];
+        
+        for (const [key, groupData] of Object.entries(groupedDirectos)) {
+          // El key ya tiene el formato "Materia - Categoría Subcategoría"
+          labels.push(key);
+          // Sumar todas las cantidades del grupo
+          const total = groupData.reduce((sum, item) => sum + Number(item.cantidad_beneficiarios || 0), 0);
+          values.push(total);
+        }
+        
+        const colors = BAR_COLORS.slice(0, labels.length);
+        chartImages.beneficiariosDirectos = generateBarChartImage(labels, values, colors);
+      }
+    }
+
+    // 8. Beneficiarios Indirectos (un solo diagrama de barras con todas las combinaciones materia-categoría-subcategoría)
+    if (data.beneficiariosPorTipo && data.beneficiariosPorTipo.length > 0) {
+      await yieldToUI();
+
+      const indirectos = data.beneficiariosPorTipo.filter(item => item.tipo_beneficiario === 'Indirecto');
+      if (indirectos.length > 0) {
+        // Agrupar por materia, categoría y subcategoría y sumar cantidades
+        const groupedIndirectos = groupBeneficiariosByMateriaSubcategoria(indirectos);
+        const labels: string[] = [];
+        const values: number[] = [];
+        
+        for (const [key, groupData] of Object.entries(groupedIndirectos)) {
+          // El key ya tiene el formato "Materia - Categoría Subcategoría"
+          labels.push(key);
+          // Sumar todas las cantidades del grupo
+          const total = groupData.reduce((sum, item) => sum + Number(item.cantidad_beneficiarios || 0), 0);
+          values.push(total);
+        }
+        
+        const colors = BAR_COLORS.slice(0, labels.length);
+        chartImages.beneficiariosIndirectos = generateBarChartImage(labels, values, colors);
+      }
+    }
+
+    // 9. Beneficiarios por Parentesco
+    if (data.beneficiariosPorParentesco && data.beneficiariosPorParentesco.length > 0) {
+      await yieldToUI();
+
+      const labels = data.beneficiariosPorParentesco.map(item => item.parentesco);
+      const values = data.beneficiariosPorParentesco.map(item => Number(item.cantidad_beneficiarios));
+      const colors = BAR_COLORS.slice(0, labels.length);
+      chartImages.beneficiariosPorParentesco = generateBarChartImage(labels, values, colors);
+    }
+
+    await yieldToUI(100);
+
     // Generar el documento PDF
     const doc = React.createElement(InformeResumenPDF, { 
       data, 
@@ -543,6 +723,9 @@ export async function generateInformeResumenPDFReact(
       logoBase64 
     });
     
+    // Un respiro final antes del paso más pesado (maquetación del PDF)
+    await yieldToUI(100);
+
     // Crear el blob del PDF
     // @ts-ignore - React PDF types issue with React 19
     const blob = await pdf(doc).toBlob();

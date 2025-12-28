@@ -14,6 +14,7 @@ import KPIDashboard from '@/components/reports/KPIDashboard';
 import Modal from '@/components/ui/feedback/Modal';
 import DatePicker from '@/components/forms/DatePicker';
 import Button from '@/components/ui/Button';
+import Spinner from '@/components/ui/feedback/Spinner';
 import type { DistributionData, TopCasesData, KPIData, StatusDistributionData, CaseLoadTrendData } from '@/lib/utils/reports-data-mapper';
 
 export default function ReportsPage() {
@@ -31,6 +32,7 @@ export default function ReportsPage() {
     const [fechaFinReporte, setFechaFinReporte] = useState('');
     const [dateError, setDateError] = useState<string | null>(null);
     const [tipoReporteActual, setTipoReporteActual] = useState<string>('');
+    const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
     // Data states
     const [distributionData, setDistributionData] = useState<DistributionData[]>([]);
@@ -158,93 +160,102 @@ export default function ReportsPage() {
 
         setDateError(null);
         setShowDateModal(false);
+        setIsGeneratingReport(true);
 
-        try {
-            // Convertir fechas vacías a undefined para reporte histórico
-            const fechaInicio = fechaInicioReporte || undefined;
-            const fechaFin = fechaFinReporte || undefined;
+        // Aumentar el tiempo de espera inicial para que el Spinner se asiente
+        setTimeout(async () => {
+            try {
+                // Convertir fechas vacías a undefined para reporte histórico
+                const fechaInicio = fechaInicioReporte || undefined;
+                const fechaFin = fechaFinReporte || undefined;
 
-            if (tipoReporteActual === 'Informe Resumen de Casos') {
-                // Generar informe resumen
-                const { getInformeResumenData } = await import('@/app/actions/reports');
-                const result = await getInformeResumenData(fechaInicio, fechaFin);
+                if (tipoReporteActual === 'Informe Resumen de Casos') {
+                    // Generar informe resumen
+                    const { getInformeResumenData } = await import('@/app/actions/reports');
+                    const result = await getInformeResumenData(fechaInicio, fechaFin);
 
-                if (result.success && result.data) {
-                    // Verificar si hay datos para el reporte
-                    const hasData = result.data.casosPorMateria.length > 0 
-                        || result.data.solicitantesPorGenero.length > 0
-                        || result.data.casosPorAmbitoLegal.length > 0;
+                    if (result.success && result.data) {
+                        // Verificar si hay datos para el reporte
+                        const hasData = result.data.casosPorMateria.length > 0 
+                            || result.data.solicitantesPorGenero.length > 0
+                            || result.data.casosPorAmbitoLegal.length > 0;
 
-                    if (!hasData) {
-                        alert('No hay datos registrados para el período seleccionado. Por favor, seleccione otro rango de fechas.');
-                        return;
+                        if (!hasData) {
+                            alert('No hay datos registrados para el período seleccionado. Por favor, seleccione otro rango de fechas.');
+                            setIsGeneratingReport(false);
+                            return;
+                        }
+
+                        // Importar y usar la función de generación de PDF
+                        const { generateInformeResumenPDFReact } = await import('@/lib/utils/pdf-generator-react');
+                        await generateInformeResumenPDFReact(
+                            result.data,
+                            fechaInicio,
+                            fechaFin
+                        );
+                    } else {
+                        alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
                     }
-
-                    // Importar y usar la función de generación de PDF
-                    const { generateInformeResumenPDFReact } = await import('@/lib/utils/pdf-generator-react');
-                    await generateInformeResumenPDFReact(
-                        result.data,
+                } else if (tipoReporteActual === 'Reporte de Estatus de Casos') {
+                    // Generar reporte de estatus
+                    const { getCasosGroupedByEstatus } = await import('@/app/actions/reports');
+                    const result = await getCasosGroupedByEstatus(
                         fechaInicio,
                         fechaFin
                     );
-                } else {
-                    alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
-                }
-            } else if (tipoReporteActual === 'Reporte de Estatus de Casos') {
-                // Generar reporte de estatus
-                const { getCasosGroupedByEstatus } = await import('@/app/actions/reports');
-                const result = await getCasosGroupedByEstatus(
-                    fechaInicio,
-                    fechaFin
-                );
 
-                if (result.success && result.data) {
-                    // Verificar si hay datos para el reporte
-                    if (result.data.length === 0 || result.data.every(item => item.cantidad_casos === 0)) {
-                        alert('No hay casos registrados. Por favor, registre casos antes de generar el reporte.');
-                        return;
+                    if (result.success && result.data) {
+                        // Verificar si hay datos para el reporte
+                        if (result.data.length === 0 || result.data.every(item => item.cantidad_casos === 0)) {
+                            alert('No hay casos registrados. Por favor, registre casos antes de generar el reporte.');
+                            setIsGeneratingReport(false);
+                            return;
+                        }
+
+                        // Importar y usar la función de generación de PDF
+                        const { generateEstatusCasosPDFReact } = await import('@/lib/utils/pdf-generator-react');
+                        await generateEstatusCasosPDFReact(
+                            result.data,
+                            fechaInicio,
+                            fechaFin
+                        );
+                    } else {
+                        alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
                     }
-
-                    // Importar y usar la función de generación de PDF
-                    const { generateEstatusCasosPDFReact } = await import('@/lib/utils/pdf-generator-react');
-                    await generateEstatusCasosPDFReact(
-                        result.data,
+                } else {
+                    // Generar reporte de tipos de caso (comportamiento original)
+                    const { getCasosGroupedByAmbitoLegal } = await import('@/app/actions/reports');
+                    const result = await getCasosGroupedByAmbitoLegal(
                         fechaInicio,
                         fechaFin
                     );
-                } else {
-                    alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
-                }
-            } else {
-                // Generar reporte de tipos de caso (comportamiento original)
-                const { getCasosGroupedByAmbitoLegal } = await import('@/app/actions/reports');
-                const result = await getCasosGroupedByAmbitoLegal(
-                    fechaInicio,
-                    fechaFin
-                );
 
-                if (result.success && result.data) {
-                    // Verificar si hay datos para el reporte
-                    if (result.data.length === 0 || result.data.every(item => item.cantidad_casos === 0)) {
-                        alert('No hay casos registrados. Por favor, registre casos antes de generar el reporte.');
-                        return;
+                    if (result.success && result.data) {
+                        // Verificar si hay datos para el reporte
+                        if (result.data.length === 0 || result.data.every(item => item.cantidad_casos === 0)) {
+                            alert('No hay casos registrados. Por favor, registre casos antes de generar el reporte.');
+                            setIsGeneratingReport(false);
+                            return;
+                        }
+
+                        // Importar y usar la función de generación de PDF con React PDF
+                        const { generateTiposCasosPDFReact } = await import('@/lib/utils/pdf-generator-react');
+                        await generateTiposCasosPDFReact(
+                            result.data,
+                            fechaInicio,
+                            fechaFin
+                        );
+                    } else {
+                        alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
                     }
-
-                    // Importar y usar la función de generación de PDF con React PDF
-                    const { generateTiposCasosPDFReact } = await import('@/lib/utils/pdf-generator-react');
-                    await generateTiposCasosPDFReact(
-                        result.data,
-                        fechaInicio,
-                        fechaFin
-                    );
-                } else {
-                    alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
                 }
-            }
             } catch (error) {
                 console.error('Error al generar reporte:', error);
                 alert('Error al generar el reporte. Por favor, intente nuevamente.');
-        }
+            } finally {
+                setIsGeneratingReport(false);
+            }
+        }, 100);
     };
 
     const getDateFromRange = (range: string): string => {
@@ -483,6 +494,24 @@ export default function ReportsPage() {
                     </div>
                 </div>
             </Modal>
+
+            {/* Pantalla de carga para generación de reporte */}
+            {isGeneratingReport && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-sm transition-all duration-300">
+                    <motion.div 
+                        className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 border border-gray-100"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <Spinner />
+                        <div className="flex flex-col items-center text-center">
+                            <h3 className="text-xl font-semibold text-gray-800">Generando Reporte</h3>
+                            <p className="text-gray-500">Por favor, espera un momento...</p>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
         </div>
     );
 }

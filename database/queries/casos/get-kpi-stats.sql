@@ -3,12 +3,19 @@
 WITH casos_filtrados AS (
     SELECT DISTINCT c.id_caso
     FROM casos c
-    LEFT JOIN se_le_asigna sla ON c.id_caso = sla.id_caso
     WHERE 
         ($1::DATE IS NULL OR c.fecha_solicitud >= $1)
         AND ($2::DATE IS NULL OR c.fecha_solicitud <= $2)
         AND ($3::INTEGER IS NULL OR c.id_nucleo = $3)
-        AND ($4::VARCHAR IS NULL OR sla.term = $4)
+        AND (
+            $4::VARCHAR IS NULL 
+            OR EXISTS (
+                SELECT 1 
+                FROM se_le_asigna sla 
+                WHERE sla.id_caso = c.id_caso 
+                AND sla.term = $4
+            )
+        )
 ),
 total_casos AS (
     SELECT COUNT(*) AS total

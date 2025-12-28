@@ -56,7 +56,15 @@ try {
 }
 
 export interface InformeResumenData {
-  casosPorMateria: Array<{ nombre_materia: string; cantidad_casos: number }>;
+  casosPorMateria: Array<{ 
+    id_materia: number;
+    num_categoria: number;
+    num_subcategoria: number;
+    nombre_materia: string;
+    nombre_categoria: string;
+    nombre_subcategoria: string;
+    cantidad_casos: number;
+  }>;
   solicitantesPorGenero: Array<{ genero: string; cantidad_solicitantes: number }>;
   solicitantesPorParroquia: Array<{ nombre_parroquia: string; cantidad_solicitantes: number }>;
   casosPorAmbitoLegal: Array<{ nombre_ambito_legal: string; cantidad_casos: number }>;
@@ -73,6 +81,17 @@ export interface InformeResumenData {
     cantidad_profesores: number 
   }>;
   tiposDeCaso: CasosGroupedData[];
+  beneficiariosPorTipo: Array<{ 
+    tipo_beneficiario: string;
+    id_materia: number;
+    num_categoria: number;
+    num_subcategoria: number;
+    nombre_materia: string;
+    nombre_categoria: string;
+    nombre_subcategoria: string;
+    cantidad_beneficiarios: number;
+  }>;
+  beneficiariosPorParentesco: Array<{ parentesco: string; cantidad_beneficiarios: number }>;
 }
 
 interface InformeResumenPDFProps {
@@ -87,6 +106,9 @@ interface InformeResumenPDFProps {
     estudiantesPorMateria?: Record<string, string>;
     profesoresPorMateria?: Record<string, string>;
     tiposDeCaso?: Record<string, string>;
+    beneficiariosDirectos?: string;
+    beneficiariosIndirectos?: string;
+    beneficiariosPorParentesco?: string;
   };
   logoBase64?: string;
 }
@@ -318,6 +340,39 @@ function groupDataByMateriaSubcategoria(
   return grouped;
 }
 
+/**
+ * Agrupa beneficiarios por materia y subcategoría (igual que tipos de caso)
+ */
+function groupBeneficiariosByMateriaSubcategoria(
+  data: InformeResumenData['beneficiariosPorTipo']
+): Record<string, InformeResumenData['beneficiariosPorTipo']> {
+  const grouped: Record<string, InformeResumenData['beneficiariosPorTipo']> = {};
+
+  for (const item of data) {
+    const categoria = item.nombre_categoria?.trim() || '';
+    const subcategoria = item.nombre_subcategoria?.trim() || '';
+    
+    const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría';
+    const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría';
+    
+    let key = item.nombre_materia;
+    if (hasCategoria && hasSubcategoria) {
+      key += ` - ${categoria} ${subcategoria}`;
+    } else if (hasCategoria) {
+      key += ` - ${categoria}`;
+    } else if (hasSubcategoria) {
+      key += ` - ${subcategoria}`;
+    }
+
+    if (!grouped[key]) {
+      grouped[key] = [];
+    }
+    grouped[key].push(item);
+  }
+
+  return grouped;
+}
+
 export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({ 
   data, 
   fechaInicio, 
@@ -523,6 +578,82 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
               <View style={styles.chartWrapper}>
                 {/* @ts-ignore */}
                 <Image src={chartImages.solicitantesPorParroquia} style={styles.chartImageSmall} />
+              </View>
+            </View>
+          </View>
+        </Page>
+      )}
+
+      {/* Página: Beneficiarios Directos (un solo diagrama de barras) */}
+      {chartImages.beneficiariosDirectos && data.beneficiariosPorTipo && (
+        // @ts-ignore
+        <Page size="A4" orientation="landscape" style={styles.page}>
+          {/* @ts-ignore */}
+          <View style={styles.centeredContent}>
+            {/* @ts-ignore */}
+            <Text style={styles.sectionTitleCentered}>Beneficiarios Directos</Text>
+            {/* @ts-ignore */}
+            <Text style={styles.totalText}>
+              Total de Beneficiarios Directos: {data.beneficiariosPorTipo
+                .filter(item => item.tipo_beneficiario === 'Directo')
+                .reduce((sum, item) => sum + Number(item.cantidad_beneficiarios || 0), 0)}
+            </Text>
+            {/* @ts-ignore */}
+            <View style={styles.chartContainerBarChart}>
+              {/* @ts-ignore */}
+              <View style={styles.chartWrapper}>
+                {/* @ts-ignore */}
+                <Image src={chartImages.beneficiariosDirectos} style={styles.chartImageSmall} />
+              </View>
+            </View>
+          </View>
+        </Page>
+      )}
+
+      {/* Página: Beneficiarios Indirectos (un solo diagrama de barras) */}
+      {chartImages.beneficiariosIndirectos && data.beneficiariosPorTipo && (
+        // @ts-ignore
+        <Page size="A4" orientation="landscape" style={styles.page}>
+          {/* @ts-ignore */}
+          <View style={styles.centeredContent}>
+            {/* @ts-ignore */}
+            <Text style={styles.sectionTitleCentered}>Beneficiarios Indirectos</Text>
+            {/* @ts-ignore */}
+            <Text style={styles.totalText}>
+              Total de Beneficiarios Indirectos: {data.beneficiariosPorTipo
+                .filter(item => item.tipo_beneficiario === 'Indirecto')
+                .reduce((sum, item) => sum + Number(item.cantidad_beneficiarios || 0), 0)}
+            </Text>
+            {/* @ts-ignore */}
+            <View style={styles.chartContainerBarChart}>
+              {/* @ts-ignore */}
+              <View style={styles.chartWrapper}>
+                {/* @ts-ignore */}
+                <Image src={chartImages.beneficiariosIndirectos} style={styles.chartImageSmall} />
+              </View>
+            </View>
+          </View>
+        </Page>
+      )}
+
+      {/* Página: Beneficiarios por Parentesco */}
+      {chartImages.beneficiariosPorParentesco && data.beneficiariosPorParentesco && (
+        // @ts-ignore
+        <Page size="A4" orientation="landscape" style={styles.page}>
+          {/* @ts-ignore */}
+          <View style={styles.centeredContent}>
+            {/* @ts-ignore */}
+            <Text style={styles.sectionTitleCentered}>Beneficiarios por Parentesco</Text>
+            {/* @ts-ignore */}
+            <Text style={styles.totalText}>
+              Total de Beneficiarios: {data.beneficiariosPorParentesco.reduce((sum, item) => sum + Number(item.cantidad_beneficiarios || 0), 0)}
+            </Text>
+            {/* @ts-ignore */}
+            <View style={styles.chartContainerBarChart}>
+              {/* @ts-ignore */}
+              <View style={styles.chartWrapper}>
+                {/* @ts-ignore */}
+                <Image src={chartImages.beneficiariosPorParentesco} style={styles.chartImageSmall} />
               </View>
             </View>
           </View>
