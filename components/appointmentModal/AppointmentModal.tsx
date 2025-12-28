@@ -206,7 +206,6 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
                 Fecha de Encuentro <span className="text-danger">*</span>
               </label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600 pointer-events-none z-10" />
                 <DatePicker
                   value={date ? date.toISOString().slice(0, 10) : ""}
                   onChange={(value: string) => {
@@ -232,7 +231,6 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
                 Fecha de Próxima cita
               </label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600 pointer-events-none z-10" />
                 <DatePicker
                   value={endDate ? endDate.toISOString().slice(0, 10) : ""}
                   onChange={(value: string) => setEndDate(value ? new Date(value) : null)}
