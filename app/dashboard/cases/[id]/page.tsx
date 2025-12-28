@@ -16,6 +16,7 @@ import { ESTATUS_CASO } from '@/lib/constants/status';
 import DropdownMenu from '@/components/ui/navigation/DropdownMenu';
 import AddDocumentModal from '@/components/cases/modals/AddDocumentModal';
 import AssignTeamModal from '@/components/cases/modals/AssignTeamModal';
+import AddActionModal from '@/components/cases/modals/AddActionModal';
 import { ChevronDown, Plus, Pencil } from 'lucide-react';
 import { getCurrentUserAction } from '@/app/actions/auth';
 
@@ -29,6 +30,7 @@ export default function CaseDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showAddDocumentModal, setShowAddDocumentModal] = useState(false);
   const [showAssignTeamModal, setShowAssignTeamModal] = useState(false);
+  const [showAddActionModal, setShowAddActionModal] = useState(false);
   const [changingStatus, setChangingStatus] = useState(false);
   const [userRol, setUserRol] = useState<string | null>(null);
 
@@ -236,6 +238,14 @@ export default function CaseDetailPage() {
             <Plus className="w-[18px] h-[18px] text-[#414040]" />
             <span className="text-base text-center">Agregar Documento</span>
           </button>
+
+          <button 
+            onClick={() => setShowAddActionModal(true)}
+            className="h-10 cursor-pointer px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors"
+          >
+            <Plus className="w-[18px] h-[18px] text-[#414040]" />
+            <span className="text-base text-center">Registrar Acción</span>
+          </button>
           
           <DropdownMenu
             trigger={
@@ -286,6 +296,13 @@ export default function CaseDetailPage() {
         onClose={() => setShowAssignTeamModal(false)}
         idCaso={caso.id_caso}
         equipoActual={caso.equipo}
+        onSuccess={handleRefresh}
+      />
+
+      <AddActionModal
+        isOpen={showAddActionModal}
+        onClose={() => setShowAddActionModal(false)}
+        idCaso={caso.id_caso}
         onSuccess={handleRefresh}
       />
 

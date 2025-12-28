@@ -9,7 +9,7 @@ interface Action {
   subText?: string;
   caseInfo: string;
   date: string;
-  time: string;
+  time?: string; // Opcional, ya no se muestra
   actionType: 'document' | 'appointment' | 'view' | 'update' | 'other';
 }
 
