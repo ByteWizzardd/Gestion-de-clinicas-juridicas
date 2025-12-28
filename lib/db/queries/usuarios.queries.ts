@@ -128,8 +128,19 @@ export const usuariosQueries = {
   /**
    * Elimina un usuario y guarda su cédula
    */
-  deleteByCedula: async (cedula: string): Promise<void> => {
-    await pool.query('SELECT eliminar_usuario($1)', [cedula]);
+  toggleHabilitado: async (cedula: string): Promise<{ success: boolean; error?: { message: string; code?: string } }> => {
+    try {
+      await pool.query('SELECT toggle_habilitado_usuario($1)', [cedula]);
+      return { success: true };
+    } catch (error: unknown) {
+      return {
+        success: false,
+        error: {
+          message: (error as Error).message,
+          code: (error as Error & { code?: string }).code,
+        },
+      };
+    }
   },
 
   /**

@@ -135,7 +135,8 @@ export async function getUsuariosAction(): Promise<GetUsuariosResult> {
   }
 }
 
-export interface deleteUsuarioResult {
+// Toggle habilitado usuario result interface
+export interface toggleHabilitadoUsuarioResult {
   success: boolean;
   error?: {
     message: string;
@@ -143,6 +144,35 @@ export interface deleteUsuarioResult {
   };
 }
 
+
+/**
+ * Server Action para alternar el estado habilitado de un usuario
+ */
+export async function toggleHabilitadoUsuarioAction(cedula: string): Promise<toggleHabilitadoUsuarioResult> {
+  try {
+    // Verificar autenticación
+    const token = getAuthTokenFromCookies();
+    if (!token) {
+      return {
+        success: false,
+        error: {
+          message: 'No autorizado',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    return await usuariosQueries.toggleHabilitado(cedula);
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: {
+        message: (error as Error).message,
+        code: (error as Error & { code?: string }).code,
+      },
+    };
+  }
+}
 
 export async function deleteUsuarioFisicoAction(
   cedula_usuario: string,
