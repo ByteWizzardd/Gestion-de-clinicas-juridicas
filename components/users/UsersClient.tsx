@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { motion } from 'motion/react';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import BulkUploadModal from './BulkUploadModal';
@@ -29,6 +30,20 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
   const [searchValue, setSearchValue] = useState('');
   const [tipoFilter, setTipoFilter] = useState('');
   const [loading, setLoading] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  // Detectar preferencia de movimiento reducido
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mediaQuery.matches);
+    
+    const handleChange = (e: MediaQueryListEvent) => {
+      setPrefersReducedMotion(e.matches);
+    };
+    
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
 
   // Cargar usuarios al montar el componente si no hay datos iniciales
   useEffect(() => {
@@ -135,23 +150,36 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
 
   return (
     <>
-      <h1 className="text-4xl m-3 font-semibold font-primary">Gestión de Usuarios</h1>
-      <p className="mb-6 ml-3">
-        Administración de usuarios del sistema: estudiantes, profesores y coordinadores
-      </p>
+      <motion.div 
+        className="mb-4 md:mb-6 mt-4"
+        initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: "easeOut" }}
+      >
+        <h1 className="text-4xl m-3 font-semibold font-primary">Gestión de Usuarios</h1>
+        <p className="mb-6 ml-3">
+          Administración de usuarios del sistema: estudiantes, profesores y coordinadores
+        </p>
+      </motion.div>
       
-      <CaseTools 
-        addLabel="Cargar Estudiantes por Lotes" 
-        onAddClick={() => setIsBulkUploadModalOpen(true)}
-        searchValue={searchValue}
-        onSearchChange={setSearchValue}
-        estatusFilter={tipoFilter}
-        onEstatusChange={setTipoFilter}
-        estatusOptions={tipoOptions}
-        tramiteFilter=""
-        onTramiteChange={() => {}}
-        tramiteOptions={[]}
-      />
+      <motion.div
+        initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
+      >
+        <CaseTools 
+          addLabel="Cargar Estudiantes por Lotes" 
+          onAddClick={() => setIsBulkUploadModalOpen(true)}
+          searchValue={searchValue}
+          onSearchChange={setSearchValue}
+          estatusFilter={tipoFilter}
+          onEstatusChange={setTipoFilter}
+          estatusOptions={tipoOptions}
+          tramiteFilter=""
+          onTramiteChange={() => {}}
+          tramiteOptions={[]}
+        />
+      </motion.div>
       
       <div className="mt-10"></div>
 
@@ -160,22 +188,28 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
           <p className="text-gray-600">Cargando usuarios...</p>
         </div>
       ) : (
-        <Table
-          data={filteredUsuarios.map((u) => ({
-            cedula: u.cedula,
-            nombre_completo: u.nombre_completo,
-            correo_electronico: u.correo_electronico,
-            nombre_usuario: u.nombre_usuario,
-            telefono_celular: u.telefono_celular || 'N/A',
-            tipo_usuario: u.tipo_usuario,
-            estado: u.habilitado_sistema ? 'Habilitado' : 'Deshabilitado',
-            informacion: formatInfo(u),
-          }))}
-          columns={["Cédula", "Nombre Completo", "Correo", "Usuario", "Teléfono", "Tipo", "Estado", "Información"]}
-          onView={handleView}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        <motion.div
+          initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
+        >
+          <Table
+            data={filteredUsuarios.map((u) => ({
+              cedula: u.cedula,
+              nombre_completo: u.nombre_completo,
+              correo_electronico: u.correo_electronico,
+              nombre_usuario: u.nombre_usuario,
+              telefono_celular: u.telefono_celular || 'N/A',
+              tipo_usuario: u.tipo_usuario,
+              estado: u.habilitado_sistema ? 'Habilitado' : 'Deshabilitado',
+              informacion: formatInfo(u),
+            }))}
+            columns={["Cédula", "Nombre Completo", "Correo", "Usuario", "Teléfono", "Tipo", "Estado", "Información"]}
+            onView={handleView}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        </motion.div>
       )}
 
       <BulkUploadModal
