@@ -13,10 +13,14 @@ type TableRowProps<T> = {
     onEdit?: (data: T) => void;
     onDelete?: (data: T) => void;
     actions?: TableRowAction<T>[];
+    hideEdit?: (data: T) => boolean;
+    hideDelete?: (data: T) => boolean;
 };
 
-export function TableRow<T extends Record<string, unknown>>({ data, rowIndex, onView, onEdit, onDelete, actions }: TableRowProps<T>) {
+export function TableRow<T extends Record<string, unknown>>({ data, rowIndex, onView, onEdit, onDelete, actions, hideEdit, hideDelete }: TableRowProps<T>) {
     const cells = Object.values(data);
+    const shouldHideEdit = hideEdit ? hideEdit(data) : false;
+    const shouldHideDelete = hideDelete ? hideDelete(data) : false;
     return (
         <tr className={`border-none ${rowIndex % 2 === 1 ? 'bg-on-primary-light' : ''}`}>
             {cells.map((cell, index) => (
@@ -37,8 +41,8 @@ export function TableRow<T extends Record<string, unknown>>({ data, rowIndex, on
                 <div className="flex justify-center">
                     <ActionMenu
                         onView={onView ? () => onView(data) : undefined}
-                        onEdit={onEdit ? () => onEdit(data) : undefined}
-                        onDelete={onDelete ? () => onDelete(data) : undefined}
+                        onEdit={!shouldHideEdit && onEdit ? () => onEdit(data) : undefined}
+                        onDelete={!shouldHideDelete && onDelete ? () => onDelete(data) : undefined}
                         customActions={actions
                             ?.map(action => {
                                 const label = typeof action.label === 'function' ? action.label(data) : action.label;

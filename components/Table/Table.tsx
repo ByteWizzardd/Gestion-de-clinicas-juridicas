@@ -16,6 +16,8 @@ interface TableProps<T> {
     label: string | JSX.Element | ((data: T) => string | JSX.Element);
     onClick: (data: T) => void;
   }[];
+  hideEdit?: (data: T) => boolean;
+  hideDelete?: (data: T) => boolean;
 }
 
 export default function Table<T extends Record<string, unknown>>({ 
@@ -25,7 +27,9 @@ export default function Table<T extends Record<string, unknown>>({
   onView,
   onEdit,
   onDelete,
-  actions
+  actions,
+  hideEdit,
+  hideDelete
 }: TableProps<T>) {
 
   // Paginación: calcular qué datos mostrar según la página actual
@@ -69,14 +73,16 @@ export default function Table<T extends Record<string, unknown>>({
           {paginatedData.length > 0 ? (
             paginatedData.map((row, idx) => (
               <TableRow 
-                key={startIndex + idx} 
-                data={row} 
-                rowIndex={startIndex + idx}
-                onView={onView}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                actions={actions}
-              />
+                  key={startIndex + idx} 
+                  data={row} 
+                  rowIndex={startIndex + idx}
+                  onView={onView}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  actions={actions}
+                  hideEdit={hideEdit}
+                  hideDelete={hideDelete}
+                />
             ))
           ) : (
             <tr>

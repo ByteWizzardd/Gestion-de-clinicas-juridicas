@@ -301,6 +301,8 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
             },
           ]}
           onDelete={handleDelete}
+          hideEdit={(row: { cedula: string }) => row.cedula === currentUserCedula}
+          hideDelete={(row: { cedula: string }) => row.cedula === currentUserCedula}
         />
       )}
 

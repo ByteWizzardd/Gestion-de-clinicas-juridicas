@@ -112,10 +112,10 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions }: 
               Eliminar
             </button>
           )}
-          {customActions && customActions.length > 0 && (
+          {customActions && customActions.filter(action => action.label !== '' && action.label !== null).length > 0 && (
             <div className="border-t border-gray-100 my-1"></div>
           )}
-          {customActions && customActions.map((action, idx) => (
+          {customActions && customActions.filter(action => action.label !== '' && action.label !== null).map((action, idx) => (
             <button
               key={idx}
               onClick={action.onClick}
