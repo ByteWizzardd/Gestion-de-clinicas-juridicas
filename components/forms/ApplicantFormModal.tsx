@@ -2755,7 +2755,7 @@ export default function ApplicantFormModal({
         {/* Footer con botones */}
         <div className="flex flex-col border-t border-gray-200">
           {/* Nota sobre campos obligatorios */}
-          <div className="flex items-center gap-1 pt-2 pb-4">
+          <div className="flex items-center gap-1 pt-2 pb-2">
             <span className="text-danger font-medium text-sm">*</span>
             <span className="text-sm text-gray-600">Campo obligatorio</span>
           </div>

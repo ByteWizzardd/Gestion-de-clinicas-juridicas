@@ -4,7 +4,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { LogOut } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { getMenuByRole, type UserRole } from './menu-config';
 
 interface SidebarProps {
@@ -17,6 +18,19 @@ export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarP
   const router = useRouter();
   const menu = getMenuByRole(role);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mediaQuery.matches);
+    
+    const handleChange = (e: MediaQueryListEvent) => {
+      setPrefersReducedMotion(e.matches);
+    };
+    
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
 
   // Función para obtener el label del rol en español
   const getRoleLabel = (role: UserRole): string => {
@@ -68,7 +82,12 @@ export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarP
   };
 
   return (
-    <aside className="w-56 bg-background flex flex-col h-[calc(100vh-2rem)] rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] m-4">
+    <motion.aside 
+      initial={prefersReducedMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: prefersReducedMotion ? 0 : 0.4, ease: "easeOut" }}
+      className="w-56 bg-background flex flex-col h-[calc(100vh-2rem)] rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] m-4"
+    >
       <div className="p-6 flex justify-center">
         <Image src="/image.png" alt="DER Logo" width={240} height={87} className="object-contain"/>
       </div>
@@ -76,12 +95,17 @@ export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarP
       {/* Menú de Navegación */}
       <nav className="flex-1 overflow-y-auto mt-[-8] p-4">
         <ul className="space-y-1">
-          {menu.map((item) => {
+          {menu.map((item, index) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
 
             return (
-              <li key={item.href}>
+              <motion.li 
+                key={item.href}
+                initial={prefersReducedMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1 + index * 0.05, ease: "easeOut" }}
+              >
                 <Link 
                   href={item.href}
                   className={`flex items-center gap-3 px-4 py-3 transition-all duration-200
@@ -90,14 +114,19 @@ export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarP
                   <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-foreground'}`} />
                   <span>{item.label}</span>
                 </Link>
-              </li>
+              </motion.li>
             );
           })}
         </ul>
       </nav>
 
       {/* Footer del Sidebar */}
-      <div className="px-4 pb-8 space-y-3">
+      <motion.div 
+        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.4, ease: "easeOut" }}
+        className="px-4 pb-8 space-y-3"
+      >
         <div className="flex items-center gap-3 mb-5">
           <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0"></div>
           <div className="flex-1 min-w-0">
@@ -113,8 +142,8 @@ export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarP
           <LogOut className="w-4 h-4"/>
           <span>{isLoggingOut ? 'Cerrando...' : 'Cerrar Sesión'}</span>
         </button>
-      </div>
-    </aside>
+      </motion.div>
+    </motion.aside>
   );
 }
 

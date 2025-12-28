@@ -15,17 +15,13 @@ export default async function DashboardPage() {
   const casos = casosResult.success && Array.isArray(casosResult.data) ? casosResult.data : [];
   const acciones = accionesResult.success && Array.isArray(accionesResult.data) ? accionesResult.data : [];
 
-  // Debug logging
-  if (!casosResult.success) {
-    console.error('Error al obtener casos:', casosResult.error);
-  } else {
-    console.log('Casos obtenidos en servidor:', casos.length);
+  // Solo loguear errores reales en el servidor si no es un problema de sesión (que maneja el layout)
+  if (!casosResult.success && casosResult.error && (casosResult.error as any).code !== 'UNAUTHORIZED') {
+    console.error('Error al obtener casos:', JSON.stringify(casosResult.error));
   }
-
-  if (!accionesResult.success) {
-    console.error('Error al obtener acciones:', accionesResult.error);
-  } else {
-    console.log('Acciones obtenidas en servidor:', acciones.length);
+  
+  if (!accionesResult.success && accionesResult.error && (accionesResult.error as any).code !== 'UNAUTHORIZED') {
+    console.error('Error al obtener acciones:', JSON.stringify(accionesResult.error));
   }
 
   return <DashboardClient initialAppointments={appointments} initialCasos={casos} initialAcciones={acciones} />;
