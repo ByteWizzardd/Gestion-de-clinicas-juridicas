@@ -1,6 +1,6 @@
 'use client';
 
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, TooltipProps } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 interface StatusDistributionData {
     name: string;
@@ -12,7 +12,7 @@ interface StatusDistributionChartProps {
     data: StatusDistributionData[];
 }
 
-const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
+const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
         return (
             <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg">

@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, TooltipProps } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 interface DistributionData {
     name: string;
@@ -12,7 +12,7 @@ interface DistributionChartProps {
     data: DistributionData[];
 }
 
-const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
+const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
             <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg">
