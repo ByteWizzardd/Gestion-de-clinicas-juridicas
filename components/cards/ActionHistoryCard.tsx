@@ -50,19 +50,19 @@ export default function ActionHistoryCard({
         </div>
 
         {/* Acción principal */}
-        <div className="text-sm md:text-base font-semibold text-gray-900 mb-1">
+        <div className="text-sm md:text-base font-semibold text-gray-900 mb-1 truncate" title={mainText}>
           {mainText}
         </div>
 
         {/* Subtexto opcional */}
         {subText && (
-          <div className="text-xs md:text-sm text-gray-600 mb-1.5">
+          <div className="text-xs md:text-sm text-gray-600 mb-1.5 truncate" title={subText}>
             {subText}
           </div>
         )}
 
         {/* Información del caso */}
-        <div className="text-xs md:text-sm text-gray-500 font-medium">
+        <div className="text-xs md:text-sm text-gray-500 font-medium truncate" title={caseInfo}>
           {caseInfo}
         </div>
       </div>
