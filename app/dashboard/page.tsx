@@ -2,10 +2,14 @@ import { getCitasAction } from '@/app/actions/citas';
 import { getCasosByUsuarioAction, getAccionesRecientesAction } from '@/app/actions/casos';
 import DashboardClient from '@/components/dashboard/DashboardClient';
 import type { Appointment } from '@/types/appointment';
+import { authorizeRole } from '@/lib/utils/auth-utils';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
+  // Permitir a todos los roles autenticados
+  await authorizeRole(['coordinator', 'professor', 'student']);
+
   // Cargar citas, casos y acciones en el servidor
   const [citasResult, casosResult, accionesResult] = await Promise.all([
     getCitasAction(),

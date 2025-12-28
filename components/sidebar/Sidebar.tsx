@@ -35,7 +35,7 @@ export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarP
   // Función para obtener el label del rol en español
   const getRoleLabel = (role: UserRole): string => {
     const roleLabels: Record<UserRole, string> = {
-      admin: 'Administrador',
+      coordinator: 'Coordinador',
       professor: 'Profesor',
       student: 'Estudiante',
     };
