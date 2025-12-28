@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import ConfirmModal from '../ui/feedback/ConfirmModal';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
@@ -39,6 +40,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
   const [searchValue, setSearchValue] = useState('');
   const [tipoFilter, setTipoFilter] = useState('');
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   // Cargar usuarios al montar el componente si no hay datos iniciales
   useEffect(() => {
@@ -105,7 +107,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
 
   const handleView = (data: Record<string, unknown>) => {
     const usuario = data as Usuario;
-    alert(`Ver detalles de: ${usuario.nombre_completo}`);
+    router.push(`/dashboard/users/${usuario.cedula}`);
   };
 
   const handleEdit = (data: Record<string, unknown>) => {

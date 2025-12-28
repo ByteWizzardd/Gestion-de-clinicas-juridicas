@@ -158,6 +158,28 @@ export const usuariosQueries = {
     ]);
   },
 
+  /**
+   * Información de un Solo usuario por cédula
+   */
+  getInfoByCedula: async (cedula: string): Promise<{
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+    nombre_completo: string;
+    correo_electronico: string;
+    nombre_usuario: string;
+    telefono_celular: string | null;
+    habilitado_sistema: boolean;
+    tipo_usuario: string;
+    info_estudiante: string | null;
+    info_profesor: string | null;
+    info_coordinador: string | null;
+  } | null> => {
+    const query = loadSQL('usuarios/get-all-by-cedula.sql');
+    const result: QueryResult = await pool.query(query, [cedula]);
+    return result.rows[0] || null;
+  },
+
 };
 
 

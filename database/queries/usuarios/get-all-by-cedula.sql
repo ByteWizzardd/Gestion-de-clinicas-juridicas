@@ -1,6 +1,5 @@
--- Obtener todos los usuarios con información de su tipo y estado
--- Incluye información adicional si es estudiante, profesor o coordinador
-
+-- Obtener toda la información de un usuario (igual que get-all.sql) pero filtrando por cédula
+-- Parámetro: $1 = cédula exacta
 SELECT 
     u.cedula,
     u.nombres,
@@ -36,4 +35,5 @@ SELECT
         ELSE NULL
     END AS info_coordinador
 FROM usuarios u
-ORDER BY u.tipo_usuario, u.apellidos, u.nombres;
+WHERE u.cedula = $1
+LIMIT 1;
