@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { FileBarChart, Clock, User, Briefcase, X, Calendar } from 'lucide-react';
 import ReportCard from '@/components/cards/ReportCard';
 import FilterBar, { ReportFilters } from '@/components/reports/FilterBar';
@@ -495,22 +495,31 @@ export default function ReportsPage() {
             </Modal>
 
             {/* Pantalla de carga para generación de reporte */}
-            {isGeneratingReport && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-sm transition-all duration-300">
+            <AnimatePresence>
+                {isGeneratingReport && (
                     <motion.div 
-                        className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 border border-gray-100"
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.2 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-sm"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
                     >
-                        <Spinner />
-                        <div className="flex flex-col items-center text-center">
-                            <h3 className="text-xl font-semibold text-gray-800">Generando Reporte</h3>
-                            <p className="text-gray-500">Por favor, espera un momento...</p>
-                        </div>
+                        <motion.div 
+                            className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 border border-gray-100"
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            transition={{ duration: 0.3, ease: "easeOut" }}
+                        >
+                            <Spinner />
+                            <div className="flex flex-col items-center text-center">
+                                <h3 className="text-xl font-semibold text-gray-800">Generando Reporte</h3>
+                                <p className="text-gray-500">Por favor, espera un momento...</p>
+                            </div>
+                        </motion.div>
                     </motion.div>
-                </div>
-            )}
+                )}
+            </AnimatePresence>
         </div>
     );
 }
