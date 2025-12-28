@@ -131,7 +131,7 @@ export default function ReportsPage() {
     }, [filters]);
 
     const handleGenerateReport = async (reportType: string) => {
-        if (reportType === 'Tipos de Caso' || reportType === 'Reporte de Estatus de Casos' || reportType === 'Informe Resumen de Casos') {
+        if (reportType === 'Tipos de Caso' || reportType === 'Reporte de Estatus de Casos' || reportType === 'Resumen de Casos') {
             // Guardar el tipo de reporte actual
             setTipoReporteActual(reportType);
             // Mostrar modal para seleccionar rango de fechas
@@ -169,7 +169,7 @@ export default function ReportsPage() {
                 const fechaInicio = fechaInicioReporte || undefined;
                 const fechaFin = fechaFinReporte || undefined;
 
-                if (tipoReporteActual === 'Informe Resumen de Casos') {
+                if (tipoReporteActual === 'Resumen de Casos') {
                     // Generar informe resumen
                     const { getInformeResumenData } = await import('@/app/actions/reports');
                     const result = await getInformeResumenData(fechaInicio, fechaFin);
@@ -303,9 +303,9 @@ export default function ReportsPage() {
                 transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
             >
                 <ReportCard
-                    title="Informe Resumen de Casos"
+                    title="Resumen de Casos"
                     icon={<FileBarChart className="w-full h-full" strokeWidth={1.5} />}
-                    onGenerate={() => handleGenerateReport('Informe Resumen de Casos')}
+                    onGenerate={() => handleGenerateReport('Resumen de Casos')}
                     buttonColor="red"
                 />
                 <ReportCard
@@ -415,8 +415,8 @@ export default function ReportsPage() {
                     <h2 className="text-xl font-normal text-foreground mb-4">
                         {tipoReporteActual === 'Reporte de Estatus de Casos' 
                             ? 'Rango de Fechas - Estatus de Casos'
-                            : tipoReporteActual === 'Informe Resumen de Casos'
-                            ? 'Rango de Fechas - Informe Resumen de Casos'
+                            : tipoReporteActual === 'Resumen de Casos'
+                            ? 'Rango de Fechas - Resumen de Casos'
                             : 'Rango de Fechas - Tipos de Caso'}
                     </h2>
 

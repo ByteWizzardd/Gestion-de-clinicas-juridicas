@@ -49,15 +49,19 @@ export function generateBarChartImage(
   ctx.imageSmoothingQuality = 'high';
   
   // Configuración del gráfico según Figma
-  // Aumentar padding inferior para múltiples líneas de texto
-  const padding = { top: 30, right: 20, bottom: 70, left: 20 };
+  // Aumentar padding superior e inferior para acomodar etiquetas apiladas
+  const padding = { top: 45, right: 20, bottom: 70, left: 20 };
   const chartWidth = baseWidth - padding.left - padding.right;
   const chartHeight = baseHeight - padding.top - padding.bottom;
   const barSpacing = chartWidth / labels.length;
   const barWidth = barSpacing * 0.68; // ~232px de 338px según Figma
-  const maxValue = Math.max(...values, 1);
+  const maxValue = Math.max(...values.map(v => Number(v)), 1);
+  const total = values.reduce((acc, val) => acc + Number(val), 0);
   
   const baseY = padding.top + chartHeight;
+  
+  // Asegurar que values sean números para el resto de la función
+  const numericValues = values.map(v => Number(v));
   
   // Función para dividir texto en múltiples líneas
   const wrapText = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] => {
@@ -89,7 +93,7 @@ export function generateBarChartImage(
   
   // Dibujar barras (sin efecto 3D, solo barras planas con overlay)
   labels.forEach((label, index) => {
-    const value = values[index];
+    const value = numericValues[index];
     if (value <= 0) return;
     
     const color = colors[index % colors.length];
@@ -105,16 +109,24 @@ export function generateBarChartImage(
     ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
     ctx.fillRect(x, y, barWidth / 2, barHeight);
     
-    // Etiqueta de valor encima de la barra (opacidad 0.7 según Figma)
+    // Etiqueta de valor encima de la barra (Cantidad y Porcentaje apilados)
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.font = '400 16px Inter, Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
-    const labelY = Math.round((y - 8) * pixelRatio) / pixelRatio;
+    
     const labelX = Math.round((x + barWidth / 2) * pixelRatio) / pixelRatio;
-    // Convertir a número entero para evitar padding de ceros
-    const valueText = Math.round(Number(value)).toString();
-    ctx.fillText(valueText, labelX, labelY);
+    const labelY = Math.round((y - 8) * pixelRatio) / pixelRatio;
+    
+    // Calcular porcentaje con 2 decimales
+    const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : "0.00";
+    
+    // 1. Dibujar Porcentaje (abajo, más pequeño)
+    ctx.font = '400 12px Inter, Arial, sans-serif';
+    ctx.fillText(`(${percentage}%)`, labelX, labelY);
+    
+    // 2. Dibujar Cantidad (arriba, más grande y negrita)
+    ctx.font = '600 16px Inter, Arial, sans-serif';
+    ctx.fillText(Math.round(Number(value)).toString(), labelX, labelY - 15);
     
     // Etiqueta del eje X (con saltos de línea para evitar que se crucen)
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
