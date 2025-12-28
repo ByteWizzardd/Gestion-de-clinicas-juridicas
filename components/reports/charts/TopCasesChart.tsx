@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, TooltipProps } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 interface TopCasesData {
     name: string;
@@ -10,6 +10,12 @@ interface TopCasesData {
 interface TopCasesChartProps {
     data: TopCasesData[];
 }
+
+const COLORS = [
+    '#8979ff', '#ff928a', '#3cc3df', '#ffae4c', '#537ff1',
+    '#6fd195', '#8c63da', '#2bb7dc', '#1f94ff', '#f4cf3b',
+    '#55c4ae', '#6186cc',
+];
 
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -45,9 +51,12 @@ export default function TopCasesChart({ data }: TopCasesChartProps) {
                     />
                     <Bar
                         dataKey="value"
-                        fill="#6366F1"
                         radius={[8, 8, 0, 0]}
-                    />
+                    >
+                        {data.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                    </Bar>
                 </BarChart>
             </ResponsiveContainer>
         </div>
