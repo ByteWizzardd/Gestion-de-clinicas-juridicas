@@ -2,6 +2,8 @@ import { getSolicitantesAction } from '@/app/actions/solicitantes';
 import { getNucleosAction } from '@/app/actions/nucleos';
 import ApplicantsClient from '@/components/applicants/ApplicantsClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ApplicantsPage() {
   // Cargar datos en el servidor
   const [solicitantesResult, nucleosResult] = await Promise.all([

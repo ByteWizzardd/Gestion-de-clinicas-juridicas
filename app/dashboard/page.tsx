@@ -3,6 +3,8 @@ import { getCasosByUsuarioAction, getAccionesRecientesAction } from '@/app/actio
 import DashboardClient from '@/components/dashboard/DashboardClient';
 import type { Appointment } from '@/types/appointment';
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   // Cargar citas, casos y acciones en el servidor
   const [citasResult, casosResult, accionesResult] = await Promise.all([
