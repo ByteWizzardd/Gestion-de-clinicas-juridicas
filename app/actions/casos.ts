@@ -555,7 +555,8 @@ export async function createAccionAction(
   idCaso: number,
   detalleAccion: string,
   comentario?: string,
-  ejecutores?: Array<{ idUsuario: string; fechaEjecucion: string }>
+  ejecutores?: Array<{ idUsuario: string; fechaEjecucion: string }>,
+  fechaRegistro?: string
 ): Promise<{ success: boolean; data?: any; error?: { message: string; code?: string } }> {
   const client = await pool.connect();
   try {
@@ -602,6 +603,16 @@ export async function createAccionAction(
 
     const cedulaUsuario = decoded.cedula;
     
+    // Obtener la fecha actual del cliente en formato YYYY-MM-DD para evitar problemas de zona horaria
+    // Si no se proporciona fechaRegistro, usar la fecha actual del cliente
+    const fechaRegistroStr = fechaRegistro || (() => {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    })();
+    
     // Crear la acción usando el cliente de la transacción
     const createAccionQuery = loadSQL('acciones/create.sql');
     const accionResult = await client.query(createAccionQuery, [
@@ -610,6 +621,7 @@ export async function createAccionAction(
       comentario?.trim() || null,
       cedulaUsuario,
       null, // numAccion se calcula automáticamente
+      fechaRegistroStr, // Fecha de registro explícita
     ]);
     const accion = accionResult.rows[0];
 
@@ -617,7 +629,9 @@ export async function createAccionAction(
     if (ejecutores && ejecutores.length > 0) {
       const createEjecutanQuery = loadSQL('ejecutan/create.sql');
       for (const ejecutor of ejecutores) {
-        const fechaEjecucion = new Date(ejecutor.fechaEjecucion);
+        // Pasar la fecha como string directamente para evitar problemas de zona horaria
+        // El formato YYYY-MM-DD es aceptado directamente por PostgreSQL para columnas DATE
+        const fechaEjecucion = ejecutor.fechaEjecucion;
         await client.query(createEjecutanQuery, [
           ejecutor.idUsuario,
           accion.num_accion,
@@ -849,6 +863,95 @@ export interface AsignarEquipoResult {
     message: string;
     code?: string;
   };
+}
+
+export interface GetAccionesRecientesResult {
+  success: boolean;
+  data?: Array<{
+    num_accion: number;
+    id_caso: number;
+    detalle_accion: string;
+    comentario: string | null;
+    id_usuario_registra: string;
+    fecha_registro: string;
+    nombres_usuario_registra: string;
+    apellidos_usuario_registra: string;
+    nombre_completo_usuario_registra: string;
+    caso_id: number;
+    nombre_solicitante: string;
+    nombre_nucleo: string;
+    ejecutores: Array<{
+      id_usuario: string;
+      nombres: string;
+      apellidos: string;
+      nombre_completo: string;
+      fecha_ejecucion: string;
+    }>;
+  }>;
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+/**
+ * Server Action para obtener acciones recientes del usuario
+ */
+export async function getAccionesRecientesAction(limite: number = 10): Promise<GetAccionesRecientesResult> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      return {
+        success: false,
+        error: {
+          message: 'No autorizado',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    let decoded;
+    try {
+      decoded = await verifyToken(token);
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    const cedulaUsuario = decoded.cedula;
+    const acciones = await accionesQueries.getRecentByUsuario(cedulaUsuario, limite);
+
+    return {
+      success: true,
+      data: acciones,
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'ACCION_ERROR',
+        },
+      };
+    }
+
+    console.error('Error en getAccionesRecientesAction:', error);
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al obtener acciones recientes',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  }
 }
 
 export async function asignarEquipoAction(

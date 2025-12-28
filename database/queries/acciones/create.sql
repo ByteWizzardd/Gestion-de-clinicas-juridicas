@@ -5,7 +5,8 @@
 --   $3 = comentario (opcional, puede ser NULL)
 --   $4 = id_usuario_registra (cédula del usuario que registra la acción)
 --   $5 = num_accion (número de acción, se calcula automáticamente si es NULL)
--- Nota: fecha_registro se establece automáticamente con CURRENT_DATE
+--   $6 = fecha_registro (opcional, si es NULL se usa CURRENT_DATE)
+-- Nota: Se recomienda pasar la fecha explícitamente para evitar problemas de zona horaria
 INSERT INTO acciones (
     num_accion,
     id_caso,
@@ -20,7 +21,7 @@ SELECT
     $2,
     $3,
     $4,
-    CURRENT_DATE
+    COALESCE($6::DATE, CURRENT_DATE)
 FROM acciones
 WHERE id_caso = $1
 RETURNING *;

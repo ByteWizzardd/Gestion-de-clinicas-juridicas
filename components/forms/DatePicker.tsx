@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 
 interface DatePickerProps {
@@ -311,7 +311,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
           setIsOpen(!isOpen);
         }}
         className={`
-          w-full h-[40px] pl-12 pr-4 rounded-full border flex items-center
+          w-full h-[40px] pl-12 pr-4 rounded-full border flex items-center relative
           ${error ? 'border-danger' : 'border-gray-300'}
           focus-within:ring-1 
           ${error ? 'focus-within:ring-danger' : 'focus-within:ring-primary'}
@@ -319,6 +319,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         `}
       >
+        <Calendar className="absolute left-4 w-5 h-5 text-gray-400" />
         <span className={`text-base ${value ? 'text-gray-600' : 'text-gray-400'}`}>
           {formatDisplayDate(value)}
         </span>
@@ -327,11 +328,11 @@ export default function DatePicker({ value, onChange, error, required, disabled 
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            initial={{ opacity: 0, y: openUpward ? 10 : -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            exit={{ opacity: 0, y: openUpward ? 10 : -10, scale: 0.95 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className={`absolute left-0 bg-white border border-gray-300 rounded-2xl shadow-lg z-[60] p-4 w-80 ${
+            className={`absolute left-0 bg-white border border-gray-300 rounded-2xl shadow-lg z-[100] p-4 w-80 ${
               openUpward ? 'bottom-full mb-2' : 'top-full mt-2'
             }`}
           >

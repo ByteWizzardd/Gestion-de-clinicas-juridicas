@@ -2,6 +2,7 @@
 
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
+import { ClipboardList } from 'lucide-react';
 import ActionHistoryCard from './ActionHistoryCard';
 
 interface Action {
@@ -9,7 +10,7 @@ interface Action {
   subText?: string;
   caseInfo: string;
   date: string;
-  time: string;
+  time?: string; // Opcional, ya no se muestra
   actionType: 'document' | 'appointment' | 'view' | 'update' | 'other';
 }
 
@@ -35,11 +36,12 @@ export default function ActionHistoryList({
   }, []);
 
   return (
-    <div className="relative">
+    <div className="relative h-full flex flex-col">
       {actions.length === 0 ? (
-        <div className="text-xs md:text-sm text-gray-500 text-center py-8">
-          <div className="text-gray-400 mb-2">📋</div>
-          No hay acciones recientes
+        <div className="flex-1 flex flex-col items-center justify-center text-gray-500 py-12">
+          <ClipboardList className="w-16 h-16 mb-4 opacity-40 text-gray-400" />
+          <p className="text-lg font-medium text-gray-600">No hay acciones recientes</p>
+          <p className="text-sm mt-2 text-gray-500">Las actividades de tus casos aparecerán aquí</p>
         </div>
       ) : (
         <div className="space-y-0">

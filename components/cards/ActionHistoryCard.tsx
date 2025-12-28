@@ -1,6 +1,6 @@
 'use client';
 
-import { FileText, Calendar, FileCheck, Eye, Clock } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { ReactNode } from 'react';
 
 interface ActionHistoryCardProps {
@@ -8,26 +8,13 @@ interface ActionHistoryCardProps {
   subText?: string;
   caseInfo: string;
   date: string;
-  time: string;
+  time?: string; // Opcional, ya no se muestra
   actionType: 'document' | 'appointment' | 'view' | 'update' | 'other';
   isLast?: boolean;
 }
 
-const actionIcons = {
-  document: FileText,
-  appointment: Calendar,
-  view: Eye,
-  update: FileCheck,
-  other: Clock,
-};
-
-const actionColors = {
-  document: 'bg-primary-light text-primary border-primary',
-  appointment: 'bg-secondary-light text-secondary border-secondary',
-  view: 'bg-primary-light text-primary border-primary',
-  update: 'bg-secondary-light text-secondary border-secondary',
-  other: 'bg-primary-light text-primary border-primary',
-};
+const actionIcon = Clock;
+const actionColor = 'bg-secondary-light text-secondary border-secondary';
 
 export default function ActionHistoryCard({
   mainText,
@@ -38,8 +25,8 @@ export default function ActionHistoryCard({
   actionType,
   isLast = false,
 }: ActionHistoryCardProps) {
-  const Icon = actionIcons[actionType] || actionIcons.other;
-  const colorClass = actionColors[actionType] || actionColors.other;
+  const Icon = actionIcon;
+  const colorClass = actionColor;
 
   return (
     <div className="relative flex gap-3 md:gap-4 pb-4 md:pb-6">
@@ -55,31 +42,27 @@ export default function ActionHistoryCard({
 
       {/* Contenido del historial */}
       <div className="flex-1 min-w-0 pt-0.5">
-        {/* Fecha y hora */}
-        <div className="flex items-center gap-2 mb-1.5">
+        {/* Fecha */}
+        <div className="mb-1.5">
           <span className="text-xs md:text-sm font-semibold text-gray-700">
             {date}
-          </span>
-          <span className="text-xs text-gray-500">•</span>
-          <span className="text-xs md:text-sm text-gray-500">
-            {time}
           </span>
         </div>
 
         {/* Acción principal */}
-        <div className="text-sm md:text-base font-semibold text-gray-900 mb-1">
+        <div className="text-sm md:text-base font-semibold text-gray-900 mb-1 truncate" title={mainText}>
           {mainText}
         </div>
 
         {/* Subtexto opcional */}
         {subText && (
-          <div className="text-xs md:text-sm text-gray-600 mb-1.5">
+          <div className="text-xs md:text-sm text-gray-600 mb-1.5 truncate" title={subText}>
             {subText}
           </div>
         )}
 
         {/* Información del caso */}
-        <div className="text-xs md:text-sm text-gray-500 font-medium">
+        <div className="text-xs md:text-sm text-gray-500 font-medium truncate" title={caseInfo}>
           {caseInfo}
         </div>
       </div>

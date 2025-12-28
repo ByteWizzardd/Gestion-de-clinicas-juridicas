@@ -11,17 +11,33 @@ export function formatDate(date: string | Date | null | undefined): string {
   if (!date) return 'N/A';
   
   try {
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    let day: number, month: number, year: number;
     
-    if (isNaN(dateObj.getTime())) {
-      return 'N/A';
+    if (typeof date === 'string') {
+      // Si es un string, parsear manualmente para evitar problemas de zona horaria
+      if (date.includes('-')) {
+        const parts = date.split('-');
+        year = parseInt(parts[0], 10);
+        month = parseInt(parts[1], 10); // Mes 1-12
+        day = parseInt(parts[2].split(' ')[0], 10); // Tomar solo la parte de la fecha si hay hora
+      } else {
+        // Si no tiene formato esperado, intentar con Date
+        const dateObj = new Date(date);
+        if (isNaN(dateObj.getTime())) {
+          return 'N/A';
+        }
+        day = dateObj.getDate();
+        month = dateObj.getMonth() + 1;
+        year = dateObj.getFullYear();
+      }
+    } else {
+      // Si es un objeto Date, usar los métodos locales
+      day = date.getDate();
+      month = date.getMonth() + 1;
+      year = date.getFullYear();
     }
     
-    const day = dateObj.getDate().toString().padStart(2, '0');
-    const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
-    const year = dateObj.getFullYear();
-    
-    return `${day}/${month}/${year}`;
+    return `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
   } catch (error) {
     console.error('Error formatting date:', error);
     return 'N/A';

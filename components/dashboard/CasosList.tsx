@@ -101,7 +101,7 @@ export default function CasosList({ casos, loading, error }: CasosListProps) {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 w-full">
       {casos.map((caso, index) => {
         // Validar que el caso tenga los datos necesarios
         if (!caso || !caso.id_caso) {
@@ -112,6 +112,7 @@ export default function CasosList({ casos, loading, error }: CasosListProps) {
         return (
           <motion.div
             key={caso.id_caso}
+            className="w-full"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, delay: index * 0.05 }}

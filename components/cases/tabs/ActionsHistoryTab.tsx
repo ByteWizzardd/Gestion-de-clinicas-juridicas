@@ -29,7 +29,8 @@ export default function ActionsHistoryTab({ acciones }: ActionsHistoryTabProps) 
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
         <History className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-500 text-lg">No hay acciones registradas para este caso</p>
+        <p className="text-gray-500 text-lg mb-2">No hay acciones registradas</p>
+        <p className="text-sm text-gray-400">Registre una nueva acción para comenzar el historial</p>
       </div>
     );
   }

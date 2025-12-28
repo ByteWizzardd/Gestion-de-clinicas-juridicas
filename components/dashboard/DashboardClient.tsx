@@ -21,12 +21,35 @@ interface Caso {
   rol_usuario: string;
 }
 
+interface AccionReciente {
+  num_accion: number;
+  id_caso: number;
+  detalle_accion: string;
+  comentario: string | null;
+  id_usuario_registra: string;
+  fecha_registro: string;
+  nombres_usuario_registra: string;
+  apellidos_usuario_registra: string;
+  nombre_completo_usuario_registra: string;
+  caso_id: number;
+  nombre_solicitante: string;
+  nombre_nucleo: string;
+  ejecutores: Array<{
+    id_usuario: string;
+    nombres: string;
+    apellidos: string;
+    nombre_completo: string;
+    fecha_ejecucion: string;
+  }>;
+}
+
 interface DashboardClientProps {
   initialAppointments: Appointment[];
   initialCasos: Caso[];
+  initialAcciones?: AccionReciente[];
 }
 
-export default function DashboardClient({ initialAppointments, initialCasos }: DashboardClientProps) {
+export default function DashboardClient({ initialAppointments, initialCasos, initialAcciones = [] }: DashboardClientProps) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [appointments, setAppointments] = useState<Appointment[]>(
@@ -54,40 +77,60 @@ export default function DashboardClient({ initialAppointments, initialCasos }: D
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
-  const actions = [
-    {
-      mainText: "Ver Bitácora Completa",
-      subText: "hola este es un ejemplo",
-      caseInfo: "Caso: C-001 (S. Rodríguez) - UCAB GY",
-      date: "15 Ene 2024",
-      time: "14:30",
-      actionType: "view" as const
-    },
-    {
-      mainText: "Segunda Cita Programada",
-      subText: "hola este es otro ejemplo",
-      caseInfo: "Caso: C-005 (M. García) - UCAB GY",
-      date: "14 Ene 2024",
-      time: "10:15",
-      actionType: "appointment" as const
-    },
-    {
-      mainText: "Carga de Documentos",
-      subText: "Originales",
-      caseInfo: "Caso: C-008 (J. Rivero) - UCAB GY",
-      date: "13 Ene 2024",
-      time: "16:45",
-      actionType: "document" as const
-    },
-    {
-      mainText: "Actualización de Estado",
-      subText: "En proceso",
-      caseInfo: "Caso: C-003 (A. Martínez) - UCAB GY",
-      date: "12 Ene 2024",
-      time: "09:20",
-      actionType: "update" as const
-    }
-  ];
+  // Mapear acciones de la BD al formato esperado por ActionHistoryList
+  const actions = useMemo(() => {
+    return initialAcciones.map((accion) => {
+      // Formatear fecha de registro (parsear como local para evitar problemas de zona horaria)
+      const fechaStr = accion.fecha_registro;
+      let dia: number, mes: number, año: number;
+      
+      const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+      if (typeof fechaStr === 'string' && fechaStr.includes('-')) {
+        // Parsear manualmente para evitar problemas de zona horaria
+        const parts = fechaStr.split('-');
+        año = parseInt(parts[0], 10);
+        mes = parseInt(parts[1], 10) - 1; // Los meses en JS son 0-indexed
+        dia = parseInt(parts[2], 10);
+      } else {
+        // Si es un objeto Date, usar los métodos locales
+        const fecha = typeof fechaStr === 'string' ? new Date(fechaStr) : fechaStr;
+        // Usar métodos locales para evitar conversión UTC
+        dia = fecha.getDate();
+        mes = fecha.getMonth();
+        año = fecha.getFullYear();
+      }
+      
+      const fechaFormateada = `${dia} ${meses[mes]} ${año}`;
+
+      // Formatear fecha de ejecución (del primer ejecutor si existe)
+      let fechaEjecucionFormateada = '';
+      if (accion.ejecutores && accion.ejecutores.length > 0) {
+        const fEj = accion.ejecutores[0].fecha_ejecucion;
+        if (typeof fEj === 'string' && fEj.includes('-')) {
+          const parts = fEj.split('-');
+          const dE = parseInt(parts[2], 10);
+          const mE = parseInt(parts[1], 10) - 1;
+          const aE = parseInt(parts[0], 10);
+          fechaEjecucionFormateada = `${dE} ${meses[mE]} ${aE}`;
+        } else {
+          const dateEj = new Date(fEj);
+          fechaEjecucionFormateada = `${dateEj.getDate()} ${meses[dateEj.getMonth()]} ${dateEj.getFullYear()}`;
+        }
+      }
+
+      // Información del caso sin nombre del solicitante y con fecha de ejecución
+      const caseInfo = `Caso: ${accion.id_caso} - ${accion.nombre_nucleo}${fechaEjecucionFormateada ? ` • Ejecución: ${fechaEjecucionFormateada}` : ''}`;
+
+      return {
+        mainText: accion.detalle_accion,
+        subText: accion.comentario || undefined,
+        caseInfo,
+        date: fechaFormateada,
+        actionType: 'other' as const, // Forzar a 'other' para tener un solo icon/color
+      };
+    });
+  }, [initialAcciones]);
   
   return (
     <div className="max-h-screen">
@@ -122,7 +165,7 @@ export default function DashboardClient({ initialAppointments, initialCasos }: D
                 {casos.length} {casos.length === 1 ? 'caso' : 'casos'}
               </span>
             </div>
-            <div className="flex-1 pr-2 flex items-center">
+            <div className="flex-1 pr-2 overflow-y-auto min-h-0 w-full">
               <CasosList 
                 casos={casos}
                 loading={false}

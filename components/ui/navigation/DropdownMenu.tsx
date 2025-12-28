@@ -21,6 +21,7 @@ export default function DropdownMenu({
   onOpenChange
 }: DropdownMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
 
@@ -30,6 +31,23 @@ export default function DropdownMenu({
       onOpenChange(isOpen);
     }
   }, [isOpen, onOpenChange]);
+
+  // Calcular si debe abrirse hacia arriba
+  useEffect(() => {
+    if (isOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const menuHeight = 300; // Altura aproximada del menú
+
+      // Si hay menos espacio abajo que la altura del menú, y hay más espacio arriba
+      if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
+        setOpenUpward(true);
+      } else {
+        setOpenUpward(false);
+      }
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -81,11 +99,11 @@ export default function DropdownMenu({
         {isOpen && (
           <motion.div 
             ref={menuRef} 
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            initial={{ opacity: 0, y: openUpward ? 10 : -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            exit={{ opacity: 0, y: openUpward ? 10 : -10, scale: 0.95 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className={`absolute ${alignClasses[align]} mt-2 z-30 ${menuClassName}`}
+            className={`absolute ${alignClasses[align]} ${openUpward ? 'bottom-full mb-2' : 'mt-2'} z-[100] ${menuClassName}`}
             onClick={(e) => {
               // Si el clic es en un botón dentro del menú, cerrar el dropdown inmediatamente
               const target = e.target as HTMLElement;
