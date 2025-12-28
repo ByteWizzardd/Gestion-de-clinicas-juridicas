@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import Tabs from '@/components/ui/Tabs';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
@@ -279,8 +280,18 @@ export default function CaseDetailPage() {
         </div>
       </div>
       {nombreSolicitante && (
-        <p className="text-sm sm:text-base text-gray-500 mb-6 sm:mb-8">
-          Solicitante: {nombreSolicitante}
+        <p className="text-sm sm:text-base text-gray-500 mb-6 sm:mb-8 flex items-center gap-1.5">
+          Solicitante: 
+          {caso.cedula ? (
+            <Link 
+              href={`/dashboard/applicants/${caso.cedula}`}
+              className="text-primary hover:underline font-medium transition-colors"
+            >
+              {nombreSolicitante}
+            </Link>
+          ) : (
+            <span>{nombreSolicitante}</span>
+          )}
         </p>
       )}
 

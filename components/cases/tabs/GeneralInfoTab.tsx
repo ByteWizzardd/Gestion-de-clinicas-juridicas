@@ -1,6 +1,7 @@
 'use client';
 
 import { Calendar, User, Users, FileText, Building2, Scale } from 'lucide-react';
+import Link from 'next/link';
 import { formatDate, calculateAge } from '@/lib/utils/date-formatter';
 
 interface GeneralInfoTabProps {
@@ -133,7 +134,18 @@ export default function GeneralInfoTab({ caso }: GeneralInfoTabProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-gray-500">Nombre Completo</label>
-              <p className="text-base text-gray-900 mt-1">{caso.nombre_completo_solicitante}</p>
+              <p className="text-base mt-1">
+                {caso.cedula ? (
+                  <Link 
+                    href={`/dashboard/applicants/${caso.cedula}`}
+                    className="text-primary hover:underline font-medium transition-colors"
+                  >
+                    {caso.nombre_completo_solicitante}
+                  </Link>
+                ) : (
+                  <span className="text-gray-900">{caso.nombre_completo_solicitante}</span>
+                )}
+              </p>
             </div>
             {caso.cedula && (
               <div>
