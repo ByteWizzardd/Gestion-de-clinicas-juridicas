@@ -72,7 +72,7 @@ export const casosQueries = {
     num_ambito_legal: number;
     fecha_solicitud?: string | Date;
     fecha_inicio_caso: string | Date;
-    id_usuario_registra?: string;
+    cedulaUsuarioRegistra?: string;
   }): Promise<any> => {
     const client = await pool.connect();
     try {
@@ -80,13 +80,14 @@ export const casosQueries = {
       
       // Establecer la variable de sesión con la cédula del usuario que registra el caso
       // Nota: SET LOCAL no acepta parámetros preparados, así que validamos y escapamos el valor
-      if (data.id_usuario_registra) {
+      // Esta variable es usada por el trigger para crear el cambio_estatus inicial
+      if (data.cedulaUsuarioRegistra) {
         // Validar que la cédula solo contenga caracteres alfanuméricos, guiones y puntos
-        if (!/^[A-Za-z0-9.\-]+$/.test(data.id_usuario_registra)) {
+        if (!/^[A-Za-z0-9.\-]+$/.test(data.cedulaUsuarioRegistra)) {
           throw new Error('Formato de cédula inválido');
         }
         // Escapar comillas simples para prevenir SQL injection
-        const cedulaEscapada = data.id_usuario_registra.replace(/'/g, "''");
+        const cedulaEscapada = data.cedulaUsuarioRegistra.replace(/'/g, "''");
         // Usar SET LOCAL dentro de la transacción para que esté disponible en el trigger
         await client.query(`SET LOCAL app.usuario_registra = '${cedulaEscapada}'`);
       }
@@ -391,6 +392,54 @@ export const casosQueries = {
       fechaFinStr,
       idNucleo || null,
       term || null,
+    ]);
+    return result.rows;
+  },
+
+  /**
+   * Obtiene casos agrupados por materia
+   * @param fechaInicio - Fecha de inicio del rango (opcional)
+   * @param fechaFin - Fecha de fin del rango (opcional)
+   */
+  getByMateria: async (
+    fechaInicio?: string | Date,
+    fechaFin?: string | Date
+  ): Promise<Array<{ nombre_materia: string; cantidad_casos: number }>> => {
+    const query = loadSQL('casos/get-by-materia.sql');
+    const fechaInicioStr = fechaInicio
+      ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
+      : null;
+    const fechaFinStr = fechaFin
+      ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
+      : null;
+
+    const result: QueryResult = await pool.query(query, [
+      fechaInicioStr,
+      fechaFinStr,
+    ]);
+    return result.rows;
+  },
+
+  /**
+   * Obtiene todos los casos agrupados por ámbito legal (sin agrupar por materia)
+   * @param fechaInicio - Fecha de inicio del rango (opcional)
+   * @param fechaFin - Fecha de fin del rango (opcional)
+   */
+  getByAmbitoLegalTotal: async (
+    fechaInicio?: string | Date,
+    fechaFin?: string | Date
+  ): Promise<Array<{ nombre_ambito_legal: string; cantidad_casos: number }>> => {
+    const query = loadSQL('casos/get-by-ambito-legal-total.sql');
+    const fechaInicioStr = fechaInicio
+      ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
+      : null;
+    const fechaFinStr = fechaFin
+      ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
+      : null;
+
+    const result: QueryResult = await pool.query(query, [
+      fechaInicioStr,
+      fechaFinStr,
     ]);
     return result.rows;
   },

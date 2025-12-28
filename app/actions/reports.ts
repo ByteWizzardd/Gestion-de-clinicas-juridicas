@@ -2,6 +2,9 @@
 
 import { cookies } from 'next/headers';
 import { casosQueries } from '@/lib/db/queries/casos.queries';
+import { solicitantesQueries } from '@/lib/db/queries/solicitantes.queries';
+import { estudiantesQueries } from '@/lib/db/queries/estudiantes.queries';
+import { profesoresQueries } from '@/lib/db/queries/profesores.queries';
 import { verifyToken } from '@/lib/utils/security';
 import { pool } from '@/lib/db/pool';
 import {
@@ -458,6 +461,96 @@ export async function getCasosGroupedByEstatus(
     return { success: true, data };
   } catch (error) {
     console.error('Error al obtener casos agrupados por estatus:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error desconocido',
+    };
+  }
+}
+
+/**
+ * Obtiene todos los datos para el informe resumen de casos
+ */
+export async function getInformeResumenData(
+  fechaInicio?: string,
+  fechaFin?: string
+): Promise<{
+  success: boolean;
+  data?: {
+    casosPorMateria: Array<{ nombre_materia: string; cantidad_casos: number }>;
+    solicitantesPorGenero: Array<{ genero: string; cantidad_solicitantes: number }>;
+    solicitantesPorParroquia: Array<{ nombre_parroquia: string; cantidad_solicitantes: number }>;
+    casosPorAmbitoLegal: Array<{ nombre_ambito_legal: string; cantidad_casos: number }>;
+    estudiantesPorMateria: Array<{ 
+      nombre_materia: string; 
+      nombre_categoria: string | null; 
+      nombre_subcategoria: string | null; 
+      cantidad_estudiantes: number 
+    }>;
+    profesoresPorMateria: Array<{ 
+      nombre_materia: string; 
+      nombre_categoria: string | null; 
+      nombre_subcategoria: string | null; 
+      cantidad_profesores: number 
+    }>;
+    tiposDeCaso: CasosGroupedData[];
+  };
+  error?: string;
+}> {
+  try {
+    // Verificar autenticación
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      return {
+        success: false,
+        error: 'No autorizado',
+      };
+    }
+
+    try {
+      await verifyToken(token);
+    } catch (error) {
+      return {
+        success: false,
+        error: 'Token inválido o expirado',
+      };
+    }
+
+    // Obtener todos los datos en paralelo
+    const [
+      casosPorMateria,
+      solicitantesPorGenero,
+      solicitantesPorParroquia,
+      casosPorAmbitoLegal,
+      estudiantesPorMateria,
+      profesoresPorMateria,
+      tiposDeCaso,
+    ] = await Promise.all([
+      casosQueries.getByMateria(fechaInicio, fechaFin),
+      solicitantesQueries.getByGenero(fechaInicio, fechaFin),
+      solicitantesQueries.getByParroquia(fechaInicio, fechaFin),
+      casosQueries.getByAmbitoLegalTotal(fechaInicio, fechaFin),
+      estudiantesQueries.getByMateria(fechaInicio, fechaFin),
+      profesoresQueries.getByMateria(fechaInicio, fechaFin),
+      casosQueries.getGroupedByAmbitoLegal(fechaInicio, fechaFin),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        casosPorMateria,
+        solicitantesPorGenero,
+        solicitantesPorParroquia,
+        casosPorAmbitoLegal,
+        estudiantesPorMateria,
+        profesoresPorMateria,
+        tiposDeCaso,
+      },
+    };
+  } catch (error) {
+    console.error('Error al obtener datos del informe resumen:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Error desconocido',

@@ -224,5 +224,53 @@ export const solicitantesQueries = {
             throw error;
         }
     },
+
+    /**
+     * Obtiene solicitantes agrupados por género
+     * @param fechaInicio - Fecha de inicio del rango (opcional)
+     * @param fechaFin - Fecha de fin del rango (opcional)
+     */
+    getByGenero: async (
+        fechaInicio?: string | Date,
+        fechaFin?: string | Date
+    ): Promise<Array<{ genero: string; cantidad_solicitantes: number }>> => {
+        const query = loadSQL('solicitantes/get-by-genero.sql');
+        const fechaInicioStr = fechaInicio
+            ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
+            : null;
+        const fechaFinStr = fechaFin
+            ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
+            : null;
+
+        const result: QueryResult = await pool.query(query, [
+            fechaInicioStr,
+            fechaFinStr,
+        ]);
+        return result.rows;
+    },
+
+    /**
+     * Obtiene solicitantes agrupados por parroquia
+     * @param fechaInicio - Fecha de inicio del rango (opcional)
+     * @param fechaFin - Fecha de fin del rango (opcional)
+     */
+    getByParroquia: async (
+        fechaInicio?: string | Date,
+        fechaFin?: string | Date
+    ): Promise<Array<{ nombre_parroquia: string; cantidad_solicitantes: number }>> => {
+        const query = loadSQL('solicitantes/get-by-parroquia.sql');
+        const fechaInicioStr = fechaInicio
+            ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
+            : null;
+        const fechaFinStr = fechaFin
+            ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
+            : null;
+
+        const result: QueryResult = await pool.query(query, [
+            fechaInicioStr,
+            fechaFinStr,
+        ]);
+        return result.rows;
+    },
 };
 

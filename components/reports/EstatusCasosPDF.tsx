@@ -98,15 +98,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: 'League Spartan',
   },
-  totalText: {
-    fontSize: 20,
-    fontWeight: 400,
-    color: '#000000',
-    opacity: 0.7,
-    textAlign: 'center',
-    marginBottom: 15,
-    fontFamily: 'Helvetica',
-  },
   centeredContent: {
     flexDirection: 'column',
     justifyContent: 'center',
@@ -220,12 +211,6 @@ export const EstatusCasosPDF: React.FC<EstatusCasosPDFProps> = ({
             Consulta de Casos por Estatus{fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : ''}
           </Text>
         </View>
-
-        {/* Total de Casos */}
-        {/* @ts-ignore */}
-        <Text style={styles.totalText}>
-          Total de Casos: {data.reduce((sum, item) => sum + item.cantidad_casos, 0)}
-        </Text>
 
         {/* Gráfico */}
         {/* @ts-ignore */}

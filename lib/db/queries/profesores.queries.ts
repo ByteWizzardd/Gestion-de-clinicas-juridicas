@@ -58,5 +58,34 @@ export const profesoresQueries = {
     const result: QueryResult = await pool.query(query);
     return result.rows;
   },
+
+  /**
+   * Obtiene profesores involucrados agrupados por materia (como tipos de caso)
+   * @param fechaInicio - Fecha de inicio del rango (opcional)
+   * @param fechaFin - Fecha de fin del rango (opcional)
+   */
+  getByMateria: async (
+    fechaInicio?: string | Date,
+    fechaFin?: string | Date
+  ): Promise<Array<{ 
+    nombre_materia: string; 
+    nombre_categoria: string | null; 
+    nombre_subcategoria: string | null; 
+    cantidad_profesores: number 
+  }>> => {
+    const query = loadSQL('asignaciones/get-profesores-by-materia.sql');
+    const fechaInicioStr = fechaInicio
+      ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
+      : null;
+    const fechaFinStr = fechaFin
+      ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
+      : null;
+
+    const result: QueryResult = await pool.query(query, [
+      fechaInicioStr,
+      fechaFinStr,
+    ]);
+    return result.rows;
+  },
 };
 

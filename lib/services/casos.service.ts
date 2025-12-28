@@ -119,7 +119,7 @@ export const casosService = {
                 num_ambito_legal: validatedData.num_ambito_legal,
                 fecha_solicitud: validatedData.fecha_solicitud || undefined,
                 fecha_inicio_caso: validatedData.fecha_inicio_caso,
-                id_usuario_registra: cedulaUsuario, // Pasar la cédula del usuario que registra
+                cedulaUsuarioRegistra: cedulaUsuario, // Pasar la cédula del usuario que registra (para variable de sesión del trigger)
             };
             
             // Crear el caso - el trigger automáticamente creará el cambio_estatus inicial

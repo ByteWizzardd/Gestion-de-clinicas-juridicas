@@ -129,7 +129,7 @@ export default function ReportsPage() {
     }, [filters]);
 
     const handleGenerateReport = async (reportType: string) => {
-        if (reportType === 'Tipos de Caso' || reportType === 'Reporte de Estatus de Casos') {
+        if (reportType === 'Tipos de Caso' || reportType === 'Reporte de Estatus de Casos' || reportType === 'Informe Resumen de Casos') {
             // Guardar el tipo de reporte actual
             setTipoReporteActual(reportType);
             // Mostrar modal para seleccionar rango de fechas
@@ -164,7 +164,33 @@ export default function ReportsPage() {
             const fechaInicio = fechaInicioReporte || undefined;
             const fechaFin = fechaFinReporte || undefined;
 
-            if (tipoReporteActual === 'Reporte de Estatus de Casos') {
+            if (tipoReporteActual === 'Informe Resumen de Casos') {
+                // Generar informe resumen
+                const { getInformeResumenData } = await import('@/app/actions/reports');
+                const result = await getInformeResumenData(fechaInicio, fechaFin);
+
+                if (result.success && result.data) {
+                    // Verificar si hay datos para el reporte
+                    const hasData = result.data.casosPorMateria.length > 0 
+                        || result.data.solicitantesPorGenero.length > 0
+                        || result.data.casosPorAmbitoLegal.length > 0;
+
+                    if (!hasData) {
+                        alert('No hay datos registrados para el período seleccionado. Por favor, seleccione otro rango de fechas.');
+                        return;
+                    }
+
+                    // Importar y usar la función de generación de PDF
+                    const { generateInformeResumenPDFReact } = await import('@/lib/utils/pdf-generator-react');
+                    await generateInformeResumenPDFReact(
+                        result.data,
+                        fechaInicio,
+                        fechaFin
+                    );
+                } else {
+                    alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
+                }
+            } else if (tipoReporteActual === 'Reporte de Estatus de Casos') {
                 // Generar reporte de estatus
                 const { getCasosGroupedByEstatus } = await import('@/app/actions/reports');
                 const result = await getCasosGroupedByEstatus(
@@ -215,9 +241,9 @@ export default function ReportsPage() {
                     alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
                 }
             }
-        } catch (error) {
-            console.error('Error al generar reporte:', error);
-            alert('Error al generar el reporte. Por favor, intente nuevamente.');
+            } catch (error) {
+                console.error('Error al generar reporte:', error);
+                alert('Error al generar el reporte. Por favor, intente nuevamente.');
         }
     };
 
@@ -266,9 +292,9 @@ export default function ReportsPage() {
                 transition={{ duration: prefersReducedMotion ? 0 : 0.2, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
             >
                 <ReportCard
-                    title="Informe Global de Actividad"
+                    title="Informe Resumen de Casos"
                     icon={<FileBarChart className="w-full h-full" strokeWidth={1.5} />}
-                    onGenerate={() => handleGenerateReport('Informe Global de Actividad')}
+                    onGenerate={() => handleGenerateReport('Informe Resumen de Casos')}
                     buttonColor="red"
                 />
                 <ReportCard
@@ -332,16 +358,16 @@ export default function ReportsPage() {
                     ) : (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full min-w-0">
                             <div className="w-full min-w-0">
-                                <DistributionChart data={distributionData} />
+                            <DistributionChart data={distributionData} />
                             </div>
                             <div className="w-full min-w-0">
-                                <TopCasesChart data={topCasesData} />
+                            <TopCasesChart data={topCasesData} />
                             </div>
                             <div className="w-full min-w-0">
-                                <StatusDistributionChart data={statusDistributionData} />
+                            <StatusDistributionChart data={statusDistributionData} />
                             </div>
                             <div className="w-full min-w-0">
-                                <CaseLoadTrendChart data={caseLoadTrendData} />
+                            <CaseLoadTrendChart data={caseLoadTrendData} />
                             </div>
                         </div>
                     )
@@ -377,6 +403,8 @@ export default function ReportsPage() {
                     <h2 className="text-xl font-normal text-foreground mb-4">
                         {tipoReporteActual === 'Reporte de Estatus de Casos' 
                             ? 'Rango de Fechas - Estatus de Casos'
+                            : tipoReporteActual === 'Informe Resumen de Casos'
+                            ? 'Rango de Fechas - Informe Resumen de Casos'
                             : 'Rango de Fechas - Tipos de Caso'}
                     </h2>
 
