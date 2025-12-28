@@ -196,6 +196,16 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
   // Validación de motivo
   const isMotivoValido = deleteMotivo.trim().length > 0;
 
+  // Obtener la cédula del usuario autenticado (simulación: localStorage)
+  const getCurrentUserCedula = (): string => {
+    if (typeof window !== 'undefined') {
+      return window.localStorage.getItem('cedula') || '';
+    }
+    return '';
+  };
+
+  const currentUserCedula = getCurrentUserCedula();
+
   return (
     <>
       <h1 className="text-4xl m-3 font-semibold font-primary">Gestión de Usuarios</h1>
@@ -237,15 +247,12 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
           actions={[
             {
               label: (row: unknown) => {
-                const estado = (row as { estado: string }).estado;
+                const { cedula, estado } = row as { cedula: string; estado: string };
+                if (cedula === currentUserCedula) return '';
                 const isHabilitado = estado === 'Habilitado';
                 return (
                   <span
-                    className={`flex items-center gap-2 px-2 py-1 rounded transition-colors
-                      ${isHabilitado
-                        ? ' '
-                        : ' '}
-                    `}
+                    className={`flex items-center gap-2 px-2 py-1 rounded transition-colors select-none cursor-pointer`}
                   >
                     {isHabilitado ? (
                       // SVG de candado cerrado (deshabilitar)
@@ -286,7 +293,11 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
                   </span>
                 );
               },
-              onClick: handleDisable,
+              onClick: (row: unknown) => {
+                const { cedula } = row as { cedula: string };
+                if (cedula === currentUserCedula) return;
+                handleDisable(row as Record<string, unknown>);
+              },
             },
           ]}
           onDelete={handleDelete}
