@@ -16,7 +16,7 @@ interface Usuario {
   correo_electronico: string;
   telefono_celular: string | null;
   nombre_completo: string;
-  nombre_usuario?: string;
+  nombre_usuario: string;
   habilitado_sistema?: boolean;
   tipo_usuario?: string;
   info_estudiante?: string | null;
@@ -108,16 +108,18 @@ export default function UserDetailPage() {
       <Breadcrumbs
         items={[
           { label: "Usuarios", href: "/dashboard/users" },
-          { label: usuario.cedula },
+          { label: usuario.nombre_completo },
         ]}
       />
 
-      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-2">
-        {usuario.nombre_completo}
-      </h1>
-      <p className="text-sm sm:text-base text-gray-500 mb-6 sm:mb-8">
-        Cédula: {usuario.cedula}
-      </p>
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-2" style={{ fontFamily: 'var(--font-league-spartan)' }}>
+          {usuario.nombre_completo}
+        </h1>
+        <p className="text-sm sm:text-base text-gray-500">
+          Cédula: {usuario.cedula}
+        </p>
+      </div>
 
       <Tabs tabs={tabs} defaultTab="general" />
     </div>
