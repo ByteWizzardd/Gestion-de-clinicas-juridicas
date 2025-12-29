@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Modal from '../ui/feedback/Modal';
 import Button from '../ui/Button';
+import Select from '../forms/Select';
 import { X } from 'lucide-react';
 
 interface CatalogFormModalProps {
@@ -13,7 +14,7 @@ interface CatalogFormModalProps {
     fields: {
         name: string;
         label: string;
-        type?: 'text' | 'number' | 'select';
+        type?: 'text' | 'number' | 'select' | 'date';
         required?: boolean;
         options?: { value: string; label: string }[];
     }[];
@@ -95,36 +96,50 @@ export default function CatalogFormModal({
                 <div className="space-y-4 mb-6">
                     {fields.map(field => (
                         <div key={field.name}>
-                            <label className="block text-sm font-medium text-foreground mb-1">
-                                {field.label}
-                                {field.required && <span className="text-danger ml-1">*</span>}
-                            </label>
-
                             {field.type === 'select' && field.options ? (
-                                <select
+                                <Select
+                                    label={field.required ? `${field.label} *` : field.label}
+                                    options={field.options}
                                     value={formData[field.name] || ''}
                                     onChange={(e) => updateField(field.name, e.target.value)}
-                                    className={`w-full px-4 py-2 rounded-full border ${errors[field.name] ? 'border-danger' : 'border-gray-300'
-                                        } focus:outline-none focus:ring-2 focus:ring-primary`}
-                                >
-                                    <option value="">Seleccionar...</option>
-                                    {field.options.map(opt => (
-                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                    ))}
-                                </select>
-                            ) : (
-                                <input
-                                    type={field.type || 'text'}
-                                    value={formData[field.name] || ''}
-                                    onChange={(e) => updateField(field.name, e.target.value)}
-                                    className={`w-full px-4 py-2 rounded-full border ${errors[field.name] ? 'border-danger' : 'border-gray-300'
-                                        } focus:outline-none focus:ring-2 focus:ring-primary`}
-                                    placeholder={`Ingrese ${field.label.toLowerCase()}`}
+                                    placeholder="Seleccionar..."
+                                    error={errors[field.name]}
                                 />
-                            )}
-
-                            {errors[field.name] && (
-                                <p className="text-danger text-sm mt-1">{errors[field.name]}</p>
+                            ) : field.type === 'date' ? (
+                                <>
+                                    <label className="block text-base font-normal text-foreground mb-1">
+                                        {field.label}
+                                        {field.required && <span className="text-danger ml-1">*</span>}
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={formData[field.name] || ''}
+                                        onChange={(e) => updateField(field.name, e.target.value)}
+                                        className={`w-full h-10 px-5 rounded-3xl border ${errors[field.name] ? 'border-danger' : 'border-transparent shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)]'
+                                            } bg-neutral-100 text-neutral-800/90 text-base font-normal focus:outline-none focus:ring-2 focus:ring-primary`}
+                                    />
+                                    {errors[field.name] && (
+                                        <p className="text-xs text-danger mt-1">{errors[field.name]}</p>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    <label className="block text-base font-normal text-foreground mb-1">
+                                        {field.label}
+                                        {field.required && <span className="text-danger ml-1">*</span>}
+                                    </label>
+                                    <input
+                                        type={field.type || 'text'}
+                                        value={formData[field.name] || ''}
+                                        onChange={(e) => updateField(field.name, e.target.value)}
+                                        className={`w-full h-10 px-5 rounded-3xl border ${errors[field.name] ? 'border-danger' : 'border-transparent shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)]'
+                                            } bg-neutral-100 text-neutral-800/90 text-base font-normal placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-primary`}
+                                        placeholder={`Ingrese ${field.label.toLowerCase()}`}
+                                    />
+                                    {errors[field.name] && (
+                                        <p className="text-xs text-danger mt-1">{errors[field.name]}</p>
+                                    )}
+                                </>
                             )}
                         </div>
                     ))}

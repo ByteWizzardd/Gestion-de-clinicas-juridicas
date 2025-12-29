@@ -85,7 +85,7 @@ export default function AmbitosLegalesPage() {
 
             <CatalogDetailClient
                 data={ambitos}
-                columns={["ID Materia", "Num Cat", "Num Sub", "Num Ámbito", "Nombre Ámbito", "Materia", "Categoría", "Subcategoría"]}
+                columns={["ID Materia", "Número Categoría", "Número Subcategoría", "Número Ámbito", "Nombre Ámbito", "Materia", "Categoría", "Subcategoría"]}
                 addLabel="Añadir Ámbito Legal"
                 onAddClick={() => setIsModalOpen(true)}
                 filterField="nombre_materia"

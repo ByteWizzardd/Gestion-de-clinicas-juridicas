@@ -5,7 +5,7 @@ SELECT
     a.num_subcategoria,
     a.num_ambito_legal,
     a.nombre_ambito_legal,
-    m.nombre_materia,
+    REPLACE(m.nombre_materia, 'Materia ', '') as nombre_materia,
     c.nombre_categoria,
     s.nombre_subcategoria
 FROM ambitos_legales a
