@@ -65,11 +65,11 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setPrefersReducedMotion(mediaQuery.matches);
-    
+
     const handleChange = (e: MediaQueryListEvent) => {
       setPrefersReducedMotion(e.matches);
     };
-    
+
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
@@ -112,7 +112,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   useEffect(() => {
     const cedula = searchParams.get('cedula');
     const cedulaTipo = searchParams.get('cedulaTipo');
-    
+
     if (cedula && cedulaTipo) {
       // Extraer solo los números, eliminando guiones y cualquier otro carácter
       let cedulaNumero = cedula.startsWith(cedulaTipo) ? cedula.substring(cedulaTipo.length) : cedula;
@@ -138,10 +138,10 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
     return casos.filter((caso) => {
       const normalizedSearch = normalizeText(searchValue);
-      
+
       // Buscar en todos los campos visibles en la tabla
       const responsableDisplay = caso.nombre_responsable || 'Sin asignar';
-      const matchesSearch = 
+      const matchesSearch =
         !searchValue ||
         // Código (id_caso)
         caso.id_caso.toString().includes(searchValue) ||
@@ -196,7 +196,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
     try {
       const caseData = data as any;
       const archivos = Array.isArray(caseData.archivos) ? caseData.archivos : [];
-      
+
       const casoDataSinArchivos = {
         fecha_solicitud: caseData.fecha_solicitud,
         fecha_inicio_caso: caseData.fecha_inicio_caso,
@@ -210,14 +210,14 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
         id_nucleo: caseData.id_nucleo,
         observaciones: caseData.observaciones,
       };
-      
+
       const result = await createCasoAction(casoDataSinArchivos);
 
       if (!result.success) {
         const errorMessage = result.error?.message || 'Error al crear el caso';
         const errorCode = result.error?.code || 'UNKNOWN_ERROR';
         const errorFields = result.error?.fields;
-        
+
         if (errorFields) {
           const fieldErrors = Object.entries(errorFields)
             .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
@@ -231,14 +231,14 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
       if (archivos.length > 0 && result.success && result.data) {
         const idCaso = result.data.id_caso || (result.data as any).id_caso;
-        
+
         if (!idCaso || isNaN(Number(idCaso))) {
           alert('Caso creado exitosamente, pero no se pudo obtener el ID del caso para subir los archivos');
           setIsModalOpen(false);
           fetchCasos();
           return;
         }
-        
+
         const formData = new FormData();
         archivos.forEach((archivo: File) => {
           formData.append('archivos', archivo);
@@ -246,7 +246,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
         try {
           const uploadResult = await uploadSoportesAction(Number(idCaso), formData);
-          
+
           if (!uploadResult.success) {
             alert(`Caso creado exitosamente, pero hubo un error al subir los archivos: ${uploadResult.error?.message || 'Error desconocido'}`);
           }
@@ -266,7 +266,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
   return (
     <>
-      <motion.div 
+      <motion.div
         className="mb-4 md:mb-6 mt-4"
         initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -280,8 +280,8 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
       >
-        <CaseTools 
-          addLabel="Añadir Caso" 
+        <CaseTools
+          addLabel="Añadir Caso"
           onAddClick={handleAddCase}
           searchValue={searchValue}
           onSearchChange={setSearchValue}
@@ -318,7 +318,24 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
             data={filteredCasos.map((caso) => ({
               codigo: caso.id_caso.toString(),
               solicitante: caso.nombre_completo_solicitante || caso.cedula,
-              materia: caso.nombre_materia || caso.tramite || 'N/A',
+              materia: (() => {
+                const materia = caso.nombre_materia || caso.tramite || 'Sin materia';
+                const categoria = caso.nombre_categoria?.trim() || '';
+                const subcategoria = caso.nombre_subcategoria?.trim() || '';
+
+                const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría' && categoria.toLowerCase() !== 'n/a';
+                const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría' && subcategoria.toLowerCase() !== 'n/a';
+
+                let text = materia;
+                if (hasCategoria && hasSubcategoria) {
+                  text += ` - ${categoria} ${subcategoria}`;
+                } else if (hasCategoria) {
+                  text += ` - ${categoria}`;
+                } else if (hasSubcategoria) {
+                  text += ` - ${subcategoria}`;
+                }
+                return text;
+              })(),
               estatus: caso.estatus || 'N/A',
               responsable: caso.nombre_responsable || 'Sin asignar',
             }))}

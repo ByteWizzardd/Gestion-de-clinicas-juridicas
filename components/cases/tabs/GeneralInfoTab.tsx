@@ -103,18 +103,22 @@ export default function GeneralInfoTab({ caso }: GeneralInfoTabProps) {
               </p>
             </div>
           )}
-          {caso.nombre_categoria && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Categoría</label>
-              <p className="text-base text-gray-900 mt-1">{caso.nombre_categoria}</p>
-            </div>
-          )}
-          {caso.nombre_subcategoria && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Subcategoría</label>
-              <p className="text-base text-gray-900 mt-1">{caso.nombre_subcategoria}</p>
-            </div>
-          )}
+          {caso.nombre_categoria &&
+            caso.nombre_categoria.toLowerCase() !== 'sin categoría' &&
+            caso.nombre_categoria.toLowerCase() !== 'n/a' && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Categoría</label>
+                <p className="text-base text-gray-900 mt-1">{caso.nombre_categoria}</p>
+              </div>
+            )}
+          {caso.nombre_subcategoria &&
+            caso.nombre_subcategoria.toLowerCase() !== 'sin subcategoría' &&
+            caso.nombre_subcategoria.toLowerCase() !== 'n/a' && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Subcategoría</label>
+                <p className="text-base text-gray-900 mt-1">{caso.nombre_subcategoria}</p>
+              </div>
+            )}
         </div>
         {caso.observaciones && (
           <div className="mt-4">
@@ -136,7 +140,7 @@ export default function GeneralInfoTab({ caso }: GeneralInfoTabProps) {
               <label className="text-sm font-medium text-gray-500">Nombre Completo</label>
               <p className="text-base mt-1">
                 {caso.cedula ? (
-                  <Link 
+                  <Link
                     href={`/dashboard/applicants/${caso.cedula}`}
                     className="text-primary hover:underline font-medium transition-colors"
                   >
