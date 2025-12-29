@@ -344,7 +344,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         message={
           <div>
             <p>¿Está seguro de que desea eliminar al usuario <b>{itemToDelete?.nombre_completo || ''}</b>?</p>
-            <p className="mt-2 text-danger font-semibold">Esta acción es irreversible.</p>
+            <p className="mt-2 text-danger font-semibold">Esta acción es irreversible y solo puede realizarla un coordinador.</p>
             <label className="block mt-4 mb-2 font-medium">Motivo de la eliminación:</label>
             <textarea
               className="w-full border rounded p-2"

@@ -1,6 +1,9 @@
 
+
 import Button from "../ui/Button";
 import Modal from "../ui/feedback/Modal";
+import Input from "../forms/Input";
+import Select from "../forms/Select";
 
 
 import { useEffect, useState } from 'react';
@@ -44,105 +47,80 @@ export function EditUserModal({ isOpen, onClose, usuario, onSave }: EditUserModa
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Editar Usuario">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium">Correo</label>
-          <input
-            name="correo"
-            value={typeof form.correo === 'string' ? form.correo : ''}
-            onChange={handleChange}
-            className="w-full border rounded p-2"
-          />
-        </div>
+        <Input
+          label="Correo"
+          name="correo"
+          value={typeof form.correo === 'string' ? form.correo : ''}
+          onChange={handleChange}
+        />
         
-        <div>
-          <label className="block text-sm font-medium">Nombre completo</label>
-          <input
-            name="nombre_completo"
-            value={form.nombre_completo}
-            onChange={handleChange}
-            className="w-full border rounded p-2"
-          />
-        </div>
+        <Input
+          label="Nombre completo"
+          name="nombre_completo"
+          value={form.nombre_completo as string}
+          onChange={handleChange}
+        />
 
-        <div>
-          <label className="block text-sm font-medium">Nombre de usuario</label>
-          <input
-            name="nombre_usuario"
-            value={form.nombre_usuario}
-            onChange={handleChange}
-            className="w-full border rounded p-2"
-          />
-        </div>
+        <Input
+          label="Nombre de usuario"
+          name="nombre_usuario"
+          value={form.nombre_usuario as string}
+          onChange={handleChange}
+        />
 
-        <div>
-          <label className="block text-sm font-medium">Teléfono</label>
-          <input
-            name="telefono"
-            value={typeof form.telefono === 'string' ? form.telefono : ''}
-            onChange={handleChange}
-            className="w-full border rounded p-2"
-          />
-        </div>
+        <Input
+          label="Teléfono"
+          name="telefono"
+          value={typeof form.telefono === 'string' ? form.telefono : ''}
+          onChange={handleChange}
+        />
 
-        <div>
-          <label className="block text-sm font-medium">Tipo de usuario</label>
-          <select
-            name="tipo_usuario"
-            value={form.tipo_usuario}
-            onChange={handleChange}
-            className="w-full border rounded p-2"
-          >
-            <option value="Coordinador">Coordinador</option>
-            <option value="Profesor">Profesor</option>
-            <option value="Estudiante">Estudiante</option>
-          </select>
-        </div>
+        <Select
+          label="Tipo de usuario"
+          value={form.tipo_usuario}
+          onChange={(e) =>
+            setForm({ ...form, tipo_usuario: e.target.value })
+          }
+          options={[
+            { value: 'Coordinador', label: 'Coordinador' },
+            { value: 'Profesor', label: 'Profesor' },
+            { value: 'Estudiante', label: 'Estudiante' },
+          ]}
+        />
         
         {form.rol !== undefined && (
-          <div>
-            <label className="block text-sm font-medium">Rol</label>
-            <input
-              name="rol"
-              value={form.rol as string || ''}
-              onChange={handleChange}
-              className="w-full border rounded p-2"
-            />
-          </div>
+          <Input
+            label="Rol"
+            name="rol"
+            value={form.rol as string || ''}
+            onChange={handleChange}
+          />
         )}
 
         {/* Información adicional según tipo de usuario */}
         {form.tipo_usuario === 'Profesor' && (
-          <div>
-            <label className="block text-sm font-medium">Información de Profesor</label>
-            <input
-              name="info_profesor"
-              value={form.info_profesor as string || ''}
-              onChange={handleChange}
-              className="w-full border rounded p-2"
-            />
-          </div>
+          <Input
+            label="Información de Profesor"
+            name="info_profesor"
+            value={form.info_profesor as string || ''}
+            onChange={handleChange}
+          />
         )}
         {form.tipo_usuario === 'Estudiante' && (
-          <div>
-            <label className="block text-sm font-medium">Información de Estudiante</label>
-            <input
-              name="info_estudiante"
-              value={form.info_estudiante as string || ''}
-              onChange={handleChange}
-              className="w-full border rounded p-2"
-            />
-          </div>
+          <Input
+            label="Información de Estudiante"
+            name="info_estudiante"
+            value={form.info_estudiante as string || ''}
+            onChange={handleChange}
+          />
         )}
         {form.tipo_usuario === 'Coordinador' && (
-          <div>
-            <label className="block text-sm font-medium">Información de Coordinador</label>
-            <input
-              name="info_coordinador"
-              value={form.info_coordinador as string || ''}
-              onChange={handleChange}
-              className="w-full border rounded p-2"
-            />
-          </div>
+          <Input
+            label="Información de Coordinador"
+            name="info_coordinador"
+            value={form.info_coordinador as string || ''}
+            onChange={handleChange}
+          />
         )}
         
         <hr className="my-6 border-t border-gray-200" />
