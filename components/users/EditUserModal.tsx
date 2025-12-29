@@ -141,7 +141,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
                   value={typeof form.term === 'string' ? form.term : ''}
                   onChange={(e) => setForm({ ...form, term: e.target.value })}
                   options={terms.map((t) => ({ value: t.term, label: t.term }))}
-                  placeholder="Seleccionar term"
                 />
                 <Select
                   label="Tipo de Estudiante"
@@ -163,7 +162,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
                   value={typeof form.term === 'string' ? form.term : ''}
                   onChange={(e) => setForm({ ...form, term: e.target.value })}
                   options={terms.map((t) => ({ value: t.term, label: t.term }))}
-                  placeholder="Seleccionar term"
                 />
                 <Select
                   label="Tipo de Profesor"
@@ -182,7 +180,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
                 value={typeof form.term === 'string' ? form.term : ''}
                 onChange={(e) => setForm({ ...form, term: e.target.value })}
                 options={terms.map((t) => ({ value: t.term, label: t.term }))}
-                placeholder="Seleccionar term"
               />
             )}
           </div>

@@ -6,7 +6,7 @@ import ConfirmModal from '../ui/feedback/ConfirmModal';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import BulkUploadModal from './BulkUploadModal';
-import { getUsuariosAction, deleteUsuarioFisicoAction, toggleHabilitadoUsuarioAction, getUsuarioCompleteByCedulaAction } from '@/app/actions/usuarios';
+import { getUsuariosAction, deleteUsuarioFisicoAction, toggleHabilitadoUsuarioAction, getUsuarioInfoByCedulaAction } from '@/app/actions/usuarios';
 import EditUserModal from './EditUserModal';
 
 // Simulación: obtener tipo de usuario actual (debería venir de contexto/auth real)
@@ -116,13 +116,20 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
 
   const handleEdit = async (data: Record<string, unknown>) => {
     const usuario = data as Usuario;
-    // Buscar usuario completo por cédula antes de abrir el modal
-    const result = await getUsuarioCompleteByCedulaAction(usuario.cedula);
+    // Buscar usuario completo con info extendida (incluyendo TERM)
+    const result = await getUsuarioInfoByCedulaAction(usuario.cedula);
     if (result.success && result.data) {
       setUsuarioToEdit({
         ...usuario,
         correo_electronico: result.data.correo_electronico,
         telefono: result.data.telefono_celular,
+        term:
+          result.data.estudiante?.term ||
+          result.data.profesor?.term ||
+          result.data.coordinador?.term || '',
+        tipo_estudiante: result.data.estudiante?.tipo_estudiante || '',
+        tipo_profesor: result.data.profesor?.tipo_profesor || '',
+        nrc: result.data.estudiante?.nrc || '',
       });
     } else {
       setUsuarioToEdit(usuario); // fallback
@@ -194,29 +201,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
   const handleBulkUploadSuccess = () => {
     loadUsuarios();
   };
-
-  // Formatear información adicional para mostrar en la tabla
-  /* 
-  const formatInfo = (usuario: Usuario): string => {
-    if (usuario.tipo_usuario === 'Estudiante' && usuario.info_estudiante) {
-      return typeof usuario.info_estudiante === 'string'
-        ? usuario.info_estudiante
-        : JSON.stringify(usuario.info_estudiante);
-    }
-    if (usuario.tipo_usuario === 'Profesor' && usuario.info_profesor) {
-      return typeof usuario.info_profesor === 'string'
-        ? usuario.info_profesor
-        : JSON.stringify(usuario.info_profesor);
-    }
-    if (usuario.tipo_usuario === 'Coordinador' && usuario.info_coordinador) {
-      return typeof usuario.info_coordinador === 'string'
-        ? usuario.info_coordinador
-        : JSON.stringify(usuario.info_coordinador);
-    }
-    return '-';
-  };
-  */
- 
+  
   // Validación de motivo
   const isMotivoValido = deleteMotivo.trim().length > 0;
 
