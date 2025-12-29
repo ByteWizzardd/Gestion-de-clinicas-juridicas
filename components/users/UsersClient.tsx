@@ -7,6 +7,7 @@ import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import BulkUploadModal from './BulkUploadModal';
 import { getUsuariosAction, deleteUsuarioFisicoAction, toggleHabilitadoUsuarioAction } from '@/app/actions/usuarios';
+import { EditUserModal } from './EditUserModal';
 
 // Simulación: obtener tipo de usuario actual (debería venir de contexto/auth real)
 function getCurrentUserTipo(): string {
@@ -30,6 +31,8 @@ interface UsersClientProps {
 }
 
 export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) {
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [usuarioToEdit, setUsuarioToEdit] = useState<Usuario | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<Usuario | null>(null);
   const [deleteMotivo, setDeleteMotivo] = useState('');
@@ -112,7 +115,15 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
 
   const handleEdit = (data: Record<string, unknown>) => {
     const usuario = data as Usuario;
-    alert(`Editar usuario: ${usuario.nombre_completo}`);
+    setUsuarioToEdit(usuario);
+    setShowEditModal(true);
+  };
+
+  const handleSaveEdit = (usuarioEditado: Usuario) => {
+    // Aquí deberías llamar a la acción de actualización real
+    setUsuarios((prev) => prev.map(u => u.cedula === usuarioEditado.cedula ? { ...u, ...usuarioEditado } : u));
+    setShowEditModal(false);
+    setUsuarioToEdit(null);
   };
 
   const handleDisable = async (data: Record<string, unknown>) => {
@@ -308,10 +319,18 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         />
       )}
 
+
       <BulkUploadModal
         isOpen={isBulkUploadModalOpen}
         onClose={() => setIsBulkUploadModalOpen(false)}
         onSuccess={handleBulkUploadSuccess}
+      />
+
+      <EditUserModal
+        isOpen={showEditModal}
+        onClose={() => { setShowEditModal(false); setUsuarioToEdit(null); }}
+        usuario={usuarioToEdit}
+        onSave={handleSaveEdit}
       />
 
       <ConfirmModal
@@ -325,7 +344,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         message={
           <div>
             <p>¿Está seguro de que desea eliminar al usuario <b>{itemToDelete?.nombre_completo || ''}</b>?</p>
-            <p className="mt-2 text-danger font-semibold">Esta acción es irreversible y solo puede realizarla un coordinador.</p>
+            <p className="mt-2 text-danger font-semibold">Esta acción es irreversible.</p>
             <label className="block mt-4 mb-2 font-medium">Motivo de la eliminación:</label>
             <textarea
               className="w-full border rounded p-2"
