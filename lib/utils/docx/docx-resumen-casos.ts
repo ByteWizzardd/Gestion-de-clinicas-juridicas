@@ -103,7 +103,8 @@ function createPageTable(
     topContent: any[],
     legendUint8?: Uint8Array,
     legendInsertWidth?: number,
-    legendInsertHeight?: number
+    legendInsertHeight?: number,
+    vAlign: any = VerticalAlign.CENTER
 ): Table {
     const rows = [
         new TableRow({
@@ -124,7 +125,7 @@ function createPageTable(
             children: [
                 new TableCell({
                     children: topContent,
-                    verticalAlign: VerticalAlign.CENTER,
+                    verticalAlign: vAlign,
                     borders: {
                         top: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
                         bottom: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
@@ -222,7 +223,7 @@ export async function generateResumenCasosDOCX(
                 const bannerBase64 = await generateBannerImage(reportTitle);
                 topContent.push(new Paragraph({
                     alignment: AlignmentType.CENTER,
-                    spacing: { after: 100 },
+                    spacing: { after: 60 },
                     children: [new ImageRun({ data: base64ToUint8Array(bannerBase64.split(',')[1]), transformation: { width: 830, height: 34 } } as any)],
                 }));
             }
@@ -235,13 +236,13 @@ export async function generateResumenCasosDOCX(
                 children: [new ImageRun({ data: base64ToUint8Array(titleImg.split(',')[1]), transformation: { width: 800, height: 44 } } as any)],
             }));
 
-            // Gráfica
+            // Gráfica (Dimensiones ajustadas para mantener aspect ratio y evitar distorsión en la primera página)
             topContent.push(new Paragraph({
                 alignment: AlignmentType.CENTER,
-                children: [new ImageRun({ data: chartUint8, transformation: { width: 830, height: 550 } } as any)],
+                children: [new ImageRun({ data: chartUint8, transformation: { width: isFirstPage ? 650 : 830, height: isFirstPage ? 432 : 550 } } as any)],
             }));
 
-            const pageTable = createPageTable(topContent, legendUint8, legendWidth, legendHeight);
+            const pageTable = createPageTable(topContent, legendUint8, legendWidth, legendHeight, VerticalAlign.CENTER);
             sections.push(createLandscapePageSection(pageTable));
             isFirstPage = false;
         }
@@ -338,7 +339,7 @@ export async function generateResumenCasosDOCX(
             // Logo
             topContent.push(new Paragraph({
                 alignment: AlignmentType.LEFT,
-                spacing: { before: 240, after: 120 },
+                spacing: { before: isFirstPage ? 120 : 240, after: 120 },
                 indent: { left: 200 },
                 children: [new ImageRun({ data: logoUint8, transformation: { width: 260, height: 45.5 } } as any)],
             }));
@@ -351,13 +352,16 @@ export async function generateResumenCasosDOCX(
                 children: [new ImageRun({ data: base64ToUint8Array(titleImg.split(',')[1]), transformation: { width: 800, height: 44 } } as any)],
             }));
 
+            // Espacio vacío para bajar la gráfica considerablemente
+            topContent.push(new Paragraph({ spacing: { before: 1200 } }));
+
             // Gráfica (Aspect ratio corregido para evitar distorsión)
             topContent.push(new Paragraph({
                 alignment: AlignmentType.CENTER,
                 children: [new ImageRun({ data: chartUint8, transformation: { width: 850, height: 366 } } as any)],
             }));
 
-            const pageTable = createPageTable(topContent);
+            const pageTable = createPageTable(topContent, undefined, undefined, undefined, VerticalAlign.TOP);
             sections.push(createLandscapePageSection(pageTable));
         }
 
