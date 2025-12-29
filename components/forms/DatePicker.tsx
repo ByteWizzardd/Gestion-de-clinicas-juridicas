@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { createPortal } from 'react-dom';
 
 interface DatePickerProps {
   value: string;
@@ -15,13 +16,16 @@ interface DatePickerProps {
 export default function DatePicker({ value, onChange, error, required, disabled = false }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'calendar' | 'year' | 'month'>('year');
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+  const [mounted, setMounted] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
+  
   const [currentMonth, setCurrentMonth] = useState(() => {
     if (value) {
-      // Parsear la fecha como local para evitar problemas de zona horaria
       const parts = value.split('-');
       if (parts.length === 3) {
         const year = parseInt(parts[0], 10);
-        const month = parseInt(parts[1], 10) - 1; // Los meses en JS son 0-indexed
+        const month = parseInt(parts[1], 10) - 1;
         const day = parseInt(parts[2], 10);
         const date = new Date(year, month, day);
         return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -31,13 +35,49 @@ export default function DatePicker({ value, onChange, error, required, disabled 
     }
     return new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   });
+
   const [yearRange, setYearRange] = useState(() => {
     const currentYear = value ? currentMonth.getFullYear() : new Date().getFullYear();
     const startYear = Math.floor(currentYear / 10) * 10;
     return { start: startYear, end: startYear + 9 };
   });
+
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [openUpward, setOpenUpward] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Calcular posición para el Portal
+  const updatePosition = () => {
+    if (dropdownRef.current) {
+      const rect = dropdownRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const calendarHeight = 380;
+
+      const shouldOpenUp = (spaceBelow < calendarHeight && spaceAbove > spaceBelow) || (spaceAbove > spaceBelow && spaceBelow < 450);
+      setOpenUpward(shouldOpenUp);
+
+      setCoords({
+        top: shouldOpenUp ? rect.top + window.scrollY : rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      updatePosition();
+      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('resize', updatePosition);
+    }
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [isOpen]);
 
   const monthNames = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -49,7 +89,6 @@ export default function DatePicker({ value, onChange, error, required, disabled 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Obtener el primer día del mes y cuántos días tiene
   const firstDayOfMonth = new Date(
     currentMonth.getFullYear(),
     currentMonth.getMonth(),
@@ -61,10 +100,8 @@ export default function DatePicker({ value, onChange, error, required, disabled 
     0
   );
   const daysInMonth = lastDayOfMonth.getDate();
-  // Ajustar para que la semana empiece en lunes (0 = lunes, 6 = domingo)
   const startingDayOfWeek = firstDayOfMonth.getDay() === 0 ? 6 : firstDayOfMonth.getDay() - 1;
 
-  // Días del mes anterior para completar la primera semana
   const prevMonth = new Date(
     currentMonth.getFullYear(),
     currentMonth.getMonth() - 1,
@@ -72,11 +109,10 @@ export default function DatePicker({ value, onChange, error, required, disabled 
   );
   const daysInPrevMonth = prevMonth.getDate();
 
-  // Días del mes siguiente para completar la última semana
-  const totalCells = 42; // 6 semanas × 7 días
+  const rowsNeeded = Math.ceil((startingDayOfWeek + daysInMonth) / 7);
+  const totalCells = rowsNeeded * 7;
   const daysInNextMonth = totalCells - startingDayOfWeek - daysInMonth;
 
-  // Verificar si es el día actual
   const isToday = (day: number, isCurrentMonth: boolean) => {
     if (!isCurrentMonth) return false;
     const date = new Date(
@@ -87,15 +123,13 @@ export default function DatePicker({ value, onChange, error, required, disabled 
     return date.getTime() === today.getTime();
   };
 
-  // Verificar si es el día seleccionado
   const isSelected = (day: number, isCurrentMonth: boolean) => {
     if (!value || !isCurrentMonth) return false;
-    // Parsear la fecha como local para evitar problemas de zona horaria
     const parts = value.split('-');
     let selectedDate: Date;
     if (parts.length === 3) {
       const year = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1; // Los meses en JS son 0-indexed
+      const month = parseInt(parts[1], 10) - 1;
       const dayValue = parseInt(parts[2], 10);
       selectedDate = new Date(year, month, dayValue);
     } else {
@@ -112,35 +146,19 @@ export default function DatePicker({ value, onChange, error, required, disabled 
   };
 
   const handlePrevMonth = () => {
-    setCurrentMonth(new Date(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth() - 1,
-      1
-    ));
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
   };
 
   const handleNextMonth = () => {
-    setCurrentMonth(new Date(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth() + 1,
-      1
-    ));
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
   };
 
   const handlePrevYear = () => {
-    setCurrentMonth(new Date(
-      currentMonth.getFullYear() - 1,
-      currentMonth.getMonth(),
-      1
-    ));
+    setCurrentMonth(new Date(currentMonth.getFullYear() - 1, currentMonth.getMonth(), 1));
   };
 
   const handleNextYear = () => {
-    setCurrentMonth(new Date(
-      currentMonth.getFullYear() + 1,
-      currentMonth.getMonth(),
-      1
-    ));
+    setCurrentMonth(new Date(currentMonth.getFullYear() + 1, currentMonth.getMonth(), 1));
   };
 
   const handlePrevYearRange = () => {
@@ -152,7 +170,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
   };
 
   const handleYearClick = (year: number) => {
-    setCurrentMonth(new Date(year, 0, 1)); // Establecer el mes a enero (0) para evitar problemas
+    setCurrentMonth(new Date(year, 0, 1));
     setViewMode('month');
   };
 
@@ -172,11 +190,9 @@ export default function DatePicker({ value, onChange, error, required, disabled 
     }
   };
 
-  // Resetear a vista de año cuando se abre el picker y calcular posición
   useEffect(() => {
-    if (isOpen && dropdownRef.current) {
+    if (isOpen) {
       setViewMode('year');
-      // Obtener el año actual sin depender de currentMonth en las dependencias
       let yearToUse: number;
       if (value) {
         const parts = value.split('-');
@@ -191,12 +207,6 @@ export default function DatePicker({ value, onChange, error, required, disabled 
       }
       const startYear = Math.floor(yearToUse / 10) * 10;
       setYearRange({ start: startYear, end: startYear + 9 });
-
-      // Calcular si hay espacio suficiente abajo
-      const rect = dropdownRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const calendarHeight = 400; // Altura aproximada del calendario
-      setOpenUpward(spaceBelow < calendarHeight && rect.top > calendarHeight);
     }
   }, [isOpen, value]);
 
@@ -204,39 +214,16 @@ export default function DatePicker({ value, onChange, error, required, disabled 
     let clickedDate: Date;
     if (!isCurrentMonth) {
       if (day > 15) {
-        // Es del mes anterior
-        clickedDate = new Date(
-          currentMonth.getFullYear(),
-          currentMonth.getMonth() - 1,
-          day
-        );
-        setCurrentMonth(new Date(
-          currentMonth.getFullYear(),
-          currentMonth.getMonth() - 1,
-          1
-        ));
+        clickedDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, day);
+        setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
       } else {
-        // Es del mes siguiente
-        clickedDate = new Date(
-          currentMonth.getFullYear(),
-          currentMonth.getMonth() + 1,
-          day
-        );
-        setCurrentMonth(new Date(
-          currentMonth.getFullYear(),
-          currentMonth.getMonth() + 1,
-          1
-        ));
+        clickedDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, day);
+        setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
       }
     } else {
-      clickedDate = new Date(
-        currentMonth.getFullYear(),
-        currentMonth.getMonth(),
-        day
-      );
+      clickedDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
     }
 
-    // Formatear la fecha como YYYY-MM-DD
     const year = clickedDate.getFullYear();
     const month = String(clickedDate.getMonth() + 1).padStart(2, '0');
     const dayStr = String(clickedDate.getDate()).padStart(2, '0');
@@ -245,10 +232,12 @@ export default function DatePicker({ value, onChange, error, required, disabled 
     setViewMode('calendar');
   };
 
-  // Cerrar al hacer clic fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        // Solo cerrar si el clic no es dentro del portal del calendario
+        const portal = document.querySelector('.datepicker-portal');
+        if (portal && portal.contains(event.target as Node)) return;
         setIsOpen(false);
       }
     };
@@ -256,21 +245,15 @@ export default function DatePicker({ value, onChange, error, required, disabled 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
-  // Actualizar el mes cuando cambia el valor
   useEffect(() => {
     if (value) {
-      // Parsear la fecha como local para evitar problemas de zona horaria
-      // Si el formato es YYYY-MM-DD, parsearlo manualmente
       const parts = value.split('-');
       if (parts.length === 3) {
         const year = parseInt(parts[0], 10);
-        const month = parseInt(parts[1], 10) - 1; // Los meses en JS son 0-indexed
+        const month = parseInt(parts[1], 10) - 1;
         const day = parseInt(parts[2], 10);
         const date = new Date(year, month, day);
         setCurrentMonth(new Date(date.getFullYear(), date.getMonth(), 1));
@@ -283,33 +266,24 @@ export default function DatePicker({ value, onChange, error, required, disabled 
 
   const formatDisplayDate = (dateString: string) => {
     if (!dateString) return 'dd/mm/aaaa';
-    // Parsear la fecha como local para evitar problemas de zona horaria
     const parts = dateString.split('-');
     if (parts.length === 3) {
       const year = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1; // Los meses en JS son 0-indexed
+      const month = parseInt(parts[1], 10) - 1;
       const day = parseInt(parts[2], 10);
       const date = new Date(year, month, day);
       const dayStr = String(date.getDate()).padStart(2, '0');
       const monthStr = String(date.getMonth() + 1).padStart(2, '0');
-      const yearStr = date.getFullYear();
-      return `${dayStr}/${monthStr}/${yearStr}`;
+      return `${dayStr}/${monthStr}/${date.getFullYear()}`;
     }
-    // Fallback al método anterior si el formato no es YYYY-MM-DD
     const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
+    return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
   };
 
   return (
     <div className="relative" ref={dropdownRef}>
       <div
-        onClick={() => {
-          if (disabled) return;
-          setIsOpen(!isOpen);
-        }}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
         className={`
           w-full h-[40px] pl-12 pr-4 rounded-full border flex items-center relative
           ${error ? 'border-danger' : 'border-gray-300'}
@@ -325,33 +299,43 @@ export default function DatePicker({ value, onChange, error, required, disabled 
         </span>
       </div>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: openUpward ? 10 : -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: openUpward ? 10 : -10, scale: 0.95 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className={`absolute left-0 bg-white border border-gray-300 rounded-2xl shadow-lg z-[100] p-4 w-80 ${
-              openUpward ? 'bottom-full mb-2' : 'top-full mt-2'
-            }`}
-          >
+      {mounted && isOpen && createPortal(
+        <motion.div
+          initial={{ opacity: 0, y: openUpward ? 10 : -10, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: openUpward ? 10 : -10, scale: 0.95 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          className="datepicker-portal"
+          style={{
+            position: 'fixed',
+            top: openUpward ? coords.top - 8 : coords.top + 8,
+            left: coords.left,
+            width: 280,
+            zIndex: 9999,
+            pointerEvents: 'auto',
+            transform: openUpward ? 'translateY(-100%)' : 'none',
+            backgroundColor: 'white',
+            border: '1px solid #D1D5DB',
+            borderRadius: '1rem',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            padding: '0.75rem'
+          }}
+        >
           {/* Header con navegación */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <button
               type="button"
               onClick={viewMode === 'calendar' ? handlePrevMonth : viewMode === 'month' ? handlePrevYear : handlePrevYearRange}
               className="p-1 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
-              aria-label={viewMode === 'calendar' ? 'Mes anterior' : viewMode === 'month' ? 'Año anterior' : 'Década anterior'}
             >
-              <ChevronLeft className="w-5 h-5 text-foreground" />
+              <ChevronLeft className="w-4 h-4 text-foreground" />
             </button>
             <button
               type="button"
               onClick={handleHeaderClick}
-              className="px-3 py-1 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+              className="px-2 py-1 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
             >
-              <h3 className="text-base font-semibold text-foreground">
+              <h3 className="text-sm font-semibold text-foreground">
                 {viewMode === 'calendar' && `${monthNames[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`}
                 {viewMode === 'month' && `${currentMonth.getFullYear()}`}
                 {viewMode === 'year' && `${yearRange.start} - ${yearRange.end}`}
@@ -361,71 +345,39 @@ export default function DatePicker({ value, onChange, error, required, disabled 
               type="button"
               onClick={viewMode === 'calendar' ? handleNextMonth : viewMode === 'month' ? handleNextYear : handleNextYearRange}
               className="p-1 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
-              aria-label={viewMode === 'calendar' ? 'Mes siguiente' : viewMode === 'month' ? 'Año siguiente' : 'Década siguiente'}
             >
-              <ChevronRight className="w-5 h-5 text-foreground" />
+              <ChevronRight className="w-4 h-4 text-foreground" />
             </button>
           </div>
 
           {/* Vista de calendario */}
           {viewMode === 'calendar' && (
-            <div className="grid grid-cols-7 gap-1">
-              {/* Días de la semana */}
+            <div className="grid grid-cols-7 gap-0.5">
               {dayNames.map((day) => (
-                <div
-                  key={day}
-                  className="text-xs font-medium text-gray-500 text-center py-2"
-                >
-                  {day}
-                </div>
+                <div key={day} className="text-[10px] font-medium text-gray-500 text-center py-1">{day}</div>
               ))}
-
-              {/* Días del mes anterior */}
               {Array.from({ length: startingDayOfWeek }, (_, i) => {
                 const day = daysInPrevMonth - startingDayOfWeek + i + 1;
                 return (
-                  <button
-                    type="button"
-                    key={`prev-${day}`}
-                    onClick={() => handleDayClick(day, false)}
-                    className="text-base text-gray-400 hover:bg-gray-100 rounded-md py-2 transition-colors cursor-pointer"
-                  >
+                  <button key={`prev-${day}`} type="button" onClick={() => handleDayClick(day, false)} className="text-sm text-gray-400 hover:bg-gray-100 rounded-md py-1.5">
                     {day}
                   </button>
                 );
               })}
-
-              {/* Días del mes actual */}
               {Array.from({ length: daysInMonth }, (_, i) => {
                 const day = i + 1;
                 const todayClass = isToday(day, true) ? 'font-semibold' : '';
-                const selectedClass = isSelected(day, true)
-                  ? 'bg-primary text-white hover:bg-primary'
-                  : 'hover:bg-gray-100';
+                const selectedClass = isSelected(day, true) ? 'bg-primary text-white' : 'hover:bg-gray-100';
                 return (
-                  <button
-                    type="button"
-                    key={day}
-                    onClick={() => handleDayClick(day, true)}
-                    className={`text-base ${todayClass} ${selectedClass} rounded-md py-2 transition-colors cursor-pointer ${
-                      isSelected(day, true) ? '' : 'text-foreground'
-                    }`}
-                  >
+                  <button key={day} type="button" onClick={() => handleDayClick(day, true)} className={`text-sm ${todayClass} ${selectedClass} rounded-md py-1.5`}>
                     {day}
                   </button>
                 );
               })}
-
-              {/* Días del mes siguiente */}
               {Array.from({ length: daysInNextMonth }, (_, i) => {
                 const day = i + 1;
                 return (
-                  <button
-                    type="button"
-                    key={`next-${day}`}
-                    onClick={() => handleDayClick(day, false)}
-                    className="text-base text-gray-400 hover:bg-gray-100 rounded-md py-2 transition-colors cursor-pointer"
-                  >
+                  <button key={`next-${day}`} type="button" onClick={() => handleDayClick(day, false)} className="text-sm text-gray-400 hover:bg-gray-100 rounded-md py-1.5">
                     {day}
                   </button>
                 );
@@ -436,23 +388,16 @@ export default function DatePicker({ value, onChange, error, required, disabled 
           {/* Vista de meses */}
           {viewMode === 'month' && (
             <div className="grid grid-cols-3 gap-2">
-              {monthNames.map((month, index) => {
-                const isCurrentMonth = index === currentMonth.getMonth();
-                return (
-                  <button
-                    type="button"
-                    key={month}
-                    onClick={() => handleMonthClick(index)}
-                    className={`px-3 py-2 text-sm rounded-md transition-colors cursor-pointer ${
-                      isCurrentMonth
-                        ? 'bg-primary text-white font-semibold'
-                        : 'hover:bg-gray-100 text-foreground'
-                    }`}
-                  >
-                    {month}
-                  </button>
-                );
-              })}
+              {monthNames.map((month, index) => (
+                <button
+                  key={month}
+                  type="button"
+                  onClick={() => handleMonthClick(index)}
+                  className={`px-3 py-2 text-sm rounded-md transition-colors ${index === currentMonth.getMonth() ? 'bg-primary text-white font-semibold' : 'hover:bg-gray-100'}`}
+                >
+                  {month}
+                </button>
+              ))}
             </div>
           )}
 
@@ -462,20 +407,12 @@ export default function DatePicker({ value, onChange, error, required, disabled 
               {Array.from({ length: 12 }, (_, i) => {
                 const year = yearRange.start + i;
                 const isCurrentYear = year === currentMonth.getFullYear();
-                const currentYear = new Date().getFullYear();
-                const isThisYear = year === currentYear;
                 return (
                   <button
-                    type="button"
                     key={year}
+                    type="button"
                     onClick={() => handleYearClick(year)}
-                    className={`px-3 py-2 text-sm rounded-md transition-colors cursor-pointer ${
-                      isCurrentYear
-                        ? 'bg-primary text-white font-semibold'
-                        : isThisYear
-                        ? 'bg-gray-200 text-foreground font-medium'
-                        : 'hover:bg-gray-100 text-foreground'
-                    }`}
+                    className={`px-3 py-2 text-sm rounded-md transition-colors ${isCurrentYear ? 'bg-primary text-white font-semibold' : 'hover:bg-gray-100'}`}
                   >
                     {year}
                   </button>
@@ -483,9 +420,9 @@ export default function DatePicker({ value, onChange, error, required, disabled 
               })}
             </div>
           )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </motion.div>,
+        document.body
+      )}
     </div>
   );
 }

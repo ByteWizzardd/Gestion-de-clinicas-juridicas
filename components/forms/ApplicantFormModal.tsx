@@ -1351,7 +1351,10 @@ export default function ApplicantFormModal({
         const beneficiarioResult = await getBeneficiarioByCedulaAction(cedula);
         
         if (beneficiarioResult.success && beneficiarioResult.data) {
-          autocompleteFromBeneficiario(beneficiarioResult.data);
+          autocompleteFromBeneficiario({
+            ...beneficiarioResult.data,
+            sexo: beneficiarioResult.data.sexo ?? undefined,
+          });
           return;
         }
       }
@@ -1443,7 +1446,10 @@ export default function ApplicantFormModal({
                   autocompleteFromUsuario(usuarioResult.data);
                 }
               } else if (exactMatch.source === 'beneficiario') {
-                autocompleteFromBeneficiario(exactMatch);
+                autocompleteFromBeneficiario({
+                  ...exactMatch,
+                  sexo: exactMatch.sexo ?? undefined,
+                });
               }
             }
           } catch (error) {
@@ -1864,7 +1870,10 @@ export default function ApplicantFormModal({
                         autocompleteFromUsuario(usuarioResult.data);
                       }
                     } else if (item.source === 'beneficiario') {
-                      autocompleteFromBeneficiario(item);
+                      autocompleteFromBeneficiario({
+                        ...item,
+                        sexo: item.sexo ?? undefined,
+                      });
                     } else {
                       // Fallback para compatibilidad con sugerencias antiguas
                       autocompleteFromSolicitante(item as any);

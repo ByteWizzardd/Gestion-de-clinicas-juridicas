@@ -9,7 +9,6 @@ interface ActionHistoryCardProps {
   caseInfo: string;
   date: string;
   time?: string; // Opcional, ya no se muestra
-  actionType: 'document' | 'appointment' | 'view' | 'update' | 'other';
   isLast?: boolean;
 }
 
@@ -22,7 +21,6 @@ export default function ActionHistoryCard({
   caseInfo,
   date,
   time,
-  actionType,
   isLast = false,
 }: ActionHistoryCardProps) {
   const Icon = actionIcon;

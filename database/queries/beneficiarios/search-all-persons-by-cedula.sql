@@ -1,5 +1,6 @@
--- Obtener persona completa por cédula (búsqueda exacta en beneficiarios, solicitantes y usuarios)
--- Parámetro: $1 = cédula exacta
+-- Buscar en beneficiarios, solicitantes y usuarios por cédula (búsqueda parcial)
+-- Parámetro: $1 = cédula a buscar (puede ser parcial)
+
 SELECT DISTINCT ON (cedula)
     cedula,
     nombres,
@@ -21,7 +22,7 @@ FROM (
         NULL AS correo_electronico,
         NULL AS telefono_celular
     FROM beneficiarios b
-    WHERE b.cedula = $1
+    WHERE b.cedula IS NOT NULL AND b.cedula LIKE '%' || $1 || '%'
 
     UNION ALL
 
@@ -36,7 +37,7 @@ FROM (
         s.correo_electronico,
         s.telefono_celular
     FROM solicitantes s
-    WHERE s.cedula = $1
+    WHERE s.cedula LIKE '%' || $1 || '%'
 
     UNION ALL
 
@@ -51,7 +52,8 @@ FROM (
         u.correo_electronico,
         u.telefono_celular
     FROM usuarios u
-    WHERE u.cedula = $1
+    WHERE u.cedula LIKE '%' || $1 || '%'
 ) AS personas
-LIMIT 1;
+ORDER BY cedula
+LIMIT 10;
 

@@ -17,7 +17,10 @@ const leagueSpartan = League_Spartan({
 });
 
 export const metadata: Metadata = {
-  title: "Gestion de Clinicas Juridicas"
+  title: "Gestion de Clinicas Juridicas",
+  icons: {
+    icon: "/colmenas de derecho.svg",
+  },
 };
 
 export default function RootLayout({

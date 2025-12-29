@@ -23,9 +23,9 @@ export function formatDate(date: string | Date | null | undefined): string {
       } else {
         // Si no tiene formato esperado, intentar con Date
         const dateObj = new Date(date);
-        if (isNaN(dateObj.getTime())) {
-          return 'N/A';
-        }
+    if (isNaN(dateObj.getTime())) {
+      return 'N/A';
+    }
         day = dateObj.getDate();
         month = dateObj.getMonth() + 1;
         year = dateObj.getFullYear();
