@@ -11,7 +11,6 @@ interface Action {
   caseInfo: string;
   date: string;
   time?: string; // Opcional, ya no se muestra
-  actionType: 'document' | 'appointment' | 'view' | 'update' | 'other';
 }
 
 interface ActionHistoryListProps {
@@ -62,7 +61,6 @@ export default function ActionHistoryList({
                 caseInfo={action.caseInfo}
                 date={action.date}
                 time={action.time}
-                actionType={action.actionType}
                 isLast={index === actions.length - 1}
               />
             </motion.div>
@@ -72,4 +70,3 @@ export default function ActionHistoryList({
     </div>
   );
 }
-

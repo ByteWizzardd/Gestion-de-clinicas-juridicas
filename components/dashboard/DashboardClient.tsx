@@ -127,7 +127,6 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
         subText: accion.comentario || undefined,
         caseInfo,
         date: fechaFormateada,
-        actionType: 'other' as const, // Forzar a 'other' para tener un solo icon/color
       };
     });
   }, [initialAcciones]);
