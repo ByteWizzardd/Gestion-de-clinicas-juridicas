@@ -272,5 +272,29 @@ export const solicitantesQueries = {
         ]);
         return result.rows;
     },
+
+    /**
+     * Obtiene solicitantes agrupados por estado
+     * @param fechaInicio - Fecha de inicio del rango (opcional)
+     * @param fechaFin - Fecha de fin del rango (opcional)
+     */
+    getByEstado: async (
+        fechaInicio?: string | Date,
+        fechaFin?: string | Date
+    ): Promise<Array<{ nombre_estado: string; cantidad_solicitantes: number }>> => {
+        const query = loadSQL('solicitantes/get-by-estado.sql');
+        const fechaInicioStr = fechaInicio && fechaInicio !== ''
+            ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
+            : null;
+        const fechaFinStr = fechaFin && fechaFin !== ''
+            ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
+            : null;
+
+        const result: QueryResult = await pool.query(query, [
+            fechaInicioStr,
+            fechaFinStr,
+        ]);
+        return result.rows;
+    },
 };
 

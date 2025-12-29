@@ -66,6 +66,7 @@ export interface InformeResumenData {
     cantidad_casos: number;
   }>;
   solicitantesPorGenero: Array<{ genero: string; cantidad_solicitantes: number }>;
+  solicitantesPorEstado: Array<{ nombre_estado: string; cantidad_solicitantes: number }>;
   solicitantesPorParroquia: Array<{ nombre_parroquia: string; cantidad_solicitantes: number }>;
   casosPorAmbitoLegal: Array<{ nombre_ambito_legal: string; cantidad_casos: number }>;
   estudiantesPorMateria: Array<{
@@ -101,6 +102,7 @@ interface InformeResumenPDFProps {
   chartImages: {
     casosPorMateria?: string;
     solicitantesPorGenero?: string;
+    solicitantesPorEstado?: string;
     solicitantesPorParroquia?: string;
     casosPorAmbitoLegal?: string;
     estudiantesPorMateria?: Record<string, string>;
@@ -593,6 +595,31 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
               <View style={styles.chartWrapper}>
                 {/* @ts-ignore */}
                 <Image src={chartImages.solicitantesPorGenero} style={styles.chartImageSmall} />
+              </View>
+            </View>
+          </View>
+        </Page>
+      )}
+
+      {/* Página: Solicitantes por Estado */}
+      {chartImages.solicitantesPorEstado && data.solicitantesPorEstado && (
+        // @ts-ignore
+        <Page size="A4" orientation="landscape" style={styles.page}>
+          <ReportHeader />
+          {/* @ts-ignore */}
+          <View style={styles.centeredContent}>
+            {/* @ts-ignore */}
+            <Text style={styles.sectionTitleCentered}>Solicitantes por Estado</Text>
+            {/* @ts-ignore */}
+            <Text style={styles.totalText}>
+              Total de Solicitantes: {data.solicitantesPorEstado.reduce((sum, item) => sum + Number(item.cantidad_solicitantes || 0), 0)}
+            </Text>
+            {/* @ts-ignore */}
+            <View style={styles.chartContainerBarChart}>
+              {/* @ts-ignore */}
+              <View style={styles.chartWrapper}>
+                {/* @ts-ignore */}
+                <Image src={chartImages.solicitantesPorEstado} style={styles.chartImageSmall} />
               </View>
             </View>
           </View>

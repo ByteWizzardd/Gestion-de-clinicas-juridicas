@@ -267,6 +267,11 @@ export async function generateResumenCasosDOCX(
                 values: data.solicitantesPorGenero.map(item => item.cantidad_solicitantes)
             },
             {
+                title: 'Solicitantes por Estado',
+                labels: data.solicitantesPorEstado.map(item => item.nombre_estado),
+                values: data.solicitantesPorEstado.map(item => item.cantidad_solicitantes)
+            },
+            {
                 title: 'Solicitantes por Parroquia',
                 labels: data.solicitantesPorParroquia.map(item => item.nombre_parroquia),
                 values: data.solicitantesPorParroquia.map(item => item.cantidad_solicitantes)

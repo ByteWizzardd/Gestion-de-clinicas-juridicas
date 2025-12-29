@@ -586,6 +586,7 @@ export async function getInformeResumenData(
       cantidad_casos: number;
     }>;
     solicitantesPorGenero: Array<{ genero: string; cantidad_solicitantes: number }>;
+    solicitantesPorEstado: Array<{ nombre_estado: string; cantidad_solicitantes: number }>;
     solicitantesPorParroquia: Array<{ nombre_parroquia: string; cantidad_solicitantes: number }>;
     casosPorAmbitoLegal: Array<{ nombre_ambito_legal: string; cantidad_casos: number }>;
     estudiantesPorMateria: Array<{
@@ -643,6 +644,7 @@ export async function getInformeResumenData(
     const [
       casosPorMateria,
       solicitantesPorGenero,
+      solicitantesPorEstado,
       solicitantesPorParroquia,
       casosPorAmbitoLegal,
       estudiantesPorMateria,
@@ -653,6 +655,7 @@ export async function getInformeResumenData(
     ] = await Promise.all([
       casosQueries.getByMateriaGrouped(start, end),
       solicitantesQueries.getByGenero(start, end),
+      solicitantesQueries.getByEstado(start, end),
       solicitantesQueries.getByParroquia(start, end),
       casosQueries.getByAmbitoLegalTotal(start, end),
       estudiantesQueries.getByMateria(start, end),
@@ -667,6 +670,7 @@ export async function getInformeResumenData(
       data: {
         casosPorMateria,
         solicitantesPorGenero,
+        solicitantesPorEstado,
         solicitantesPorParroquia,
         casosPorAmbitoLegal,
         estudiantesPorMateria,

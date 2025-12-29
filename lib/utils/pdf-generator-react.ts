@@ -670,6 +670,7 @@ export async function generateInformeResumenPDFReact(
     const chartImages: {
       casosPorMateria?: string;
       solicitantesPorGenero?: string;
+      solicitantesPorEstado?: string;
       solicitantesPorParroquia?: string;
       casosPorAmbitoLegal?: string;
       estudiantesPorMateria?: Record<string, string>;
@@ -731,6 +732,16 @@ export async function generateInformeResumenPDFReact(
       const values = data.solicitantesPorGenero.map(item => item.cantidad_solicitantes);
       const colors = BAR_COLORS.slice(0, labels.length);
       chartImages.solicitantesPorGenero = generateBarChartImage(labels, values, colors);
+    }
+
+    // 3.5. Solicitantes por Estado (barras)
+    if (data.solicitantesPorEstado && data.solicitantesPorEstado.length > 0) {
+      await yieldToUI();
+
+      const labels = data.solicitantesPorEstado.map(item => item.nombre_estado);
+      const values = data.solicitantesPorEstado.map(item => item.cantidad_solicitantes);
+      const colors = BAR_COLORS.slice(0, labels.length);
+      chartImages.solicitantesPorEstado = generateBarChartImage(labels, values, colors);
     }
 
     // 4. Solicitantes por Parroquia (barras)
