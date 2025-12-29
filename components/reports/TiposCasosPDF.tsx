@@ -283,18 +283,18 @@ export const TiposCasosPDF: React.FC<TiposCasosPDFProps> = ({
         return (
           // @ts-ignore - React PDF types issue
           <Page key={key} size="A4" orientation="landscape" style={styles.page}>
+            {/* Header con logo - EN TODAS LAS PÁGINAS */}
+            {/* @ts-ignore */}
+            <View style={styles.header}>
+              {/* @ts-ignore */}
+              <Image
+                src={logoBase64 || "/logo clinica juridica.png"}
+                style={styles.logo}
+              />
+            </View>
+
             {isFirstPage ? (
               <>
-                {/* Header con logo - Solo en la primera página */}
-                {/* @ts-ignore */}
-                <View style={styles.header}>
-                  {/* @ts-ignore */}
-                  <Image
-                    src={logoBase64 || "/logo clinica juridica.png"}
-                    style={styles.logo}
-                  />
-                </View>
-
                 {/* Banner rojo con título y fechas - Solo en la primera página */}
                 {/* @ts-ignore */}
                 <View style={styles.titleBanner}>

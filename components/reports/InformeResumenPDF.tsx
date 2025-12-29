@@ -111,6 +111,7 @@ interface InformeResumenPDFProps {
     beneficiariosPorParentesco?: string;
   };
   logoBase64?: string;
+  portadaBase64?: string;
 }
 
 // Colores para gráficos de barras
@@ -267,6 +268,21 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica',
     fontWeight: 400,
   },
+  coverPage: {
+    width: '100%',
+    height: '100%',
+    margin: 0,
+    padding: 0, // Quitamos el padding para que la imagen se ajuste mejor al formato vertical
+    backgroundColor: '#FFFFFF',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  coverImage: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'contain', // Mantiene la proporción sin recortar
+  },
 });
 
 /**
@@ -378,7 +394,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
   fechaInicio, 
   fechaFin, 
   chartImages,
-  logoBase64 
+  logoBase64,
+  portadaBase64
 }) => {
       // PRIMERO: Tipos de Caso (igual que el reporte de tipos de caso)
       const tiposDeCasoGrouped = data.tiposDeCaso && data.tiposDeCaso.length > 0
@@ -388,6 +405,15 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
       return (
         // @ts-ignore - React PDF types issue
         <Document>
+          {/* PORTADA - Primera hoja */}
+          {portadaBase64 && (
+            // @ts-ignore
+            <Page size="A4" orientation="portrait" style={styles.coverPage}>
+              {/* @ts-ignore */}
+              <Image src={portadaBase64} style={styles.coverImage} />
+            </Page>
+          )}
+
           {/* PRIMERO: Páginas de Tipos de Caso (igual que el reporte de tipos de caso) */}
           {Object.entries(tiposDeCasoGrouped).map(([key, groupData], pageIndex) => {
             const chartImage = chartImages.tiposDeCaso?.[key] || '';

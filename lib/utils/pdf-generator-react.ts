@@ -9,7 +9,7 @@ import { CasosGroupedData } from '@/app/actions/reports';
 import { generateBarChartImage } from './bar-chart-generator';
 
 // Colores exactos del diseño de Figma
-const CHART_COLORS = [
+export const CHART_COLORS = [
   '#8979ff', // Solicitud de Naturalización
   '#ff928a', // Justificativo de Soltería
   '#3cc3df', // Justificativo de Concubinato
@@ -31,7 +31,7 @@ const yieldToUI = (ms = 30) => new Promise(resolve => setTimeout(resolve, ms));
  * Agrupa los datos por materia y subcategoría
  * Solo incluye categoría y subcategoría si tienen valores
  */
-function groupDataByMateriaSubcategoria(
+export function groupDataByMateriaSubcategoria(
   data: CasosGroupedData[]
 ): Record<string, CasosGroupedData[]> {
   const grouped: Record<string, CasosGroupedData[]> = {};
@@ -147,6 +147,135 @@ function groupCasosByMateriaSubcategoria(
   return grouped;
 }
 
+/**
+ * Formatea el título del grupo (solo muestra categoría/subcategoría si existen)
+ */
+export function formatGroupTitle(item: {
+  nombre_materia: string;
+  nombre_categoria?: string | null;
+  nombre_subcategoria?: string | null;
+}): string {
+  let title = item.nombre_materia;
+  
+  const categoria = item.nombre_categoria?.trim();
+  const subcategoria = item.nombre_subcategoria?.trim();
+  
+  const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría';
+  const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría';
+  
+  if (hasCategoria && hasSubcategoria) {
+    // Si hay ambas: "Materia - Categoría Subcategoría" (sin guión entre categoría y subcategoría)
+    title += ` - ${categoria} ${subcategoria}`;
+  } else if (hasCategoria) {
+    // Si solo hay categoría: "Materia - Categoría"
+    title += ` - ${categoria}`;
+  } else if (hasSubcategoria) {
+    // Si solo hay subcategoría: "Materia - Subcategoría"
+    title += ` - ${subcategoria}`;
+  }
+
+  return title;
+}
+
+/**
+ * Genera una imagen de una página completa del reporte de Tipos de Caso
+ */
+export async function generateTiposCasosPageImage(
+  groupData: CasosGroupedData[],
+  title: string,
+  logoBase64: string,
+  isFirstPage: boolean
+): Promise<string> {
+  const pixelRatio = 2;
+  const baseWidth = 842; // A4 Landscape en puntos
+  const baseHeight = 595;
+  
+  const canvas = document.createElement('canvas');
+  canvas.width = baseWidth * pixelRatio;
+  canvas.height = baseHeight * pixelRatio;
+  
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return '';
+  
+  ctx.scale(pixelRatio, pixelRatio);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, baseWidth, baseHeight);
+
+  let currentY = 20;
+
+  // 1. Dibujar Logo (solo primera página)
+  if (isFirstPage && logoBase64) {
+    const img = new Image();
+    img.src = logoBase64;
+    await new Promise(r => img.onload = r);
+    ctx.drawImage(img, 20, 20, 200, 35);
+    currentY = 70;
+  }
+
+  // 2. Dibujar Banner Rojo
+  if (isFirstPage) {
+    ctx.fillStyle = '#9c2327';
+    const bannerWidth = baseWidth * 0.8;
+    const bannerX = (baseWidth - bannerWidth) / 2;
+    // Dibujar rectángulo con bordes redondeados manualmente para compatibilidad
+    const r = 5;
+    const x = bannerX;
+    const y = currentY;
+    const w = bannerWidth;
+    const h = 40;
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#FFFFFF';
+    // League Spartan no está disponible en canvas por defecto, usamos sans-serif como fallback
+    ctx.font = 'bold 18px "League Spartan", Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(title.toUpperCase(), baseWidth / 2, currentY + 25);
+    currentY += 60;
+  } else {
+    currentY = 40;
+  }
+
+  // 3. Título de Sección (Materia - Categoría)
+  ctx.fillStyle = '#000000';
+  ctx.font = '600 18px "League Spartan", Arial, sans-serif';
+  ctx.textAlign = 'center';
+  const groupTitle = formatGroupTitle(groupData[0]);
+  ctx.fillText(groupTitle, baseWidth / 2, currentY);
+  currentY += 30;
+
+  // 4. Generar y Dibujar la Gráfica
+  const values = groupData.map(item => Number(item.cantidad_casos) || 0);
+  const total = values.reduce((sum, val) => sum + val, 0);
+  const labels = groupData.map(item => item.nombre_ambito_legal);
+  const colors = CHART_COLORS.slice(0, groupData.length);
+  
+  const chartBase64 = generatePieChartImage(labels, values, colors, total);
+  const chartImg = new Image();
+  chartImg.src = chartBase64;
+  await new Promise(r => chartImg.onload = r);
+  
+  // El gráfico donut generado ya tiene sus propias proporciones y callouts
+  const chartWidth = 750;
+  const chartHeight = 500;
+  ctx.drawImage(chartImg, (baseWidth - chartWidth) / 2, currentY - 40, chartWidth, chartHeight);
+
+  // 5. Dibujar Leyenda si es necesario (aunque el pie chart ya tiene sus propios callouts)
+  // En el PDF original hay una leyenda abajo, vamos a replicarla mínimamente si hay espacio
+  
+  return canvas.toDataURL('image/png', 1.0);
+}
+
 // Colores fijos para los estatus
 const ESTATUS_COLORS: Record<string, string> = {
   'En proceso': '#4A90E2', // Azul
@@ -159,7 +288,7 @@ const ESTATUS_COLORS: Record<string, string> = {
  * Genera una imagen base64 de un gráfico donut estilo iChart de Figma
  * Alta calidad con devicePixelRatio y renderizado optimizado
  */
-function generatePieChartImage(
+export function generatePieChartImage(
   labels: string[],
   values: number[],
   colors: string[],
@@ -385,7 +514,7 @@ function lightenColor(color: string, amount: number): string {
 /**
  * Convierte una imagen a base64 para preservar la transparencia
  */
-async function imageToBase64(imagePath: string): Promise<string> {
+export async function imageToBase64(imagePath: string): Promise<string> {
   try {
     const response = await fetch(imagePath);
     const blob = await response.blob();
@@ -522,8 +651,9 @@ export async function generateInformeResumenPDFReact(
   fechaFin?: string
 ): Promise<void> {
   try {
-    // Cargar el logo como base64
+    // Cargar el logo y la portada como base64
     const logoBase64 = await imageToBase64('/logo clinica juridica.png');
+    const portadaBase64 = await imageToBase64('/portada reporte.png');
     
     // Colores para gráficos
     const BAR_COLORS = [
@@ -720,7 +850,8 @@ export async function generateInformeResumenPDFReact(
       fechaInicio, 
       fechaFin, 
       chartImages, 
-      logoBase64 
+      logoBase64,
+      portadaBase64 
     });
     
     // Un respiro final antes del paso más pesado (maquetación del PDF)
