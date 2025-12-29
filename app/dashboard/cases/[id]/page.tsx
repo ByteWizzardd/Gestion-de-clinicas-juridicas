@@ -18,6 +18,7 @@ import DropdownMenu from '@/components/ui/navigation/DropdownMenu';
 import AddDocumentModal from '@/components/cases/modals/AddDocumentModal';
 import AssignTeamModal from '@/components/cases/modals/AssignTeamModal';
 import AddActionModal from '@/components/cases/modals/AddActionModal';
+import AddBeneficiaryModal from '@/components/cases/modals/AddBeneficiaryModal';
 import { ChevronDown, Plus, Pencil } from 'lucide-react';
 import { getCurrentUserAction } from '@/app/actions/auth';
 
@@ -32,6 +33,7 @@ export default function CaseDetailPage() {
   const [showAddDocumentModal, setShowAddDocumentModal] = useState(false);
   const [showAssignTeamModal, setShowAssignTeamModal] = useState(false);
   const [showAddActionModal, setShowAddActionModal] = useState(false);
+  const [showAddBeneficiaryModal, setShowAddBeneficiaryModal] = useState(false);
   const [changingStatus, setChangingStatus] = useState(false);
   const [userRol, setUserRol] = useState<string | null>(null);
 
@@ -247,6 +249,14 @@ export default function CaseDetailPage() {
             <Plus className="w-[18px] h-[18px] text-[#414040]" />
             <span className="text-base text-center">Registrar Acción</span>
           </button>
+
+          <button 
+            onClick={() => setShowAddBeneficiaryModal(true)}
+            className="h-10 cursor-pointer px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors"
+          >
+            <Plus className="w-[18px] h-[18px] text-[#414040]" />
+            <span className="text-base text-center">Agregar Beneficiario</span>
+          </button>
           
           <DropdownMenu
             trigger={
@@ -283,12 +293,15 @@ export default function CaseDetailPage() {
         <p className="text-sm sm:text-base text-gray-500 mb-6 sm:mb-8 flex items-center gap-1.5">
           Solicitante: 
           {caso.cedula ? (
-            <Link 
-              href={`/dashboard/applicants/${caso.cedula}`}
-              className="text-primary hover:underline font-medium transition-colors"
-            >
-              {nombreSolicitante}
-            </Link>
+            <>
+              <Link 
+                href={`/dashboard/applicants/${caso.cedula}`}
+                className="text-primary hover:underline font-medium transition-colors"
+              >
+                {nombreSolicitante}
+              </Link>
+              <span className="text-gray-400">({caso.cedula})</span>
+            </>
           ) : (
             <span>{nombreSolicitante}</span>
           )}
@@ -314,6 +327,14 @@ export default function CaseDetailPage() {
         isOpen={showAddActionModal}
         onClose={() => setShowAddActionModal(false)}
         idCaso={caso.id_caso}
+        onSuccess={handleRefresh}
+      />
+
+      <AddBeneficiaryModal
+        isOpen={showAddBeneficiaryModal}
+        onClose={() => setShowAddBeneficiaryModal(false)}
+        idCaso={caso.id_caso}
+        beneficiariosActuales={caso.beneficiarios}
         onSuccess={handleRefresh}
       />
 
