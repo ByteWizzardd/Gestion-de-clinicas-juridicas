@@ -44,6 +44,29 @@ export interface BeneficiariosGroupedData {
   cantidad_beneficiarios: number;
 }
 
+export interface SocioeconomicoData {
+  distribucionPorTipoVivienda: Array<{ tipo_vivienda: string; cantidad_solicitantes: number }>;
+  distribucionPorGenero: Array<{ genero: string; cantidad_solicitantes: number }>;
+  distribucionPorEdad: Array<{ rango_edad: string; cantidad_solicitantes: number }>;
+  distribucionPorEstadoCivil: Array<{ estado_civil: string; cantidad_solicitantes: number }>;
+  distribucionPorNivelEducativo: Array<{ nivel_educativo: string; cantidad_solicitantes: number }>;
+  distribucionLaboralFusionada: Array<{ categoria: string; cantidad_solicitantes: number }>;
+  distribucionPorCondicionTrabajo: Array<{ condicion_trabajo: string; cantidad_solicitantes: number }>;
+  distribucionPorCondicionActividad: Array<{ condicion_actividad: string; cantidad_solicitantes: number }>;
+  distribucionPorIngresos: Array<{ rango_ingresos: string; cantidad_solicitantes: number }>;
+  distribucionPorTamanoHogar: Array<{ tamano_hogar: string; cantidad_solicitantes: number }>;
+  distribucionPorTrabajadoresHogar: Array<{ trabajadores_hogar: string; cantidad_solicitantes: number }>;
+  distribucionPorDependientes: Array<{ cantidad_dependientes: string; cantidad_solicitantes: number }>;
+  distribucionPorNinosHogar: Array<{ ninos_hogar: string; cantidad_solicitantes: number }>;
+  distribucionPorHabitaciones: Array<{ cant_habitaciones: string; cantidad_solicitantes: number }>;
+  distribucionPorBanos: Array<{ cant_banos: string; cantidad_solicitantes: number }>;
+  distribucionPorCaracteristicasVivienda: Array<{
+    nombre_tipo_caracteristica: string;
+    caracteristica: string;
+    cantidad_solicitantes: number
+  }>;
+}
+
 /**
  * Obtiene casos agrupados por ámbito legal para generar reportes
  */
@@ -682,6 +705,118 @@ export async function getInformeResumenData(
     };
   } catch (error) {
     console.error('Error al obtener datos del informe resumen:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error desconocido',
+    };
+  }
+}
+
+/**
+ * Obtiene los datos del informe socioeconómico (paso a paso, empezando con vivienda)
+ */
+export async function getInformeSocioeconomicoData(
+  fechaInicio?: string,
+  fechaFin?: string,
+  term?: string
+): Promise<{
+  success: boolean;
+  data?: SocioeconomicoData;
+  error?: string;
+}> {
+  try {
+    // Verificar autenticación
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      return {
+        success: false,
+        error: 'No autorizado',
+      };
+    }
+
+    try {
+      await verifyToken(token);
+    } catch (error) {
+      return {
+        success: false,
+        error: 'Token inválido o expirado',
+      };
+    }
+
+    // Si hay term, obtener sus fechas
+    let start = fechaInicio;
+    let end = fechaFin;
+    if (term && term !== 'all') {
+      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
+      const semestre = await semestresQueries.getByTerm(term);
+      if (semestre) {
+        start = semestre.fecha_inicio.toISOString().split('T')[0];
+        end = semestre.fecha_fin.toISOString().split('T')[0];
+      }
+    }
+
+    // Obtener distribuciones socioeconómicas
+    const [
+      distribucionPorTipoVivienda,
+      distribucionPorGenero,
+      distribucionPorEdad,
+      distribucionPorEstadoCivil,
+      distribucionPorNivelEducativo,
+      distribucionLaboralFusionada,
+      distribucionPorCondicionTrabajo,
+      distribucionPorCondicionActividad,
+      distribucionPorIngresos,
+      distribucionPorTamanoHogar,
+      distribucionPorTrabajadoresHogar,
+      distribucionPorDependientes,
+      distribucionPorNinosHogar,
+      distribucionPorHabitaciones,
+      distribucionPorBanos,
+      distribucionPorCaracteristicasVivienda
+    ] = await Promise.all([
+      solicitantesQueries.getByTipoVivienda(start, end),
+      solicitantesQueries.getDistribucionGenero(start, end),
+      solicitantesQueries.getDistribucionEdad(start, end),
+      solicitantesQueries.getDistribucionEstadoCivil(start, end),
+      solicitantesQueries.getDistribucionNivelEducativo(start, end),
+      solicitantesQueries.getDistribucionLaboralFusionada(start, end),
+      solicitantesQueries.getDistribucionCondicionTrabajo(start, end),
+      solicitantesQueries.getDistribucionCondicionActividad(start, end),
+      solicitantesQueries.getDistribucionIngresos(start, end),
+      solicitantesQueries.getDistribucionTamanoHogar(start, end),
+      solicitantesQueries.getDistribucionTrabajadoresHogar(start, end),
+      solicitantesQueries.getDistribucionDependientes(start, end),
+      solicitantesQueries.getDistribucionNinosHogar(start, end),
+      solicitantesQueries.getDistribucionHabitaciones(start, end),
+      solicitantesQueries.getDistribucionBanos(start, end),
+      solicitantesQueries.getDistribucionCaracteristicasVivienda(start, end),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        distribucionPorTipoVivienda,
+        distribucionPorGenero,
+        distribucionPorEdad,
+        distribucionPorEstadoCivil,
+        distribucionPorNivelEducativo,
+        distribucionLaboralFusionada,
+        distribucionPorCondicionTrabajo,
+        distribucionPorCondicionActividad,
+        distribucionPorIngresos,
+        distribucionPorTamanoHogar,
+        distribucionPorTrabajadoresHogar,
+        distribucionPorDependientes,
+        distribucionPorNinosHogar,
+        distribucionPorHabitaciones,
+        distribucionPorBanos,
+        distribucionPorCaracteristicasVivienda
+      },
+    };
+  } catch (error) {
+    console.error('Error al obtener datos del informe socioeconómico:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Error desconocido',

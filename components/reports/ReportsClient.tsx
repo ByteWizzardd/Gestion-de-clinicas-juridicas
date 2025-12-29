@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { FileBarChart, Clock, User, Briefcase, X, Calendar } from 'lucide-react';
+import { FileBarChart, Clock, User, Briefcase, X, Calendar, Home } from 'lucide-react';
 import ReportCard from '@/components/cards/ReportCard';
 import FilterBar, { ReportFilters } from '@/components/reports/FilterBar';
 import { ViewMode } from '@/components/ui/navigation/ViewSwitcher';
@@ -151,7 +151,7 @@ export default function ReportsPage() {
     }, [filters]);
 
     const handleGenerateReport = async (reportType: string) => {
-        if (reportType === 'Tipos de Caso' || reportType === 'Reporte de Estatus de Casos' || reportType === 'Resumen de Casos') {
+        if (reportType === 'Tipos de Caso' || reportType === 'Reporte de Estatus de Casos' || reportType === 'Resumen de Casos' || reportType === 'Reporte Socioeconómico') {
             // Guardar el tipo de reporte actual
             setTipoReporteActual(reportType);
             // Mostrar modal para seleccionar rango de fechas
@@ -281,6 +281,38 @@ export default function ReportsPage() {
                     } else {
                         alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
                     }
+                } else if (tipoReporteActual === 'Reporte Socioeconómico') {
+                    // Generar reporte socioeconómico (paso a paso)
+                    const { getInformeSocioeconomicoData } = await import('@/app/actions/reports');
+                    const result = await getInformeSocioeconomicoData(
+                        fechaInicio,
+                        fechaFin,
+                        term
+                    );
+
+                    if (result.success && result.data) {
+                        if (formatoReporte === 'word') {
+                            // Importar y usar la función de generación de DOCX
+                            const { generateSocioeconomicoDOCX } = await import('@/lib/utils/docx/docx-socioeconomico');
+                            await generateSocioeconomicoDOCX(
+                                result.data,
+                                fechaInicio,
+                                fechaFin,
+                                term
+                            );
+                        } else {
+                            // Importar y usar la función de generación de PDF con React PDF
+                            const { generateInformeSocioeconomicoPDF } = await import('@/lib/utils/pdf-generator-react');
+                            await generateInformeSocioeconomicoPDF(
+                                result.data,
+                                fechaInicio,
+                                fechaFin,
+                                term
+                            );
+                        }
+                    } else {
+                        alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
+                    }
                 } else {
                     // Generar reporte de tipos de caso (comportamiento original)
                     const { getCasosGroupedByAmbitoLegal } = await import('@/app/actions/reports');
@@ -400,6 +432,12 @@ export default function ReportsPage() {
                     icon={<Briefcase className="w-full h-full" strokeWidth={1.5} />}
                     onGenerate={() => handleGenerateReport('Tipos de Caso')}
                     buttonColor="orange"
+                />
+                <ReportCard
+                    title="Reporte Socioeconómico"
+                    icon={<Home className="w-full h-full" strokeWidth={1.5} />}
+                    onGenerate={() => handleGenerateReport('Reporte Socioeconómico')}
+                    buttonColor="red"
                 />
             </motion.div>
 

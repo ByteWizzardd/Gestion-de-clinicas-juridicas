@@ -249,6 +249,8 @@ export const solicitantesQueries = {
         return result.rows;
     },
 
+
+
     /**
      * Obtiene solicitantes agrupados por parroquia
      * @param fechaInicio - Fecha de inicio del rango (opcional)
@@ -296,5 +298,178 @@ export const solicitantesQueries = {
         ]);
         return result.rows;
     },
+
+    getByTipoVivienda: async (
+        fechaInicio?: string | Date,
+        fechaFin?: string | Date
+    ): Promise<Array<{ tipo_vivienda: string; cantidad_solicitantes: number }>> => {
+        const query = loadSQL('solicitantes/get-distribucion-tipo-vivienda.sql');
+        const { start, end } = formatDates(fechaInicio, fechaFin);
+        const result: QueryResult = await pool.query(query, [start, end]);
+        return result.rows;
+    },
+
+    getDistribucionGenero: async (
+        fechaInicio?: string | Date,
+        fechaFin?: string | Date
+    ): Promise<Array<{ genero: string; cantidad_solicitantes: number }>> => {
+        const query = loadSQL('solicitantes/get-distribucion-genero.sql');
+        const { start, end } = formatDates(fechaInicio, fechaFin);
+        const result: QueryResult = await pool.query(query, [start, end]);
+        return result.rows;
+    },
+
+    getDistribucionEdad: async (
+        fechaInicio?: string | Date,
+        fechaFin?: string | Date
+    ): Promise<Array<{ rango_edad: string; cantidad_solicitantes: number }>> => {
+        const query = loadSQL('solicitantes/get-distribucion-edad.sql');
+        const { start, end } = formatDates(fechaInicio, fechaFin);
+        const result: QueryResult = await pool.query(query, [start, end]);
+        return result.rows;
+    },
+
+    getDistribucionEstadoCivil: async (
+        fechaInicio?: string | Date,
+        fechaFin?: string | Date
+    ): Promise<Array<{ estado_civil: string; cantidad_solicitantes: number }>> => {
+        const query = loadSQL('solicitantes/get-distribucion-estado-civil.sql');
+        const { start, end } = formatDates(fechaInicio, fechaFin);
+        const result: QueryResult = await pool.query(query, [start, end]);
+        return result.rows;
+    },
+
+    getDistribucionNivelEducativo: async (
+        fechaInicio?: string | Date,
+        fechaFin?: string | Date
+    ): Promise<Array<{ nivel_educativo: string; cantidad_solicitantes: number }>> => {
+        const query = loadSQL('solicitantes/get-distribucion-nivel-educativo.sql');
+        const { start, end } = formatDates(fechaInicio, fechaFin);
+        const result: QueryResult = await pool.query(query, [start, end]);
+        return result.rows;
+    },
+
+    getDistribucionCondicionTrabajo: async (
+        fechaInicio?: string | Date,
+        fechaFin?: string | Date
+    ): Promise<Array<{ condicion_trabajo: string; cantidad_solicitantes: number }>> => {
+        const query = loadSQL('solicitantes/get-distribucion-condicion-trabajo.sql');
+        const { start, end } = formatDates(fechaInicio, fechaFin);
+        const result: QueryResult = await pool.query(query, [start, end]);
+        return result.rows;
+    },
+
+    getDistribucionCondicionActividad: async (
+        fechaInicio?: string | Date,
+        fechaFin?: string | Date
+    ): Promise<Array<{ condicion_actividad: string; cantidad_solicitantes: number }>> => {
+        const query = loadSQL('solicitantes/get-distribucion-condicion-actividad.sql');
+        const { start, end } = formatDates(fechaInicio, fechaFin);
+        const result: QueryResult = await pool.query(query, [start, end]);
+        return result.rows;
+    },
+    getDistribucionLaboralFusionada: async (
+        fechaInicio?: string | Date,
+        fechaFin?: string | Date
+    ): Promise<Array<{ categoria: string; cantidad_solicitantes: number }>> => {
+        const query = loadSQL('solicitantes/get-distribucion-laboral-fusionada.sql');
+        const { start, end } = formatDates(fechaInicio, fechaFin);
+        const result: QueryResult = await pool.query(query, [start, end]);
+        return result.rows;
+    },
+
+    getDistribucionIngresos: async (
+        fechaInicio?: string | Date,
+        fechaFin?: string | Date
+    ): Promise<Array<{ rango_ingresos: string; cantidad_solicitantes: number }>> => {
+        const query = loadSQL('solicitantes/get-distribucion-ingresos.sql');
+        const { start, end } = formatDates(fechaInicio, fechaFin);
+        const result: QueryResult = await pool.query(query, [start, end]);
+        return result.rows;
+    },
+
+    getDistribucionTamanoHogar: async (
+        fechaInicio?: string | Date,
+        fechaFin?: string | Date
+    ): Promise<Array<{ tamano_hogar: string; cantidad_solicitantes: number }>> => {
+        const query = loadSQL('solicitantes/get-distribucion-tamano-hogar.sql');
+        const { start, end } = formatDates(fechaInicio, fechaFin);
+        const result: QueryResult = await pool.query(query, [start, end]);
+        return result.rows;
+    },
+
+    getDistribucionTrabajadoresHogar: async (
+        fechaInicio?: string | Date,
+        fechaFin?: string | Date
+    ): Promise<Array<{ trabajadores_hogar: string; cantidad_solicitantes: number }>> => {
+        const query = loadSQL('solicitantes/get-distribucion-trabajadores-hogar.sql');
+        const { start, end } = formatDates(fechaInicio, fechaFin);
+        const result: QueryResult = await pool.query(query, [start, end]);
+        return result.rows;
+    },
+
+    getDistribucionNinosHogar: async (
+        fechaInicio?: string | Date,
+        fechaFin?: string | Date
+    ): Promise<Array<{ ninos_hogar: string; cantidad_solicitantes: number }>> => {
+        const query = loadSQL('solicitantes/get-distribucion-ninos-hogar.sql');
+        const { start, end } = formatDates(fechaInicio, fechaFin);
+        const result: QueryResult = await pool.query(query, [start, end]);
+        return result.rows;
+    },
+    getDistribucionHabitaciones: async (
+        fechaInicio?: string | Date,
+        fechaFin?: string | Date
+    ): Promise<Array<{ cant_habitaciones: string; cantidad_solicitantes: number }>> => {
+        const query = loadSQL('solicitantes/get-distribucion-habitaciones.sql');
+        const { start, end } = formatDates(fechaInicio, fechaFin);
+        const result: QueryResult = await pool.query(query, [start, end]);
+        return result.rows;
+    },
+    getDistribucionBanos: async (
+        fechaInicio?: string | Date,
+        fechaFin?: string | Date
+    ): Promise<Array<{ cant_banos: string; cantidad_solicitantes: number }>> => {
+        const query = loadSQL('solicitantes/get-distribucion-banos.sql');
+        const { start, end } = formatDates(fechaInicio, fechaFin);
+        const result: QueryResult = await pool.query(query, [start, end]);
+        return result.rows;
+    },
+    getDistribucionCaracteristicasVivienda: async (
+        fechaInicio?: string | Date,
+        fechaFin?: string | Date
+    ): Promise<Array<{
+        nombre_tipo_caracteristica: string;
+        caracteristica: string;
+        cantidad_solicitantes: number
+    }>> => {
+        const query = loadSQL('solicitantes/get-distribucion-caracteristicas-vivienda.sql');
+        const { start, end } = formatDates(fechaInicio, fechaFin);
+        const result: QueryResult = await pool.query(query, [start, end]);
+        return result.rows;
+    },
+
+    getDistribucionDependientes: async (
+        fechaInicio?: string | Date,
+        fechaFin?: string | Date
+    ): Promise<Array<{ cantidad_dependientes: string; cantidad_solicitantes: number }>> => {
+        const query = loadSQL('solicitantes/get-distribucion-dependientes.sql');
+        const { start, end } = formatDates(fechaInicio, fechaFin);
+        const result: QueryResult = await pool.query(query, [start, end]);
+        return result.rows;
+    },
 };
+
+/**
+ * Función auxiliar para formatear fechas
+ */
+function formatDates(fechaInicio?: string | Date, fechaFin?: string | Date) {
+    const start = fechaInicio && fechaInicio !== ''
+        ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
+        : null;
+    const end = fechaFin && fechaFin !== ''
+        ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
+        : null;
+    return { start, end };
+}
 

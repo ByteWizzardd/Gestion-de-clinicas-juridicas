@@ -4,7 +4,7 @@
 
 import { CasosGroupedData } from '@/app/actions/reports';
 import { EstatusGroupedData } from '@/components/reports/EstatusCasosPDF';
-import { 
+import {
     CHART_COLORS,
     ESTATUS_COLORS,
     generatePieChartImage,
@@ -23,23 +23,54 @@ export async function generateTitleImage(text: string): Promise<string> {
     const h = 50;
     canvas.width = w * pixelRatio;
     canvas.height = h * pixelRatio;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return '';
-    
+
     ctx.scale(pixelRatio, pixelRatio);
-    
+
     // Fondo blanco
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, w, h);
-    
+
     // Texto en League Spartan Bold para que se vea igual al PDF
     ctx.fillStyle = '#000000';
     ctx.font = 'bold 28px "League Spartan", Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(text, w / 2, h / 2);
-    
+
+    return canvas.toDataURL('image/png', 1.0);
+}
+
+/**
+ * Genera una imagen del subtítulo (e.g. Total de Solicitantes)
+ * Texto un poco más pequeño, color gris oscuro
+ */
+export async function generateSubtitleImage(text: string): Promise<string> {
+    const canvas = document.createElement('canvas');
+    const pixelRatio = 2;
+    const w = 900;
+    const h = 40;
+    canvas.width = w * pixelRatio;
+    canvas.height = h * pixelRatio;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return '';
+
+    ctx.scale(pixelRatio, pixelRatio);
+
+    // Fondo blanco
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, w, h);
+
+    // Texto en League Spartan para consistencia
+    ctx.fillStyle = '#666666';
+    ctx.font = '24px "League Spartan", Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, w / 2, h / 2);
+
     return canvas.toDataURL('image/png', 1.0);
 }
 
@@ -53,12 +84,12 @@ export async function generateBannerImage(text: string): Promise<string> {
     const h = 36;   // Un poco menos alto
     canvas.width = w * pixelRatio;
     canvas.height = h * pixelRatio;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return '';
-    
+
     ctx.scale(pixelRatio, pixelRatio);
-    
+
     // Rectángulo con bordes redondeados
     const r = 7; // Bordes un poco más redondeados
     ctx.fillStyle = '#9c2327';
@@ -81,7 +112,7 @@ export async function generateBannerImage(text: string): Promise<string> {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(text, w / 2, h / 2 + 1);
-    
+
     return canvas.toDataURL('image/png', 1.0);
 }
 
@@ -96,14 +127,14 @@ export async function generateChartImage(
     // Gráfica más grande para aprovechar mejor el espacio
     const baseWidth = 950;
     const baseHeight = 630;
-    
+
     const canvas = document.createElement('canvas');
     canvas.width = baseWidth * pixelRatio;
     canvas.height = baseHeight * pixelRatio;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return '';
-    
+
     ctx.scale(pixelRatio, pixelRatio);
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, baseWidth, baseHeight);
@@ -113,15 +144,15 @@ export async function generateChartImage(
     const total = values.reduce((sum, val) => sum + val, 0);
     const labels = groupData.map(item => item.nombre_ambito_legal);
     const colors = CHART_COLORS.slice(0, groupData.length);
-    
+
     const chartBase64 = generatePieChartImage(labels, values, colors, total);
     const chartImg = new Image();
     chartImg.src = chartBase64;
     await new Promise(r => chartImg.onload = r);
-    
+
     // Dibujar la gráfica ocupando todo el canvas
     ctx.drawImage(chartImg, 0, 0, baseWidth, baseHeight);
-    
+
     return canvas.toDataURL('image/png', 1.0);
 }
 
@@ -135,19 +166,19 @@ export async function generateLegendImage(
     const pixelRatio = 2;
     const labels = groupData.map(item => item.nombre_ambito_legal);
     const colors = CHART_COLORS.slice(0, groupData.length);
-    
+
     // Calcular dimensiones necesarias - MÁS ANCHO para llegar hasta los márgenes
     const baseWidth = 1100;
     const dotRadius = 7;
     const paddingX = 22;
     const lineHeight = 26;
-    
+
     // Crear canvas temporal para medir texto
     const tempCanvas = document.createElement('canvas');
     const tempCtx = tempCanvas.getContext('2d');
     if (!tempCtx) return { base64: '', width: 0, height: 0 };
     tempCtx.font = '14px Inter, Arial, sans-serif';
-    
+
     // Calcular líneas
     const maxLineWidth = baseWidth - 40; // Menos margen para aprovechar más espacio
     const lines: Array<{ labels: string[], colors: string[], widths: number[] }> = [];
@@ -157,37 +188,37 @@ export async function generateLegendImage(
     labels.forEach((label, index) => {
         const textWidth = tempCtx.measureText(label).width;
         const itemWidth = (dotRadius * 2) + 10 + textWidth + paddingX;
-        
+
         if (currentLineWidth + itemWidth > maxLineWidth && currentLine.labels.length > 0) {
             lines.push(currentLine);
             currentLine = { labels: [], colors: [], widths: [] };
             currentLineWidth = 0;
         }
-        
+
         currentLine.labels.push(label);
         currentLine.colors.push(colors[index % colors.length]);
         currentLine.widths.push(itemWidth);
         currentLineWidth += itemWidth;
     });
-    
+
     if (currentLine.labels.length > 0) {
         lines.push(currentLine);
     }
 
     // Altura basada en número de líneas
     const baseHeight = Math.max(40, lines.length * lineHeight + 20);
-    
+
     const canvas = document.createElement('canvas');
     canvas.width = baseWidth * pixelRatio;
     canvas.height = baseHeight * pixelRatio;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return { base64: '', width: 0, height: 0 };
-    
+
     ctx.scale(pixelRatio, pixelRatio);
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, baseWidth, baseHeight);
-    
+
     ctx.font = '14px Inter, Arial, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
@@ -211,7 +242,7 @@ export async function generateLegendImage(
             currentX += line.widths[itemIndex];
         });
     });
-    
+
     return {
         base64: canvas.toDataURL('image/png', 1.0),
         width: baseWidth,
@@ -228,17 +259,17 @@ export async function generateEstatusLegendImage(
     const pixelRatio = 2;
     const labels = data.map(item => item.nombre_estatus);
     const colors = data.map(item => ESTATUS_COLORS[item.nombre_estatus] || '#9E9E9E');
-    
+
     const baseWidth = 1100;
     const dotRadius = 7;
     const paddingX = 22;
     const lineHeight = 26;
-    
+
     const tempCanvas = document.createElement('canvas');
     const tempCtx = tempCanvas.getContext('2d');
     if (!tempCtx) return { base64: '', width: 0, height: 0 };
     tempCtx.font = '14px Inter, Arial, sans-serif';
-    
+
     const maxLineWidth = baseWidth - 40;
     const lines: Array<{ labels: string[], colors: string[], widths: number[] }> = [];
     let currentLine = { labels: [] as string[], colors: [] as string[], widths: [] as number[] };
@@ -247,36 +278,36 @@ export async function generateEstatusLegendImage(
     labels.forEach((label, index) => {
         const textWidth = tempCtx.measureText(label).width;
         const itemWidth = (dotRadius * 2) + 10 + textWidth + paddingX;
-        
+
         if (currentLineWidth + itemWidth > maxLineWidth && currentLine.labels.length > 0) {
             lines.push(currentLine);
             currentLine = { labels: [], colors: [], widths: [] };
             currentLineWidth = 0;
         }
-        
+
         currentLine.labels.push(label);
         currentLine.colors.push(colors[index]);
         currentLine.widths.push(itemWidth);
         currentLineWidth += itemWidth;
     });
-    
+
     if (currentLine.labels.length > 0) {
         lines.push(currentLine);
     }
 
     const baseHeight = Math.max(40, lines.length * lineHeight + 20);
-    
+
     const canvas = document.createElement('canvas');
     canvas.width = baseWidth * pixelRatio;
     canvas.height = baseHeight * pixelRatio;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return { base64: '', width: 0, height: 0 };
-    
+
     ctx.scale(pixelRatio, pixelRatio);
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, baseWidth, baseHeight);
-    
+
     ctx.font = '14px Inter, Arial, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
@@ -297,7 +328,7 @@ export async function generateEstatusLegendImage(
             currentX += line.widths[itemIndex];
         });
     });
-    
+
     return {
         base64: canvas.toDataURL('image/png', 1.0),
         width: baseWidth,
@@ -329,12 +360,12 @@ export async function generateGenericLegendImage(
     const dotRadius = 7;
     const paddingX = 22;
     const lineHeight = 26;
-    
+
     const tempCanvas = document.createElement('canvas');
     const tempCtx = tempCanvas.getContext('2d');
     if (!tempCtx) return { base64: '', width: 0, height: 0 };
     tempCtx.font = '14px Inter, Arial, sans-serif';
-    
+
     const maxLineWidth = baseWidth - 40;
     const lines: Array<{ labels: string[], colors: string[], widths: number[] }> = [];
     let currentLine = { labels: [] as string[], colors: [] as string[], widths: [] as number[] };
@@ -343,36 +374,36 @@ export async function generateGenericLegendImage(
     labels.forEach((label, index) => {
         const textWidth = tempCtx.measureText(label).width;
         const itemWidth = (dotRadius * 2) + 10 + textWidth + paddingX;
-        
+
         if (currentLineWidth + itemWidth > maxLineWidth && currentLine.labels.length > 0) {
             lines.push(currentLine);
             currentLine = { labels: [], colors: [], widths: [] };
             currentLineWidth = 0;
         }
-        
+
         currentLine.labels.push(label);
         currentLine.colors.push(colors[index % colors.length]);
         currentLine.widths.push(itemWidth);
         currentLineWidth += itemWidth;
     });
-    
+
     if (currentLine.labels.length > 0) {
         lines.push(currentLine);
     }
 
     const baseHeight = Math.max(40, lines.length * lineHeight + 20);
-    
+
     const canvas = document.createElement('canvas');
     canvas.width = baseWidth * pixelRatio;
     canvas.height = baseHeight * pixelRatio;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return { base64: '', width: 0, height: 0 };
-    
+
     ctx.scale(pixelRatio, pixelRatio);
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, baseWidth, baseHeight);
-    
+
     ctx.font = '14px Inter, Arial, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
@@ -393,7 +424,7 @@ export async function generateGenericLegendImage(
             currentX += line.widths[itemIndex];
         });
     });
-    
+
     return {
         base64: canvas.toDataURL('image/png', 1.0),
         width: baseWidth,

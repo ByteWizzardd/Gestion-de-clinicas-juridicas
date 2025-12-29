@@ -5,7 +5,8 @@ import { pdf } from '@react-pdf/renderer/lib/react-pdf.browser';
 import { TiposCasosPDF } from '@/components/reports/TiposCasosPDF';
 import { EstatusCasosPDF, EstatusGroupedData } from '@/components/reports/EstatusCasosPDF';
 import { InformeResumenPDF, InformeResumenData } from '@/components/reports/InformeResumenPDF';
-import { CasosGroupedData } from '@/app/actions/reports';
+import { CasosGroupedData, SocioeconomicoData } from '@/app/actions/reports';
+import InformeSocioeconomicoPDF from '@/components/reports/InformeSocioeconomicoPDF';
 import { generateBarChartImage } from './bar-chart-generator';
 
 // Colores exactos del diseño de Figma
@@ -893,3 +894,257 @@ export async function generateInformeResumenPDFReact(
     throw error;
   }
 }
+
+/**
+ * Genera imagen de gráfico de barras para datos socioeconómicos
+ */
+async function generateSocioeconomicoChartImage(
+  data: Array<{ [key: string]: string | number }>,
+  title: string,
+  categoriaKey: string,
+  cantidadKey: string
+): Promise<string> {
+  const labels = data.map((item) => item[categoriaKey] as string);
+  const values = data.map((item) => Number(item[cantidadKey]));
+
+  // Usar una paleta de colores consistente
+  const BAR_COLORS = [
+    '#8979ff', '#ff928a', '#3cc3df', '#ffae4c', '#537ff1',
+    '#6fd195', '#8c63da', '#2bb7dc', '#1f94ff', '#f4cf3b',
+  ];
+  const colors = BAR_COLORS.slice(0, labels.length);
+
+  return generateBarChartImage(labels, values, colors);
+}
+
+/**
+ * Genera el PDF del informe socioeconómico (paso a paso, empezando con vivienda)
+ */
+export async function generateInformeSocioeconomicoPDF(
+  data: SocioeconomicoData,
+  fechaInicio?: string,
+  fechaFin?: string,
+  term?: string
+): Promise<void> {
+  try {
+    await yieldToUI();
+
+    const chartImages: Record<string, string> = {};
+
+    // 1. Gráfico de Tipo de Vivienda
+    if (data.distribucionPorTipoVivienda?.length > 0) {
+      chartImages.tipoVivienda = await generateSocioeconomicoChartImage(
+        data.distribucionPorTipoVivienda,
+        'Tipo de Vivienda',
+        'tipo_vivienda',
+        'cantidad_solicitantes'
+      );
+    }
+    await yieldToUI();
+
+    // 2. Gráfico de Género
+    if (data.distribucionPorGenero?.length > 0) {
+      const formattedData = data.distribucionPorGenero.map(item => ({
+        genero: item.genero === 'M' ? 'Masculino' : 'Femenino',
+        cantidad_solicitantes: item.cantidad_solicitantes
+      }));
+      chartImages.genero = await generateSocioeconomicoChartImage(
+        formattedData,
+        'Género',
+        'genero',
+        'cantidad_solicitantes'
+      );
+    }
+    await yieldToUI();
+
+    // 3. Gráfico de Edad
+    if (data.distribucionPorEdad?.length > 0) {
+      chartImages.edad = await generateSocioeconomicoChartImage(
+        data.distribucionPorEdad,
+        'Rango de Edad',
+        'rango_edad',
+        'cantidad_solicitantes'
+      );
+    }
+    await yieldToUI();
+
+    // 4. Gráfico de Estado Civil
+    if (data.distribucionPorEstadoCivil?.length > 0) {
+      chartImages.estadoCivil = await generateSocioeconomicoChartImage(
+        data.distribucionPorEstadoCivil,
+        'Estado Civil',
+        'estado_civil',
+        'cantidad_solicitantes'
+      );
+    }
+    await yieldToUI();
+
+    // 5. Gráfico de Nivel Educativo
+    if (data.distribucionPorNivelEducativo?.length > 0) {
+      chartImages.nivelEducativo = await generateSocioeconomicoChartImage(
+        data.distribucionPorNivelEducativo,
+        'Nivel Educativo',
+        'nivel_educativo',
+        'cantidad_solicitantes'
+      );
+    }
+    await yieldToUI();
+
+    // 6. Gráfico de Condición de Trabajo
+    if (data.distribucionPorCondicionTrabajo?.length > 0) {
+      chartImages.condicionTrabajo = await generateSocioeconomicoChartImage(
+        data.distribucionPorCondicionTrabajo,
+        'Condición de Trabajo',
+        'condicion_trabajo',
+        'cantidad_solicitantes'
+      );
+    }
+    await yieldToUI();
+
+    // 7. Gráfico de Condición de Actividad
+    if (data.distribucionPorCondicionActividad?.length > 0) {
+      chartImages.condicionActividad = await generateSocioeconomicoChartImage(
+        data.distribucionPorCondicionActividad,
+        'Condición de Actividad',
+        'condicion_actividad',
+        'cantidad_solicitantes'
+      );
+    }
+    await yieldToUI();
+
+    // 8. Gráfico de Ingresos
+    if (data.distribucionPorIngresos?.length > 0) {
+      chartImages.ingresos = await generateSocioeconomicoChartImage(
+        data.distribucionPorIngresos,
+        'Rangos de Ingresos',
+        'rango_ingresos',
+        'cantidad_solicitantes'
+      );
+    }
+    await yieldToUI();
+
+    // 9. Gráfico de Tamaño de Hogar
+    if (data.distribucionPorTamanoHogar?.length > 0) {
+      chartImages.tamanoHogar = await generateSocioeconomicoChartImage(
+        data.distribucionPorTamanoHogar,
+        'Tamaño del Hogar',
+        'tamano_hogar',
+        'cantidad_solicitantes'
+      );
+    }
+    await yieldToUI();
+
+    // 10. Gráfico de Trabajadores en el Hogar
+    if (data.distribucionPorTrabajadoresHogar?.length > 0) {
+      chartImages.trabajadoresHogar = await generateSocioeconomicoChartImage(
+        data.distribucionPorTrabajadoresHogar,
+        'Trabajadores en el Hogar',
+        'trabajadores_hogar',
+        'cantidad_solicitantes'
+      );
+    }
+    await yieldToUI();
+
+    // 10.5 Gráfico de Dependientes en el Hogar
+    if (data.distribucionPorDependientes?.length > 0) {
+      chartImages.dependientes = await generateSocioeconomicoChartImage(
+        data.distribucionPorDependientes,
+        'Personas Dependientes (No trabajan)',
+        'cantidad_dependientes',
+        'cantidad_solicitantes'
+      );
+    }
+    await yieldToUI();
+
+    // 11. Gráfico de Niños en el Hogar
+    if (data.distribucionPorNinosHogar?.length > 0) {
+      chartImages.ninosHogar = await generateSocioeconomicoChartImage(
+        data.distribucionPorNinosHogar,
+        'Niños en el Hogar',
+        'ninos_hogar',
+        'cantidad_solicitantes'
+      );
+    }
+    await yieldToUI();
+
+    // 12. Gráfico de Habitaciones
+    if (data.distribucionPorHabitaciones?.length > 0) {
+      chartImages.habitaciones = await generateSocioeconomicoChartImage(
+        data.distribucionPorHabitaciones,
+        'Cantidad de Habitaciones',
+        'cant_habitaciones',
+        'cantidad_solicitantes'
+      );
+    }
+    await yieldToUI();
+
+    // 13. Gráfico de Baños
+    if (data.distribucionPorBanos?.length > 0) {
+      chartImages.banos = await generateSocioeconomicoChartImage(
+        data.distribucionPorBanos,
+        'Cantidad de Baños',
+        'cant_banos',
+        'cantidad_solicitantes'
+      );
+    }
+    await yieldToUI();
+
+    // 14. Gráficos de Características de Vivienda (Dinámicos)
+    if (data.distribucionPorCaracteristicasVivienda?.length > 0) {
+      // Agrupar por tipo de característica
+      const grouped: Record<string, any[]> = {};
+      data.distribucionPorCaracteristicasVivienda.forEach(item => {
+        const type = item.nombre_tipo_caracteristica;
+        if (!grouped[type]) grouped[type] = [];
+        grouped[type].push(item);
+      });
+
+      // Generar un gráfico por cada tipo
+      for (const [type, items] of Object.entries(grouped)) {
+        // Evitar duplicar si ya existe (como tipoVivienda que se genera arriba)
+        // Pero el usuario pidió agruparlos todos aquí, así que los guardamos con un prefijo
+        const key = `caract_${type.replace(/\s+/g, '_').toLowerCase()}`;
+        chartImages[key] = await generateSocioeconomicoChartImage(
+          items,
+          type,
+          'caracteristica',
+          'cantidad_solicitantes'
+        );
+        await yieldToUI();
+      }
+    }
+
+    // Cargar logo
+    const logoBase64 = await imageToBase64('/logo clinica juridica.png');
+
+    // Crear documento
+    const doc = React.createElement(InformeSocioeconomicoPDF, {
+      data,
+      fechaInicio,
+      fechaFin,
+      chartImages,
+      logoBase64,
+      term
+    });
+
+    // Generar blob
+    // @ts-ignore
+    const blob = await pdf(doc).toBlob();
+
+    // Descargar
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const periodLabel = term ? `Semestre_${term}` : `${fechaInicio || 'historico'}_${fechaFin || 'historico'}`;
+    link.download = `Informe_Socioeconomico_${periodLabel}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error al generar PDF socioeconómico:', error);
+    throw error;
+  }
+}
+
+
