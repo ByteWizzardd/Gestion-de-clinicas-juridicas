@@ -193,7 +193,7 @@ export const EstatusCasosPDF: React.FC<EstatusCasosPDFProps> = ({
     <Document>
       {/* @ts-ignore */}
       <Page size="A4" orientation="landscape" style={styles.page}>
-        {/* Header con logo - Solo en la primera página */}
+        {/* Header con logo */}
         {/* @ts-ignore */}
         <View style={styles.header}>
           {/* @ts-ignore */}

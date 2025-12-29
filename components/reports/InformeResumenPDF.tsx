@@ -56,7 +56,7 @@ try {
 }
 
 export interface InformeResumenData {
-  casosPorMateria: Array<{ 
+  casosPorMateria: Array<{
     id_materia: number;
     num_categoria: number;
     num_subcategoria: number;
@@ -68,20 +68,20 @@ export interface InformeResumenData {
   solicitantesPorGenero: Array<{ genero: string; cantidad_solicitantes: number }>;
   solicitantesPorParroquia: Array<{ nombre_parroquia: string; cantidad_solicitantes: number }>;
   casosPorAmbitoLegal: Array<{ nombre_ambito_legal: string; cantidad_casos: number }>;
-  estudiantesPorMateria: Array<{ 
-    nombre_materia: string; 
-    nombre_categoria: string | null; 
-    nombre_subcategoria: string | null; 
-    cantidad_estudiantes: number 
+  estudiantesPorMateria: Array<{
+    nombre_materia: string;
+    nombre_categoria: string | null;
+    nombre_subcategoria: string | null;
+    cantidad_estudiantes: number
   }>;
-  profesoresPorMateria: Array<{ 
-    nombre_materia: string; 
-    nombre_categoria: string | null; 
-    nombre_subcategoria: string | null; 
-    cantidad_profesores: number 
+  profesoresPorMateria: Array<{
+    nombre_materia: string;
+    nombre_categoria: string | null;
+    nombre_subcategoria: string | null;
+    cantidad_profesores: number
   }>;
   tiposDeCaso: CasosGroupedData[];
-  beneficiariosPorTipo: Array<{ 
+  beneficiariosPorTipo: Array<{
     tipo_beneficiario: string;
     id_materia: number;
     num_categoria: number;
@@ -196,8 +196,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    paddingTop: 20, // Espacio superior reducido
-    paddingBottom: 20, // Espacio inferior reducido
+    paddingTop: 10, // Reducir padding superior
+    paddingBottom: 10, // Reducir padding inferior
   },
   chartContainer: {
     flexDirection: 'column',
@@ -212,7 +212,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    marginTop: 10, // Mismo espaciado que en pie charts
+    marginTop: 5, // Reducir margen superior
+    maxHeight: 380, // Limitar altura máxima para evitar desbordamiento
   },
   // Contenedor del gráfico para páginas centradas (sin margen superior)
   chartContainerCentered: {
@@ -229,12 +230,12 @@ const styles = StyleSheet.create({
   },
   chartImage: {
     width: 750,
-    height: 500,
+    height: 400, // Reducir altura para evitar salto de página
     objectFit: 'contain',
   },
   chartImageSmall: {
     width: 700,
-    height: 450,
+    height: 380, // Reducir altura para evitar salto de página
     objectFit: 'contain',
   },
   legendContainer: {
@@ -305,13 +306,13 @@ function formatGroupTitle(item: {
   nombre_subcategoria?: string | null;
 }): string {
   let title = item.nombre_materia;
-  
+
   const categoria = item.nombre_categoria?.trim();
   const subcategoria = item.nombre_subcategoria?.trim();
-  
+
   const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría';
   const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría';
-  
+
   if (hasCategoria && hasSubcategoria) {
     title += ` - ${categoria} ${subcategoria}`;
   } else if (hasCategoria) {
@@ -334,10 +335,10 @@ function groupDataByMateriaSubcategoria(
   for (const item of data) {
     const categoria = item.nombre_categoria?.trim() || '';
     const subcategoria = item.nombre_subcategoria?.trim() || '';
-    
+
     const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría';
     const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría';
-    
+
     let key = item.nombre_materia;
     if (hasCategoria && hasSubcategoria) {
       key += ` - ${categoria} ${subcategoria}`;
@@ -367,10 +368,10 @@ function groupBeneficiariosByMateriaSubcategoria(
   for (const item of data) {
     const categoria = item.nombre_categoria?.trim() || '';
     const subcategoria = item.nombre_subcategoria?.trim() || '';
-    
+
     const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría';
     const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría';
-    
+
     let key = item.nombre_materia;
     if (hasCategoria && hasSubcategoria) {
       key += ` - ${categoria} ${subcategoria}`;
@@ -389,55 +390,60 @@ function groupBeneficiariosByMateriaSubcategoria(
   return grouped;
 }
 
-export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({ 
-  data, 
-  fechaInicio, 
-  fechaFin, 
+export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
+  data,
+  fechaInicio,
+  fechaFin,
   chartImages,
   logoBase64,
   portadaBase64
 }) => {
-      // PRIMERO: Tipos de Caso (igual que el reporte de tipos de caso)
-      const tiposDeCasoGrouped = data.tiposDeCaso && data.tiposDeCaso.length > 0
-        ? groupDataByMateriaSubcategoria(data.tiposDeCaso)
-        : {};
+  // Componente reutilizable para el encabezado con logo
+  const ReportHeader = () => (
+    // @ts-ignore
+    <View style={styles.header}>
+      {/* @ts-ignore */}
+      <Image
+        src={logoBase64 || "/logo clinica juridica.png"}
+        style={styles.logo}
+      />
+    </View>
+  );
 
-      return (
-        // @ts-ignore - React PDF types issue
-        <Document>
-          {/* PORTADA - Primera hoja */}
-          {portadaBase64 && (
-            // @ts-ignore
-            <Page size="A4" orientation="portrait" style={styles.coverPage}>
-              {/* @ts-ignore */}
-              <Image src={portadaBase64} style={styles.coverImage} />
-            </Page>
-          )}
+  // PRIMERO: Tipos de Caso (igual que el reporte de tipos de caso)
+  const tiposDeCasoGrouped = data.tiposDeCaso && data.tiposDeCaso.length > 0
+    ? groupDataByMateriaSubcategoria(data.tiposDeCaso)
+    : {};
 
-          {/* PRIMERO: Páginas de Tipos de Caso (igual que el reporte de tipos de caso) */}
-          {Object.entries(tiposDeCasoGrouped).map(([key, groupData], pageIndex) => {
-            const chartImage = chartImages.tiposDeCaso?.[key] || '';
-            const isFirstPage = pageIndex === 0;
-            const pieData = {
-              labels: groupData.map(item => item.nombre_ambito_legal),
-              values: groupData.map(item => item.cantidad_casos),
-              colors: CHART_COLORS.slice(0, groupData.length),
-            };
+  return (
+    // @ts-ignore - React PDF types issue
+    <Document>
+      {/* PORTADA - Primera hoja */}
+      {portadaBase64 && (
+        // @ts-ignore
+        <Page size="A4" orientation="portrait" style={styles.coverPage}>
+          {/* @ts-ignore */}
+          <Image src={portadaBase64} style={styles.coverImage} />
+        </Page>
+      )}
+
+      {/* PRIMERO: Páginas de Tipos de Caso (igual que el reporte de tipos de caso) */}
+      {Object.entries(tiposDeCasoGrouped).map(([key, groupData], pageIndex) => {
+        const chartImage = chartImages.tiposDeCaso?.[key] || '';
+        const isFirstPage = pageIndex === 0;
+        const pieData = {
+          labels: groupData.map(item => item.nombre_ambito_legal),
+          values: groupData.map(item => item.cantidad_casos),
+          colors: CHART_COLORS.slice(0, groupData.length),
+        };
 
         return (
           // @ts-ignore
           <Page key={key} size="A4" orientation="landscape" style={styles.page}>
             {isFirstPage ? (
               <>
-                {/* Header con logo - Solo en la primera página */}
-                {/* @ts-ignore */}
-                <View style={styles.header}>
-                  {/* @ts-ignore */}
-                  <Image
-                    src={logoBase64 || "/logo clinica juridica.png"}
-                    style={styles.logo}
-                  />
-                </View>
+                {/* Header con logo */}
+                <ReportHeader />
 
                 {/* Banner rojo con título - Solo en la primera página */}
                 {/* @ts-ignore */}
@@ -489,48 +495,51 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
               </>
             ) : (
               <>
+                {/* Header con logo */}
+                <ReportHeader />
+
                 {/* Contenido centrado verticalmente para páginas sin encabezado */}
                 {/* @ts-ignore */}
                 <View style={styles.centeredContent}>
-                {/* Subtítulo (Materia - Categoría - Subcategoría) */}
-                {/* @ts-ignore */}
-                <Text style={styles.sectionTitleCentered}>
-                  {formatGroupTitle(groupData[0])}
-                </Text>
-
-                {/* Gráfico */}
-                {/* @ts-ignore */}
-                <View style={styles.chartContainerCentered}>
+                  {/* Subtítulo (Materia - Categoría - Subcategoría) */}
                   {/* @ts-ignore */}
-                  <View style={styles.chartWrapper}>
-                    {chartImage && (
-                      // @ts-ignore
-                      <Image src={chartImage} style={styles.chartImage} />
-                    )}
-                  </View>
+                  <Text style={styles.sectionTitleCentered}>
+                    {formatGroupTitle(groupData[0])}
+                  </Text>
 
-                  {/* Leyenda inferior */}
+                  {/* Gráfico */}
                   {/* @ts-ignore */}
-                  <View style={styles.legendContainer}>
-                    {groupData.map((item, index) => (
-                      // @ts-ignore
-                      <View key={index} style={styles.legendItem}>
-                        {/* @ts-ignore */}
-                        <View
-                          style={[
-                            styles.legendDot,
-                            { backgroundColor: pieData.colors[index] },
-                          ]}
-                        />
-                        {/* @ts-ignore */}
-                        <Text style={styles.legendText}>
-                          {item.nombre_ambito_legal}
-                        </Text>
-                      </View>
-                    ))}
+                  <View style={styles.chartContainerCentered}>
+                    {/* @ts-ignore */}
+                    <View style={styles.chartWrapper}>
+                      {chartImage && (
+                        // @ts-ignore
+                        <Image src={chartImage} style={styles.chartImage} />
+                      )}
+                    </View>
+
+                    {/* Leyenda inferior */}
+                    {/* @ts-ignore */}
+                    <View style={styles.legendContainer}>
+                      {groupData.map((item, index) => (
+                        // @ts-ignore
+                        <View key={index} style={styles.legendItem}>
+                          {/* @ts-ignore */}
+                          <View
+                            style={[
+                              styles.legendDot,
+                              { backgroundColor: pieData.colors[index] },
+                            ]}
+                          />
+                          {/* @ts-ignore */}
+                          <Text style={styles.legendText}>
+                            {item.nombre_ambito_legal}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
                   </View>
                 </View>
-              </View>
               </>
             )}
           </Page>
@@ -542,6 +551,7 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
       {chartImages.casosPorMateria && data.casosPorMateria && (
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
+          <ReportHeader />
           {/* @ts-ignore */}
           <View style={styles.centeredContent}>
             {/* @ts-ignore */}
@@ -566,6 +576,7 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
       {chartImages.solicitantesPorGenero && data.solicitantesPorGenero && (
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
+          <ReportHeader />
           {/* @ts-ignore */}
           <View style={styles.centeredContent}>
             {/* @ts-ignore */}
@@ -590,6 +601,7 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
       {chartImages.solicitantesPorParroquia && data.solicitantesPorParroquia && (
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
+          <ReportHeader />
           {/* @ts-ignore */}
           <View style={styles.centeredContent}>
             {/* @ts-ignore */}
@@ -614,6 +626,7 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
       {chartImages.beneficiariosDirectos && data.beneficiariosPorTipo && (
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
+          <ReportHeader />
           {/* @ts-ignore */}
           <View style={styles.centeredContent}>
             {/* @ts-ignore */}
@@ -640,6 +653,7 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
       {chartImages.beneficiariosIndirectos && data.beneficiariosPorTipo && (
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
+          <ReportHeader />
           {/* @ts-ignore */}
           <View style={styles.centeredContent}>
             {/* @ts-ignore */}
@@ -666,6 +680,7 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
       {chartImages.beneficiariosPorParentesco && data.beneficiariosPorParentesco && (
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
+          <ReportHeader />
           {/* @ts-ignore */}
           <View style={styles.centeredContent}>
             {/* @ts-ignore */}
@@ -690,6 +705,7 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
       {data.estudiantesPorMateria && chartImages.estudiantesPorMateria?.total && (
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
+          <ReportHeader />
           {/* @ts-ignore */}
           <View style={styles.centeredContent}>
             {/* @ts-ignore */}
@@ -714,6 +730,7 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
       {data.profesoresPorMateria && chartImages.profesoresPorMateria?.total && (
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
+          <ReportHeader />
           {/* @ts-ignore */}
           <View style={styles.centeredContent}>
             {/* @ts-ignore */}

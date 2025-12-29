@@ -277,7 +277,7 @@ export async function generateTiposCasosPageImage(
 }
 
 // Colores fijos para los estatus
-const ESTATUS_COLORS: Record<string, string> = {
+export const ESTATUS_COLORS: Record<string, string> = {
   'En proceso': '#4A90E2', // Azul
   'Archivado': '#7B68EE',   // Morado
   'Entregado': '#50C878',   // Verde

@@ -26,7 +26,7 @@ export default function ReportsPage() {
         term: 'all'
     });
     const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-    
+
     // Estados para el modal de fechas del reporte "Tipos de Caso" y "Estatus de Casos"
     const [showDateModal, setShowDateModal] = useState(false);
     const [fechaInicioReporte, setFechaInicioReporte] = useState('');
@@ -172,47 +172,108 @@ export default function ReportsPage() {
                 const fechaInicio = fechaInicioReporte || undefined;
                 const fechaFin = fechaFinReporte || undefined;
 
-                        if (tipoReporteActual === 'Resumen de Casos') {
-                            // ... (resumen logic)
-                        } else if (tipoReporteActual === 'Reporte de Estatus de Casos') {
-                            // ... (estatus logic)
-                        } else {
-                            // Generar reporte de tipos de caso (comportamiento original)
-                            const { getCasosGroupedByAmbitoLegal } = await import('@/app/actions/reports');
-                            const result = await getCasosGroupedByAmbitoLegal(
+                if (tipoReporteActual === 'Resumen de Casos') {
+                    // Generar reporte resumen de casos
+                    const { getInformeResumenData } = await import('@/app/actions/reports');
+                    const result = await getInformeResumenData(
+                        fechaInicio,
+                        fechaFin
+                    );
+
+                    if (result.success && result.data) {
+                        if (formatoReporte === 'word') {
+                            // Importar y usar la función de generación de DOCX
+                            const { generateResumenCasosDOCX } = await import('@/lib/utils/doc-generator');
+                            await generateResumenCasosDOCX(
+                                result.data,
                                 fechaInicio,
                                 fechaFin
                             );
-
-                            if (result.success && result.data) {
-                                // Verificar si hay datos para el reporte
-                                if (result.data.length === 0 || result.data.every(item => item.cantidad_casos === 0)) {
-                                    alert('No hay casos registrados. Por favor, registre casos antes de generar el reporte.');
-                                    setIsGeneratingReport(false);
-                                    return;
-                                }
-
-                                if (formatoReporte === 'word') {
-                                    // Importar y usar la función de generación de DOCX
-                                    const { generateTiposCasosDOCX } = await import('@/lib/utils/doc-generator');
-                                    await generateTiposCasosDOCX(
-                                        result.data,
-                                        fechaInicio,
-                                        fechaFin
-                                    );
-                                } else {
-                                    // Importar y usar la función de generación de PDF con React PDF
-                                    const { generateTiposCasosPDFReact } = await import('@/lib/utils/pdf-generator-react');
-                                    await generateTiposCasosPDFReact(
-                                        result.data,
-                                        fechaInicio,
-                                        fechaFin
-                                    );
-                                }
-                            } else {
-                                alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
-                            }
+                        } else {
+                            // Importar y usar la función de generación de PDF con React PDF
+                            const { generateInformeResumenPDFReact } = await import('@/lib/utils/pdf-generator-react');
+                            await generateInformeResumenPDFReact(
+                                result.data,
+                                fechaInicio,
+                                fechaFin
+                            );
                         }
+                    } else {
+                        alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
+                    }
+                } else if (tipoReporteActual === 'Reporte de Estatus de Casos') {
+                    // Generar reporte de estatus de casos
+                    const { getCasosGroupedByEstatus } = await import('@/app/actions/reports');
+                    const result = await getCasosGroupedByEstatus(
+                        fechaInicio,
+                        fechaFin
+                    );
+
+                    if (result.success && result.data) {
+                        // Verificar si hay datos para el reporte
+                        if (result.data.length === 0 || result.data.every(item => item.cantidad_casos === 0)) {
+                            alert('No hay casos registrados. Por favor, registre casos antes de generar el reporte.');
+                            setIsGeneratingReport(false);
+                            return;
+                        }
+
+                        if (formatoReporte === 'word') {
+                            // Importar y usar la función de generación de DOCX
+                            const { generateEstatusCasosDOCX } = await import('@/lib/utils/doc-generator');
+                            await generateEstatusCasosDOCX(
+                                result.data,
+                                fechaInicio,
+                                fechaFin
+                            );
+                        } else {
+                            // Importar y usar la función de generación de PDF con React PDF
+                            const { generateEstatusCasosPDFReact } = await import('@/lib/utils/pdf-generator-react');
+                            await generateEstatusCasosPDFReact(
+                                result.data,
+                                fechaInicio,
+                                fechaFin
+                            );
+                        }
+                    } else {
+                        alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
+                    }
+                } else {
+                    // Generar reporte de tipos de caso (comportamiento original)
+                    const { getCasosGroupedByAmbitoLegal } = await import('@/app/actions/reports');
+                    const result = await getCasosGroupedByAmbitoLegal(
+                        fechaInicio,
+                        fechaFin
+                    );
+
+                    if (result.success && result.data) {
+                        // Verificar si hay datos para el reporte
+                        if (result.data.length === 0 || result.data.every(item => item.cantidad_casos === 0)) {
+                            alert('No hay casos registrados. Por favor, registre casos antes de generar el reporte.');
+                            setIsGeneratingReport(false);
+                            return;
+                        }
+
+                        if (formatoReporte === 'word') {
+                            // Importar y usar la función de generación de DOCX
+                            const { generateTiposCasosDOCX } = await import('@/lib/utils/doc-generator');
+                            await generateTiposCasosDOCX(
+                                result.data,
+                                fechaInicio,
+                                fechaFin
+                            );
+                        } else {
+                            // Importar y usar la función de generación de PDF con React PDF
+                            const { generateTiposCasosPDFReact } = await import('@/lib/utils/pdf-generator-react');
+                            await generateTiposCasosPDFReact(
+                                result.data,
+                                fechaInicio,
+                                fechaFin
+                            );
+                        }
+                    } else {
+                        alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
+                    }
+                }
             } catch (error) {
                 console.error('Error al generar reporte:', error);
                 alert('Error al generar el reporte. Por favor, intente nuevamente.');
@@ -334,16 +395,16 @@ export default function ReportsPage() {
                     ) : (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full min-w-0">
                             <div className="w-full min-w-0">
-                            <DistributionChart data={distributionData} />
+                                <DistributionChart data={distributionData} />
                             </div>
                             <div className="w-full min-w-0">
-                            <TopCasesChart data={topCasesData} />
+                                <TopCasesChart data={topCasesData} />
                             </div>
                             <div className="w-full min-w-0">
-                            <StatusDistributionChart data={statusDistributionData} />
+                                <StatusDistributionChart data={statusDistributionData} />
                             </div>
                             <div className="w-full min-w-0">
-                            <CaseLoadTrendChart data={caseLoadTrendData} />
+                                <CaseLoadTrendChart data={caseLoadTrendData} />
                             </div>
                         </div>
                     )
@@ -374,14 +435,14 @@ export default function ReportsPage() {
                     >
                         <X className="w-6 h-6" />
                     </button>
-                    
+
                     {/* Título */}
                     <h2 className="text-xl font-normal text-foreground mb-4">
-                        {tipoReporteActual === 'Reporte de Estatus de Casos' 
+                        {tipoReporteActual === 'Reporte de Estatus de Casos'
                             ? 'Rango de Fechas - Estatus de Casos'
                             : tipoReporteActual === 'Resumen de Casos'
-                            ? 'Rango de Fechas - Resumen de Casos'
-                            : 'Rango de Fechas - Tipos de Caso'}
+                                ? 'Rango de Fechas - Resumen de Casos'
+                                : 'Rango de Fechas - Tipos de Caso'}
                     </h2>
 
                     {/* Grid de formulario */}
@@ -445,7 +506,7 @@ export default function ReportsPage() {
                                 </div>
                                 <span className={`text-sm ${formatoReporte === 'pdf' ? 'text-primary font-medium' : 'text-gray-600'}`}>PDF (.pdf)</span>
                             </label>
-                            
+
                             <label className="flex items-center gap-2 cursor-pointer group">
                                 <div className="relative flex items-center justify-center">
                                     <input
@@ -503,14 +564,14 @@ export default function ReportsPage() {
             {/* Pantalla de carga para generación de reporte */}
             <AnimatePresence>
                 {isGeneratingReport && (
-                    <motion.div 
+                    <motion.div
                         className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-sm"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.3 }}
                     >
-                        <motion.div 
+                        <motion.div
                             className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 border border-gray-100"
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
