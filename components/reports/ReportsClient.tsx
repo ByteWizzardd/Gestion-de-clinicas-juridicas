@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { FileBarChart, Clock, User, Briefcase, X, Calendar, Home } from 'lucide-react';
+import { FileBarChart, Clock, User, Briefcase, X, Calendar, Home, History } from 'lucide-react';
 import ReportCard from '@/components/cards/ReportCard';
 import FilterBar, { ReportFilters } from '@/components/reports/FilterBar';
 import { ViewMode } from '@/components/ui/navigation/ViewSwitcher';
@@ -404,40 +404,57 @@ export default function ReportsPage() {
 
             {/* Report Generation Cards */}
             <motion.div
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 w-full min-w-0"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-[10rem] gap-4 mb-6 w-full min-w-0"
                 initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
             >
+                {/* 1. Resumen de Casos (Normal Card) */}
                 <ReportCard
                     title="Resumen de Casos"
                     icon={<FileBarChart className="w-full h-full" strokeWidth={1.5} />}
                     onGenerate={() => handleGenerateReport('Resumen de Casos')}
                     buttonColor="red"
                 />
+
+                {/* 2. Estatus de Casos (Top Right) */}
                 <ReportCard
                     title="Reporte de Estatus de Casos"
                     icon={<Clock className="w-full h-full" strokeWidth={1.5} />}
                     onGenerate={() => handleGenerateReport('Reporte de Estatus de Casos')}
                     buttonColor="orange"
                 />
+
+                {/* 3. Tipos de Caso (Middle Right) */}
+                <ReportCard
+                    title="Tipos de Caso"
+                    icon={<Briefcase className="w-full h-full" strokeWidth={1.5} />}
+                    onGenerate={() => handleGenerateReport('Tipos de Caso')}
+                    buttonColor="red"
+                />
+
+                {/* 4. Historial de Casos (Bottom Row) */}
+                <ReportCard
+                    title="Historial de Casos del Solicitante"
+                    icon={<History className="w-full h-full" strokeWidth={1.5} />}
+                    onGenerate={() => handleGenerateReport('Historial de Casos del Solicitante')}
+                    buttonColor="orange"
+                />
+
+                {/* 5. Ficha Resumen (Bottom Row) */}
                 <ReportCard
                     title="Ficha Resumen del Solicitante"
                     icon={<User className="w-full h-full" strokeWidth={1.5} />}
                     onGenerate={() => handleGenerateReport('Ficha Resumen del Solicitante')}
                     buttonColor="red"
                 />
-                <ReportCard
-                    title="Tipos de Caso"
-                    icon={<Briefcase className="w-full h-full" strokeWidth={1.5} />}
-                    onGenerate={() => handleGenerateReport('Tipos de Caso')}
-                    buttonColor="orange"
-                />
+
+                {/* 6. Reporte Socioeconómico (Bottom Row) */}
                 <ReportCard
                     title="Reporte Socioeconómico"
                     icon={<Home className="w-full h-full" strokeWidth={1.5} />}
                     onGenerate={() => handleGenerateReport('Reporte Socioeconómico')}
-                    buttonColor="red"
+                    buttonColor="orange"
                 />
             </motion.div>
 

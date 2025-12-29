@@ -23,7 +23,7 @@ import {
     imageToBase64,
     formatGroupTitle
 } from '../pdf-generator-react';
-import { formatDate, base64ToUint8Array } from './docx-utils';
+import { formatDate, base64ToUint8Array, createEmptyPortraitPage } from './docx-utils';
 import {
     generateTitleImage,
     generateBannerImage,
@@ -41,36 +41,6 @@ const BAR_CHART_COLORS = [
     '#6fd195', '#8c63da', '#2bb7dc', '#1f94ff', '#f4cf3b',
     '#55c4ae', '#6186cc',
 ];
-
-/**
- * Crea una página de portada
- */
-async function createCoverPage(portadaBase64: string) {
-    const portadaUint8 = base64ToUint8Array(portadaBase64.split(',')[1]);
-    return {
-        properties: {
-            page: {
-                size: {
-                    orientation: PageOrientation.PORTRAIT,
-                    width: 11906,
-                    height: 16838
-                },
-                margin: { top: 0, right: 0, bottom: 0, left: 0 },
-            },
-        },
-        children: [
-            new Paragraph({
-                alignment: AlignmentType.CENTER,
-                children: [
-                    new ImageRun({
-                        data: portadaUint8,
-                        transformation: { width: 630, height: 891 }, // A4 proporciones
-                    } as any),
-                ],
-            }),
-        ],
-    };
-}
 
 /**
  * Crea una sección de página horizontal con contenido
@@ -187,14 +157,13 @@ export async function generateResumenCasosDOCX(
 ): Promise<void> {
     try {
         const logoBase64 = await imageToBase64('/logo clinica juridica.png');
-        const portadaBase64 = await imageToBase64('/portada reporte.png');
         const logoUint8 = base64ToUint8Array(logoBase64.split(',')[1]);
 
         const sections: any[] = [];
         const reportTitle = `Informe Resumen de Casos${term ? ` Semestre ${term}` : (fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : '')}`;
 
-        // 1. Portada
-        sections.push(await createCoverPage(portadaBase64));
+        // 1. Primera Hoja Vacía
+        sections.push(createEmptyPortraitPage());
 
         // 2. Tipos de Caso (Pie Charts agrupados)
         const groupedTiposCasos = groupDataByMateriaSubcategoria(data.tiposDeCaso);

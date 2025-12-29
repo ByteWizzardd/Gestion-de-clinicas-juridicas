@@ -35,28 +35,34 @@ export default function StatusDistributionChart({ data }: StatusDistributionChar
     return (
         <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
             <h3 className="text-xl font-medium text-foreground mb-4 text-center">Distribución por Estatus</h3>
-            <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                    <Pie
-                        data={chartData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={100}
-                        dataKey="value"
-                    >
-                        {chartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                    </Pie>
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend
-                        verticalAlign="bottom"
-                        height={36}
-                        formatter={(value) => <span className="text-sm">{value}</span>}
-                    />
-                </PieChart>
-            </ResponsiveContainer>
+            {(!chartData || chartData.length === 0 || chartData.every(item => item.value === 0)) ? (
+                <div className="h-[300px] w-full flex items-center justify-center">
+                    <p className="text-gray-500 text-sm">No hay casos con los filtros seleccionados</p>
+                </div>
+            ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                        <Pie
+                            data={chartData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            outerRadius={100}
+                            dataKey="value"
+                        >
+                            {chartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.fill} />
+                            ))}
+                        </Pie>
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend
+                            verticalAlign="bottom"
+                            height={36}
+                            formatter={(value) => <span className="text-sm">{value}</span>}
+                        />
+                    </PieChart>
+                </ResponsiveContainer>
+            )}
         </div>
     );
 }

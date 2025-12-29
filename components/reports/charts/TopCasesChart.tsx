@@ -33,32 +33,38 @@ export default function TopCasesChart({ data }: TopCasesChartProps) {
     return (
         <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
             <h3 className="text-xl font-medium text-foreground mb-4 text-center">Top 5 Tipos de Caso (Materia)</h3>
-            <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis
-                        dataKey="name"
-                        tick={{ fill: '#6b7280', fontSize: 12 }}
-                        axisLine={{ stroke: '#d1d5db' }}
-                    />
-                    <YAxis
-                        tick={{ fill: '#6b7280', fontSize: 12 }}
-                        axisLine={{ stroke: '#d1d5db' }}
-                    />
-                    <Tooltip
-                        content={<CustomTooltip />}
-                        cursor={{ fill: 'rgba(99, 102, 241, 0.1)' }}
-                    />
-                    <Bar
-                        dataKey="value"
-                        radius={[8, 8, 0, 0]}
-                    >
-                        {data.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                    </Bar>
-                </BarChart>
-            </ResponsiveContainer>
+            {(!data || data.length === 0 || data.every(item => item.value === 0)) ? (
+                <div className="h-[300px] w-full flex items-center justify-center">
+                    <p className="text-gray-500 text-sm">No hay casos con los filtros seleccionados</p>
+                </div>
+            ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis
+                            dataKey="name"
+                            tick={{ fill: '#6b7280', fontSize: 12 }}
+                            axisLine={{ stroke: '#d1d5db' }}
+                        />
+                        <YAxis
+                            tick={{ fill: '#6b7280', fontSize: 12 }}
+                            axisLine={{ stroke: '#d1d5db' }}
+                        />
+                        <Tooltip
+                            content={<CustomTooltip />}
+                            cursor={{ fill: 'rgba(99, 102, 241, 0.1)' }}
+                        />
+                        <Bar
+                            dataKey="value"
+                            radius={[8, 8, 0, 0]}
+                        >
+                            {data.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                        </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
+            )}
         </div>
     );
 }
