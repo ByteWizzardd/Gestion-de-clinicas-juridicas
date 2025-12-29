@@ -344,17 +344,14 @@ export default function ReportsPage() {
                                 <label className="text-base font-normal text-foreground mb-1">
                                     Fecha de Inicio <span className="text-danger">*</span>
                                 </label>
-                                <div className="relative">
-                                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600 pointer-events-none z-10" />
-                                    <DatePicker
-                                        value={fechaInicioReporte}
-                                        onChange={(value) => {
-                                            setFechaInicioReporte(value);
-                                            setDateError(null);
-                                        }}
-                                        required
-                                    />
-                                </div>
+                                <DatePicker
+                                    value={fechaInicioReporte}
+                                    onChange={(value) => {
+                                        setFechaInicioReporte(value);
+                                        setDateError(null);
+                                    }}
+                                    required
+                                />
                             </div>
                         </div>
 
@@ -364,17 +361,14 @@ export default function ReportsPage() {
                                 <label className="text-base font-normal text-foreground mb-1">
                                     Fecha de Fin <span className="text-danger">*</span>
                                 </label>
-                                <div className="relative">
-                                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600 pointer-events-none z-10" />
-                                    <DatePicker
-                                        value={fechaFinReporte}
-                                        onChange={(value) => {
-                                            setFechaFinReporte(value);
-                                            setDateError(null);
-                                        }}
-                                        required
-                                    />
-                                </div>
+                                <DatePicker
+                                    value={fechaFinReporte}
+                                    onChange={(value) => {
+                                        setFechaFinReporte(value);
+                                        setDateError(null);
+                                    }}
+                                    required
+                                />
                             </div>
                         </div>
                     </div>

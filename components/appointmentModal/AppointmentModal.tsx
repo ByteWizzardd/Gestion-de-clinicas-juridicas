@@ -205,25 +205,22 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
               <label className="text-base font-normal text-foreground mb-1">
                 Fecha de Encuentro <span className="text-danger">*</span>
               </label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600 pointer-events-none z-10" />
-                <DatePicker
-                  value={date ? date.toISOString().slice(0, 10) : ""}
-                  onChange={(value: string) => {
-                    setDate(value ? new Date(value) : null);
-                    // Limpiar error del campo cuando se modifica
-                    if (errors.date) {
-                      setErrors((prev) => {
-                        const newErrors = { ...prev };
-                        delete newErrors.date;
-                        return newErrors;
-                      });
-                    }
-                  }}
-                  error={errors.date}
-                  required
-                />
-              </div>
+              <DatePicker
+                value={date ? date.toISOString().slice(0, 10) : ""}
+                onChange={(value: string) => {
+                  setDate(value ? new Date(value) : null);
+                  // Limpiar error del campo cuando se modifica
+                  if (errors.date) {
+                    setErrors((prev) => {
+                      const newErrors = { ...prev };
+                      delete newErrors.date;
+                      return newErrors;
+                    });
+                  }
+                }}
+                error={errors.date}
+                required
+              />
             </div>
           </div>
           <div className="col-span-1">
@@ -231,13 +228,10 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
               <label className="text-base font-normal text-foreground mb-1">
                 Fecha de Próxima cita
               </label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600 pointer-events-none z-10" />
-                <DatePicker
-                  value={endDate ? endDate.toISOString().slice(0, 10) : ""}
-                  onChange={(value: string) => setEndDate(value ? new Date(value) : null)}
-                />
-              </div>
+              <DatePicker
+                value={endDate ? endDate.toISOString().slice(0, 10) : ""}
+                onChange={(value: string) => setEndDate(value ? new Date(value) : null)}
+              />
             </div>
           </div>
 
@@ -291,7 +285,7 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
         </form>
 
         {/* Footer con botón */}
-        <div className="flex flex-col border-t border-gray-200 pt-6">
+        <div className="flex flex-col border-t border-gray-200 pt-4">
           {/* Nota sobre campos obligatorios */}
           <div className="flex items-center gap-1 pb-4">
             <span className="text-danger font-medium text-sm">*</span>

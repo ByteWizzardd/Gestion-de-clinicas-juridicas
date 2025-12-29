@@ -411,15 +411,12 @@ export default function CaseFormModal({
           <div className="col-span-1">
             <div className="flex flex-col gap-1">
               <label className="text-base font-normal text-foreground mb-1">Fecha del Caso <span className="text-danger">*</span></label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600 pointer-events-none z-10" />
-                <DatePicker
-                  value={formData.fechaCaso}
-                  onChange={(value) => updateField('fechaCaso', value)}
-                  error={errors.fechaCaso}
-                  required
-                />
-              </div>
+              <DatePicker
+                value={formData.fechaCaso}
+                onChange={(value) => updateField('fechaCaso', value)}
+                error={errors.fechaCaso}
+                required
+              />
             </div>
           </div>
           <div className="col-span-1">

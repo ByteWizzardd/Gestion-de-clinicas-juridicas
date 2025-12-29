@@ -8,7 +8,7 @@ import Input from './Input';
 import InputGroup from './InputGroup';
 import Select from './Select';
 import Button from '../ui/Button';
-import { ArrowRight, ArrowLeft, Calendar } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Calendar, X, User } from 'lucide-react';
 import DatePicker from './DatePicker';
 
 interface ApplicantFormModalProps {
@@ -1121,24 +1121,13 @@ export default function ApplicantFormModal({
         }
       }
 
-      // Si no es solicitante, buscar en usuarios y beneficiarios para autocompletar
-      // Si hay una coincidencia exacta, autocompletar automáticamente
+      // Si no es solicitante, buscar en otras tablas para autocompletar automáticamente
       if (cedulaNumero.trim().length >= 4) {
-        // Buscar en usuarios
-        const { getUsuarioCompleteByCedulaAction } = await import('@/app/actions/usuarios');
-        const usuarioResult = await getUsuarioCompleteByCedulaAction(cedula);
-        
-        if (usuarioResult.success && usuarioResult.data) {
-          autocompleteFromUsuario(usuarioResult.data);
-          return;
-        }
-
-        // Buscar en beneficiarios
         const { getBeneficiarioByCedulaAction } = await import('@/app/actions/beneficiarios');
-        const beneficiarioResult = await getBeneficiarioByCedulaAction(cedula);
+        const result = await getBeneficiarioByCedulaAction(cedula);
         
-        if (beneficiarioResult.success && beneficiarioResult.data) {
-          autocompleteFromBeneficiario(beneficiarioResult.data);
+        if (result.success && result.data) {
+          autocompleteFromPerson(result.data);
           return;
         }
       }
@@ -1152,49 +1141,24 @@ export default function ApplicantFormModal({
         
         cedulaSearchTimeout.current = setTimeout(async () => {
           try {
-            const { searchUsuariosAction } = await import('@/app/actions/solicitantes');
             const { searchBeneficiariosByCedulaAction } = await import('@/app/actions/beneficiarios');
             
-            const [usuariosResult, beneficiariosResult] = await Promise.all([
-              searchUsuariosAction(cedula, true),
-              searchBeneficiariosByCedulaAction(cedula),
-            ]);
+            const result = await searchBeneficiariosByCedulaAction(cedula);
 
-            // Combinar resultados de usuarios y beneficiarios
-            const allSuggestions: any[] = [];
-            
-            if (usuariosResult.success && usuariosResult.data) {
-              const formattedUsuarios = usuariosResult.data.map((c: any) => ({
+            if (result.success && result.data) {
+              const allSuggestions = result.data.map((c: any) => ({
                 ...c,
-                fecha_nacimiento: c.fecha_nacimiento ? new Date(c.fecha_nacimiento).toISOString().split('T')[0] : null,
-                source: 'usuario',
+                // Asegurar formato de fecha para el DatePicker
+                fecha_nacimiento: c.fecha_nacimiento ? c.fecha_nacimiento : null,
               }));
-              allSuggestions.push(...formattedUsuarios);
-            }
-            
-            if (beneficiariosResult.success && beneficiariosResult.data) {
-              const formattedBeneficiarios = beneficiariosResult.data.map((c: any) => ({
-                ...c,
-                fecha_nacimiento: c.fecha_nacimiento ? new Date(c.fecha_nacimiento).toISOString().split('T')[0] : null,
-                source: 'beneficiario',
-              }));
-              allSuggestions.push(...formattedBeneficiarios);
-            }
 
-            setCedulaSuggestions(allSuggestions);
-            setShowCedulaSuggestions(allSuggestions.length > 0 && !errors.cedulaNumero);
-            
-            // Si hay una coincidencia exacta, autocompletar automáticamente
-            const exactMatch = allSuggestions.find((c: any) => c.cedula === cedula);
-            if (exactMatch) {
-              if (exactMatch.source === 'usuario') {
-                const { getUsuarioCompleteByCedulaAction } = await import('@/app/actions/usuarios');
-                const usuarioResult = await getUsuarioCompleteByCedulaAction(cedula);
-                if (usuarioResult.success && usuarioResult.data) {
-                  autocompleteFromUsuario(usuarioResult.data);
-                }
-              } else if (exactMatch.source === 'beneficiario') {
-                autocompleteFromBeneficiario(exactMatch);
+              setCedulaSuggestions(allSuggestions);
+              setShowCedulaSuggestions(allSuggestions.length > 0 && !errors.cedulaNumero);
+              
+              // Si hay una coincidencia exacta, autocompletar automáticamente
+              const exactMatch = allSuggestions.find((c: any) => c.cedula === cedula);
+              if (exactMatch) {
+                autocompleteFromPerson(exactMatch);
               }
             }
           } catch (error) {
@@ -1271,192 +1235,21 @@ export default function ApplicantFormModal({
     setEmailCheckTimeout(timeout);
   };
 
-  // Función para autocompletar el formulario con datos de un solicitante
-  const autocompleteFromSolicitante = (solicitante: {
-    cedula: string;
-    nombres: string;
-    apellidos: string;
-    fecha_nacimiento: string;
-    telefono_celular: string;
-    correo_electronico: string;
-    sexo: string;
-    nacionalidad: string;
-  }) => {
-    // Extraer tipo y número de cédula
-    // La cédula viene como "V-12345678" (con guión)
-    let cedulaTipo = 'V';
-    let cedulaNumero = solicitante.cedula || '';
-    
-    // Si la cédula tiene formato "V-XXXX", extraer el tipo y el número
-    const cedulaMatch = cedulaNumero.match(/^([VEJP])-?(.+)$/);
-    if (cedulaMatch) {
-      cedulaTipo = cedulaMatch[1];
-      cedulaNumero = cedulaMatch[2]; // Ya viene sin el guión después del tipo
-    } else if (cedulaNumero.match(/^[VEJP]/)) {
-      // Fallback: si viene como "V12345678" (sin guión), extraer el tipo
-      cedulaTipo = cedulaNumero[0];
-      cedulaNumero = cedulaNumero.substring(1);
-    }
 
-    // Extraer código de país y número de teléfono celular
-    let codigoPaisCelular = '+58';
-    let telefonoCelular = solicitante.telefono_celular || '';
-    if (telefonoCelular.startsWith('+58')) {
-      codigoPaisCelular = '+58';
-      telefonoCelular = telefonoCelular.substring(3);
-    } else if (telefonoCelular.startsWith('+')) {
-      const match = telefonoCelular.match(/^(\+\d{1,3})(.+)$/);
-      if (match) {
-        codigoPaisCelular = match[1];
-        telefonoCelular = match[2];
-      }
-    }
-
-    // Asignar nacionalidad según el tipo de cédula
-    let nacionalidadAsignada = '';
-    if (cedulaTipo === 'V' || cedulaTipo === 'J') {
-      nacionalidadAsignada = 'V'; // Venezolano
-    } else if (cedulaTipo === 'E') {
-      nacionalidadAsignada = 'E'; // Extranjero (el schema usa 'E')
-    } else if (cedulaTipo === 'P') {
-      // Si es pasaporte, usar la nacionalidad del solicitante o dejar vacío
-      nacionalidadAsignada = solicitante.nacionalidad || '';
-    }
-
-    // Actualizar el formulario con los datos del solicitante
-    setFormData((prev) => ({
-      ...prev,
-      cedulaTipo,
-      cedulaNumero,
-      nombres: solicitante.nombres || prev.nombres,
-      apellidos: solicitante.apellidos || prev.apellidos,
-      fechaNacimiento: solicitante.fecha_nacimiento || prev.fechaNacimiento,
-      sexo: solicitante.sexo || prev.sexo,
-      telefonoCelular: telefonoCelular || prev.telefonoCelular,
-      codigoPaisCelular: telefonoCelular ? codigoPaisCelular : prev.codigoPaisCelular,
-      correoElectronico: solicitante.correo_electronico || prev.correoElectronico,
-      nacionalidad: nacionalidadAsignada || prev.nacionalidad,
-    }));
-
-    // Bloquear solo los campos que tienen datos
-    const camposBloqueados = new Set<keyof FormData>();
-    if (solicitante.nombres) camposBloqueados.add('nombres');
-    if (solicitante.apellidos) camposBloqueados.add('apellidos');
-    if (solicitante.fecha_nacimiento) camposBloqueados.add('fechaNacimiento');
-    if (solicitante.sexo) camposBloqueados.add('sexo');
-    if (telefonoCelular) {
-      camposBloqueados.add('telefonoCelular');
-      camposBloqueados.add('codigoPaisCelular');
-    }
-    if (solicitante.correo_electronico) camposBloqueados.add('correoElectronico');
-    if (nacionalidadAsignada) camposBloqueados.add('nacionalidad');
-    
-    setLockedFields(camposBloqueados);
-
-    // Limpiar errores y ocultar sugerencias
-    setErrors((prev) => {
-      const newErrors = { ...prev };
-      delete newErrors.cedulaNumero;
-      return newErrors;
-    });
-    setShowCedulaSuggestions(false);
-    setCedulaSuggestions([]);
-  };
-
-  // Función para autocompletar desde un usuario
-  const autocompleteFromUsuario = (usuario: {
-    cedula: string;
-    nombres: string;
-    apellidos: string;
-    correo_electronico: string;
-    telefono_celular: string | null;
-    nombre_completo: string;
-  }) => {
-    // Extraer tipo y número de cédula
-    let cedulaTipo = 'V';
-    let cedulaNumero = usuario.cedula || '';
-    
-    const cedulaMatch = cedulaNumero.match(/^([VEJP])-?(.+)$/);
-    if (cedulaMatch) {
-      cedulaTipo = cedulaMatch[1];
-      cedulaNumero = cedulaMatch[2];
-    } else if (cedulaNumero.match(/^[VEJP]/)) {
-      cedulaTipo = cedulaNumero[0];
-      cedulaNumero = cedulaNumero.substring(1);
-    }
-
-    // Extraer código de país y número de teléfono celular
-    let codigoPaisCelular = '+58';
-    let telefonoCelular = usuario.telefono_celular || '';
-    if (telefonoCelular.startsWith('+58')) {
-      codigoPaisCelular = '+58';
-      telefonoCelular = telefonoCelular.substring(3);
-    } else if (telefonoCelular.startsWith('+')) {
-      const match = telefonoCelular.match(/^(\+\d{1,3})(.+)$/);
-      if (match) {
-        codigoPaisCelular = match[1];
-        telefonoCelular = match[2];
-      }
-    }
-
-    // Asignar nacionalidad según el tipo de cédula
-    let nacionalidadAsignada = '';
-    if (cedulaTipo === 'V' || cedulaTipo === 'J') {
-      nacionalidadAsignada = 'V';
-    } else if (cedulaTipo === 'E') {
-      nacionalidadAsignada = 'E'; // Extranjero (el schema usa 'E')
-    } else if (cedulaTipo === 'P') {
-      nacionalidadAsignada = '';
-    }
-
-    // Actualizar el formulario con los datos del usuario
-    setFormData((prev) => ({
-      ...prev,
-      cedulaTipo,
-      cedulaNumero,
-      nombres: usuario.nombres || prev.nombres,
-      apellidos: usuario.apellidos || prev.apellidos,
-      telefonoCelular: telefonoCelular || prev.telefonoCelular,
-      codigoPaisCelular: telefonoCelular ? codigoPaisCelular : prev.codigoPaisCelular,
-      correoElectronico: usuario.correo_electronico || prev.correoElectronico,
-      nacionalidad: nacionalidadAsignada || prev.nacionalidad,
-    }));
-
-    // Bloquear solo los campos que tienen datos
-    const camposBloqueados = new Set<keyof FormData>();
-    if (usuario.nombres) camposBloqueados.add('nombres');
-    if (usuario.apellidos) camposBloqueados.add('apellidos');
-    if (telefonoCelular) {
-      camposBloqueados.add('telefonoCelular');
-      camposBloqueados.add('codigoPaisCelular');
-    }
-    if (usuario.correo_electronico) camposBloqueados.add('correoElectronico');
-    if (nacionalidadAsignada) camposBloqueados.add('nacionalidad');
-    
-    setLockedFields(camposBloqueados);
-
-    // Limpiar errores y ocultar sugerencias
-    setErrors((prev) => {
-      const newErrors = { ...prev };
-      delete newErrors.cedulaNumero;
-      return newErrors;
-    });
-    setShowCedulaSuggestions(false);
-    setCedulaSuggestions([]);
-  };
-
-  // Función para autocompletar desde un beneficiario
-  const autocompleteFromBeneficiario = (beneficiario: {
+  // Función para autocompletar desde una persona (Usuario, Beneficiario o Solicitante)
+  const autocompleteFromPerson = (persona: {
     cedula: string;
     nombres: string;
     apellidos: string;
     fecha_nacimiento?: string | null;
-    sexo?: string;
+    sexo?: string | null;
     nombre_completo: string;
+    correo_electronico?: string | null;
+    telefono_celular?: string | null;
   }) => {
     // Extraer tipo y número de cédula
     let cedulaTipo = 'V';
-    let cedulaNumero = beneficiario.cedula || '';
+    let cedulaNumero = persona.cedula || '';
     
     const cedulaMatch = cedulaNumero.match(/^([VEJP])-?(.+)$/);
     if (cedulaMatch) {
@@ -1465,6 +1258,20 @@ export default function ApplicantFormModal({
     } else if (cedulaNumero.match(/^[VEJP]/)) {
       cedulaTipo = cedulaNumero[0];
       cedulaNumero = cedulaNumero.substring(1);
+    }
+
+    // Extraer código de país y número de teléfono celular si existe
+    let codigoPaisCelular = '+58';
+    let telefonoCelular = persona.telefono_celular || '';
+    if (telefonoCelular.startsWith('+58')) {
+      codigoPaisCelular = '+58';
+      telefonoCelular = telefonoCelular.substring(3);
+    } else if (telefonoCelular.startsWith('+')) {
+      const match = telefonoCelular.match(/^(\+\d{1,3})(.+)$/);
+      if (match) {
+        codigoPaisCelular = match[1];
+        telefonoCelular = match[2];
+      }
     }
 
     // Asignar nacionalidad según el tipo de cédula
@@ -1477,24 +1284,32 @@ export default function ApplicantFormModal({
       nacionalidadAsignada = '';
     }
 
-    // Actualizar el formulario con los datos del beneficiario
+    // Actualizar el formulario con los datos de la persona
     setFormData((prev) => ({
       ...prev,
       cedulaTipo,
       cedulaNumero,
-      nombres: beneficiario.nombres || prev.nombres,
-      apellidos: beneficiario.apellidos || prev.apellidos,
-      fechaNacimiento: beneficiario.fecha_nacimiento || prev.fechaNacimiento,
-      sexo: beneficiario.sexo || prev.sexo,
+      nombres: persona.nombres || prev.nombres,
+      apellidos: persona.apellidos || prev.apellidos,
+      fechaNacimiento: persona.fecha_nacimiento || prev.fechaNacimiento,
+      sexo: persona.sexo || prev.sexo,
+      telefonoCelular: telefonoCelular || prev.telefonoCelular,
+      codigoPaisCelular: telefonoCelular ? codigoPaisCelular : prev.codigoPaisCelular,
+      correoElectronico: persona.correo_electronico || prev.correoElectronico,
       nacionalidad: nacionalidadAsignada || prev.nacionalidad,
     }));
 
     // Bloquear solo los campos que tienen datos
     const camposBloqueados = new Set<keyof FormData>();
-    if (beneficiario.nombres) camposBloqueados.add('nombres');
-    if (beneficiario.apellidos) camposBloqueados.add('apellidos');
-    if (beneficiario.fecha_nacimiento) camposBloqueados.add('fechaNacimiento');
-    if (beneficiario.sexo) camposBloqueados.add('sexo');
+    if (persona.nombres) camposBloqueados.add('nombres');
+    if (persona.apellidos) camposBloqueados.add('apellidos');
+    if (persona.fecha_nacimiento) camposBloqueados.add('fechaNacimiento');
+    if (persona.sexo) camposBloqueados.add('sexo');
+    if (telefonoCelular) {
+      camposBloqueados.add('telefonoCelular');
+      camposBloqueados.add('codigoPaisCelular');
+    }
+    if (persona.correo_electronico) camposBloqueados.add('correoElectronico');
     if (nacionalidadAsignada) camposBloqueados.add('nacionalidad');
     
     setLockedFields(camposBloqueados);
@@ -1574,35 +1389,20 @@ export default function ApplicantFormModal({
                 <motion.button
                   key={`${item.cedula}-${index}`}
                   type="button"
-                  onClick={async () => {
-                    if (item.source === 'usuario') {
-                      const { getUsuarioCompleteByCedulaAction } = await import('@/app/actions/usuarios');
-                      const usuarioResult = await getUsuarioCompleteByCedulaAction(item.cedula);
-                      if (usuarioResult.success && usuarioResult.data) {
-                        autocompleteFromUsuario(usuarioResult.data);
-                      }
-                    } else if (item.source === 'beneficiario') {
-                      autocompleteFromBeneficiario(item);
-                    } else {
-                      // Fallback para compatibilidad con sugerencias antiguas
-                      autocompleteFromSolicitante(item as any);
-                    }
-                  }}
+                  onClick={() => autocompleteFromPerson(item)}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.03, duration: 0.15 }}
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none transition-colors"
+                  className="w-full text-left px-4 py-3 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none transition-colors border-b border-gray-100 last:border-0"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium text-gray-900">{item.cedula}</div>
-                      <div className="text-sm text-gray-600">{item.nombre_completo}</div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <User className="w-4 h-4 text-primary" />
                     </div>
-                    {item.source && (
-                      <span className="text-xs text-gray-500 capitalize ml-2">
-                        {item.source === 'usuario' ? 'Usuario' : item.source === 'beneficiario' ? 'Beneficiario' : ''}
-                      </span>
-                    )}
+                    <div>
+                      <div className="font-medium text-gray-900 text-sm">{item.cedula}</div>
+                      <div className="text-xs text-gray-500">{item.nombre_completo}</div>
+                    </div>
                   </div>
                 </motion.button>
               ))}
@@ -1637,16 +1437,13 @@ export default function ApplicantFormModal({
       <div className="col-span-1">
         <div className="flex flex-col gap-1">
           <label className="text-base font-normal text-foreground mb-1">Fecha de Nacimiento <span className="text-danger">*</span></label>
-          <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600 pointer-events-none z-10" />
-            <DatePicker
-              value={formData.fechaNacimiento}
-              onChange={(value) => updateField('fechaNacimiento', value)}
-              error={errors.fechaNacimiento}
-              required
-              disabled={lockedFields.has('fechaNacimiento')}
-            />
-          </div>
+          <DatePicker
+            value={formData.fechaNacimiento}
+            onChange={(value) => updateField('fechaNacimiento', value)}
+            error={errors.fechaNacimiento}
+            required
+            disabled={lockedFields.has('fechaNacimiento')}
+          />
           {errors.fechaNacimiento && <p className="text-xs text-danger mt-1">{errors.fechaNacimiento}</p>}
         </div>
       </div>
@@ -2361,7 +2158,6 @@ export default function ApplicantFormModal({
   };
 
   return (
-    <>
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
@@ -2369,31 +2165,37 @@ export default function ApplicantFormModal({
       className="rounded-[50px] max-w-[1200px] mx-auto"
       showCloseButton={false}
     >
-      <div className="p-12 relative">
-        {/* Botón de cerrar */}
-        <button
-          onClick={handleClose}
-          className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
-          aria-label="Cerrar modal"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-        
-        {/* Título */}
-        <h2 className="text-2xl font-normal text-foreground mb-6">Registro de Solicitante</h2>
+      <div className="flex flex-col h-full bg-white rounded-[50px] overflow-hidden max-h-[90vh]">
+        {/* Header fijo */}
+        <div className="flex-shrink-0 p-12 pb-4 relative border-b border-gray-200">
+          <button
+            onClick={handleClose}
+            className="absolute top-6 right-6 cursor-pointer p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
+            aria-label="Cerrar modal"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          
+          <h2 className="text-2xl font-normal text-foreground">Registro de Solicitante</h2>
+        </div>
 
-        {/* Stepper */}
-        <Stepper steps={STEPS} currentStep={currentStep} />
+        {/* Área de contenido scrollable */}
+        <div className="px-12 py-6 overflow-y-auto flex-1 min-h-0 custom-scrollbar">
+          {/* Stepper */}
+          <div className="mb-8">
+            <Stepper steps={STEPS} currentStep={currentStep} />
+          </div>
 
-        {/* Contenido del paso */}
-        <div className="min-h-[300px] mb-4">{renderStepContent()}</div>
+          {/* Contenido del paso */}
+          <div className="min-h-[300px] mb-4">
+            {renderStepContent()}
+          </div>
+        </div>
 
-        {/* Footer con botones */}
-        <div className="flex flex-col border-t border-gray-200">
+        {/* Footer fijo */}
+        <div className="flex-shrink-0 flex flex-col border-t border-gray-200 px-12 py-6 bg-white">
           {/* Nota sobre campos obligatorios */}
-          <div className="flex items-center gap-1 pt-2 pb-4">
+          <div className="flex items-center gap-1 mb-4">
             <span className="text-danger font-medium text-sm">*</span>
             <span className="text-sm text-gray-600">Campo obligatorio</span>
           </div>
@@ -2419,7 +2221,6 @@ export default function ApplicantFormModal({
         </div>
       </div>
     </Modal>
-  </>
   );
 }
 

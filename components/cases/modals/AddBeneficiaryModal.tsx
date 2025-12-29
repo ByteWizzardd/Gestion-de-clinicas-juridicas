@@ -131,6 +131,12 @@ export default function AddBeneficiaryModal({
         if (result.success && result.data) {
           setSuggestions(result.data);
           setShowSuggestions(result.data.length > 0);
+
+          // Si hay una coincidencia exacta, autocompletar automáticamente
+          const exactMatch = result.data.find(p => p.cedula === cedula);
+          if (exactMatch) {
+            autocompleteFromPerson(exactMatch);
+          }
         }
       } catch (error) {
         console.error('Error searching beneficiary:', error);
@@ -140,14 +146,14 @@ export default function AddBeneficiaryModal({
     }, 300);
   };
 
-  const autocompleteFromBeneficiary = (beneficiario: any) => {
+  const autocompleteFromPerson = (persona: any) => {
     // Extraer datos y asegurar que la fecha sea un string YYYY-MM-DD
     let fechaNacString = '';
-    if (beneficiario.fecha_nacimiento) {
-      if (beneficiario.fecha_nacimiento instanceof Date) {
-        fechaNacString = beneficiario.fecha_nacimiento.toISOString().split('T')[0];
-      } else if (typeof beneficiario.fecha_nacimiento === 'string') {
-        fechaNacString = beneficiario.fecha_nacimiento.split('T')[0];
+    if (persona.fecha_nacimiento) {
+      if (persona.fecha_nacimiento instanceof Date) {
+        fechaNacString = persona.fecha_nacimiento.toISOString().split('T')[0];
+      } else if (typeof persona.fecha_nacimiento === 'string') {
+        fechaNacString = persona.fecha_nacimiento.split('T')[0];
       }
     }
 
@@ -155,8 +161,8 @@ export default function AddBeneficiaryModal({
     let cedulaTipo = formData.cedulaTipo;
     let cedulaNumero = formData.cedulaNumero;
     
-    if (beneficiario.cedula && beneficiario.cedula.includes('-')) {
-      const parts = beneficiario.cedula.split('-');
+    if (persona.cedula && persona.cedula.includes('-')) {
+      const parts = persona.cedula.split('-');
       if (parts.length === 2) {
         cedulaTipo = parts[0];
         cedulaNumero = parts[1];
@@ -167,18 +173,18 @@ export default function AddBeneficiaryModal({
       ...prev,
       cedulaTipo,
       cedulaNumero,
-      nombres: beneficiario.nombres || prev.nombres,
-      apellidos: beneficiario.apellidos || prev.apellidos,
+      nombres: persona.nombres || prev.nombres,
+      apellidos: persona.apellidos || prev.apellidos,
       fechaNac: fechaNacString || prev.fechaNac,
-      sexo: beneficiario.sexo || prev.sexo,
+      sexo: persona.sexo || prev.sexo,
     }));
 
     // Bloquear campos autocompletados
     const newLocked = new Set<keyof FormData>();
-    if (beneficiario.nombres) newLocked.add('nombres');
-    if (beneficiario.apellidos) newLocked.add('apellidos');
+    if (persona.nombres) newLocked.add('nombres');
+    if (persona.apellidos) newLocked.add('apellidos');
     if (fechaNacString) newLocked.add('fechaNac');
-    if (beneficiario.sexo) newLocked.add('sexo');
+    if (persona.sexo) newLocked.add('sexo');
     setLockedFields(newLocked);
 
     setShowSuggestions(false);
@@ -308,7 +314,7 @@ export default function AddBeneficiaryModal({
                       suggestions.map((item, idx) => (
                         <button
                           key={idx}
-                          onClick={() => autocompleteFromBeneficiary(item)}
+                          onClick={() => autocompleteFromPerson(item)}
                           className="w-full text-left px-4 py-3 hover:bg-primary/5 rounded-xl transition-colors flex items-center gap-3"
                         >
                           <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
