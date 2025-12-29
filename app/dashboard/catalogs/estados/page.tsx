@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
-import { getEstados } from "@/app/actions/catalogos";
+import { getEstados } from "@/app/actions/catalogos/estados.actions";
 
 export default function EstadosPage() {
     const [estados, setEstados] = useState<any[]>([]);
@@ -21,7 +21,7 @@ export default function EstadosPage() {
     };
 
     const handleAdd = async (data: Record<string, string>) => {
-        const { createEstado } = await import('@/app/actions/catalogos');
+        const { createEstado } = await import('@/app/actions/catalogos/estados.actions');
         const result = await createEstado(data as { nombre_estado: string });
 
         if (result.success) {

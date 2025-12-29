@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
-import { getAmbitosLegales, getMaterias, getCategorias, getSubcategorias, createAmbitoLegal } from "@/app/actions/catalogos";
+import { getAmbitosLegales, createAmbitoLegal } from "@/app/actions/catalogos/ambitos-legales.actions";
+import { getMaterias } from "@/app/actions/catalogos/materias.actions";
+import { getCategorias } from "@/app/actions/catalogos/categorias.actions";
+import { getSubcategorias } from "@/app/actions/catalogos/subcategorias.actions";
 
 export default function AmbitosLegalesPage() {
     const [ambitos, setAmbitos] = useState<any[]>([]);

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
-import { getMaterias } from "@/app/actions/catalogos";
+import { getMaterias } from "@/app/actions/catalogos/materias.actions";
 
 export default function MateriasPage() {
     const [materias, setMaterias] = useState<any[]>([]);
@@ -21,7 +21,7 @@ export default function MateriasPage() {
     };
 
     const handleAdd = async (data: Record<string, string>) => {
-        const { createMateria } = await import('@/app/actions/catalogos');
+        const { createMateria } = await import('@/app/actions/catalogos/materias.actions');
         const result = await createMateria(data as { nombre_materia: string });
 
         if (result.success) {

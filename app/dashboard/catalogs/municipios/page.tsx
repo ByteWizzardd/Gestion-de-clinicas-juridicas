@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
-import { getMunicipios, getEstados, createMunicipio } from "@/app/actions/catalogos";
+import { getMunicipios, createMunicipio } from "@/app/actions/catalogos/municipios.actions";
+import { getEstados } from "@/app/actions/catalogos/estados.actions";
 
 export default function MunicipiosPage() {
   const [municipios, setMunicipios] = useState<any[]>([]);

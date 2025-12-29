@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
-import { getCondicionesActividad, createCondicionActividad } from "@/app/actions/catalogos";
+import { getCondicionesActividad, createCondicionActividad } from "@/app/actions/catalogos/condiciones-actividad.actions";
 
 export default function CondicionesActividadPage() {
   const [condiciones, setCondiciones] = useState<any[]>([]);

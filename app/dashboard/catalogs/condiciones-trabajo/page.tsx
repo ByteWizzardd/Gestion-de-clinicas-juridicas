@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
-import { getCondicionesTrabajo, createCondicionTrabajo } from "@/app/actions/catalogos";
+import { getCondicionesTrabajo, createCondicionTrabajo } from "@/app/actions/catalogos/condiciones-trabajo.actions";
 
 export default function CondicionesTrabajoPage() {
   const [condiciones, setCondiciones] = useState<any[]>([]);

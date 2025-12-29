@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
-import { getSemestres, createSemestre } from "@/app/actions/catalogos";
+import { getSemestres, createSemestre } from "@/app/actions/catalogos/semestres.actions";
 
 export default function SemestresPage() {
   const [semestres, setSemestres] = useState<any[]>([]);

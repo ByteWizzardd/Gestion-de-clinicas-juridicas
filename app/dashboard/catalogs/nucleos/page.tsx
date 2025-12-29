@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
-import { getNucleos, getParroquias, createNucleo } from "@/app/actions/catalogos";
+import { getNucleos, createNucleo } from "@/app/actions/catalogos/nucleos.actions";
+import { getParroquias } from "@/app/actions/catalogos/parroquias.actions";
 
 export default function NucleosPage() {
     const [nucleos, setNucleos] = useState<any[]>([]);

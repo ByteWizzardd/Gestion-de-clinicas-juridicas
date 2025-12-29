@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
-import { getCaracteristicas, getTiposCaracteristicas, createCaracteristica } from "@/app/actions/catalogos";
+import { getCaracteristicas, createCaracteristica } from "@/app/actions/catalogos/caracteristicas.actions";
+import { getTiposCaracteristicas } from "@/app/actions/catalogos/tipos-caracteristicas.actions";
 
 export default function CaracteristicasPage() {
   const [caracteristicas, setCaracteristicas] = useState<any[]>([]);

@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
-import { getCategorias, getMaterias } from "@/app/actions/catalogos";
+import { getCategorias } from "@/app/actions/catalogos/categorias.actions";
+import { getMaterias } from "@/app/actions/catalogos/materias.actions";
 
 export default function CategoriasPage() {
     const [categorias, setCategorias] = useState<any[]>([]);
@@ -33,7 +34,7 @@ export default function CategoriasPage() {
     };
 
     const handleAdd = async (data: Record<string, string>) => {
-        const { createCategoria } = await import('@/app/actions/catalogos');
+        const { createCategoria } = await import('@/app/actions/catalogos/categorias.actions');
         const result = await createCategoria(data as { id_materia: string; nombre_categoria: string });
 
         if (result.success) {

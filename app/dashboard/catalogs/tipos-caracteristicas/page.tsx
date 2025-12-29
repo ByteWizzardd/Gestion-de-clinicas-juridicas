@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
-import { getTiposCaracteristicas, createTipoCaracteristica } from "@/app/actions/catalogos";
+import { getTiposCaracteristicas, createTipoCaracteristica } from "@/app/actions/catalogos/tipos-caracteristicas.actions";
 
 export default function TiposCaracteristicasPage() {
   const [tipos, setTipos] = useState<any[]>([]);

@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
-import { getParroquias, getEstados, getMunicipios, createParroquia } from "@/app/actions/catalogos";
+import { getParroquias, createParroquia } from "@/app/actions/catalogos/parroquias.actions";
+import { getEstados } from "@/app/actions/catalogos/estados.actions";
+import { getMunicipios } from "@/app/actions/catalogos/municipios.actions";
 
 export default function ParroquiasPage() {
     const [parroquias, setParroquias] = useState<any[]>([]);

@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
-import { getSubcategorias, getMaterias, getCategorias, createSubcategoria } from "@/app/actions/catalogos";
+import { getSubcategorias, createSubcategoria } from "@/app/actions/catalogos/subcategorias.actions";
+import { getMaterias } from "@/app/actions/catalogos/materias.actions";
+import { getCategorias } from "@/app/actions/catalogos/categorias.actions";
 
 export default function SubcategoriasPage() {
     const [subcategorias, setSubcategorias] = useState<any[]>([]);
