@@ -41,7 +41,7 @@ export const solicitantesQueries = {
         const validatedData = getAllSolicitantes.array().parse(rowsWithNombreCompleto);
         return validatedData;
     },
-    
+
     /**
      * Obtiene un solicitante por su cédula
      */
@@ -184,18 +184,18 @@ export const solicitantesQueries = {
             // Obtener información completa del solicitante
             const getCompletoSQL = loadSQL('solicitantes/get-by-cedula-completo.sql');
             const resultCompleto: QueryResult = await pool.query(getCompletoSQL, [cedula]);
-            
+
             if (resultCompleto.rows.length === 0) {
                 return null;
             }
-            
+
             const solicitante = resultCompleto.rows[0];
-            
+
             // Formatear fechas
             if (solicitante.fecha_nacimiento) {
                 solicitante.fecha_nacimiento = solicitante.fecha_nacimiento.toISOString().slice(0, 10);
             }
-            
+
             // Obtener casos asociados
             try {
                 const getCasosSQL = loadSQL('solicitantes/get-casos-by-cedula.sql');
@@ -217,7 +217,7 @@ export const solicitantesQueries = {
                 console.error('Error obteniendo casos:', error);
                 solicitante.casos = [];
             }
-            
+
             return solicitante;
         } catch (error) {
             console.error('Error en getSolicitanteCompleto:', error);
@@ -235,10 +235,10 @@ export const solicitantesQueries = {
         fechaFin?: string | Date
     ): Promise<Array<{ genero: string; cantidad_solicitantes: number }>> => {
         const query = loadSQL('solicitantes/get-by-genero.sql');
-        const fechaInicioStr = fechaInicio
+        const fechaInicioStr = fechaInicio && fechaInicio !== ''
             ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
             : null;
-        const fechaFinStr = fechaFin
+        const fechaFinStr = fechaFin && fechaFin !== ''
             ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
             : null;
 
@@ -259,10 +259,10 @@ export const solicitantesQueries = {
         fechaFin?: string | Date
     ): Promise<Array<{ nombre_parroquia: string; cantidad_solicitantes: number }>> => {
         const query = loadSQL('solicitantes/get-by-parroquia.sql');
-        const fechaInicioStr = fechaInicio
+        const fechaInicioStr = fechaInicio && fechaInicio !== ''
             ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
             : null;
-        const fechaFinStr = fechaFin
+        const fechaFinStr = fechaFin && fechaFin !== ''
             ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
             : null;
 

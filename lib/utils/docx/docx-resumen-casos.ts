@@ -182,7 +182,8 @@ function createPageTable(
 export async function generateResumenCasosDOCX(
     data: InformeResumenData,
     fechaInicio?: string,
-    fechaFin?: string
+    fechaFin?: string,
+    term?: string
 ): Promise<void> {
     try {
         const logoBase64 = await imageToBase64('/logo clinica juridica.png');
@@ -190,7 +191,7 @@ export async function generateResumenCasosDOCX(
         const logoUint8 = base64ToUint8Array(logoBase64.split(',')[1]);
 
         const sections: any[] = [];
-        const reportTitle = `Informe Resumen de Casos${fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : ''}`;
+        const reportTitle = `Informe Resumen de Casos${term ? ` Semestre ${term}` : (fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : '')}`;
 
         // 1. Portada
         sections.push(await createCoverPage(portadaBase64));
@@ -367,7 +368,8 @@ export async function generateResumenCasosDOCX(
 
         const doc = new Document({ sections: sections });
         const blob = await Packer.toBlob(doc);
-        saveAs(blob, `Informe_Resumen_Casos_${fechaInicio || 'all'}_${fechaFin || 'all'}.docx`);
+        const periodLabel = term ? `Semestre_${term}` : `${fechaInicio || 'all'}_${fechaFin || 'all'}`;
+        saveAs(blob, `Informe_Resumen_Casos_${periodLabel}.docx`);
     } catch (error) {
         console.error('Error al generar DOCX:', error);
         throw error;

@@ -112,6 +112,7 @@ interface InformeResumenPDFProps {
   };
   logoBase64?: string;
   portadaBase64?: string;
+  term?: string;
 }
 
 // Colores para gráficos de barras
@@ -396,7 +397,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
   fechaFin,
   chartImages,
   logoBase64,
-  portadaBase64
+  portadaBase64,
+  term
 }) => {
   // Componente reutilizable para el encabezado con logo
   const ReportHeader = () => (
@@ -450,7 +452,7 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
                 <View style={styles.titleBanner}>
                   {/* @ts-ignore */}
                   <Text style={styles.titleText}>
-                    Informe Resumen de Casos{fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : ''}
+                    Informe Resumen de Casos{term ? ` Semestre ${term}` : (fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : '')}
                   </Text>
                 </View>
 

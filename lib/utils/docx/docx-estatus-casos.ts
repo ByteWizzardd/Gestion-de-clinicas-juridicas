@@ -2,12 +2,12 @@
  * Generador de documento Word (.docx) para el reporte de Estatus de Casos
  */
 
-import { 
-    Document, 
-    Packer, 
-    Paragraph, 
-    ImageRun, 
-    AlignmentType, 
+import {
+    Document,
+    Packer,
+    Paragraph,
+    ImageRun,
+    AlignmentType,
     PageOrientation,
     Table,
     TableRow,
@@ -18,15 +18,15 @@ import {
 } from 'docx';
 import { saveAs } from 'file-saver';
 import { EstatusGroupedData } from '@/components/reports/EstatusCasosPDF';
-import { 
-    imageToBase64, 
+import {
+    imageToBase64,
     generatePieChartImage,
     ESTATUS_COLORS
 } from '../pdf-generator-react';
 import { formatDate, base64ToUint8Array } from './docx-utils';
-import { 
-    generateBannerImage, 
-    generateEstatusLegendImage 
+import {
+    generateBannerImage,
+    generateEstatusLegendImage
 } from './docx-image-generators';
 
 /**
@@ -36,12 +36,12 @@ function createEmptyPortraitPage() {
     return {
         properties: {
             page: {
-                size: { 
-                    orientation: PageOrientation.PORTRAIT, 
+                size: {
+                    orientation: PageOrientation.PORTRAIT,
                     width: 11906,
                     height: 16838
                 },
-                margin: { 
+                margin: {
                     top: 1440,    // 1 pulgada (2.54 cm) - margen superior estándar
                     right: 1800,  // 1.25 pulgadas (3.18 cm) - margen derecho estándar
                     bottom: 1440, // 1 pulgada (2.54 cm) - margen inferior estándar
@@ -163,9 +163,9 @@ function createPageTable(
                                 children: [
                                     new ImageRun({
                                         data: legendUint8,
-                                        transformation: { 
-                                            width: legendInsertWidth, 
-                                            height: legendInsertHeight 
+                                        transformation: {
+                                            width: legendInsertWidth,
+                                            height: legendInsertHeight
                                         },
                                     } as any),
                                 ],
@@ -196,14 +196,14 @@ function createLandscapePageSection(pageTable: Table) {
     return {
         properties: {
             page: {
-                size: { 
-                    orientation: PageOrientation.LANDSCAPE, 
+                size: {
+                    orientation: PageOrientation.LANDSCAPE,
                     width: 11906,
                     height: 16838
                 },
-                margin: { 
+                margin: {
                     top: 200,
-                    right: 567,  
+                    right: 567,
                     bottom: 300,
                     left: 200
                 },
@@ -219,16 +219,17 @@ function createLandscapePageSection(pageTable: Table) {
 export async function generateEstatusCasosDOCX(
     data: EstatusGroupedData[],
     fechaInicio?: string,
-    fechaFin?: string
+    fechaFin?: string,
+    term?: string
 ): Promise<void> {
     try {
         const logoBase64 = await imageToBase64('/logo clinica juridica.png');
         const logoData = logoBase64.split(',')[1];
         const logoUint8 = base64ToUint8Array(logoData);
-        
+
         const sections: any[] = [];
 
-        const reportTitle = `Consulta de Casos por Estatus${fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : ''}`;
+        const reportTitle = `Estatus de Casos${term ? ` Semestre ${term}` : (fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : '')}`;
 
         // Primera hoja vacía con orientación vertical y márgenes estándar de Word
         sections.push(createEmptyPortraitPage());
@@ -238,13 +239,13 @@ export async function generateEstatusCasosDOCX(
         const total = values.reduce((sum, val) => sum + val, 0);
         const labels = data.map(item => item.nombre_estatus);
         const colors = data.map(item => ESTATUS_COLORS[item.nombre_estatus] || '#9E9E9E');
-        
+
         const chartImageBase64 = generatePieChartImage(labels, values, colors, total);
         const chartUint8 = base64ToUint8Array(chartImageBase64.split(',')[1]);
-        
+
         const legendResult = await generateEstatusLegendImage(data);
         const legendUint8 = base64ToUint8Array(legendResult.base64.split(',')[1]);
-        
+
         const legendInsertWidth = 950;
         const legendInsertHeight = Math.round((legendResult.height / legendResult.width) * legendInsertWidth);
 
@@ -268,7 +269,8 @@ export async function generateEstatusCasosDOCX(
 
         const doc = new Document({ sections: sections });
         const blob = await Packer.toBlob(doc);
-        saveAs(blob, `Estatus_de_Casos_${fechaInicio || 'all'}_${fechaFin || 'all'}.docx`);
+        const periodLabel = term ? `Semestre_${term}` : `${fechaInicio || 'all'}_${fechaFin || 'all'}`;
+        saveAs(blob, `Reporte_Estatus_Casos_${periodLabel}.docx`);
     } catch (error) {
         console.error('Error al generar DOCX de estatus:', error);
         throw error;

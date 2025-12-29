@@ -22,8 +22,8 @@ export const beneficiariosQueries = {
     const result: QueryResult = await pool.query(query, [cedula]);
     return result.rows.map(row => ({
       ...row,
-      fecha_nacimiento: row.fecha_nacimiento instanceof Date 
-        ? row.fecha_nacimiento.toISOString().split('T')[0] 
+      fecha_nacimiento: row.fecha_nacimiento instanceof Date
+        ? row.fecha_nacimiento.toISOString().split('T')[0]
         : row.fecha_nacimiento
     }));
   },
@@ -42,12 +42,12 @@ export const beneficiariosQueries = {
     const query = loadSQL('beneficiarios/get-by-cedula.sql');
     const result: QueryResult = await pool.query(query, [cedula]);
     if (result.rows.length === 0) return null;
-    
+
     const row = result.rows[0];
     return {
       ...row,
-      fecha_nacimiento: row.fecha_nacimiento instanceof Date 
-        ? row.fecha_nacimiento.toISOString().split('T')[0] 
+      fecha_nacimiento: row.fecha_nacimiento instanceof Date
+        ? row.fecha_nacimiento.toISOString().split('T')[0]
         : row.fecha_nacimiento
     };
   },
@@ -71,8 +71,8 @@ export const beneficiariosQueries = {
     const result: QueryResult = await pool.query(query, [idCaso]);
     return result.rows.map(row => ({
       ...row,
-      fecha_nac: row.fecha_nac instanceof Date 
-        ? row.fecha_nac.toISOString().split('T')[0] 
+      fecha_nac: row.fecha_nac instanceof Date
+        ? row.fecha_nac.toISOString().split('T')[0]
         : row.fecha_nac
     }));
   },
@@ -110,15 +110,15 @@ export const beneficiariosQueries = {
   getByTipo: async (
     fechaInicio?: string | Date,
     fechaFin?: string | Date
-  ): Promise<Array<{ 
-    tipo_beneficiario: string; 
-    cantidad_beneficiarios: number 
+  ): Promise<Array<{
+    tipo_beneficiario: string;
+    cantidad_beneficiarios: number
   }>> => {
     const query = loadSQL('beneficiarios/get-by-tipo.sql');
-    const fechaInicioStr = fechaInicio
+    const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
       : null;
-    const fechaFinStr = fechaFin
+    const fechaFinStr = fechaFin && fechaFin !== ''
       ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
       : null;
 
@@ -135,15 +135,15 @@ export const beneficiariosQueries = {
   getByParentesco: async (
     fechaInicio?: string | Date,
     fechaFin?: string | Date
-  ): Promise<Array<{ 
-    parentesco: string; 
-    cantidad_beneficiarios: number 
+  ): Promise<Array<{
+    parentesco: string;
+    cantidad_beneficiarios: number
   }>> => {
     const query = loadSQL('beneficiarios/get-by-parentesco.sql');
-    const fechaInicioStr = fechaInicio
+    const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
       : null;
-    const fechaFinStr = fechaFin
+    const fechaFinStr = fechaFin && fechaFin !== ''
       ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
       : null;
 
@@ -161,7 +161,7 @@ export const beneficiariosQueries = {
   getByTipoGrouped: async (
     fechaInicio?: string | Date,
     fechaFin?: string | Date
-  ): Promise<Array<{ 
+  ): Promise<Array<{
     tipo_beneficiario: string;
     id_materia: number;
     num_categoria: number;
@@ -172,10 +172,10 @@ export const beneficiariosQueries = {
     cantidad_beneficiarios: number;
   }>> => {
     const query = loadSQL('beneficiarios/get-by-tipo-grouped.sql');
-    const fechaInicioStr = fechaInicio
+    const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
       : null;
-    const fechaFinStr = fechaFin
+    const fechaFinStr = fechaFin && fechaFin !== ''
       ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
       : null;
 

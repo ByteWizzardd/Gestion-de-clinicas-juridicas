@@ -6,19 +6,10 @@ SELECT
     COUNT(DISTINCT c.id_caso) AS cantidad
 FROM nucleos n
 LEFT JOIN casos c ON n.id_nucleo = c.id_nucleo
-    AND ($1::DATE IS NULL OR c.fecha_solicitud >= $1)
-    AND ($2::DATE IS NULL OR c.fecha_solicitud <= $2)
+    AND ($1::DATE IS NULL OR c.fecha_inicio_caso >= $1)
+    AND ($2::DATE IS NULL OR c.fecha_inicio_caso <= $2)
 WHERE 
     ($3::INTEGER IS NULL OR n.id_nucleo = $3)
-    AND (
-        $4::VARCHAR IS NULL 
-        OR EXISTS (
-            SELECT 1 
-            FROM se_le_asigna sla 
-            WHERE sla.id_caso = c.id_caso 
-            AND sla.term = $4
-        )
-    )
 GROUP BY n.id_nucleo, n.nombre_nucleo
 HAVING COUNT(DISTINCT c.id_caso) > 0
 ORDER BY cantidad DESC;

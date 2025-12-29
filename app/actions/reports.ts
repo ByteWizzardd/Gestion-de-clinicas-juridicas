@@ -49,7 +49,8 @@ export interface BeneficiariosGroupedData {
  */
 export async function getCasosGroupedByAmbitoLegal(
   fechaInicio?: string,
-  fechaFin?: string
+  fechaFin?: string,
+  term?: string
 ): Promise<{ success: boolean; data?: CasosGroupedData[]; error?: string }> {
   try {
     // Verificar autenticación
@@ -73,9 +74,21 @@ export async function getCasosGroupedByAmbitoLegal(
       };
     }
 
+    // Si hay term, obtener sus fechas
+    let start = fechaInicio;
+    let end = fechaFin;
+    if (term && term !== 'all') {
+      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
+      const semestre = await semestresQueries.getByTerm(term);
+      if (semestre) {
+        start = semestre.fecha_inicio.toISOString().split('T')[0];
+        end = semestre.fecha_fin.toISOString().split('T')[0];
+      }
+    }
+
     const data = await casosQueries.getGroupedByAmbitoLegal(
-      fechaInicio || undefined,
-      fechaFin || undefined
+      start || undefined,
+      end || undefined
     );
 
     return { success: true, data };
@@ -118,12 +131,24 @@ export async function getCaseLoadTrend(
       };
     }
 
+    // Si hay term, obtener sus fechas
+    let start = fechaInicio;
+    let end = fechaFin;
+    if (term && term !== 'all') {
+      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
+      const semestre = await semestresQueries.getByTerm(term);
+      if (semestre) {
+        start = semestre.fecha_inicio.toISOString().split('T')[0];
+        end = semestre.fecha_fin.toISOString().split('T')[0];
+      }
+    }
+
     // Obtener datos de la base de datos
     const dbData = await casosQueries.getCaseLoadTrend(
-      fechaInicio,
-      fechaFin,
+      start,
+      end,
       idNucleo,
-      term
+      undefined // No filtrar por term en el SQL si ya tenemos las fechas
     );
 
     // Mapear datos al formato de la gráfica
@@ -169,12 +194,24 @@ export async function getDistributionByNucleo(
       };
     }
 
+    // Si hay term, obtener sus fechas
+    let start = fechaInicio;
+    let end = fechaFin;
+    if (term && term !== 'all') {
+      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
+      const semestre = await semestresQueries.getByTerm(term);
+      if (semestre) {
+        start = semestre.fecha_inicio.toISOString().split('T')[0];
+        end = semestre.fecha_fin.toISOString().split('T')[0];
+      }
+    }
+
     // Obtener datos de la base de datos
     const dbData = await casosQueries.getDistributionByNucleo(
-      fechaInicio,
-      fechaFin,
+      start,
+      end,
       idNucleo,
-      term
+      undefined
     );
 
     // Mapear datos al formato de la gráfica
@@ -307,12 +344,24 @@ export async function getKPIStats(
       };
     }
 
+    // Si hay term, obtener sus fechas
+    let start = fechaInicio;
+    let end = fechaFin;
+    if (term && term !== 'all') {
+      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
+      const semestre = await semestresQueries.getByTerm(term);
+      if (semestre) {
+        start = semestre.fecha_inicio.toISOString().split('T')[0];
+        end = semestre.fecha_fin.toISOString().split('T')[0];
+      }
+    }
+
     // Obtener datos de la base de datos
     const dbData = await casosQueries.getKPIStats(
-      fechaInicio,
-      fechaFin,
+      start,
+      end,
       idNucleo,
-      term
+      undefined
     );
 
     // Mapear datos al formato del dashboard
@@ -358,12 +407,24 @@ export async function getDistributionByStatus(
       };
     }
 
+    // Si hay term, obtener sus fechas
+    let start = fechaInicio;
+    let end = fechaFin;
+    if (term && term !== 'all') {
+      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
+      const semestre = await semestresQueries.getByTerm(term);
+      if (semestre) {
+        start = semestre.fecha_inicio.toISOString().split('T')[0];
+        end = semestre.fecha_fin.toISOString().split('T')[0];
+      }
+    }
+
     // Obtener datos de la base de datos
     const dbData = await casosQueries.getDistributionByStatus(
-      fechaInicio,
-      fechaFin,
+      start,
+      end,
       idNucleo,
-      term
+      undefined
     );
 
     // Mapear datos al formato de la gráfica
@@ -409,12 +470,24 @@ export async function getTopCases(
       };
     }
 
+    // Si hay term, obtener sus fechas
+    let start = fechaInicio;
+    let end = fechaFin;
+    if (term && term !== 'all') {
+      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
+      const semestre = await semestresQueries.getByTerm(term);
+      if (semestre) {
+        start = semestre.fecha_inicio.toISOString().split('T')[0];
+        end = semestre.fecha_fin.toISOString().split('T')[0];
+      }
+    }
+
     // Obtener datos de la base de datos
     const dbData = await casosQueries.getTopMaterias(
-      fechaInicio,
-      fechaFin,
+      start,
+      end,
       idNucleo,
-      term
+      undefined
     );
 
     // Mapear datos al formato de la gráfica
@@ -435,7 +508,8 @@ export async function getTopCases(
  */
 export async function getCasosGroupedByEstatus(
   fechaInicio?: string,
-  fechaFin?: string
+  fechaFin?: string,
+  term?: string
 ): Promise<{ success: boolean; data?: EstatusGroupedData[]; error?: string }> {
   try {
     // Verificar autenticación
@@ -459,9 +533,21 @@ export async function getCasosGroupedByEstatus(
       };
     }
 
+    // Si hay term, obtener sus fechas
+    let start = fechaInicio;
+    let end = fechaFin;
+    if (term && term !== 'all') {
+      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
+      const semestre = await semestresQueries.getByTerm(term);
+      if (semestre) {
+        start = semestre.fecha_inicio.toISOString().split('T')[0];
+        end = semestre.fecha_fin.toISOString().split('T')[0];
+      }
+    }
+
     const dbData = await casosQueries.getGroupedByEstatus(
-      fechaInicio || undefined,
-      fechaFin || undefined
+      start || undefined,
+      end || undefined
     );
 
     // Mapear a EstatusGroupedData
@@ -485,11 +571,12 @@ export async function getCasosGroupedByEstatus(
  */
 export async function getInformeResumenData(
   fechaInicio?: string,
-  fechaFin?: string
+  fechaFin?: string,
+  term?: string
 ): Promise<{
   success: boolean;
   data?: {
-    casosPorMateria: Array<{ 
+    casosPorMateria: Array<{
       id_materia: number;
       num_categoria: number;
       num_subcategoria: number;
@@ -501,17 +588,17 @@ export async function getInformeResumenData(
     solicitantesPorGenero: Array<{ genero: string; cantidad_solicitantes: number }>;
     solicitantesPorParroquia: Array<{ nombre_parroquia: string; cantidad_solicitantes: number }>;
     casosPorAmbitoLegal: Array<{ nombre_ambito_legal: string; cantidad_casos: number }>;
-    estudiantesPorMateria: Array<{ 
-      nombre_materia: string; 
-      nombre_categoria: string | null; 
-      nombre_subcategoria: string | null; 
-      cantidad_estudiantes: number 
+    estudiantesPorMateria: Array<{
+      nombre_materia: string;
+      nombre_categoria: string | null;
+      nombre_subcategoria: string | null;
+      cantidad_estudiantes: number
     }>;
-    profesoresPorMateria: Array<{ 
-      nombre_materia: string; 
-      nombre_categoria: string | null; 
-      nombre_subcategoria: string | null; 
-      cantidad_profesores: number 
+    profesoresPorMateria: Array<{
+      nombre_materia: string;
+      nombre_categoria: string | null;
+      nombre_subcategoria: string | null;
+      cantidad_profesores: number
     }>;
     tiposDeCaso: CasosGroupedData[];
     beneficiariosPorTipo: BeneficiariosGroupedData[];
@@ -540,6 +627,18 @@ export async function getInformeResumenData(
       };
     }
 
+    // Si hay term, obtener sus fechas
+    let start = fechaInicio;
+    let end = fechaFin;
+    if (term && term !== 'all') {
+      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
+      const semestre = await semestresQueries.getByTerm(term);
+      if (semestre) {
+        start = semestre.fecha_inicio.toISOString().split('T')[0];
+        end = semestre.fecha_fin.toISOString().split('T')[0];
+      }
+    }
+
     // Obtener todos los datos en paralelo
     const [
       casosPorMateria,
@@ -552,15 +651,15 @@ export async function getInformeResumenData(
       beneficiariosPorTipo,
       beneficiariosPorParentesco,
     ] = await Promise.all([
-      casosQueries.getByMateriaGrouped(fechaInicio, fechaFin),
-      solicitantesQueries.getByGenero(fechaInicio, fechaFin),
-      solicitantesQueries.getByParroquia(fechaInicio, fechaFin),
-      casosQueries.getByAmbitoLegalTotal(fechaInicio, fechaFin),
-      estudiantesQueries.getByMateria(fechaInicio, fechaFin),
-      profesoresQueries.getByMateria(fechaInicio, fechaFin),
-      casosQueries.getGroupedByAmbitoLegal(fechaInicio, fechaFin),
-      beneficiariosQueries.getByTipoGrouped(fechaInicio, fechaFin),
-      beneficiariosQueries.getByParentesco(fechaInicio, fechaFin),
+      casosQueries.getByMateriaGrouped(start, end),
+      solicitantesQueries.getByGenero(start, end),
+      solicitantesQueries.getByParroquia(start, end),
+      casosQueries.getByAmbitoLegalTotal(start, end),
+      estudiantesQueries.getByMateria(start, end),
+      profesoresQueries.getByMateria(start, end),
+      casosQueries.getGroupedByAmbitoLegal(start, end),
+      beneficiariosQueries.getByTipoGrouped(start, end),
+      beneficiariosQueries.getByParentesco(start, end),
     ]);
 
     return {

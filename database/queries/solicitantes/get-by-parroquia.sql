@@ -15,8 +15,8 @@ WHERE
         SELECT 1 
         FROM casos c 
         WHERE c.cedula = s.cedula
-        AND ($1::DATE IS NULL OR c.fecha_solicitud >= $1)
-        AND ($2::DATE IS NULL OR c.fecha_solicitud <= $2)
+        AND ($1::DATE IS NULL OR c.fecha_inicio_caso >= $1)
+        AND ($2::DATE IS NULL OR c.fecha_inicio_caso <= $2)
     )
 GROUP BY COALESCE(p.id_estado, 0), COALESCE(p.num_municipio, 0), COALESCE(p.num_parroquia, 0), COALESCE(p.nombre_parroquia, 'Sin parroquia')
 ORDER BY cantidad_solicitantes DESC, nombre_parroquia

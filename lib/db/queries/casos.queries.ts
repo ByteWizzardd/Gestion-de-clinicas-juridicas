@@ -77,7 +77,7 @@ export const casosQueries = {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      
+
       // Establecer la variable de sesión con la cédula del usuario que registra el caso
       // Nota: SET LOCAL no acepta parámetros preparados, así que validamos y escapamos el valor
       // Esta variable es usada por el trigger para crear el cambio_estatus inicial
@@ -91,7 +91,7 @@ export const casosQueries = {
         // Usar SET LOCAL dentro de la transacción para que esté disponible en el trigger
         await client.query(`SET LOCAL app.usuario_registra = '${cedulaEscapada}'`);
       }
-      
+
       const query = loadSQL('casos/create.sql');
       const fechaSolicitudStr = data.fecha_solicitud
         ? (typeof data.fecha_solicitud === 'string' ? data.fecha_solicitud : data.fecha_solicitud.toISOString().split('T')[0])
@@ -112,7 +112,7 @@ export const casosQueries = {
         fechaSolicitudStr,
         fechaInicioStr,
       ]);
-      
+
       await client.query('COMMIT');
       return result.rows[0];
     } catch (error) {
@@ -192,10 +192,10 @@ export const casosQueries = {
     cantidad_casos: number;
   }>> => {
     const query = loadSQL('casos/get-grouped-by-ambito-legal.sql');
-    const fechaInicioStr = fechaInicio
+    const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
       : null;
-    const fechaFinStr = fechaFin
+    const fechaFinStr = fechaFin && fechaFin !== ''
       ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
       : null;
 
@@ -217,10 +217,10 @@ export const casosQueries = {
     term?: string
   ): Promise<Array<{ nombre_nucleo: string; cantidad: number }>> => {
     const query = loadSQL('casos/get-distribution-by-nucleo.sql');
-    const fechaInicioStr = fechaInicio
+    const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
       : null;
-    const fechaFinStr = fechaFin
+    const fechaFinStr = fechaFin && fechaFin !== ''
       ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
       : null;
 
@@ -228,7 +228,6 @@ export const casosQueries = {
       fechaInicioStr,
       fechaFinStr,
       idNucleo || null,
-      term || null,
     ]);
     return result.rows;
   },
@@ -247,10 +246,10 @@ export const casosQueries = {
     term?: string
   ): Promise<Array<{ nombre_materia: string; cantidad: number }>> => {
     const query = loadSQL('casos/get-top-materias.sql');
-    const fechaInicioStr = fechaInicio
+    const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
       : null;
-    const fechaFinStr = fechaFin
+    const fechaFinStr = fechaFin && fechaFin !== ''
       ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
       : null;
 
@@ -258,7 +257,6 @@ export const casosQueries = {
       fechaInicioStr,
       fechaFinStr,
       idNucleo || null,
-      term || null,
     ]);
     return result.rows;
   },
@@ -279,10 +277,10 @@ export const casosQueries = {
     fecha_solicitud_max: string;
   }>> => {
     const query = loadSQL('casos/get-grouped-by-estatus.sql');
-    const fechaInicioStr = fechaInicio
+    const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
       : null;
-    const fechaFinStr = fechaFin
+    const fechaFinStr = fechaFin && fechaFin !== ''
       ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
       : null;
 
@@ -312,10 +310,10 @@ export const casosQueries = {
     tasa_cierre_porcentaje: number;
   }> => {
     const query = loadSQL('casos/get-kpi-stats.sql');
-    const fechaInicioStr = fechaInicio
+    const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
       : null;
-    const fechaFinStr = fechaFin
+    const fechaFinStr = fechaFin && fechaFin !== ''
       ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
       : null;
 
@@ -323,7 +321,6 @@ export const casosQueries = {
       fechaInicioStr,
       fechaFinStr,
       idNucleo || null,
-      term || null,
     ]);
     return result.rows[0] || {
       total_casos: 0,
@@ -350,10 +347,10 @@ export const casosQueries = {
     term?: string
   ): Promise<Array<{ nombre_estatus: string; cantidad: number }>> => {
     const query = loadSQL('casos/get-distribution-by-status.sql');
-    const fechaInicioStr = fechaInicio
+    const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
       : null;
-    const fechaFinStr = fechaFin
+    const fechaFinStr = fechaFin && fechaFin !== ''
       ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
       : null;
 
@@ -361,7 +358,6 @@ export const casosQueries = {
       fechaInicioStr,
       fechaFinStr,
       idNucleo || null,
-      term || null,
     ]);
     return result.rows;
   },
@@ -380,10 +376,10 @@ export const casosQueries = {
     term?: string
   ): Promise<Array<{ mes: string; estatus: string; cantidad: number }>> => {
     const query = loadSQL('casos/get-case-load-trend.sql');
-    const fechaInicioStr = fechaInicio
+    const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
       : null;
-    const fechaFinStr = fechaFin
+    const fechaFinStr = fechaFin && fechaFin !== ''
       ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
       : null;
 
@@ -391,7 +387,6 @@ export const casosQueries = {
       fechaInicioStr,
       fechaFinStr,
       idNucleo || null,
-      term || null,
     ]);
     return result.rows;
   },
@@ -406,10 +401,10 @@ export const casosQueries = {
     fechaFin?: string | Date
   ): Promise<Array<{ nombre_materia: string; cantidad_casos: number }>> => {
     const query = loadSQL('casos/get-by-materia.sql');
-    const fechaInicioStr = fechaInicio
+    const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
       : null;
-    const fechaFinStr = fechaFin
+    const fechaFinStr = fechaFin && fechaFin !== ''
       ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
       : null;
 
@@ -430,10 +425,10 @@ export const casosQueries = {
     fechaFin?: string | Date
   ): Promise<Array<{ nombre_ambito_legal: string; cantidad_casos: number }>> => {
     const query = loadSQL('casos/get-by-ambito-legal-total.sql');
-    const fechaInicioStr = fechaInicio
+    const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
       : null;
-    const fechaFinStr = fechaFin
+    const fechaFinStr = fechaFin && fechaFin !== ''
       ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
       : null;
 
@@ -453,7 +448,7 @@ export const casosQueries = {
   getByMateriaGrouped: async (
     fechaInicio?: string | Date,
     fechaFin?: string | Date
-  ): Promise<Array<{ 
+  ): Promise<Array<{
     id_materia: number;
     num_categoria: number;
     num_subcategoria: number;
@@ -463,10 +458,10 @@ export const casosQueries = {
     cantidad_casos: number;
   }>> => {
     const query = loadSQL('casos/get-by-materia-grouped.sql');
-    const fechaInicioStr = fechaInicio
+    const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
       : null;
-    const fechaFinStr = fechaFin
+    const fechaFinStr = fechaFin && fechaFin !== ''
       ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
       : null;
 

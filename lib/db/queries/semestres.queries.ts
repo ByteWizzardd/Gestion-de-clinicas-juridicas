@@ -19,5 +19,18 @@ export const semestresQueries = {
     const result: QueryResult = await pool.query(query);
     return result.rows;
   },
+
+  /**
+   * Obtiene un semestre por su term
+   */
+  getByTerm: async (term: string): Promise<{
+    term: string;
+    fecha_inicio: Date;
+    fecha_fin: Date;
+  } | null> => {
+    const query = loadSQL('semestres/get-by-term.sql');
+    const result: QueryResult = await pool.query(query, [term]);
+    return result.rows[0] || null;
+  },
 };
 

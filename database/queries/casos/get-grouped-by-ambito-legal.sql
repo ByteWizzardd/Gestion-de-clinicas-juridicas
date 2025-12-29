@@ -22,8 +22,8 @@ INNER JOIN ambitos_legales al ON c.id_materia = al.id_materia
     AND c.num_subcategoria = al.num_subcategoria
     AND c.num_ambito_legal = al.num_ambito_legal
 WHERE 
-    ($1::DATE IS NULL OR c.fecha_solicitud >= $1)
-    AND ($2::DATE IS NULL OR c.fecha_solicitud <= $2)
+    ($1::DATE IS NULL OR c.fecha_inicio_caso >= $1)
+    AND ($2::DATE IS NULL OR c.fecha_inicio_caso <= $2)
 GROUP BY 
     c.id_materia,
     c.num_categoria,

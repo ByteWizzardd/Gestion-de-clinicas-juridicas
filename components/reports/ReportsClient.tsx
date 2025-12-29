@@ -11,6 +11,7 @@ import TopCasesChart from '@/components/reports/charts/TopCasesChart';
 import StatusDistributionChart from '@/components/reports/charts/StatusDistributionChart';
 import CaseLoadTrendChart from '@/components/reports/charts/CaseLoadTrendChart';
 import KPIDashboard from '@/components/reports/KPIDashboard';
+import Select from '@/components/forms/Select';
 import Modal from '@/components/ui/feedback/Modal';
 import DatePicker from '@/components/forms/DatePicker';
 import Button from '@/components/ui/Button';
@@ -35,6 +36,8 @@ export default function ReportsPage() {
     const [tipoReporteActual, setTipoReporteActual] = useState<string>('');
     const [formatoReporte, setFormatoReporte] = useState<'pdf' | 'word'>('pdf');
     const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+    const [termOptions, setTermOptions] = useState<{ value: string; label: string }[]>([]);
+    const [selectedTermReporte, setSelectedTermReporte] = useState('all');
 
     // Data states
     const [distributionData, setDistributionData] = useState<DistributionData[]>([]);
@@ -54,6 +57,21 @@ export default function ReportsPage() {
         };
 
         mediaQuery.addEventListener("change", handleChange);
+
+        // Cargar opciones de periodos
+        const loadTermOptions = async () => {
+            try {
+                const { getFilterOptions } = await import('@/app/actions/reports');
+                const result = await getFilterOptions();
+                if (result.success && result.data) {
+                    setTermOptions(result.data.termOptions);
+                }
+            } catch (err) {
+                console.error('Error loading term options:', err);
+            }
+        };
+        loadTermOptions();
+
         return () => mediaQuery.removeEventListener("change", handleChange);
     }, []);
 
@@ -141,6 +159,7 @@ export default function ReportsPage() {
             // Sin fechas por defecto - si no se seleccionan, el reporte es histórico
             setFechaInicioReporte('');
             setFechaFinReporte('');
+            setSelectedTermReporte('all');
             setFormatoReporte('pdf');
             setDateError(null);
         } else {
@@ -149,8 +168,11 @@ export default function ReportsPage() {
     };
 
     const handleGenerateTiposCasosReport = async () => {
-        // Si se proporciona una fecha, ambas deben estar presentes
-        if ((fechaInicioReporte && !fechaFinReporte) || (!fechaInicioReporte && fechaFinReporte)) {
+        // Validar que se haya seleccionado algo si no es histórico
+        if (!fechaInicioReporte && !fechaFinReporte && selectedTermReporte === 'all') {
+            // Permitir histórico, pero si intentaron algo y falló, dar error
+            // En este caso el usuario dice "Si no selecciona fechas, se generará histórico"
+        } else if (selectedTermReporte === 'all' && ((fechaInicioReporte && !fechaFinReporte) || (!fechaInicioReporte && fechaFinReporte))) {
             setDateError('Si selecciona una fecha, debe seleccionar ambas');
             return;
         }
@@ -171,23 +193,38 @@ export default function ReportsPage() {
                 // Convertir fechas vacías a undefined para reporte histórico
                 const fechaInicio = fechaInicioReporte || undefined;
                 const fechaFin = fechaFinReporte || undefined;
+                const term = selectedTermReporte !== 'all' ? selectedTermReporte : undefined;
 
                 if (tipoReporteActual === 'Resumen de Casos') {
                     // Generar reporte resumen de casos
                     const { getInformeResumenData } = await import('@/app/actions/reports');
                     const result = await getInformeResumenData(
                         fechaInicio,
-                        fechaFin
+                        fechaFin,
+                        term
                     );
 
                     if (result.success && result.data) {
+                        // Verificar si hay datos principales
+                        const hasData = result.data.tiposDeCaso && result.data.tiposDeCaso.length > 0 &&
+                            result.data.tiposDeCaso.some(item => item.cantidad_casos > 0);
+
+                        if (!hasData) {
+                            const msg = term
+                                ? `No hay casos registrados para el semestre ${term}.`
+                                : 'No hay casos registrados para el periodo seleccionado.';
+                            alert(msg);
+                            setIsGeneratingReport(false);
+                            return;
+                        }
                         if (formatoReporte === 'word') {
                             // Importar y usar la función de generación de DOCX
                             const { generateResumenCasosDOCX } = await import('@/lib/utils/doc-generator');
                             await generateResumenCasosDOCX(
                                 result.data,
                                 fechaInicio,
-                                fechaFin
+                                fechaFin,
+                                term
                             );
                         } else {
                             // Importar y usar la función de generación de PDF con React PDF
@@ -195,7 +232,8 @@ export default function ReportsPage() {
                             await generateInformeResumenPDFReact(
                                 result.data,
                                 fechaInicio,
-                                fechaFin
+                                fechaFin,
+                                term
                             );
                         }
                     } else {
@@ -206,13 +244,17 @@ export default function ReportsPage() {
                     const { getCasosGroupedByEstatus } = await import('@/app/actions/reports');
                     const result = await getCasosGroupedByEstatus(
                         fechaInicio,
-                        fechaFin
+                        fechaFin,
+                        term
                     );
 
                     if (result.success && result.data) {
                         // Verificar si hay datos para el reporte
                         if (result.data.length === 0 || result.data.every(item => item.cantidad_casos === 0)) {
-                            alert('No hay casos registrados. Por favor, registre casos antes de generar el reporte.');
+                            const msg = term
+                                ? `No hay casos registrados para el semestre ${term}.`
+                                : 'No hay casos registrados para el periodo seleccionado.';
+                            alert(msg);
                             setIsGeneratingReport(false);
                             return;
                         }
@@ -223,7 +265,8 @@ export default function ReportsPage() {
                             await generateEstatusCasosDOCX(
                                 result.data,
                                 fechaInicio,
-                                fechaFin
+                                fechaFin,
+                                term
                             );
                         } else {
                             // Importar y usar la función de generación de PDF con React PDF
@@ -231,7 +274,8 @@ export default function ReportsPage() {
                             await generateEstatusCasosPDFReact(
                                 result.data,
                                 fechaInicio,
-                                fechaFin
+                                fechaFin,
+                                term
                             );
                         }
                     } else {
@@ -242,13 +286,17 @@ export default function ReportsPage() {
                     const { getCasosGroupedByAmbitoLegal } = await import('@/app/actions/reports');
                     const result = await getCasosGroupedByAmbitoLegal(
                         fechaInicio,
-                        fechaFin
+                        fechaFin,
+                        term
                     );
 
                     if (result.success && result.data) {
                         // Verificar si hay datos para el reporte
                         if (result.data.length === 0 || result.data.every(item => item.cantidad_casos === 0)) {
-                            alert('No hay casos registrados. Por favor, registre casos antes de generar el reporte.');
+                            const msg = term
+                                ? `No hay casos registrados para el semestre ${term}.`
+                                : 'No hay casos registrados para el periodo seleccionado.';
+                            alert(msg);
                             setIsGeneratingReport(false);
                             return;
                         }
@@ -259,7 +307,8 @@ export default function ReportsPage() {
                             await generateTiposCasosDOCX(
                                 result.data,
                                 fechaInicio,
-                                fechaFin
+                                fechaFin,
+                                term
                             );
                         } else {
                             // Importar y usar la función de generación de PDF con React PDF
@@ -267,7 +316,8 @@ export default function ReportsPage() {
                             await generateTiposCasosPDFReact(
                                 result.data,
                                 fechaInicio,
-                                fechaFin
+                                fechaFin,
+                                term
                             );
                         }
                     } else {
@@ -447,6 +497,34 @@ export default function ReportsPage() {
 
                     {/* Grid de formulario */}
                     <div className="grid grid-cols-1 gap-4 mb-4">
+                        {/* Opción por Semestre */}
+                        <div>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-base font-normal text-foreground mb-1">
+                                    Por Semestre (Periodo)
+                                </label>
+                                <Select
+                                    options={termOptions}
+                                    value={selectedTermReporte}
+                                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                                        setSelectedTermReporte(e.target.value);
+                                        if (e.target.value !== 'all') {
+                                            setFechaInicioReporte('');
+                                            setFechaFinReporte('');
+                                        }
+                                        setDateError(null);
+                                    }}
+                                    placeholder="Seleccionar Semestre"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="relative py-2 flex items-center">
+                            <div className="flex-grow border-t border-gray-200"></div>
+                            <span className="flex-shrink mx-4 text-gray-400 text-sm">O por rango de fechas</span>
+                            <div className="flex-grow border-t border-gray-200"></div>
+                        </div>
+
                         {/* Fecha de Inicio */}
                         <div>
                             <div className="flex flex-col gap-1">
@@ -458,6 +536,7 @@ export default function ReportsPage() {
                                         value={fechaInicioReporte}
                                         onChange={(value) => {
                                             setFechaInicioReporte(value);
+                                            setSelectedTermReporte('all');
                                             setDateError(null);
                                         }}
                                     />
@@ -476,6 +555,7 @@ export default function ReportsPage() {
                                         value={fechaFinReporte}
                                         onChange={(value) => {
                                             setFechaFinReporte(value);
+                                            setSelectedTermReporte('all');
                                             setDateError(null);
                                         }}
                                     />
@@ -528,7 +608,7 @@ export default function ReportsPage() {
 
                     {/* Mensaje informativo sobre histórico */}
                     <p className="text-sm text-gray-500 mb-4">
-                        Si no selecciona fechas, se generará un reporte histórico con todos los casos.
+                        Si no selecciona semestre ni fechas, se generará un reporte histórico con todos los casos.
                     </p>
 
                     {/* Mensaje de error */}

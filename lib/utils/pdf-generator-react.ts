@@ -39,10 +39,10 @@ export function groupDataByMateriaSubcategoria(
   for (const item of data) {
     const categoria = item.nombre_categoria?.trim() || '';
     const subcategoria = item.nombre_subcategoria?.trim() || '';
-    
+
     const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría';
     const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría';
-    
+
     let key = item.nombre_materia;
     if (hasCategoria && hasSubcategoria) {
       // Si hay ambas: "Materia - Categoría Subcategoría" (sin guión entre categoría y subcategoría)
@@ -84,10 +84,10 @@ function groupBeneficiariosByMateriaSubcategoria(
   for (const item of data) {
     const categoria = item.nombre_categoria?.trim() || '';
     const subcategoria = item.nombre_subcategoria?.trim() || '';
-    
+
     const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría';
     const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría';
-    
+
     let key = item.nombre_materia;
     if (hasCategoria && hasSubcategoria) {
       key += ` - ${categoria} ${subcategoria}`;
@@ -125,10 +125,10 @@ function groupCasosByMateriaSubcategoria(
   for (const item of data) {
     const categoria = item.nombre_categoria?.trim() || '';
     const subcategoria = item.nombre_subcategoria?.trim() || '';
-    
+
     const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría';
     const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría';
-    
+
     let key = item.nombre_materia;
     if (hasCategoria && hasSubcategoria) {
       key += ` - ${categoria} ${subcategoria}`;
@@ -156,13 +156,13 @@ export function formatGroupTitle(item: {
   nombre_subcategoria?: string | null;
 }): string {
   let title = item.nombre_materia;
-  
+
   const categoria = item.nombre_categoria?.trim();
   const subcategoria = item.nombre_subcategoria?.trim();
-  
+
   const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría';
   const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría';
-  
+
   if (hasCategoria && hasSubcategoria) {
     // Si hay ambas: "Materia - Categoría Subcategoría" (sin guión entre categoría y subcategoría)
     title += ` - ${categoria} ${subcategoria}`;
@@ -189,14 +189,14 @@ export async function generateTiposCasosPageImage(
   const pixelRatio = 2;
   const baseWidth = 842; // A4 Landscape en puntos
   const baseHeight = 595;
-  
+
   const canvas = document.createElement('canvas');
   canvas.width = baseWidth * pixelRatio;
   canvas.height = baseHeight * pixelRatio;
-  
+
   const ctx = canvas.getContext('2d');
   if (!ctx) return '';
-  
+
   ctx.scale(pixelRatio, pixelRatio);
   ctx.fillStyle = '#FFFFFF';
   ctx.fillRect(0, 0, baseWidth, baseHeight);
@@ -259,12 +259,12 @@ export async function generateTiposCasosPageImage(
   const total = values.reduce((sum, val) => sum + val, 0);
   const labels = groupData.map(item => item.nombre_ambito_legal);
   const colors = CHART_COLORS.slice(0, groupData.length);
-  
+
   const chartBase64 = generatePieChartImage(labels, values, colors, total);
   const chartImg = new Image();
   chartImg.src = chartBase64;
   await new Promise(r => chartImg.onload = r);
-  
+
   // El gráfico donut generado ya tiene sus propias proporciones y callouts
   const chartWidth = 750;
   const chartHeight = 500;
@@ -272,7 +272,7 @@ export async function generateTiposCasosPageImage(
 
   // 5. Dibujar Leyenda si es necesario (aunque el pie chart ya tiene sus propios callouts)
   // En el PDF original hay una leyenda abajo, vamos a replicarla mínimamente si hay espacio
-  
+
   return canvas.toDataURL('image/png', 1.0);
 }
 
@@ -295,33 +295,33 @@ export function generatePieChartImage(
   total: number
 ): string {
   // Resolución optimizada (1.5x es el punto dulce entre calidad y fluidez de la UI)
-  const pixelRatio = 2; 
+  const pixelRatio = 2;
   // Aumentar el tamaño del canvas para que quepan todos los callouts
   const baseWidth = 750;
   const baseHeight = 500;
-  
+
   const canvas = document.createElement('canvas');
   canvas.width = baseWidth * pixelRatio;
   canvas.height = baseHeight * pixelRatio;
   canvas.style.width = `${baseWidth}px`;
   canvas.style.height = `${baseHeight}px`;
-  
-  const ctx = canvas.getContext('2d', { 
+
+  const ctx = canvas.getContext('2d', {
     alpha: true,
-    desynchronized: false 
+    desynchronized: false
   });
-  
+
   if (!ctx) {
     return '';
   }
 
   // Escalar el contexto para alta resolución
   ctx.scale(pixelRatio, pixelRatio);
-  
+
   // Configurar suavizado de alta calidad
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  
+
   // Configurar renderizado de texto de alta calidad
   // Usar coordenadas alineadas a píxeles para mejor renderizado
 
@@ -336,11 +336,11 @@ export function generatePieChartImage(
   const depth = 22;
 
   let currentAngle = -Math.PI / 2;
-  const sliceAngles: { 
-    start: number; 
-    end: number; 
-    midAngle: number; 
-    value: number; 
+  const sliceAngles: {
+    start: number;
+    end: number;
+    midAngle: number;
+    value: number;
     color: string;
     percentage: string;
   }[] = [];
@@ -403,19 +403,19 @@ export function generatePieChartImage(
   // Dibujar líneas de guía y valores con cantidad y porcentaje
   sliceAngles.forEach((slice) => {
     const midAngle = slice.midAngle;
-    
+
     // Punto de inicio en el borde de la elipse
     const startX = centerX + Math.cos(midAngle) * outerRadiusX;
     const startY = centerY + Math.sin(midAngle) * outerRadiusY;
-    
+
     // Punto de inflexión - ajustar distancia según el ángulo (usando proporción elíptica)
     const bendDistance = 55;
     const bendX = centerX + Math.cos(midAngle) * (outerRadiusX + bendDistance);
     const bendY = centerY + Math.sin(midAngle) * (outerRadiusY + bendDistance * 0.7);
-    
+
     // Dirección horizontal
     const direction = Math.cos(midAngle) > 0 ? 1 : -1;
-    
+
     // Medir el ancho del texto para calcular la longitud de la línea
     ctx.font = '600 14px Inter, Arial, sans-serif';
     const valueText = slice.value.toString();
@@ -424,36 +424,36 @@ export function generatePieChartImage(
     ctx.font = '400 12px Inter, Arial, sans-serif';
     const percentageWidth = ctx.measureText(percentageText).width;
     const maxTextWidth = Math.max(valueWidth, percentageWidth);
-    
+
     // Calcular la longitud de la línea horizontal
     const horizontalLength = 70;
     const lineEndX = bendX + direction * horizontalLength;
     const lineY = bendY; // La línea horizontal está en bendY
-    
+
     // Asegurar que el final de la línea esté dentro del canvas
     const textPadding = 8;
     const finalLineEndX = direction > 0
       ? Math.min(lineEndX, baseWidth - textPadding)
       : Math.max(lineEndX, textPadding);
-    
+
     // Dibujar línea de guía con el color del segmento
     ctx.strokeStyle = slice.color;
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
     ctx.setLineDash([]);
-    
+
     // Línea diagonal
     ctx.beginPath();
     ctx.moveTo(startX, startY);
     ctx.lineTo(bendX, bendY);
     ctx.stroke();
-    
+
     // Línea horizontal que se extiende hasta el final (actúa como separador)
     ctx.beginPath();
     ctx.moveTo(bendX, bendY);
     ctx.lineTo(finalLineEndX, lineY);
     ctx.stroke();
-    
+
     // Valor numérico (cantidad) - Semi Bold 600, 14px (más grande) - ARRIBA de la línea
     // Alineado al final de la línea: derecha si direction > 0, izquierda si direction < 0
     ctx.fillStyle = slice.color;
@@ -464,7 +464,7 @@ export function generatePieChartImage(
     const valueY = Math.round((lineY - 2) * pixelRatio) / pixelRatio;
     const valueX = Math.round(finalLineEndX * pixelRatio) / pixelRatio;
     ctx.fillText(valueText, valueX, valueY);
-    
+
     // Porcentaje debajo de la línea - Regular 400, 12px (más grande)
     // Alineado al final de la línea: derecha si direction > 0, izquierda si direction < 0
     ctx.font = '400 12px Inter, Arial, sans-serif';
@@ -536,15 +536,16 @@ export async function imageToBase64(imagePath: string): Promise<string> {
 export async function generateTiposCasosPDFReact(
   data: CasosGroupedData[],
   fechaInicio?: string,
-  fechaFin?: string
+  fechaFin?: string,
+  term?: string
 ): Promise<void> {
   try {
     // Cargar el logo como base64 para preservar la transparencia
     const logoBase64 = await imageToBase64('/logo clinica juridica.png');
-    
+
     // Agrupar datos
     const groupedData = groupDataByMateriaSubcategoria(data);
-    
+
     // Generar imágenes de gráficas para cada grupo
     const chartImages: Record<string, string> = {};
     for (const [key, groupData] of Object.entries(groupedData)) {
@@ -562,16 +563,16 @@ export async function generateTiposCasosPDFReact(
       const total = values.reduce((sum, val) => sum + Number(val), 0);
       chartImages[key] = generatePieChartImage(pieData.labels, pieData.values, pieData.colors, total);
     }
-    
+
     await new Promise(resolve => setTimeout(resolve, 0));
 
     // Generar el documento PDF
     const doc = React.createElement(TiposCasosPDF, { data, fechaInicio, fechaFin, chartImages, logoBase64 });
-    
+
     // Crear el blob del PDF
     // @ts-ignore - React PDF types issue with React 19
     const blob = await pdf(doc).toBlob();
-    
+
     // Crear URL y descargar
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -594,12 +595,13 @@ export async function generateTiposCasosPDFReact(
 export async function generateEstatusCasosPDFReact(
   data: EstatusGroupedData[],
   fechaInicio?: string,
-  fechaFin?: string
+  fechaFin?: string,
+  term?: string
 ): Promise<void> {
   try {
     // Cargar el logo como base64 para preservar la transparencia
     const logoBase64 = await imageToBase64('/logo clinica juridica.png');
-    
+
     // Preparar datos para el gráfico de pie chart 3D
     const values = data.map(item => Number(item.cantidad_casos) || 0);
     const total = values.reduce((sum, val) => sum + val, 0);
@@ -608,30 +610,32 @@ export async function generateEstatusCasosPDFReact(
       values: values,
       colors: data.map(item => ESTATUS_COLORS[item.nombre_estatus] || '#9E9E9E'),
     };
-    
+
     // Generar imagen del pie chart 3D (mismo estilo que tipos de casos)
     const chartImage = generatePieChartImage(pieData.labels, pieData.values, pieData.colors, total);
-    
+
     await yieldToUI();
 
     // Generar el documento PDF
-    const doc = React.createElement(EstatusCasosPDF, { 
-      data, 
-      fechaInicio, 
-      fechaFin, 
-      chartImage, 
-      logoBase64 
+    const doc = React.createElement(EstatusCasosPDF, {
+      data,
+      fechaInicio,
+      fechaFin,
+      chartImage,
+      logoBase64,
+      term
     });
-    
+
     // Crear el blob del PDF
     // @ts-ignore - React PDF types issue with React 19
     const blob = await pdf(doc).toBlob();
-    
+
     // Crear URL y descargar
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Estatus_de_Casos_${fechaInicio || 'historico'}_${fechaFin || 'historico'}.pdf`;
+    const periodLabel = term ? `Semestre_${term}` : `${fechaInicio || 'historico'}_${fechaFin || 'historico'}`;
+    link.download = `Reporte_Estatus_Casos_${periodLabel}.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -648,13 +652,14 @@ export async function generateEstatusCasosPDFReact(
 export async function generateInformeResumenPDFReact(
   data: InformeResumenData,
   fechaInicio?: string,
-  fechaFin?: string
+  fechaFin?: string,
+  term?: string
 ): Promise<void> {
   try {
     // Cargar el logo y la portada como base64
     const logoBase64 = await imageToBase64('/logo clinica juridica.png');
     const portadaBase64 = await imageToBase64('/portada reporte.png');
-    
+
     // Colores para gráficos
     const BAR_COLORS = [
       '#8979ff', '#ff928a', '#3cc3df', '#ffae4c', '#537ff1',
@@ -679,7 +684,7 @@ export async function generateInformeResumenPDFReact(
     if (data.tiposDeCaso && data.tiposDeCaso.length > 0) {
       // Usar la misma función groupDataByMateriaSubcategoria que usa generateTiposCasosPDFReact
       const groupedData = groupDataByMateriaSubcategoria(data.tiposDeCaso);
-      
+
       // Generar imágenes de gráficas para cada grupo (igual que generateTiposCasosPDFReact)
       chartImages.tiposDeCaso = {};
       for (const [key, groupData] of Object.entries(groupedData)) {
@@ -705,7 +710,7 @@ export async function generateInformeResumenPDFReact(
       const groupedCasos = groupCasosByMateriaSubcategoria(data.casosPorMateria);
       const labels: string[] = [];
       const values: number[] = [];
-      
+
       for (const [key, groupData] of Object.entries(groupedCasos)) {
         // El key ya tiene el formato "Materia - Categoría Subcategoría"
         labels.push(key);
@@ -713,7 +718,7 @@ export async function generateInformeResumenPDFReact(
         const total = groupData.reduce((sum, item) => sum + Number(item.cantidad_casos || 0), 0);
         values.push(total);
       }
-      
+
       const colors = BAR_COLORS.slice(0, labels.length);
       chartImages.casosPorMateria = generateBarChartImage(labels, values, colors);
     }
@@ -794,7 +799,7 @@ export async function generateInformeResumenPDFReact(
         const groupedDirectos = groupBeneficiariosByMateriaSubcategoria(directos);
         const labels: string[] = [];
         const values: number[] = [];
-        
+
         for (const [key, groupData] of Object.entries(groupedDirectos)) {
           // El key ya tiene el formato "Materia - Categoría Subcategoría"
           labels.push(key);
@@ -802,7 +807,7 @@ export async function generateInformeResumenPDFReact(
           const total = groupData.reduce((sum, item) => sum + Number(item.cantidad_beneficiarios || 0), 0);
           values.push(total);
         }
-        
+
         const colors = BAR_COLORS.slice(0, labels.length);
         chartImages.beneficiariosDirectos = generateBarChartImage(labels, values, colors);
       }
@@ -818,7 +823,7 @@ export async function generateInformeResumenPDFReact(
         const groupedIndirectos = groupBeneficiariosByMateriaSubcategoria(indirectos);
         const labels: string[] = [];
         const values: number[] = [];
-        
+
         for (const [key, groupData] of Object.entries(groupedIndirectos)) {
           // El key ya tiene el formato "Materia - Categoría Subcategoría"
           labels.push(key);
@@ -826,7 +831,7 @@ export async function generateInformeResumenPDFReact(
           const total = groupData.reduce((sum, item) => sum + Number(item.cantidad_beneficiarios || 0), 0);
           values.push(total);
         }
-        
+
         const colors = BAR_COLORS.slice(0, labels.length);
         chartImages.beneficiariosIndirectos = generateBarChartImage(labels, values, colors);
       }
@@ -845,27 +850,29 @@ export async function generateInformeResumenPDFReact(
     await yieldToUI(100);
 
     // Generar el documento PDF
-    const doc = React.createElement(InformeResumenPDF, { 
-      data, 
-      fechaInicio, 
-      fechaFin, 
-      chartImages, 
+    const doc = React.createElement(InformeResumenPDF, {
+      data,
+      fechaInicio,
+      fechaFin,
+      chartImages,
       logoBase64,
-      portadaBase64 
+      portadaBase64,
+      term
     });
-    
+
     // Un respiro final antes del paso más pesado (maquetación del PDF)
     await yieldToUI(100);
 
     // Crear el blob del PDF
     // @ts-ignore - React PDF types issue with React 19
     const blob = await pdf(doc).toBlob();
-    
+
     // Crear URL y descargar
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Informe_Resumen_${fechaInicio || 'historico'}_${fechaFin || 'historico'}.pdf`;
+    const periodLabel = term ? `Semestre_${term}` : `${fechaInicio || 'historico'}_${fechaFin || 'historico'}`;
+    link.download = `Informe_Resumen_${periodLabel}.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

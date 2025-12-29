@@ -67,17 +67,17 @@ export const profesoresQueries = {
   getByMateria: async (
     fechaInicio?: string | Date,
     fechaFin?: string | Date
-  ): Promise<Array<{ 
-    nombre_materia: string; 
-    nombre_categoria: string | null; 
-    nombre_subcategoria: string | null; 
-    cantidad_profesores: number 
+  ): Promise<Array<{
+    nombre_materia: string;
+    nombre_categoria: string | null;
+    nombre_subcategoria: string | null;
+    cantidad_profesores: number
   }>> => {
     const query = loadSQL('asignaciones/get-profesores-by-materia.sql');
-    const fechaInicioStr = fechaInicio
+    const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
       : null;
-    const fechaFinStr = fechaFin
+    const fechaFinStr = fechaFin && fechaFin !== ''
       ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
       : null;
 
