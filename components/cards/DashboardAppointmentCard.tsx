@@ -22,7 +22,7 @@ export default function DashboardAppointmentCard({
         <div className="text-xs md:text-sm font-semibold mb-0.5 md:mb-1">
           {time} - {title}
         </div>
-        <div className="text-[10px] md:text-xs font-normal mb-0.5 md:mb-1">{client}</div>
+        {client && <div className="text-[10px] md:text-xs font-normal mb-0.5 md:mb-1">{client}</div>}
         <div className="text-[10px] md:text-xs font-normal">{reason}</div>
       </div>
     </div>

@@ -24,19 +24,19 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
 
   return (
     <div className="relative">
-      {/* Primera línea: Título - Fecha (izquierda) y Hora (derecha) */}
+      {/* Primera línea: Caso - Fecha (izquierda) y Hora (derecha) */}
       <div className="flex items-start justify-between mb-1">
         <p className="text-base text-black font-normal">
-          {appointment.title} - {formatDate(appointment.date)}
+          {appointment.caseDetail.split('(')[0].trim()} ({appointment.client}) {formatDate(appointment.date)}
         </p>
         <p className="text-base text-primary font-normal whitespace-nowrap">
           {formatTime(appointment.time)}
         </p>
       </div>
 
-      {/* Segunda línea: Detalle del Caso */}
+      {/* Segunda línea: Materia */}
       <p className="text-base text-gray-600 font-normal">
-        Caso: {appointment.caseDetail}
+        Materia: {appointment.title}
       </p>
     </div>
   );

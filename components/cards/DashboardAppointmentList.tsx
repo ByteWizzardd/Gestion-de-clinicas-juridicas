@@ -36,7 +36,7 @@ export default function DashboardAppointmentList({
   // Filtrar citas del día seleccionado y transformar al formato del dashboard
   const dayAppointments = useMemo(() => {
     const selectedDateStr = selectedDate.toDateString();
-    
+
     return appointments
       .filter((apt) => {
         const aptDate = new Date(apt.date);
@@ -52,9 +52,9 @@ export default function DashboardAppointmentList({
       })
       .map((apt): DashboardAppointment => ({
         time: formatTime(apt.time),
-        title: apt.title,
-        client: `Solicitante: ${apt.client.split(' ').slice(0, 2).join(' ')}.`, // Solo nombre y apellido inicial
-        reason: `Motivo: ${apt.title}` // El título ya contiene la materia/trámite
+        title: `${apt.caseDetail.split('(')[0].trim()} (${apt.client.split(' ').slice(0, 2).join(' ')}.)`,
+        client: '', // Consolidado en el título para evitar duplicidad
+        reason: `Materia: ${apt.title}`
       }));
   }, [appointments, selectedDate]);
 
