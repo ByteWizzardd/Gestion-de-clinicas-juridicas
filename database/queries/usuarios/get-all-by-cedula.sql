@@ -10,30 +10,18 @@ SELECT
     u.telefono_celular,
     u.habilitado_sistema,
     u.tipo_usuario,
-    -- Información adicional de estudiantes
-    CASE 
-        WHEN u.tipo_usuario = 'Estudiante' THEN 
-            (SELECT string_agg(e.term || ' - ' || e.tipo_estudiante || ' (NRC: ' || e.nrc || ')', ', ' ORDER BY e.term DESC)
-             FROM estudiantes e 
-             WHERE e.cedula_estudiante = u.cedula)
-        ELSE NULL
-    END AS info_estudiante,
-    -- Información adicional de profesores
-    CASE 
-        WHEN u.tipo_usuario = 'Profesor' THEN 
-            (SELECT string_agg(p.term || ' - ' || p.tipo_profesor, ', ' ORDER BY p.term DESC)
-             FROM profesores p 
-             WHERE p.cedula_profesor = u.cedula)
-        ELSE NULL
-    END AS info_profesor,
-    -- Información adicional de coordinadores
-    CASE 
-        WHEN u.tipo_usuario = 'Coordinador' THEN 
-            (SELECT string_agg(c.term, ', ' ORDER BY c.term DESC)
-             FROM coordinadores c 
-             WHERE c.id_coordinador = u.cedula)
-        ELSE NULL
-    END AS info_coordinador
+    -- Estudiante
+    e.nrc AS estudiante_nrc,
+    e.term AS estudiante_term,
+    e.tipo_estudiante AS estudiante_tipo,
+    -- Profesor
+    p.term AS profesor_term,
+    p.tipo_profesor AS profesor_tipo,
+    -- Coordinador
+    c.term AS coordinador_term
 FROM usuarios u
+LEFT JOIN estudiantes e ON e.cedula_estudiante = u.cedula
+LEFT JOIN profesores p ON p.cedula_profesor = u.cedula
+LEFT JOIN coordinadores c ON c.id_coordinador = u.cedula
 WHERE u.cedula = $1
 LIMIT 1;

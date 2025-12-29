@@ -171,13 +171,46 @@ export const usuariosQueries = {
     telefono_celular: string | null;
     habilitado_sistema: boolean;
     tipo_usuario: string;
-    info_estudiante: string | null;
-    info_profesor: string | null;
-    info_coordinador: string | null;
+    estudiante?: {
+      nrc: string | null;
+      term: string | null;
+      tipo_estudiante: 'Voluntario' | 'Inscrito' | 'Egresado' | 'Servicio Comunitario' | null;
+    };
+    profesor?: {
+      term: string | null;
+      tipo_profesor: string | null;
+    };
+    coordinador?: {
+      term: string | null;
+    };
   } | null> => {
     const query = loadSQL('usuarios/get-all-by-cedula.sql');
     const result: QueryResult = await pool.query(query, [cedula]);
-    return result.rows[0] || null;
+    const row = result.rows[0];
+    if (!row) return null;
+    return {
+      cedula: row.cedula,
+      nombres: row.nombres,
+      apellidos: row.apellidos,
+      nombre_completo: row.nombre_completo,
+      correo_electronico: row.correo_electronico,
+      nombre_usuario: row.nombre_usuario,
+      telefono_celular: row.telefono_celular,
+      habilitado_sistema: row.habilitado_sistema,
+      tipo_usuario: row.tipo_usuario,
+      estudiante: row.estudiante_nrc || row.estudiante_term || row.estudiante_tipo ? {
+        nrc: row.estudiante_nrc,
+        term: row.estudiante_term,
+        tipo_estudiante: row.estudiante_tipo,
+      } : undefined,
+      profesor: row.profesor_term || row.profesor_tipo ? {
+        term: row.profesor_term,
+        tipo_profesor: row.profesor_tipo,
+      } : undefined,
+      coordinador: row.coordinador_term ? {
+        term: row.coordinador_term,
+      } : undefined,
+    };
   },
 
 };

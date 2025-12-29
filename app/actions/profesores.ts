@@ -3,11 +3,11 @@
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/utils/security';
 import { profesoresQueries } from '@/lib/db/queries/profesores.queries';
-import { AppError, UnauthorizedError } from '@/lib/utils/errors';
+import { AppError } from '@/lib/utils/errors';
 
 export interface SearchProfesoresResult {
   success: boolean;
-  data?: any[];
+  data?: unknown[];
   error?: {
     message: string;
     code?: string;
@@ -35,7 +35,7 @@ export async function searchProfesoresAction(query: string): Promise<SearchProfe
 
     try {
       await verifyToken(token);
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: {
@@ -79,4 +79,3 @@ export async function searchProfesoresAction(query: string): Promise<SearchProfe
     };
   }
 }
-

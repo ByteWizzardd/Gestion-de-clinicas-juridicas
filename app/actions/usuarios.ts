@@ -227,9 +227,18 @@ export interface GetUsuarioInfoByCedulaResult {
     telefono_celular: string | null;
     habilitado_sistema: boolean;
     tipo_usuario: string;
-    info_estudiante: string | null;
-    info_profesor: string | null;
-    info_coordinador: string | null;
+    estudiante?: {
+      nrc: string | null;
+      term: string | null;
+      tipo_estudiante: 'Voluntario' | 'Inscrito' | 'Egresado' | 'Servicio Comunitario' | null;
+    };
+    profesor?: {
+      term: string | null;
+      tipo_profesor: string | null;
+    };
+    coordinador?: {
+      term: string | null;
+    };
   } | null;
   error?: {
     message: string;

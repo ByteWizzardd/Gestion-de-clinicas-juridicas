@@ -6,8 +6,8 @@ import ConfirmModal from '../ui/feedback/ConfirmModal';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import BulkUploadModal from './BulkUploadModal';
-import { getUsuariosAction, deleteUsuarioFisicoAction, toggleHabilitadoUsuarioAction } from '@/app/actions/usuarios';
-import { EditUserModal } from './EditUserModal';
+import { getUsuariosAction, deleteUsuarioFisicoAction, toggleHabilitadoUsuarioAction, getUsuarioCompleteByCedulaAction } from '@/app/actions/usuarios';
+import EditUserModal from './EditUserModal';
 
 // Simulación: obtener tipo de usuario actual (debería venir de contexto/auth real)
 function getCurrentUserTipo(): string {
@@ -24,6 +24,7 @@ interface Usuario extends Record<string, unknown> {
   nombre_usuario: string;
   habilitado_sistema: boolean;
   tipo_usuario: string;
+  correo_electronico?: string;
 }
 
 interface UsersClientProps {
@@ -113,9 +114,19 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
     router.push(`/dashboard/users/${usuario.cedula}`);
   };
 
-  const handleEdit = (data: Record<string, unknown>) => {
+  const handleEdit = async (data: Record<string, unknown>) => {
     const usuario = data as Usuario;
-    setUsuarioToEdit(usuario);
+    // Buscar usuario completo por cédula antes de abrir el modal
+    const result = await getUsuarioCompleteByCedulaAction(usuario.cedula);
+    if (result.success && result.data) {
+      setUsuarioToEdit({
+        ...usuario,
+        correo_electronico: result.data.correo_electronico,
+        telefono: result.data.telefono_celular,
+      });
+    } else {
+      setUsuarioToEdit(usuario); // fallback
+    }
     setShowEditModal(true);
   };
 

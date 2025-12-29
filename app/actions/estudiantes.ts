@@ -6,11 +6,11 @@ import { verifyToken } from '@/lib/utils/security';
 import { estudiantesQueries } from '@/lib/db/queries/estudiantes.queries';
 import { semestresQueries } from '@/lib/db/queries/semestres.queries';
 import { bulkCreateEstudiantes, BulkUploadResult } from '@/lib/services/estudiantes.service';
-import { AppError, UnauthorizedError } from '@/lib/utils/errors';
+import { AppError } from '@/lib/utils/errors';
 
 export interface SearchEstudiantesResult {
   success: boolean;
-  data?: any[];
+  data?: unknown[];
   error?: {
     message: string;
     code?: string;
@@ -60,7 +60,7 @@ export async function searchEstudiantesAction(query: string): Promise<SearchEstu
 
     try {
       await verifyToken(token);
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: {
@@ -126,7 +126,7 @@ export async function getSemestresAction(): Promise<GetSemestresResult> {
 
     try {
       await verifyToken(token);
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: {
@@ -187,7 +187,7 @@ export async function bulkCreateEstudiantesAction(
 
     try {
       await verifyToken(token);
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: {
