@@ -15,11 +15,11 @@ export function TableRow<T extends Record<string, unknown>>({ data, rowIndex, on
             {cells.map((cell, index) => (
                 <td
                     key={index}
-                    className={`py-4 sm:py-5 text-center flex-1 text-base px-3
+                    className={`py-4 sm:py-5 text-center flex-1 text-base px-3 min-w-0
                         ${rowIndex % 2 === 1 && index === 0 ? 'rounded-l-xl' : ''}
                     `}
                 >
-                    <span className="truncate block">{String(cell)}</span>
+                    <span className="truncate block" title={String(cell)}>{String(cell)}</span>
                 </td>
             ))}
             {/* Nueva columna de acciones*/}
