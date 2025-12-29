@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import Tabs from '@/components/ui/Tabs';
@@ -15,7 +16,7 @@ export default function ApplicantDetailClient() {
   const params = useParams();
   const router = useRouter();
   const cedula = params.id as string;
-  
+
   const [solicitante, setSolicitante] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,14 +37,14 @@ export default function ApplicantDetailClient() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const { getSolicitanteByIdAction } = await import('@/app/actions/solicitantes');
       const result = await getSolicitanteByIdAction(cedula);
-      
+
       if (!result.success) {
         throw new Error(result.error?.message || 'Error al cargar la información del solicitante');
       }
-      
+
       if (result.data) {
         setSolicitante(result.data);
       } else {
@@ -118,23 +119,47 @@ export default function ApplicantDetailClient() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <Breadcrumbs
-        items={[
-          { label: 'Solicitantes', href: '/dashboard/applicants' },
-          { label: nombreCompleto }
-        ]}
-      />
-      
-      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-2" style={{ fontFamily: 'var(--font-league-spartan)' }}>
-        {nombreCompleto}
-      </h1>
-      {solicitante.cedula && (
-        <p className="text-sm sm:text-base text-gray-500 mb-6 sm:mb-8">
-          Cédula: {solicitante.cedula}
-        </p>
-      )}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+      >
+        <Breadcrumbs
+          items={[
+            { label: 'Solicitantes', href: '/dashboard/applicants' },
+            { label: nombreCompleto }
+          ]}
+        />
+      </motion.div>
 
-      <Tabs tabs={tabs} defaultTab="personal" />
+      <motion.h1
+        className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-2"
+        style={{ fontFamily: 'var(--font-league-spartan)' }}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1, ease: 'easeOut' }}
+      >
+        {nombreCompleto}
+      </motion.h1>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.2, ease: 'easeOut' }}
+      >
+        {solicitante.cedula && (
+          <p className="text-sm sm:text-base text-gray-500 mb-6 sm:mb-8">
+            Cédula: {solicitante.cedula}
+          </p>
+        )}
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.25, ease: 'easeOut' }}
+      >
+        <Tabs tabs={tabs} defaultTab="personal" />
+      </motion.div>
     </div>
   );
 }

@@ -81,11 +81,10 @@ export default function TeamTab({ equipo }: TeamTabProps) {
                   <div>
                     <label className="text-sm font-medium text-gray-500">Estado</label>
                     <p className="text-base text-gray-900 mt-1">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        profesor.habilitado 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${profesor.habilitado
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-800'
+                        }`}>
                         {profesor.habilitado ? 'Activo' : 'Inactivo'}
                       </span>
                     </p>

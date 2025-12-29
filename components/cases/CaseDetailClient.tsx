@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { motion } from 'motion/react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -26,7 +27,7 @@ export default function CaseDetailClient() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
-  
+
   const [caso, setCaso] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,13 +49,13 @@ export default function CaseDetailClient() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const result = await getCasoByIdAction(idCaso);
-      
+
       if (!result.success) {
         throw new Error(result.error?.message || 'Error al cargar la información del caso');
       }
-      
+
       if (result.data) {
         setCaso(result.data);
       } else {
@@ -152,7 +153,7 @@ export default function CaseDetailClient() {
 
   const codigoCaso = caso.id_caso.toString();
   const nombreSolicitante = caso.nombre_completo_solicitante || 'Caso sin solicitante';
-  
+
   const getStatusColor = (estatus: string | null) => {
     if (!estatus) return 'bg-gray-100 text-gray-800';
     const colors: Record<string, string> = {
@@ -166,11 +167,11 @@ export default function CaseDetailClient() {
 
   const handleStatusChange = async (nuevoEstatus: string) => {
     if (!caso) return;
-    
+
     setChangingStatus(true);
     try {
       const result = await changeStatusAction(caso.id_caso, nuevoEstatus);
-      
+
       if (!result.success) {
         alert(result.error?.message || 'Error al cambiar el estatus');
         return;
@@ -198,28 +199,39 @@ export default function CaseDetailClient() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <Breadcrumbs
-        items={[
-          { label: 'Casos', href: '/dashboard/cases' },
-          { label: codigoCaso }
-        ]}
-      />
-      
-      <div className="flex items-center justify-between mb-2">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+      >
+        <Breadcrumbs
+          items={[
+            { label: 'Casos', href: '/dashboard/cases' },
+            { label: codigoCaso }
+          ]}
+        />
+      </motion.div>
+
+      <motion.div
+        className="flex items-center justify-between mb-2"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1, ease: 'easeOut' }}
+      >
         <div className="flex items-center gap-3">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold" style={{ fontFamily: 'var(--font-league-spartan)' }}>
-        {codigoCaso}
-      </h1>
+            {codigoCaso}
+          </h1>
           {caso.estatus && (
             <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(caso.estatus)}`}>
               {caso.estatus}
             </span>
           )}
         </div>
-        
+
         <div className="flex items-center gap-2">
           {userRol && userRol !== 'Estudiante' && (
-            <button 
+            <button
               onClick={() => setShowAssignTeamModal(true)}
               className="h-10 cursor-pointer px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors"
             >
@@ -234,7 +246,7 @@ export default function CaseDetailClient() {
             </button>
           )}
 
-          <button 
+          <button
             onClick={() => setShowAddDocumentModal(true)}
             className="h-10 cursor-pointer px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors"
           >
@@ -242,7 +254,7 @@ export default function CaseDetailClient() {
             <span className="text-base text-center">Agregar Documento</span>
           </button>
 
-          <button 
+          <button
             onClick={() => setShowAddActionModal(true)}
             className="h-10 cursor-pointer px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors"
           >
@@ -250,14 +262,14 @@ export default function CaseDetailClient() {
             <span className="text-base text-center">Registrar Acción</span>
           </button>
 
-          <button 
+          <button
             onClick={() => setShowAddBeneficiaryModal(true)}
             className="h-10 cursor-pointer px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors"
           >
             <Plus className="w-[18px] h-[18px] text-[#414040]" />
             <span className="text-base text-center">Agregar Beneficiario</span>
           </button>
-          
+
           <DropdownMenu
             trigger={
               <button
@@ -288,25 +300,31 @@ export default function CaseDetailClient() {
             )}
           </DropdownMenu>
         </div>
-      </div>
-      {nombreSolicitante && (
-        <p className="text-sm sm:text-base text-gray-500 mb-6 sm:mb-8 flex items-center gap-1.5">
-          Solicitante: 
-          {caso.cedula ? (
-            <>
-              <Link 
-                href={`/dashboard/applicants/${caso.cedula}`}
-                className="text-primary hover:underline font-medium transition-colors"
-              >
-                {nombreSolicitante}
-              </Link>
-              <span className="text-gray-400">({caso.cedula})</span>
-            </>
-          ) : (
-            <span>{nombreSolicitante}</span>
-          )}
-        </p>
-      )}
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.2, ease: 'easeOut' }}
+      >
+        {nombreSolicitante && (
+          <p className="text-sm sm:text-base text-gray-500 mb-6 sm:mb-8 flex items-center gap-1.5">
+            Solicitante:
+            {caso.cedula ? (
+              <>
+                <Link
+                  href={`/dashboard/applicants/${caso.cedula}`}
+                  className="text-primary hover:underline font-medium transition-colors"
+                >
+                  {nombreSolicitante}
+                </Link>
+                <span className="text-gray-400">({caso.cedula})</span>
+              </>
+            ) : (
+              <span>{nombreSolicitante}</span>
+            )}
+          </p>
+        )}
+      </motion.div>
 
       <AddDocumentModal
         isOpen={showAddDocumentModal}
@@ -338,7 +356,13 @@ export default function CaseDetailClient() {
         onSuccess={handleRefresh}
       />
 
-      <Tabs tabs={tabs} defaultTab="general" />
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.25, ease: 'easeOut' }}
+      >
+        <Tabs tabs={tabs} defaultTab="general" />
+      </motion.div>
     </div>
   );
 }
