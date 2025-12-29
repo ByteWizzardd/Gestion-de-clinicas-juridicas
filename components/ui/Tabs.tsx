@@ -22,13 +22,13 @@ export default function Tabs({ tabs, defaultTab }: TabsProps) {
     <div className="w-full">
       {/* Tab Headers */}
       <div className="border-b border-gray-200 mb-4 sm:mb-6">
-        <div className="flex space-x-1 overflow-x-auto scrollbar-hide -mx-4 sm:mx-0 px-4 sm:px-0">
+        <div className="flex gap-1 w-full">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`
-                px-3 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-medium whitespace-nowrap
+                px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-medium whitespace-nowrap flex-shrink
                 border-b-2 transition-colors duration-200 cursor-pointer
                 ${activeTab === tab.id
                   ? 'border-primary text-primary'
