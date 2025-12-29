@@ -60,7 +60,9 @@ export default function NucleosPage() {
                         name: 'id_parroquia',
                         label: 'Parroquia',
                         type: 'select',
-                        options: parroquias.map(p => ({ value: p.id_parroquia.toString(), label: p.nombre_parroquia })),
+                        options: parroquias
+                            .filter(p => p.id_parroquia != null)
+                            .map(p => ({ value: p.id_parroquia.toString(), label: p.nombre_parroquia })),
                         required: true
                     },
                     { name: 'nombre_nucleo', label: 'Nombre del Núcleo', required: true }
