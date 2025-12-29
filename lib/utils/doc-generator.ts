@@ -271,6 +271,26 @@ export async function generateTiposCasosDOCX(
 
         const reportTitle = `Tipos de Caso${fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : ''}`;
 
+        // Primera hoja vacía con orientación vertical y márgenes estándar de Word
+        sections.push({
+            properties: {
+                page: {
+                    size: { 
+                        orientation: PageOrientation.PORTRAIT, 
+                        width: 11906,
+                        height: 16838
+                    },
+                    margin: { 
+                        top: 1440,    // 1 pulgada (2.54 cm) - margen superior estándar
+                        right: 1800,  // 1.25 pulgadas (3.18 cm) - margen derecho estándar
+                        bottom: 1440, // 1 pulgada (2.54 cm) - margen inferior estándar
+                        left: 1800    // 1.25 pulgadas (3.18 cm) - margen izquierdo estándar
+                    },
+                },
+            },
+            children: [],
+        });
+
         let isFirstPage = true;
 
         for (const [key, groupData] of Object.entries(groupedData)) {
