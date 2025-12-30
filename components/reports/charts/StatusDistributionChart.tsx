@@ -12,18 +12,6 @@ interface StatusDistributionChartProps {
     data: StatusDistributionData[];
 }
 
-const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-        return (
-            <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg">
-                <p className="text-sm font-medium text-gray-700 mb-1">{payload[0].name}</p>
-                <p className="text-base font-semibold text-gray-900">{payload[0].value}</p>
-            </div>
-        );
-    }
-    return null;
-};
-
 export default function StatusDistributionChart({ data }: StatusDistributionChartProps) {
     // Transform data to match Recharts expected format
     const chartData = data.map(item => ({
@@ -31,6 +19,24 @@ export default function StatusDistributionChart({ data }: StatusDistributionChar
         value: item.value,
         fill: item.color
     }));
+
+    const total = chartData?.reduce((sum, item) => sum + item.value, 0) || 0;
+
+    const CustomTooltip = ({ active, payload }: any) => {
+        if (active && payload && payload.length) {
+            const value = payload[0].value;
+            const percent = total > 0 ? (value / total) * 100 : 0;
+            return (
+                <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg">
+                    <p className="text-sm font-medium text-gray-700 mb-1">{payload[0].name}</p>
+                    <p className="text-base font-semibold text-gray-900">
+                        {value} ({percent.toFixed(1)}%)
+                    </p>
+                </div>
+            );
+        }
+        return null;
+    };
 
     return (
         <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">

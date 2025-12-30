@@ -68,6 +68,52 @@ export interface SocioeconomicoData {
 }
 
 /**
+ * Obtiene distribución de casos por Tipo de Trámite (Ámbito Legal)
+ */
+export async function getDistributionByTramite(
+  fechaInicio?: string,
+  fechaFin?: string,
+  idNucleo?: number, // Not used in specific query but kept for signature consistency if extended later
+  term?: string
+): Promise<{ success: boolean; data?: any[]; error?: string }> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) throw new Error('No autorizado');
+
+    let start = fechaInicio;
+    let end = fechaFin;
+    if (term && term !== 'all') {
+      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
+      const semestre = await semestresQueries.getByTerm(term);
+      if (semestre) {
+        start = semestre.fecha_inicio.toISOString().split('T')[0];
+        end = semestre.fecha_fin.toISOString().split('T')[0];
+      }
+    }
+
+    // Usamos casosQueries para obtener los datos
+    const dbData = await casosQueries.getDistributionByTramite(
+      start || undefined,
+      end || undefined,
+      idNucleo
+    );
+
+    // Mapeamos a formato de gráfica
+    const formattedData = dbData.map(item => ({
+      name: item.nombre_tramite,
+      value: Number(item.cantidad_casos),
+    }));
+
+    return { success: true, data: formattedData };
+  } catch (error) {
+    console.error('Error al obtener distribución por trámite:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Error desconocido' };
+  }
+}
+
+/**
  * Obtiene casos agrupados por ámbito legal para generar reportes
  */
 export async function getCasosGroupedByAmbitoLegal(
@@ -184,6 +230,50 @@ export async function getCaseLoadTrend(
       success: false,
       error: error instanceof Error ? error.message : 'Error desconocido',
     };
+  }
+}
+
+
+/**
+ * Obtiene distribución de solicitantes por género
+ */
+export async function getDistributionByGender(
+  fechaInicio?: string,
+  fechaFin?: string,
+  idNucleo?: number, // Note: Not used in query currently but kept for interface consistency
+  term?: string
+): Promise<{ success: boolean; data?: any[]; error?: string }> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) throw new Error('No autorizado');
+
+    let start = fechaInicio;
+    let end = fechaFin;
+    if (term && term !== 'all') {
+      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
+      const semestre = await semestresQueries.getByTerm(term);
+      if (semestre) {
+        start = semestre.fecha_inicio.toISOString().split('T')[0];
+        end = semestre.fecha_fin.toISOString().split('T')[0];
+      }
+    }
+
+    const { solicitantesQueries } = await import('@/lib/db/queries/solicitantes.queries');
+    const data = await solicitantesQueries.getDistribucionGenero(start || undefined, end || undefined);
+
+    // Map 'M'/'F' to full names
+    const formattedData = data.map(item => ({
+      name: item.genero === 'M' ? 'Masculino' : item.genero === 'F' ? 'Femenino' : item.genero,
+      value: Number(item.cantidad_solicitantes),
+      color: item.genero === 'M' ? '#4A90E2' : item.genero === 'F' ? '#FF69B4' : '#9E9E9E'
+    }));
+
+    return { success: true, data: formattedData };
+  } catch (error) {
+    console.error('Error al obtener distribución por género:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Error desconocido' };
   }
 }
 

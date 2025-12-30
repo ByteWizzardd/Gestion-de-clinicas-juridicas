@@ -9,7 +9,7 @@ import { ViewMode } from '@/components/ui/navigation/ViewSwitcher';
 import DistributionChart from '@/components/reports/charts/DistributionChart';
 import TopCasesChart from '@/components/reports/charts/TopCasesChart';
 import StatusDistributionChart from '@/components/reports/charts/StatusDistributionChart';
-import CaseLoadTrendChart from '@/components/reports/charts/CaseLoadTrendChart';
+import TramiteDistributionChart from '@/components/reports/charts/TramiteDistributionChart'; // New Import
 import KPIDashboard from '@/components/reports/KPIDashboard';
 import Select from '@/components/forms/Select';
 import Modal from '@/components/ui/feedback/Modal';
@@ -18,6 +18,14 @@ import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/feedback/Spinner';
 import { saveAs } from 'file-saver';
 import type { DistributionData, TopCasesData, KPIData, StatusDistributionData, CaseLoadTrendData } from '@/lib/utils/reports-data-mapper';
+
+import {
+    getDistributionByNucleo,
+    getTopCases,
+    getDistributionByStatus,
+    getKPIStats,
+    getDistributionByTramite // New Action
+} from '@/app/actions/reports';
 
 export default function ReportsPage() {
     const [viewMode, setViewMode] = useState<ViewMode>('charts');
@@ -43,7 +51,7 @@ export default function ReportsPage() {
     const [distributionData, setDistributionData] = useState<DistributionData[]>([]);
     const [topCasesData, setTopCasesData] = useState<TopCasesData[]>([]);
     const [statusDistributionData, setStatusDistributionData] = useState<StatusDistributionData[]>([]);
-    const [caseLoadTrendData, setCaseLoadTrendData] = useState<CaseLoadTrendData[]>([]);
+    const [tramiteDistributionData, setTramiteDistributionData] = useState<any[]>([]); // New State
     const [kpiData, setKPIData] = useState<KPIData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -111,11 +119,11 @@ export default function ReportsPage() {
                 }
 
                 // Fetch all data in parallel using server actions
-                const [distributionResult, topCasesResult, statusDistResult, trendResult, kpiResult] = await Promise.all([
+                const [distributionResult, topCasesResult, statusDistResult, tramitetResult, kpiResult] = await Promise.all([
                     getDistributionByNucleo(fechaInicio, fechaFin, idNucleo, term),
                     getTopCases(fechaInicio, fechaFin, idNucleo, term),
                     getDistributionByStatus(fechaInicio, fechaFin, idNucleo, term),
-                    getCaseLoadTrend(fechaInicio, fechaFin, idNucleo, term),
+                    getDistributionByTramite(fechaInicio, fechaFin, idNucleo, term),
                     getKPIStats(fechaInicio, fechaFin, idNucleo, term)
                 ]);
 
@@ -131,8 +139,8 @@ export default function ReportsPage() {
                     setStatusDistributionData(statusDistResult.data);
                 }
 
-                if (trendResult.success && trendResult.data) {
-                    setCaseLoadTrendData(trendResult.data);
+                if (tramitetResult.success && tramitetResult.data) {
+                    setTramiteDistributionData(tramitetResult.data);
                 }
 
                 if (kpiResult.success && kpiResult.data) {
@@ -509,7 +517,7 @@ export default function ReportsPage() {
                                 <StatusDistributionChart data={statusDistributionData} />
                             </div>
                             <div className="w-full min-w-0">
-                                <CaseLoadTrendChart data={caseLoadTrendData} />
+                                <TramiteDistributionChart data={tramiteDistributionData} />
                             </div>
                         </div>
                     )

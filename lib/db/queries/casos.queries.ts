@@ -471,5 +471,32 @@ export const casosQueries = {
     ]);
     return result.rows;
   },
+
+  /**
+   * Obtiene la distribución de casos por trámite
+   * @param fechaInicio - Fecha de inicio del rango (opcional)
+   * @param fechaFin - Fecha de fin del rango (opcional)
+   * @param idNucleo - ID del núcleo para filtrar (opcional)
+   */
+  getDistributionByTramite: async (
+    fechaInicio?: string | Date,
+    fechaFin?: string | Date,
+    idNucleo?: number
+  ): Promise<Array<{ nombre_tramite: string; cantidad_casos: number }>> => {
+    const query = loadSQL('casos/get-distribucion-tramite.sql');
+    const fechaInicioStr = fechaInicio && fechaInicio !== ''
+      ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
+      : null;
+    const fechaFinStr = fechaFin && fechaFin !== ''
+      ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
+      : null;
+
+    const result: QueryResult = await pool.query(query, [
+      fechaInicioStr,
+      fechaFinStr,
+      idNucleo || null,
+    ]);
+    return result.rows;
+  },
 };
 

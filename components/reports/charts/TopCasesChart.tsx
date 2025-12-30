@@ -17,19 +17,25 @@ const COLORS = [
     '#55c4ae', '#6186cc',
 ];
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-        return (
-            <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg">
-                <p className="text-sm font-medium text-gray-700 mb-1">{label}</p>
-                <p className="text-base font-semibold text-gray-900">{payload[0].value}</p>
-            </div>
-        );
-    }
-    return null;
-};
-
 export default function TopCasesChart({ data }: TopCasesChartProps) {
+    const total = data?.reduce((sum, item) => sum + item.value, 0) || 0;
+
+    const CustomTooltip = ({ active, payload, label }: any) => {
+        if (active && payload && payload.length) {
+            const value = payload[0].value;
+            const percent = total > 0 ? (value / total) * 100 : 0;
+            return (
+                <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg">
+                    <p className="text-sm font-medium text-gray-700 mb-1">{label}</p>
+                    <p className="text-base font-semibold text-gray-900">
+                        {value} ({percent.toFixed(1)}%)
+                    </p>
+                </div>
+            );
+        }
+        return null;
+    };
+
     return (
         <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
             <h3 className="text-xl font-medium text-foreground mb-4 text-center">Top 5 Tipos de Caso (Materia)</h3>
