@@ -38,7 +38,7 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
   }, []);
 
   return (
-    <div className="flex h-screen bg-background relative">
+    <div className="flex h-screen bg-background relative overflow-x-hidden">
       <div className="flex-shrink-0">
         <Sidebar role={userRole} userName={userName} />
       </div>
