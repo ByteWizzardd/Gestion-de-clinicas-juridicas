@@ -16,6 +16,7 @@ interface DashboardAppointmentListProps {
   selectedDate: Date;
   loading?: boolean;
   error?: string | null;
+  onAppointmentClick?: (appointment: Appointment) => void;
 }
 
 export default function DashboardAppointmentList({
@@ -23,6 +24,7 @@ export default function DashboardAppointmentList({
   selectedDate,
   loading = false,
   error = null,
+  onAppointmentClick,
 }: DashboardAppointmentListProps) {
   // Convertir hora de HH:mm a formato AM/PM
   const formatTime = (time: string): string => {
@@ -33,10 +35,10 @@ export default function DashboardAppointmentList({
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
-  // Filtrar citas del día seleccionado y transformar al formato del dashboard
+  // Filtrar citas del día seleccionado y mantener referencia al appointment original
   const dayAppointments = useMemo(() => {
     const selectedDateStr = selectedDate.toDateString();
-    
+
     return appointments
       .filter((apt) => {
         const aptDate = new Date(apt.date);
@@ -50,7 +52,8 @@ export default function DashboardAppointmentList({
         const minutesB = timeB[0] * 60 + timeB[1];
         return minutesA - minutesB;
       })
-      .map((apt): DashboardAppointment => ({
+      .map((apt) => ({
+        appointment: apt, // Mantener referencia al appointment original
         time: formatTime(apt.time),
         title: apt.title,
         client: `Solicitante: ${apt.client.split(' ').slice(0, 2).join(' ')}.`, // Solo nombre y apellido inicial
@@ -86,13 +89,14 @@ export default function DashboardAppointmentList({
           No hay citas programadas para este día
         </div>
       ) : (
-        dayAppointments.map((appointment, index) => (
+        dayAppointments.map((item, index) => (
           <DashboardAppointmentCard
             key={index}
-            time={appointment.time}
-            title={appointment.title}
-            client={appointment.client}
-            reason={appointment.reason}
+            time={item.time}
+            title={item.title}
+            client={item.client}
+            reason={item.reason}
+            onClick={onAppointmentClick ? () => onAppointmentClick(item.appointment) : undefined}
           />
         ))
       )}
