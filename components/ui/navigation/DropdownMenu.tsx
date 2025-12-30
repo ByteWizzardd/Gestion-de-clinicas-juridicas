@@ -13,9 +13,9 @@ interface DropdownMenuProps {
   onOpenChange?: (isOpen: boolean) => void;
 }
 
-export default function DropdownMenu({ 
-  trigger, 
-  children, 
+export default function DropdownMenu({
+  trigger,
+  children,
   align = 'left',
   className = '',
   menuClassName = '',
@@ -50,9 +50,10 @@ export default function DropdownMenu({
       const shouldOpenUp = (spaceBelow < menuHeight && spaceAbove > spaceBelow) || (spaceAbove > spaceBelow && spaceBelow < 400);
       setOpenUpward(shouldOpenUp);
 
+      // Usar coordenadas relativas al viewport para position: fixed
       setCoords({
-        top: shouldOpenUp ? rect.top + window.scrollY : rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
+        top: shouldOpenUp ? rect.top : rect.bottom,
+        left: rect.left,
         width: rect.width
       });
     }
@@ -108,8 +109,8 @@ export default function DropdownMenu({
 
   return (
     <div className={`relative ${className}`}>
-      <div 
-        ref={triggerRef} 
+      <div
+        ref={triggerRef}
         onClick={handleToggle}
         className="cursor-pointer"
       >
@@ -118,20 +119,25 @@ export default function DropdownMenu({
 
       {mounted && isOpen && createPortal(
         <AnimatePresence>
-          <motion.div 
-            ref={menuRef} 
-            initial={{ opacity: 0, y: openUpward ? 10 : -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: openUpward ? 10 : -10, scale: 0.95 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+          <motion.div
+            ref={menuRef}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
             style={{
               position: 'fixed',
               top: openUpward ? coords.top - 8 : coords.top + 8,
-              ...alignStyles[align],
-              width: align === 'center' ? 'auto' : coords.width,
+              // Para align="right", usamos right en lugar de left+translateX para evitar conflicto con motion
+              ...(align === 'right'
+                ? { right: window.innerWidth - coords.left - coords.width }
+                : align === 'center'
+                  ? { left: coords.left + coords.width / 2, transform: 'translateX(-50%)' }
+                  : { left: coords.left }
+              ),
+              ...(openUpward && { transform: 'translateY(-100%)' }),
               zIndex: 9999,
               pointerEvents: 'auto',
-              transform: openUpward ? `${alignStyles[align].transform || ''} translateY(-100%)` : alignStyles[align].transform
             }}
             className={menuClassName}
             onClick={(e) => {

@@ -8,7 +8,7 @@ import Table from '@/components/Table/Table';
 import CaseFormModal from '@/components/forms/CaseFormModal';
 import Spinner from '@/components/ui/feedback/Spinner';
 import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
-import { getCasosAction } from '@/app/actions/casos';
+import { getCasosAction, getCasosByUsuarioAction } from '@/app/actions/casos';
 import { createCasoAction, uploadSoportesAction } from '@/app/actions/casos';
 
 interface Caso {
@@ -52,12 +52,15 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [casos, setCasos] = useState<Caso[]>(initialCasos);
+  const [allCasos, setAllCasos] = useState<Caso[]>(initialCasos); // Cache para todos los casos
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
-  const [estatusFilter, setEstatusFilter] = useState('');
+  const [nucleoFilter, setNucleoFilter] = useState('');
   const [tramiteFilter, setTramiteFilter] = useState('');
+  const [estatusFilter, setEstatusFilter] = useState('');
+  const [casosAsignadosFilter, setCasosAsignadosFilter] = useState(false);
   const [initialCedula, setInitialCedula] = useState<string>('');
   const [initialCedulaTipo, setInitialCedulaTipo] = useState<string>('V');
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -98,11 +101,40 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       }
       if (result.data) {
         setCasos(result.data);
+        setAllCasos(result.data); // Actualizar cache de todos los casos
       } else {
         setCasos([]);
+        setAllCasos([]);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCasosAsignadosChange = async (checked: boolean) => {
+    setCasosAsignadosFilter(checked);
+    setLoading(true);
+    try {
+      if (checked) {
+        // Cargar casos asignados al usuario
+        const result = await getCasosByUsuarioAction();
+        if (result.success && result.data) {
+          setCasos(result.data);
+        } else {
+          // Si falla o no hay datos, mostrar lista vacía o manejar error
+          console.error('Error cargando casos asignados:', result.error);
+          setCasos([]);
+        }
+      } else {
+        // Restaurar todos los casos (usando cache local para velocidad)
+        setCasos(allCasos);
+        // Opcional: refrescar en background si se desea frescura total
+        // fetchCasos(); 
+      }
+    } catch (error) {
+      console.error('Error al cambiar filtro de asignación:', error);
     } finally {
       setLoading(false);
     }
@@ -132,7 +164,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   };
 
   const filteredCasos = useMemo(() => {
-    if (!searchValue && !estatusFilter && !tramiteFilter) {
+    if (!searchValue && !nucleoFilter && !tramiteFilter && !estatusFilter && !casosAsignadosFilter) {
       return casos;
     }
 
@@ -162,12 +194,15 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
         // Núcleo
         normalizeText(caso.nombre_nucleo || '').includes(normalizedSearch);
 
-      const matchesEstatus = !estatusFilter || caso.estatus === estatusFilter;
+      const matchesNucleo = !nucleoFilter || caso.id_nucleo.toString() === nucleoFilter;
       const matchesTramite = !tramiteFilter || caso.tramite === tramiteFilter;
+      const matchesEstatus = !estatusFilter || caso.estatus === estatusFilter;
+      // TODO: Implementar filtro de casos asignados cuando se tenga el ID del usuario actual
+      // const matchesCasosAsignados = !casosAsignadosFilter || caso.id_responsable === currentUserId;
 
-      return matchesSearch && matchesEstatus && matchesTramite;
+      return matchesSearch && matchesNucleo && matchesTramite && matchesEstatus;
     });
-  }, [casos, searchValue, estatusFilter, tramiteFilter]);
+  }, [casos, searchValue, nucleoFilter, tramiteFilter, estatusFilter, casosAsignadosFilter]);
 
   const handleView = (data: Record<string, unknown>) => {
     const caso = data as TableRow;
@@ -285,12 +320,17 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
           onAddClick={handleAddCase}
           searchValue={searchValue}
           onSearchChange={setSearchValue}
-          estatusFilter={estatusFilter}
-          onEstatusChange={setEstatusFilter}
-          estatusOptions={estatusOptions}
+          nucleoFilter={nucleoFilter}
+          onNucleoChange={setNucleoFilter}
           tramiteFilter={tramiteFilter}
           onTramiteChange={setTramiteFilter}
           tramiteOptions={tramiteOptions}
+          estatusFilter={estatusFilter}
+          onEstatusChange={setEstatusFilter}
+          estatusOptions={estatusOptions}
+          casosAsignadosFilter={casosAsignadosFilter}
+          onCasosAsignadosChange={handleCasosAsignadosChange}
+          showCasosAsignados={true}
         />
       </motion.div>
       <div className="mt-10"></div>
@@ -318,24 +358,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
             data={filteredCasos.map((caso) => ({
               codigo: caso.id_caso.toString(),
               solicitante: caso.nombre_completo_solicitante || caso.cedula,
-              materia: (() => {
-                const materia = caso.nombre_materia || caso.tramite || 'Sin materia';
-                const categoria = caso.nombre_categoria?.trim() || '';
-                const subcategoria = caso.nombre_subcategoria?.trim() || '';
-
-                const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría' && categoria.toLowerCase() !== 'n/a';
-                const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría' && subcategoria.toLowerCase() !== 'n/a';
-
-                let text = materia;
-                if (hasCategoria && hasSubcategoria) {
-                  text += ` - ${categoria} ${subcategoria}`;
-                } else if (hasCategoria) {
-                  text += ` - ${categoria}`;
-                } else if (hasSubcategoria) {
-                  text += ` - ${subcategoria}`;
-                }
-                return text;
-              })(),
+              materia: (caso.nombre_materia || caso.tramite || 'Sin materia').replace(/^Materia\s+/i, ''),
               estatus: caso.estatus || 'N/A',
               responsable: caso.nombre_responsable || 'Sin asignar',
             }))}
