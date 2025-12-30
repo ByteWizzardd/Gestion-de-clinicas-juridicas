@@ -3,14 +3,15 @@ import Modal from "../ui/feedback/Modal";
 import Input from "../forms/Input";
 import Select from "../forms/Select";
 import { useEffect, useState } from 'react';
+import { updateUsuarioByCedulaAction } from '@/app/actions/usuarios';
 import { getSemestresAction } from '@/app/actions/estudiantes';
 
 interface Usuario {
   cedula: string;
-  nombre_completo: string;
+  nombres?: string;
+  apellidos?: string;
   nombre_usuario: string;
   tipo_usuario: string;
-  habilitado_sistema: boolean;
   correo_electronico?: string;
   telefono?: string;
   [key: string]: unknown;
@@ -25,6 +26,8 @@ interface EditUserModalProps {
 
 const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario, onSave }) => {
   const [form, setForm] = useState<Usuario | null>(usuario);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Sincronizar el estado local solo cuando cambia el usuario (no por isOpen)
   useEffect(() => {
@@ -53,9 +56,49 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (form) onSave(form);
+    setError(null);
+    if (!form) return;
+    setLoading(true);
+    try {
+      const result = await updateUsuarioByCedulaAction(form.cedula, {
+        correo_electronico: form.correo_electronico,
+        nombre: form.nombres,
+        apellidos: form.apellidos,
+        nombre_usuario: form.nombre_usuario,
+        tipo_usuario: form.tipo_usuario,
+        telefono: form.telefono,
+        estudiante: form.tipo_usuario === 'Estudiante' ? {
+          tipo_estudiante: form.tipo_estudiante as
+            | 'Voluntario'
+            | 'Inscrito'
+            | 'Egresado'
+            | 'Servicio Comunitario'
+            | null
+            | undefined,
+          nrc: form.nrc as string | null | undefined,
+          term: form.term as string | null | undefined,
+        } : undefined,
+        profesor: form.tipo_usuario === 'Profesor' ? {
+          tipo_profesor: form.tipo_profesor as 'Voluntario' | 'Asesor' | null | undefined,
+          term: (form.term as string | null | undefined) ?? null,
+        } : undefined,
+        coordinador: form.tipo_usuario === 'Coordinador' ? {
+          term: form.term !== undefined ? (form.term as string | null) : null,
+        } : undefined,
+      });
+      if (result && result.success) {
+        onSave({ ...form });
+        onClose();
+      } else {
+        setError(result?.error?.message || 'Error al actualizar usuario');
+      }
+    } catch  {
+      setError('Error inesperado al actualizar usuario');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -81,6 +124,9 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
 
         {/* Grid de formulario */}
         <form onSubmit={handleSubmit}>
+          {error && (
+            <div className="mb-4 text-red-600 text-sm font-medium">{error}</div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 mb-6">
             <Input
               label="Correo"
@@ -89,9 +135,15 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
               onChange={handleChange}
             />
             <Input
-              label="Nombre completo"
-              name="nombre_completo"
-              value={form.nombre_completo as string}
+              label="Nombre(s)"
+              name="nombres"
+              value={typeof form.nombres === 'string' ? form.nombres : ''}
+              onChange={handleChange}
+            />
+            <Input
+              label="Apellido(s)"
+              name="apellidos"
+              value={typeof form.apellidos === 'string' ? form.apellidos : ''}
               onChange={handleChange}
             />
             <Input
@@ -186,11 +238,11 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
           {/* Footer con botón */}
           <div className="flex flex-col border-t border-gray-200 pt-4">
             <div className="flex justify-end gap-4 mt-4">
-              <Button type="button" variant="outline" size="xl" onClick={onClose}>
+              <Button type="button" variant="outline" size="xl" onClick={onClose} disabled={loading}>
                 Cancelar
               </Button>
-              <Button type="submit" variant="primary" size="xl">
-                Guardar
+              <Button type="submit" variant="primary" size="xl" disabled={loading}>
+                {loading ? 'Guardando...' : 'Guardar'}
               </Button>
             </div>
           </div>

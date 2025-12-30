@@ -290,3 +290,100 @@ export async function getUsuarioInfoByCedulaAction(cedula: string): Promise<GetU
     };
   }
 }
+
+export interface UpdateUsaruiobyCedulaResult {
+  success: boolean;
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+export async function updateUsuarioByCedulaAction(
+  cedula: string,
+  updates: {
+    correo_electronico?: string;
+    nombre?: string;
+    apellidos?: string;
+    nombre_usuario?: string;
+    tipo_usuario?: string;
+    habilitado_sistema?: boolean;
+    telefono?: string;
+    estudiante?: {
+      tipo_estudiante?:
+        | "Voluntario"
+        | "Inscrito"
+        | "Egresado"
+        | "Servicio Comunitario"
+        | null;
+      nrc?: string | null;
+      term?: string | null;
+    };
+    profesor?: {
+      tipo_profesor?: "Voluntario" | "Asesor" | null;
+      term: string | null;
+    };
+    coordinador?: {
+      term: string | null;
+    };
+  }
+): Promise<UpdateUsaruiobyCedulaResult> {
+  try {
+    // Verificar autenticación
+    const token = getAuthTokenFromCookies();
+    if (!token) {
+      return {
+        success: false,
+        error: {
+          message: "No autorizado",
+          code: "UNAUTHORIZED",
+        },
+      };
+    }
+
+    await usuariosQueries.updateUsuarioByCedulaAction({
+      cedula,
+      nombres: updates.nombre ?? "",
+      apellidos: updates.apellidos ?? "",
+      correo_electronico: updates.correo_electronico ?? "",
+      nombre_usuario: updates.nombre_usuario ?? "",
+      telefono_celular: updates.telefono ?? null,
+      tipo_usuario: updates.tipo_usuario ?? "",
+      nrc: updates.estudiante?.nrc ?? null,
+      term:
+        updates.tipo_usuario === 'Estudiante'
+          ? updates.estudiante?.term ?? null
+          : updates.tipo_usuario === 'Profesor'
+          ? updates.profesor?.term ?? null
+          : updates.tipo_usuario === 'Coordinador'
+          ? updates.coordinador?.term ?? null
+          : null,
+      tipo_estudiante: updates.estudiante?.tipo_estudiante ?? null,
+      tipo_profesor: updates.profesor?.tipo_profesor ?? null,
+    });
+
+    return { success: true };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || "USUARIO_ERROR",
+        },
+      };
+    }
+
+    console.error("Error en updateUsuarioByCedulaAction:", error);
+    return {
+      success: false,
+      error: {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Error al actualizar usuario",
+        code: "UNKNOWN_ERROR",
+      },
+    };
+  }
+}

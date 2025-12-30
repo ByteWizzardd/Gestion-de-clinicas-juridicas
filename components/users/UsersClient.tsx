@@ -6,23 +6,18 @@ import ConfirmModal from '../ui/feedback/ConfirmModal';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import BulkUploadModal from './BulkUploadModal';
-import { getUsuariosAction, deleteUsuarioFisicoAction, toggleHabilitadoUsuarioAction, getUsuarioInfoByCedulaAction } from '@/app/actions/usuarios';
+import { getUsuariosAction, deleteUsuarioFisicoAction, getUsuarioInfoByCedulaAction } from '@/app/actions/usuarios';
 import EditUserModal from './EditUserModal';
 
 // Simulación: obtener tipo de usuario actual (debería venir de contexto/auth real)
-function getCurrentUserTipo(): string {
-  // TODO: Reemplazar por lógica real de autenticación
-  if (typeof window !== 'undefined') {
-    return window.localStorage.getItem('tipo_usuario') || '';
-  }
-  return '';
-}
+
 
 interface Usuario extends Record<string, unknown> {
   cedula: string;
-  nombre_completo: string;
+  nombres?: string;
+  apellidos?: string;
   nombre_usuario: string;
-  habilitado_sistema: boolean;
+  habilitado_sistema?: boolean;
   tipo_usuario: string;
   correo_electronico?: string;
 }
@@ -38,7 +33,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
   const [itemToDelete, setItemToDelete] = useState<Usuario | null>(null);
   const [deleteMotivo, setDeleteMotivo] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [, setDisableLoading] = useState(false);
+
   const [usuarios, setUsuarios] = useState<Usuario[]>(initialUsuarios);
   const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
@@ -65,6 +60,13 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
     } finally {
       setLoading(false);
     }
+  };
+  
+  // Permite seleccionar el usuario a eliminar y mostrar el modal de confirmación
+  const handleDelete = (data: Record<string, unknown>) => {
+    const usuario = data as Usuario;
+    setItemToDelete(usuario);
+    setShowConfirm(true);
   };
 
   // Preparar opciones de tipo de usuario
@@ -100,7 +102,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
       const matchesSearch = 
         !searchValue ||
         usuario.cedula.includes(searchValue) ||
-        normalizeText(usuario.nombre_completo || '').includes(normalizedSearch) ||
+        normalizeText((usuario.nombres || '') + ' ' + (usuario.apellidos || '')).includes(normalizedSearch) ||
         normalizeText(usuario.nombre_usuario || '').includes(normalizedSearch);
 
       const matchesTipo = !tipoFilter || usuario.tipo_usuario === tipoFilter;
@@ -113,6 +115,16 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
     const usuario = data as Usuario;
     router.push(`/dashboard/users/${usuario.cedula}`);
   };
+
+
+
+  const handleSaveEdit = (usuarioEditado: Usuario) => {
+    // Aquí deberías llamar a la acción de actualización real
+    setUsuarios((prev) => prev.map(u => u.cedula === usuarioEditado.cedula ? { ...u, ...usuarioEditado } : u));
+    setShowEditModal(false);
+    setUsuarioToEdit(null);
+  };
+
 
   const handleEdit = async (data: Record<string, unknown>) => {
     const usuario = data as Usuario;
@@ -130,48 +142,13 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         tipo_estudiante: result.data.estudiante?.tipo_estudiante || '',
         tipo_profesor: result.data.profesor?.tipo_profesor || '',
         nrc: result.data.estudiante?.nrc || '',
+        nombres: result.data.nombres || usuario.nombres || '',
+        apellidos: result.data.apellidos || usuario.apellidos || '',
       });
     } else {
       setUsuarioToEdit(usuario); // fallback
     }
     setShowEditModal(true);
-  };
-
-  const handleSaveEdit = (usuarioEditado: Usuario) => {
-    // Aquí deberías llamar a la acción de actualización real
-    setUsuarios((prev) => prev.map(u => u.cedula === usuarioEditado.cedula ? { ...u, ...usuarioEditado } : u));
-    setShowEditModal(false);
-    setUsuarioToEdit(null);
-  };
-
-  const handleDisable = async (data: Record<string, unknown>) => {
-    const usuario = data as Usuario;
-    setDisableLoading(true);
-    const result = await toggleHabilitadoUsuarioAction(usuario.cedula);
-    setDisableLoading(false);
-    if (!result.success) {
-      alert(result.error?.message || 'Error al cambiar el estado del usuario');
-      return;
-    }
-    // Actualizar la lista de usuarios localmente
-    setUsuarios((prev) =>
-      prev.map((u) =>
-        u.cedula === usuario.cedula
-          ? { ...u, habilitado_sistema: !u.habilitado_sistema }
-          : u
-      )
-    );
-  };
-
-  const handleDelete = (data: Record<string, unknown>) => {
-    const usuario = data as Usuario;
-    // Solo permitir si el usuario actual es coordinador
-    if (getCurrentUserTipo() !== 'Coordinador') {
-      alert('Solo los coordinadores pueden eliminar usuarios permanentemente.');
-      return;
-    }
-    setItemToDelete(usuario);
-    setShowConfirm(true);
   };
 
   // Función para eliminar usuario (debes implementar la lógica real de eliminación)
@@ -245,7 +222,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         <Table
           data={filteredUsuarios.map((u) => ({
             cedula: u.cedula,
-            nombre_completo: u.nombre_completo,
+            nombre_completo: `${u.nombres || ''} ${u.apellidos || ''}`.trim(),
             nombre_usuario: u.nombre_usuario,
             tipo_usuario: u.tipo_usuario,
             estado: u.habilitado_sistema ? 'Habilitado' : 'Deshabilitado',
@@ -253,62 +230,6 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
           columns={["Cédula", "Nombre Completo", "Usuario", "Tipo", "Estado"]}
           onView={handleView}
           onEdit={handleEdit}
-          actions={[
-            {
-              label: (row: unknown) => {
-                const { cedula, estado } = row as { cedula: string; estado: string };
-                if (cedula === currentUserCedula) return '';
-                const isHabilitado = estado === 'Habilitado';
-                return (
-                  <span
-                    className={`flex items-center gap-2 px-2 py-1 rounded transition-colors select-none cursor-pointer`}
-                  >
-                    {isHabilitado ? (
-                      // SVG de candado cerrado (deshabilitar)
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-4 h-4 text-yellow-600"
-                      >
-                        <rect x="3" y="11" width="18" height="10" rx="2" />
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                        <circle cx="12" cy="16" r="1" />
-                      </svg>
-                    ) : (
-                      // SVG de candado abierto (habilitar)
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-4 h-4 text-yellow-600"
-                      >
-                        <rect x="3" y="11" width="18" height="10" rx="2" />
-                        <path d="M7 11V7a5 5 0 0 1 9.9-1" />
-                        <circle cx="12" cy="16" r="1" />
-                      </svg>
-                    )}
-                    {isHabilitado ? 'Deshabilitar' : 'Habilitar'}
-                  </span>
-                );
-              },
-              onClick: (row: unknown) => {
-                const { cedula } = row as { cedula: string };
-                if (cedula === currentUserCedula) return;
-                handleDisable(row as Record<string, unknown>);
-              },
-            },
-          ]}
           onDelete={handleDelete}
           hideEdit={(row: { cedula: string }) => row.cedula === currentUserCedula}
           hideDelete={(row: { cedula: string }) => row.cedula === currentUserCedula}
@@ -339,7 +260,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         title="Eliminar usuario permanentemente"
         message={
           <div>
-            <p>¿Está seguro de que desea eliminar al usuario <b>{itemToDelete?.nombre_completo || ''}</b>?</p>
+            <p>¿Está seguro de que desea eliminar al usuario <b>{itemToDelete ? `${itemToDelete.nombres || ''} ${itemToDelete.apellidos || ''}` : ''}</b>?</p>
             <p className="mt-2 text-danger font-semibold">Esta acción es irreversible y solo puede realizarla un coordinador.</p>
             <label className="block mt-4 mb-2 font-medium">Motivo de la eliminación:</label>
             <textarea

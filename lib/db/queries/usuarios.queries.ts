@@ -11,13 +11,17 @@ export const usuariosQueries = {
    * Busca usuarios por cédula (búsqueda parcial)
    * Busca en la tabla usuarios (estudiantes, profesores, coordinadores)
    */
-  searchByCedula: async (cedula: string): Promise<Array<{
-    cedula: string;
-    nombres: string;
-    apellidos: string;
-    nombre_completo: string;
-  }>> => {
-    const query = loadSQL('usuarios/search-by-cedula.sql');
+  searchByCedula: async (
+    cedula: string
+  ): Promise<
+    Array<{
+      cedula: string;
+      nombres: string;
+      apellidos: string;
+      nombre_completo: string;
+    }>
+  > => {
+    const query = loadSQL("usuarios/search-by-cedula.sql");
     const result: QueryResult = await pool.query(query, [cedula]);
     return result.rows;
   },
@@ -25,15 +29,19 @@ export const usuariosQueries = {
   /**
    * Busca usuarios por cédula excluyendo solicitantes (para recomendaciones)
    */
-  searchByCedulaExcludeSolicitantes: async (cedula: string): Promise<Array<{
-    cedula: string;
-    nombres: string;
-    apellidos: string;
-    telefono_celular: string;
-    correo_electronico: string;
-    nombre_completo: string;
-  }>> => {
-    const query = loadSQL('usuarios/search-by-cedula-exclude-solicitantes.sql');
+  searchByCedulaExcludeSolicitantes: async (
+    cedula: string
+  ): Promise<
+    Array<{
+      cedula: string;
+      nombres: string;
+      apellidos: string;
+      telefono_celular: string;
+      correo_electronico: string;
+      nombre_completo: string;
+    }>
+  > => {
+    const query = loadSQL("usuarios/search-by-cedula-exclude-solicitantes.sql");
     const result: QueryResult = await pool.query(query, [cedula]);
     return result.rows;
   },
@@ -41,14 +49,18 @@ export const usuariosQueries = {
   /**
    * Busca usuarios por correo electrónico (búsqueda exacta)
    */
-  searchByEmail: async (email: string): Promise<Array<{
-    cedula: string;
-    nombres: string;
-    apellidos: string;
-    correo_electronico: string;
-    nombre_completo: string;
-  }>> => {
-    const query = loadSQL('usuarios/search-by-email.sql');
+  searchByEmail: async (
+    email: string
+  ): Promise<
+    Array<{
+      cedula: string;
+      nombres: string;
+      apellidos: string;
+      correo_electronico: string;
+      nombre_completo: string;
+    }>
+  > => {
+    const query = loadSQL("usuarios/search-by-email.sql");
     const result: QueryResult = await pool.query(query, [email]);
     return result.rows;
   },
@@ -56,7 +68,9 @@ export const usuariosQueries = {
   /**
    * Obtiene un usuario completo por cédula con todos los campos necesarios para autocompletar
    */
-  getCompleteByCedula: async (cedula: string): Promise<{
+  getCompleteByCedula: async (
+    cedula: string
+  ): Promise<{
     cedula: string;
     nombres: string;
     apellidos: string;
@@ -64,7 +78,7 @@ export const usuariosQueries = {
     telefono_celular: string | null;
     nombre_completo: string;
   } | null> => {
-    const query = loadSQL('usuarios/get-complete-by-cedula.sql');
+    const query = loadSQL("usuarios/get-complete-by-cedula.sql");
     const result: QueryResult = await pool.query(query, [cedula]);
     return result.rows[0] || null;
   },
@@ -81,7 +95,7 @@ export const usuariosQueries = {
     contrasena: string;
     telefono_celular?: string | null;
   }): Promise<unknown> => {
-    const query = loadSQL('usuarios/create-or-update.sql');
+    const query = loadSQL("usuarios/create-or-update.sql");
     const result: QueryResult = await pool.query(query, [
       data.cedula,
       data.nombres,
@@ -97,21 +111,23 @@ export const usuariosQueries = {
   /**
    * Obtiene todos los usuarios con información adicional
    */
-  getAll: async (): Promise<Array<{
-    cedula: string;
-    nombres: string;
-    apellidos: string;
-    nombre_completo: string;
-    correo_electronico: string;
-    nombre_usuario: string;
-    telefono_celular: string | null;
-    habilitado_sistema: boolean;
-    tipo_usuario: string;
-    info_estudiante: string | null;
-    info_profesor: string | null;
-    info_coordinador: string | null;
-  }>> => {
-    const query = loadSQL('usuarios/get-all.sql');
+  getAll: async (): Promise<
+    Array<{
+      cedula: string;
+      nombres: string;
+      apellidos: string;
+      nombre_completo: string;
+      correo_electronico: string;
+      nombre_usuario: string;
+      telefono_celular: string | null;
+      habilitado_sistema: boolean;
+      tipo_usuario: string;
+      info_estudiante: string | null;
+      info_profesor: string | null;
+      info_coordinador: string | null;
+    }>
+  > => {
+    const query = loadSQL("usuarios/get-all.sql");
     const result: QueryResult = await pool.query(query);
     return result.rows;
   },
@@ -119,8 +135,11 @@ export const usuariosQueries = {
   /**
    * Actualiza la contraseña de un usuario por correo electrónico
    */
-  updatePasswordByEmail: async (email: string, passwordHash: string): Promise<unknown> => {
-    const query = loadSQL('usuarios/update-password.sql');
+  updatePasswordByEmail: async (
+    email: string,
+    passwordHash: string
+  ): Promise<unknown> => {
+    const query = loadSQL("usuarios/update-password.sql");
     const result: QueryResult = await pool.query(query, [email, passwordHash]);
     return result.rows[0];
   },
@@ -128,9 +147,14 @@ export const usuariosQueries = {
   /**
    * Elimina un usuario y guarda su cédula
    */
-  toggleHabilitado: async (cedula: string): Promise<{ success: boolean; error?: { message: string; code?: string } }> => {
+  toggleHabilitado: async (
+    cedula: string
+  ): Promise<{
+    success: boolean;
+    error?: { message: string; code?: string };
+  }> => {
     try {
-      await pool.query('SELECT toggle_habilitado_usuario($1)', [cedula]);
+      await pool.query("SELECT toggle_habilitado_usuario($1)", [cedula]);
       return { success: true };
     } catch (error: unknown) {
       return {
@@ -151,7 +175,7 @@ export const usuariosQueries = {
     cedula_actor: string,
     motivo: string
   ): Promise<void> => {
-    await pool.query('SELECT eliminar_usuario_fisico($1, $2, $3)', [
+    await pool.query("SELECT eliminar_usuario_fisico($1, $2, $3)", [
       cedula_usuario,
       cedula_actor,
       motivo,
@@ -161,7 +185,9 @@ export const usuariosQueries = {
   /**
    * Información de un Solo usuario por cédula
    */
-  getInfoByCedula: async (cedula: string): Promise<{
+  getInfoByCedula: async (
+    cedula: string
+  ): Promise<{
     cedula: string;
     nombres: string;
     apellidos: string;
@@ -174,7 +200,12 @@ export const usuariosQueries = {
     estudiante?: {
       nrc: string | null;
       term: string | null;
-      tipo_estudiante: 'Voluntario' | 'Inscrito' | 'Egresado' | 'Servicio Comunitario' | null;
+      tipo_estudiante:
+        | "Voluntario"
+        | "Inscrito"
+        | "Egresado"
+        | "Servicio Comunitario"
+        | null;
     };
     profesor?: {
       term: string | null;
@@ -184,7 +215,7 @@ export const usuariosQueries = {
       term: string | null;
     };
   } | null> => {
-    const query = loadSQL('usuarios/get-all-by-cedula.sql');
+    const query = loadSQL("usuarios/get-all-by-cedula.sql");
     const result: QueryResult = await pool.query(query, [cedula]);
     const row = result.rows[0];
     if (!row) return null;
@@ -198,21 +229,74 @@ export const usuariosQueries = {
       telefono_celular: row.telefono_celular,
       habilitado_sistema: row.habilitado_sistema,
       tipo_usuario: row.tipo_usuario,
-      estudiante: row.estudiante_nrc || row.estudiante_term || row.estudiante_tipo ? {
-        nrc: row.estudiante_nrc,
-        term: row.estudiante_term,
-        tipo_estudiante: row.estudiante_tipo,
-      } : undefined,
-      profesor: row.profesor_term || row.profesor_tipo ? {
-        term: row.profesor_term,
-        tipo_profesor: row.profesor_tipo,
-      } : undefined,
-      coordinador: row.coordinador_term ? {
-        term: row.coordinador_term,
-      } : undefined,
+      estudiante:
+        row.estudiante_nrc || row.estudiante_term || row.estudiante_tipo
+          ? {
+              nrc: row.estudiante_nrc,
+              term: row.estudiante_term,
+              tipo_estudiante: row.estudiante_tipo,
+            }
+          : undefined,
+      profesor:
+        row.profesor_term || row.profesor_tipo
+          ? {
+              term: row.profesor_term,
+              tipo_profesor: row.profesor_tipo,
+            }
+          : undefined,
+      coordinador: row.coordinador_term
+        ? {
+            term: row.coordinador_term,
+          }
+        : undefined,
     };
   },
 
+  /**
+   * Actualiza toda la información de un usuario
+   */
+  updateUsuarioByCedulaAction: async (data: {
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+    correo_electronico: string;
+    nombre_usuario: string;
+    telefono_celular?: string | null;
+    tipo_usuario: string;
+    nrc?: string | null;
+    term?: string | null;
+    tipo_estudiante?:
+      | "Voluntario"
+      | "Inscrito"
+      | "Egresado"
+      | "Servicio Comunitario"
+      | null;
+    tipo_profesor?: string | null;
+  }): Promise<void> => {
+    await pool.query(
+      `CALL update_all_by_cedula(
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+      )`,
+      [
+        data.cedula,
+        data.nombres ?? null,
+        data.apellidos ?? null,
+        data.correo_electronico ?? null,
+        data.nombre_usuario ?? null,
+        data.telefono_celular ?? null,
+        data.tipo_usuario ?? null,
+        // Estudiante
+        data.tipo_usuario === "Estudiante" ? data.nrc ?? null : null,
+        data.tipo_usuario === "Estudiante" ? data.term ?? null : null,
+        data.tipo_usuario === "Estudiante" ? data.tipo_estudiante ?? null : null,
+        // Profesor
+        data.tipo_usuario === "Profesor" ? data.term ?? null : null,
+        data.tipo_usuario === "Profesor" ? data.tipo_profesor ?? null : null,
+        // Coordinador
+        data.tipo_usuario === "Coordinador" ? data.term ?? null : null,
+      ]
+    );
+  }
 };
 
 
