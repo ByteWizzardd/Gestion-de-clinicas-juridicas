@@ -10,6 +10,7 @@ interface AppointmentListProps {
   selectedDate?: Date | null;
   onAddAppointment?: () => void;
   onShowAllMonth?: () => void;
+  onAppointmentClick?: (appointment: Appointment) => void;
   addButton?: React.ReactNode; // Botón desacoplado para flexibilidad
 }
 
@@ -19,6 +20,7 @@ export default function AppointmentList({
   selectedDate,
   onAddAppointment,
   onShowAllMonth,
+  onAppointmentClick,
   addButton,
 }: AppointmentListProps) {
   const monthNames = [
@@ -143,7 +145,10 @@ export default function AppointmentList({
                   index !== sortedAppointments.length - 1 ? 'border-b border-gray-200' : ''
                 }`}
               >
-                <AppointmentCard appointment={appointment} />
+                <AppointmentCard
+                  appointment={appointment}
+                  onClick={onAppointmentClick ? () => onAppointmentClick(appointment) : undefined}
+                />
               </div>
             ))}
           </div>

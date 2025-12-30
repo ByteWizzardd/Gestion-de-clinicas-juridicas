@@ -7,6 +7,7 @@ import CalendarWidget from '@/components/ui/calendar/CalendarWidget';
 import AppointmentList from '@/components/cards/AppointmentList';
 import type { Appointment } from '@/types/appointment';
 import { AppointmentModal } from '../appointmentModal/AppointmentModal';
+import { AppointmentDetailModal } from '../appointmentModal/AppointmentDetailModal';
 
 interface AppointmentsClientProps {
   initialAppointments: Appointment[];
@@ -24,6 +25,8 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
   );
   const [showModal, setShowModal] = useState(false);
   const [modalDate, setModalDate] = useState<Date | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -109,6 +112,18 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
     setModalDate(null);
   };
 
+  // Abrir modal de detalles de cita
+  const handleAppointmentClick = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setShowDetailModal(true);
+  };
+
+  // Cerrar modal de detalles
+  const handleDetailModalClose = () => {
+    setShowDetailModal(false);
+    setSelectedAppointment(null);
+  };
+
   return (
     <div className="h-full relative">
       <motion.div 
@@ -152,6 +167,7 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
             selectedDate={filterByDate ? selectedDate : null}
             onAddAppointment={handleAddAppointment}
             onShowAllMonth={filterByDate ? handleShowAllMonth : undefined}
+            onAppointmentClick={handleAppointmentClick}
           />
         </motion.div>
       </div>
@@ -165,6 +181,12 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
           />
         )}
       </AnimatePresence>
+
+      <AppointmentDetailModal
+        appointment={selectedAppointment}
+        isOpen={showDetailModal}
+        onClose={handleDetailModalClose}
+      />
     </div>
   );
 }
