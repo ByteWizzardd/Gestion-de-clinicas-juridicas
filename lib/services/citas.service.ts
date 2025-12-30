@@ -41,6 +41,27 @@ export const citasService = {
         // Título: Materia del ámbito legal
         const title = cita.nombre_materia || cita.tramite;
 
+        // Usuarios que atendieron
+        const attendingUsers = cita.nombre_completo_usuario_atencion || 'No especificado';
+        const isMultiplePeople = attendingUsers && attendingUsers.includes(',') || (attendingUsers && attendingUsers.split(' ').length > 2);
+
+        // Fecha de próxima cita formateada
+        const nextAppointmentDate = cita.fecha_proxima_cita
+          ? (() => {
+              const nextDate = new Date(cita.fecha_proxima_cita);
+              const day = String(nextDate.getDate()).padStart(2, '0');
+              const month = String(nextDate.getMonth() + 1).padStart(2, '0');
+              const year = nextDate.getFullYear();
+              return `${day}/${month}/${year}`;
+            })()
+          : null;
+
+        console.log('Cita:', {
+          num_cita: cita.num_cita,
+          orientacion: cita.orientacion,
+          nombre_completo_usuario_atencion: cita.nombre_completo_usuario_atencion
+        });
+
         return {
           id: `cita-${cita.num_cita}-${cita.id_caso}-${fechaCita.getTime()}`,
           title,
@@ -49,6 +70,10 @@ export const citasService = {
           caseDetail,
           client,
           location: cita.nombre_nucleo,
+          orientation: cita.orientacion || 'Sin orientación especificada',
+          attendingUsers,
+          isMultiplePeople,
+          nextAppointmentDate,
         };
       });
     } catch (error) {

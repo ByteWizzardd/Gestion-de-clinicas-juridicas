@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Modal from '../ui/feedback/Modal';
-import { X, Calendar, Clock, User, MapPin, FileText } from 'lucide-react';
+import { X, Calendar, FileText, User } from 'lucide-react';
 import type { Appointment } from '@/types/appointment';
 
 interface AppointmentDetailModalProps {
@@ -24,23 +24,9 @@ export function AppointmentDetailModal({ appointment, isOpen, onClose }: Appoint
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
-    const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-    const monthNames = [
-      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-    ];
-    const dayName = dayNames[date.getDay()];
-    const monthName = monthNames[date.getMonth()];
-    return `${dayName}, ${day} de ${monthName} de ${year}`;
+    return `${day}/${month}/${year}`;
   };
 
-  const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours, 10);
-    const ampm = hour >= 12 ? 'pm' : 'am';
-    const hour12 = hour % 12 || 12;
-    return `${hour12}:${minutes} ${ampm}`;
-  };
 
   const handleClose = () => {
     setIsModalOpen(false);
@@ -75,90 +61,80 @@ export function AppointmentDetailModal({ appointment, isOpen, onClose }: Appoint
         {/* Línea divisoria naranja */}
         <div className="border-b-2 border-secondary w-full mb-8"></div>
 
-        {/* Grid de contenido */}
-        <div className="grid grid-cols-2 gap-x-6 gap-y-8 mb-8">
-          {/* Título de la cita */}
+        {/* Contenido organizado en dos columnas */}
+        <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+          {/* Columna 1 */}
+          <div className="space-y-6">
+            {/* Fecha de la cita */}
+            <div>
+              <div className="flex flex-col gap-1">
+                <label className="text-base font-normal text-foreground mb-2 flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-primary" />
+                  Fecha de la cita
+                </label>
+                <p className="text-base text-gray-900">
+                  {formatDate(appointment.date)}
+                </p>
+              </div>
+            </div>
+
+            {/* Usuarios que atendieron */}
+            {appointment.attendingUsers && (
+              <div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-base font-normal text-foreground mb-2 flex items-center gap-2">
+                    <User className="w-5 h-5 text-primary" />
+                    {appointment.isMultiplePeople ? 'Personas que atendieron' : 'Persona que atendió'}
+                  </label>
+                  <p className="text-base text-gray-900">
+                    {appointment.attendingUsers}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Columna 2 */}
+          <div className="space-y-6">
+            {/* Caso relacionado */}
+            <div>
+              <div className="flex flex-col gap-1">
+                <label className="text-base font-normal text-foreground mb-2 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-primary" />
+                  Caso relacionado
+                </label>
+                <p className="text-base text-gray-900">
+                  {appointment.caseDetail}
+                </p>
+              </div>
+            </div>
+
+            {/* Fecha de próxima cita */}
+            {appointment.nextAppointmentDate && (
+              <div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-base font-normal text-foreground mb-2 flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-primary" />
+                    Fecha de próxima cita
+                  </label>
+                  <p className="text-base text-gray-900">
+                    {appointment.nextAppointmentDate}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Orientación - ocupa ambas columnas */}
           <div className="col-span-2">
             <div className="flex flex-col gap-1">
               <label className="text-base font-normal text-foreground mb-2 flex items-center gap-2">
                 <FileText className="w-5 h-5 text-primary" />
-                Título de la cita
+                Orientación
               </label>
               <p className="text-base text-gray-900">
-                {appointment.title}
+                {appointment.orientation}
               </p>
-            </div>
-          </div>
-
-          {/* Fecha */}
-          <div className="col-span-1">
-            <div className="flex flex-col gap-1">
-              <label className="text-base font-normal text-foreground mb-2 flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-primary" />
-                Fecha
-              </label>
-              <p className="text-base text-gray-900">
-                {formatDate(appointment.date)}
-              </p>
-            </div>
-          </div>
-
-          {/* Hora */}
-          <div className="col-span-1">
-            <div className="flex flex-col gap-1">
-              <label className="text-base font-normal text-foreground mb-2 flex items-center gap-2">
-                <Clock className="w-5 h-5 text-primary" />
-                Hora
-              </label>
-              <p className="text-base text-gray-900">
-                {formatTime(appointment.time)}
-              </p>
-            </div>
-          </div>
-
-          {/* Cliente */}
-          <div className="col-span-1">
-            <div className="flex flex-col gap-1">
-              <label className="text-base font-normal text-foreground mb-2 flex items-center gap-2">
-                <User className="w-5 h-5 text-primary" />
-                Cliente
-              </label>
-              <p className="text-base text-gray-900">
-                {appointment.client}
-              </p>
-            </div>
-          </div>
-
-          {/* Ubicación */}
-          <div className="col-span-1">
-            <div className="flex flex-col gap-1">
-              <label className="text-base font-normal text-foreground mb-2 flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-primary" />
-                Ubicación
-              </label>
-              <p className="text-base text-gray-900">
-                {appointment.location}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Separador sutil */}
-        <div className="border-b border-gray-200 mb-6"></div>
-
-        <div className="grid grid-cols-1 gap-y-6">
-          {/* Detalle del Caso */}
-          <div className="col-span-1">
-            <div className="flex flex-col gap-1">
-              <label className="text-base font-normal text-foreground mb-2 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-primary" />
-                Detalle del caso
-              </label>
-              <div className="bg-neutral-50 rounded-3xl p-4 min-h-[80px]">
-                <p className="text-base text-gray-900 whitespace-pre-wrap">
-                  {appointment.caseDetail}
-                </p>
-              </div>
             </div>
           </div>
         </div>

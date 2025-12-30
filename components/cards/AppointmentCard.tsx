@@ -25,19 +25,16 @@ export default function AppointmentCard({ appointment, onClick }: AppointmentCar
 
   return (
     <div className="relative cursor-pointer hover:bg-gray-100 rounded-lg p-2 -m-2 transition-colors" onClick={onClick}>
-      {/* Primera línea: Título - Fecha (izquierda) y Hora (derecha) */}
-      <div className="flex items-start justify-between mb-1">
-        <p className="text-base text-black font-normal">
-          {appointment.title} - {formatDate(appointment.date)}
-        </p>
-        <p className="text-base text-primary font-normal whitespace-nowrap">
-          {formatTime(appointment.time)}
+      {/* Fecha de la cita */}
+      <div className="mb-1">
+        <p className="text-base text-primary font-normal">
+          {formatDate(appointment.date)}
         </p>
       </div>
 
-      {/* Segunda línea: Detalle del Caso */}
+      {/* Caso relacionado */}
       <p className="text-base text-gray-600 font-normal">
-        Caso: {appointment.caseDetail}
+        {appointment.caseDetail}
       </p>
     </div>
   );

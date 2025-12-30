@@ -5,9 +5,7 @@ import DashboardAppointmentCard from './DashboardAppointmentCard';
 import type { Appointment } from '@/types/appointment';
 
 interface DashboardAppointment {
-  time: string;
-  title: string;
-  client: string;
+  date: string;
   reason: string;
 }
 
@@ -26,13 +24,12 @@ export default function DashboardAppointmentList({
   error = null,
   onAppointmentClick,
 }: DashboardAppointmentListProps) {
-  // Convertir hora de HH:mm a formato AM/PM
-  const formatTime = (time: string): string => {
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours, 10);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const displayHour = hour % 12 || 12;
-    return `${displayHour}:${minutes} ${ampm}`;
+  // Formatear fecha en formato DD/MM/YYYY
+  const formatDate = (date: Date): string => {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   // Filtrar citas del día seleccionado y mantener referencia al appointment original
@@ -44,20 +41,10 @@ export default function DashboardAppointmentList({
         const aptDate = new Date(apt.date);
         return aptDate.toDateString() === selectedDateStr;
       })
-      .sort((a, b) => {
-        // Ordenar por hora
-        const timeA = a.time.split(':').map(Number);
-        const timeB = b.time.split(':').map(Number);
-        const minutesA = timeA[0] * 60 + timeA[1];
-        const minutesB = timeB[0] * 60 + timeB[1];
-        return minutesA - minutesB;
-      })
       .map((apt) => ({
         appointment: apt, // Mantener referencia al appointment original
-        time: formatTime(apt.time),
-        title: apt.title,
-        client: `Solicitante: ${apt.client.split(' ').slice(0, 2).join(' ')}.`, // Solo nombre y apellido inicial
-        reason: `Motivo: ${apt.title}` // El título ya contiene la materia/trámite
+        date: formatDate(apt.date),
+        reason: apt.caseDetail // Solo mostrar el detalle del caso
       }));
   }, [appointments, selectedDate]);
 
@@ -92,9 +79,7 @@ export default function DashboardAppointmentList({
         dayAppointments.map((item, index) => (
           <DashboardAppointmentCard
             key={index}
-            time={item.time}
-            title={item.title}
-            client={item.client}
+            date={item.date}
             reason={item.reason}
             onClick={onAppointmentClick ? () => onAppointmentClick(item.appointment) : undefined}
           />
