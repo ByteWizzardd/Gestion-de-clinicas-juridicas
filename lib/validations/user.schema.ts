@@ -6,8 +6,8 @@ import { z } from 'zod';
 export const UpdateUserSchema = z.object({
   cedula: z.string().min(1, 'La cédula es requerida'),
 }).extend({
-  nombres: z.string().min(1, 'Los nombres son requeridos').optional(),
-  apellidos: z.string().min(1, 'Los apellidos son requeridos').optional(),
+  nombres: z.string().min(1, 'El nombre(s) son requeridos').optional(),
+  apellidos: z.string().min(1, 'El apellido(s) son requeridos').optional(),
   nombre_usuario: z.string().min(1, 'El nombre de usuario es requerido').optional(),
   tipo_usuario: z.enum(['Estudiante', 'Profesor', 'Coordinador'], {
     errorMap: () => ({ message: 'Tipo de usuario inválido' }),

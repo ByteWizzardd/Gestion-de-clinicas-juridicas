@@ -4,6 +4,7 @@ import Input from "../forms/Input";
 import Select from "../forms/Select";
 import { useEffect, useState } from 'react';
 import { updateUsuarioByCedulaAction } from '@/app/actions/usuarios';
+import { UpdateUserSchema } from '@/lib/validations/user.schema';
 import { getSemestresAction } from '@/app/actions/estudiantes';
 
 interface Usuario {
@@ -32,6 +33,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
   // Sincronizar el estado local solo cuando cambia el usuario (no por isOpen)
   useEffect(() => {
     setForm(usuario);
+    setError(null); 
   }, [usuario]);
 
   const [terms, setTerms] = useState<Array<{ term: string }>>([]);
@@ -60,6 +62,16 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
     e.preventDefault();
     setError(null);
     if (!form) return;
+
+    // Validar con Zod antes de enviar
+    const validation = UpdateUserSchema.safeParse(form);
+    if (!validation.success) {
+      // Mostrar el primer error encontrado
+      const firstError = validation.error.errors[0];
+      setError(firstError?.message || 'Datos inválidos');
+      return;
+    }
+
     setLoading(true);
     try {
       const result = await updateUsuarioByCedulaAction(form.cedula, {
