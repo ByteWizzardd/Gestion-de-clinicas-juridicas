@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Appointment } from '@/types/appointment';
 import AppointmentCard from './AppointmentCard';
+import { AppointmentScheduleModal } from '../appointmentModal/AppointmentScheduleModal';
 import { Plus, ArrowLeft } from 'lucide-react';
 
 interface AppointmentListProps {
@@ -25,6 +26,7 @@ export default function AppointmentList({
   addButton,
 }: AppointmentListProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Cerrar dropdown al hacer clic fuera
@@ -109,8 +111,7 @@ export default function AppointmentList({
               <button
                 onClick={() => {
                   setIsDropdownOpen(false);
-                  // TODO: Implementar modal de programar cita
-                  alert('Funcionalidad de programar cita próximamente disponible');
+                  setShowScheduleModal(true);
                 }}
                 className="w-full text-left cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2"
               >
@@ -136,8 +137,18 @@ export default function AppointmentList({
     return null;
   };
 
+  const handleScheduleModalClose = () => {
+    setShowScheduleModal(false);
+  };
+
+  const handleScheduleModalSave = () => {
+    setShowScheduleModal(false);
+    // Aquí podrías recargar las citas si fuera necesario
+  };
+
   return (
-    <div className="bg-white rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] h-full flex flex-col">
+    <div className="relative">
+      <div className="bg-white rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] h-full flex flex-col">
       {/* Header con título y botón */}
       <div className="pt-6 px-6 pb-0">
         <div className="flex items-center justify-between gap-3 mb-4">
@@ -179,8 +190,8 @@ export default function AppointmentList({
           <div className="text-center text-gray-500 py-8 px-6">
             <p>
               {isFilteredByDate 
-                ? 'No hay citas programadas para este día' 
-                : 'No hay citas programadas para este mes'}
+                ? 'No hay citas para este día' 
+                : 'No hay citas para este mes'}
             </p>
           </div>
         ) : (
@@ -203,6 +214,17 @@ export default function AppointmentList({
           </div>
         )}
       </div>
+
+      </div>
+
+      {/* Modal de programar cita */}
+      {showScheduleModal && (
+        <AppointmentScheduleModal
+          onClose={handleScheduleModalClose}
+          onSave={handleScheduleModalSave}
+          initialDate={selectedDate || undefined}
+        />
+      )}
     </div>
   );
 }
