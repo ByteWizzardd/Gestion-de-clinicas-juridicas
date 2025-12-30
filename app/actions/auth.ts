@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { authService } from '@/lib/services/auth.service';
 import { authQueries } from '@/lib/db/queries/auth.queries';
 import { jwtExpiresInToSeconds, verifyToken } from '@/lib/utils/security';
-import { AppError, UnauthorizedError } from '@/lib/utils/errors';
+import { AppError } from '@/lib/utils/errors';
 import crypto from "crypto";
 
 
@@ -60,6 +60,38 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
       };
     }
 
+    // Obtener usuario para validar si está habilitado
+    const user = await authQueries.getUserByNombreUsuario(nombreUsuario) as {
+      cedula: string;
+      nombres: string;
+      apellidos: string;
+      correo_electronico: string;
+      rol_sistema: string;
+      password_hash: string;
+      habilitado_sistema: boolean;
+    } | null;
+
+    if (!user) {
+      return {
+        success: false,
+        error: {
+          message: 'Usuario no encontrado',
+          code: 'NOT_FOUND',
+        },
+      };
+    }
+
+    if (user.habilitado_sistema === false) {
+      return {
+        success: false,
+        error: {
+          message: 'El usuario está deshabilitado. Contacte al coordinador.',
+          code: 'USER_DISABLED',
+        },
+      };
+    }
+
+    // Continuar con el login normal
     const result = await authService.login({
       nombreUsuario,
       password,
@@ -489,4 +521,3 @@ export async function resetPasswordAction(formData: FormData): Promise<ResetPass
     };
   }
 }
-

@@ -6,7 +6,7 @@ import ConfirmModal from '../ui/feedback/ConfirmModal';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import BulkUploadModal from './BulkUploadModal';
-import { getUsuariosAction, deleteUsuarioFisicoAction, getUsuarioInfoByCedulaAction } from '@/app/actions/usuarios';
+import { getUsuariosAction, deleteUsuarioFisicoAction, getUsuarioInfoByCedulaAction, toggleHabilitadoUsuarioAction } from '@/app/actions/usuarios';
 import EditUserModal from './EditUserModal';
 
 // Simulación: obtener tipo de usuario actual (debería venir de contexto/auth real)
@@ -33,6 +33,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
   const [itemToDelete, setItemToDelete] = useState<Usuario | null>(null);
   const [deleteMotivo, setDeleteMotivo] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [disableLoading, setDisableLoading] = useState(false);
 
   const [usuarios, setUsuarios] = useState<Usuario[]>(initialUsuarios);
   const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
@@ -68,6 +69,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
     setItemToDelete(usuario);
     setShowConfirm(true);
   };
+
 
   // Preparar opciones de tipo de usuario
   const tipoOptions = useMemo(() => {
@@ -123,6 +125,26 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
     setUsuarios((prev) => prev.map(u => u.cedula === usuarioEditado.cedula ? { ...u, ...usuarioEditado } : u));
     setShowEditModal(false);
     setUsuarioToEdit(null);
+  };
+
+
+  const handleDisable = async (data: Record<string, unknown>) => {
+    const usuario = data as Usuario;
+    setDisableLoading(true);
+    const result = await toggleHabilitadoUsuarioAction(usuario.cedula);
+    setDisableLoading(false);
+    if (!result.success) {
+      alert(result.error?.message || 'Error al cambiar el estado del usuario');
+      return;
+    }
+    // Actualizar la lista de usuarios localmente
+    setUsuarios((prev) =>
+      prev.map((u) =>
+        u.cedula === usuario.cedula
+          ? { ...u, habilitado_sistema: !u.habilitado_sistema }
+          : u
+      )
+    );
   };
 
 
@@ -231,6 +253,52 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
           onView={handleView}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          actions={[
+            {
+              label: (row) => {
+                const isHabilitado = row.estado === 'Habilitado';
+                return (
+                  <span className="flex items-center gap-2">
+                    {isHabilitado ? (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="w-4 h-4 text-yellow-600"
+                      >
+                        <rect x="3" y="11" width="18" height="10" rx="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        <circle cx="12" cy="16" r="1" />
+                      </svg>
+                    ) : (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="w-4 h-4 text-yellow-600"
+                      >
+                        <rect x="3" y="11" width="18" height="10" rx="2" />
+                        <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+                        <circle cx="12" cy="16" r="1" />
+                      </svg>
+                    )}
+                    {isHabilitado ? 'Deshabilitar' : 'Habilitar'}
+                  </span>
+                );
+              },
+              onClick: handleDisable,
+            },
+          ]}
           hideEdit={(row: { cedula: string }) => row.cedula === currentUserCedula}
           hideDelete={(row: { cedula: string }) => row.cedula === currentUserCedula}
         />
