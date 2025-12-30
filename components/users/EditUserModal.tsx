@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { updateUsuarioByCedulaAction } from '@/app/actions/usuarios';
 import { UpdateUserSchema } from '@/lib/validations/user.schema';
 import { getSemestresAction } from '@/app/actions/estudiantes';
+import PhoneInput from '../forms/PhoneInput';
 
 interface Usuario {
   cedula: string;
@@ -33,7 +34,14 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
   // Sincronizar el estado local solo cuando cambia el usuario y el modal se abre
   useEffect(() => {
     if (isOpen && usuario) {
-      setForm(usuario);
+      // Asegurarse de que el teléfono tenga un código de país si no lo tiene
+      const initialFormState = { ...usuario };
+      if (initialFormState.telefono && !initialFormState.telefono.startsWith('+')) {
+        initialFormState.telefono = `+58${initialFormState.telefono.replace(/^0/, '')}`;
+      } else if (!initialFormState.telefono) {
+        initialFormState.telefono = '+58';
+      }
+      setForm(initialFormState);
       setError(null); 
     }
   }, [isOpen, usuario]);
@@ -167,11 +175,12 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
                 value={form.nombre_usuario as string}
                 onChange={handleChange}
               />
-              <Input
+              <PhoneInput
                 label="Teléfono"
                 name="telefono"
                 value={typeof form.telefono === 'string' ? form.telefono : ''}
                 onChange={handleChange}
+                placeholder="4121234567"
               />
               <Select
                 label="Tipo de usuario"

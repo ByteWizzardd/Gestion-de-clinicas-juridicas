@@ -6,6 +6,7 @@ import Modal from '../ui/feedback/Modal';
 import Stepper from './Stepper';
 import Input from './Input';
 import InputGroup from './InputGroup';
+import PhoneInput from './PhoneInput';
 import Select from './Select';
 import Button from '../ui/Button';
 import { ArrowRight, ArrowLeft, Calendar } from 'lucide-react';
@@ -26,8 +27,7 @@ interface FormData {
   fechaNacimiento: string;
   sexo: string;
   telefonoLocal: string;
-  codigoPaisCelular: string; // Código de país para teléfono celular
-  telefonoCelular: string;
+  telefonoCelular: string; // Almacenará el número completo: +58412...
   correoElectronico: string;
   estadoCivil: string;
   concubinato: string;
@@ -151,8 +151,7 @@ const getInitialFormData = (): FormData => ({
   fechaNacimiento: '',
   sexo: '',
   telefonoLocal: '',
-  codigoPaisCelular: '+58', // Código por defecto: Venezuela
-  telefonoCelular: '',
+  telefonoCelular: '+58', // Valor inicial con código de país
   correoElectronico: '',
   estadoCivil: '',
   concubinato: '',
@@ -390,23 +389,21 @@ export default function ApplicantFormModal({
     }
     
     // Validar teléfono celular
-    if (!formData.telefonoCelular.trim()) {
+    if (!formData.telefonoCelular || formData.telefonoCelular.replace(/\+\d+/,'').trim() === '') {
       newErrors.telefonoCelular = 'Este campo es requerido';
-    } else if (!/^[0-9]+$/.test(formData.telefonoCelular.trim())) {
-      newErrors.telefonoCelular = 'Solo se permiten números';
     } else {
-      const telefonoCelular = formData.telefonoCelular.trim();
-      const telefonoCelularLength = telefonoCelular.length;
-      
-      // Para números venezolanos (+58), el número debe tener 10 dígitos (sin el cero inicial)
-      // Ejemplo: 4122727981 (sin el 0 inicial, se guarda como +584122727981)
-      if (formData.codigoPaisCelular === '+58') {
-        if (telefonoCelular.startsWith('0') || telefonoCelularLength !== 10 || !/^[4][0-9]{9}$/.test(telefonoCelular)) {
-          newErrors.telefonoCelular = 'Número de teléfono inválido';
+      const codeMatch = formData.telefonoCelular.match(/^(\+\d{1,3})/);
+      const code = codeMatch ? codeMatch[1] : '';
+      const number = formData.telefonoCelular.replace(code, '');
+
+      // Para números venezolanos (+58), el número debe tener 10 dígitos y empezar con 4.
+      if (code === '+58') {
+        if (number.length !== 10 || !number.startsWith('4')) {
+          newErrors.telefonoCelular = 'Número venezolano inválido. Debe tener 10 dígitos y empezar con 4 (ej: 412...).';
         }
       } else {
         // Para otros países, validar longitud mínima y máxima
-        if (telefonoCelularLength < 7 || telefonoCelularLength > 15) {
+        if (number.length < 7 || number.length > 15) {
           newErrors.telefonoCelular = 'Número de teléfono inválido';
         }
       }
@@ -1002,8 +999,7 @@ export default function ApplicantFormModal({
         apellidos: '',
         fechaNacimiento: '',
         sexo: '',
-        telefonoCelular: '',
-        codigoPaisCelular: '+58',
+        telefonoCelular: '+58',
         correoElectronico: '',
         nacionalidad: '',
         [field]: value, // Actualizar el campo que se está modificando
@@ -1068,10 +1064,14 @@ export default function ApplicantFormModal({
     let filteredValue = value;
     if (field === 'nombres' || field === 'apellidos') {
       filteredValue = filterOnlyLetters(value);
-    } else if (field === 'telefonoLocal' || field === 'telefonoCelular') {
+    } else if (field === 'telefonoLocal') {
       filteredValue = filterOnlyNumbers(value);
-    } else if (field === 'codigoPaisCelular') {
-      filteredValue = filterCountryCode(value);
+    } else if (field === 'telefonoCelular') {
+      // El PhoneInput ya maneja el filtrado, pero mantenemos una capa de seguridad
+      const codeMatch = value.match(/^(\+?\d*)/);
+      const code = codeMatch ? codeMatch[0] : '';
+      const number = value.replace(code, '').replace(/\D/g, '');
+      filteredValue = `${code}${number}`;
     }
     
     setFormData((prev) => ({ ...prev, [field]: filteredValue }));
@@ -1299,18 +1299,7 @@ export default function ApplicantFormModal({
     }
 
     // Extraer código de país y número de teléfono celular
-    let codigoPaisCelular = '+58';
-    let telefonoCelular = solicitante.telefono_celular || '';
-    if (telefonoCelular.startsWith('+58')) {
-      codigoPaisCelular = '+58';
-      telefonoCelular = telefonoCelular.substring(3);
-    } else if (telefonoCelular.startsWith('+')) {
-      const match = telefonoCelular.match(/^(\+\d{1,3})(.+)$/);
-      if (match) {
-        codigoPaisCelular = match[1];
-        telefonoCelular = match[2];
-      }
-    }
+    const telefonoCompleto = solicitante.telefono_celular || '';
 
     // Asignar nacionalidad según el tipo de cédula
     let nacionalidadAsignada = '';
@@ -1319,8 +1308,7 @@ export default function ApplicantFormModal({
     } else if (cedulaTipo === 'E') {
       nacionalidadAsignada = 'E'; // Extranjero (el schema usa 'E')
     } else if (cedulaTipo === 'P') {
-      // Si es pasaporte, usar la nacionalidad del solicitante o dejar vacío
-      nacionalidadAsignada = solicitante.nacionalidad || '';
+      nacionalidadAsignada = ''; // Si es pasaporte, usar la nacionalidad del solicitante o dejar vacío
     }
 
     // Actualizar el formulario con los datos del solicitante
@@ -1332,8 +1320,7 @@ export default function ApplicantFormModal({
       apellidos: solicitante.apellidos || prev.apellidos,
       fechaNacimiento: solicitante.fecha_nacimiento || prev.fechaNacimiento,
       sexo: solicitante.sexo || prev.sexo,
-      telefonoCelular: telefonoCelular || prev.telefonoCelular,
-      codigoPaisCelular: telefonoCelular ? codigoPaisCelular : prev.codigoPaisCelular,
+      telefonoCelular: telefonoCompleto || prev.telefonoCelular,
       correoElectronico: solicitante.correo_electronico || prev.correoElectronico,
       nacionalidad: nacionalidadAsignada || prev.nacionalidad,
     }));
@@ -1344,9 +1331,8 @@ export default function ApplicantFormModal({
     if (solicitante.apellidos) camposBloqueados.add('apellidos');
     if (solicitante.fecha_nacimiento) camposBloqueados.add('fechaNacimiento');
     if (solicitante.sexo) camposBloqueados.add('sexo');
-    if (telefonoCelular) {
+    if (telefonoCompleto) {
       camposBloqueados.add('telefonoCelular');
-      camposBloqueados.add('codigoPaisCelular');
     }
     if (solicitante.correo_electronico) camposBloqueados.add('correoElectronico');
     if (nacionalidadAsignada) camposBloqueados.add('nacionalidad');
@@ -1386,18 +1372,7 @@ export default function ApplicantFormModal({
     }
 
     // Extraer código de país y número de teléfono celular
-    let codigoPaisCelular = '+58';
-    let telefonoCelular = usuario.telefono_celular || '';
-    if (telefonoCelular.startsWith('+58')) {
-      codigoPaisCelular = '+58';
-      telefonoCelular = telefonoCelular.substring(3);
-    } else if (telefonoCelular.startsWith('+')) {
-      const match = telefonoCelular.match(/^(\+\d{1,3})(.+)$/);
-      if (match) {
-        codigoPaisCelular = match[1];
-        telefonoCelular = match[2];
-      }
-    }
+    const telefonoCompleto = usuario.telefono_celular || '';
 
     // Asignar nacionalidad según el tipo de cédula
     let nacionalidadAsignada = '';
@@ -1416,8 +1391,7 @@ export default function ApplicantFormModal({
       cedulaNumero,
       nombres: usuario.nombres || prev.nombres,
       apellidos: usuario.apellidos || prev.apellidos,
-      telefonoCelular: telefonoCelular || prev.telefonoCelular,
-      codigoPaisCelular: telefonoCelular ? codigoPaisCelular : prev.codigoPaisCelular,
+      telefonoCelular: telefonoCompleto || prev.telefonoCelular,
       correoElectronico: usuario.correo_electronico || prev.correoElectronico,
       nacionalidad: nacionalidadAsignada || prev.nacionalidad,
     }));
@@ -1426,9 +1400,8 @@ export default function ApplicantFormModal({
     const camposBloqueados = new Set<keyof FormData>();
     if (usuario.nombres) camposBloqueados.add('nombres');
     if (usuario.apellidos) camposBloqueados.add('apellidos');
-    if (telefonoCelular) {
+    if (telefonoCompleto) {
       camposBloqueados.add('telefonoCelular');
-      camposBloqueados.add('codigoPaisCelular');
     }
     if (usuario.correo_electronico) camposBloqueados.add('correoElectronico');
     if (nacionalidadAsignada) camposBloqueados.add('nacionalidad');
@@ -1477,7 +1450,7 @@ export default function ApplicantFormModal({
       nacionalidadAsignada = '';
     }
 
-    // Actualizar el formulario con los datos del beneficiario
+    // Actualizar el formulario with los datos del beneficiario
     setFormData((prev) => ({
       ...prev,
       cedulaTipo,
@@ -1678,18 +1651,15 @@ export default function ApplicantFormModal({
 
       {/* Fila 3: Teléfono Celular, Correo Electrónico, Estado Civil */}
       <div className="col-span-1">
-        <InputGroup
-          label="Teléfono Celular *"
-          selectValue={formData.codigoPaisCelular}
-          selectOptions={CODIGOS_PAIS}
-          onSelectChange={(value) => updateField('codigoPaisCelular', value)}
-          inputValue={formData.telefonoCelular}
-          onInputChange={(value) => updateField('telefonoCelular', value)}
-          inputPlaceholder="Ingrese teléfono celular"
+        <PhoneInput
+          label="Teléfono Celular"
+          name="telefonoCelular"
+          value={formData.telefonoCelular}
+          onChange={(e) => updateField('telefonoCelular', e.target.value)}
+          placeholder="Ingrese teléfono celular"
           error={errors.telefonoCelular}
-          selectWidth="w-20"
-          editableCode={true}
-          disabled={lockedFields.has('telefonoCelular') || lockedFields.has('codigoPaisCelular')}
+          required
+          disabled={lockedFields.has('telefonoCelular')}
         />
       </div>
       <div className="col-span-1">
