@@ -10,6 +10,7 @@ import Spinner from '@/components/ui/feedback/Spinner';
 import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
 import { getCasosAction, getCasosByUsuarioAction } from '@/app/actions/casos';
 import { createCasoAction, uploadSoportesAction } from '@/app/actions/casos';
+import { getMateriasAction } from '@/app/actions/materias';
 
 interface Caso {
   id_caso: number;
@@ -61,6 +62,8 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   const [tramiteFilter, setTramiteFilter] = useState('');
   const [estatusFilter, setEstatusFilter] = useState('');
   const [casosAsignadosFilter, setCasosAsignadosFilter] = useState(false);
+  const [materias, setMaterias] = useState<{ id_materia: number; nombre_materia: string }[]>([]);
+  const [materiaFilter, setMateriaFilter] = useState('');
   const [initialCedula, setInitialCedula] = useState<string>('');
   const [initialCedulaTipo, setInitialCedulaTipo] = useState<string>('V');
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -72,6 +75,20 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
     const handleChange = (e: MediaQueryListEvent) => {
       setPrefersReducedMotion(e.matches);
     };
+
+    // Cargar materias
+    const fetchMaterias = async () => {
+      try {
+        const result = await getMateriasAction();
+        if (result.success && result.data) {
+          setMaterias(result.data);
+        }
+      } catch (error) {
+        console.error('Error cargando materias:', error);
+      }
+    };
+
+    fetchMaterias();
 
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
@@ -164,7 +181,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   };
 
   const filteredCasos = useMemo(() => {
-    if (!searchValue && !nucleoFilter && !tramiteFilter && !estatusFilter && !casosAsignadosFilter) {
+    if (!searchValue && !nucleoFilter && !tramiteFilter && !estatusFilter && !casosAsignadosFilter && !materiaFilter) {
       return casos;
     }
 
@@ -197,12 +214,11 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       const matchesNucleo = !nucleoFilter || caso.id_nucleo.toString() === nucleoFilter;
       const matchesTramite = !tramiteFilter || caso.tramite === tramiteFilter;
       const matchesEstatus = !estatusFilter || caso.estatus === estatusFilter;
-      // TODO: Implementar filtro de casos asignados cuando se tenga el ID del usuario actual
-      // const matchesCasosAsignados = !casosAsignadosFilter || caso.id_responsable === currentUserId;
+      const matchesMateria = !materiaFilter || (caso.id_materia && String(caso.id_materia) === materiaFilter);
 
-      return matchesSearch && matchesNucleo && matchesTramite && matchesEstatus;
+      return matchesSearch && matchesNucleo && matchesTramite && matchesEstatus && matchesMateria;
     });
-  }, [casos, searchValue, nucleoFilter, tramiteFilter, estatusFilter, casosAsignadosFilter]);
+  }, [casos, searchValue, nucleoFilter, tramiteFilter, estatusFilter, casosAsignadosFilter, materiaFilter]);
 
   const handleView = (data: Record<string, unknown>) => {
     const caso = data as TableRow;
@@ -322,6 +338,9 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
           onSearchChange={setSearchValue}
           nucleoFilter={nucleoFilter}
           onNucleoChange={setNucleoFilter}
+          materiaFilter={materiaFilter}
+          onMateriaChange={setMateriaFilter}
+          materias={materias}
           tramiteFilter={tramiteFilter}
           onTramiteChange={setTramiteFilter}
           tramiteOptions={tramiteOptions}

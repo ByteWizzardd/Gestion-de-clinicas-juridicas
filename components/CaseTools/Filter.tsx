@@ -1,5 +1,5 @@
 'use client';
-import { Filter as FilterIcon, ChevronLeft, Building2, FileText, UserCheck, X, Activity } from 'lucide-react';
+import { Filter as FilterIcon, ChevronLeft, Building2, FileText, UserCheck, X, Activity, BookOpen } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { createPortal } from 'react-dom';
@@ -17,6 +17,9 @@ interface FilterProps {
   tramiteOptions: { value: string; label: string }[];
   estatusOptions: { value: string; label: string }[];
   showCasosAsignados?: boolean;
+  materiaFilter?: string;
+  onMateriaChange?: (value: string) => void;
+  materias?: { id_materia: number; nombre_materia: string }[];
 }
 
 function Filter({
@@ -30,10 +33,13 @@ function Filter({
   onCasosAsignadosChange,
   tramiteOptions,
   estatusOptions,
-  showCasosAsignados = false
+  showCasosAsignados = false,
+  materiaFilter,
+  onMateriaChange,
+  materias = []
 }: FilterProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeSubmenu, setActiveSubmenu] = useState<'nucleo' | 'tramite' | 'estatus' | null>(null);
+  const [activeSubmenu, setActiveSubmenu] = useState<'nucleo' | 'materia' | 'tramite' | 'estatus' | null>(null);
   const [nucleos, setNucleos] = useState<Array<{ id_nucleo: number; nombre_nucleo: string }>>([]);
   const [mounted, setMounted] = useState(false);
   const [submenuPosition, setSubmenuPosition] = useState({ top: 0, right: 0 });
@@ -58,16 +64,21 @@ function Filter({
     loadNucleos();
   }, []);
 
-  // Calcular posición del submenú
-  useEffect(() => {
-    if (activeSubmenu && menuRef.current) {
-      const menuRect = menuRef.current.getBoundingClientRect();
+  // Eliminar useEffect de posicionamiento automático y usar el evento de click
+  const handleSubmenuToggle = (type: 'nucleo' | 'materia' | 'tramite' | 'estatus', e: React.MouseEvent<HTMLButtonElement>) => {
+    if (activeSubmenu === type) {
+      setActiveSubmenu(null);
+    } else {
+      const buttonRect = e.currentTarget.getBoundingClientRect();
+      const menuRect = menuRef.current?.getBoundingClientRect();
+
       setSubmenuPosition({
-        top: menuRect.top,
-        right: window.innerWidth - menuRect.left + 8
+        top: buttonRect.top,
+        right: menuRect ? (window.innerWidth - menuRect.left + 8) : 0
       });
+      setActiveSubmenu(type);
     }
-  }, [activeSubmenu]);
+  };
 
   // Cerrar al hacer clic fuera
   useEffect(() => {
@@ -85,6 +96,8 @@ function Filter({
 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      // Actualizar posición al hacer scroll para que el submenú siga al botón si es necesario (opcional)
+      // window.addEventListener('scroll', () => setActiveSubmenu(null)); 
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
@@ -93,7 +106,8 @@ function Filter({
     (nucleoFilter ? 1 : 0) +
     (tramiteFilter ? 1 : 0) +
     (estatusFilter ? 1 : 0) +
-    (casosAsignadosFilter ? 1 : 0);
+    (casosAsignadosFilter ? 1 : 0) +
+    (materiaFilter ? 1 : 0);
 
   const hasActiveFilter = activeFilterCount > 0;
 
@@ -101,6 +115,7 @@ function Filter({
     onNucleoChange('');
     onTramiteChange('');
     onEstatusChange('');
+    if (onMateriaChange) onMateriaChange('');
     onCasosAsignadosChange(false);
     setActiveSubmenu(null);
   };
@@ -130,6 +145,11 @@ function Filter({
           options = tramiteOptions;
           onChangeHandler = onTramiteChange;
           allLabel = 'Todos los trámites';
+          break;
+        case 'materia':
+          options = materias.map(m => ({ value: m.id_materia.toString(), label: m.nombre_materia }));
+          onChangeHandler = onMateriaChange || (() => { });
+          allLabel = 'Todas las materias';
           break;
         case 'estatus':
           options = estatusOptions;
@@ -168,6 +188,11 @@ function Filter({
           handler = onTramiteChange;
           allLabel = 'Todos los trámites';
           break;
+        case 'materia':
+          options = materias.map(m => ({ value: m.id_materia.toString(), label: m.nombre_materia }));
+          handler = onMateriaChange || (() => { });
+          allLabel = 'Todas las materias';
+          break;
         case 'estatus':
           options = estatusOptions;
           handler = onEstatusChange;
@@ -183,6 +208,7 @@ function Filter({
     // Resolver filterValue dinámicamente
     switch (type) {
       case 'nucleo': filterValue = nucleoFilter; break;
+      case 'materia': filterValue = materiaFilter || ''; break;
       case 'tramite': filterValue = tramiteFilter; break;
       case 'estatus': filterValue = estatusFilter; break;
     }
@@ -291,7 +317,7 @@ function Filter({
                 type="button"
                 whileTap={{ scale: 0.95 }}
                 whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
-                onClick={() => setActiveSubmenu(activeSubmenu === 'nucleo' ? null : 'nucleo')}
+                onClick={(e) => handleSubmenuToggle('nucleo', e)}
                 className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'nucleo'
                   ? 'bg-primary-light text-primary'
                   : nucleoFilter
@@ -307,13 +333,35 @@ function Filter({
 
               <div className="border-t border-gray-200 my-2"></div>
 
+              {/* Opción: Materia */}
+              <motion.button
+                ref={activeSubmenu === 'materia' ? activeButtonRef : undefined}
+                type="button"
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                onClick={(e) => handleSubmenuToggle('materia', e)}
+                className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'materia'
+                  ? 'bg-primary-light text-primary'
+                  : materiaFilter
+                    ? 'text-primary hover:bg-gray-100'
+                    : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+              >
+                <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'materia' ? '-rotate-90' : ''}`} />
+                <div className="flex-1" />
+                <span>Materia</span>
+                <BookOpen className="w-4 h-4" />
+              </motion.button>
+
+              <div className="border-t border-gray-200 my-2"></div>
+
               {/* Opción: Trámite */}
               <motion.button
                 ref={activeSubmenu === 'tramite' ? activeButtonRef : undefined}
                 type="button"
                 whileTap={{ scale: 0.95 }}
                 whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
-                onClick={() => setActiveSubmenu(activeSubmenu === 'tramite' ? null : 'tramite')}
+                onClick={(e) => handleSubmenuToggle('tramite', e)}
                 className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'tramite'
                   ? 'bg-primary-light text-primary'
                   : tramiteFilter
@@ -335,7 +383,7 @@ function Filter({
                 type="button"
                 whileTap={{ scale: 0.95 }}
                 whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
-                onClick={() => setActiveSubmenu(activeSubmenu === 'estatus' ? null : 'estatus')}
+                onClick={(e) => handleSubmenuToggle('estatus', e)}
                 className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'estatus'
                   ? 'bg-primary-light text-primary'
                   : estatusFilter

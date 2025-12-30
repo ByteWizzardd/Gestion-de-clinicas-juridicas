@@ -18,6 +18,9 @@ type CaseToolsProps = {
     tramiteOptions?: { value: string; label: string }[];
     estatusOptions?: { value: string; label: string }[];
     showCasosAsignados?: boolean;
+    materiaFilter?: string;
+    onMateriaChange?: (value: string) => void;
+    materias?: { id_materia: number; nombre_materia: string }[];
 };
 
 function CaseTools({
@@ -35,10 +38,13 @@ function CaseTools({
     onCasosAsignadosChange,
     tramiteOptions = [],
     estatusOptions = [],
-    showCasosAsignados = false
+    showCasosAsignados = false,
+    materiaFilter = '',
+    onMateriaChange,
+    materias = []
 }: CaseToolsProps) {
     const hasSearch = onSearchChange !== undefined;
-    const hasFilter = onNucleoChange !== undefined && onTramiteChange !== undefined && onEstatusChange !== undefined && onCasosAsignadosChange !== undefined;
+    const hasFilter = onNucleoChange !== undefined && onTramiteChange !== undefined && onEstatusChange !== undefined && onCasosAsignadosChange !== undefined && onMateriaChange !== undefined;
 
     return (
         <div className="flex flex-nowrap gap-3 sm:gap-4 items-center w-full px-3">
@@ -61,6 +67,9 @@ function CaseTools({
                         tramiteOptions={tramiteOptions}
                         estatusOptions={estatusOptions}
                         showCasosAsignados={showCasosAsignados}
+                        materiaFilter={materiaFilter}
+                        onMateriaChange={onMateriaChange}
+                        materias={materias}
                     />
                 )}
                 <Add label={addLabel} onClick={onAddClick} />
