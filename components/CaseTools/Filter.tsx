@@ -6,14 +6,15 @@ import { createPortal } from 'react-dom';
 import { getNucleosAction } from '@/app/actions/nucleos';
 
 interface FilterProps {
-  nucleoFilter: string;
-  tramiteFilter: string;
-  estatusFilter: string;
-  casosAsignadosFilter: boolean;
-  onNucleoChange: (value: string) => void;
-  onTramiteChange: (value: string) => void;
-  onEstatusChange: (value: string) => void;
-  onCasosAsignadosChange: (value: boolean) => void;
+  nucleoFilter?: string;
+  tramiteFilter?: string;
+  estatusFilter?: string;
+  casosAsignadosFilter?: boolean;
+  onNucleoChange?: (value: string) => void;
+  onTramiteChange?: (value: string) => void;
+  onEstatusChange?: (value: string) => void;
+  onCasosAsignadosChange?: (value: boolean) => void;
+  nucleoOptions?: { value: string; label: string }[];
   tramiteOptions: { value: string; label: string }[];
   estatusOptions: { value: string; label: string }[];
   showCasosAsignados?: boolean;
@@ -31,6 +32,7 @@ function Filter({
   onTramiteChange,
   onEstatusChange,
   onCasosAsignadosChange,
+  nucleoOptions,
   tramiteOptions,
   estatusOptions,
   showCasosAsignados = false,
@@ -112,11 +114,11 @@ function Filter({
   const hasActiveFilter = activeFilterCount > 0;
 
   const handleClearFilters = () => {
-    onNucleoChange('');
-    onTramiteChange('');
-    onEstatusChange('');
+    if (onNucleoChange) onNucleoChange('');
+    if (onTramiteChange) onTramiteChange('');
+    if (onEstatusChange) onEstatusChange('');
     if (onMateriaChange) onMateriaChange('');
-    onCasosAsignadosChange(false);
+    if (onCasosAsignadosChange) onCasosAsignadosChange(false);
     setActiveSubmenu(null);
   };
 
@@ -137,13 +139,17 @@ function Filter({
 
       switch (activeSubmenu) {
         case 'nucleo':
-          options = nucleos.map(n => ({ value: n.id_nucleo.toString(), label: n.nombre_nucleo }));
-          onChangeHandler = onNucleoChange;
+          if (nucleoOptions && nucleoOptions.length > 0) {
+            options = nucleoOptions;
+          } else {
+            options = nucleos.map(n => ({ value: n.id_nucleo.toString(), label: n.nombre_nucleo }));
+          }
+          onChangeHandler = onNucleoChange || (() => { });
           allLabel = 'Todos los núcleos';
           break;
         case 'tramite':
           options = tramiteOptions;
-          onChangeHandler = onTramiteChange;
+          onChangeHandler = onTramiteChange || (() => { });
           allLabel = 'Todos los trámites';
           break;
         case 'materia':
@@ -153,7 +159,7 @@ function Filter({
           break;
         case 'estatus':
           options = estatusOptions;
-          onChangeHandler = onEstatusChange;
+          onChangeHandler = onEstatusChange || (() => { });
           allLabel = 'Todos los estatus';
           break;
       }
@@ -179,13 +185,17 @@ function Filter({
     if (activeSubmenu) {
       switch (activeSubmenu) {
         case 'nucleo':
-          options = nucleos.map(n => ({ value: n.id_nucleo.toString(), label: n.nombre_nucleo }));
-          handler = onNucleoChange;
+          if (nucleoOptions && nucleoOptions.length > 0) {
+            options = nucleoOptions;
+          } else {
+            options = nucleos.map(n => ({ value: n.id_nucleo.toString(), label: n.nombre_nucleo }));
+          }
+          handler = onNucleoChange || (() => { });
           allLabel = 'Todos los núcleos';
           break;
         case 'tramite':
           options = tramiteOptions;
-          handler = onTramiteChange;
+          handler = onTramiteChange || (() => { });
           allLabel = 'Todos los trámites';
           break;
         case 'materia':
@@ -195,7 +205,7 @@ function Filter({
           break;
         case 'estatus':
           options = estatusOptions;
-          handler = onEstatusChange;
+          handler = onEstatusChange || (() => { });
           allLabel = 'Todos los estatus';
           break;
       }
@@ -207,13 +217,15 @@ function Filter({
 
     // Resolver filterValue dinámicamente
     switch (type) {
-      case 'nucleo': filterValue = nucleoFilter; break;
+      case 'nucleo': filterValue = nucleoFilter || ''; break;
       case 'materia': filterValue = materiaFilter || ''; break;
-      case 'tramite': filterValue = tramiteFilter; break;
-      case 'estatus': filterValue = estatusFilter; break;
+      case 'tramite': filterValue = tramiteFilter || ''; break;
+      case 'estatus': filterValue = estatusFilter || ''; break;
     }
 
     return createPortal(
+      // ... (contenido intermedio sin cambios grandes, pero para el contexto del replace pongo hasta donde falla si puedo, o mejor hago chunks)
+
       <AnimatePresence>
         {activeSubmenu && (
           <motion.div
@@ -334,88 +346,97 @@ function Filter({
               <div className="border-t border-gray-200 my-2"></div>
 
               {/* Opción: Materia */}
-              <motion.button
-                ref={activeSubmenu === 'materia' ? activeButtonRef : undefined}
-                type="button"
-                whileTap={{ scale: 0.95 }}
-                whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
-                onClick={(e) => handleSubmenuToggle('materia', e)}
-                className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'materia'
-                  ? 'bg-primary-light text-primary'
-                  : materiaFilter
-                    ? 'text-primary hover:bg-gray-100'
-                    : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-              >
-                <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'materia' ? '-rotate-90' : ''}`} />
-                <div className="flex-1" />
-                <span>Materia</span>
-                <BookOpen className="w-4 h-4" />
-              </motion.button>
-
-              <div className="border-t border-gray-200 my-2"></div>
+              {onMateriaChange && (
+                <>
+                  <motion.button
+                    ref={activeSubmenu === 'materia' ? activeButtonRef : undefined}
+                    type="button"
+                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                    onClick={(e) => handleSubmenuToggle('materia', e)}
+                    className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'materia'
+                      ? 'bg-primary-light text-primary'
+                      : materiaFilter
+                        ? 'text-primary hover:bg-gray-100'
+                        : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                  >
+                    <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'materia' ? '-rotate-90' : ''}`} />
+                    <div className="flex-1" />
+                    <span>Materia</span>
+                    <BookOpen className="w-4 h-4" />
+                  </motion.button>
+                  <div className="border-t border-gray-200 my-2"></div>
+                </>
+              )}
 
               {/* Opción: Trámite */}
-              <motion.button
-                ref={activeSubmenu === 'tramite' ? activeButtonRef : undefined}
-                type="button"
-                whileTap={{ scale: 0.95 }}
-                whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
-                onClick={(e) => handleSubmenuToggle('tramite', e)}
-                className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'tramite'
-                  ? 'bg-primary-light text-primary'
-                  : tramiteFilter
-                    ? 'text-primary hover:bg-gray-100'
-                    : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-              >
-                <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'tramite' ? '-rotate-90' : ''}`} />
-                <div className="flex-1" />
-                <span>Trámite</span>
-                <FileText className="w-4 h-4" />
-              </motion.button>
-
-              <div className="border-t border-gray-200 my-2"></div>
+              {onTramiteChange && (
+                <>
+                  <motion.button
+                    ref={activeSubmenu === 'tramite' ? activeButtonRef : undefined}
+                    type="button"
+                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                    onClick={(e) => handleSubmenuToggle('tramite', e)}
+                    className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'tramite'
+                      ? 'bg-primary-light text-primary'
+                      : tramiteFilter
+                        ? 'text-primary hover:bg-gray-100'
+                        : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                  >
+                    <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'tramite' ? '-rotate-90' : ''}`} />
+                    <div className="flex-1" />
+                    <span>Trámite</span>
+                    <FileText className="w-4 h-4" />
+                  </motion.button>
+                  <div className="border-t border-gray-200 my-2"></div>
+                </>
+              )}
 
               {/* Opción: Estatus */}
-              <motion.button
-                ref={activeSubmenu === 'estatus' ? activeButtonRef : undefined}
-                type="button"
-                whileTap={{ scale: 0.95 }}
-                whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
-                onClick={(e) => handleSubmenuToggle('estatus', e)}
-                className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'estatus'
-                  ? 'bg-primary-light text-primary'
-                  : estatusFilter
-                    ? 'text-primary hover:bg-gray-100'
-                    : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-              >
-                <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'estatus' ? '-rotate-90' : ''}`} />
-                <div className="flex-1" />
-                <span>Estatus</span>
-                <Activity className="w-4 h-4" />
-              </motion.button>
-
-              <div className="border-t border-gray-200 my-2"></div>
+              {onEstatusChange && (
+                <>
+                  <motion.button
+                    ref={activeSubmenu === 'estatus' ? activeButtonRef : undefined}
+                    type="button"
+                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                    onClick={(e) => handleSubmenuToggle('estatus', e)}
+                    className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'estatus'
+                      ? 'bg-primary-light text-primary'
+                      : estatusFilter
+                        ? 'text-primary hover:bg-gray-100'
+                        : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                  >
+                    <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'estatus' ? '-rotate-90' : ''}`} />
+                    <div className="flex-1" />
+                    <span>Estatus</span>
+                    <Activity className="w-4 h-4" />
+                  </motion.button>
+                  <div className="border-t border-gray-200 my-2"></div>
+                </>
+              )}
 
               {/* Opción: Casos Asignados */}
-              {showCasosAsignados && (
+              {showCasosAsignados && onCasosAsignadosChange && (
                 <>
                   <motion.button
                     type="button"
                     whileTap={{ scale: 0.95 }}
                     whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
                     onClick={() => onCasosAsignadosChange(!casosAsignadosFilter)}
-                    className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${casosAsignadosFilter
-                      ? 'text-primary hover:bg-gray-100'
-                      : 'text-gray-700 hover:bg-gray-100'
+                    className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-between gap-2 group ${casosAsignadosFilter
+                      ? 'text-red-600'
+                      : 'text-gray-600'
                       }`}
                   >
-                    <div className="w-4 h-4" /> {/* Spacer invisible para alinear con items que tienen chevron */}
-                    <div className="flex-1" />
-                    <span>Mis casos</span>
-                    <UserCheck className="w-4 h-4" />
+                    <div className="flex items-center gap-2">
+                      <span>Mis casos</span>
+                      <UserCheck className={`w-4 h-4 ${casosAsignadosFilter ? 'text-red-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
+                    </div>
                   </motion.button>
                   <div className="border-t border-gray-200 my-2"></div>
                 </>

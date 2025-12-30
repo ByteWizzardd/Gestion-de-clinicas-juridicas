@@ -12,6 +12,7 @@ type CaseToolsProps = {
     estatusFilter?: string;
     casosAsignadosFilter?: boolean;
     onNucleoChange?: (value: string) => void;
+    nucleoOptions?: { value: string; label: string }[];
     onTramiteChange?: (value: string) => void;
     onEstatusChange?: (value: string) => void;
     onCasosAsignadosChange?: (value: boolean) => void;
@@ -33,6 +34,7 @@ function CaseTools({
     estatusFilter = '',
     casosAsignadosFilter = false,
     onNucleoChange,
+    nucleoOptions,
     onTramiteChange,
     onEstatusChange,
     onCasosAsignadosChange,
@@ -44,7 +46,7 @@ function CaseTools({
     materias = []
 }: CaseToolsProps) {
     const hasSearch = onSearchChange !== undefined;
-    const hasFilter = onNucleoChange !== undefined && onTramiteChange !== undefined && onEstatusChange !== undefined && onCasosAsignadosChange !== undefined && onMateriaChange !== undefined;
+    const hasFilter = onNucleoChange !== undefined || onTramiteChange !== undefined || onEstatusChange !== undefined || onCasosAsignadosChange !== undefined || onMateriaChange !== undefined;
 
     return (
         <div className="flex flex-nowrap gap-3 sm:gap-4 items-center w-full px-3">
@@ -57,6 +59,7 @@ function CaseTools({
                 {hasFilter && (
                     <Filter
                         nucleoFilter={nucleoFilter}
+                        nucleoOptions={nucleoOptions}
                         tramiteFilter={tramiteFilter}
                         estatusFilter={estatusFilter}
                         casosAsignadosFilter={casosAsignadosFilter}
