@@ -24,7 +24,7 @@ export default function AppointmentCard({ appointment, onClick }: AppointmentCar
   };
 
   return (
-    <div className="relative cursor-pointer hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors" onClick={onClick}>
+    <div className="relative cursor-pointer hover:bg-gray-100 rounded-lg p-2 -m-2 transition-colors" onClick={onClick}>
       {/* Primera línea: Título - Fecha (izquierda) y Hora (derecha) */}
       <div className="flex items-start justify-between mb-1">
         <p className="text-base text-black font-normal">
