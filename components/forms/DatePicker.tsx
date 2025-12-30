@@ -54,7 +54,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
       const rect = dropdownRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
       const spaceAbove = rect.top;
-      const calendarHeight = 380;
+      const calendarHeight = 320;
 
       const shouldOpenUp = (spaceBelow < calendarHeight && spaceAbove > spaceBelow) || (spaceAbove > spaceBelow && spaceBelow < 450);
       setOpenUpward(shouldOpenUp);
@@ -310,7 +310,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
             position: 'fixed',
             top: openUpward ? coords.top - 8 : coords.top + 8,
             left: coords.left,
-            width: 280,
+            width: 250,
             zIndex: 9999,
             pointerEvents: 'auto',
             transform: openUpward ? 'translateY(-100%)' : 'none',
@@ -318,11 +318,11 @@ export default function DatePicker({ value, onChange, error, required, disabled 
             border: '1px solid #D1D5DB',
             borderRadius: '1rem',
             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-            padding: '0.75rem'
+            padding: '0.5rem'
           }}
         >
           {/* Header con navegación */}
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-2">
             <button
               type="button"
               onClick={viewMode === 'calendar' ? handlePrevMonth : viewMode === 'month' ? handlePrevYear : handlePrevYearRange}
@@ -359,7 +359,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
               {Array.from({ length: startingDayOfWeek }, (_, i) => {
                 const day = daysInPrevMonth - startingDayOfWeek + i + 1;
                 return (
-                  <button key={`prev-${day}`} type="button" onClick={() => handleDayClick(day, false)} className="text-sm text-gray-400 hover:bg-gray-100 rounded-md py-1.5">
+                  <button key={`prev-${day}`} type="button" onClick={() => handleDayClick(day, false)} className="text-sm text-gray-400 hover:bg-gray-100 rounded-md py-1">
                     {day}
                   </button>
                 );
@@ -369,7 +369,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
                 const todayClass = isToday(day, true) ? 'font-semibold' : '';
                 const selectedClass = isSelected(day, true) ? 'bg-primary text-white' : 'hover:bg-gray-100';
                 return (
-                  <button key={day} type="button" onClick={() => handleDayClick(day, true)} className={`text-sm ${todayClass} ${selectedClass} rounded-md py-1.5`}>
+                  <button key={day} type="button" onClick={() => handleDayClick(day, true)} className={`text-sm ${todayClass} ${selectedClass} rounded-md py-1`}>
                     {day}
                   </button>
                 );
@@ -377,7 +377,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
               {Array.from({ length: daysInNextMonth }, (_, i) => {
                 const day = i + 1;
                 return (
-                  <button key={`next-${day}`} type="button" onClick={() => handleDayClick(day, false)} className="text-sm text-gray-400 hover:bg-gray-100 rounded-md py-1.5">
+                  <button key={`next-${day}`} type="button" onClick={() => handleDayClick(day, false)} className="text-sm text-gray-400 hover:bg-gray-100 rounded-md py-1">
                     {day}
                   </button>
                 );
@@ -387,15 +387,15 @@ export default function DatePicker({ value, onChange, error, required, disabled 
 
           {/* Vista de meses */}
           {viewMode === 'month' && (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-1">
               {monthNames.map((month, index) => (
                 <button
                   key={month}
                   type="button"
                   onClick={() => handleMonthClick(index)}
-                  className={`px-3 py-2 text-sm rounded-md transition-colors ${index === currentMonth.getMonth() ? 'bg-primary text-white font-semibold' : 'hover:bg-gray-100'}`}
+                  className={`px-1 py-1.5 text-sm text-center rounded-md transition-colors ${index === currentMonth.getMonth() ? 'bg-primary text-white font-semibold' : 'hover:bg-gray-100'}`}
                 >
-                  {month}
+                  {month.slice(0, 3)}
                 </button>
               ))}
             </div>
@@ -412,7 +412,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
                     key={year}
                     type="button"
                     onClick={() => handleYearClick(year)}
-                    className={`px-3 py-2 text-sm rounded-md transition-colors ${isCurrentYear ? 'bg-primary text-white font-semibold' : 'hover:bg-gray-100'}`}
+                    className={`px-2 py-1.5 text-sm rounded-md transition-colors ${isCurrentYear ? 'bg-primary text-white font-semibold' : 'hover:bg-gray-100'}`}
                   >
                     {year}
                   </button>
