@@ -8,11 +8,13 @@ import AppointmentList from '@/components/cards/AppointmentList';
 import AppointmentCardList from './AppointmentCardList';
 import { AppointmentViewMode } from '@/components/ui/navigation/AppointmentViewSwitcher';
 import AppointmentsToolbar from './AppointmentsToolbar';
-import { Search as SearchIcon, Plus } from 'lucide-react';
+import { Search as SearchIcon } from 'lucide-react';
 import Tabs from '@/components/ui/Tabs';
 import type { Appointment } from '@/types/appointment';
 import { AppointmentModal } from '../appointmentModal/AppointmentModal';
 import { AppointmentDetailModal } from '../appointmentModal/AppointmentDetailModal';
+import { AppointmentScheduleModal } from '../appointmentModal/AppointmentScheduleModal';
+import NewAppointmentButton from './NewAppointmentButton';
 
 interface AppointmentFilterOptions {
   nucleos: Array<{ id_nucleo: number; nombre_nucleo: string }>;
@@ -41,6 +43,7 @@ export default function AppointmentsClient({
   const [showModal, setShowModal] = useState(false);
   const [modalDate, setModalDate] = useState<Date | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   const [searchValue, setSearchValue] = useState('');
@@ -196,11 +199,42 @@ export default function AppointmentsClient({
     const newMonth = new Date(date.getFullYear(), date.getMonth(), 1);
     setSelectedMonth(newMonth);
   };
-  // Abrir modal para agregar nueva cita
+  // Abrir modal para agregar nueva cita (Registrar)
   const handleAddAppointment = () => {
-    setModalDate(selectedDate);
-    setShowModal(true);
+    // Pequeño delay para asegurar que el dropdown se cierre primero
+    setTimeout(() => {
+      setModalDate(selectedDate);
+      setShowModal(true);
+    }, 50);
   };
+
+  // Abrir modal para programar cita
+  const handleScheduleAppointment = () => {
+    // Pequeño delay para asegurar que el dropdown se cierre primero
+    setTimeout(() => {
+      setShowScheduleModal(true);
+    }, 50);
+  };
+
+  // Cerrar modal de programar cita
+  const handleScheduleModalClose = () => {
+    setShowScheduleModal(false);
+  };
+
+  // Guardar cita programada
+  const handleScheduleModalSave = async () => {
+    // Recargar citas desde el backend
+    const result = await getCitasAction();
+    if (result.success && result.data) {
+      if (Array.isArray(result.data)) {
+        setAppointments(result.data.map((apt: Appointment) => ({ ...apt, date: new Date(apt.date) })));
+      } else {
+        setAppointments([]);
+      }
+    }
+    setShowScheduleModal(false);
+  };
+
   // Cerrar modal
   const handleModalClose = () => {
     setShowModal(false);
@@ -327,6 +361,7 @@ export default function AppointmentsClient({
                       selectedMonth={selectedMonth}
                       selectedDate={filterByDate ? selectedDate : null}
                       onAddAppointment={handleAddAppointment}
+                      onScheduleAppointment={handleScheduleAppointment}
                       onShowAllMonth={filterByDate ? handleShowAllMonth : undefined}
                       onAppointmentClick={handleAppointmentClick}
                     />
@@ -397,16 +432,11 @@ export default function AppointmentsClient({
                         filterOptions={initialFilterOptions}
                       />
                       
-                      {/* Botón Nueva Cita */}
-                      <motion.button
-                        onClick={handleAddAppointment}
-                        className="h-10 px-4 flex items-center justify-center gap-2 bg-primary text-white rounded-full hover:bg-primary-dark transition-colors font-medium whitespace-nowrap"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <Plus className="w-5 h-5" />
-                        <span>Nueva Cita</span>
-                      </motion.button>
+                       {/* Botón Nueva Cita con Dropdown */}
+                       <NewAppointmentButton
+                         onRegister={handleAddAppointment}
+                         onSchedule={handleScheduleAppointment}
+                       />
                     </div>
                   </div>
                 </motion.div>
@@ -439,6 +469,16 @@ export default function AppointmentsClient({
         isOpen={showDetailModal}
         onClose={handleDetailModalClose}
       />
+
+      <AnimatePresence>
+        {showScheduleModal && (
+          <AppointmentScheduleModal
+            onClose={handleScheduleModalClose}
+            onSave={handleScheduleModalSave}
+            initialDate={selectedDate}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

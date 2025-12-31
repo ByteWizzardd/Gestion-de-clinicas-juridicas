@@ -1,16 +1,18 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import type { Appointment } from '@/types/appointment';
 import AppointmentCard from './AppointmentCard';
 import { AppointmentScheduleModal } from '../appointmentModal/AppointmentScheduleModal';
-import { Plus, ArrowLeft } from 'lucide-react';
+import NewAppointmentButton from '../appointments/NewAppointmentButton';
+import { ArrowLeft } from 'lucide-react';
 
 interface AppointmentListProps {
   appointments: Appointment[];
   selectedMonth: Date;
   selectedDate?: Date | null;
   onAddAppointment?: () => void;
+  onScheduleAppointment?: () => void;
   onShowAllMonth?: () => void;
   onAppointmentClick?: (appointment: Appointment) => void;
   addButton?: React.ReactNode; // Botón desacoplado para flexibilidad
@@ -21,30 +23,12 @@ export default function AppointmentList({
   selectedMonth,
   selectedDate,
   onAddAppointment,
+  onScheduleAppointment,
   onShowAllMonth,
   onAppointmentClick,
   addButton,
 }: AppointmentListProps) {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Cerrar dropdown al hacer clic fuera
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    if (isDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isDropdownOpen]);
   const monthNames = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
@@ -95,42 +79,21 @@ export default function AppointmentList({
     }
 
     if (onAddAppointment) {
-      return (
-        <div className="relative" ref={dropdownRef}>
-          <button
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="h-7 w-7 bg-primary text-white rounded-full flex items-center justify-center hover:bg-primary-dark transition-colors mb-1 cursor-pointer"
-            aria-label="Opciones de cita"
-          >
-            <Plus className="w-5 h-5" strokeWidth={4} />
-          </button>
+      const handleSchedule = () => {
+        if (onScheduleAppointment) {
+          onScheduleAppointment();
+        } else {
+          setShowScheduleModal(true);
+        }
+      };
 
-          {/* Dropdown menu */}
-          {isDropdownOpen && (
-            <div className="absolute right-0 top-full mt-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[180px] z-50">
-              <button
-                onClick={() => {
-                  setIsDropdownOpen(false);
-                  setShowScheduleModal(true);
-                }}
-                className="w-full text-left cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Programar cita
-              </button>
-              <button
-                onClick={() => {
-                  setIsDropdownOpen(false);
-                  onAddAppointment();
-                }}
-                className="w-full text-left px-4 cursor-pointer py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Registrar cita
-              </button>
-            </div>
-          )}
-        </div>
+      return (
+        <NewAppointmentButton
+          onRegister={onAddAppointment}
+          onSchedule={handleSchedule}
+          variant="icon"
+          className="mb-1"
+        />
       );
     }
 
