@@ -62,16 +62,46 @@ AS $$
                 WHERE id_coordinador = p_cedula;
             END IF;
 
-            -- Insertar en la nueva tabla según el tipo
+            -- Insertar o actualizar en la nueva tabla según el tipo
             IF p_tipo_usuario = 'Estudiante' THEN
-                INSERT INTO estudiantes (cedula_estudiante, nrc, term, tipo_estudiante, habilitado)
-                VALUES (p_cedula, p_estudiante_nrc, p_estudiante_term, p_estudiante_tipo, TRUE);
+                IF EXISTS (SELECT 1 FROM estudiantes WHERE cedula_estudiante = p_cedula) THEN
+                --Actualizar
+                    UPDATE estudiantes
+                    SET nrc = COALESCE(p_estudiante_nrc, nrc),
+                        term = COALESCE(p_estudiante_term, term),
+                        tipo_estudiante = COALESCE(p_estudiante_tipo, tipo_estudiante),
+                        habilitado = TRUE
+                    WHERE cedula_estudiante = p_cedula;
+                ELSE
+                    INSERT INTO estudiantes (cedula_estudiante, nrc, term, tipo_estudiante, habilitado)
+                --Insertar
+                    VALUES (p_cedula, p_estudiante_nrc, p_estudiante_term, p_estudiante_tipo, TRUE);
+                END IF;
             ELSIF p_tipo_usuario = 'Profesor' THEN
-                INSERT INTO profesores (cedula_profesor, term, tipo_profesor, habilitado)
-                VALUES (p_cedula, p_profesor_term, p_profesor_tipo, TRUE);
+                IF EXISTS (SELECT 1 FROM profesores WHERE cedula_profesor = p_cedula) THEN
+                --Actualizar
+                    UPDATE profesores
+                    SET term = COALESCE(p_profesor_term, term),
+                        tipo_profesor = COALESCE(p_profesor_tipo, tipo_profesor),
+                        habilitado = TRUE
+                    WHERE cedula_profesor = p_cedula;
+                ELSE
+                --Insertar
+                    INSERT INTO profesores (cedula_profesor, term, tipo_profesor, habilitado)
+                    VALUES (p_cedula, p_profesor_term, p_profesor_tipo, TRUE);
+                END IF;
             ELSIF p_tipo_usuario = 'Coordinador' THEN
-                INSERT INTO coordinadores (id_coordinador, term, habilitado)
-                VALUES (p_cedula, p_coordinador_term, TRUE);
+                IF EXISTS (SELECT 1 FROM coordinadores WHERE id_coordinador = p_cedula) THEN
+                --Actualizar
+                    UPDATE coordinadores
+                    SET term = COALESCE(p_coordinador_term, term),
+                        habilitado = TRUE
+                    WHERE id_coordinador = p_cedula;
+                ELSE
+                --Insertar
+                    INSERT INTO coordinadores (id_coordinador, term, habilitado)
+                    VALUES (p_cedula, p_coordinador_term, TRUE);
+                END IF;
             END IF;
 
         ELSE
