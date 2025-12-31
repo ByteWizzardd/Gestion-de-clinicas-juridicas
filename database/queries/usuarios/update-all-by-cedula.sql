@@ -47,19 +47,6 @@ AS $$
                 p_cedula_actor
             );
 
-            -- Eliminar de la tabla anterior si cambió de tipo
-            IF v_tipo_usuario_anterior = 'Estudiante' THEN
-                -- Eliminar dependencias para evitar FK violation
-                DELETE FROM se_le_asigna WHERE cedula_estudiante = p_cedula;
-                DELETE FROM estudiantes WHERE cedula_estudiante = p_cedula;
-            ELSIF v_tipo_usuario_anterior = 'Profesor' THEN
-                -- Eliminar dependencias para evitar FK violation
-                DELETE FROM supervisa WHERE cedula_profesor = p_cedula;
-                DELETE FROM profesores WHERE cedula_profesor = p_cedula;
-            ELSIF v_tipo_usuario_anterior = 'Coordinador' THEN
-                DELETE FROM coordinadores WHERE id_coordinador = p_cedula;
-            END IF;
-
             -- Insertar en la nueva tabla según el tipo
             IF p_tipo_usuario = 'Estudiante' THEN
                 INSERT INTO estudiantes (cedula_estudiante, nrc, term, tipo_estudiante)
