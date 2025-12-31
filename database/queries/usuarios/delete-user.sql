@@ -28,6 +28,7 @@ BEGIN
         RAISE EXCEPTION 'Usuario con cédula % no encontrado', p_cedula_usuario;
     END IF;
 
+    -- Se podría mandar esto para que el usuario conozca las implicaciones
     -- Contar casos y acciones asociadas (solo informativo)
     SELECT COUNT(*) INTO casos_count FROM (
         SELECT 1 FROM casos c INNER JOIN supervisa s ON c.id_caso = s.id_caso WHERE s.cedula_profesor = p_cedula_usuario

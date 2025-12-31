@@ -20,53 +20,79 @@ CREATE OR REPLACE PROCEDURE update_all_by_cedula(
 )
 LANGUAGE plpgsql
 AS $$
-    -- Guardar el tipo_usuario anterior
-    DECLARE v_tipo_usuario_anterior VARCHAR;
-BEGIN
-    SELECT tipo_usuario INTO v_tipo_usuario_anterior FROM usuarios WHERE cedula = p_cedula;
+    DECLARE
+        v_tipo_usuario_anterior VARCHAR;
+    BEGIN
+        SELECT tipo_usuario INTO v_tipo_usuario_anterior FROM usuarios WHERE cedula = p_cedula;
 
-    -- Actualizar tabla usuarios solo si existe el usuario
-    UPDATE usuarios
-    SET 
-        nombres = COALESCE(p_nombres, nombres), 
-        apellidos = COALESCE(p_apellidos, apellidos), 
-        correo_electronico = COALESCE(p_correo_electronico, correo_electronico), 
-        nombre_usuario = COALESCE(p_nombre_usuario, nombre_usuario),
-        telefono_celular = COALESCE(p_telefono_celular, telefono_celular),
-        tipo_usuario = COALESCE(p_tipo_usuario, tipo_usuario)
-    WHERE cedula = p_cedula;
+        -- Actualizar tabla usuarios solo si existe el usuario
+        UPDATE usuarios
+        SET 
+            nombres = COALESCE(p_nombres, nombres), 
+            apellidos = COALESCE(p_apellidos, apellidos), 
+            correo_electronico = COALESCE(p_correo_electronico, correo_electronico), 
+            nombre_usuario = COALESCE(p_nombre_usuario, nombre_usuario),
+            telefono_celular = COALESCE(p_telefono_celular, telefono_celular),
+            tipo_usuario = COALESCE(p_tipo_usuario, tipo_usuario)
+        WHERE cedula = p_cedula;
 
-    -- Auditoría: solo si cambió el tipo_usuario
-    IF p_tipo_usuario IS NOT NULL AND v_tipo_usuario_anterior IS DISTINCT FROM p_tipo_usuario THEN
-        INSERT INTO auditoria_actualizacion_tipo_usuario (
-            ci_usuario, tipo_usuario_anterior, tipo_usuario_nuevo, actualizado_por
-        ) VALUES (
-            p_cedula,
-            v_tipo_usuario_anterior,
-            p_tipo_usuario,
-            p_cedula_actor
-        );
-    END IF;
+        -- Auditoría y manejo de cambio de tipo_usuario
+        IF p_tipo_usuario IS NOT NULL AND v_tipo_usuario_anterior IS DISTINCT FROM p_tipo_usuario THEN
+            INSERT INTO auditoria_actualizacion_tipo_usuario (
+                ci_usuario, tipo_usuario_anterior, tipo_usuario_nuevo, actualizado_por
+            ) VALUES (
+                p_cedula,
+                v_tipo_usuario_anterior,
+                p_tipo_usuario,
+                p_cedula_actor
+            );
 
-    -- Actualizar tabla estudiantes solo si existe el estudiante
-    UPDATE estudiantes
-    SET 
-        nrc = COALESCE(p_estudiante_nrc, nrc),
-        term = COALESCE(p_estudiante_term, term),
-        tipo_estudiante = COALESCE(p_estudiante_tipo, tipo_estudiante)
-    WHERE cedula_estudiante = p_cedula;
+            -- Eliminar de la tabla anterior si cambió de tipo
+            IF v_tipo_usuario_anterior = 'Estudiante' THEN
+                -- Eliminar dependencias para evitar FK violation
+                DELETE FROM se_le_asigna WHERE cedula_estudiante = p_cedula;
+                DELETE FROM estudiantes WHERE cedula_estudiante = p_cedula;
+            ELSIF v_tipo_usuario_anterior = 'Profesor' THEN
+                -- Eliminar dependencias para evitar FK violation
+                DELETE FROM supervisa WHERE cedula_profesor = p_cedula;
+                DELETE FROM profesores WHERE cedula_profesor = p_cedula;
+            ELSIF v_tipo_usuario_anterior = 'Coordinador' THEN
+                DELETE FROM coordinadores WHERE id_coordinador = p_cedula;
+            END IF;
 
-    -- Actualizar tabla profesores solo si existe el profesor
-    UPDATE profesores
-    SET 
-        term = COALESCE(p_profesor_term, term),
-        tipo_profesor = COALESCE(p_profesor_tipo, tipo_profesor)
-    WHERE cedula_profesor = p_cedula;
+            -- Insertar en la nueva tabla según el tipo
+            IF p_tipo_usuario = 'Estudiante' THEN
+                INSERT INTO estudiantes (cedula_estudiante, nrc, term, tipo_estudiante)
+                VALUES (p_cedula, p_estudiante_nrc, p_estudiante_term, p_estudiante_tipo);
+            ELSIF p_tipo_usuario = 'Profesor' THEN
+                INSERT INTO profesores (cedula_profesor, term, tipo_profesor)
+                VALUES (p_cedula, p_profesor_term, p_profesor_tipo);
+            ELSIF p_tipo_usuario = 'Coordinador' THEN
+                INSERT INTO coordinadores (id_coordinador, term)
+                VALUES (p_cedula, p_coordinador_term);
+            END IF;
 
-    -- Actualizar tabla coordinadores solo si existe el coordinador
-    UPDATE coordinadores
-    SET 
-        term = COALESCE(p_coordinador_term, term)
-    WHERE id_coordinador = p_cedula;
-END;
+        ELSE
+            -- Si el tipo no cambió, solo actualiza en la tabla correspondiente
+            IF COALESCE(p_tipo_usuario, v_tipo_usuario_anterior) = 'Estudiante' THEN
+                UPDATE estudiantes
+                SET 
+                    nrc = COALESCE(p_estudiante_nrc, nrc),
+                    term = COALESCE(p_estudiante_term, term),
+                    tipo_estudiante = COALESCE(p_estudiante_tipo, tipo_estudiante)
+                WHERE cedula_estudiante = p_cedula;
+            ELSIF COALESCE(p_tipo_usuario, v_tipo_usuario_anterior) = 'Profesor' THEN
+                UPDATE profesores
+                SET 
+                    term = COALESCE(p_profesor_term, term),
+                    tipo_profesor = COALESCE(p_profesor_tipo, tipo_profesor)
+                WHERE cedula_profesor = p_cedula;
+            ELSIF COALESCE(p_tipo_usuario, v_tipo_usuario_anterior) = 'Coordinador' THEN
+                UPDATE coordinadores
+                SET 
+                    term = COALESCE(p_coordinador_term, term)
+                WHERE id_coordinador = p_cedula;
+            END IF;
+        END IF;
+    END;
 $$;
