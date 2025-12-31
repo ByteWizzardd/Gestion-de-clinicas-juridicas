@@ -14,11 +14,20 @@ import type { Appointment } from '@/types/appointment';
 import { AppointmentModal } from '../appointmentModal/AppointmentModal';
 import { AppointmentDetailModal } from '../appointmentModal/AppointmentDetailModal';
 
-interface AppointmentsClientProps {
-  initialAppointments: Appointment[];
+interface AppointmentFilterOptions {
+  nucleos: Array<{ id_nucleo: number; nombre_nucleo: string }>;
+  usuarios: Array<{ cedula: string; nombres: string; apellidos: string; nombre_completo: string }>;
 }
 
-export default function AppointmentsClient({ initialAppointments }: AppointmentsClientProps) {
+interface AppointmentsClientProps {
+  initialAppointments: Appointment[];
+  initialFilterOptions?: AppointmentFilterOptions;
+}
+
+export default function AppointmentsClient({ 
+  initialAppointments,
+  initialFilterOptions = { nucleos: [], usuarios: [] }
+}: AppointmentsClientProps) {
   const [viewMode, setViewMode] = useState<AppointmentViewMode>('calendar');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedMonth, setSelectedMonth] = useState(
@@ -35,6 +44,13 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   const [searchValue, setSearchValue] = useState('');
+  
+  // Filtros
+  const [nucleoFilter, setNucleoFilter] = useState<string>('');
+  const [usuarioFilter, setUsuarioFilter] = useState<string>('');
+  const [dateRangeFilter, setDateRangeFilter] = useState<string>('all'); // 'all', 'today', 'week', 'month', 'custom'
+  const [customDateStart, setCustomDateStart] = useState<string>('');
+  const [customDateEnd, setCustomDateEnd] = useState<string>('');
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -75,25 +91,81 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
     return filtered;
   }, [appointments, selectedMonth, selectedDate, filterByDate]);
 
-  // Filtrar citas por búsqueda (solo para vista de lista)
+  // Filtrar citas por búsqueda y filtros (solo para vista de lista)
   const filteredAppointmentsForList = useMemo(() => {
-    if (!searchValue.trim()) {
-      return appointments;
+    let filtered = appointments;
+
+    // Filtro por búsqueda de texto
+    if (searchValue.trim()) {
+      const searchLower = searchValue.toLowerCase().trim();
+      filtered = filtered.filter((apt) => {
+        const clientMatch = apt.client?.toLowerCase().includes(searchLower);
+        const caseMatch = apt.caseDetail?.toLowerCase().includes(searchLower);
+        const locationMatch = apt.location?.toLowerCase().includes(searchLower);
+        const orientationMatch = apt.orientation?.toLowerCase().includes(searchLower);
+        const attendingUsersMatch = apt.attendingUsers?.toLowerCase().includes(searchLower);
+        const titleMatch = apt.title?.toLowerCase().includes(searchLower);
+        
+        return clientMatch || caseMatch || locationMatch || orientationMatch || attendingUsersMatch || titleMatch;
+      });
     }
-    
-    const searchLower = searchValue.toLowerCase().trim();
-    return appointments.filter((apt) => {
-      // Buscar en: cliente, caso, ubicación, orientación, usuarios que atendieron
-      const clientMatch = apt.client?.toLowerCase().includes(searchLower);
-      const caseMatch = apt.caseDetail?.toLowerCase().includes(searchLower);
-      const locationMatch = apt.location?.toLowerCase().includes(searchLower);
-      const orientationMatch = apt.orientation?.toLowerCase().includes(searchLower);
-      const attendingUsersMatch = apt.attendingUsers?.toLowerCase().includes(searchLower);
-      const titleMatch = apt.title?.toLowerCase().includes(searchLower);
+
+    // Filtro por núcleo
+    if (nucleoFilter) {
+      filtered = filtered.filter((apt) => {
+        // El location contiene el nombre del núcleo
+        return apt.location?.toLowerCase().includes(nucleoFilter.toLowerCase());
+      });
+    }
+
+    // Filtro por usuario que atendió
+    if (usuarioFilter) {
+      filtered = filtered.filter((apt) => {
+        return apt.attendingUsersList?.some(
+          (user) => user.id_usuario === usuarioFilter || user.nombre_completo.toLowerCase().includes(usuarioFilter.toLowerCase())
+        );
+      });
+    }
+
+    // Filtro por rango de fechas
+    if (dateRangeFilter !== 'all') {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
       
-      return clientMatch || caseMatch || locationMatch || orientationMatch || attendingUsersMatch || titleMatch;
-    });
-  }, [appointments, searchValue]);
+      filtered = filtered.filter((apt) => {
+        const aptDate = new Date(apt.date);
+        aptDate.setHours(0, 0, 0, 0);
+        
+        switch (dateRangeFilter) {
+          case 'today':
+            return aptDate.getTime() === now.getTime();
+          case 'week': {
+            const weekAgo = new Date(now);
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            return aptDate >= weekAgo && aptDate <= now;
+          }
+          case 'month': {
+            const monthAgo = new Date(now);
+            monthAgo.setMonth(monthAgo.getMonth() - 1);
+            return aptDate >= monthAgo && aptDate <= now;
+          }
+          case 'custom': {
+            if (customDateStart && customDateEnd) {
+              const start = new Date(customDateStart);
+              const end = new Date(customDateEnd);
+              end.setHours(23, 59, 59, 999);
+              return aptDate >= start && aptDate <= end;
+            }
+            return true;
+          }
+          default:
+            return true;
+        }
+      });
+    }
+
+    return filtered;
+  }, [appointments, searchValue, nucleoFilter, usuarioFilter, dateRangeFilter, customDateStart, customDateEnd]);
 
   // Preparar datos para el calendario (solo fechas)
   const calendarAppointments = useMemo(() => {
@@ -307,6 +379,17 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
                       <AppointmentsToolbar
                         viewMode="list"
                         onViewModeChange={setViewMode}
+                        nucleoFilter={nucleoFilter}
+                        usuarioFilter={usuarioFilter}
+                        dateRangeFilter={dateRangeFilter}
+                        customDateStart={customDateStart}
+                        customDateEnd={customDateEnd}
+                        onNucleoFilterChange={setNucleoFilter}
+                        onUsuarioFilterChange={setUsuarioFilter}
+                        onDateRangeFilterChange={setDateRangeFilter}
+                        onCustomDateStartChange={setCustomDateStart}
+                        onCustomDateEndChange={setCustomDateEnd}
+                        filterOptions={initialFilterOptions}
                       />
                       
                       {/* Botón Nueva Cita */}

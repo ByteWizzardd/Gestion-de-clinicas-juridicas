@@ -32,27 +32,29 @@ export default function DropdownMenu({
     setMounted(true);
   }, []);
 
-  // Sincronizar el estado externo si se proporciona onOpenChange
   useEffect(() => {
     if (onOpenChange) {
       onOpenChange(isOpen);
     }
   }, [isOpen, onOpenChange]);
 
-  // Calcular posición para el Portal
   const updatePosition = () => {
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
       const spaceAbove = rect.top;
-      const menuHeight = 350; // Altura estimada
+      const menuHeight = 350;
 
       const shouldOpenUp = (spaceBelow < menuHeight && spaceAbove > spaceBelow) || (spaceAbove > spaceBelow && spaceBelow < 400);
       setOpenUpward(shouldOpenUp);
 
+      // Offset adicional hacia la izquierda para align="left"
+      const leftOffset = align === 'left' ? -24 : 0;
+      const minLeft = 8;
+
       setCoords({
         top: shouldOpenUp ? rect.top + window.scrollY : rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
+        left: Math.max(minLeft, rect.left + window.scrollX + leftOffset),
         width: rect.width
       });
     }
@@ -68,7 +70,7 @@ export default function DropdownMenu({
       window.removeEventListener('scroll', updatePosition, true);
       window.removeEventListener('resize', updatePosition);
     };
-  }, [isOpen]);
+  }, [isOpen, align]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -78,18 +80,29 @@ export default function DropdownMenu({
         !menuRef.current.contains(event.target as Node) &&
         !triggerRef.current.contains(event.target as Node)
       ) {
+        // No cerrar si el click es en un submenú (elementos con z-index mayor)
+        const target = event.target as HTMLElement;
+        const submenu = target.closest('[data-submenu]');
+        if (submenu) {
+          return;
+        }
+        
         setIsOpen(false);
         onOpenChange?.(false);
       }
     };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
+      // Usar un pequeño delay para evitar cierres inmediatos
+      const timeoutId = setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+      }, 50);
 
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+      return () => {
+        clearTimeout(timeoutId);
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
   }, [isOpen, onOpenChange]);
 
   const handleToggle = () => {
@@ -136,7 +149,7 @@ export default function DropdownMenu({
             className={menuClassName}
             onClick={(e) => {
               const target = e.target as HTMLElement;
-              const clickedButton = target.closest('button');
+              const clickedButton = target.closest('button[data-close-menu]');
               if (clickedButton) {
                 setIsOpen(false);
                 onOpenChange?.(false);
@@ -151,4 +164,3 @@ export default function DropdownMenu({
     </div>
   );
 }
-
