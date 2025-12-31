@@ -47,16 +47,31 @@ AS $$
                 p_cedula_actor
             );
 
+            -- Deshabilitar en la tabla anterior
+            IF v_tipo_usuario_anterior = 'Estudiante' THEN
+                UPDATE estudiantes
+                SET habilitado = FALSE
+                WHERE cedula_estudiante = p_cedula;
+            ELSIF v_tipo_usuario_anterior = 'Profesor' THEN
+                UPDATE profesores
+                SET habilitado = FALSE
+                WHERE cedula_profesor = p_cedula;
+            ELSIF v_tipo_usuario_anterior = 'Coordinador' THEN
+                UPDATE coordinadores
+                SET habilitado = FALSE      
+                WHERE id_coordinador = p_cedula;
+            END IF;
+
             -- Insertar en la nueva tabla según el tipo
             IF p_tipo_usuario = 'Estudiante' THEN
-                INSERT INTO estudiantes (cedula_estudiante, nrc, term, tipo_estudiante)
-                VALUES (p_cedula, p_estudiante_nrc, p_estudiante_term, p_estudiante_tipo);
+                INSERT INTO estudiantes (cedula_estudiante, nrc, term, tipo_estudiante, habilitado)
+                VALUES (p_cedula, p_estudiante_nrc, p_estudiante_term, p_estudiante_tipo, TRUE);
             ELSIF p_tipo_usuario = 'Profesor' THEN
-                INSERT INTO profesores (cedula_profesor, term, tipo_profesor)
-                VALUES (p_cedula, p_profesor_term, p_profesor_tipo);
+                INSERT INTO profesores (cedula_profesor, term, tipo_profesor, habilitado)
+                VALUES (p_cedula, p_profesor_term, p_profesor_tipo, TRUE);
             ELSIF p_tipo_usuario = 'Coordinador' THEN
-                INSERT INTO coordinadores (id_coordinador, term)
-                VALUES (p_cedula, p_coordinador_term);
+                INSERT INTO coordinadores (id_coordinador, term, habilitado)
+                VALUES (p_cedula, p_coordinador_term, TRUE);
             END IF;
 
         ELSE

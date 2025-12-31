@@ -3,16 +3,17 @@ import Filter from "./Filter";
 import Search from "./search";
 
 type CaseToolsProps = {
-  addLabel?: string;
-  onAddClick?: () => void;
-  searchValue?: string;
-  onSearchChange?: (value: string) => void;
-  estatusFilter?: string;
-  tramiteFilter?: string;
-  onEstatusChange?: (value: string) => void;
-  onTramiteChange?: (value: string) => void;
-  estatusOptions?: { value: string; label: string }[];
-  tramiteOptions?: { value: string; label: string }[];
+    addLabel?: string;
+    onAddClick?: () => void;
+    searchValue?: string;
+    onSearchChange?: (value: string) => void;
+    searchPlaceholder?: string;
+    estatusFilter?: string;
+    tramiteFilter?: string;
+    onEstatusChange?: (value: string) => void;
+    onTramiteChange?: (value: string) => void;
+    estatusOptions?: { value: string; label: string }[];
+    tramiteOptions?: { value: string; label: string }[];
 };
 
 function CaseTools({ 
@@ -20,6 +21,7 @@ function CaseTools({
   onAddClick,
   searchValue = '',
   onSearchChange,
+  searchPlaceholder,
   estatusFilter = '',
   tramiteFilter = '',
   onEstatusChange,
@@ -34,10 +36,10 @@ function CaseTools({
         <div className="flex flex-nowrap gap-3 sm:gap-4 items-center w-full px-3">
             {hasSearch && (
                 <div className="flex-1 min-w-0">
-                    <Search value={searchValue} onChange={onSearchChange} />
+                    <Search value={searchValue} onChange={onSearchChange} placeholder={searchPlaceholder} />
                 </div>
             )}
-            <div className="flex gap-3 sm:gap-4 items-center flex-shrink-0">
+            <div className="flex gap-3 sm:gap-4 items-center shrink-0">
                 {hasFilter && (
                     <Filter
                       estatusFilter={estatusFilter}

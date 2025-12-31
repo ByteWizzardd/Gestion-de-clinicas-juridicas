@@ -213,12 +213,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
                     onChange={handleChange}
                   />
                   <Select
-                    label="TERM"
-                    value={typeof form.term === 'string' ? form.term : ''}
-                    onChange={(e) => setForm({ ...form, term: e.target.value })}
-                    options={terms.map((t) => ({ value: t.term, label: t.term }))}
-                  />
-                  <Select
                     label="Tipo de Estudiante"
                     value={typeof form.tipo_estudiante === 'string' ? form.tipo_estudiante : ''}
                     onChange={(e) => setForm({ ...form, tipo_estudiante: e.target.value })}
@@ -234,12 +228,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
               {form.tipo_usuario === 'Profesor' && (
                 <>
                   <Select
-                    label="TERM"
-                    value={typeof form.term === 'string' ? form.term : ''}
-                    onChange={(e) => setForm({ ...form, term: e.target.value })}
-                    options={terms.map((t) => ({ value: t.term, label: t.term }))}
-                  />
-                  <Select
                     label="Tipo de Profesor"
                     value={typeof form.tipo_profesor === 'string' ? form.tipo_profesor : ''}
                     onChange={(e) => setForm({ ...form, tipo_profesor: e.target.value })}
@@ -249,14 +237,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
                     ]}
                   />
                 </>
-              )}
-              {form.tipo_usuario === 'Coordinador' && (
-                <Select
-                  label="TERM"
-                  value={typeof form.term === 'string' ? form.term : ''}
-                  onChange={(e) => setForm({ ...form, term: e.target.value })}
-                  options={terms.map((t) => ({ value: t.term, label: t.term }))}
-                />
               )}
             </div>
             {/* Footer con botón */}

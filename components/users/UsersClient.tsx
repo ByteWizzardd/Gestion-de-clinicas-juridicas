@@ -226,6 +226,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         onAddClick={() => setIsBulkUploadModalOpen(true)}
         searchValue={searchValue}
         onSearchChange={setSearchValue}
+        searchPlaceholder="Buscar usuario..."
         estatusFilter={tipoFilter}
         onEstatusChange={setTipoFilter}
         estatusOptions={tipoOptions}
