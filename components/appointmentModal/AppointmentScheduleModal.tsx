@@ -71,17 +71,71 @@ export function AppointmentScheduleModal({ onClose, onSave, initialDate }: Appoi
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
 
+    // Validación de Caso (selectedCaseID)
     if (!selectedCaseID) {
       newErrors.selectedCaseID = 'Este campo es requerido';
+    } else {
+      const caseIdNumber = Number(selectedCaseID);
+      if (isNaN(caseIdNumber) || caseIdNumber <= 0 || !Number.isInteger(caseIdNumber)) {
+        newErrors.selectedCaseID = 'El ID del caso debe ser un número válido';
+      } else {
+        const caseExists = caseOptions.some(opt => opt.value === selectedCaseID);
+        if (!caseExists) {
+          newErrors.selectedCaseID = 'El caso seleccionado no es válido';
+        }
+      }
     }
-    if (!selectedCaseID) {
-      newErrors.selectedCaseID = 'Este campo es requerido';
-    }
+
+    // Validación de Fecha de Encuentro (date)
     if (!date) {
       newErrors.date = 'Este campo es requerido';
+    } else {
+      const dateString = date.toISOString().slice(0, 10);
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(dateString)) {
+        newErrors.date = 'Formato de fecha inválido';
+      } else {
+        const dateObj = new Date(dateString);
+        if (isNaN(dateObj.getTime())) {
+          newErrors.date = 'Fecha inválida';
+        } else {
+          // Validar que la fecha sea futura (no puede ser hoy ni pasado)
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          dateObj.setHours(0, 0, 0, 0);
+          if (dateObj <= today) {
+            newErrors.date = 'La fecha de encuentro debe ser una fecha futura';
+          } else {
+            // Validar que no sea muy lejana (máximo 1 año)
+            const oneYearFromNow = new Date();
+            oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+            if (dateObj > oneYearFromNow) {
+              newErrors.date = 'La fecha no puede ser más de un año en el futuro';
+            }
+          }
+        }
+      }
     }
+
+    // Validación de Usuarios Invitados (usuariosInvitados)
     if (usuariosInvitados.length === 0) {
-      newErrors.usuariosInvitados = 'Este campo es requerido';
+      newErrors.usuariosInvitados = 'Debe seleccionar al menos un usuario';
+    } else {
+      // Validar duplicados
+      const uniqueCedulas = new Set(usuariosInvitados);
+      if (uniqueCedulas.size !== usuariosInvitados.length) {
+        newErrors.usuariosInvitados = 'No puede seleccionar usuarios duplicados';
+      } else {
+        // Validar que todos existan en las opciones
+        const invalidCedulas = usuariosInvitados.filter(
+          cedula => !usuarioOptions.some(opt => opt.value === cedula)
+        );
+        if (invalidCedulas.length > 0) {
+          newErrors.usuariosInvitados = 'Algunos usuarios seleccionados no son válidos';
+        } else if (usuariosInvitados.length > 10) {
+          newErrors.usuariosInvitados = 'No puede seleccionar más de 10 usuarios';
+        }
+      }
     }
 
     setErrors(newErrors);
@@ -204,6 +258,9 @@ export function AppointmentScheduleModal({ onClose, onSave, initialDate }: Appoi
                   required
                 />
               </div>
+              {errors.date && (
+                <p className="text-xs text-danger mt-1">{errors.date}</p>
+              )}
             </div>
           </div>
 

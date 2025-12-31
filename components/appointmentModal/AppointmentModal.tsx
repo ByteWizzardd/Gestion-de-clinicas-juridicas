@@ -20,6 +20,7 @@ interface AppointmentModalProps {
 interface FormData {
   selectedCaseID: string;
   date: string;
+  endDate?: string;
   orientacion: string;
   usuariosAtienden: string[];
 }
@@ -75,17 +76,85 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
 
+    // Validación de Caso (selectedCaseID)
     if (!selectedCaseID) {
       newErrors.selectedCaseID = 'Este campo es requerido';
+    } else {
+      const caseIdNumber = Number(selectedCaseID);
+      if (isNaN(caseIdNumber) || caseIdNumber <= 0 || !Number.isInteger(caseIdNumber)) {
+        newErrors.selectedCaseID = 'El ID del caso debe ser un número válido';
+      } else {
+        const caseExists = caseOptions.some(opt => opt.value === selectedCaseID);
+        if (!caseExists) {
+          newErrors.selectedCaseID = 'El caso seleccionado no es válido';
+        }
+      }
     }
+
+    // Validación de Fecha de Encuentro (date)
     if (!date) {
       newErrors.date = 'Este campo es requerido';
+    } else {
+      const dateString = date.toISOString().slice(0, 10);
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(dateString)) {
+        newErrors.date = 'Formato de fecha inválido';
+      } else {
+        const dateObj = new Date(dateString);
+        if (isNaN(dateObj.getTime())) {
+          newErrors.date = 'Fecha inválida';
+        }
+      }
     }
-    if (!orientacion.trim()) {
-      newErrors.orientacion = 'Este campo es requerido';
+
+    // Validación de Fecha de Próxima Cita (endDate) - OPCIONAL
+    if (endDate) {
+      const endDateString = endDate.toISOString().slice(0, 10);
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(endDateString)) {
+        newErrors.endDate = 'Formato de fecha inválido';
+      } else {
+        const endDateObj = new Date(endDateString);
+        if (isNaN(endDateObj.getTime())) {
+          newErrors.endDate = 'Fecha inválida';
+        } else if (date) {
+          const dateObj = new Date(date.toISOString().slice(0, 10));
+          if (endDateObj <= dateObj) {
+            newErrors.endDate = 'La fecha de la próxima cita debe ser posterior a la fecha de encuentro';
+          }
+        }
+      }
     }
+
+    // Validación de Usuarios que Atendieron (usuariosAtienden)
     if (usuariosAtienden.length === 0) {
-      newErrors.usuariosAtienden = 'Este campo es requerido';
+      newErrors.usuariosAtienden = 'Debe seleccionar al menos un usuario';
+    } else {
+      // Validar duplicados
+      const uniqueCedulas = new Set(usuariosAtienden);
+      if (uniqueCedulas.size !== usuariosAtienden.length) {
+        newErrors.usuariosAtienden = 'No puede seleccionar usuarios duplicados';
+      } else {
+        // Validar que todos existan en las opciones
+        const invalidCedulas = usuariosAtienden.filter(
+          cedula => !usuarioOptions.some(opt => opt.value === cedula)
+        );
+        if (invalidCedulas.length > 0) {
+          newErrors.usuariosAtienden = 'Algunos usuarios seleccionados no son válidos';
+        } else if (usuariosAtienden.length > 10) {
+          newErrors.usuariosAtienden = 'No puede seleccionar más de 10 usuarios';
+        }
+      }
+    }
+
+    // Validación de Orientación (orientacion)
+    const orientacionTrimmed = orientacion.trim();
+    if (!orientacionTrimmed) {
+      newErrors.orientacion = 'Este campo es requerido';
+    } else if (orientacionTrimmed.length < 10) {
+      newErrors.orientacion = 'La orientación debe tener al menos 10 caracteres';
+    } else if (!/\w/.test(orientacionTrimmed)) {
+      newErrors.orientacion = 'La orientación debe contener texto válido';
     }
 
     setErrors(newErrors);
@@ -223,6 +292,9 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
                   required
                 />
               </div>
+              {errors.date && (
+                <p className="text-xs text-danger mt-1">{errors.date}</p>
+              )}
             </div>
           </div>
           <div className="col-span-1">
@@ -233,9 +305,23 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
               <div className="relative">
                 <DatePicker
                   value={endDate ? endDate.toISOString().slice(0, 10) : ""}
-                  onChange={(value: string) => setEndDate(value ? new Date(value) : null)}
+                  onChange={(value: string) => {
+                    setEndDate(value ? new Date(value) : null);
+                    // Limpiar error del campo cuando se modifica
+                    if (errors.endDate) {
+                      setErrors((prev) => {
+                        const newErrors = { ...prev };
+                        delete newErrors.endDate;
+                        return newErrors;
+                      });
+                    }
+                  }}
+                  error={errors.endDate}
                 />
               </div>
+              {errors.endDate && (
+                <p className="text-xs text-danger mt-1">{errors.endDate}</p>
+              )}
             </div>
           </div>
 
