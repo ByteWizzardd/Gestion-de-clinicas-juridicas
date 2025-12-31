@@ -1,5 +1,6 @@
 import { citasQueries, type CitaCompleta } from '@/lib/db/queries/citas.queries';
 import { AppError } from '@/lib/utils/errors';
+import { withTransaction } from '@/lib/db/transactions';
 
 /**
  * Servicio para la entidad Citas
@@ -18,6 +19,17 @@ export const citasService = {
       caseDetail: string;
       client: string;
       location: string;
+      orientation: string;
+      attendingUsers: string;
+      attendingUsersList: Array<{
+        id_usuario: string;
+        nombres: string;
+        apellidos: string;
+        nombre_completo: string;
+        fecha_registro: string;
+      }>;
+      isMultiplePeople: boolean;
+      nextAppointmentDate?: string | null;
     }>
   > {
     try {
@@ -41,9 +53,12 @@ export const citasService = {
         // Título: Materia del ámbito legal
         const title = cita.nombre_materia || cita.tramite;
 
-        // Usuarios que atendieron
-        const attendingUsers = cita.nombre_completo_usuario_atencion || 'No especificado';
-        const isMultiplePeople = attendingUsers && attendingUsers.includes(',') || (attendingUsers && attendingUsers.split(' ').length > 2);
+        // Usuarios que atendieron (ahora es un array)
+        const atenciones = cita.atenciones || [];
+        const attendingUsersNames = atenciones.length > 0
+          ? atenciones.map(a => a.nombre_completo).join(', ')
+          : 'No especificado';
+        const isMultiplePeople = atenciones.length > 1;
 
         // Fecha de próxima cita formateada
         const nextAppointmentDate = cita.fecha_proxima_cita
@@ -56,12 +71,6 @@ export const citasService = {
             })()
           : null;
 
-        console.log('Cita:', {
-          num_cita: cita.num_cita,
-          orientacion: cita.orientacion,
-          nombre_completo_usuario_atencion: cita.nombre_completo_usuario_atencion
-        });
-
         return {
           id: `cita-${cita.num_cita}-${cita.id_caso}-${fechaCita.getTime()}`,
           title,
@@ -71,7 +80,8 @@ export const citasService = {
           client,
           location: cita.nombre_nucleo,
           orientation: cita.orientacion || 'Sin orientación especificada',
-          attendingUsers,
+          attendingUsers: attendingUsersNames,
+          attendingUsersList: atenciones, // Array completo para uso detallado
           isMultiplePeople,
           nextAppointmentDate,
         };
@@ -100,36 +110,43 @@ export const citasService = {
       if (isNaN(caseIdNumber)) {
         throw new AppError('El ID del caso no es válido', 400);
       }
-      const result = await citasQueries.create(
-        caseIdNumber,
-        params.date,
-        params.endDate || null,
-        params.orientacion
-      );
-      if (!result.rows || result.rows.length === 0) {
-        throw new AppError("No se pudo crear la cita", 500);
-      }
-      
-      const { num_cita, id_caso } = result.rows[0];
-      
-      // Crear registros en atienden si hay usuarios seleccionados
-      if (params.usuariosAtienden && params.usuariosAtienden.length > 0) {
-        const { atiendenQueries } = await import('@/lib/db/queries/atienden.queries');
-        for (const usuarioCedula of params.usuariosAtienden) {
-          try {
-            await atiendenQueries.create({
-              idUsuario: usuarioCedula,
-              numCita: num_cita,
-              idCaso: id_caso,
-            });
-          } catch (error) {
-            // Log del error pero no fallar la creación de la cita
-            console.error(`Error al registrar usuario ${usuarioCedula} en atienden:`, error);
+
+      // Usar transacción para crear cita y registros en atienden de forma atómica
+      return await withTransaction(async (client) => {
+        // 1. Crear la cita
+        const createQuery = await import('@/lib/db/sql-loader').then(m => m.loadSQL('citas/create.sql'));
+        const citaResult = await client.query(createQuery, [
+          caseIdNumber,
+          params.date,
+          params.endDate || null,
+          params.orientacion
+        ]);
+
+        if (!citaResult.rows || citaResult.rows.length === 0) {
+          throw new AppError("No se pudo crear la cita", 500);
+        }
+
+        const { num_cita, id_caso } = citaResult.rows[0];
+
+        // 2. Crear registros en atienden si hay usuarios seleccionados
+        if (params.usuariosAtienden && params.usuariosAtienden.length > 0) {
+          const { loadSQL } = await import('@/lib/db/sql-loader');
+          const atiendenQuery = loadSQL('atienden/create.sql');
+          
+          for (const usuarioCedula of params.usuariosAtienden) {
+            await client.query(atiendenQuery, [
+              usuarioCedula,
+              num_cita,
+              id_caso,
+              null // fecha_registro se usa CURRENT_DATE por defecto
+            ]);
           }
         }
-      }
-      
-      return { num_cita, id_caso };
+
+        // Si todo sale bien, la transacción hace COMMIT automáticamente
+        // Si hay error, hace ROLLBACK automáticamente
+        return { num_cita, id_caso };
+      });
     } catch (error) {
       // Log detallado para depuración
       // eslint-disable-next-line no-console
