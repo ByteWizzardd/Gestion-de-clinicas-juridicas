@@ -314,11 +314,12 @@ export default function InputGroup({
             type={numbersOnly ? 'text' : 'text'}
             inputMode={numbersOnly ? 'numeric' : 'text'}
             value={inputValue}
+            maxLength={numbersOnly ? 13 : undefined}
             onChange={(e) => {
               if (disabled) return;
-              // Si numbersOnly es true, filtrar solo números
+              // Si numbersOnly es true, filtrar solo números y limitar a 13 dígitos
               if (numbersOnly) {
-                const soloNumeros = e.target.value.replace(/\D/g, '');
+                const soloNumeros = e.target.value.replace(/\D/g, '').slice(0, 13);
                 onInputChange(soloNumeros);
               } else {
                 onInputChange(e.target.value);
