@@ -133,6 +133,7 @@ export default function AppointmentsClient({
       now.setHours(0, 0, 0, 0);
       
       filtered = filtered.filter((apt) => {
+        const aptDateOriginal = new Date(apt.date);
         const aptDate = new Date(apt.date);
         aptDate.setHours(0, 0, 0, 0);
         
@@ -152,9 +153,13 @@ export default function AppointmentsClient({
           case 'custom': {
             if (customDateStart && customDateEnd) {
               const start = new Date(customDateStart);
+              start.setHours(0, 0, 0, 0); // Inicio del día de inicio (00:00:00)
               const end = new Date(customDateEnd);
-              end.setHours(23, 59, 59, 999);
-              return aptDate >= start && aptDate <= end;
+              end.setHours(23, 59, 59, 999); // Fin del día de fin (23:59:59.999)
+              
+              // Usar la fecha original de la cita (con hora) para comparar con el rango completo
+              // Esto incluye citas del mismo día de inicio y fin
+              return aptDateOriginal >= start && aptDateOriginal <= end;
             }
             return true;
           }

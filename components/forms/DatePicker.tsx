@@ -311,7 +311,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
             top: openUpward ? coords.top - 8 : coords.top + 8,
             left: coords.left,
             width: 250,
-            zIndex: 9999,
+            zIndex: 10001,
             pointerEvents: 'auto',
             transform: openUpward ? 'translateY(-100%)' : 'none',
             backgroundColor: 'white',
