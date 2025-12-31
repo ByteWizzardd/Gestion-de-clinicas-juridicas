@@ -1,0 +1,1 @@
+ALTER TABLE coordinadores ADD COLUMN habilitado BOOLEAN NOT NULL DEFAULT TRUE;
