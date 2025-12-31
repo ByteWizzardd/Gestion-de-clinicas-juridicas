@@ -23,12 +23,12 @@ interface AppointmentsToolbarProps {
   viewMode: AppointmentViewMode;
   onViewModeChange: (view: AppointmentViewMode) => void;
   nucleoFilter: string;
-  usuarioFilter: string;
+  usuarioFilter: string[];
   dateRangeFilter: string;
   customDateStart: string;
   customDateEnd: string;
   onNucleoFilterChange: (value: string) => void;
-  onUsuarioFilterChange: (value: string) => void;
+  onUsuarioFilterChange: (value: string[]) => void;
   onDateRangeFilterChange: (value: string) => void;
   onCustomDateStartChange: (value: string) => void;
   onCustomDateEndChange: (value: string) => void;
@@ -146,7 +146,7 @@ function FilterMenuItem({
           e.stopPropagation();
           onToggle();
         }}
-        className={`relative w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-gray-50 active:bg-gray-100 transition-all duration-150 border-b border-gray-200 last:border-b-0 ${
+        className={`relative w-full flex items-center gap-3 px-4 py-3.5 text-left cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-all duration-150 border-b border-gray-200 last:border-b-0 ${
           hasActiveFilter ? 'bg-primary-light/10 border-l-4 border-l-primary' : ''
         }`}
       >
@@ -221,13 +221,20 @@ export default function AppointmentsToolbar({
   const fechaItemRef = useRef<HTMLButtonElement>(null);
   const nucleoItemRef = useRef<HTMLButtonElement>(null);
   const usuarioItemRef = useRef<HTMLButtonElement>(null);
+
+  // Cerrar todos los submenús cuando se cierra el filtro principal
+  useEffect(() => {
+    if (!isFilterOpen) {
+      setOpenSections({ fecha: false, nucleo: false, usuario: false });
+    }
+  }, [isFilterOpen]);
   
-  const hasActiveFilter = nucleoFilter !== '' || usuarioFilter !== '' || dateRangeFilter !== 'all';
+  const hasActiveFilter = nucleoFilter !== '' || usuarioFilter.length > 0 || dateRangeFilter !== 'all';
 
   const getActiveFilterCount = () => {
     let count = 0;
     if (nucleoFilter !== '') count++;
-    if (usuarioFilter !== '') count++;
+    if (usuarioFilter.length > 0) count++;
     if (dateRangeFilter !== 'all') count++;
     return count;
   };
@@ -248,7 +255,7 @@ export default function AppointmentsToolbar({
 
   const handleClearFilters = () => {
     onNucleoFilterChange('');
-    onUsuarioFilterChange('');
+    onUsuarioFilterChange([]);
     onDateRangeFilterChange('all');
     onCustomDateStartChange('');
     onCustomDateEndChange('');
@@ -318,7 +325,7 @@ export default function AppointmentsToolbar({
                     onDateRangeFilterChange('all');
                     setOpenSections(prev => ({ ...prev, fecha: false }));
                   }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg transition-all duration-150 ${
+                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${
                     dateRangeFilter === 'all'
                       ? 'bg-primary-light text-primary font-medium shadow-sm'
                       : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
@@ -333,7 +340,7 @@ export default function AppointmentsToolbar({
                     onDateRangeFilterChange('today');
                     setOpenSections(prev => ({ ...prev, fecha: false }));
                   }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg transition-all duration-150 ${
+                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${
                     dateRangeFilter === 'today'
                       ? 'bg-primary-light text-primary font-medium shadow-sm'
                       : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
@@ -348,7 +355,7 @@ export default function AppointmentsToolbar({
                     onDateRangeFilterChange('week');
                     setOpenSections(prev => ({ ...prev, fecha: false }));
                   }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg transition-all duration-150 ${
+                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${
                     dateRangeFilter === 'week'
                       ? 'bg-primary-light text-primary font-medium shadow-sm'
                       : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
@@ -363,7 +370,7 @@ export default function AppointmentsToolbar({
                     onDateRangeFilterChange('month');
                     setOpenSections(prev => ({ ...prev, fecha: false }));
                   }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg transition-all duration-150 ${
+                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${
                     dateRangeFilter === 'month'
                       ? 'bg-primary-light text-primary font-medium shadow-sm'
                       : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
@@ -377,7 +384,7 @@ export default function AppointmentsToolbar({
                     e.stopPropagation();
                     onDateRangeFilterChange('custom');
                   }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg transition-all duration-150 ${
+                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${
                     dateRangeFilter === 'custom'
                       ? 'bg-primary-light text-primary font-medium shadow-sm'
                       : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
@@ -426,7 +433,7 @@ export default function AppointmentsToolbar({
                     onNucleoFilterChange('');
                     setOpenSections(prev => ({ ...prev, nucleo: false }));
                   }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg transition-all duration-150 ${
+                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${
                     nucleoFilter === ''
                       ? 'bg-primary-light text-primary font-medium shadow-sm'
                       : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
@@ -443,7 +450,7 @@ export default function AppointmentsToolbar({
                       onNucleoFilterChange(option.value);
                       setOpenSections(prev => ({ ...prev, nucleo: false }));
                     }}
-                    className={`w-full px-3 py-2.5 text-left text-sm rounded-lg transition-all duration-150 ${
+                    className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${
                       nucleoFilter === option.value
                         ? 'bg-primary-light text-primary font-medium shadow-sm'
                         : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
@@ -462,7 +469,7 @@ export default function AppointmentsToolbar({
             icon={<UserCheck className="w-5 h-5" />}
             isOpen={openSections.usuario}
             onToggle={() => toggleSection('usuario')}
-            hasActiveFilter={usuarioFilter !== ''}
+            hasActiveFilter={usuarioFilter.length > 0}
             itemRef={usuarioItemRef}
             submenuContent={
               <div className="p-3 space-y-1 overflow-y-auto flex-1 min-h-0" style={{ maxHeight: 'calc(80vh - 24px)' }}>
@@ -470,35 +477,66 @@ export default function AppointmentsToolbar({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onUsuarioFilterChange('');
-                    setOpenSections(prev => ({ ...prev, usuario: false }));
+                    onUsuarioFilterChange([]);
                   }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg transition-all duration-150 ${
-                    usuarioFilter === ''
+                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 flex items-center gap-2 ${
+                    usuarioFilter.length === 0
                       ? 'bg-primary-light text-primary font-medium shadow-sm'
                       : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
                   }`}
                 >
-                  Todos los usuarios
-                </button>
-                {usuarioOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
+                  <input
+                    type="checkbox"
+                    checked={usuarioFilter.length === 0}
+                    onChange={() => {}}
+                    className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onUsuarioFilterChange(option.value);
-                      setOpenSections(prev => ({ ...prev, usuario: false }));
+                      onUsuarioFilterChange([]);
                     }}
-                    className={`w-full px-3 py-2.5 text-left text-sm rounded-lg transition-all duration-150 ${
-                      usuarioFilter === option.value
-                        ? 'bg-primary-light text-primary font-medium shadow-sm'
-                        : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
+                  />
+                  <span>Todos los usuarios</span>
+                </button>
+                {usuarioOptions.map((option) => {
+                  const isSelected = usuarioFilter.includes(option.value);
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isSelected) {
+                          // Deseleccionar
+                          onUsuarioFilterChange(usuarioFilter.filter(v => v !== option.value));
+                        } else {
+                          // Seleccionar
+                          onUsuarioFilterChange([...usuarioFilter, option.value]);
+                        }
+                      }}
+                      className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 flex items-center gap-2 ${
+                        isSelected
+                          ? 'bg-primary-light text-primary font-medium shadow-sm'
+                          : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {}}
+                        className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isSelected) {
+                            onUsuarioFilterChange(usuarioFilter.filter(v => v !== option.value));
+                          } else {
+                            onUsuarioFilterChange([...usuarioFilter, option.value]);
+                          }
+                        }}
+                      />
+                      <span>{option.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             }
           />
@@ -512,7 +550,7 @@ export default function AppointmentsToolbar({
                   e.stopPropagation();
                   handleClearFilters();
                 }}
-                className="w-full px-3 py-2.5 text-sm text-center text-red-600 hover:bg-red-50 active:bg-red-100 rounded-lg transition-all duration-150 font-medium"
+                className="w-full px-3 py-2.5 text-sm text-center text-red-600 hover:bg-red-50 active:bg-red-100 rounded-lg cursor-pointer transition-all duration-150 font-medium"
               >
                 Limpiar filtros
               </button>

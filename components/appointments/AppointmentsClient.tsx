@@ -50,7 +50,7 @@ export default function AppointmentsClient({
   
   // Filtros
   const [nucleoFilter, setNucleoFilter] = useState<string>('');
-  const [usuarioFilter, setUsuarioFilter] = useState<string>('');
+  const [usuarioFilter, setUsuarioFilter] = useState<string[]>([]);
   const [dateRangeFilter, setDateRangeFilter] = useState<string>('all'); // 'all', 'today', 'week', 'month', 'custom'
   const [customDateStart, setCustomDateStart] = useState<string>('');
   const [customDateEnd, setCustomDateEnd] = useState<string>('');
@@ -121,12 +121,15 @@ export default function AppointmentsClient({
       });
     }
 
-    // Filtro por usuario que atendió
-    if (usuarioFilter) {
+    // Filtro por usuario que atendió (múltiple) - todos los usuarios seleccionados deben estar en la cita
+    if (usuarioFilter.length > 0) {
       filtered = filtered.filter((apt) => {
-        return apt.attendingUsersList?.some(
-          (user) => user.id_usuario === usuarioFilter || user.nombre_completo.toLowerCase().includes(usuarioFilter.toLowerCase())
-        );
+        if (!apt.attendingUsersList || apt.attendingUsersList.length === 0) {
+          return false;
+        }
+        // Verificar que TODOS los usuarios seleccionados estén en la cita
+        const userIdsInAppointment = apt.attendingUsersList.map(user => user.id_usuario);
+        return usuarioFilter.every(selectedUserId => userIdsInAppointment.includes(selectedUserId));
       });
     }
 
