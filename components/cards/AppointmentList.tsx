@@ -147,7 +147,7 @@ export default function AppointmentList({
   };
 
   return (
-    <div className="relative">
+    <div className="relative pb-6">
       <div className="bg-white rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] h-full flex flex-col">
       {/* Header con título y botón */}
       <div className="pt-6 px-6 pb-0">
