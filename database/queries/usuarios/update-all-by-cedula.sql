@@ -15,11 +15,16 @@ CREATE OR REPLACE PROCEDURE update_all_by_cedula(
     p_profesor_term         VARCHAR DEFAULT NULL,
     p_profesor_tipo         VARCHAR DEFAULT NULL,
     -- Coordinador
-    p_coordinador_term      VARCHAR DEFAULT NULL
+    p_coordinador_term      VARCHAR DEFAULT NULL,
+    p_cedula_actor          VARCHAR DEFAULT NULL
 )
 LANGUAGE plpgsql
 AS $$
+    -- Guardar el tipo_usuario anterior
+    DECLARE v_tipo_usuario_anterior VARCHAR;
 BEGIN
+    SELECT tipo_usuario INTO v_tipo_usuario_anterior FROM usuarios WHERE cedula = p_cedula;
+
     -- Actualizar tabla usuarios solo si existe el usuario
     UPDATE usuarios
     SET 
@@ -30,6 +35,18 @@ BEGIN
         telefono_celular = COALESCE(p_telefono_celular, telefono_celular),
         tipo_usuario = COALESCE(p_tipo_usuario, tipo_usuario)
     WHERE cedula = p_cedula;
+
+    -- Auditoría: solo si cambió el tipo_usuario
+    IF p_tipo_usuario IS NOT NULL AND v_tipo_usuario_anterior IS DISTINCT FROM p_tipo_usuario THEN
+        INSERT INTO auditoria_actualizacion_tipo_usuario (
+            ci_usuario, tipo_usuario_anterior, tipo_usuario_nuevo, actualizado_por
+        ) VALUES (
+            p_cedula,
+            v_tipo_usuario_anterior,
+            p_tipo_usuario,
+            p_cedula_actor
+        );
+    END IF;
 
     -- Actualizar tabla estudiantes solo si existe el estudiante
     UPDATE estudiantes

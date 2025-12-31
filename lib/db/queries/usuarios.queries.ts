@@ -272,33 +272,49 @@ export const usuariosQueries = {
       | "Servicio Comunitario"
       | null;
     tipo_profesor?: string | null;
+    cedula_actor?: string; 
   }): Promise<void> => {
-    await pool.query(
-      `CALL update_all_by_cedula(
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
-      )`,
-      [
-        data.cedula,
-        data.nombres ?? null,
-        data.apellidos ?? null,
-        data.correo_electronico ?? null,
-        data.nombre_usuario ?? null,
-        data.telefono_celular ?? null,
-        data.tipo_usuario ?? null,
-        // Estudiante
-        data.tipo_usuario === "Estudiante" ? data.nrc ?? null : null,
-        data.tipo_usuario === "Estudiante" ? data.term ?? null : null,
-        data.tipo_usuario === "Estudiante" ? data.tipo_estudiante ?? null : null,
-        // Profesor
-        data.tipo_usuario === "Profesor" ? data.term ?? null : null,
-        data.tipo_usuario === "Profesor" ? data.tipo_profesor ?? null : null,
-        // Coordinador
-        data.tipo_usuario === "Coordinador" ? data.term ?? null : null,
-      ]
-    );
+      // Se espera que la cédula del usuario autenticado llegue como data.cedula_actor
+      if (!data.cedula_actor) {
+        throw new Error('No se recibió la cédula del usuario autenticado');
+      }
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query(
+          `CALL update_all_by_cedula(
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+          )`,
+          [
+            data.cedula,
+            data.nombres ?? null,
+            data.apellidos ?? null,
+            data.correo_electronico ?? null,
+            data.nombre_usuario ?? null,
+            data.telefono_celular ?? null,
+            data.tipo_usuario ?? null,
+            // Estudiante
+            data.tipo_usuario === "Estudiante" ? data.nrc ?? null : null,
+            data.tipo_usuario === "Estudiante" ? data.term ?? null : null,
+            data.tipo_usuario === "Estudiante" ? data.tipo_estudiante ?? null : null,
+            // Profesor
+            data.tipo_usuario === "Profesor" ? data.term ?? null : null,
+            data.tipo_usuario === "Profesor" ? data.tipo_profesor ?? null : null,
+            // Coordinador
+            data.tipo_usuario === "Coordinador" ? data.term ?? null : null,
+            //Cedula actor (Usuario que realiza la acción)
+            data.cedula_actor
+          ]
+        );
+        await client.query('COMMIT');
+      } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+      } finally {
+        client.release();
+      }
   }
 };
-
 
 
 
