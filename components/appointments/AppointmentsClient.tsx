@@ -5,6 +5,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import { getCitasAction } from '@/app/actions/citas';
 import CalendarWidget from '@/components/ui/calendar/CalendarWidget';
 import AppointmentList from '@/components/cards/AppointmentList';
+import AppointmentCardList from './AppointmentCardList';
+import { AppointmentViewMode } from '@/components/ui/navigation/AppointmentViewSwitcher';
+import AppointmentsToolbar from './AppointmentsToolbar';
+import { Search as SearchIcon, Plus } from 'lucide-react';
+import Tabs from '@/components/ui/Tabs';
 import type { Appointment } from '@/types/appointment';
 import { AppointmentModal } from '../appointmentModal/AppointmentModal';
 import { AppointmentDetailModal } from '../appointmentModal/AppointmentDetailModal';
@@ -14,6 +19,7 @@ interface AppointmentsClientProps {
 }
 
 export default function AppointmentsClient({ initialAppointments }: AppointmentsClientProps) {
+  const [viewMode, setViewMode] = useState<AppointmentViewMode>('calendar');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedMonth, setSelectedMonth] = useState(
     new Date(new Date().getFullYear(), new Date().getMonth(), 1)
@@ -27,6 +33,8 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
   const [modalDate, setModalDate] = useState<Date | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+  const [searchValue, setSearchValue] = useState('');
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -42,9 +50,11 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
 
   // Filtrar citas según el modo: por día específico o por mes completo
   const displayedAppointments = useMemo(() => {
+    let filtered = appointments;
+    
     if (filterByDate) {
       // Filtrar solo las citas del día seleccionado
-      return appointments.filter((apt) => {
+      filtered = filtered.filter((apt) => {
         const aptDate = new Date(apt.date);
         const selectedDateOnly = new Date(selectedDate);
         selectedDateOnly.setHours(0, 0, 0, 0);
@@ -53,7 +63,7 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
       });
     } else {
       // Filtrar citas del mes seleccionado
-      return appointments.filter((apt) => {
+      filtered = filtered.filter((apt) => {
         const aptDate = new Date(apt.date);
         return (
           aptDate.getFullYear() === selectedMonth.getFullYear() &&
@@ -61,7 +71,29 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
         );
       });
     }
+    
+    return filtered;
   }, [appointments, selectedMonth, selectedDate, filterByDate]);
+
+  // Filtrar citas por búsqueda (solo para vista de lista)
+  const filteredAppointmentsForList = useMemo(() => {
+    if (!searchValue.trim()) {
+      return appointments;
+    }
+    
+    const searchLower = searchValue.toLowerCase().trim();
+    return appointments.filter((apt) => {
+      // Buscar en: cliente, caso, ubicación, orientación, usuarios que atendieron
+      const clientMatch = apt.client?.toLowerCase().includes(searchLower);
+      const caseMatch = apt.caseDetail?.toLowerCase().includes(searchLower);
+      const locationMatch = apt.location?.toLowerCase().includes(searchLower);
+      const orientationMatch = apt.orientation?.toLowerCase().includes(searchLower);
+      const attendingUsersMatch = apt.attendingUsers?.toLowerCase().includes(searchLower);
+      const titleMatch = apt.title?.toLowerCase().includes(searchLower);
+      
+      return clientMatch || caseMatch || locationMatch || orientationMatch || attendingUsersMatch || titleMatch;
+    });
+  }, [appointments, searchValue]);
 
   // Preparar datos para el calendario (solo fechas)
   const calendarAppointments = useMemo(() => {
@@ -96,6 +128,7 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
   const handleModalClose = () => {
     setShowModal(false);
     setModalDate(null);
+    setEditingAppointment(null);
   };
 
   const handleModalSave = async () => {
@@ -110,6 +143,7 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
     }
     setShowModal(false);
     setModalDate(null);
+    setEditingAppointment(null);
   };
 
   // Abrir modal de detalles de cita
@@ -124,6 +158,38 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
     setSelectedAppointment(null);
   };
 
+  // Manejar edición de cita
+  const handleEditAppointment = (appointment: Appointment) => {
+    setEditingAppointment(appointment);
+    setModalDate(appointment.date);
+    setShowModal(true);
+  };
+
+  // Manejar eliminación de cita
+  const handleDeleteAppointment = async (appointment: Appointment) => {
+    const confirmDelete = window.confirm(
+      `¿Está seguro de que desea eliminar la cita del ${formatDate(appointment.date)}?`
+    );
+    if (confirmDelete) {
+      // TODO: Implementar acción de eliminar cita
+      console.log('Eliminar cita:', appointment);
+      // Recargar citas después de eliminar
+      const result = await getCitasAction();
+      if (result.success && result.data) {
+        if (Array.isArray(result.data)) {
+          setAppointments(result.data.map((apt: Appointment) => ({ ...apt, date: new Date(apt.date) })));
+        }
+      }
+    }
+  };
+
+  const formatDate = (date: Date) => {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   return (
     <div className="h-full relative">
       <motion.div 
@@ -132,45 +198,143 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: "easeOut" }}
       >
-        <h1 className="text-3xl font-medium text-foreground mb-1" style={{ fontFamily: 'var(--font-league-spartan)' }}>
-          Citas
-        </h1>
-        <p className="text-base text-gray-600" style={{ fontFamily: 'var(--font-urbanist)' }}>
-          Vista de programación de las citas.
-        </p>
+        <div className="mb-4">
+          <h1 className="text-3xl font-medium text-foreground mb-1" style={{ fontFamily: 'var(--font-league-spartan)' }}>
+            Citas
+          </h1>
+          <p className="text-base text-gray-600" style={{ fontFamily: 'var(--font-urbanist)' }}>
+            Vista de programación de las citas.
+          </p>
+        </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6">
-        <motion.div 
-          className="h-[calc(100vh-10rem)]"
-          initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
-        >
-          <CalendarWidget
-            selectedDate={selectedDate}
-            onDateChange={handleDateChange}
-            onMonthChange={handleMonthChange}
-            appointments={calendarAppointments}
-          />
-        </motion.div>
+      {/* Tabs para cambiar entre vistas */}
+      <Tabs
+        onTabChange={(tabId) => setViewMode(tabId as AppointmentViewMode)}
+        defaultTab={viewMode}
+        tabs={[
+          {
+            id: 'calendar',
+            label: 'Calendario',
+            content: (
+              <motion.div
+                key="calendar-view"
+                initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.3 }}
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6">
+                  <motion.div 
+                    className="h-[calc(100vh-10rem)]"
+                    initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
+                  >
+                    <CalendarWidget
+                      selectedDate={selectedDate}
+                      onDateChange={handleDateChange}
+                      onMonthChange={handleMonthChange}
+                      appointments={calendarAppointments}
+                    />
+                  </motion.div>
 
-        <motion.div 
-          className="pr-6 h-[calc(100vh-10rem)]"
-          initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.15, ease: "easeOut" }}
-        >
-          <AppointmentList
-            appointments={displayedAppointments}
-            selectedMonth={selectedMonth}
-            selectedDate={filterByDate ? selectedDate : null}
-            onAddAppointment={handleAddAppointment}
-            onShowAllMonth={filterByDate ? handleShowAllMonth : undefined}
-            onAppointmentClick={handleAppointmentClick}
-          />
-        </motion.div>
-      </div>
+                  <motion.div 
+                    className="pr-6 h-[calc(100vh-10rem)]"
+                    initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.15, ease: "easeOut" }}
+                  >
+                    <AppointmentList
+                      appointments={displayedAppointments}
+                      selectedMonth={selectedMonth}
+                      selectedDate={filterByDate ? selectedDate : null}
+                      onAddAppointment={handleAddAppointment}
+                      onShowAllMonth={filterByDate ? handleShowAllMonth : undefined}
+                      onAppointmentClick={handleAppointmentClick}
+                    />
+                  </motion.div>
+                </div>
+              </motion.div>
+            ),
+          },
+          {
+            id: 'list',
+            label: 'Lista',
+            content: (
+              <motion.div
+                key="list-view"
+                initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.3 }}
+              >
+                {/* Barra de búsqueda y filtro */}
+                <motion.div
+                  initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
+                  className="mb-4"
+                >
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+                    {/* Buscador */}
+                    <div className="flex-1 min-w-0">
+                      <search className="flex items-center">
+                        <form 
+                          className="flex items-center h-10 border border-primary rounded-full bg-transparent w-full"
+                          onSubmit={(e) => e.preventDefault()}
+                        >
+                          <label className="flex items-center w-full">
+                            <input
+                              id="search-appointments-input"
+                              type="search"
+                              name="q"
+                              autoComplete="off"
+                              placeholder="Buscar cita..."
+                              value={searchValue}
+                              onChange={(e) => setSearchValue(e.target.value)}
+                              className="flex-1 px-4 py-2.5 h-full focus:outline-none bg-transparent text-base text-foreground placeholder:text-gray-500"
+                            />
+                            <SearchIcon className="w-[18px] h-[18px] text-[#414040] mr-3 flex-shrink-0" />
+                          </label>
+                        </form> 
+                      </search>
+                    </div>
+                    
+                    {/* Filtro y Botón Nueva Cita */}
+                    <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+                      {/* Filtro */}
+                      <AppointmentsToolbar
+                        viewMode="list"
+                        onViewModeChange={setViewMode}
+                      />
+                      
+                      {/* Botón Nueva Cita */}
+                      <motion.button
+                        onClick={handleAddAppointment}
+                        className="h-10 px-4 flex items-center justify-center gap-2 bg-primary text-white rounded-full hover:bg-primary-dark transition-colors font-medium whitespace-nowrap"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Plus className="w-5 h-5" />
+                        <span>Nueva Cita</span>
+                      </motion.button>
+                    </div>
+                  </div>
+                </motion.div>
+                
+                {/* Lista de cards */}
+                <AppointmentCardList
+                  appointments={filteredAppointmentsForList}
+                  onEdit={handleEditAppointment}
+                  onDelete={handleDeleteAppointment}
+                  onView={handleAppointmentClick}
+                />
+              </motion.div>
+            ),
+          },
+        ]}
+      />
 
       <AnimatePresence>
         {showModal && (
