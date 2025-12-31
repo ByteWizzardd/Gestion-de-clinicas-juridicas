@@ -190,6 +190,12 @@ export async function deleteUsuarioFisicoAction(
   cedula_usuario: string,
   motivo: string
 ): Promise<{ success: boolean; error?: { message: string } }> {
+  if (!motivo || motivo.trim() === "") {
+    return {
+      success: false,
+      error: { message: "El motivo es obligatorio para eliminar un usuario" },
+    };
+  }
   // 1. Obtener usuario actor desde la cookie JWT
   const userResult = await getCurrentUserAction();
   if (!userResult.success || !userResult.data) {

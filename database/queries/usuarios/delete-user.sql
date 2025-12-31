@@ -17,7 +17,6 @@ CREATE OR REPLACE FUNCTION eliminar_usuario_fisico(
 DECLARE
     casos_count INTEGER;
     acciones_count INTEGER;
-    datos_usuario JSONB;
 BEGIN
     -- Validar motivo
     IF p_motivo IS NULL OR TRIM(p_motivo) = '' THEN
@@ -29,12 +28,7 @@ BEGIN
         RAISE EXCEPTION 'Usuario con cédula % no encontrado', p_cedula_usuario;
     END IF;
 
-    -- Obtener datos del usuario para auditoría
-    SELECT row_to_json(u.*)::jsonb INTO datos_usuario
-    FROM usuarios u
-    WHERE u.cedula = p_cedula_usuario;
-
-    -- Contar casos y acciones asociadas
+    -- Contar casos y acciones asociadas (solo informativo)
     SELECT COUNT(*) INTO casos_count FROM (
         SELECT 1 FROM casos c INNER JOIN supervisa s ON c.id_caso = s.id_caso WHERE s.cedula_profesor = p_cedula_usuario
         UNION ALL
@@ -48,43 +42,30 @@ BEGIN
     END IF;
 
     BEGIN
-        -- Establecer el usuario actual para el trigger de auditoría
-        PERFORM set_config('app.current_user', p_cedula_actor, true);
-
-        -- 1. Eliminar tokens de recuperación de contraseña
+        -- Eliminar referencias
         DELETE FROM password_reset_tokens WHERE cedula_usuario = p_cedula_usuario;
-
-        -- 2. Eliminar de atienden
         DELETE FROM atienden WHERE id_usuario = p_cedula_usuario;
-
-        -- 3. Eliminar de ejecutan
         DELETE FROM ejecutan WHERE id_usuario_ejecuta = p_cedula_usuario;
-
-        -- 4. Eliminar de supervisa
         DELETE FROM supervisa WHERE cedula_profesor = p_cedula_usuario;
-
-        -- 5. Eliminar de se_le_asigna
         DELETE FROM se_le_asigna WHERE cedula_estudiante = p_cedula_usuario;
-
-        -- 6. Actualizar acciones (id_usuario_registra = NULL)
         UPDATE acciones SET id_usuario_registra = NULL WHERE id_usuario_registra = p_cedula_usuario;
-
-        -- 7. Actualizar cambio_estatus (id_usuario_cambia = NULL)
         UPDATE cambio_estatus SET id_usuario_cambia = NULL WHERE id_usuario_cambia = p_cedula_usuario;
-
-        -- 8. Eliminar de coordinadores
         DELETE FROM coordinadores WHERE id_coordinador = p_cedula_usuario;
-
-        -- 9. Eliminar de estudiantes
         DELETE FROM estudiantes WHERE cedula_estudiante = p_cedula_usuario;
-
-        -- 10. Eliminar de profesores
         DELETE FROM profesores WHERE cedula_profesor = p_cedula_usuario;
 
-        -- 12. Eliminar de usuarios (Esto disparará el trigger)
+        -- Eliminar de usuarios
         DELETE FROM usuarios WHERE cedula = p_cedula_usuario;
 
-        RAISE NOTICE 'Usuario % eliminado completamente del sistema por usuario %', p_cedula_usuario, p_cedula_actor;
+        -- Auditoría de eliminación
+        INSERT INTO auditoria_eliminacion_usuario (
+            usuario_eliminado, eliminado_por, motivo, fecha
+        ) VALUES (
+            p_cedula_usuario,
+            p_cedula_actor,
+            p_motivo,
+            CURRENT_TIMESTAMP
+        );
 
     EXCEPTION
         WHEN foreign_key_violation THEN

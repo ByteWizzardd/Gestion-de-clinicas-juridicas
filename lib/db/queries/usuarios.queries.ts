@@ -168,13 +168,14 @@ export const usuariosQueries = {
   },
 
   /**
-   * Elimina físicamente un usuario y todas sus referencias
+   * Elimina físicamente un usuario y todas sus referencias, registrando auditoría en el procedimiento
    */
   deleteFisico: async (
     cedula_usuario: string,
     cedula_actor: string,
     motivo: string
   ): Promise<void> => {
+    // Llama a la función que ya realiza la auditoría internamente
     await pool.query("SELECT eliminar_usuario_fisico($1, $2, $3)", [
       cedula_usuario,
       cedula_actor,
