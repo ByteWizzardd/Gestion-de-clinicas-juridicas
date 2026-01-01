@@ -251,11 +251,12 @@ function Filter({
                 handler('');
                 setActiveSubmenu(null);
               }}
-              className={`w-full px-3 py-2 text-left text-sm rounded-lg transition-colors cursor-pointer ${filterValue === ''
+              className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end ${filterValue === ''
                 ? 'bg-primary-light text-primary font-medium'
                 : 'text-gray-600 hover:bg-gray-100'
                 }`}
             >
+              <div className="flex-1" />
               {allLabel}
             </motion.button>
             {options.map((option) => (
@@ -268,11 +269,12 @@ function Filter({
                   handler(option.value);
                   setActiveSubmenu(null);
                 }}
-                className={`w-full px-3 py-2 text-left text-sm rounded-lg transition-colors cursor-pointer ${filterValue === option.value
+                className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end ${filterValue === option.value
                   ? 'bg-primary-light text-primary font-medium'
                   : 'text-gray-600 hover:bg-gray-100'
                   }`}
               >
+                <div className="flex-1" />
                 {option.label}
               </motion.button>
             ))}
@@ -428,15 +430,14 @@ function Filter({
                     whileTap={{ scale: 0.95 }}
                     whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
                     onClick={() => onCasosAsignadosChange(!casosAsignadosFilter)}
-                    className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-between gap-2 group ${casosAsignadosFilter
+                    className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 group ${casosAsignadosFilter
                       ? 'text-red-600'
                       : 'text-gray-600'
                       }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <span>Mis casos</span>
-                      <UserCheck className={`w-4 h-4 ${casosAsignadosFilter ? 'text-red-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
-                    </div>
+                    <div className="flex-1" />
+                    <span>Mis casos</span>
+                    <UserCheck className={`w-4 h-4 ${casosAsignadosFilter ? 'text-red-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
                   </motion.button>
                   <div className="border-t border-gray-200 my-2"></div>
                 </>
