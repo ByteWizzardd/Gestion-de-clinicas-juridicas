@@ -93,7 +93,7 @@ export default function ProfileDropdown({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: showAbove ? 10 : -10, scale: 0.95 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className={`absolute left-full ml-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 z-50 py-2 ${
+            className={`absolute left-full ml-0.1 w-56 bg-white rounded-xl shadow-xl border border-gray-200 z-50 py-2 ${
               showAbove ? 'bottom-0' : 'top-0'
             }`}
           >
