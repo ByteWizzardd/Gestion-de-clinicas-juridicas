@@ -172,7 +172,13 @@ export async function getCurrentUserAction(): Promise<GetCurrentUserResult> {
     }
 
     // Obtener información completa del usuario
-    const user = await authQueries.getUserByCedula(authResult.user.cedula);
+    const user = await authQueries.getUserByCedula(authResult.user.cedula) as {
+      cedula: string;
+      nombres: string;
+      apellidos: string;
+      correo_electronico: string;
+      rol_sistema?: string;
+    } | null;
 
     if (!user) {
       return {
