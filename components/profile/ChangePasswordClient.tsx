@@ -124,7 +124,7 @@ export default function ChangePasswordClient() {
           <div className="p-6 sm:p-8 space-y-6">
             <div>
               <Input
-                label="Contraseña Actual *"
+                label="Contraseña Actual"
                 name="currentPassword"
                 type="password"
                 value={formData.currentPassword}
@@ -136,7 +136,7 @@ export default function ChangePasswordClient() {
 
             <div>
               <Input
-                label="Nueva Contraseña *"
+                label="Nueva Contraseña"
                 name="newPassword"
                 type="password"
                 value={formData.newPassword}
@@ -149,7 +149,7 @@ export default function ChangePasswordClient() {
 
             <div>
               <Input
-                label="Confirmar Nueva Contraseña *"
+                label="Confirmar Nueva Contraseña"
                 name="confirmPassword"
                 type="password"
                 value={formData.confirmPassword}
@@ -174,11 +174,6 @@ export default function ChangePasswordClient() {
           {/* Footer con botones */}
           <div className="flex flex-col px-6 sm:px-8 py-4">
             <div className="border-t border-gray-200 mb-4"></div>
-            {/* Nota sobre campos obligatorios */}
-            <div className="flex items-center gap-1 mb-4">
-              <span className="text-danger font-medium text-sm">*</span>
-              <span className="text-sm text-gray-600">Campo obligatorio</span>
-            </div>
             
             <div className="flex justify-end gap-4">
               <Button
