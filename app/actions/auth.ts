@@ -7,6 +7,7 @@ import { jwtExpiresInToSeconds, verifyToken } from '@/lib/utils/security';
 import { AppError, UnauthorizedError } from '@/lib/utils/errors';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { handleServerActionError } from '@/lib/utils/server-action-helpers';
+import { usuariosQueries } from '@/lib/db/queries/usuarios.queries';
 import crypto from "crypto";
 
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '30d';
@@ -36,6 +37,7 @@ export interface GetCurrentUserResult {
     apellidos: string;
     correo: string;
     rol: string;
+    fotoPerfil?: string | null; // Base64 string o null
   };
   error?: {
     message: string;
@@ -190,6 +192,15 @@ export async function getCurrentUserAction(): Promise<GetCurrentUserResult> {
       };
     }
 
+    // Obtener foto de perfil
+    const fotoBuffer = await usuariosQueries.getFotoPerfil(user.cedula);
+    let fotoPerfilBase64: string | null = null;
+    
+    if (fotoBuffer) {
+      // Convertir Buffer a base64
+      fotoPerfilBase64 = `data:image/jpeg;base64,${fotoBuffer.toString('base64')}`;
+    }
+
     return {
       success: true,
       data: {
@@ -198,6 +209,7 @@ export async function getCurrentUserAction(): Promise<GetCurrentUserResult> {
         apellidos: user.apellidos,
         correo: user.correo_electronico,
         rol: user.rol_sistema || authResult.user.rol,
+        fotoPerfil: fotoPerfilBase64,
       },
     };
   } catch (error) {
@@ -496,5 +508,117 @@ export async function resetPasswordAction(formData: FormData): Promise<ResetPass
         code: 'UNKNOWN_ERROR',
       },
     };
+  }
+}
+
+export interface ChangePasswordResult {
+  success: boolean;
+  data?: {
+    message: string;
+  };
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+/**
+ * Server Action para cambiar la contraseña cuando el usuario está autenticado
+ * Valida la contraseña actual y actualiza a la nueva sin necesidad de correo
+ */
+export async function changePasswordAction(formData: FormData): Promise<ChangePasswordResult> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: {
+          message: 'No autorizado',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    const currentPassword = formData.get('currentPassword') as string;
+    const newPassword = formData.get('newPassword') as string;
+    const confirmPassword = formData.get('confirmPassword') as string;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return {
+        success: false,
+        error: {
+          message: 'Todos los campos son requeridos',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    if (newPassword !== confirmPassword) {
+      return {
+        success: false,
+        error: {
+          message: 'Las contraseñas no coinciden',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    if (newPassword.length < 6) {
+      return {
+        success: false,
+        error: {
+          message: 'La contraseña debe tener al menos 6 caracteres',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Obtener usuario con su contraseña actual
+    const user = await authQueries.getUserByCedula(authResult.user.cedula) as {
+      password_hash: string;
+      correo_electronico: string;
+    } | null;
+
+    if (!user || !user.password_hash) {
+      return {
+        success: false,
+        error: {
+          message: 'Usuario no encontrado o sin contraseña configurada',
+          code: 'NOT_FOUND',
+        },
+      };
+    }
+
+    // Verificar contraseña actual
+    const { comparePassword } = await import('@/lib/utils/security');
+    const passwordMatch = await comparePassword(currentPassword, user.password_hash);
+    
+    if (!passwordMatch) {
+      return {
+        success: false,
+        error: {
+          message: 'La contraseña actual es incorrecta',
+          code: 'INVALID_PASSWORD',
+        },
+      };
+    }
+
+    // Hash de la nueva contraseña
+    const { hashPassword } = await import('@/lib/utils/security');
+    const passwordHash = await hashPassword(newPassword);
+
+    // Actualizar contraseña
+    const { usuariosQueries } = await import('@/lib/db/queries/usuarios.queries');
+    await usuariosQueries.updatePasswordByEmail(user.correo_electronico, passwordHash);
+
+    return {
+      success: true,
+      data: {
+        message: 'Contraseña actualizada exitosamente',
+      },
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'changePasswordAction', 'PASSWORD_CHANGE_ERROR');
   }
 }

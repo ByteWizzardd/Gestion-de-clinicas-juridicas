@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import Tabs from "@/components/ui/Tabs";
 import GeneralInfoTab from "@/components/users/tabs/GeneralInfoTab";
 import RolesTab from "@/components/users/tabs/RolesTab";
+import EditableAvatar from "@/components/users/EditableAvatar";
 import { getUsuarioInfoByCedulaAction } from "@/app/actions/usuarios";
 
 interface Usuario {
@@ -19,6 +21,7 @@ interface Usuario {
   nombre_usuario: string;
   habilitado_sistema?: boolean;
   tipo_usuario?: string;
+  fotoPerfil?: string | null;
   info_estudiante?: string | null;
   info_profesor?: string | null;
   info_coordinador?: string | null;
@@ -32,6 +35,7 @@ export default function UserDetailPage() {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -112,13 +116,54 @@ export default function UserDetailPage() {
         ]}
       />
 
-      <div className="mb-6 sm:mb-8">
+      <div className="mb-6 sm:mb-8 relative">
+        <div className="flex items-center gap-4 mb-4">
+          <EditableAvatar
+            fotoPerfil={usuario.fotoPerfil || null}
+            cedula={usuario.cedula}
+            nombreInicial={usuario.nombres}
+            allowUpload={false}
+            onPhotoUpdated={() => {
+              // Refrescar datos del usuario
+              const fetchUsuario = async () => {
+                try {
+                  const result = await getUsuarioInfoByCedulaAction(id);
+                  if (result.success && result.data) {
+                    setUsuario(result.data);
+                  }
+                } catch (err) {
+                  console.error('Error al actualizar usuario:', err);
+                }
+              };
+              fetchUsuario();
+            }}
+            onSuccess={setShowSuccess}
+          />
+          <div>
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-2" style={{ fontFamily: 'var(--font-league-spartan)' }}>
           {usuario.nombre_completo}
         </h1>
         <p className="text-sm sm:text-base text-gray-500">
           Cédula: {usuario.cedula}
         </p>
+          </div>
+        </div>
+        
+        {/* Notificación de éxito centrada abajo de la sección */}
+        <AnimatePresence>
+          {showSuccess && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex justify-center mt-4"
+            >
+              <div className="p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
+                Operación exitosa
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <Tabs tabs={tabs} defaultTab="general" />

@@ -393,3 +393,253 @@ export async function updateUsuarioByCedulaAction(
     };
   }
 }
+
+export interface UploadFotoPerfilResult {
+  success: boolean;
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+/**
+ * Server Action para subir/actualizar foto de perfil
+ */
+export async function uploadFotoPerfilAction(
+  formData: FormData
+): Promise<UploadFotoPerfilResult> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    const cedula = authResult.user.cedula;
+    const file = formData.get('foto') as File | null;
+
+    if (!file) {
+      return {
+        success: false,
+        error: {
+          message: 'No se proporcionó ningún archivo',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Validar tipo de archivo
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      return {
+        success: false,
+        error: {
+          message: 'Formato de archivo no permitido. Solo se permiten: JPG, PNG, WEBP',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Validar tamaño (5MB máximo)
+    const maxSize = 5 * 1024 * 1024; // 5MB en bytes
+    if (file.size > maxSize) {
+      return {
+        success: false,
+        error: {
+          message: 'El archivo es demasiado grande. Tamaño máximo: 5MB',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Convertir archivo a Buffer
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Actualizar foto de perfil en la base de datos
+    await usuariosQueries.updateFotoPerfil(cedula, buffer);
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'uploadFotoPerfilAction', 'UPLOAD_ERROR');
+  }
+}
+
+/**
+ * Server Action para eliminar foto de perfil del usuario actual
+ */
+export async function deleteFotoPerfilAction(): Promise<DeleteFotoPerfilResult> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    const cedula = authResult.user.cedula;
+
+    // Eliminar foto de perfil (establecer a NULL)
+    await usuariosQueries.deleteFotoPerfil(cedula);
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'deleteFotoPerfilAction', 'DELETE_ERROR');
+  }
+}
+
+/**
+ * Server Action para subir foto de perfil de otro usuario (solo coordinador)
+ */
+export async function uploadFotoPerfilUsuarioAction(
+  formData: FormData
+): Promise<UploadFotoPerfilResult> {
+  try {
+    // Verificar autenticación y rol
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    // Solo coordinador puede subir fotos de otros usuarios
+    const userResult = await getCurrentUserAction();
+    if (!userResult.success || userResult.data?.rol !== 'Coordinador') {
+      return {
+        success: false,
+        error: {
+          message: 'No tienes permisos para realizar esta acción',
+          code: 'FORBIDDEN',
+        },
+      };
+    }
+
+    const cedula = formData.get('cedula') as string;
+    const file = formData.get('foto') as File | null;
+
+    if (!cedula) {
+      return {
+        success: false,
+        error: {
+          message: 'No se proporcionó la cédula del usuario',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    if (!file) {
+      return {
+        success: false,
+        error: {
+          message: 'No se proporcionó ningún archivo',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Validar tipo de archivo
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      return {
+        success: false,
+        error: {
+          message: 'Formato de archivo no permitido. Solo se permiten: JPG, PNG, WEBP',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Validar tamaño (5MB máximo)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      return {
+        success: false,
+        error: {
+          message: 'El archivo es demasiado grande. Tamaño máximo: 5MB',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Convertir archivo a Buffer
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Actualizar foto de perfil en la base de datos
+    await usuariosQueries.updateFotoPerfil(cedula, buffer);
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'uploadFotoPerfilUsuarioAction', 'UPLOAD_ERROR');
+  }
+}
+
+export interface DeleteFotoPerfilResult {
+  success: boolean;
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+/**
+ * Server Action para eliminar foto de perfil de otro usuario (solo coordinador)
+ */
+export async function deleteFotoPerfilUsuarioAction(
+  cedula: string
+): Promise<DeleteFotoPerfilResult> {
+  try {
+    // Verificar autenticación y rol
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    // Solo coordinador puede eliminar fotos de otros usuarios
+    const userResult = await getCurrentUserAction();
+    if (!userResult.success || userResult.data?.rol !== 'Coordinador') {
+      return {
+        success: false,
+        error: {
+          message: 'No tienes permisos para realizar esta acción',
+          code: 'FORBIDDEN',
+        },
+      };
+    }
+
+    if (!cedula) {
+      return {
+        success: false,
+        error: {
+          message: 'No se proporcionó la cédula del usuario',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Eliminar foto de perfil (establecer a NULL)
+    await usuariosQueries.deleteFotoPerfil(cedula);
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'deleteFotoPerfilUsuarioAction', 'DELETE_ERROR');
+  }
+}

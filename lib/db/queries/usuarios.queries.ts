@@ -198,6 +198,7 @@ export const usuariosQueries = {
     telefono_celular: string | null;
     habilitado_sistema: boolean;
     tipo_usuario: string;
+    fotoPerfil?: string | null;
     estudiante?: {
       nrc: string | null;
       term: string | null;
@@ -220,6 +221,15 @@ export const usuariosQueries = {
     const result: QueryResult = await pool.query(query, [cedula]);
     const row = result.rows[0];
     if (!row) return null;
+
+    // Obtener foto de perfil
+    const fotoBuffer = await usuariosQueries.getFotoPerfil(cedula);
+    let fotoPerfilBase64: string | null = null;
+    
+    if (fotoBuffer) {
+      fotoPerfilBase64 = `data:image/jpeg;base64,${fotoBuffer.toString('base64')}`;
+    }
+
     return {
       cedula: row.cedula,
       nombres: row.nombres,
@@ -230,6 +240,7 @@ export const usuariosQueries = {
       telefono_celular: row.telefono_celular,
       habilitado_sistema: row.habilitado_sistema,
       tipo_usuario: row.tipo_usuario,
+      fotoPerfil: fotoPerfilBase64,
       estudiante:
         row.estudiante_nrc || row.estudiante_term || row.estudiante_tipo
           ? {
@@ -314,7 +325,32 @@ export const usuariosQueries = {
       } finally {
         client.release();
       }
-  }
+  },
+
+  /**
+   * Obtiene la foto de perfil de un usuario
+   */
+  getFotoPerfil: async (cedula: string): Promise<Buffer | null> => {
+    const query = loadSQL('usuarios/get-foto-perfil.sql');
+    const result: QueryResult = await pool.query(query, [cedula]);
+    return result.rows[0]?.foto_perfil || null;
+  },
+
+  /**
+   * Actualiza la foto de perfil de un usuario
+   */
+  updateFotoPerfil: async (cedula: string, fotoPerfil: Buffer): Promise<void> => {
+    const query = loadSQL('usuarios/update-foto-perfil.sql');
+    await pool.query(query, [cedula, fotoPerfil]);
+  },
+
+  /**
+   * Elimina la foto de perfil de un usuario (establece a NULL)
+   */
+  deleteFotoPerfil: async (cedula: string): Promise<void> => {
+    const query = loadSQL('usuarios/delete-foto-perfil.sql');
+    await pool.query(query, [cedula]);
+  },
 };
 
 

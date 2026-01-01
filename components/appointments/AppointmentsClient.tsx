@@ -19,9 +19,7 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
   );
 
   const [filterByDate, setFilterByDate] = useState(false);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(
-    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   const [appointments, setAppointments] = useState<Appointment[]>(
     initialAppointments.map((apt) => ({ ...apt, date: new Date(apt.date) }))
@@ -31,6 +29,8 @@ export default function AppointmentsClient({ initialAppointments }: Appointments
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mediaQuery.matches);
+    
     const handleChange = (e: MediaQueryListEvent) => {
       setPrefersReducedMotion(e.matches);
     };
