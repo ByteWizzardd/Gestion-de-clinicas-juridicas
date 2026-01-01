@@ -1,15 +1,21 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, JSX } from 'react';
 import { MoreHorizontal, Eye, Pencil, Trash2 } from 'lucide-react';
+
+type CustomAction = {
+  label: string | JSX.Element;
+  onClick: () => void;
+};
 
 type ActionMenuProps = {
   onView?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  customActions?: CustomAction[];
   itemId?: string | number;
 };
 
-export default function ActionMenu({ onView, onEdit, onDelete }: ActionMenuProps) {
+export default function ActionMenu({ onView, onEdit, onDelete, customActions }: ActionMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showAbove, setShowAbove] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -63,7 +69,7 @@ export default function ActionMenu({ onView, onEdit, onDelete }: ActionMenuProps
     }
   };
 
-  const hasActions = onView || onEdit || onDelete;
+  const hasActions = onView || onEdit || onDelete || (customActions && customActions.length > 0);
 
   return (
     <div className="relative">
@@ -106,6 +112,18 @@ export default function ActionMenu({ onView, onEdit, onDelete }: ActionMenuProps
               Eliminar
             </button>
           )}
+          {customActions && customActions.filter(action => action.label !== '' && action.label !== null).length > 0 && (
+            <div className="border-t border-gray-100 my-1"></div>
+          )}
+          {customActions && customActions.filter(action => action.label !== '' && action.label !== null).map((action, idx) => (
+            <button
+              key={idx}
+              onClick={action.onClick}
+              className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-yellow-600 flex items-center gap-3 transition-colors cursor-pointer"
+            >
+              {action.label}
+            </button>
+          ))}
         </div>
       )}
     </div>

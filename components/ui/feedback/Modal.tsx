@@ -114,7 +114,7 @@ export default function Modal({
               {showCloseButton && !title && (
                 <button
                   onClick={onClose}
-                  className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
+                  className="absolute top-6 right-6 p-2 text-gray-400 hover:text-primary hover:bg-red-100 rounded-md transition-colors z-10"
                   style={{ cursor: 'pointer' }}
                   aria-label="Cerrar modal"
                   type="button"
@@ -134,7 +134,7 @@ export default function Modal({
                   {showCloseButton && (
                     <button
                       onClick={onClose}
-                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+                      className="p-2 text-gray-400 hover:text-primary hover:bg-red-100 rounded-md transition-colors"
                       style={{ cursor: 'pointer' }}
                       aria-label="Cerrar modal"
                       type="button"

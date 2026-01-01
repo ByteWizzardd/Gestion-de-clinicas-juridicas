@@ -37,4 +37,3 @@ SELECT
     END AS info_coordinador
 FROM usuarios u
 ORDER BY u.tipo_usuario, u.apellidos, u.nombres;
-

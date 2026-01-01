@@ -4,9 +4,10 @@ import { Search as SearchIcon } from 'lucide-react';
 interface SearchProps {
   value: string;
   onChange: (value: string) => void;
+  placeholder?: string;
 }
 
-function Search({ value, onChange }: SearchProps) {
+function Search({ value, onChange, placeholder = 'Buscar caso...' }: SearchProps) {
   return (
     <search className="flex items-center">
       <form 
@@ -19,7 +20,7 @@ function Search({ value, onChange }: SearchProps) {
             type="search"
             name="q"
             autoComplete="off"
-            placeholder="Buscar caso..."
+            placeholder={placeholder}
             value={value}
             onChange={(e) => onChange(e.target.value)}
             className="flex-1 px-4 py-2.5 h-full focus:outline-none bg-transparent text-base text-foreground placeholder:text-gray-500"

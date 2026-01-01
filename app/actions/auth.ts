@@ -1,13 +1,13 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { authService } from '@/lib/services/auth.service';
 import { authQueries } from '@/lib/db/queries/auth.queries';
 import { jwtExpiresInToSeconds, verifyToken } from '@/lib/utils/security';
 import { AppError, UnauthorizedError } from '@/lib/utils/errors';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { handleServerActionError } from '@/lib/utils/server-action-helpers';
+import crypto from "crypto";
 
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '30d';
 
@@ -61,6 +61,38 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
       };
     }
 
+    // Obtener usuario para validar si está habilitado
+    const user = await authQueries.getUserByNombreUsuario(nombreUsuario) as {
+      cedula: string;
+      nombres: string;
+      apellidos: string;
+      correo_electronico: string;
+      rol_sistema: string;
+      password_hash: string;
+      habilitado_sistema: boolean;
+    } | null;
+
+    if (!user) {
+      return {
+        success: false,
+        error: {
+          message: 'Usuario no encontrado',
+          code: 'NOT_FOUND',
+        },
+      };
+    }
+
+    if (user.habilitado_sistema === false) {
+      return {
+        success: false,
+        error: {
+          message: 'El usuario está deshabilitado. Contacte al coordinador.',
+          code: 'USER_DISABLED',
+        },
+      };
+    }
+
+    // Continuar con el login normal
     const result = await authService.login({
       nombreUsuario,
       password,
@@ -120,7 +152,7 @@ export async function logoutAction(): Promise<{ success: boolean }> {
     });
 
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false };
   }
 }
@@ -207,7 +239,6 @@ export interface VerifyCodeResult {
  */
 function generateVerificationCode(): string {
   // Generar código de 6 dígitos usando crypto de Node.js (más seguro)
-  const crypto = require('crypto');
   const randomBytes = crypto.randomBytes(3); // 3 bytes = 24 bits, suficiente para 6 dígitos
   const randomNum = parseInt(randomBytes.toString('hex'), 16) % 900000 + 100000; // Entre 100000 y 999999
   return randomNum.toString();
@@ -461,4 +492,3 @@ export async function resetPasswordAction(formData: FormData): Promise<ResetPass
     };
   }
 }
-

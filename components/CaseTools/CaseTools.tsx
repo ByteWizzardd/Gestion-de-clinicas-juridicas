@@ -7,6 +7,7 @@ type CaseToolsProps = {
     onAddClick?: () => void;
     searchValue?: string;
     onSearchChange?: (value: string) => void;
+    searchPlaceholder?: string;
     nucleoFilter?: string;
     tramiteFilter?: string;
     estatusFilter?: string;
@@ -29,6 +30,7 @@ function CaseTools({
     onAddClick,
     searchValue = '',
     onSearchChange,
+    searchPlaceholder,
     nucleoFilter = '',
     tramiteFilter = '',
     estatusFilter = '',
@@ -52,10 +54,10 @@ function CaseTools({
         <div className="flex flex-nowrap gap-3 sm:gap-4 items-center w-full px-3">
             {hasSearch && (
                 <div className="flex-1 min-w-0">
-                    <Search value={searchValue} onChange={onSearchChange} />
+                    <Search value={searchValue} onChange={onSearchChange} placeholder={searchPlaceholder} />
                 </div>
             )}
-            <div className="flex gap-3 sm:gap-4 items-center flex-shrink-0">
+            <div className="flex gap-3 sm:gap-4 items-center shrink-0">
                 {hasFilter && (
                     <Filter
                         nucleoFilter={nucleoFilter}

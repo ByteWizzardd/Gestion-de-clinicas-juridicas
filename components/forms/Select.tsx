@@ -1,6 +1,6 @@
-'use client';
+    'use client';
 
-import { useState, useRef, useEffect } from 'react';
+
 import { ChevronDown } from "lucide-react";
 import { AnimatePresence, motion } from 'motion/react';
 import DropdownMenu from '../ui/navigation/DropdownMenu';
@@ -23,29 +23,17 @@ interface SelectProps {
     disabled?: boolean;
 }
 
-export default function Select({ label, error, options, placeholder = "Selecciona una opción", value = "", onChange, required, className = "", icon, disabled = false }: SelectProps) {
-    const [isOpen, setIsOpen] = useState(false);
+export default function Select({ label, error, options, placeholder = "Selecciona una opción", value = "", onChange, className = "", icon }: SelectProps) {
 
     const selectedOption = options.find((opt) => opt.value === value);
-
     const handleSelect = (optionValue: string) => {
         if (onChange) {
-            // Crear un evento sintético para mantener compatibilidad
             const syntheticEvent = {
                 target: { value: optionValue }
             } as React.ChangeEvent<HTMLSelectElement>;
             onChange(syntheticEvent);
         }
-        // Cerrar el dropdown inmediatamente después de seleccionar
-        setIsOpen(false);
     };
-
-    // Sincronizar el estado cuando isOpen cambia externamente
-    useEffect(() => {
-        if (!isOpen) {
-            // El dropdown se cerró, no hacer nada adicional
-        }
-    }, [isOpen]);
 
     const triggerButton = (isOpenState: boolean) => (
         <button
@@ -61,13 +49,13 @@ export default function Select({ label, error, options, placeholder = "Seleccion
             `}
         >
             <div className="flex items-center gap-3 flex-1 min-w-0">
-                {icon && <span className="flex-shrink-0">{icon}</span>}
+                {icon && <span className="shrink-0">{icon}</span>}
                 <span className={`truncate ${selectedOption ? 'text-neutral-800/90' : 'text-neutral-600'}`}>
                     {selectedOption ? selectedOption.label : placeholder}
                 </span>
             </div>
             <ChevronDown
-                className={`w-4 h-4 text-neutral-700 transition-transform flex-shrink-0 ${isOpenState ? 'transform rotate-180' : ''}`}
+                className={`w-4 h-4 text-neutral-700 transition-transform shrink-0 ${isOpenState ? 'transform rotate-180' : ''}`}
             />
         </button>
     );
@@ -92,7 +80,6 @@ export default function Select({ label, error, options, placeholder = "Seleccion
                 align="left"
                 className="w-full"
                 menuClassName="w-full"
-                onOpenChange={setIsOpen}
             >
                 <AnimatePresence>
                     <motion.div

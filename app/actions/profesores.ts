@@ -7,7 +7,7 @@ import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 
 export interface SearchProfesoresResult {
   success: boolean;
-  data?: any[];
+  data?: unknown[];
   error?: {
     message: string;
     code?: string;
@@ -45,4 +45,3 @@ export async function searchProfesoresAction(query: string): Promise<SearchProfe
     return handleServerActionError(error, 'searchProfesoresAction', 'PROFESOR_ERROR');
   }
 }
-

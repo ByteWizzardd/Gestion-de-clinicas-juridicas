@@ -10,7 +10,7 @@ import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 
 export interface SearchEstudiantesResult {
   success: boolean;
-  data?: any[];
+  data?: unknown[];
   error?: {
     message: string;
     code?: string;

@@ -45,7 +45,7 @@ export const solicitantesQueries = {
     /**
      * Obtiene un solicitante por su cédula
      */
-    getSolicitanteById: async (cedula: string): Promise<any | null> => {
+    getSolicitanteById: async (cedula: string): Promise<unknown | null> => {
         const getSolicitanteSQL = loadSQL("solicitantes/get-by-id.sql");
         const result: QueryResult = await pool.query(getSolicitanteSQL, [cedula]);
         if (result.rows.length === 0) {
@@ -129,7 +129,7 @@ export const solicitantesQueries = {
         idEstado?: number | null;
         numMunicipio?: number | null;
         numParroquia?: number | null;
-    }): Promise<any> => {
+    }): Promise<unknown> => {
         const query = loadSQL('solicitantes/update-complete.sql');
         const result: QueryResult = await pool.query(query, [
             data.cedula,
@@ -179,7 +179,7 @@ export const solicitantesQueries = {
      * Obtiene un solicitante completo por su cédula con todas sus relaciones
      * (núcleo, educación, trabajo, hogar, vivienda, casos)
      */
-    getSolicitanteCompleto: async (cedula: string): Promise<any | null> => {
+    getSolicitanteCompleto: async (cedula: string): Promise<unknown | null> => {
         try {
             // Obtener información completa del solicitante
             const getCompletoSQL = loadSQL('solicitantes/get-by-cedula-completo.sql');
@@ -200,18 +200,25 @@ export const solicitantesQueries = {
             try {
                 const getCasosSQL = loadSQL('solicitantes/get-casos-by-cedula.sql');
                 const resultCasos: QueryResult = await pool.query(getCasosSQL, [cedula]);
-                solicitante.casos = resultCasos.rows.map((caso: any) => {
+                solicitante.casos = resultCasos.rows.map((caso: unknown) => {
+                    // Aseguramos el tipo de caso como un objeto con las propiedades esperadas
+                    const c = caso as {
+                        fecha_solicitud?: Date | null;
+                        fecha_inicio_caso?: Date | null;
+                        fecha_fin_caso?: Date | null;
+                        [key: string]: unknown;
+                    };
                     // Formatear fechas de casos
-                    if (caso.fecha_solicitud) {
-                        caso.fecha_solicitud = caso.fecha_solicitud.toISOString().slice(0, 10);
+                    if (c.fecha_solicitud instanceof Date) {
+                        c.fecha_solicitud_str = c.fecha_solicitud.toISOString().slice(0, 10);
                     }
-                    if (caso.fecha_inicio_caso) {
-                        caso.fecha_inicio_caso = caso.fecha_inicio_caso.toISOString().slice(0, 10);
+                    if (c.fecha_inicio_caso instanceof Date) {
+                        c.fecha_inicio_caso_str = c.fecha_inicio_caso.toISOString().slice(0, 10);
                     }
-                    if (caso.fecha_fin_caso) {
-                        caso.fecha_fin_caso = caso.fecha_fin_caso.toISOString().slice(0, 10);
+                    if (c.fecha_fin_caso instanceof Date) {
+                        c.fecha_fin_caso_str = c.fecha_fin_caso.toISOString().slice(0, 10);
                     }
-                    return caso;
+                    return c;
                 });
             } catch (error) {
                 console.error('Error obteniendo casos:', error);
@@ -458,6 +465,11 @@ export const solicitantesQueries = {
         const result: QueryResult = await pool.query(query, [start, end]);
         return result.rows;
     },
+
+    deleteById: async (cedula: string): Promise<void> => {
+        const query = loadSQL('solicitantes/delete-by-id.sql');
+        await pool.query(query, [cedula]);
+    }
 };
 
 /**
