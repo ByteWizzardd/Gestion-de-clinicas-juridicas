@@ -1,10 +1,10 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/utils/security';
 import { citasService } from '@/lib/services/citas.service';
 import { AppError, UnauthorizedError } from '@/lib/utils/errors';
 import { appointmentSchema } from '@/lib/validations/appointment.schema';
+import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 
 export interface GetCitasResult {
   success: boolean;
@@ -28,9 +28,6 @@ export interface CreateCitaParams {
  */
 export async function createCitaAction(params: CreateCitaParams): Promise<GetCitasResult> { 
   try {
-    // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
     const parseResult = appointmentSchema.safeParse(params);
     console.log('DEBUG createCitaAction params:', params);
     console.log('DEBUG createCitaAction parseResult:', parseResult);
@@ -45,27 +42,15 @@ export async function createCitaAction(params: CreateCitaParams): Promise<GetCit
       };
     }
 
-    if (!token) {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
-    try {
-      await verifyToken(token);
-    } catch {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
     // Convertir caseId a número antes de guardar en la base de datos
     const newCita = await citasService.createAppointment({
       ...params,
@@ -77,52 +62,18 @@ export async function createCitaAction(params: CreateCitaParams): Promise<GetCit
       data: newCita,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'CITA_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en createCitaAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al crear la cita',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'createCitaAction', 'CITA_ERROR');
   }
 }
 
 export async function getCitasAction(): Promise<GetCitasResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -133,24 +84,7 @@ export async function getCitasAction(): Promise<GetCitasResult> {
       data: appointments,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'CITA_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en getCitasAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al obtener citas',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'getCitasAction', 'CITA_ERROR');
   }
 }
 

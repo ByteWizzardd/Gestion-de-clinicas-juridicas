@@ -1,7 +1,5 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/utils/security';
 import { casosService } from '@/lib/services/casos.service';
 import { revalidatePath } from 'next/cache';
 import { soportesQueries } from '@/lib/db/queries/soportes.queries';
@@ -14,6 +12,8 @@ import { semestresQueries } from '@/lib/db/queries/semestres.queries';
 import { pool } from '@/lib/db/pool';
 import { loadSQL } from '@/lib/db/sql-loader';
 import { AppError, UnauthorizedError, ValidationError } from '@/lib/utils/errors';
+import { requireAuthInServerActionWithCode, requireAuthInServerActionOrThrow } from '@/lib/utils/server-auth';
+import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 
 export interface CreateCasoResult {
   success: boolean;
@@ -85,34 +85,15 @@ export interface CasoOption {
 export async function createCasoAction(data: any): Promise<CreateCasoResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No hay sesión activa. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
-    // Verificar token y obtener cédula del usuario (quien registra el caso)
-    let decoded;
-    try {
-      decoded = await verifyToken(token);
-    } catch (verifyError) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    const cedulaUsuario = decoded.cedula;
+    const cedulaUsuario = authResult.user.cedula;
     const nuevoCaso = await casosService.createCaso(data, cedulaUsuario);
 
     // Revalidar cache de la página de casos
@@ -123,25 +104,7 @@ export async function createCasoAction(data: any): Promise<CreateCasoResult> {
       data: nuevoCaso,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'CASO_ERROR',
-          fields: (error as any).fields,
-        },
-      };
-    }
-
-    console.error('Error en createCasoAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al crear caso',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'createCasoAction', 'CASO_ERROR');
   }
 }
 
@@ -154,21 +117,13 @@ export async function uploadSoportesAction(
 ): Promise<UploadSoportesResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No hay sesión activa',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
-
-    // Verificar token
-    await verifyToken(token);
 
     if (isNaN(idCaso)) {
       return {
@@ -231,24 +186,7 @@ export async function uploadSoportesAction(
       },
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'UPLOAD_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en uploadSoportesAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al subir archivos',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'uploadSoportesAction', 'UPLOAD_ERROR');
   }
 }
 
@@ -258,28 +196,11 @@ export async function uploadSoportesAction(
 export async function getCasosAction(): Promise<GetCasosResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -290,24 +211,7 @@ export async function getCasosAction(): Promise<GetCasosResult> {
       data: casos,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'CASO_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en getCasosAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al obtener casos',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'getCasosAction', 'CASO_ERROR');
   }
 }
 
@@ -317,33 +221,15 @@ export async function getCasosAction(): Promise<GetCasosResult> {
 export async function getCasosByUsuarioAction(): Promise<GetCasosResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
-    let decodedToken: any;
-    try {
-      decodedToken = await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    const cedulaUsuario = decodedToken.cedula;
+    const cedulaUsuario = authResult.user.cedula;
     console.log('🔍 Buscando casos para usuario:', cedulaUsuario);
     
     // Debug: Verificar si hay asignaciones en se_le_asigna
@@ -383,24 +269,7 @@ export async function getCasosByUsuarioAction(): Promise<GetCasosResult> {
       data: casos,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'CASO_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en getCasosByUsuarioAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al obtener casos del usuario',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'getCasosByUsuarioAction', 'CASO_ERROR');
   }
 }
 
@@ -410,28 +279,11 @@ export async function getCasosByUsuarioAction(): Promise<GetCasosResult> {
 export async function getNextCaseNumberAction(): Promise<GetNextCaseNumberResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -442,24 +294,7 @@ export async function getNextCaseNumberAction(): Promise<GetNextCaseNumberResult
       data: { nextNumber },
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'CASO_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en getNextCaseNumberAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al obtener siguiente número de caso',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'getNextCaseNumberAction', 'CASO_ERROR');
   }
 }
 
@@ -469,28 +304,11 @@ export async function getNextCaseNumberAction(): Promise<GetNextCaseNumberResult
 export async function getCasoByIdAction(idCaso: number): Promise<GetCasoByIdResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -501,24 +319,7 @@ export async function getCasoByIdAction(idCaso: number): Promise<GetCasoByIdResu
       data: caso,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'CASO_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en getCasoByIdAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al obtener el caso',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'getCasoByIdAction', 'CASO_ERROR');
   }
 }
 
@@ -527,23 +328,18 @@ export async function getCasoByIdAction(idCaso: number): Promise<GetCasoByIdResu
  */
 export async function getCaseIdsAction(): Promise<{ success: boolean; data?: number[]; error?: { message: string; code?: string } }> {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: { message: 'No autorizado', code: 'UNAUTHORIZED' },
+        error: authResult.error!,
       };
     }
-    await verifyToken(token);
 
     const ids = await casosService.getAllCaseIds();
     return { success: true, data: ids };
   } catch (error) {
-    return {
-      success: false,
-      error: { message: error instanceof Error ? error.message : 'Error al obtener IDs de casos', code: 'CASO_ERROR' },
-    };
+    return handleServerActionError(error, 'getCaseIdsAction', 'CASO_ERROR');
   }
 }
 
@@ -562,31 +358,12 @@ export async function createAccionAction(
   try {
     await client.query('BEGIN');
 
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       await client.query('ROLLBACK');
       return {
         success: false,
-        error: {
-          message: 'No hay sesión activa',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    let decoded;
-    try {
-      decoded = await verifyToken(token);
-    } catch {
-      await client.query('ROLLBACK');
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -601,7 +378,7 @@ export async function createAccionAction(
       };
     }
 
-    const cedulaUsuario = decoded.cedula;
+    const cedulaUsuario = authResult.user.cedula;
     
     // Obtener la fecha actual del cliente en formato YYYY-MM-DD para evitar problemas de zona horaria
     // Si no se proporciona fechaRegistro, usar la fecha actual del cliente
@@ -681,29 +458,12 @@ export async function changeStatusAction(
   motivo?: string
 ): Promise<{ success: boolean; data?: any; error?: { message: string; code?: string } }> {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No hay sesión activa',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    let decoded;
-    try {
-      decoded = await verifyToken(token);
-    } catch {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -718,7 +478,7 @@ export async function changeStatusAction(
       };
     }
 
-    const cedulaUsuario = decoded.cedula;
+    const cedulaUsuario = authResult.user.cedula;
     const cambioEstatus = await cambiosEstatusQueries.create(
       idCaso,
       nuevoEstatus,
@@ -733,23 +493,7 @@ export async function changeStatusAction(
       data: cambioEstatus,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'STATUS_ERROR',
-        },
-      };
-    }
-
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al cambiar el estatus',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'changeStatusAction', 'STATUS_ERROR');
   }
 }
 
@@ -899,33 +643,16 @@ export interface GetAccionesRecientesResult {
  */
 export async function getAccionesRecientesAction(limite: number = 10): Promise<GetAccionesRecientesResult> {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
-    let decoded;
-    try {
-      decoded = await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    const cedulaUsuario = decoded.cedula;
+    const cedulaUsuario = authResult.user.cedula;
     const acciones = await accionesQueries.getRecentByUsuario(cedulaUsuario, limite);
 
     return {
@@ -933,24 +660,7 @@ export async function getAccionesRecientesAction(limite: number = 10): Promise<G
       data: acciones,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'ACCION_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en getAccionesRecientesAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al obtener acciones recientes',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'getAccionesRecientesAction', 'ACCION_ERROR');
   }
 }
 
@@ -960,14 +670,8 @@ export async function asignarEquipoAction(
   estudiantes: string[]
 ): Promise<AsignarEquipoResult> {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
-      throw new UnauthorizedError('No autorizado');
-    }
-
-    const decoded = await verifyToken(token);
+    // Verificar autenticación
+    const user = await requireAuthInServerActionOrThrow();
 
     // Obtener el semestre actual
     const semestres = await semestresQueries.getAll();

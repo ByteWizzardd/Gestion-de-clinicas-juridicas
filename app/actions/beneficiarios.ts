@@ -1,10 +1,10 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/utils/security';
 import { beneficiariosQueries } from '@/lib/db/queries/beneficiarios.queries';
 import { AppError } from '@/lib/utils/errors';
 import { revalidatePath } from 'next/cache';
+import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 
 export interface SearchBeneficiariosResult {
   success: boolean;
@@ -44,28 +44,11 @@ export interface GetBeneficiarioByCedulaResult {
 export async function searchBeneficiariosByCedulaAction(cedula: string): Promise<SearchBeneficiariosResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -76,24 +59,7 @@ export async function searchBeneficiariosByCedulaAction(cedula: string): Promise
       data: beneficiarios,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'BENEFICIARIO_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en searchBeneficiariosByCedulaAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al buscar beneficiarios',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'searchBeneficiariosByCedulaAction', 'BENEFICIARIO_ERROR');
   }
 }
 
@@ -103,28 +69,11 @@ export async function searchBeneficiariosByCedulaAction(cedula: string): Promise
 export async function getBeneficiarioByCedulaAction(cedula: string): Promise<GetBeneficiarioByCedulaResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -135,24 +84,7 @@ export async function getBeneficiarioByCedulaAction(cedula: string): Promise<Get
       data: beneficiario,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'BENEFICIARIO_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en getBeneficiarioByCedulaAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al obtener beneficiario',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'getBeneficiarioByCedulaAction', 'BENEFICIARIO_ERROR');
   }
 }
 
@@ -171,28 +103,11 @@ export async function createBeneficiarioAction(data: {
 }): Promise<{ success: boolean; data?: any; error?: { message: string; code?: string } }> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No hay sesión activa',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -221,14 +136,7 @@ export async function createBeneficiarioAction(data: {
       data: beneficiario,
     };
   } catch (error) {
-    console.error('Error en createBeneficiarioAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al registrar beneficiario',
-        code: 'BENEFICIARIO_CREATE_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'createBeneficiarioAction', 'BENEFICIARIO_CREATE_ERROR');
   }
 }
 

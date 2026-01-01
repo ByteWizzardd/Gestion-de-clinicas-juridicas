@@ -1,12 +1,10 @@
 'use server';
 
-import { cookies } from 'next/headers';
 import { casosQueries } from '@/lib/db/queries/casos.queries';
 import { solicitantesQueries } from '@/lib/db/queries/solicitantes.queries';
 import { estudiantesQueries } from '@/lib/db/queries/estudiantes.queries';
 import { profesoresQueries } from '@/lib/db/queries/profesores.queries';
 import { beneficiariosQueries } from '@/lib/db/queries/beneficiarios.queries';
-import { verifyToken } from '@/lib/utils/security';
 import { pool } from '@/lib/db/pool';
 import {
   mapCaseLoadTrendData,
@@ -15,6 +13,8 @@ import {
   mapStatusDistributionData,
   mapTopCasesData,
 } from '@/lib/utils/reports-data-mapper';
+import { requireAuthInServerAction } from '@/lib/utils/server-auth';
+import { resolveDateRange, handleReportError } from '@/lib/utils/reports-helpers';
 
 export interface CasosGroupedData {
   id_materia: number;
@@ -77,26 +77,17 @@ export async function getDistributionByTramite(
   term?: string
 ): Promise<{ success: boolean; data?: any[]; error?: string }> {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) throw new Error('No autorizado');
-
-    let start = fechaInicio;
-    let end = fechaFin;
-    if (term && term !== 'all') {
-      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
-      const semestre = await semestresQueries.getByTerm(term);
-      if (semestre) {
-        start = semestre.fecha_inicio.toISOString().split('T')[0];
-        end = semestre.fecha_fin.toISOString().split('T')[0];
-      }
+    const authResult = await requireAuthInServerAction();
+    if (!authResult.success) {
+      return { success: false, error: authResult.error };
     }
+
+    const { start, end } = await resolveDateRange(fechaInicio, fechaFin, term);
 
     // Usamos casosQueries para obtener los datos
     const dbData = await casosQueries.getDistributionByTramite(
-      start || undefined,
-      end || undefined,
+      start,
+      end,
       idNucleo
     );
 
@@ -108,8 +99,7 @@ export async function getDistributionByTramite(
 
     return { success: true, data: formattedData };
   } catch (error) {
-    console.error('Error al obtener distribución por trámite:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Error desconocido' };
+    return handleReportError(error, 'getDistributionByTramite');
   }
 }
 
@@ -122,51 +112,18 @@ export async function getCasosGroupedByAmbitoLegal(
   term?: string
 ): Promise<{ success: boolean; data?: CasosGroupedData[]; error?: string }> {
   try {
-    // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
-      return {
-        success: false,
-        error: 'No autorizado',
-      };
+    const authResult = await requireAuthInServerAction();
+    if (!authResult.success) {
+      return { success: false, error: authResult.error };
     }
 
-    // Verificar token
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: 'Token inválido o expirado',
-      };
-    }
+    const { start, end } = await resolveDateRange(fechaInicio, fechaFin, term);
 
-    // Si hay term, obtener sus fechas
-    let start = fechaInicio;
-    let end = fechaFin;
-    if (term && term !== 'all') {
-      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
-      const semestre = await semestresQueries.getByTerm(term);
-      if (semestre) {
-        start = semestre.fecha_inicio.toISOString().split('T')[0];
-        end = semestre.fecha_fin.toISOString().split('T')[0];
-      }
-    }
-
-    const data = await casosQueries.getGroupedByAmbitoLegal(
-      start || undefined,
-      end || undefined
-    );
+    const data = await casosQueries.getGroupedByAmbitoLegal(start, end);
 
     return { success: true, data };
   } catch (error) {
-    console.error('Error al obtener casos agrupados:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Error desconocido',
-    };
+    return handleReportError(error, 'getCasosGroupedByAmbitoLegal');
   }
 }
 
@@ -180,37 +137,12 @@ export async function getCaseLoadTrend(
   term?: string
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
-      return {
-        success: false,
-        error: 'No autorizado',
-      };
+    const authResult = await requireAuthInServerAction();
+    if (!authResult.success) {
+      return { success: false, error: authResult.error };
     }
 
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: 'Token inválido o expirado',
-      };
-    }
-
-    // Si hay term, obtener sus fechas
-    let start = fechaInicio;
-    let end = fechaFin;
-    if (term && term !== 'all') {
-      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
-      const semestre = await semestresQueries.getByTerm(term);
-      if (semestre) {
-        start = semestre.fecha_inicio.toISOString().split('T')[0];
-        end = semestre.fecha_fin.toISOString().split('T')[0];
-      }
-    }
+    const { start, end } = await resolveDateRange(fechaInicio, fechaFin, term);
 
     // Obtener datos de la base de datos
     const dbData = await casosQueries.getCaseLoadTrend(
@@ -225,11 +157,7 @@ export async function getCaseLoadTrend(
 
     return { success: true, data: chartData };
   } catch (error) {
-    console.error('Error al obtener datos de tendencia de carga:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Error desconocido',
-    };
+    return handleReportError(error, 'getCaseLoadTrend');
   }
 }
 
@@ -244,24 +172,14 @@ export async function getDistributionByGender(
   term?: string
 ): Promise<{ success: boolean; data?: any[]; error?: string }> {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) throw new Error('No autorizado');
-
-    let start = fechaInicio;
-    let end = fechaFin;
-    if (term && term !== 'all') {
-      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
-      const semestre = await semestresQueries.getByTerm(term);
-      if (semestre) {
-        start = semestre.fecha_inicio.toISOString().split('T')[0];
-        end = semestre.fecha_fin.toISOString().split('T')[0];
-      }
+    const authResult = await requireAuthInServerAction();
+    if (!authResult.success) {
+      return { success: false, error: authResult.error };
     }
 
-    const { solicitantesQueries } = await import('@/lib/db/queries/solicitantes.queries');
-    const data = await solicitantesQueries.getDistribucionGenero(start || undefined, end || undefined);
+    const { start, end } = await resolveDateRange(fechaInicio, fechaFin, term);
+
+    const data = await solicitantesQueries.getDistribucionGenero(start, end);
 
     // Map 'M'/'F' to full names
     const formattedData = data.map(item => ({
@@ -272,8 +190,7 @@ export async function getDistributionByGender(
 
     return { success: true, data: formattedData };
   } catch (error) {
-    console.error('Error al obtener distribución por género:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Error desconocido' };
+    return handleReportError(error, 'getDistributionByGender');
   }
 }
 
@@ -287,37 +204,12 @@ export async function getDistributionByNucleo(
   term?: string
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
-      return {
-        success: false,
-        error: 'No autorizado',
-      };
+    const authResult = await requireAuthInServerAction();
+    if (!authResult.success) {
+      return { success: false, error: authResult.error };
     }
 
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: 'Token inválido o expirado',
-      };
-    }
-
-    // Si hay term, obtener sus fechas
-    let start = fechaInicio;
-    let end = fechaFin;
-    if (term && term !== 'all') {
-      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
-      const semestre = await semestresQueries.getByTerm(term);
-      if (semestre) {
-        start = semestre.fecha_inicio.toISOString().split('T')[0];
-        end = semestre.fecha_fin.toISOString().split('T')[0];
-      }
-    }
+    const { start, end } = await resolveDateRange(fechaInicio, fechaFin, term);
 
     // Obtener datos de la base de datos
     const dbData = await casosQueries.getDistributionByNucleo(
@@ -332,11 +224,7 @@ export async function getDistributionByNucleo(
 
     return { success: true, data: chartData };
   } catch (error) {
-    console.error('Error al obtener datos de distribución:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Error desconocido',
-    };
+    return handleReportError(error, 'getDistributionByNucleo');
   }
 }
 
@@ -353,24 +241,9 @@ export async function getFilterOptions(): Promise<{
   error?: string;
 }> {
   try {
-    // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
-      return {
-        success: false,
-        error: 'No autorizado',
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: 'Token inválido o expirado',
-      };
+    const authResult = await requireAuthInServerAction();
+    if (!authResult.success) {
+      return { success: false, error: authResult.error };
     }
 
     // Obtener núcleos
@@ -419,11 +292,7 @@ export async function getFilterOptions(): Promise<{
       },
     };
   } catch (error) {
-    console.error('Error al obtener opciones de filtros:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Error desconocido',
-    };
+    return handleReportError(error, 'getFilterOptions');
   }
 }
 
@@ -437,37 +306,12 @@ export async function getKPIStats(
   term?: string
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
-      return {
-        success: false,
-        error: 'No autorizado',
-      };
+    const authResult = await requireAuthInServerAction();
+    if (!authResult.success) {
+      return { success: false, error: authResult.error };
     }
 
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: 'Token inválido o expirado',
-      };
-    }
-
-    // Si hay term, obtener sus fechas
-    let start = fechaInicio;
-    let end = fechaFin;
-    if (term && term !== 'all') {
-      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
-      const semestre = await semestresQueries.getByTerm(term);
-      if (semestre) {
-        start = semestre.fecha_inicio.toISOString().split('T')[0];
-        end = semestre.fecha_fin.toISOString().split('T')[0];
-      }
-    }
+    const { start, end } = await resolveDateRange(fechaInicio, fechaFin, term);
 
     // Obtener datos de la base de datos
     const dbData = await casosQueries.getKPIStats(
@@ -482,11 +326,7 @@ export async function getKPIStats(
 
     return { success: true, data: kpiData };
   } catch (error) {
-    console.error('Error al obtener datos KPI:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Error desconocido',
-    };
+    return handleReportError(error, 'getKPIStats');
   }
 }
 
@@ -500,37 +340,12 @@ export async function getDistributionByStatus(
   term?: string
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
-      return {
-        success: false,
-        error: 'No autorizado',
-      };
+    const authResult = await requireAuthInServerAction();
+    if (!authResult.success) {
+      return { success: false, error: authResult.error };
     }
 
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: 'Token inválido o expirado',
-      };
-    }
-
-    // Si hay term, obtener sus fechas
-    let start = fechaInicio;
-    let end = fechaFin;
-    if (term && term !== 'all') {
-      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
-      const semestre = await semestresQueries.getByTerm(term);
-      if (semestre) {
-        start = semestre.fecha_inicio.toISOString().split('T')[0];
-        end = semestre.fecha_fin.toISOString().split('T')[0];
-      }
-    }
+    const { start, end } = await resolveDateRange(fechaInicio, fechaFin, term);
 
     // Obtener datos de la base de datos
     const dbData = await casosQueries.getDistributionByStatus(
@@ -545,11 +360,7 @@ export async function getDistributionByStatus(
 
     return { success: true, data: chartData };
   } catch (error) {
-    console.error('Error al obtener datos de distribución por estatus:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Error desconocido',
-    };
+    return handleReportError(error, 'getDistributionByStatus');
   }
 }
 
@@ -563,37 +374,12 @@ export async function getTopCases(
   term?: string
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
-      return {
-        success: false,
-        error: 'No autorizado',
-      };
+    const authResult = await requireAuthInServerAction();
+    if (!authResult.success) {
+      return { success: false, error: authResult.error };
     }
 
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: 'Token inválido o expirado',
-      };
-    }
-
-    // Si hay term, obtener sus fechas
-    let start = fechaInicio;
-    let end = fechaFin;
-    if (term && term !== 'all') {
-      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
-      const semestre = await semestresQueries.getByTerm(term);
-      if (semestre) {
-        start = semestre.fecha_inicio.toISOString().split('T')[0];
-        end = semestre.fecha_fin.toISOString().split('T')[0];
-      }
-    }
+    const { start, end } = await resolveDateRange(fechaInicio, fechaFin, term);
 
     // Obtener datos de la base de datos
     const dbData = await casosQueries.getTopMaterias(
@@ -608,11 +394,7 @@ export async function getTopCases(
 
     return { success: true, data: chartData };
   } catch (error) {
-    console.error('Error al obtener datos de top casos:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Error desconocido',
-    };
+    return handleReportError(error, 'getTopCases');
   }
 }
 
@@ -625,43 +407,14 @@ export async function getCasosGroupedByEstatus(
   term?: string
 ): Promise<{ success: boolean; data?: EstatusGroupedData[]; error?: string }> {
   try {
-    // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
-      return {
-        success: false,
-        error: 'No autorizado',
-      };
+    const authResult = await requireAuthInServerAction();
+    if (!authResult.success) {
+      return { success: false, error: authResult.error };
     }
 
-    // Verificar token
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: 'Token inválido o expirado',
-      };
-    }
+    const { start, end } = await resolveDateRange(fechaInicio, fechaFin, term);
 
-    // Si hay term, obtener sus fechas
-    let start = fechaInicio;
-    let end = fechaFin;
-    if (term && term !== 'all') {
-      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
-      const semestre = await semestresQueries.getByTerm(term);
-      if (semestre) {
-        start = semestre.fecha_inicio.toISOString().split('T')[0];
-        end = semestre.fecha_fin.toISOString().split('T')[0];
-      }
-    }
-
-    const dbData = await casosQueries.getGroupedByEstatus(
-      start || undefined,
-      end || undefined
-    );
+    const dbData = await casosQueries.getGroupedByEstatus(start, end);
 
     // Mapear a EstatusGroupedData
     const data: EstatusGroupedData[] = dbData.map(item => ({
@@ -671,11 +424,7 @@ export async function getCasosGroupedByEstatus(
 
     return { success: true, data };
   } catch (error) {
-    console.error('Error al obtener casos agrupados por estatus:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Error desconocido',
-    };
+    return handleReportError(error, 'getCasosGroupedByEstatus');
   }
 }
 
@@ -721,37 +470,12 @@ export async function getInformeResumenData(
   error?: string;
 }> {
   try {
-    // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
-      return {
-        success: false,
-        error: 'No autorizado',
-      };
+    const authResult = await requireAuthInServerAction();
+    if (!authResult.success) {
+      return { success: false, error: authResult.error };
     }
 
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: 'Token inválido o expirado',
-      };
-    }
-
-    // Si hay term, obtener sus fechas
-    let start = fechaInicio;
-    let end = fechaFin;
-    if (term && term !== 'all') {
-      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
-      const semestre = await semestresQueries.getByTerm(term);
-      if (semestre) {
-        start = semestre.fecha_inicio.toISOString().split('T')[0];
-        end = semestre.fecha_fin.toISOString().split('T')[0];
-      }
-    }
+    const { start, end } = await resolveDateRange(fechaInicio, fechaFin, term);
 
     // Obtener todos los datos en paralelo
     const [
@@ -815,37 +539,12 @@ export async function getInformeSocioeconomicoData(
   error?: string;
 }> {
   try {
-    // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
-      return {
-        success: false,
-        error: 'No autorizado',
-      };
+    const authResult = await requireAuthInServerAction();
+    if (!authResult.success) {
+      return { success: false, error: authResult.error };
     }
 
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: 'Token inválido o expirado',
-      };
-    }
-
-    // Si hay term, obtener sus fechas
-    let start = fechaInicio;
-    let end = fechaFin;
-    if (term && term !== 'all') {
-      const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
-      const semestre = await semestresQueries.getByTerm(term);
-      if (semestre) {
-        start = semestre.fecha_inicio.toISOString().split('T')[0];
-        end = semestre.fecha_fin.toISOString().split('T')[0];
-      }
-    }
+    const { start, end } = await resolveDateRange(fechaInicio, fechaFin, term);
 
     // Obtener distribuciones socioeconómicas
     const [
@@ -906,10 +605,6 @@ export async function getInformeSocioeconomicoData(
       },
     };
   } catch (error) {
-    console.error('Error al obtener datos del informe socioeconómico:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Error desconocido',
-    };
+    return handleReportError(error, 'getInformeSocioeconomicoData');
   }
 }

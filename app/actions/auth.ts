@@ -6,6 +6,8 @@ import { authService } from '@/lib/services/auth.service';
 import { authQueries } from '@/lib/db/queries/auth.queries';
 import { jwtExpiresInToSeconds, verifyToken } from '@/lib/utils/security';
 import { AppError, UnauthorizedError } from '@/lib/utils/errors';
+import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '30d';
 
@@ -128,25 +130,17 @@ export async function logoutAction(): Promise<{ success: boolean }> {
  */
 export async function getCurrentUserAction(): Promise<GetCurrentUserResult> {
   try {
-    // Obtener token de la cookie
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No hay sesión activa',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
-    // Verificar token
-    const decoded = await verifyToken(token);
-
     // Obtener información completa del usuario
-    const user = await authQueries.getUserByCedula(decoded.cedula);
+    const user = await authQueries.getUserByCedula(authResult.user.cedula);
 
     if (!user) {
       return {
@@ -165,27 +159,11 @@ export async function getCurrentUserAction(): Promise<GetCurrentUserResult> {
         nombres: user.nombres,
         apellidos: user.apellidos,
         correo: user.correo_electronico,
-        rol: user.rol_sistema || decoded.rol,
+        rol: user.rol_sistema || authResult.user.rol,
       },
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'AUTH_ERROR',
-        },
-      };
-    }
-
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al obtener usuario',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'getCurrentUserAction', 'AUTH_ERROR');
   }
 }
 
