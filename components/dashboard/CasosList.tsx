@@ -2,7 +2,7 @@
 
 import { motion } from 'motion/react';
 import Link from 'next/link';
-import { Briefcase, Calendar, User, FileText } from 'lucide-react';
+import { Briefcase, Calendar, User, MapPin } from 'lucide-react';
 
 interface Caso {
   id_caso: number;
@@ -175,7 +175,7 @@ export default function CasosList({ casos, loading, error }: CasosListProps) {
                 )}
                 {caso.nombre_nucleo && (
                   <div className="flex items-center gap-1">
-                    <FileText className="w-4 h-4" />
+                    <MapPin className="w-4 h-4" />
                     <span>{caso.nombre_nucleo}</span>
                   </div>
                 )}
