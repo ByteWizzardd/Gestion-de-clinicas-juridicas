@@ -158,5 +158,83 @@ export const citasService = {
       );
     }
   },
+
+  /**
+   * Actualiza una cita existente y sus usuarios que atendieron
+   */
+  async updateAppointment(params: {
+    appointmentId: string; // Formato: "cita-{num_cita}-{id_caso}-{timestamp}"
+    date?: string;
+    endDate?: string | null;
+    orientacion?: string;
+    usuariosAtienden?: string[];
+  }): Promise<{ num_cita: number; id_caso: number }> {
+    try {
+      // Parsear el ID del appointment para obtener num_cita e id_caso
+      // Formato: "cita-{num_cita}-{id_caso}-{timestamp}"
+      const idParts = params.appointmentId.split('-');
+      if (idParts.length < 3 || idParts[0] !== 'cita') {
+        throw new AppError('ID de cita inválido', 400);
+      }
+
+      const num_cita = parseInt(idParts[1], 10);
+      const id_caso = parseInt(idParts[2], 10);
+
+      if (isNaN(num_cita) || isNaN(id_caso)) {
+        throw new AppError('ID de cita inválido: no se pudieron extraer num_cita e id_caso', 400);
+      }
+
+      // Usar transacción para actualizar cita y registros en atienden de forma atómica
+      return await withTransaction(async (client) => {
+        // 1. Actualizar la cita si hay cambios
+        if (params.date || params.endDate !== undefined || params.orientacion) {
+          const updateQuery = await import('@/lib/db/sql-loader').then(m => m.loadSQL('citas/update.sql'));
+          const citaResult = await client.query(updateQuery, [
+            num_cita,
+            id_caso,
+            params.date || null,
+            params.endDate !== undefined ? params.endDate : null,
+            params.orientacion || null
+          ]);
+
+          if (!citaResult.rows || citaResult.rows.length === 0) {
+            throw new AppError("No se pudo actualizar la cita. Verifique que la cita existe.", 404);
+          }
+        }
+
+        // 2. Actualizar registros en atienden si se proporcionaron usuarios
+        if (params.usuariosAtienden !== undefined) {
+          // Primero eliminar todos los registros existentes
+          const { loadSQL } = await import('@/lib/db/sql-loader');
+          const deleteQuery = loadSQL('atienden/delete-by-cita.sql');
+          await client.query(deleteQuery, [num_cita, id_caso]);
+
+          // Luego crear los nuevos registros si hay usuarios seleccionados
+          if (params.usuariosAtienden.length > 0) {
+            const createQuery = loadSQL('atienden/create.sql');
+            
+            for (const usuarioCedula of params.usuariosAtienden) {
+              await client.query(createQuery, [
+                usuarioCedula,
+                num_cita,
+                id_caso,
+                null // fecha_registro se usa CURRENT_DATE por defecto
+              ]);
+            }
+          }
+        }
+
+        return { num_cita, id_caso };
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error al actualizar la cita (detalle DB):', error);
+      throw new AppError(
+        "Error al actualizar la cita",
+        500,
+        error instanceof Error ? error.message : "Error desconocido"
+      );
+    }
+  },
 };
 

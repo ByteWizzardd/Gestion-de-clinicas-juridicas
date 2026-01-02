@@ -5,16 +5,18 @@ import { useState, useEffect } from "react";
 import Modal from "../ui/feedback/Modal";
 import Select from "../forms/Select";
 import MultiSelect from "../forms/MultiSelect";
-import { createCitaAction } from "@/app/actions/citas";
+import { createCitaAction, updateCitaAction } from "@/app/actions/citas";
 import { getCaseIdsAction } from "@/app/actions/casos";
 import { getUsuariosAction } from "@/app/actions/usuarios";
 import TextArea from "../forms/TextArea";
 import Button from "../ui/Button";
 import { X, Calendar } from "lucide-react";
+import type { Appointment } from "@/types/appointment";
 interface AppointmentModalProps {
   onClose: () => void;
   onSave: () => void;
   initialDate?: Date;
+  appointment?: Appointment | null; // Cita a editar (opcional)
 }
 
 interface FormData {
@@ -25,12 +27,34 @@ interface FormData {
   usuariosAtienden: string[];
 }
 
-export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentModalProps) {
-  const [date, setDate] = useState<Date | null>(initialDate || null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
-  const [selectedCaseID, setSelectedCaseID] = useState<string>("");
-  const [orientacion, setOrientacion] = useState<string>("");
-  const [usuariosAtienden, setUsuariosAtienden] = useState<string[]>([]);
+export function AppointmentModal({ onClose, onSave, initialDate, appointment }: AppointmentModalProps) {
+  const isEditing = !!appointment;
+  
+  // Extraer el ID del caso del caseDetail si estamos editando
+  const extractCaseId = (caseDetail: string): string => {
+    const match = caseDetail.match(/C-(\d+)/);
+    return match ? match[1] : "";
+  };
+
+  const [date, setDate] = useState<Date | null>(
+    appointment ? appointment.date : (initialDate || null)
+  );
+  const [endDate, setEndDate] = useState<Date | null>(
+    appointment && appointment.nextAppointmentDate
+      ? new Date(appointment.nextAppointmentDate.split('/').reverse().join('-'))
+      : null
+  );
+  const [selectedCaseID, setSelectedCaseID] = useState<string>(
+    appointment ? extractCaseId(appointment.caseDetail) : ""
+  );
+  const [orientacion, setOrientacion] = useState<string>(
+    appointment ? appointment.orientation : ""
+  );
+  const [usuariosAtienden, setUsuariosAtienden] = useState<string[]>(
+    appointment && appointment.attendingUsersList
+      ? appointment.attendingUsersList.map(u => u.id_usuario)
+      : []
+  );
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
@@ -76,25 +100,27 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
 
-    // Validación de Caso (selectedCaseID)
-    if (!selectedCaseID) {
-      newErrors.selectedCaseID = 'Este campo es requerido';
-    } else {
-      const caseIdNumber = Number(selectedCaseID);
-      if (isNaN(caseIdNumber) || caseIdNumber <= 0 || !Number.isInteger(caseIdNumber)) {
-        newErrors.selectedCaseID = 'El ID del caso debe ser un número válido';
+    // Validación de Caso (selectedCaseID) - Solo requerido al crear, no al editar
+    if (!isEditing) {
+      if (!selectedCaseID) {
+        newErrors.selectedCaseID = 'Este campo es requerido';
       } else {
-        const caseExists = caseOptions.some(opt => opt.value === selectedCaseID);
-        if (!caseExists) {
-          newErrors.selectedCaseID = 'El caso seleccionado no es válido';
+        const caseIdNumber = Number(selectedCaseID);
+        if (isNaN(caseIdNumber) || caseIdNumber <= 0 || !Number.isInteger(caseIdNumber)) {
+          newErrors.selectedCaseID = 'El ID del caso debe ser un número válido';
+        } else {
+          const caseExists = caseOptions.some(opt => opt.value === selectedCaseID);
+          if (!caseExists) {
+            newErrors.selectedCaseID = 'El caso seleccionado no es válido';
+          }
         }
       }
     }
 
-    // Validación de Fecha de Encuentro (date)
-    if (!date) {
+    // Validación de Fecha de Encuentro (date) - Solo requerida al crear
+    if (!isEditing && !date) {
       newErrors.date = 'Este campo es requerido';
-    } else {
+    } else if (date) {
       const dateString = date.toISOString().slice(0, 10);
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
       if (!dateRegex.test(dateString)) {
@@ -127,9 +153,10 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
     }
 
     // Validación de Usuarios que Atendieron (usuariosAtienden)
-    if (usuariosAtienden.length === 0) {
+    // Al editar, si no se proporciona usuariosAtienden, no se valida (se mantienen los existentes)
+    if (!isEditing && usuariosAtienden.length === 0) {
       newErrors.usuariosAtienden = 'Debe seleccionar al menos un usuario';
-    } else {
+    } else if (usuariosAtienden.length > 0) {
       // Validar duplicados
       const uniqueCedulas = new Set(usuariosAtienden);
       if (uniqueCedulas.size !== usuariosAtienden.length) {
@@ -147,14 +174,19 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
       }
     }
 
-    // Validación de Orientación (orientacion)
-    const orientacionTrimmed = orientacion.trim();
-    if (!orientacionTrimmed) {
-      newErrors.orientacion = 'Este campo es requerido';
-    } else if (orientacionTrimmed.length < 10) {
+    // Validación de Orientación (orientacion) - Solo requerida al crear
+    if (!isEditing) {
+      const orientacionTrimmed = orientacion.trim();
+      if (!orientacionTrimmed) {
+        newErrors.orientacion = 'Este campo es requerido';
+      } else if (orientacionTrimmed.length < 10) {
+        newErrors.orientacion = 'La orientación debe tener al menos 10 caracteres';
+      } else if (!/\w/.test(orientacionTrimmed)) {
+        newErrors.orientacion = 'La orientación debe contener texto válido';
+      }
+    } else if (orientacion.trim().length > 0 && orientacion.trim().length < 10) {
+      // Al editar, si se proporciona orientación, debe cumplir el mínimo
       newErrors.orientacion = 'La orientación debe tener al menos 10 caracteres';
-    } else if (!/\w/.test(orientacionTrimmed)) {
-      newErrors.orientacion = 'La orientación debe contener texto válido';
     }
 
     setErrors(newErrors);
@@ -209,13 +241,27 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
     setSuccess(false);
     setLoading(true);
 
-    const result = await createCitaAction({
-      caseId: Number(selectedCaseID),
-      date: date ? date.toISOString().slice(0, 10) : "",
-      endDate: endDate ? endDate.toISOString().slice(0, 10) : undefined,
-      orientacion,
-      usuariosAtienden: usuariosAtienden,
-    });
+    let result;
+    
+    if (isEditing && appointment) {
+      // Modo edición
+      result = await updateCitaAction({
+        appointmentId: appointment.id,
+        date: date ? date.toISOString().slice(0, 10) : undefined,
+        endDate: endDate ? endDate.toISOString().slice(0, 10) : (endDate === null ? null : undefined),
+        orientacion: orientacion || undefined,
+        usuariosAtienden: usuariosAtienden.length > 0 ? usuariosAtienden : undefined,
+      });
+    } else {
+      // Modo creación
+      result = await createCitaAction({
+        caseId: Number(selectedCaseID),
+        date: date ? date.toISOString().slice(0, 10) : "",
+        endDate: endDate ? endDate.toISOString().slice(0, 10) : undefined,
+        orientacion,
+        usuariosAtienden: usuariosAtienden,
+      });
+    }
 
     setLoading(false);
     if (result.success && result.data) {
@@ -230,7 +276,7 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
       onSave();
       if (onClose) onClose();
     } else {
-      setError(result.error?.message || "Error al crear la cita");
+      setError(result.error?.message || (isEditing ? "Error al actualizar la cita" : "Error al crear la cita"));
     }
   };
 
@@ -253,19 +299,22 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
         </button>
 
         {/* Título */}
-        <h2 className="text-2xl font-normal text-foreground mb-6">Registrar nueva cita</h2>
+        <h2 className="text-2xl font-normal text-foreground mb-6">
+          {isEditing ? 'Modificar cita' : 'Registrar nueva cita'}
+        </h2>
 
         {/* Grid de formulario */}
         <form onSubmit={handleSubmit} noValidate className="grid grid-cols-3 gap-x-6 gap-y-4 mb-6">
           {/* Fila 1: Caso, Fecha de Encuentro, Fecha de Próxima cita */}
           <div className="col-span-1">
             <Select
-              label="Caso *"
+              label={isEditing ? "Caso" : "Caso *"}
               options={caseOptions}
               value={selectedCaseID}
               onChange={(e) => updateField('selectedCaseID', e.target.value)}
               error={errors.selectedCaseID}
-              required
+              required={!isEditing}
+              disabled={isEditing}
               className="w-full"
             />
           </div>

@@ -23,6 +23,14 @@ export interface CreateCitaParams {
   usuariosAtienden?: string[];
 }
 
+export interface UpdateCitaParams {
+  appointmentId: string;
+  date?: string;
+  endDate?: string | null;
+  orientacion?: string;
+  usuariosAtienden?: string[];
+}
+
 /**
  * Server Action para obtener todas las citas
  */
@@ -243,3 +251,164 @@ export async function getCitasAction(): Promise<GetCitasResult> {
   }
 }
 
+export interface UpdateCitaParams {
+  appointmentId: string;
+  date?: string;
+  endDate?: string | null;
+  orientacion?: string;
+  usuariosAtienden?: string[];
+}
+
+/**
+ * Server Action para actualizar una cita existente
+ */
+export async function updateCitaAction(params: UpdateCitaParams): Promise<GetCitasResult> {
+  try {
+    // Verificar autenticación
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      return {
+        success: false,
+        error: {
+          message: 'No autorizado',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    try {
+      await verifyToken(token);
+    } catch {
+      return {
+        success: false,
+        error: {
+          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    // Validar que al menos un campo se esté actualizando
+    if (!params.date && params.endDate === undefined && !params.orientacion && params.usuariosAtienden === undefined) {
+      return {
+        success: false,
+        error: {
+          message: 'Debe proporcionar al menos un campo para actualizar',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Validar formato de appointmentId
+    if (!params.appointmentId || !params.appointmentId.startsWith('cita-')) {
+      return {
+        success: false,
+        error: {
+          message: 'ID de cita inválido',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Validar fecha si se proporciona
+    if (params.date) {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(params.date)) {
+        return {
+          success: false,
+          error: {
+            message: 'Formato de fecha inválido',
+            code: 'VALIDATION_ERROR',
+          },
+        };
+      }
+    }
+
+    // Validar endDate si se proporciona
+    if (params.endDate !== null && params.endDate !== undefined) {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(params.endDate)) {
+        return {
+          success: false,
+          error: {
+            message: 'Formato de fecha de próxima cita inválido',
+            code: 'VALIDATION_ERROR',
+          },
+        };
+      }
+    }
+
+    // Validar orientacion si se proporciona
+    if (params.orientacion !== undefined) {
+      const orientacionTrimmed = params.orientacion.trim();
+      if (orientacionTrimmed.length < 10) {
+        return {
+          success: false,
+          error: {
+            message: 'La orientación debe tener al menos 10 caracteres',
+            code: 'VALIDATION_ERROR',
+          },
+        };
+      }
+    }
+
+    // Validar usuariosAtienden si se proporciona
+    if (params.usuariosAtienden !== undefined) {
+      if (params.usuariosAtienden.length === 0) {
+        return {
+          success: false,
+          error: {
+            message: 'Debe seleccionar al menos un usuario',
+            code: 'VALIDATION_ERROR',
+          },
+        };
+      }
+
+      // Validar duplicados
+      const uniqueCedulas = new Set(params.usuariosAtienden);
+      if (uniqueCedulas.size !== params.usuariosAtienden.length) {
+        return {
+          success: false,
+          error: {
+            message: 'No puede seleccionar usuarios duplicados',
+            code: 'VALIDATION_ERROR',
+          },
+        };
+      }
+    }
+
+    const updatedCita = await citasService.updateAppointment({
+      appointmentId: params.appointmentId,
+      date: params.date,
+      endDate: params.endDate,
+      orientacion: params.orientacion,
+      usuariosAtienden: params.usuariosAtienden,
+    });
+
+    return {
+      success: true,
+      data: updatedCita,
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'CITA_ERROR',
+        },
+      };
+    }
+
+    console.error('Error en updateCitaAction:', error);
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al actualizar la cita',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  }
+}
