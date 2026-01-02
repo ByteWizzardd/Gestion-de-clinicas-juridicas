@@ -37,6 +37,7 @@ export default function CaseDetailClient() {
   const [showAddBeneficiaryModal, setShowAddBeneficiaryModal] = useState(false);
   const [changingStatus, setChangingStatus] = useState(false);
   const [userRol, setUserRol] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('general');
 
   const fetchCaso = useCallback(async () => {
     const idCaso = parseInt(id, 10);
@@ -120,6 +121,11 @@ export default function CaseDetailClient() {
 
   const handleRefresh = () => {
     fetchCaso();
+  };
+
+  const handleDocumentUploaded = () => {
+    setActiveTab('documentos');
+    handleRefresh();
   };
 
   const getStatusColor = (estatus: string | null) => {
@@ -330,7 +336,7 @@ export default function CaseDetailClient() {
         isOpen={showAddDocumentModal}
         onClose={() => setShowAddDocumentModal(false)}
         idCaso={caso.id_caso}
-        onSuccess={handleRefresh}
+        onSuccess={handleDocumentUploaded}
       />
 
       <AssignTeamModal
@@ -361,7 +367,7 @@ export default function CaseDetailClient() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.25, ease: 'easeOut' }}
       >
-        <Tabs tabs={tabs} defaultTab="general" />
+        <Tabs tabs={tabs} defaultTab={activeTab} onTabChange={setActiveTab} />
       </motion.div>
     </div>
   );

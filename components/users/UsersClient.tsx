@@ -367,27 +367,40 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         title="Eliminar usuario permanentemente"
         message={
           <div>
-            <p>¿Está seguro de que desea eliminar al usuario <b>{itemToDelete ? `${itemToDelete.nombres || ''} ${itemToDelete.apellidos || ''}` : ''}</b>?</p>
-            <p className="mt-2 text-danger font-semibold">Esta acción es irreversible y solo puede realizarla un coordinador.</p>
-            <label className="block mt-4 mb-2 font-medium">Motivo de la eliminación:</label>
-            <textarea
-              className="w-full border rounded p-2"
-              rows={3}
-              maxLength={250}
-              value={deleteMotivo}
-              onChange={e => setDeleteMotivo(e.target.value)}
-              placeholder="Describe el motivo..."
-              disabled={deleteLoading}
-            />
-            <div className="text-right text-xs text-gray-500 mt-1">
-              {deleteMotivo.length} / 250 caracteres
-              {!isMotivoValido && ' - El motivo es obligatorio.'}
+            <p className="mb-4 text-base text-foreground">
+              ¿Estás seguro de que deseas eliminar al usuario <strong>{itemToDelete ? `${itemToDelete.nombres || ''} ${itemToDelete.apellidos || ''}` : ''}</strong>?
+            </p>
+            <p className="mb-6 text-red-600 font-semibold text-base">
+              Esta acción es irreversible y solo puede realizarla un coordinador.
+            </p>
+            <div className="flex flex-col gap-1">
+              <label className="text-base font-normal text-foreground mb-1">
+                Motivo de la eliminación
+              </label>
+              <textarea
+                className={`
+                  w-full p-4 rounded-lg border bg-[#E5E7EB] border-transparent
+                  focus:outline-none focus:ring-1 focus:ring-primary
+                  text-base placeholder:text-[#717171] resize-none
+                  ${deleteLoading ? 'opacity-50 cursor-not-allowed' : ''}
+                `}
+                rows={4}
+                maxLength={250}
+                value={deleteMotivo}
+                onChange={e => setDeleteMotivo(e.target.value)}
+                placeholder="Describe el motivo de la eliminación..."
+                disabled={deleteLoading}
+              />
+              <div className="text-right text-xs text-gray-500 mt-1">
+                {deleteMotivo.length} / 250 caracteres
+              </div>
             </div>
           </div>
         }
-        confirmLabel={deleteLoading ? 'Eliminando...' : 'Eliminar permanentemente'}
+        confirmLabel={deleteLoading ? 'Eliminando...' : 'Eliminar'}
         cancelLabel="Cancelar"
         disabled={deleteLoading || !isMotivoValido}
+        confirmVariant="danger"
       />
     </>
   );

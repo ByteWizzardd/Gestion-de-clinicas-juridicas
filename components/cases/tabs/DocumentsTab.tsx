@@ -170,28 +170,33 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
         title="Eliminar Soporte"
         message={
           <div>
-            <p className="mb-4">
+            <p className="mb-4 text-base text-foreground">
               ¿Estás seguro de que deseas eliminar el archivo <strong>{confirmDelete?.nombreArchivo}</strong>?
-              <br />
+            </p>
+            <p className="mb-6 text-red-600 font-semibold text-base">
               Esta acción no se puede deshacer.
             </p>
-            <label className="block mb-2 font-medium text-gray-700">
-              Motivo de la eliminación <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
-              rows={4}
-              maxLength={500}
-              value={motivoEliminacion}
-              onChange={(e) => setMotivoEliminacion(e.target.value)}
-              placeholder="Describe el motivo de la eliminación..."
-              disabled={!!deleting}
-            />
-            <div className="text-right text-xs text-gray-500 mt-1">
-              {motivoEliminacion.length} / 500 caracteres
-              {!motivoEliminacion.trim() && (
-                <span className="text-red-500 ml-2">- El motivo es obligatorio</span>
-              )}
+            <div className="flex flex-col gap-1">
+              <label className="text-base font-normal text-foreground mb-1">
+                Motivo de la eliminación
+              </label>
+              <textarea
+                className={`
+                  w-full p-4 rounded-lg border bg-[#E5E7EB] border-transparent
+                  focus:outline-none focus:ring-1 focus:ring-primary
+                  text-base placeholder:text-[#717171] resize-none
+                  ${deleting ? 'opacity-50 cursor-not-allowed' : ''}
+                `}
+                rows={4}
+                maxLength={500}
+                value={motivoEliminacion}
+                onChange={(e) => setMotivoEliminacion(e.target.value)}
+                placeholder="Describe el motivo de la eliminación..."
+                disabled={!!deleting}
+              />
+              <div className="text-right text-xs text-gray-500 mt-1">
+                {motivoEliminacion.length} / 500 caracteres
+              </div>
             </div>
           </div>
         }
