@@ -89,10 +89,7 @@ export default function NucleosPage() {
     const handleUpdate = async (data: Record<string, string>) => {
         if (!editingItem) return;
         const result = await updateNucleo(
-            editingItem.id_estado,
-            editingItem.num_municipio,
-            editingItem.num_parroquia,
-            editingItem.num_nucleo,
+            editingItem.id_nucleo,
             { nombre_nucleo: data.nombre_nucleo }
         );
         if (result.success) {
@@ -104,14 +101,14 @@ export default function NucleosPage() {
     };
 
     const handleToggle = async (item: any) => {
-        const result = await toggleNucleoHabilitado(item.id_estado, item.num_municipio, item.num_parroquia, item.num_nucleo);
+        const result = await toggleNucleoHabilitado(item.id_nucleo);
         if (result.success) await loadData();
         else alert(result.error);
     };
 
     const handleDelete = async (item: any) => {
         if (!confirm(`¿Eliminar "${item.nombre_nucleo}"?`)) return;
-        const result = await deleteNucleo(item.id_estado, item.num_municipio, item.num_parroquia, item.num_nucleo);
+        const result = await deleteNucleo(item.id_nucleo);
         if (result.success) await loadData();
         else alert(result.error === 'HAS_ASSOCIATIONS' ? result.message : result.error);
     };
