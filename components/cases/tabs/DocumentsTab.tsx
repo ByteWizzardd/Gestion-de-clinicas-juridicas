@@ -225,8 +225,7 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
               <div className="flex items-center justify-center">{getFileIcon(soporte.tipo_mime)}</div>
               <div>
                 <h4 className="text-base sm:text-lg font-semibold text-gray-900">{soporte.nombre_archivo}</h4>
-                <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
+                <p className="text-sm text-gray-500 mt-1">
                   {formatDate(soporte.fecha_consignacion)}
                 </p>
               </div>

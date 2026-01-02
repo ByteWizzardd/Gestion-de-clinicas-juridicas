@@ -60,23 +60,20 @@ export default function GeneralInfoTab({ caso }: GeneralInfoTabProps) {
           </div>
           <div>
             <label className="text-sm font-medium text-gray-500">Fecha de Solicitud</label>
-            <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gray-400" />
+            <p className="text-base text-gray-900 mt-1">
               {caso.fecha_solicitud ? formatDate(caso.fecha_solicitud) : 'N/A'}
             </p>
           </div>
           <div>
             <label className="text-sm font-medium text-gray-500">Fecha de Inicio</label>
-            <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gray-400" />
+            <p className="text-base text-gray-900 mt-1">
               {caso.fecha_inicio_caso ? formatDate(caso.fecha_inicio_caso) : 'N/A'}
             </p>
           </div>
           {caso.fecha_fin_caso && (
             <div>
               <label className="text-sm font-medium text-gray-500">Fecha de Fin</label>
-              <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-gray-400" />
+              <p className="text-base text-gray-900 mt-1">
                 {formatDate(caso.fecha_fin_caso)}
               </p>
             </div>
@@ -88,8 +85,7 @@ export default function GeneralInfoTab({ caso }: GeneralInfoTabProps) {
           {caso.nombre_nucleo && (
             <div>
               <label className="text-sm font-medium text-gray-500">Núcleo</label>
-              <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-gray-400" />
+              <p className="text-base text-gray-900 mt-1">
                 {caso.nombre_nucleo}
               </p>
             </div>
@@ -97,8 +93,7 @@ export default function GeneralInfoTab({ caso }: GeneralInfoTabProps) {
           {caso.nombre_materia && (
             <div>
               <label className="text-sm font-medium text-gray-500">Materia</label>
-              <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
-                <Scale className="w-4 h-4 text-gray-400" />
+              <p className="text-base text-gray-900 mt-1">
                 {caso.nombre_materia}
               </p>
             </div>
@@ -186,8 +181,7 @@ export default function GeneralInfoTab({ caso }: GeneralInfoTabProps) {
                     )}
                     <div>
                       <label className="text-sm font-medium text-gray-500">Fecha de Nacimiento</label>
-                      <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gray-400" />
+                      <p className="text-base text-gray-900 mt-1">
                         {beneficiario.fecha_nac ? formatDate(beneficiario.fecha_nac) : 'N/A'}
                         {edad !== null && ` (${edad} años)`}
                       </p>

@@ -198,7 +198,7 @@ export default function CaseDetailClient() {
   ].filter(opt => opt.value !== caso?.estatus);
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8 overflow-x-hidden">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -228,8 +228,8 @@ export default function CaseDetailClient() {
             </span>
           )}
         </div>
-
-        <div className="flex items-center gap-2">
+        
+        <div className="flex flex-wrap items-center gap-2">
           {userRol && userRol !== 'Estudiante' && (
             <button
               onClick={() => setShowAssignTeamModal(true)}
@@ -280,7 +280,7 @@ export default function CaseDetailClient() {
                 <ChevronDown className="w-[18px] h-[18px] text-[#414040]" />
               </button>
             }
-            align="right"
+            align="left"
             menuClassName="bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[200px]"
           >
             {estatusOptions.length > 0 ? (

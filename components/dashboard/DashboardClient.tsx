@@ -6,6 +6,7 @@ import CompactCalendar from "@/components/ui/calendar/CompactCalendar";
 import DashboardAppointmentList from "@/components/cards/DashboardAppointmentList";
 import ActionHistoryList from "@/components/cards/ActionHistoryList";
 import CasosList from "@/components/dashboard/CasosList";
+import { AppointmentDetailModal } from "@/components/appointmentModal/AppointmentDetailModal";
 import type { Appointment } from '@/types/appointment';
 
 interface Caso {
@@ -60,6 +61,19 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
     }))
   );
   const [casos] = useState<Caso[]>(initialCasos || []);
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+
+  // Manejadores para el modal de detalles de citas
+  const handleAppointmentClick = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setShowAppointmentModal(true);
+  };
+
+  const handleAppointmentModalClose = () => {
+    setShowAppointmentModal(false);
+    setSelectedAppointment(null);
+  };
 
   useEffect(() => {
     console.log('Casos recibidos:', casos);
@@ -191,6 +205,7 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
                       selectedDate={selectedDate}
                       loading={false}
                       error={null}
+                      onAppointmentClick={handleAppointmentClick}
                     />
                   </div>
                 </div>
@@ -225,6 +240,13 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
           </div>
         </div>
       </div>
+
+      {/* Modal de detalles de cita */}
+      <AppointmentDetailModal
+        appointment={selectedAppointment}
+        isOpen={showAppointmentModal}
+        onClose={handleAppointmentModalClose}
+      />
     </div>
   );
 }
