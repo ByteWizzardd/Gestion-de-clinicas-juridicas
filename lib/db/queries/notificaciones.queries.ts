@@ -36,4 +36,13 @@ export const notificacionesQueries = {
         ]);
         return result.rows[0];
     },
+
+    /**
+     * Obtiene todas las notificaciones de un receptor
+     */
+    getByReceptor: async (cedulaReceptor: string): Promise<Notificacion[]> => {
+        const query = loadSQL('notificaciones/get-by-receptor.sql');
+        const result: QueryResult = await pool.query(query, [cedulaReceptor]);
+        return result.rows as Notificacion[];
+    },
 };

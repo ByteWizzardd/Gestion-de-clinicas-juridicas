@@ -14,6 +14,7 @@ import { loadSQL } from '@/lib/db/sql-loader';
 import { AppError, UnauthorizedError, ValidationError } from '@/lib/utils/errors';
 import { requireAuthInServerActionWithCode, requireAuthInServerActionOrThrow } from '@/lib/utils/server-auth';
 import { handleServerActionError } from '@/lib/utils/server-action-helpers';
+import { notificarVariosUsuariosAction } from './notificaciones';
 
 export interface CreateCasoResult {
   success: boolean;
@@ -895,6 +896,11 @@ export async function asignarEquipoAction(
         
         if (profesoresInvalidos.length > 0) {
           await client.query('ROLLBACK');
+          await notificarVariosUsuariosAction({
+            cedulasReceptores: profesoresNuevos,
+            titulo: 'Asignación a caso',
+            mensaje: `Has sido asignado al caso #${idCaso}. Por favor, revisa los detalles en el sistema.`,
+          })
           return {
             success: false,
             error: {
@@ -908,6 +914,11 @@ export async function asignarEquipoAction(
       // Verificar que los estudiantes nuevos existan (en cualquier semestre)
       if (estudiantesNuevos.length > 0) {
         const estudiantesInvalidos = estudiantesNuevos.filter(cedula => !estudiantesAllActiveCedulas.has(cedula));
+        await notificarVariosUsuariosAction({
+          cedulasReceptores: estudiantesNuevos,
+          titulo: 'Asignación a caso',
+          mensaje: `Has sido asignado al caso #${idCaso}. Por favor, revisa los detalles en el sistema.`,
+        })
         
         if (estudiantesInvalidos.length > 0) {
           await client.query('ROLLBACK');

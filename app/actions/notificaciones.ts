@@ -1,4 +1,5 @@
 'use server';
+
 import { notificarVariosUsuariosService } from '@/lib/services/notificaciones.service';
 import { notificacionesQueries } from '@/lib/db/queries/notificaciones.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
@@ -82,5 +83,34 @@ export async function notificarVariosUsuariosAction(data: {
     return result;
   } catch (error) {
     return handleServerActionError(error, 'notificarVariosUsuariosAction', 'NOTIFICACION_MASIVA_ERROR');
+  }
+}
+export interface GetNotificacionesResult {
+  success: boolean;
+  data?: import("@/lib/db/queries/notificaciones.queries").Notificacion[];
+  error?: { message: string; code?: string };
+}
+
+/**
+ * Server Action para obtener las notificaciones del usuario autenticado
+ */
+export async function getNotificacionesAction(): Promise<GetNotificacionesResult> {
+  try {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+    const cedula = authResult.user.cedula;
+    const notificaciones = await notificacionesQueries.getByReceptor(cedula);
+    return { success: true, data: notificaciones };
+  } catch (error) {
+    return handleServerActionError(
+      error,
+      "getNotificacionesAction",
+      "NOTIFICACION_GET_ERROR"
+    );
   }
 }

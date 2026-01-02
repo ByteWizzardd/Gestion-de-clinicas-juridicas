@@ -3,49 +3,20 @@
 import { Bell } from 'lucide-react';
 import DropdownMenu from '../navigation/DropdownMenu';
 import { AnimatePresence, motion } from 'motion/react';
+import { useNotifications } from './useNotifications';
 
 interface NotificationProps {
   count?: number;
   onClick?: () => void;
 }
 
-interface NotificationItem {
-  id: string;
-  title: string;
-  message: string;
-  time: string;
-  read?: boolean;
-}
+// NotificationItem viene de useNotifications
 
-export default function Notification({  }: NotificationProps) {
-  // Datos de ejemplo de notificaciones
-  const notifications: NotificationItem[] = [
-    {
-      id: '1',
-      title: 'Nuevo caso asignado',
-      message: 'Se te ha asignado un nuevo caso de materia familiar',
-      time: 'Hace 5 minutos',
-      read: false
-    },
-    {
-      id: '2',
-      title: 'Recordatorio de cita',
-      message: 'Tienes una cita programada para mañana a las 10:00 AM',
-      time: 'Hace 1 hora',
-      read: false
-    },
-    {
-      id: '3',
-      title: 'Actualización de caso',
-      message: 'El caso #12345 ha sido actualizado',
-      time: 'Hace 2 horas',
-      read: true
-    }
-  ];
-
+const Notification: React.FC<NotificationProps> = () => {
+  const { notifications, loading, error } = useNotifications();
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const triggerButton = () => (
+  const triggerButton = (
     <button 
       className="relative flex items-center justify-center p-2 cursor-pointer hover:bg-neutral-100 rounded-lg transition-colors" 
       aria-label="Notificaciones"
@@ -77,7 +48,11 @@ export default function Notification({  }: NotificationProps) {
             <h3 className="text-lg font-semibold text-neutral-800">Notificaciones</h3>
           </div>
           <div className="overflow-y-auto flex-1 min-h-0">
-            {notifications.length > 0 ? (
+            {loading ? (
+              <div className="px-4 py-8 text-base text-gray-500 text-center">Cargando notificaciones...</div>
+            ) : error ? (
+              <div className="px-4 py-8 text-base text-red-500 text-center">{error}</div>
+            ) : notifications.length > 0 ? (
               notifications.map((notification) => (
                 <button
                   key={notification.id}
@@ -115,4 +90,6 @@ export default function Notification({  }: NotificationProps) {
       </AnimatePresence>
     </DropdownMenu>
   );
-}
+};
+
+export default Notification;
