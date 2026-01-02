@@ -337,7 +337,7 @@ export default function AddBeneficiaryModal({
                 label="Nombres *"
                 value={formData.nombres}
                 onChange={(e) => updateField('nombres', e.target.value)}
-                placeholder="Ej: Juan"
+                placeholder="Ingrese nombres"
                 error={errors.nombres}
                 disabled={lockedFields.has('nombres') || isSubmitting}
                 required
@@ -349,7 +349,7 @@ export default function AddBeneficiaryModal({
                 label="Apellidos *"
                 value={formData.apellidos}
                 onChange={(e) => updateField('apellidos', e.target.value)}
-                placeholder="Ej: Pérez"
+                placeholder="Ingrese apellidos"
                 error={errors.apellidos}
                 disabled={lockedFields.has('apellidos') || isSubmitting}
                 required
@@ -409,7 +409,7 @@ export default function AddBeneficiaryModal({
                 label="Parentesco con el Solicitante *"
                 value={formData.parentesco}
                 onChange={(e) => updateField('parentesco', e.target.value)}
-                placeholder="Ej: Hijo, Hija, Sobrino, etc."
+                placeholder="Ingrese el parentesco (ej: Hijo, Hija, Sobrino, etc.)"
                 error={errors.parentesco}
                 disabled={isSubmitting}
                 required
