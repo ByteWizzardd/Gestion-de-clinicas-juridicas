@@ -17,7 +17,7 @@ import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 
 export interface CreateCasoResult {
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: {
     message: string;
     code?: string;
@@ -66,7 +66,7 @@ export interface DeleteSoporteResult {
 
 export interface GetCasosResult {
   success: boolean;
-  data?: any[];
+  data?: unknown[];
   error?: {
     message: string;
     code?: string;
@@ -86,7 +86,7 @@ export interface GetNextCaseNumberResult {
 
 export interface GetCasoByIdResult {
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: {
     message: string;
     code?: string;
@@ -106,7 +106,7 @@ export interface CasoOption {
  * Nota: Un caso se asocia a un SOLICITANTE (la persona que solicita el servicio legal).
  * El usuario que registra el caso (estudiante/profesor) es diferente del solicitante asociado al caso.
  */
-export async function createCasoAction(data: any): Promise<CreateCasoResult> {
+export async function createCasoAction(data: unknown): Promise<CreateCasoResult> {
   try {
     // Verificar autenticación
     const authResult = await requireAuthInServerActionWithCode();
@@ -525,7 +525,7 @@ export async function createAccionAction(
   comentario?: string,
   ejecutores?: Array<{ idUsuario: string; fechaEjecucion: string }>,
   fechaRegistro?: string
-): Promise<{ success: boolean; data?: any; error?: { message: string; code?: string } }> {
+): Promise<{ success: boolean; data?: unknown; error?: { message: string; code?: string } }> {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -628,7 +628,7 @@ export async function changeStatusAction(
   idCaso: number,
   nuevoEstatus: string,
   motivo?: string
-): Promise<{ success: boolean; data?: any; error?: { message: string; code?: string } }> {
+): Promise<{ success: boolean; data?: unknown; error?: { message: string; code?: string } }> {
   try {
     // Verificar autenticación
     const authResult = await requireAuthInServerActionWithCode();
@@ -836,6 +836,7 @@ export async function getAccionesRecientesAction(limite: number = 10): Promise<G
   }
 }
 
+// Server Action para asignar equipo (profesores y estudiantes) a un caso
 export async function asignarEquipoAction(
   idCaso: number,
   profesores: string[],
@@ -843,7 +844,6 @@ export async function asignarEquipoAction(
 ): Promise<AsignarEquipoResult> {
   try {
     // Verificar autenticación
-    const user = await requireAuthInServerActionOrThrow();
 
     // Obtener el semestre actual
     const semestres = await semestresQueries.getAll();
