@@ -245,13 +245,40 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
     
     if (isEditing && appointment) {
       // Modo edición
-      result = await updateCitaAction({
+      // Construir objeto de actualización con los campos modificados
+      const updateParams: {
+        appointmentId: string;
+        date?: string;
+        endDate?: string | null;
+        orientacion?: string;
+        usuariosAtienden?: string[];
+      } = {
         appointmentId: appointment.id,
-        date: date ? date.toISOString().slice(0, 10) : undefined,
-        endDate: endDate ? endDate.toISOString().slice(0, 10) : (endDate === null ? null : undefined),
-        orientacion: orientacion || undefined,
-        usuariosAtienden: usuariosAtienden.length > 0 ? usuariosAtienden : undefined,
-      });
+      };
+
+      // Incluir fecha si está presente (siempre se envía si hay fecha)
+      if (date) {
+        updateParams.date = date.toISOString().slice(0, 10);
+      }
+
+      // Manejar fecha de próxima cita
+      // Si endDate es null, significa que el usuario quiere eliminar la fecha
+      // Si endDate es undefined, no se envía (no se modifica)
+      if (endDate !== undefined) {
+        updateParams.endDate = endDate ? endDate.toISOString().slice(0, 10) : null;
+      }
+
+      // Incluir orientación si está presente y no está vacía
+      if (orientacion && orientacion.trim()) {
+        updateParams.orientacion = orientacion.trim();
+      }
+
+      // Incluir usuarios si hay seleccionados
+      if (usuariosAtienden.length > 0) {
+        updateParams.usuariosAtienden = usuariosAtienden;
+      }
+
+      result = await updateCitaAction(updateParams);
     } else {
       // Modo creación
       result = await createCitaAction({
@@ -419,7 +446,9 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
             <div className="col-span-3 text-danger mb-2">{error}</div>
           )}
           {success && (
-            <div className="col-span-3 text-success mb-2">¡Cita creada exitosamente!</div>
+            <div className="col-span-3 text-success mb-2">
+              {isEditing ? '¡Cita actualizada exitosamente!' : '¡Cita creada exitosamente!'}
+            </div>
           )}
         </form>
 
@@ -433,7 +462,9 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
           
           <div className="flex justify-end">
             <Button variant="primary" size="xl" onClick={handleSubmit} disabled={loading}>
-              {loading ? 'Registrando...' : 'Registrar Cita'}
+              {loading 
+                ? (isEditing ? 'Actualizando...' : 'Registrando...') 
+                : (isEditing ? 'Actualizar Cita' : 'Registrar Cita')}
             </Button>
           </div>
         </div>

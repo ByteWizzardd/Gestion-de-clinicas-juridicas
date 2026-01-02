@@ -95,6 +95,17 @@ export const citasQueries = {
     const query = loadSQL('citas/create.sql');
     return await pool.query(query, [caseId, date, endDate, orientacion]);
   },
+
+  /**
+   * Elimina una cita específica
+   */
+  delete: async (
+    numCita: number,
+    idCaso: number
+  ): Promise<QueryResult<CitaCreada>> => {
+    const query = loadSQL('citas/delete.sql');
+    return await pool.query(query, [numCita, idCaso]);
+  },
 };
 
 
