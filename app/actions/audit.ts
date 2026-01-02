@@ -6,7 +6,7 @@ import { auditoriaEliminacionSoportesQueries } from '@/lib/db/queries/auditoria-
 import { auditoriaEliminacionCitasQueries } from '@/lib/db/queries/auditoria-eliminacion-citas.queries';
 import { auditoriaActualizacionCitasQueries } from '@/lib/db/queries/auditoria-actualizacion-citas.queries';
 import { auditoriaEliminacionUsuarioQueries } from '@/lib/db/queries/auditoria-eliminacion-usuario.queries';
-import { auditoriaActualizacionTipoUsuarioQueries } from '@/lib/db/queries/auditoria-actualizacion-tipo-usuario.queries';
+import { auditoriaActualizacionUsuariosQueries } from '@/lib/db/queries/auditoria-actualizacion-usuarios.queries';
 import type { AuditFilters, AuditCounts } from '@/types/audit';
 
 /**
@@ -26,12 +26,12 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
   }
 
   try {
-    const [soportes, citasEliminadas, citasActualizadas, usuariosEliminados, usuariosActualizados] = await Promise.all([
+    const [soportes, citasEliminadas, citasActualizadas, usuariosEliminados, usuariosActualizadosCampos] = await Promise.all([
       auditoriaEliminacionSoportesQueries.getCount(),
       auditoriaEliminacionCitasQueries.getCount(),
       auditoriaActualizacionCitasQueries.getCount(),
       auditoriaEliminacionUsuarioQueries.getCount(),
-      auditoriaActualizacionTipoUsuarioQueries.getCount(),
+      auditoriaActualizacionUsuariosQueries.getCount(),
     ]);
 
     return {
@@ -39,7 +39,7 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       citasEliminadas,
       citasActualizadas,
       usuariosEliminados,
-      usuariosActualizados,
+      usuariosActualizadosCampos,
     };
   } catch (error) {
     console.error('Error obteniendo contadores de auditoría:', error);
@@ -161,9 +161,9 @@ export async function getUsuariosEliminadosAuditAction(filters?: AuditFilters) {
 }
 
 /**
- * Obtiene cambios de tipo de usuario con filtros
+ * Obtiene actualizaciones de campos de usuarios (incluyendo cambios de tipo) con filtros
  */
-export async function getUsuariosActualizadosAuditAction(filters?: AuditFilters) {
+export async function getUsuariosActualizadosCamposAuditAction(filters?: AuditFilters) {
   const authResult = await requireAuthInServerActionWithCode();
   
   if (!authResult.success || !authResult.user) {
@@ -176,9 +176,16 @@ export async function getUsuariosActualizadosAuditAction(filters?: AuditFilters)
   }
 
   try {
-    return await auditoriaActualizacionTipoUsuarioQueries.getAll(filters);
+    const records = await auditoriaActualizacionUsuariosQueries.getAll(filters);
+    // Mapear campos para compatibilidad con tipos
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_actualizacion,
+      usuario_accion: r.id_usuario_actualizo,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_actualizo || undefined,
+    }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de usuarios actualizados:', error);
-    throw new Error('Error al obtener auditoría de usuarios actualizados');
+    console.error('Error obteniendo auditoría de usuarios actualizados (campos):', error);
+    throw new Error('Error al obtener auditoría de usuarios actualizados (campos)');
   }
 }

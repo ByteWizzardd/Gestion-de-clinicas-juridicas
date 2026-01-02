@@ -32,6 +32,7 @@ export interface SoporteAuditRecord {
   nombres_usuario_elimino: string | null;
   apellidos_usuario_elimino: string | null;
   nombre_completo_usuario_elimino: string | null;
+  foto_perfil_usuario_elimino: string | null;
   motivo: string | null;
 }
 
@@ -55,6 +56,7 @@ export interface CitaEliminadaAuditRecord {
   nombres_usuario_elimino: string | null;
   apellidos_usuario_elimino: string | null;
   nombre_completo_usuario_elimino: string | null;
+  foto_perfil_usuario_elimino: string | null;
   motivo: string | null;
 }
 
@@ -78,6 +80,7 @@ export interface CitaActualizadaAuditRecord {
   nombres_usuario_actualizo: string | null;
   apellidos_usuario_actualizo: string | null;
   nombre_completo_usuario_actualizo: string | null;
+  foto_perfil_usuario_actualizo: string | null;
   fecha_actualizacion: string;
   fecha: string; // Alias para fecha_actualizacion
 }
@@ -90,24 +93,52 @@ export interface UsuarioEliminadoAuditRecord {
   apellidos_usuario_eliminado: string | null;
   nombre_completo_usuario_eliminado: string | null;
   eliminado_por: string;
+  nombres_eliminado_por: string | null;
+  apellidos_eliminado_por: string | null;
+  nombre_completo_eliminado_por: string | null;
+  foto_perfil_eliminado_por: string | null;
   motivo: string;
   fecha: string;
 }
 
-// Auditoría de cambios de tipo de usuario
-export interface UsuarioActualizadoAuditRecord {
+// Auditoría de actualizaciones de campos de usuario (incluyendo cambios de tipo, tipo_estudiante, tipo_profesor)
+export interface UsuarioActualizadoCamposAuditRecord {
   id: number;
   ci_usuario: string;
   nombres_usuario: string | null;
   apellidos_usuario: string | null;
   nombre_completo_usuario: string | null;
-  tipo_usuario_anterior: string;
-  tipo_usuario_nuevo: string;
-  actualizado_por: string;
-  nombres_actualizado_por: string | null;
-  apellidos_actualizado_por: string | null;
-  nombre_completo_actualizado_por: string | null;
-  fecha: string;
+  foto_perfil_usuario: string | null;
+  // Valores anteriores
+  nombres_anterior: string | null;
+  apellidos_anterior: string | null;
+  correo_electronico_anterior: string | null;
+  nombre_usuario_anterior: string | null;
+  telefono_celular_anterior: string | null;
+  habilitado_sistema_anterior: boolean | null;
+  tipo_usuario_anterior: string | null;
+  tipo_estudiante_anterior: string | null;
+  tipo_profesor_anterior: string | null;
+  // Valores nuevos
+  nombres_nuevo: string | null;
+  apellidos_nuevo: string | null;
+  correo_electronico_nuevo: string | null;
+  nombre_usuario_nuevo: string | null;
+  telefono_celular_nuevo: string | null;
+  habilitado_sistema_nuevo: boolean | null;
+  tipo_usuario_nuevo: string | null;
+  tipo_estudiante_nuevo: string | null;
+  tipo_profesor_nuevo: string | null;
+  // Información de auditoría
+  id_usuario_actualizo: string;
+  usuario_accion: string; // Alias para id_usuario_actualizo
+  nombre_completo_usuario_accion?: string; // Alias para nombre_completo_usuario_actualizo
+  nombres_usuario_actualizo: string | null;
+  apellidos_usuario_actualizo: string | null;
+  nombre_completo_usuario_actualizo: string | null;
+  foto_perfil_usuario_actualizo: string | null;
+  fecha_actualizacion: string;
+  fecha: string; // Alias para fecha_actualizacion
 }
 
 // Filtros para consultas de auditoría
@@ -125,5 +156,5 @@ export interface AuditCounts {
   citasEliminadas: number;
   citasActualizadas: number;
   usuariosEliminados: number;
-  usuariosActualizados: number;
+  usuariosActualizadosCampos: number;
 }

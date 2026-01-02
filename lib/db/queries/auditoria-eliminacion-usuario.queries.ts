@@ -32,6 +32,10 @@ export const auditoriaEliminacionUsuarioQueries = {
     apellidos_usuario_eliminado: string | null;
     nombre_completo_usuario_eliminado: string | null;
     eliminado_por: string;
+    nombres_eliminado_por: string | null;
+    apellidos_eliminado_por: string | null;
+    nombre_completo_eliminado_por: string | null;
+    foto_perfil_eliminado_por: string | null;
     motivo: string;
     fecha: string;
   }>> => {
@@ -43,6 +47,12 @@ export const auditoriaEliminacionUsuarioQueries = {
       filters?.busqueda || null,
       filters?.orden || 'desc', // Por defecto: más reciente primero
     ]);
-    return result.rows;
+    // Convertir foto_perfil de Buffer a base64
+    return result.rows.map(row => ({
+      ...row,
+      foto_perfil_eliminado_por: row.foto_perfil_eliminado_por 
+        ? `data:image/jpeg;base64,${(row.foto_perfil_eliminado_por as Buffer).toString('base64')}`
+        : null,
+    }));
   },
 };

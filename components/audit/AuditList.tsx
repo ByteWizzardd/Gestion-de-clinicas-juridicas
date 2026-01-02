@@ -5,7 +5,7 @@ import { motion } from 'motion/react';
 import { TablePagination } from '@/components/Table/TablePagination';
 import AuditRecordCard from './AuditRecordCard';
 
-type AuditRecordType = 'soporte' | 'cita-eliminada' | 'cita-actualizada' | 'usuario-eliminado' | 'usuario-actualizado';
+type AuditRecordType = 'soporte' | 'cita-eliminada' | 'cita-actualizada' | 'usuario-eliminado' | 'usuario-actualizado-campos';
 
 interface AuditListProps {
   records: any[];

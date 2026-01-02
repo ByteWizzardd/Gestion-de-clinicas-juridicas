@@ -25,6 +25,7 @@ SELECT
     u_elimino.nombres AS nombres_usuario_elimino,
     u_elimino.apellidos AS apellidos_usuario_elimino,
     CONCAT(u_elimino.nombres, ' ', u_elimino.apellidos) AS nombre_completo_usuario_elimino,
+    u_elimino.foto_perfil AS foto_perfil_usuario_elimino,
     -- Motivo de la eliminación
     a.motivo
 FROM auditoria_eliminacion_soportes a

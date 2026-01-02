@@ -100,6 +100,7 @@ export default function Select({ label, error, options, placeholder = "Seleccion
                                 <button
                                     key={option.value}
                                     type="button"
+                                    data-close-menu
                                     onClick={() => handleSelect(option.value)}
                                     className={`
                                         w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer

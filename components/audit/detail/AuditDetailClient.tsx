@@ -10,8 +10,8 @@ import AuditRecordCard from '../AuditRecordCard';
 import Spinner from '@/components/ui/feedback/Spinner';
 import type { AuditFilters } from '@/types/audit';
 
-type AuditType = 'soportes' | 'citas-eliminadas' | 'citas-actualizadas' | 'usuarios-eliminados' | 'usuarios-actualizados';
-type AuditRecordType = 'soporte' | 'cita-eliminada' | 'cita-actualizada' | 'usuario-eliminado' | 'usuario-actualizado';
+type AuditType = 'soportes' | 'citas-eliminadas' | 'citas-actualizadas' | 'usuarios-eliminados' | 'usuarios-actualizados-campos';
+type AuditRecordType = 'soporte' | 'cita-eliminada' | 'cita-actualizada' | 'usuario-eliminado' | 'usuario-actualizado-campos';
 
 interface AuditDetailClientProps {
   title: string;
@@ -38,7 +38,7 @@ export default function AuditDetailClient({
     'citas-eliminadas': 'cita-eliminada',
     'citas-actualizadas': 'cita-actualizada',
     'usuarios-eliminados': 'usuario-eliminado',
-    'usuarios-actualizados': 'usuario-actualizado',
+    'usuarios-actualizados-campos': 'usuario-actualizado-campos',
   };
 
   // Cargar opciones de usuarios
@@ -75,7 +75,7 @@ export default function AuditDetailClient({
           getCitasEliminadasAuditAction,
           getCitasActualizadasAuditAction,
           getUsuariosEliminadosAuditAction,
-          getUsuariosActualizadosAuditAction
+          getUsuariosActualizadosCamposAuditAction
         } = await import('@/app/actions/audit');
 
         let data: any[];
@@ -92,8 +92,8 @@ export default function AuditDetailClient({
           case 'usuarios-eliminados':
             data = await getUsuariosEliminadosAuditAction(filters);
             break;
-          case 'usuarios-actualizados':
-            data = await getUsuariosActualizadosAuditAction(filters);
+          case 'usuarios-actualizados-campos':
+            data = await getUsuariosActualizadosCamposAuditAction(filters);
             break;
           default:
             throw new Error('Tipo de auditoría no válido');

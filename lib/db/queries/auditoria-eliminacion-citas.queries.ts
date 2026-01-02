@@ -101,6 +101,7 @@ export const auditoriaEliminacionCitasQueries = {
     nombres_usuario_elimino: string | null;
     apellidos_usuario_elimino: string | null;
     nombre_completo_usuario_elimino: string | null;
+    foto_perfil_usuario_elimino: string | null;
     motivo: string | null;
   }>> => {
     const query = loadSQL('auditoria-eliminacion-citas/get-all.sql');
@@ -111,6 +112,12 @@ export const auditoriaEliminacionCitasQueries = {
       filters?.busqueda || null,
       filters?.orden || 'desc', // Por defecto: más reciente primero
     ]);
-    return result.rows;
+    // Convertir foto_perfil de Buffer a base64
+    return result.rows.map(row => ({
+      ...row,
+      foto_perfil_usuario_elimino: row.foto_perfil_usuario_elimino 
+        ? `data:image/jpeg;base64,${(row.foto_perfil_usuario_elimino as Buffer).toString('base64')}`
+        : null,
+    }));
   },
 };

@@ -412,15 +412,34 @@ CREATE TABLE auditoria_eliminacion_usuario (
     fecha TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
 );
 
--- 26.5) AUDITORÍA DE ACTUALIZACIÓN DE TIPO DE USUARIO
--- Tabla para registrar cambios en el tipo de usuario
-CREATE TABLE auditoria_actualizacion_tipo_usuario (
+-- 26.5) AUDITORÍA DE ACTUALIZACIÓN DE USUARIOS
+-- Tabla para registrar todas las actualizaciones de usuarios (campos, tipo de usuario, tipo_estudiante, tipo_profesor)
+CREATE TABLE auditoria_actualizacion_usuarios (
     id SERIAL PRIMARY KEY,
-    ci_usuario VARCHAR(20) NOT NULL, -- Cédula del usuario cuyo tipo cambió
-    tipo_usuario_anterior VARCHAR(255) NOT NULL,
-    tipo_usuario_nuevo VARCHAR(255) NOT NULL,
-    actualizado_por VARCHAR(20) NOT NULL, -- Cédula del usuario que realizó el cambio
-    fecha TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+    ci_usuario VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    -- Valores anteriores (antes de la actualización)
+    nombres_anterior VARCHAR(100),
+    apellidos_anterior VARCHAR(100),
+    correo_electronico_anterior VARCHAR(100),
+    nombre_usuario_anterior VARCHAR(50),
+    telefono_celular_anterior VARCHAR(20),
+    habilitado_sistema_anterior BOOLEAN,
+    tipo_usuario_anterior VARCHAR(20),
+    tipo_estudiante_anterior VARCHAR(50),
+    tipo_profesor_anterior VARCHAR(20),
+    -- Valores nuevos (después de la actualización)
+    nombres_nuevo VARCHAR(100),
+    apellidos_nuevo VARCHAR(100),
+    correo_electronico_nuevo VARCHAR(100),
+    nombre_usuario_nuevo VARCHAR(50),
+    telefono_celular_nuevo VARCHAR(20),
+    habilitado_sistema_nuevo BOOLEAN,
+    tipo_usuario_nuevo VARCHAR(20),
+    tipo_estudiante_nuevo VARCHAR(50),
+    tipo_profesor_nuevo VARCHAR(20),
+    -- Información de auditoría
+    id_usuario_actualizo VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    fecha_actualizacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
 );
 
 -- 27) BENEFICIARIOS (PARENTESCO LIBRE)

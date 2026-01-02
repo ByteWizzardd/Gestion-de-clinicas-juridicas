@@ -93,6 +93,7 @@ export const auditoriaActualizacionCitasQueries = {
     nombres_usuario_actualizo: string | null;
     apellidos_usuario_actualizo: string | null;
     nombre_completo_usuario_actualizo: string | null;
+    foto_perfil_usuario_actualizo: string | null;
     fecha_actualizacion: string;
   }>> => {
     const query = loadSQL('auditoria-actualizacion-citas/get-all.sql');
@@ -103,6 +104,12 @@ export const auditoriaActualizacionCitasQueries = {
       filters?.busqueda || null,
       filters?.orden || 'desc', // Por defecto: más reciente primero
     ]);
-    return result.rows;
+    // Convertir foto_perfil de Buffer a base64
+    return result.rows.map(row => ({
+      ...row,
+      foto_perfil_usuario_actualizo: row.foto_perfil_usuario_actualizo 
+        ? `data:image/jpeg;base64,${(row.foto_perfil_usuario_actualizo as Buffer).toString('base64')}`
+        : null,
+    }));
   },
 };

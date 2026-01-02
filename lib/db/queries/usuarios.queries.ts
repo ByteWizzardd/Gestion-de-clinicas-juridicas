@@ -148,13 +148,14 @@ export const usuariosQueries = {
    * Elimina un usuario y guarda su cédula
    */
   toggleHabilitado: async (
-    cedula: string
+    cedula: string,
+    cedula_actor: string
   ): Promise<{
     success: boolean;
     error?: { message: string; code?: string };
   }> => {
     try {
-      await pool.query("SELECT toggle_habilitado_usuario($1)", [cedula]);
+      await pool.query("SELECT toggle_habilitado_usuario($1, $2)", [cedula, cedula_actor]);
       return { success: true };
     } catch (error: unknown) {
       return {
@@ -293,6 +294,19 @@ export const usuariosQueries = {
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
+        
+        // Obtener el tipo_usuario actual del usuario para determinar qué valores pasar
+        const tipoUsuarioResult = await client.query(
+          'SELECT tipo_usuario FROM usuarios WHERE cedula = $1',
+          [data.cedula]
+        );
+        const tipoUsuarioActual = tipoUsuarioResult.rows[0]?.tipo_usuario || null;
+        
+        // Usar el tipo_usuario que se está pasando, o el actual si no se pasa
+        const tipoUsuarioParaValores = (data.tipo_usuario && data.tipo_usuario.trim() !== '') 
+          ? data.tipo_usuario 
+          : tipoUsuarioActual;
+        
         await client.query(
           `CALL update_all_by_cedula(
             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
@@ -304,16 +318,16 @@ export const usuariosQueries = {
             data.correo_electronico ?? null,
             data.nombre_usuario ?? null,
             data.telefono_celular ?? null,
-            data.tipo_usuario ?? null,
-            // Estudiante
-            data.tipo_usuario === "Estudiante" ? data.nrc ?? null : null,
-            data.tipo_usuario === "Estudiante" ? data.term ?? null : null,
-            data.tipo_usuario === "Estudiante" ? data.tipo_estudiante ?? null : null,
+            data.tipo_usuario && data.tipo_usuario.trim() !== '' ? data.tipo_usuario : null,
+            // Estudiante - usar tipoUsuarioParaValores para determinar si pasar valores
+            tipoUsuarioParaValores === "Estudiante" ? data.nrc ?? null : null,
+            tipoUsuarioParaValores === "Estudiante" ? data.term ?? null : null,
+            tipoUsuarioParaValores === "Estudiante" ? data.tipo_estudiante ?? null : null,
             // Profesor
-            data.tipo_usuario === "Profesor" ? data.term ?? null : null,
-            data.tipo_usuario === "Profesor" ? data.tipo_profesor ?? null : null,
+            tipoUsuarioParaValores === "Profesor" ? data.term ?? null : null,
+            tipoUsuarioParaValores === "Profesor" ? data.tipo_profesor ?? null : null,
             // Coordinador
-            data.tipo_usuario === "Coordinador" ? data.term ?? null : null,
+            tipoUsuarioParaValores === "Coordinador" ? data.term ?? null : null,
             //Cedula actor (Usuario que realiza la acción)
             data.cedula_actor
           ]

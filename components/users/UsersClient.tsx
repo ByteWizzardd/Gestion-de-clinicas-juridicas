@@ -237,7 +237,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: "easeOut" }}
       >
-        <h1 className="text-4xl m-3 font-semibold font-primary">Gestión de Usuarios</h1>
+        <h1 className="text-4xl m-3 font-semibold font-primary">Usuarios</h1>
         <p className="mb-6 ml-3">
           Administración de usuarios del sistema: estudiantes, profesores y coordinadores
         </p>

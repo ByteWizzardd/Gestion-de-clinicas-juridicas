@@ -140,7 +140,8 @@ export async function toggleHabilitadoUsuarioAction(
         },
       };
     }
-    return await usuariosQueries.toggleHabilitado(cedula);
+    const cedula_actor = userResult.data.cedula;
+    return await usuariosQueries.toggleHabilitado(cedula, cedula_actor);
   } catch (error: unknown) {
     return {
       success: false,
@@ -346,6 +347,16 @@ export async function updateUsuarioByCedulaAction(
       };
     }
     const cedula_actor = userResult.data.cedula;
+    
+    // Obtener el tipo_usuario actual del usuario para determinar qué valores pasar
+    const usuarioActual = await usuariosQueries.getInfoByCedula(cedula);
+    const tipoUsuarioActual = usuarioActual?.tipo_usuario || null;
+    
+    // Usar el tipo_usuario que se está pasando, o el actual si no se pasa
+    const tipoUsuarioParaValores = (updates.tipo_usuario && updates.tipo_usuario.trim() !== '') 
+      ? updates.tipo_usuario 
+      : tipoUsuarioActual;
+    
     await usuariosQueries.updateUsuarioByCedulaAction({
       cedula,
       nombres: updates.nombre ?? "",
@@ -353,18 +364,18 @@ export async function updateUsuarioByCedulaAction(
       correo_electronico: updates.correo_electronico ?? "",
       nombre_usuario: updates.nombre_usuario ?? "",
       telefono_celular: updates.telefono ?? null,
-      tipo_usuario: updates.tipo_usuario ?? "",
-      nrc: updates.estudiante?.nrc ?? null,
+      tipo_usuario: (updates.tipo_usuario && updates.tipo_usuario.trim() !== '') ? updates.tipo_usuario : (tipoUsuarioActual || ""),
+      nrc: tipoUsuarioParaValores === "Estudiante" ? updates.estudiante?.nrc ?? null : null,
       term:
-        updates.tipo_usuario === "Estudiante"
+        tipoUsuarioParaValores === "Estudiante"
           ? updates.estudiante?.term ?? null
-          : updates.tipo_usuario === "Profesor"
+          : tipoUsuarioParaValores === "Profesor"
           ? updates.profesor?.term ?? null
-          : updates.tipo_usuario === "Coordinador"
+          : tipoUsuarioParaValores === "Coordinador"
           ? updates.coordinador?.term ?? null
           : null,
-      tipo_estudiante: updates.estudiante?.tipo_estudiante ?? null,
-      tipo_profesor: updates.profesor?.tipo_profesor ?? null,
+      tipo_estudiante: tipoUsuarioParaValores === "Estudiante" ? (updates.estudiante?.tipo_estudiante ?? null) : null,
+      tipo_profesor: tipoUsuarioParaValores === "Profesor" ? (updates.profesor?.tipo_profesor ?? null) : null,
       cedula_actor,
     });
     return { success: true };

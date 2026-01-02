@@ -20,9 +20,22 @@ SELECT
         ELSE NULL
     END AS nombre_completo_usuario_eliminado,
     a.eliminado_por,
+    u_elimino.nombres AS nombres_eliminado_por,
+    u_elimino.apellidos AS apellidos_eliminado_por,
+    CASE 
+        WHEN u_elimino.nombres IS NOT NULL AND u_elimino.apellidos IS NOT NULL 
+        THEN u_elimino.nombres || ' ' || u_elimino.apellidos
+        WHEN u_elimino.nombres IS NOT NULL 
+        THEN u_elimino.nombres
+        WHEN u_elimino.apellidos IS NOT NULL 
+        THEN u_elimino.apellidos
+        ELSE NULL
+    END AS nombre_completo_eliminado_por,
+    u_elimino.foto_perfil AS foto_perfil_eliminado_por,
     a.motivo,
     a.fecha
 FROM auditoria_eliminacion_usuario a
+LEFT JOIN usuarios u_elimino ON TRIM(a.eliminado_por) = TRIM(u_elimino.cedula)
 WHERE 
     ($1::DATE IS NULL OR a.fecha::DATE >= $1)
     AND ($2::DATE IS NULL OR a.fecha::DATE <= $2)

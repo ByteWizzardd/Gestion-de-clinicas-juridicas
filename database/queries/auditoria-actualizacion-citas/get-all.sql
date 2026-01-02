@@ -22,6 +22,7 @@ SELECT
     u_actualizo.nombres AS nombres_usuario_actualizo,
     u_actualizo.apellidos AS apellidos_usuario_actualizo,
     CONCAT(u_actualizo.nombres, ' ', u_actualizo.apellidos) AS nombre_completo_usuario_actualizo,
+    u_actualizo.foto_perfil AS foto_perfil_usuario_actualizo,
     a.fecha_actualizacion
 FROM auditoria_actualizacion_citas a
 LEFT JOIN usuarios u_actualizo ON a.id_usuario_actualizo = u_actualizo.cedula

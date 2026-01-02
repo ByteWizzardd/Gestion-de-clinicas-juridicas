@@ -4,17 +4,18 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronDown, ChevronUp, FileText, Calendar, User, X, Check } from 'lucide-react';
 import Link from 'next/link';
+import UserAvatar from '@/components/ui/UserAvatar';
 import type { 
   SoporteAuditRecord, 
   CitaEliminadaAuditRecord, 
   CitaActualizadaAuditRecord,
   UsuarioEliminadoAuditRecord,
-  UsuarioActualizadoAuditRecord 
+  UsuarioActualizadoCamposAuditRecord
 } from '@/types/audit';
 
-type AuditRecord = SoporteAuditRecord | CitaEliminadaAuditRecord | CitaActualizadaAuditRecord | UsuarioEliminadoAuditRecord | UsuarioActualizadoAuditRecord;
+type AuditRecord = SoporteAuditRecord | CitaEliminadaAuditRecord | CitaActualizadaAuditRecord | UsuarioEliminadoAuditRecord | UsuarioActualizadoCamposAuditRecord;
 
-type AuditRecordType = 'soporte' | 'cita-eliminada' | 'cita-actualizada' | 'usuario-eliminado' | 'usuario-actualizado';
+type AuditRecordType = 'soporte' | 'cita-eliminada' | 'cita-actualizada' | 'usuario-eliminado' | 'usuario-actualizado-campos';
 
 interface AuditRecordCardProps {
   record: AuditRecord;
@@ -86,26 +87,87 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
 
+  // Helper para renderizar nombre de usuario como enlace
+  const renderUserLink = (
+    nombreCompleto: string | null,
+    nombres: string | null,
+    apellidos: string | null,
+    cedula: string | null | undefined
+  ) => {
+    // Construir nombre completo
+    let nombre = nombreCompleto;
+    if (!nombre && (nombres || apellidos)) {
+      nombre = `${nombres || ''} ${apellidos || ''}`.trim();
+    }
+    if (!nombre) {
+      nombre = 'Usuario desconocido';
+    }
+
+    // Si hay cédula, renderizar como enlace
+    if (cedula) {
+      return (
+        <>
+          <Link
+            href={`/dashboard/users/${cedula}`}
+            className="text-primary hover:underline font-medium transition-colors"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {nombre}
+          </Link>
+          <span className="text-gray-600"> (Cédula: {cedula})</span>
+        </>
+      );
+    }
+
+    // Sin cédula, solo texto
+    return <span className="text-gray-600">{nombre}</span>;
+  };
+
+  // Helper para renderizar nombre de usuario eliminado como texto (sin enlace)
+  const renderDeletedUser = (
+    nombreCompleto: string | null,
+    nombres: string | null,
+    apellidos: string | null,
+    cedula: string | null | undefined
+  ) => {
+    // Construir nombre completo
+    let nombre = nombreCompleto;
+    if (!nombre && (nombres || apellidos)) {
+      nombre = `${nombres || ''} ${apellidos || ''}`.trim();
+    }
+    if (!nombre) {
+      nombre = 'Usuario desconocido';
+    }
+
+    // Mostrar como texto normal (sin enlace)
+    if (cedula) {
+      return (
+        <span className="text-gray-900">
+          {nombre} <span className="text-gray-600">(Cédula: {cedula})</span>
+        </span>
+      );
+    }
+
+    return <span className="text-gray-900">{nombre}</span>;
+  };
+
   const renderSummary = () => {
     switch (type) {
       case 'soporte': {
         const r = record as SoporteAuditRecord;
-        // Construir nombre completo del usuario que eliminó
-        let nombreCompletoElimino = r.nombre_completo_usuario_elimino;
-        if (!nombreCompletoElimino && (r.nombres_usuario_elimino || r.apellidos_usuario_elimino)) {
-          nombreCompletoElimino = `${r.nombres_usuario_elimino || ''} ${r.apellidos_usuario_elimino || ''}`.trim();
-        }
-        if (!nombreCompletoElimino) {
-          nombreCompletoElimino = 'Usuario desconocido';
-        }
-        
         return (
           <div className="flex items-center gap-3">
             <FileText className="w-5 h-5 text-gray-600" />
             <div className="flex-1">
               <p className="font-semibold text-gray-900">{r.nombre_archivo}</p>
               <p className="text-sm text-gray-600">
-                Caso #{r.id_caso} • Eliminado por: {nombreCompletoElimino} (Cédula: {r.id_usuario_elimino})
+                Caso #{r.id_caso} • Eliminado por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_elimino,
+                  r.nombres_usuario_elimino,
+                  r.apellidos_usuario_elimino,
+                  r.id_usuario_elimino
+                )}
               </p>
             </div>
           </div>
@@ -118,10 +180,23 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
             <Calendar className="w-5 h-5 text-gray-600" />
             <div className="flex-1">
               <p className="font-semibold text-gray-900">
-                Cita #{r.num_cita} - Caso #{r.id_caso}
+                Cita #{r.num_cita} -{' '}
+                <Link
+                  href={`/dashboard/cases/${r.id_caso}`}
+                  className="text-primary hover:underline font-medium transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Caso #{r.id_caso}
+                </Link>
               </p>
               <p className="text-sm text-gray-600">
-                {formatDate(r.fecha_encuentro)} • {r.nombre_completo_usuario_elimino || r.id_usuario_elimino}
+                {formatDate(r.fecha_encuentro)} • Eliminado por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_elimino,
+                  r.nombres_usuario_elimino,
+                  r.apellidos_usuario_elimino,
+                  r.id_usuario_elimino
+                )}
               </p>
             </div>
           </div>
@@ -134,10 +209,23 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
             <Check className="w-5 h-5 text-gray-600" />
             <div className="flex-1">
               <p className="font-semibold text-gray-900">
-                Cita #{r.num_cita} - Caso #{r.id_caso}
+                Cita #{r.num_cita} -{' '}
+                <Link
+                  href={`/dashboard/cases/${r.id_caso}`}
+                  className="text-primary hover:underline font-medium transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Caso #{r.id_caso}
+                </Link>
               </p>
               <p className="text-sm text-gray-600">
-                {r.nombre_completo_usuario_actualizo || r.id_usuario_actualizo}
+                Actualizado por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_actualizo,
+                  r.nombres_usuario_actualizo,
+                  r.apellidos_usuario_actualizo,
+                  r.id_usuario_actualizo
+                )}
               </p>
             </div>
           </div>
@@ -145,29 +233,33 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
       }
       case 'usuario-eliminado': {
         const r = record as UsuarioEliminadoAuditRecord;
-        // Construir nombre completo del usuario eliminado
-        let nombreCompletoEliminado = r.nombre_completo_usuario_eliminado;
-        if (!nombreCompletoEliminado && (r.nombres_usuario_eliminado || r.apellidos_usuario_eliminado)) {
-          nombreCompletoEliminado = `${r.nombres_usuario_eliminado || ''} ${r.apellidos_usuario_eliminado || ''}`.trim();
-        }
-        if (!nombreCompletoEliminado) {
-          nombreCompletoEliminado = 'Usuario desconocido';
-        }
-        
         return (
           <div className="flex items-center gap-3">
             <User className="w-5 h-5 text-gray-600" />
             <div className="flex-1">
               <p className="font-semibold text-gray-900">
-                {nombreCompletoEliminado} (Cédula: {r.usuario_eliminado})
+                {renderDeletedUser(
+                  r.nombre_completo_usuario_eliminado,
+                  r.nombres_usuario_eliminado,
+                  r.apellidos_usuario_eliminado,
+                  r.usuario_eliminado
+                )}
               </p>
-              <p className="text-sm text-gray-600">Eliminado por: {r.eliminado_por}</p>
+              <p className="text-sm text-gray-600">
+                Eliminado por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_eliminado_por,
+                  r.nombres_eliminado_por,
+                  r.apellidos_eliminado_por,
+                  r.eliminado_por
+                )}
+              </p>
             </div>
           </div>
         );
       }
-      case 'usuario-actualizado': {
-        const r = record as UsuarioActualizadoAuditRecord;
+      case 'usuario-actualizado-campos': {
+        const r = record as UsuarioActualizadoCamposAuditRecord;
         // Construir nombre completo
         let nombreCompleto = r.nombre_completo_usuario;
         if (!nombreCompleto && (r.nombres_usuario || r.apellidos_usuario)) {
@@ -179,13 +271,33 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         
         return (
           <div className="flex items-center gap-3">
-            <User className="w-5 h-5 text-gray-600" />
+            <UserAvatar fotoPerfil={r.foto_perfil_usuario} size={25} />
             <div className="flex-1">
               <p className="font-semibold text-gray-900">
-                {nombreCompleto}
+                {r.ci_usuario ? (
+                  <Link
+                    href={`/dashboard/users/${r.ci_usuario}`}
+                    className="text-primary hover:underline font-medium transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {nombreCompleto}
+                  </Link>
+                ) : (
+                  nombreCompleto
+                )}
               </p>
               <p className="text-sm text-gray-600">
-                Cédula: {r.ci_usuario} • {r.tipo_usuario_anterior} → {r.tipo_usuario_nuevo}
+                Cédula: {r.ci_usuario}
+                {r.tipo_usuario_anterior !== r.tipo_usuario_nuevo && (
+                  <> • {r.tipo_usuario_anterior} → {r.tipo_usuario_nuevo}</>
+                )}
+                {' • '}Actualizado por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_actualizo,
+                  r.nombres_usuario_actualizo,
+                  r.apellidos_usuario_actualizo,
+                  r.id_usuario_actualizo
+                )}
               </p>
             </div>
           </div>
@@ -222,26 +334,27 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
               <div>
                 <p className="text-sm font-semibold text-gray-700 mb-1">Subido por</p>
                 <p className="text-sm text-gray-600">
-                  {r.nombre_completo_usuario_subio || (r.nombres_usuario_subio && r.apellidos_usuario_subio 
-                    ? `${r.nombres_usuario_subio} ${r.apellidos_usuario_subio}`.trim()
-                    : r.id_usuario_subio) || 'N/A'}
-                  {r.id_usuario_subio && r.nombre_completo_usuario_subio && ` (Cédula: ${r.id_usuario_subio})`}
+                  {r.id_usuario_subio ? (
+                    renderUserLink(
+                      r.nombre_completo_usuario_subio,
+                      r.nombres_usuario_subio,
+                      r.apellidos_usuario_subio,
+                      r.id_usuario_subio
+                    )
+                  ) : (
+                    <span className="text-gray-600">N/A</span>
+                  )}
                 </p>
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-700 mb-1">Eliminado por</p>
                 <p className="text-sm text-gray-600">
-                  {(() => {
-                    // Construir nombre completo del usuario que eliminó
-                    let nombreCompletoElimino = r.nombre_completo_usuario_elimino;
-                    if (!nombreCompletoElimino && (r.nombres_usuario_elimino || r.apellidos_usuario_elimino)) {
-                      nombreCompletoElimino = `${r.nombres_usuario_elimino || ''} ${r.apellidos_usuario_elimino || ''}`.trim();
-                    }
-                    if (!nombreCompletoElimino) {
-                      nombreCompletoElimino = 'Usuario desconocido';
-                    }
-                    return `${nombreCompletoElimino} (Cédula: ${r.id_usuario_elimino})`;
-                  })()}
+                  {renderUserLink(
+                    r.nombre_completo_usuario_elimino,
+                    r.nombres_usuario_elimino,
+                    r.apellidos_usuario_elimino,
+                    r.id_usuario_elimino
+                  )}
                 </p>
               </div>
             </div>
@@ -280,11 +393,23 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
                 {r.id_usuario_registro && (
                   <p className="text-sm text-gray-600">
-                    Registrado por: {r.nombre_completo_usuario_registro || r.id_usuario_registro}
+                    Registrado por:{' '}
+                    {renderUserLink(
+                      r.nombre_completo_usuario_registro,
+                      r.nombres_usuario_registro,
+                      r.apellidos_usuario_registro,
+                      r.id_usuario_registro
+                    )}
                   </p>
                 )}
                 <p className="text-sm text-gray-600">
-                  Eliminado por: {r.nombre_completo_usuario_elimino || r.id_usuario_elimino}
+                  Eliminado por:{' '}
+                  {renderUserLink(
+                    r.nombre_completo_usuario_elimino,
+                    r.nombres_usuario_elimino,
+                    r.apellidos_usuario_elimino,
+                    r.id_usuario_elimino
+                  )}
                 </p>
                 <p className="text-sm text-gray-600">Fecha eliminación: {formatDate(r.fecha_eliminacion)}</p>
               </div>
@@ -355,7 +480,13 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
               <div>
                 <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
                 <p className="text-sm text-gray-600">
-                  Actualizado por: {r.nombre_completo_usuario_actualizo || r.id_usuario_actualizo}
+                  Actualizado por:{' '}
+                  {renderUserLink(
+                    r.nombre_completo_usuario_actualizo,
+                    r.nombres_usuario_actualizo,
+                    r.apellidos_usuario_actualizo,
+                    r.id_usuario_actualizo
+                  )}
                 </p>
                 <p className="text-sm text-gray-600">
                   Fecha actualización: {formatDate(r.fecha_actualizacion)}
@@ -384,14 +515,37 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           nombreCompletoEliminado = 'Usuario desconocido';
         }
         
+        // Construir nombre completo del usuario que eliminó
+        let nombreCompletoEliminoPor = r.nombre_completo_eliminado_por;
+        if (!nombreCompletoEliminoPor && (r.nombres_eliminado_por || r.apellidos_eliminado_por)) {
+          nombreCompletoEliminoPor = `${r.nombres_eliminado_por || ''} ${r.apellidos_eliminado_por || ''}`.trim();
+        }
+        if (!nombreCompletoEliminoPor) {
+          nombreCompletoEliminoPor = 'Usuario desconocido';
+        }
+        
         return (
           <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
             <div>
               <p className="text-sm font-semibold text-gray-700 mb-1">Información</p>
               <p className="text-sm text-gray-600">
-                Usuario eliminado: {nombreCompletoEliminado} (Cédula: {r.usuario_eliminado})
+                Usuario eliminado:{' '}
+                {renderDeletedUser(
+                  r.nombre_completo_usuario_eliminado,
+                  r.nombres_usuario_eliminado,
+                  r.apellidos_usuario_eliminado,
+                  r.usuario_eliminado
+                )}
               </p>
-              <p className="text-sm text-gray-600">Eliminado por: {r.eliminado_por}</p>
+              <p className="text-sm text-gray-600">
+                Eliminado por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_eliminado_por,
+                  r.nombres_eliminado_por,
+                  r.apellidos_eliminado_por,
+                  r.eliminado_por
+                )}
+              </p>
               <p className="text-sm text-gray-600">Fecha: {formatDate(r.fecha)}</p>
             </div>
             {r.motivo && (
@@ -403,8 +557,8 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           </div>
         );
       }
-      case 'usuario-actualizado': {
-        const r = record as UsuarioActualizadoAuditRecord;
+      case 'usuario-actualizado-campos': {
+        const r = record as UsuarioActualizadoCamposAuditRecord;
         // Construir nombre completo del usuario
         let nombreCompleto = r.nombre_completo_usuario;
         if (!nombreCompleto && (r.nombres_usuario || r.apellidos_usuario)) {
@@ -414,31 +568,172 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           nombreCompleto = 'Usuario desconocido';
         }
         
-        // Construir nombre completo del usuario que actualizó
-        let nombreCompletoActualizadoPor = r.nombre_completo_actualizado_por;
-        if (!nombreCompletoActualizadoPor && (r.nombres_actualizado_por || r.apellidos_actualizado_por)) {
-          nombreCompletoActualizadoPor = `${r.nombres_actualizado_por || ''} ${r.apellidos_actualizado_por || ''}`.trim();
-        }
-        if (!nombreCompletoActualizadoPor) {
-          nombreCompletoActualizadoPor = 'Usuario desconocido';
-        }
-        
         return (
           <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Cambio de Tipo</p>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Cambios Realizados</p>
+              <p className="text-sm text-gray-600 mb-3">
+                Usuario:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario,
+                  r.nombres_usuario,
+                  r.apellidos_usuario,
+                  r.ci_usuario
+                )}
+              </p>
+              
+              {/* Mostrar solo los campos que cambiaron */}
+              {(r.nombres_anterior !== r.nombres_nuevo) && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Nombres:{' '}
+                    <span className="line-through text-red-500">
+                      {r.nombres_anterior || 'N/A'}
+                    </span>
+                    {' → '}
+                    <span className="text-green-600">
+                      {r.nombres_nuevo || 'N/A'}
+                    </span>
+                  </p>
+                </div>
+              )}
+              
+              {(r.apellidos_anterior !== r.apellidos_nuevo) && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Apellidos:{' '}
+                    <span className="line-through text-red-500">
+                      {r.apellidos_anterior || 'N/A'}
+                    </span>
+                    {' → '}
+                    <span className="text-green-600">
+                      {r.apellidos_nuevo || 'N/A'}
+                    </span>
+                  </p>
+                </div>
+              )}
+              
+              {(r.correo_electronico_anterior !== r.correo_electronico_nuevo) && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Correo electrónico:{' '}
+                    <span className="line-through text-red-500">
+                      {r.correo_electronico_anterior || 'N/A'}
+                    </span>
+                    {' → '}
+                    <span className="text-green-600">
+                      {r.correo_electronico_nuevo || 'N/A'}
+                    </span>
+                  </p>
+                </div>
+              )}
+              
+              {(r.nombre_usuario_anterior !== r.nombre_usuario_nuevo) && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Nombre de usuario:{' '}
+                    <span className="line-through text-red-500">
+                      {r.nombre_usuario_anterior || 'N/A'}
+                    </span>
+                    {' → '}
+                    <span className="text-green-600">
+                      {r.nombre_usuario_nuevo || 'N/A'}
+                    </span>
+                  </p>
+                </div>
+              )}
+              
+              {(r.telefono_celular_anterior !== r.telefono_celular_nuevo) && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Teléfono celular:{' '}
+                    <span className="line-through text-red-500">
+                      {r.telefono_celular_anterior || 'N/A'}
+                    </span>
+                    {' → '}
+                    <span className="text-green-600">
+                      {r.telefono_celular_nuevo || 'N/A'}
+                    </span>
+                  </p>
+                </div>
+              )}
+              
+              {(r.habilitado_sistema_anterior !== r.habilitado_sistema_nuevo) && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Habilitado en sistema:{' '}
+                    <span className="line-through text-red-500">
+                      {r.habilitado_sistema_anterior ? 'Sí' : 'No'}
+                    </span>
+                    {' → '}
+                    <span className="text-green-600">
+                      {r.habilitado_sistema_nuevo ? 'Sí' : 'No'}
+                    </span>
+                  </p>
+                </div>
+              )}
+              
+              {(r.tipo_usuario_anterior !== r.tipo_usuario_nuevo) && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Tipo de usuario:{' '}
+                    <span className="line-through text-red-500">
+                      {r.tipo_usuario_anterior || 'N/A'}
+                    </span>
+                    {' → '}
+                    <span className="text-green-600">
+                      {r.tipo_usuario_nuevo || 'N/A'}
+                    </span>
+                  </p>
+                </div>
+              )}
+              
+              {/* Solo mostrar cambios de tipo_estudiante si el tipo_usuario NO cambió */}
+              {(r.tipo_usuario_anterior === r.tipo_usuario_nuevo && r.tipo_estudiante_anterior !== r.tipo_estudiante_nuevo) && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Tipo de estudiante:{' '}
+                    <span className="line-through text-red-500">
+                      {r.tipo_estudiante_anterior || 'N/A'}
+                    </span>
+                    {' → '}
+                    <span className="text-green-600">
+                      {r.tipo_estudiante_nuevo || 'N/A'}
+                    </span>
+                  </p>
+                </div>
+              )}
+              
+              {/* Solo mostrar cambios de tipo_profesor si el tipo_usuario NO cambió */}
+              {(r.tipo_usuario_anterior === r.tipo_usuario_nuevo && r.tipo_profesor_anterior !== r.tipo_profesor_nuevo) && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Tipo de profesor:{' '}
+                    <span className="line-through text-red-500">
+                      {r.tipo_profesor_anterior || 'N/A'}
+                    </span>
+                    {' → '}
+                    <span className="text-green-600">
+                      {r.tipo_profesor_nuevo || 'N/A'}
+                    </span>
+                  </p>
+                </div>
+              )}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
               <p className="text-sm text-gray-600">
-                Usuario: {nombreCompleto} (Cédula: {r.ci_usuario})
+                Actualizado por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_actualizo,
+                  r.nombres_usuario_actualizo,
+                  r.apellidos_usuario_actualizo,
+                  r.id_usuario_actualizo
+                )}
               </p>
               <p className="text-sm text-gray-600">
-                <span className="line-through text-red-500">{r.tipo_usuario_anterior}</span>
-                {' → '}
-                <span className="text-green-600">{r.tipo_usuario_nuevo}</span>
+                Fecha actualización: {formatDate(r.fecha_actualizacion)}
               </p>
-              <p className="text-sm text-gray-600">
-                Actualizado por: {nombreCompletoActualizadoPor} (Cédula: {r.actualizado_por})
-              </p>
-              <p className="text-sm text-gray-600">Fecha: {formatDate(r.fecha)}</p>
             </div>
           </div>
         );
@@ -456,8 +751,8 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         return (record as CitaActualizadaAuditRecord).fecha_actualizacion;
       case 'usuario-eliminado':
         return (record as UsuarioEliminadoAuditRecord).fecha;
-      case 'usuario-actualizado':
-        return (record as UsuarioActualizadoAuditRecord).fecha;
+      case 'usuario-actualizado-campos':
+        return (record as UsuarioActualizadoCamposAuditRecord).fecha_actualizacion;
     }
   };
 
