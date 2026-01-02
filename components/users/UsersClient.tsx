@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import ConfirmModal from '../ui/feedback/ConfirmModal';
 import CaseTools from '@/components/CaseTools/CaseTools';
@@ -40,7 +41,21 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
   const [searchValue, setSearchValue] = useState('');
   const [tipoFilter, setTipoFilter] = useState('');
   const [loading, setLoading] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const router = useRouter();
+
+  // Detectar preferencia de movimiento reducido
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mediaQuery.matches);
+    
+    const handleChange = (e: MediaQueryListEvent) => {
+      setPrefersReducedMotion(e.matches);
+    };
+    
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
 
   // Cargar usuarios al montar el componente si no hay datos iniciales
   useEffect(() => {
@@ -216,24 +231,37 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
 
   return (
     <>
-      <h1 className="text-4xl m-3 font-semibold font-primary">Gestión de Usuarios</h1>
-      <p className="mb-6 ml-3">
-        Administración de usuarios del sistema: estudiantes, profesores y coordinadores
-      </p>
+      <motion.div 
+        className="mb-4 md:mb-6 mt-4"
+        initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: "easeOut" }}
+      >
+        <h1 className="text-4xl m-3 font-semibold font-primary">Usuarios</h1>
+        <p className="mb-6 ml-3">
+          Administración de usuarios del sistema: estudiantes, profesores y coordinadores
+        </p>
+      </motion.div>
       
-      <CaseTools 
-        addLabel="Cargar Estudiantes por Lotes" 
-        onAddClick={() => setIsBulkUploadModalOpen(true)}
-        searchValue={searchValue}
-        onSearchChange={setSearchValue}
-        searchPlaceholder="Buscar usuario..."
-        estatusFilter={tipoFilter}
-        onEstatusChange={setTipoFilter}
-        estatusOptions={tipoOptions}
-        tramiteFilter=""
-        onTramiteChange={() => {}}
-        tramiteOptions={[]}
-      />
+      <motion.div
+        initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
+      >
+        <CaseTools 
+          addLabel="Cargar Estudiantes por Lotes" 
+          onAddClick={() => setIsBulkUploadModalOpen(true)}
+          searchValue={searchValue}
+          onSearchChange={setSearchValue}
+          searchPlaceholder="Buscar usuario..."
+          estatusFilter={tipoFilter}
+          onEstatusChange={setTipoFilter}
+          estatusOptions={tipoOptions}
+          tramiteFilter=""
+          onTramiteChange={() => {}}
+          tramiteOptions={[]}
+        />
+      </motion.div>
       
       <div className="mt-10"></div>
 
@@ -242,67 +270,77 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
           <p className="text-gray-600">Cargando usuarios...</p>
         </div>
       ) : (
-        <Table
-          data={filteredUsuarios.map((u) => ({
-            cedula: u.cedula,
-            nombre_completo: `${u.nombres || ''} ${u.apellidos || ''}`.trim(),
-            nombre_usuario: u.nombre_usuario,
-            tipo_usuario: u.tipo_usuario,
-            estado: u.habilitado_sistema ? 'Habilitado' : 'Deshabilitado',
-          }))}
-          columns={["Cédula", "Nombre Completo", "Usuario", "Tipo", "Estado"]}
-          onView={handleView}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          actions={[
-            {
-              label: (row) => {
-                const isHabilitado = row.estado === 'Habilitado';
-                return (
-                  <span className="flex items-center gap-2">
-                    {isHabilitado ? (
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-4 h-4 text-yellow-600"
-                      >
-                        <rect x="3" y="11" width="18" height="10" rx="2" />
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                        <circle cx="12" cy="16" r="1" />
-                      </svg>
-                    ) : (
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-4 h-4 text-yellow-600"
-                      >
-                        <rect x="3" y="11" width="18" height="10" rx="2" />
-                        <path d="M7 11V7a5 5 0 0 1 9.9-1" />
-                        <circle cx="12" cy="16" r="1" />
-                      </svg>
-                    )}
-                    {isHabilitado ? 'Deshabilitar' : 'Habilitar'}
-                  </span>
-                );
+        <motion.div
+          initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
+        >
+          <Table
+            data={filteredUsuarios.map((u) => ({
+              cedula: u.cedula,
+              nombre_completo: `${u.nombres || ''} ${u.apellidos || ''}`.trim(),
+              nombre_usuario: u.nombre_usuario,
+              tipo_usuario: u.tipo_usuario,
+              estado: u.habilitado_sistema ? 'Habilitado' : 'Deshabilitado',
+            }))}
+            columns={["Cédula", "Nombre Completo", "Usuario", "Tipo", "Estado"]}
+            onView={handleView}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            actions={[
+              {
+                label: (row) => {
+                  // Ocultar acción si es el usuario actual
+                  if (row.cedula === currentUserCedula) return '';
+                  const isHabilitado = row.estado === 'Habilitado';
+                  return (
+                    <span className="flex items-center gap-2">
+                      {isHabilitado ? (
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-4 h-4 text-yellow-600"
+                        >
+                          <rect x="3" y="11" width="18" height="10" rx="2" />
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                          <circle cx="12" cy="16" r="1" />
+                        </svg>
+                      ) : (
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-4 h-4 text-yellow-600"
+                        >
+                          <rect x="3" y="11" width="18" height="10" rx="2" />
+                          <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+                          <circle cx="12" cy="16" r="1" />
+                        </svg>
+                      )}
+                      {isHabilitado ? 'Deshabilitar' : 'Habilitar'}
+                    </span>
+                  );
+                },
+                onClick: (row) => {
+                  if (row.cedula !== currentUserCedula) handleDisable(row);
+                },
               },
-              onClick: handleDisable,
-            },
-          ]}
-          hideEdit={(row: { cedula: string }) => row.cedula === currentUserCedula}
-          hideDelete={(row: { cedula: string }) => row.cedula === currentUserCedula}
-        />
+            ]}
+            hideEdit={(row: { cedula: string }) => row.cedula === currentUserCedula}
+            hideDelete={(row: { cedula: string }) => row.cedula === currentUserCedula}
+          />
+        </motion.div>
       )}
 
 
@@ -329,27 +367,40 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         title="Eliminar usuario permanentemente"
         message={
           <div>
-            <p>¿Está seguro de que desea eliminar al usuario <b>{itemToDelete ? `${itemToDelete.nombres || ''} ${itemToDelete.apellidos || ''}` : ''}</b>?</p>
-            <p className="mt-2 text-danger font-semibold">Esta acción es irreversible y solo puede realizarla un coordinador.</p>
-            <label className="block mt-4 mb-2 font-medium">Motivo de la eliminación:</label>
-            <textarea
-              className="w-full border rounded p-2"
-              rows={3}
-              maxLength={250}
-              value={deleteMotivo}
-              onChange={e => setDeleteMotivo(e.target.value)}
-              placeholder="Describe el motivo..."
-              disabled={deleteLoading}
-            />
-            <div className="text-right text-xs text-gray-500 mt-1">
-              {deleteMotivo.length} / 250 caracteres
-              {!isMotivoValido && ' - El motivo es obligatorio.'}
+            <p className="mb-4 text-base text-foreground">
+              ¿Estás seguro de que deseas eliminar al usuario <strong>{itemToDelete ? `${itemToDelete.nombres || ''} ${itemToDelete.apellidos || ''}` : ''}</strong>?
+            </p>
+            <p className="mb-6 text-red-600 font-semibold text-base">
+              Esta acción es irreversible y solo puede realizarla un coordinador.
+            </p>
+            <div className="flex flex-col gap-1">
+              <label className="text-base font-normal text-foreground mb-1">
+                Motivo de la eliminación
+              </label>
+              <textarea
+                className={`
+                  w-full p-4 rounded-lg border bg-[#E5E7EB] border-transparent
+                  focus:outline-none focus:ring-1 focus:ring-primary
+                  text-base placeholder:text-[#717171] resize-none
+                  ${deleteLoading ? 'opacity-50 cursor-not-allowed' : ''}
+                `}
+                rows={4}
+                maxLength={250}
+                value={deleteMotivo}
+                onChange={e => setDeleteMotivo(e.target.value)}
+                placeholder="Describe el motivo de la eliminación..."
+                disabled={deleteLoading}
+              />
+              <div className="text-right text-xs text-gray-500 mt-1">
+                {deleteMotivo.length} / 250 caracteres
+              </div>
             </div>
           </div>
         }
-        confirmLabel={deleteLoading ? 'Eliminando...' : 'Eliminar permanentemente'}
+        confirmLabel={deleteLoading ? 'Eliminando...' : 'Eliminar'}
         cancelLabel="Cancelar"
         disabled={deleteLoading || !isMotivoValido}
+        confirmVariant="danger"
       />
     </>
   );

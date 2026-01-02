@@ -26,5 +26,67 @@ export const asignacionesQueries = {
     const result: QueryResult = await pool.query(query, [idCaso]);
     return result.rows;
   },
+
+  /**
+   * Crea o actualiza asignación de profesor supervisor
+   */
+  createSupervisa: async (
+    term: string,
+    cedulaProfesor: string,
+    idCaso: number,
+    habilitado: boolean = true
+  ): Promise<any> => {
+    const query = loadSQL('asignaciones/create-supervisa.sql');
+    const result: QueryResult = await pool.query(query, [
+      term,
+      cedulaProfesor,
+      idCaso,
+      habilitado,
+    ]);
+    return result.rows[0];
+  },
+
+  /**
+   * Crea o actualiza asignación de estudiante
+   */
+  createSeLeAsigna: async (
+    term: string,
+    cedulaEstudiante: string,
+    idCaso: number,
+    habilitado: boolean = true
+  ): Promise<any> => {
+    const query = loadSQL('asignaciones/create-se-le-asigna.sql');
+    const result: QueryResult = await pool.query(query, [
+      term,
+      cedulaEstudiante,
+      idCaso,
+      habilitado,
+    ]);
+    return result.rows[0];
+  },
+
+  /**
+   * Deshabilitar asignación de profesor supervisor
+   */
+  removeSupervisa: async (
+    term: string,
+    cedulaProfesor: string,
+    idCaso: number
+  ): Promise<void> => {
+    const query = loadSQL('asignaciones/remove-supervisa.sql');
+    await pool.query(query, [term, cedulaProfesor, idCaso]);
+  },
+
+  /**
+   * Deshabilitar asignación de estudiante
+   */
+  removeSeLeAsigna: async (
+    term: string,
+    cedulaEstudiante: string,
+    idCaso: number
+  ): Promise<void> => {
+    const query = loadSQL('asignaciones/remove-se-le-asigna.sql');
+    await pool.query(query, [term, cedulaEstudiante, idCaso]);
+  },
 };
 

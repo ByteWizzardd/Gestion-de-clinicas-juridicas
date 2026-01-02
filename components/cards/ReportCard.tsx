@@ -7,13 +7,15 @@ interface ReportCardProps {
     icon: React.ReactNode;
     onGenerate: () => void;
     buttonColor?: 'red' | 'orange';
+    className?: string;
 }
 
 export default function ReportCard({
     title,
     icon,
     onGenerate,
-    buttonColor = 'red'
+    buttonColor = 'red',
+    className = ''
 }: ReportCardProps) {
     const buttonStyles = {
         red: 'bg-[#9c2327] hover:bg-[#7a1b1f]',
@@ -26,7 +28,7 @@ export default function ReportCard({
     };
 
     return (
-        <div className="bg-neutral-50 rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.3)] h-40 w-full relative overflow-hidden p-4 flex flex-col">
+        <div className={`bg-neutral-50 rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.3)] h-full min-h-[10rem] w-full relative overflow-hidden p-4 flex flex-col ${className}`}>
             {/* Título */}
             <h3 className="text-xl text-neutral-800/85 font-normal leading-tight pr-20 my-auto">
                 {title}

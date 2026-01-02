@@ -1,12 +1,12 @@
 'use server';
 
-import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
-import { verifyToken } from '@/lib/utils/security';
 import { estudiantesQueries } from '@/lib/db/queries/estudiantes.queries';
 import { semestresQueries } from '@/lib/db/queries/semestres.queries';
 import { bulkCreateEstudiantes, BulkUploadResult } from '@/lib/services/estudiantes.service';
-import { AppError } from '@/lib/utils/errors';
+import { AppError, UnauthorizedError } from '@/lib/utils/errors';
+import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 
 export interface SearchEstudiantesResult {
   success: boolean;
@@ -45,28 +45,11 @@ export interface GetSemestresResult {
 export async function searchEstudiantesAction(query: string): Promise<SearchEstudiantesResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -84,24 +67,7 @@ export async function searchEstudiantesAction(query: string): Promise<SearchEstu
       data: estudiantes,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'ESTUDIANTE_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en searchEstudiantesAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al buscar estudiantes',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'searchEstudiantesAction', 'ESTUDIANTE_ERROR');
   }
 }
 
@@ -111,28 +77,11 @@ export async function searchEstudiantesAction(query: string): Promise<SearchEstu
 export async function getSemestresAction(): Promise<GetSemestresResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -143,24 +92,7 @@ export async function getSemestresAction(): Promise<GetSemestresResult> {
       data: semestres,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'SEMESTRE_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en getSemestresAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al obtener semestres',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'getSemestresAction', 'SEMESTRE_ERROR');
   }
 }
 
@@ -172,28 +104,11 @@ export async function bulkCreateEstudiantesAction(
 ): Promise<BulkCreateEstudiantesResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -233,24 +148,7 @@ export async function bulkCreateEstudiantesAction(
       data: result,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'BULK_UPLOAD_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en bulkCreateEstudiantesAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al cargar estudiantes',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'bulkCreateEstudiantesAction', 'BULK_UPLOAD_ERROR');
   }
 }
 

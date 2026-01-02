@@ -1,7 +1,13 @@
 import CaseTools from "@/components/CaseTools/CaseTools";
 import Table from "@/components/Table/Table";
+import { authorizeRole } from '@/lib/utils/auth-utils';
 
-export default function TeamsPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function TeamsPage() {
+  // Solo permitir al Coordinador (coordinator)
+  await authorizeRole(['coordinator']);
+
   return (
     <>
       <h1 className="text-4xl m-3 font-semibold font-primary">Gestión de Equipo</h1>

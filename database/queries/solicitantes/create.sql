@@ -28,6 +28,7 @@ INSERT INTO solicitantes (
     nacionalidad,
     estado_civil,
     concubinato,
+    tipo_tiempo_estudio,
     tiempo_estudio,
     id_nivel_educativo,
     id_trabajo,
@@ -38,7 +39,8 @@ INSERT INTO solicitantes (
 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 
     'Soltero', -- estado_civil por defecto
     false, -- concubinato por defecto
-    '', -- tiempo_estudio por defecto (vacío)
+    NULL, -- tipo_tiempo_estudio por defecto (NULL)
+    NULL, -- tiempo_estudio por defecto (NULL, INTEGER)
     1, -- id_nivel_educativo (debe existir en niveles_educativos)
     $9, -- id_trabajo (puede ser NULL)
     $10, -- id_actividad (puede ser NULL)

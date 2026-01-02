@@ -1,9 +1,9 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/utils/security';
 import { ambitosLegalesQueries } from '@/lib/db/queries/ambitos-legales.queries';
 import { AppError, UnauthorizedError } from '@/lib/utils/errors';
+import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 
 export interface GetAmbitosLegalesResult {
   success: boolean;
@@ -20,28 +20,11 @@ export interface GetAmbitosLegalesResult {
 export async function getAmbitosLegalesAction(): Promise<GetAmbitosLegalesResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -52,24 +35,7 @@ export async function getAmbitosLegalesAction(): Promise<GetAmbitosLegalesResult
       data: ambitos,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'AMBITO_LEGAL_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en getAmbitosLegalesAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al obtener ámbitos legales',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'getAmbitosLegalesAction', 'AMBITO_LEGAL_ERROR');
   }
 }
 
@@ -83,28 +49,11 @@ export async function getAmbitosLegalesByMateriaCategoriaSubcategoriaAction(
 ): Promise<GetAmbitosLegalesResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -119,24 +68,7 @@ export async function getAmbitosLegalesByMateriaCategoriaSubcategoriaAction(
       data: ambitos,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'AMBITO_LEGAL_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en getAmbitosLegalesByMateriaCategoriaSubcategoriaAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al obtener ámbitos legales',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'getAmbitosLegalesByMateriaCategoriaSubcategoriaAction', 'AMBITO_LEGAL_ERROR');
   }
 }
 

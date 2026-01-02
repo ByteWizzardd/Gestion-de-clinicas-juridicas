@@ -21,9 +21,9 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
       >
         <span className="hidden sm:inline">Dashboard</span>
       </Link>
-      
+
       {items.map((item, index) => (
-        <div key={index} className="flex items-center gap-2">
+        <div key={`${item.label}-${index}`} className="flex items-center gap-2">
           <ChevronRight className="w-4 h-4 text-gray-400" />
           {item.href ? (
             <Link

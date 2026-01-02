@@ -37,8 +37,7 @@ export default function AppointmentsTab({ citas }: AppointmentsTabProps) {
           <div className="flex items-start justify-between mb-4">
             <div>
               <h4 className="text-base sm:text-lg font-semibold text-gray-900">Cita #{cita.num_cita}</h4>
-              <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
+              <p className="text-sm text-gray-500 mt-1">
                 Fecha de encuentro: {formatDate(cita.fecha_encuentro)}
               </p>
             </div>
@@ -47,8 +46,7 @@ export default function AppointmentsTab({ citas }: AppointmentsTabProps) {
           <div className="space-y-4">
             {cita.fecha_proxima_cita && (
               <div>
-                <label className="text-sm font-medium text-gray-500 flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
+                <label className="text-sm font-medium text-gray-500">
                   Próxima Cita
                 </label>
                 <p className="text-base text-gray-900 mt-1">{formatDate(cita.fecha_proxima_cita)}</p>
@@ -56,8 +54,7 @@ export default function AppointmentsTab({ citas }: AppointmentsTabProps) {
             )}
 
             <div>
-              <label className="text-sm font-medium text-gray-500 flex items-center gap-2 mb-2">
-                <FileText className="w-4 h-4" />
+              <label className="text-sm font-medium text-gray-500 mb-2">
                 Orientación
               </label>
               <p className="text-base text-gray-900 mt-1 whitespace-pre-wrap bg-gray-50 rounded-lg p-3 border border-gray-200">
@@ -67,8 +64,7 @@ export default function AppointmentsTab({ citas }: AppointmentsTabProps) {
 
             {cita.atenciones && cita.atenciones.length > 0 && (
               <div>
-                <label className="text-sm font-medium text-gray-500 flex items-center gap-2 mb-2">
-                  <Users className="w-4 h-4" />
+                <label className="text-sm font-medium text-gray-500 mb-2">
                   Atendido por ({cita.atenciones.length})
                 </label>
                 <div className="space-y-2">

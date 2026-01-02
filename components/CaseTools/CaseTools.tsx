@@ -8,29 +8,47 @@ type CaseToolsProps = {
     searchValue?: string;
     onSearchChange?: (value: string) => void;
     searchPlaceholder?: string;
-    estatusFilter?: string;
+    nucleoFilter?: string;
     tramiteFilter?: string;
-    onEstatusChange?: (value: string) => void;
+    estatusFilter?: string;
+    casosAsignadosFilter?: boolean;
+    onNucleoChange?: (value: string) => void;
+    nucleoOptions?: { value: string; label: string }[];
     onTramiteChange?: (value: string) => void;
-    estatusOptions?: { value: string; label: string }[];
+    onEstatusChange?: (value: string) => void;
+    onCasosAsignadosChange?: (value: boolean) => void;
     tramiteOptions?: { value: string; label: string }[];
+    estatusOptions?: { value: string; label: string }[];
+    showCasosAsignados?: boolean;
+    materiaFilter?: string;
+    onMateriaChange?: (value: string) => void;
+    materias?: { id_materia: number; nombre_materia: string }[];
 };
 
-function CaseTools({ 
-  addLabel, 
-  onAddClick,
-  searchValue = '',
-  onSearchChange,
-  searchPlaceholder,
-  estatusFilter = '',
-  tramiteFilter = '',
-  onEstatusChange,
-  onTramiteChange,
-  estatusOptions = [],
-  tramiteOptions = []
+function CaseTools({
+    addLabel,
+    onAddClick,
+    searchValue = '',
+    onSearchChange,
+    searchPlaceholder,
+    nucleoFilter = '',
+    tramiteFilter = '',
+    estatusFilter = '',
+    casosAsignadosFilter = false,
+    onNucleoChange,
+    nucleoOptions,
+    onTramiteChange,
+    onEstatusChange,
+    onCasosAsignadosChange,
+    tramiteOptions = [],
+    estatusOptions = [],
+    showCasosAsignados = false,
+    materiaFilter = '',
+    onMateriaChange,
+    materias = []
 }: CaseToolsProps) {
     const hasSearch = onSearchChange !== undefined;
-    const hasFilter = onEstatusChange !== undefined && onTramiteChange !== undefined;
+    const hasFilter = onNucleoChange !== undefined || onTramiteChange !== undefined || onEstatusChange !== undefined || onCasosAsignadosChange !== undefined || onMateriaChange !== undefined;
 
     return (
         <div className="flex flex-nowrap gap-3 sm:gap-4 items-center w-full px-3">
@@ -42,12 +60,21 @@ function CaseTools({
             <div className="flex gap-3 sm:gap-4 items-center shrink-0">
                 {hasFilter && (
                     <Filter
-                      estatusFilter={estatusFilter}
-                      tramiteFilter={tramiteFilter}
-                      onEstatusChange={onEstatusChange}
-                      onTramiteChange={onTramiteChange}
-                      estatusOptions={estatusOptions}
-                      tramiteOptions={tramiteOptions}
+                        nucleoFilter={nucleoFilter}
+                        nucleoOptions={nucleoOptions}
+                        tramiteFilter={tramiteFilter}
+                        estatusFilter={estatusFilter}
+                        casosAsignadosFilter={casosAsignadosFilter}
+                        onNucleoChange={onNucleoChange}
+                        onTramiteChange={onTramiteChange}
+                        onEstatusChange={onEstatusChange}
+                        onCasosAsignadosChange={onCasosAsignadosChange}
+                        tramiteOptions={tramiteOptions}
+                        estatusOptions={estatusOptions}
+                        showCasosAsignados={showCasosAsignados}
+                        materiaFilter={materiaFilter}
+                        onMateriaChange={onMateriaChange}
+                        materias={materias}
                     />
                 )}
                 <Add label={addLabel} onClick={onAddClick} />

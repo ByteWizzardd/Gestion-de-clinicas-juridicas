@@ -8,6 +8,27 @@ import { QueryResult } from 'pg';
  */
 export const accionesQueries = {
   /**
+   * Crea una nueva acción para un caso
+   */
+  create: async (
+    idCaso: number,
+    detalleAccion: string,
+    idUsuarioRegistra: string,
+    comentario?: string,
+    numAccion?: number
+  ): Promise<any> => {
+    const query = loadSQL('acciones/create.sql');
+    const result: QueryResult = await pool.query(query, [
+      idCaso,
+      detalleAccion,
+      comentario || null,
+      idUsuarioRegistra,
+      numAccion || null,
+    ]);
+    return result.rows[0];
+  },
+
+  /**
    * Obtiene todas las acciones realizadas para un caso específico
    */
   getByCaso: async (idCaso: number): Promise<Array<{
@@ -38,5 +59,42 @@ export const accionesQueries = {
         : row.ejecutores || []
     }));
   },
-};
 
+  /**
+   * Obtiene las acciones más recientes de los casos asignados al usuario
+   */
+  getRecentByUsuario: async (
+    cedulaUsuario: string,
+    limite: number = 10
+  ): Promise<Array<{
+    num_accion: number;
+    id_caso: number;
+    detalle_accion: string;
+    comentario: string | null;
+    id_usuario_registra: string;
+    fecha_registro: string;
+    nombres_usuario_registra: string;
+    apellidos_usuario_registra: string;
+    nombre_completo_usuario_registra: string;
+    caso_id: number;
+    nombre_solicitante: string;
+    nombre_nucleo: string;
+    ejecutores: Array<{
+      id_usuario: string;
+      nombres: string;
+      apellidos: string;
+      nombre_completo: string;
+      fecha_ejecucion: string;
+    }>;
+  }>> => {
+    const query = loadSQL('acciones/get-recent-by-usuario.sql');
+    const result: QueryResult = await pool.query(query, [cedulaUsuario, limite]);
+    // Parsear el JSON de ejecutores
+    return result.rows.map(row => ({
+      ...row,
+      ejecutores: typeof row.ejecutores === 'string' 
+        ? JSON.parse(row.ejecutores) 
+        : row.ejecutores || []
+    }));
+  },
+};

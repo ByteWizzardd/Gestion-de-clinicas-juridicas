@@ -23,10 +23,11 @@ interface SelectProps {
     disabled?: boolean;
 }
 
-export default function Select({ label, error, options, placeholder = "Selecciona una opción", value = "", onChange, className = "", icon }: SelectProps) {
+export default function Select({ label, error, options, placeholder = "Selecciona una opción", value = "", onChange, className = "", icon, disabled = false }: SelectProps) {
 
     const selectedOption = options.find((opt) => opt.value === value);
     const handleSelect = (optionValue: string) => {
+        if (disabled) return;
         if (onChange) {
             const syntheticEvent = {
                 target: { value: optionValue }
@@ -38,22 +39,28 @@ export default function Select({ label, error, options, placeholder = "Seleccion
     const triggerButton = (isOpenState: boolean) => (
         <button
             type="button"
+            disabled={disabled}
             className={`
-                w-full h-10 ${icon ? 'pl-4 pr-4' : 'pl-5 pr-4'} rounded-3xl shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] overflow-hidden flex items-center gap-3 justify-between
+                w-full h-10 ${icon ? 'pl-4 pr-4' : 'pl-5 pr-4'} rounded-3xl border overflow-hidden flex items-center gap-3 justify-between
+                ${error ? 'border-danger' : 'border-transparent shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)]'}
                 outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0
-                bg-white cursor-pointer
+                ${error ? 'focus:ring-1 focus:ring-danger' : ''}
+                ${disabled 
+                    ? 'bg-gray-100 cursor-not-allowed opacity-60' 
+                    : 'bg-white cursor-pointer'
+                }
                 text-neutral-800/90 text-left font-normal
                 ${className || 'text-base'}
             `}
         >
             <div className="flex items-center gap-3 flex-1 min-w-0">
                 {icon && <span className="shrink-0">{icon}</span>}
-                <span className={`truncate ${selectedOption ? 'text-neutral-800/90' : 'text-neutral-600'}`}>
+                <span className={`truncate ${selectedOption ? 'text-neutral-800/90' : 'text-neutral-600'} ${disabled ? 'text-gray-500' : ''}`}>
                     {selectedOption ? selectedOption.label : placeholder}
                 </span>
             </div>
             <ChevronDown
-                className={`w-4 h-4 text-neutral-700 transition-transform shrink-0 ${isOpenState ? 'transform rotate-180' : ''}`}
+                className={`w-4 h-4 transition-transform shrink-0 ${disabled ? 'text-gray-400' : 'text-neutral-700'} ${isOpenState ? 'transform rotate-180' : ''}`}
             />
         </button>
     );
@@ -78,6 +85,7 @@ export default function Select({ label, error, options, placeholder = "Seleccion
                 align="left"
                 className="w-full"
                 menuClassName="w-full"
+                disabled={disabled}
             >
                 <AnimatePresence>
                     <motion.div
@@ -92,6 +100,7 @@ export default function Select({ label, error, options, placeholder = "Seleccion
                                 <button
                                     key={option.value}
                                     type="button"
+                                    data-close-menu
                                     onClick={() => handleSelect(option.value)}
                                     className={`
                                         w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer

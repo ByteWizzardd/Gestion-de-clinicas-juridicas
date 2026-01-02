@@ -17,16 +17,18 @@ CREATE OR REPLACE FUNCTION eliminar_usuario_fisico(
 DECLARE
     casos_count INTEGER;
     acciones_count INTEGER;
+    v_nombres_usuario VARCHAR(100);
+    v_apellidos_usuario VARCHAR(100);
 BEGIN
     -- Validar motivo
     IF p_motivo IS NULL OR TRIM(p_motivo) = '' THEN
         RAISE EXCEPTION 'El motivo es obligatorio para eliminaciones físicas de usuarios';
     END IF;
 
-    -- Verificar existencia del usuario
-    IF NOT EXISTS (SELECT 1 FROM usuarios WHERE cedula = p_cedula_usuario) THEN
-        RAISE EXCEPTION 'Usuario con cédula % no encontrado', p_cedula_usuario;
-    END IF;
+    -- Verificar existencia del usuario y obtener sus datos
+    SELECT nombres, apellidos INTO STRICT v_nombres_usuario, v_apellidos_usuario
+    FROM usuarios 
+    WHERE cedula = p_cedula_usuario;
 
     -- Se podría mandar esto para que el usuario conozca las implicaciones
     -- Contar casos y acciones asociadas (solo informativo)
@@ -55,18 +57,25 @@ BEGIN
         DELETE FROM estudiantes WHERE cedula_estudiante = p_cedula_usuario;
         DELETE FROM profesores WHERE cedula_profesor = p_cedula_usuario;
 
-        -- Eliminar de usuarios
-        DELETE FROM usuarios WHERE cedula = p_cedula_usuario;
-
-        -- Auditoría de eliminación
+        -- Auditoría de eliminación (guardar antes de eliminar)
         INSERT INTO auditoria_eliminacion_usuario (
-            usuario_eliminado, eliminado_por, motivo, fecha
+            usuario_eliminado, 
+            nombres_usuario_eliminado,
+            apellidos_usuario_eliminado,
+            eliminado_por, 
+            motivo, 
+            fecha
         ) VALUES (
             p_cedula_usuario,
+            v_nombres_usuario,
+            v_apellidos_usuario,
             p_cedula_actor,
             p_motivo,
-            CURRENT_TIMESTAMP
+            (NOW() AT TIME ZONE 'America/Caracas')
         );
+
+        -- Eliminar de usuarios (después de guardar la auditoría)
+        DELETE FROM usuarios WHERE cedula = p_cedula_usuario;
 
     EXCEPTION
         WHEN foreign_key_violation THEN

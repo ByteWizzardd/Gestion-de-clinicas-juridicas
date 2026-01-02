@@ -17,7 +17,7 @@ interface NotificationItem {
   read?: boolean;
 }
 
-export default function Notification({ count = 0, onClick }: NotificationProps) {
+export default function Notification({  }: NotificationProps) {
   // Datos de ejemplo de notificaciones
   const notifications: NotificationItem[] = [
     {
@@ -45,7 +45,7 @@ export default function Notification({ count = 0, onClick }: NotificationProps) 
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const triggerButton = (isOpen: boolean) => (
+  const triggerButton = () => (
     <button 
       className="relative flex items-center justify-center p-2 cursor-pointer hover:bg-neutral-100 rounded-lg transition-colors" 
       aria-label="Notificaciones"
@@ -63,7 +63,7 @@ export default function Notification({ count = 0, onClick }: NotificationProps) 
     <DropdownMenu
       trigger={triggerButton}
       align="right"
-      menuClassName="w-80"
+      menuClassName="w-[90vw] max-w-lg sm:w-[32rem] md:w-[36rem] lg:w-[40rem] left-1/2 -translate-x-1/2"
     >
       <AnimatePresence>
         <motion.div
@@ -71,9 +71,9 @@ export default function Notification({ count = 0, onClick }: NotificationProps) 
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -10, scale: 0.95 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="bg-white border border-gray-200 rounded-xl shadow-xl flex flex-col max-h-96"
+          className="bg-white border border-gray-200 rounded-xl shadow-xl flex flex-col max-h-[80vh]"
         >
-          <div className="p-4 border-b border-gray-200 flex-shrink-0">
+          <div className="p-4 border-b border-gray-200 shrink-0">
             <h3 className="text-lg font-semibold text-neutral-800">Notificaciones</h3>
           </div>
           <div className="overflow-y-auto flex-1 min-h-0">
@@ -88,7 +88,7 @@ export default function Notification({ count = 0, onClick }: NotificationProps) 
                 >
                   <div className="flex items-start gap-3">
                     {!notification.read && (
-                      <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                      <div className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></div>
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-md font-medium text-neutral-800">{notification.title}</p>
@@ -105,7 +105,7 @@ export default function Notification({ count = 0, onClick }: NotificationProps) 
             )}
           </div>
           {notifications.length > 0 && (
-            <div className="p-3 border-t border-gray-200 flex-shrink-0">
+            <div className="p-3 border-t border-gray-200 shrink-0">
               <button className="w-full text-base text-primary hover:text-primary/80 font-medium">
                 Ver todas las notificaciones
               </button>

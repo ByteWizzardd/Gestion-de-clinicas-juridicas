@@ -1,7 +1,9 @@
-"use server";
-import { getAuthTokenFromCookies } from "@/lib/utils/auth";
-import { usuariosQueries } from "@/lib/db/queries/usuarios.queries";
-import { AppError } from "@/lib/utils/errors";
+'use server';
+
+import { usuariosQueries } from '@/lib/db/queries/usuarios.queries';
+import { AppError } from '@/lib/utils/errors';
+import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 import { getCurrentUserAction } from "./auth";
 export interface GetUsuarioCompleteByCedulaResult {
   success: boolean;
@@ -52,24 +54,7 @@ export async function getUsuarioCompleteByCedulaAction(
       data: usuario,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || "USUARIO_ERROR",
-        },
-      };
-    }
-    console.error("Error en getUsuarioCompleteByCedulaAction:", error);
-    return {
-      success: false,
-      error: {
-        message:
-          error instanceof Error ? error.message : "Error al obtener usuario",
-        code: "UNKNOWN_ERROR",
-      },
-    }
+    return handleServerActionError(error, 'getUsuarioCompleteByCedulaAction', 'USUARIO_ERROR');
   }
 }
 export interface GetUsuariosResult {
@@ -102,40 +87,21 @@ export interface GetUsuariosResult {
 export async function getUsuariosAction(): Promise<GetUsuariosResult> {
   try {
     // Verificar autenticación
-    const token = getAuthTokenFromCookies();
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: "No autorizado",
-          code: "UNAUTHORIZED",
-        },
+        error: authResult.error!,
       };
     }
+
     const usuarios = await usuariosQueries.getAll();
     return {
       success: true,
       data: usuarios,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || "USUARIO_ERROR",
-        },
-      };
-    }
-    console.error("Error en getUsuariosAction:", error);
-    return {
-      success: false,
-      error: {
-        message:
-          error instanceof Error ? error.message : "Error al obtener usuarios",
-        code: "UNKNOWN_ERROR",
-      },
-    }
+    return handleServerActionError(error, 'getUsuariosAction', 'USUARIO_ERROR');
   }
 }
 
@@ -174,7 +140,8 @@ export async function toggleHabilitadoUsuarioAction(
         },
       };
     }
-    return await usuariosQueries.toggleHabilitado(cedula);
+    const cedula_actor = userResult.data.cedula;
+    return await usuariosQueries.toggleHabilitado(cedula, cedula_actor);
   } catch (error: unknown) {
     return {
       success: false,
@@ -380,6 +347,16 @@ export async function updateUsuarioByCedulaAction(
       };
     }
     const cedula_actor = userResult.data.cedula;
+    
+    // Obtener el tipo_usuario actual del usuario para determinar qué valores pasar
+    const usuarioActual = await usuariosQueries.getInfoByCedula(cedula);
+    const tipoUsuarioActual = usuarioActual?.tipo_usuario || null;
+    
+    // Usar el tipo_usuario que se está pasando, o el actual si no se pasa
+    const tipoUsuarioParaValores = (updates.tipo_usuario && updates.tipo_usuario.trim() !== '') 
+      ? updates.tipo_usuario 
+      : tipoUsuarioActual;
+    
     await usuariosQueries.updateUsuarioByCedulaAction({
       cedula,
       nombres: updates.nombre ?? "",
@@ -387,18 +364,18 @@ export async function updateUsuarioByCedulaAction(
       correo_electronico: updates.correo_electronico ?? "",
       nombre_usuario: updates.nombre_usuario ?? "",
       telefono_celular: updates.telefono ?? null,
-      tipo_usuario: updates.tipo_usuario ?? "",
-      nrc: updates.estudiante?.nrc ?? null,
+      tipo_usuario: (updates.tipo_usuario && updates.tipo_usuario.trim() !== '') ? updates.tipo_usuario : (tipoUsuarioActual || ""),
+      nrc: tipoUsuarioParaValores === "Estudiante" ? updates.estudiante?.nrc ?? null : null,
       term:
-        updates.tipo_usuario === "Estudiante"
+        tipoUsuarioParaValores === "Estudiante"
           ? updates.estudiante?.term ?? null
-          : updates.tipo_usuario === "Profesor"
+          : tipoUsuarioParaValores === "Profesor"
           ? updates.profesor?.term ?? null
-          : updates.tipo_usuario === "Coordinador"
+          : tipoUsuarioParaValores === "Coordinador"
           ? updates.coordinador?.term ?? null
           : null,
-      tipo_estudiante: updates.estudiante?.tipo_estudiante ?? null,
-      tipo_profesor: updates.profesor?.tipo_profesor ?? null,
+      tipo_estudiante: tipoUsuarioParaValores === "Estudiante" ? (updates.estudiante?.tipo_estudiante ?? null) : null,
+      tipo_profesor: tipoUsuarioParaValores === "Profesor" ? (updates.profesor?.tipo_profesor ?? null) : null,
       cedula_actor,
     });
     return { success: true };
@@ -425,5 +402,255 @@ export async function updateUsuarioByCedulaAction(
         code: "UNKNOWN_ERROR",
       },
     };
+  }
+}
+
+export interface UploadFotoPerfilResult {
+  success: boolean;
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+/**
+ * Server Action para subir/actualizar foto de perfil
+ */
+export async function uploadFotoPerfilAction(
+  formData: FormData
+): Promise<UploadFotoPerfilResult> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    const cedula = authResult.user.cedula;
+    const file = formData.get('foto') as File | null;
+
+    if (!file) {
+      return {
+        success: false,
+        error: {
+          message: 'No se proporcionó ningún archivo',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Validar tipo de archivo
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      return {
+        success: false,
+        error: {
+          message: 'Formato de archivo no permitido. Solo se permiten: JPG, PNG, WEBP',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Validar tamaño (5MB máximo)
+    const maxSize = 5 * 1024 * 1024; // 5MB en bytes
+    if (file.size > maxSize) {
+      return {
+        success: false,
+        error: {
+          message: 'El archivo es demasiado grande. Tamaño máximo: 5MB',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Convertir archivo a Buffer
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Actualizar foto de perfil en la base de datos
+    await usuariosQueries.updateFotoPerfil(cedula, buffer);
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'uploadFotoPerfilAction', 'UPLOAD_ERROR');
+  }
+}
+
+/**
+ * Server Action para eliminar foto de perfil del usuario actual
+ */
+export async function deleteFotoPerfilAction(): Promise<DeleteFotoPerfilResult> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    const cedula = authResult.user.cedula;
+
+    // Eliminar foto de perfil (establecer a NULL)
+    await usuariosQueries.deleteFotoPerfil(cedula);
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'deleteFotoPerfilAction', 'DELETE_ERROR');
+  }
+}
+
+/**
+ * Server Action para subir foto de perfil de otro usuario (solo coordinador)
+ */
+export async function uploadFotoPerfilUsuarioAction(
+  formData: FormData
+): Promise<UploadFotoPerfilResult> {
+  try {
+    // Verificar autenticación y rol
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    // Solo coordinador puede subir fotos de otros usuarios
+    const userResult = await getCurrentUserAction();
+    if (!userResult.success || userResult.data?.rol !== 'Coordinador') {
+      return {
+        success: false,
+        error: {
+          message: 'No tienes permisos para realizar esta acción',
+          code: 'FORBIDDEN',
+        },
+      };
+    }
+
+    const cedula = formData.get('cedula') as string;
+    const file = formData.get('foto') as File | null;
+
+    if (!cedula) {
+      return {
+        success: false,
+        error: {
+          message: 'No se proporcionó la cédula del usuario',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    if (!file) {
+      return {
+        success: false,
+        error: {
+          message: 'No se proporcionó ningún archivo',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Validar tipo de archivo
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      return {
+        success: false,
+        error: {
+          message: 'Formato de archivo no permitido. Solo se permiten: JPG, PNG, WEBP',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Validar tamaño (5MB máximo)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      return {
+        success: false,
+        error: {
+          message: 'El archivo es demasiado grande. Tamaño máximo: 5MB',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Convertir archivo a Buffer
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Actualizar foto de perfil en la base de datos
+    await usuariosQueries.updateFotoPerfil(cedula, buffer);
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'uploadFotoPerfilUsuarioAction', 'UPLOAD_ERROR');
+  }
+}
+
+export interface DeleteFotoPerfilResult {
+  success: boolean;
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+/**
+ * Server Action para eliminar foto de perfil de otro usuario (solo coordinador)
+ */
+export async function deleteFotoPerfilUsuarioAction(
+  cedula: string
+): Promise<DeleteFotoPerfilResult> {
+  try {
+    // Verificar autenticación y rol
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    // Solo coordinador puede eliminar fotos de otros usuarios
+    const userResult = await getCurrentUserAction();
+    if (!userResult.success || userResult.data?.rol !== 'Coordinador') {
+      return {
+        success: false,
+        error: {
+          message: 'No tienes permisos para realizar esta acción',
+          code: 'FORBIDDEN',
+        },
+      };
+    }
+
+    if (!cedula) {
+      return {
+        success: false,
+        error: {
+          message: 'No se proporcionó la cédula del usuario',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Eliminar foto de perfil (establecer a NULL)
+    await usuariosQueries.deleteFotoPerfil(cedula);
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'deleteFotoPerfilUsuarioAction', 'DELETE_ERROR');
   }
 }

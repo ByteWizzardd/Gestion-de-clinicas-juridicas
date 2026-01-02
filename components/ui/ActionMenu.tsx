@@ -80,7 +80,7 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions }: 
       {isOpen && hasActions && (
         <div 
           ref={menuRef} 
-          className={`absolute right-0 w-48 bg-white rounded-xl shadow-xl border border-gray-200 z-100 py-1 ${
+          className={`absolute right-0 w-48 bg-white rounded-xl shadow-xl border border-gray-200 z-30 py-1 ${
             showAbove ? 'bottom-full mb-2' : 'top-full mt-2'
           }`}
         >

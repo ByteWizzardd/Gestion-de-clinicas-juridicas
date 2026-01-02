@@ -3,12 +3,10 @@
 WITH casos_filtrados AS (
     SELECT DISTINCT c.id_caso
     FROM casos c
-    LEFT JOIN se_le_asigna sla ON c.id_caso = sla.id_caso
     WHERE 
-        ($1::DATE IS NULL OR c.fecha_solicitud >= $1)
-        AND ($2::DATE IS NULL OR c.fecha_solicitud <= $2)
+        ($1::DATE IS NULL OR c.fecha_inicio_caso >= $1)
+        AND ($2::DATE IS NULL OR c.fecha_inicio_caso <= $2)
         AND ($3::INTEGER IS NULL OR c.id_nucleo = $3)
-        AND ($4::VARCHAR IS NULL OR sla.term = $4)
 ),
 total_casos AS (
     SELECT COUNT(*) AS total
@@ -65,14 +63,14 @@ materia_comun AS (
     LIMIT 1
 )
 SELECT 
-    tc.total AS total_casos,
-    cr.en_riesgo AS casos_en_riesgo,
-    ta.acciones AS total_acciones,
-    ca.archivados AS casos_archivados,
-    mc.nombre_materia AS materia_mas_comun,
-    mc.cantidad AS cantidad_materia_comun,
+    (SELECT total FROM total_casos) AS total_casos,
+    (SELECT en_riesgo FROM casos_riesgo) AS casos_en_riesgo,
+    (SELECT acciones FROM total_acciones) AS total_acciones,
+    (SELECT archivados FROM casos_archivados) AS casos_archivados,
+    (SELECT nombre_materia FROM materia_comun) AS materia_mas_comun,
+    (SELECT cantidad FROM materia_comun) AS cantidad_materia_comun,
     CASE 
-        WHEN tc.total > 0 THEN ROUND((ca.archivados::NUMERIC / tc.total::NUMERIC) * 100, 0)
+        WHEN (SELECT total FROM total_casos) > 0 
+        THEN ROUND(((SELECT archivados FROM casos_archivados)::NUMERIC / (SELECT total FROM total_casos)::NUMERIC) * 100, 0)
         ELSE 0
-    END AS tasa_cierre_porcentaje
-FROM total_casos tc, casos_riesgo cr, total_acciones ta, casos_archivados ca, materia_comun mc;
+    END AS tasa_cierre_porcentaje;

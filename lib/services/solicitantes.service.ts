@@ -39,17 +39,19 @@ interface ApplicantFormData {
   tipoEducativo: string;
   numeroEducativo: string;
   nivelEducativo: string;
-  anosCursados: string;
-  semestresCursados: string;
-  trimestresCursados: string;
+  tipoTiempoEstudioJefe: string;
+  tiempoEstudioJefe: string;
   ingresosMensuales: string;
   // Nivel Educativo del Solicitante
   tipoEducativoSolicitante: string;
   numeroEducativoSolicitante: string;
   nivelEducativoSolicitante: string;
-  anosCursadosSolicitante: string;
-  semestresCursadosSolicitante: string;
-  trimestresCursadosSolicitante: string;
+  tipoTiempoEstudioSolicitante: string;
+  tiempoEstudioSolicitante: string;
+  // Ubicación
+  idEstado: string;
+  numMunicipio: string;
+  numParroquia: string;
   // Trabajo
   trabaja: string;
   condicionTrabajo: string;
@@ -75,6 +77,26 @@ function getNivelEducativoDescripcion(numeroEducativo: string): string {
   if (num === 14) return 'Universitaria';
   
   return 'Sin Nivel'; // Fallback
+}
+
+
+function buildTelefonoCelular(input: {
+  telefonoCelular?: unknown;
+  codigoPaisCelular?: unknown;
+}): string {
+  const rawTelefono = (input.telefonoCelular ?? "").toString().trim();
+
+  // Si ya viene en formato internacional, usarlo tal cual (sin espacios)
+  if (rawTelefono.startsWith("+")) {
+    const normalized = rawTelefono.replace(/\s+/g, "");
+    return normalized;
+  }
+
+  // Si viene solo el número, concatenar con código país (o default +58)
+  const rawCode = (input.codigoPaisCelular ?? "+58").toString().trim();
+  const normalizedCode = rawCode.startsWith("+") ? rawCode : `+${rawCode}`;
+  const onlyDigits = rawTelefono.replace(/\D/g, "");
+  return `${normalizedCode}${onlyDigits}`;
 }
 
 /**
@@ -184,6 +206,10 @@ export const solicitantesService = {
       // Construir cédula con formato V-XXXX (con guión)
       const cedula = `${data.cedulaTipo}-${data.cedulaNumero}`;
       const sexo = data.sexo === 'Masculino' ? 'M' : 'F';
+      const telefonoCelularCompleto = buildTelefonoCelular({
+        telefonoCelular: data.telefonoCelular,
+        codigoPaisCelular: data.codigoPaisCelular,
+      });
       
       // Asignar nacionalidad según el tipo de cédula
       // NOTA: El schema solo permite 'V' (Venezolano) o 'E' (Extranjero)
@@ -235,7 +261,8 @@ export const solicitantesService = {
       // Si no se especifica si trabaja o no, ambos pueden ser NULL
 
       // 2. Buscar o crear nivel educativo del solicitante
-      const descripcionNivelSolicitante = getNivelEducativoDescripcion(data.numeroEducativoSolicitante);
+      // Usar directamente la descripción del nivel educativo seleccionado
+      const descripcionNivelSolicitante = data.nivelEducativoSolicitante || getNivelEducativoDescripcion(data.numeroEducativoSolicitante || '0');
       const nivelEducativoSolicitante = await findOrCreateNivelEducativo(client, descripcionNivelSolicitante);
 
       // 3. Verificar si el solicitante ya existe
@@ -264,7 +291,7 @@ export const solicitantesService = {
             data.nombres,
             data.apellidos,
             data.correoElectronico,
-            `${data.codigoPaisCelular}${data.telefonoCelular}`,
+            telefonoCelularCompleto,
             data.fechaNacimiento,
             sexo,
             nacionalidad,
@@ -323,8 +350,9 @@ export const solicitantesService = {
 
       // 5. Buscar o crear nivel educativo del jefe de hogar (si aplica)
       let nivelEducativoJefeHogar = null;
-      if (data.jefeHogar === 'no' && data.numeroEducativo) {
-        const descripcionNivelJefe = getNivelEducativoDescripcion(data.numeroEducativo);
+      if (data.jefeHogar === 'no' && (data.nivelEducativo || data.numeroEducativo)) {
+        // Usar directamente la descripción del nivel educativo seleccionado, o calcularla desde número si existe
+        const descripcionNivelJefe = data.nivelEducativo || getNivelEducativoDescripcion(data.numeroEducativo || '0');
         nivelEducativoJefeHogar = await findOrCreateNivelEducativo(client, descripcionNivelJefe);
       }
 
@@ -348,7 +376,8 @@ export const solicitantesService = {
         parseInt(data.cantNinosEstudiando),
         data.jefeHogar === 'si',
         parseFloat(data.ingresosMensuales),
-        nivelEducativoJefeHogar ? (data.anosCursados || data.semestresCursados || data.trimestresCursados ? `${data.anosCursados || 0} años, ${data.semestresCursados || 0} semestres, ${data.trimestresCursados || 0} trimestres` : null) : null,
+        nivelEducativoJefeHogar ? (data.tipoTiempoEstudioJefe || null) : null,
+        nivelEducativoJefeHogar ? (data.tiempoEstudioJefe ? parseInt(data.tiempoEstudioJefe) : null) : null,
         nivelEducativoJefeHogar?.id_nivel_educativo || null,
       ]);
       const hogar = hogarResult.rows[0];
@@ -385,25 +414,9 @@ export const solicitantesService = {
 
       // 8. Guardar artefactos domésticos como características (tipo 8) en asignadas_a
       if (data.artefactosDomesticos && data.artefactosDomesticos.length > 0) {
-        // Mapear nombres de artefactos a num_caracteristica según el seed
-        const artefactosMap: Record<string, number> = {
-          'Nevera': 1,
-          'Lavadora': 2,
-          'Computadora': 3,
-          'Cable Satelital': 4,
-          'Internet': 5,
-          'Carro': 6,
-          'Moto': 7,
-        };
-
+        // Usar la función guardarCaracteristica para buscar dinámicamente por descripción
         for (const artefactoNombre of data.artefactosDomesticos) {
-          const numCaracteristica = artefactosMap[artefactoNombre];
-          if (numCaracteristica) {
-            await client.query(
-              'INSERT INTO asignadas_a (cedula_solicitante, id_tipo_caracteristica, num_caracteristica) VALUES ($1, 8, $2) ON CONFLICT DO NOTHING',
-              [cedula, numCaracteristica]
-            );
-          }
+          await guardarCaracteristica(artefactoNombre, 8); // tipo 8 = artefactos_domesticos
         }
       }
 
@@ -411,28 +424,25 @@ export const solicitantesService = {
       const estadoCivil = data.estadoCivil || null;
       const concubinato = data.concubinato === 'si' ? true : (data.concubinato === 'no' ? false : null);
       
-      // Calcular tiempo_estudio del solicitante
-      const tiempoEstudioSolicitante = [
-        data.anosCursadosSolicitante ? `${data.anosCursadosSolicitante} años` : '',
-        data.semestresCursadosSolicitante ? `${data.semestresCursadosSolicitante} semestres` : '',
-        data.trimestresCursadosSolicitante ? `${data.trimestresCursadosSolicitante} trimestres` : '',
-      ].filter(Boolean).join(', ') || '';
+      // Obtener tipo y tiempo de estudio del solicitante
+      const tipoTiempoEstudioSolicitante = data.tipoTiempoEstudioSolicitante || null;
+      const tiempoEstudioSolicitante = data.tiempoEstudioSolicitante ? parseInt(data.tiempoEstudioSolicitante) : null;
       
       const updateSolicitanteQuery = loadSQL('solicitantes/update-complete.sql');
       const solicitanteResult: QueryResult = await client.query(updateSolicitanteQuery, [
         cedula,
         data.telefonoLocal || null,
-        `${data.codigoPaisCelular}${data.telefonoCelular}`,
+        telefonoCelularCompleto,
         estadoCivil,
         concubinato,
-        tiempoEstudioSolicitante || '',
+        tipoTiempoEstudioSolicitante,
+        tiempoEstudioSolicitante,
         nivelEducativoSolicitante.id_nivel_educativo,
         idTrabajo,
         idActividad,
-        // TODO: Agregar id_estado, num_municipio, num_parroquia cuando estén disponibles en el formulario
-        1, // id_estado temporal
-        1, // num_municipio temporal
-        1, // num_parroquia temporal
+        data.idEstado ? parseInt(data.idEstado) : 1, // id_estado
+        data.numMunicipio ? parseInt(data.numMunicipio) : 1, // num_municipio
+        data.numParroquia ? parseInt(data.numParroquia) : 1, // num_parroquia
       ]);
       const solicitanteActualizado = solicitanteResult.rows[0];
 

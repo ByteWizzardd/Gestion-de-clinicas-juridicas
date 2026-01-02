@@ -32,7 +32,11 @@ interface FormData {
   estadoCivil: string;
   concubinato: string;
   nacionalidad: string;
-  // Paso 2 - Vivienda
+  // Paso 2 - Ubicación
+  idEstado: string;
+  numMunicipio: string;
+  numParroquia: string;
+  // Paso 3 - Vivienda
   tipoVivienda: string;
   cantHabitaciones: string;
   cantBanos: string;
@@ -43,7 +47,7 @@ interface FormData {
   eliminacionAguasN: string;
   aseo: string;
   artefactosDomesticos: string[]; // Array de artefactos seleccionados
-  // Paso 3 - Familia y Hogar
+  // Paso 4 - Familia y Hogar
   cantPersonas: string;
   cantTrabajadores: string;
   cantNinos: string;
@@ -52,18 +56,16 @@ interface FormData {
   tipoEducativo: string; // Tipo de educación del jefe de hogar
   numeroEducativo: string; // Número/grado específico del jefe de hogar
   nivelEducativo: string; // Se mantiene para compatibilidad, se calculará desde tipo y número
-  anosCursados: string;
-  semestresCursados: string;
-  trimestresCursados: string;
+  tipoTiempoEstudioJefe: string; // Tipo de tiempo: 'Años', 'Semestres', 'Trimestres'
+  tiempoEstudioJefe: string; // Cantidad de tiempo de estudio del jefe
   ingresosMensuales: string;
-  // Paso 4 - Nivel Educativo del Solicitante
+  // Paso 5 - Nivel Educativo del Solicitante
   tipoEducativoSolicitante: string; // Tipo de educación del solicitante
   numeroEducativoSolicitante: string; // Número/grado específico del solicitante
   nivelEducativoSolicitante: string; // Se mantiene para compatibilidad, se calculará desde tipo y número
-  anosCursadosSolicitante: string;
-  semestresCursadosSolicitante: string;
-  trimestresCursadosSolicitante: string;
-  // Paso 5 - Trabajo
+  tipoTiempoEstudioSolicitante: string; // Tipo de tiempo: 'Años', 'Semestres', 'Trimestres'
+  tiempoEstudioSolicitante: string; // Cantidad de tiempo de estudio
+  // Paso 6 - Trabajo
   trabaja: string; // ¿Trabaja? (si/no)
   condicionTrabajo: string; // Condición en el trabajo (si trabaja)
   buscandoTrabajo: string; // ¿Está buscando trabajo? (si no trabaja)
@@ -71,7 +73,8 @@ interface FormData {
 }
 
 const STEPS = [
-  'Identificación', 
+  'Identificación',
+  'Ubicación',
   'Nivel Educativo',
   'Trabajo',
   'Vivienda y Servicios Conexos', 
@@ -156,6 +159,9 @@ const getInitialFormData = (): FormData => ({
   estadoCivil: '',
   concubinato: '',
   nacionalidad: 'V', // Por defecto venezolano cuando el tipo es 'V'
+  idEstado: '',
+  numMunicipio: '',
+  numParroquia: '',
   tipoVivienda: '',
   cantHabitaciones: '',
   cantBanos: '',
@@ -174,29 +180,97 @@ const getInitialFormData = (): FormData => ({
   tipoEducativo: '',
   numeroEducativo: '',
   nivelEducativo: '',
-  anosCursados: '',
-  semestresCursados: '',
-  trimestresCursados: '',
+  tipoTiempoEstudioJefe: '',
+  tiempoEstudioJefe: '',
   ingresosMensuales: '',
   tipoEducativoSolicitante: '',
   numeroEducativoSolicitante: '',
   nivelEducativoSolicitante: '',
-  anosCursadosSolicitante: '',
-  semestresCursadosSolicitante: '',
-  trimestresCursadosSolicitante: '',
+  tipoTiempoEstudioSolicitante: '',
+  tiempoEstudioSolicitante: '',
   trabaja: '',
   condicionTrabajo: '',
   buscandoTrabajo: '',
   condicionActividad: '',
 });
 
+const STORAGE_KEY = 'applicant_form_data';
+const STORAGE_STEP_KEY = 'applicant_form_current_step';
+
+// Función para cargar datos del localStorage
+const loadFormDataFromStorage = (): FormData | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored) as FormData;
+    }
+  } catch (error) {
+    console.error('Error al cargar datos del formulario desde localStorage:', error);
+  }
+  return null;
+};
+
+// Función para cargar el paso actual del localStorage
+const loadCurrentStepFromStorage = (): number => {
+  if (typeof window === 'undefined') return 0;
+  try {
+    const stored = localStorage.getItem(STORAGE_STEP_KEY);
+    if (stored) {
+      const step = parseInt(stored, 10);
+      return isNaN(step) ? 0 : Math.max(0, Math.min(step, STEPS.length - 1));
+    }
+  } catch (error) {
+    console.error('Error al cargar el paso actual desde localStorage:', error);
+  }
+  return 0;
+};
+
+// Función para guardar datos en localStorage
+const saveFormDataToStorage = (data: FormData) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (error) {
+    console.error('Error al guardar datos del formulario en localStorage:', error);
+  }
+};
+
+// Función para guardar el paso actual en localStorage
+const saveCurrentStepToStorage = (step: number) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_STEP_KEY, step.toString());
+  } catch (error) {
+    console.error('Error al guardar el paso actual en localStorage:', error);
+  }
+};
+
+// Función para limpiar datos del localStorage
+const clearFormDataFromStorage = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_STEP_KEY);
+  } catch (error) {
+    console.error('Error al limpiar datos del formulario de localStorage:', error);
+  }
+};
+
 export default function ApplicantFormModal({
   isOpen,
   onClose,
   onSubmit,
 }: ApplicantFormModalProps) {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState<FormData>(getInitialFormData());
+  // Cargar el paso actual desde localStorage
+  const [currentStep, setCurrentStep] = useState(() => loadCurrentStepFromStorage());
+  const [shouldClearOnClose, setShouldClearOnClose] = useState(false);
+  
+  // Cargar datos guardados o usar datos iniciales
+  const [formData, setFormData] = useState<FormData>(() => {
+    const stored = loadFormDataFromStorage();
+    return stored || getInitialFormData();
+  });
 
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [cedulaCheckTimeout, setCedulaCheckTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -216,6 +290,7 @@ export default function ApplicantFormModal({
     source?: 'usuario' | 'beneficiario';
   }>>([]);
   const [showCedulaSuggestions, setShowCedulaSuggestions] = useState(false);
+  const [cedulaDropdownPosition, setCedulaDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const cedulaInputRef = useRef<HTMLDivElement>(null);
   const cedulaSearchTimeout = useRef<NodeJS.Timeout | null>(null);
   
@@ -232,6 +307,11 @@ export default function ApplicantFormModal({
   const [aguaPotable, setAguaPotable] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
   const [aseo, setAseo] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
   const [eliminacionAguasN, setEliminacionAguasN] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
+  const [artefactosDomesticos, setArtefactosDomesticos] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
+  const [nivelesEducativos, setNivelesEducativos] = useState<Array<{ id_nivel_educativo: number; descripcion: string }>>([]);
+  const [estados, setEstados] = useState<Array<{ id_estado: number; nombre_estado: string }>>([]);
+  const [municipios, setMunicipios] = useState<Array<{ id_estado: number; num_municipio: number; nombre_municipio: string }>>([]);
+  const [parroquias, setParroquias] = useState<Array<{ id_estado: number; num_municipio: number; num_parroquia: number; nombre_parroquia: string }>>([]);
   const [loadingCatalogos, setLoadingCatalogos] = useState(false);
 
   // Helper para limpiar errores de campos específicos
@@ -248,19 +328,17 @@ export default function ApplicantFormModal({
     if (prefix === 'Solicitante') {
       setFormData((prev) => ({
         ...prev,
-        anosCursadosSolicitante: '',
-        semestresCursadosSolicitante: '',
-        trimestresCursadosSolicitante: '',
+        tipoTiempoEstudioSolicitante: '',
+        tiempoEstudioSolicitante: '',
       }));
-      clearErrors(['anosCursadosSolicitante', 'semestresCursadosSolicitante', 'trimestresCursadosSolicitante']);
+      clearErrors(['tipoTiempoEstudioSolicitante', 'tiempoEstudioSolicitante']);
     } else {
       setFormData((prev) => ({
         ...prev,
-        anosCursados: '',
-        semestresCursados: '',
-        trimestresCursados: '',
+        tipoTiempoEstudioJefe: '',
+        tiempoEstudioJefe: '',
       }));
-      clearErrors(['anosCursados', 'semestresCursados', 'trimestresCursados']);
+      clearErrors(['tipoTiempoEstudioJefe', 'tiempoEstudioJefe']);
     }
   };
 
@@ -389,23 +467,23 @@ export default function ApplicantFormModal({
     }
     
     // Validar teléfono celular
-    if (!formData.telefonoCelular || formData.telefonoCelular.replace(/\+\d+/,'').trim() === '') {
-      newErrors.telefonoCelular = 'Este campo es requerido';
-    } else {
-      const codeMatch = formData.telefonoCelular.match(/^(\+\d{1,3})/);
-      const code = codeMatch ? codeMatch[1] : '';
-      const number = formData.telefonoCelular.replace(code, '');
+    // Nota: el valor esperado es "<codigoPais><numero>", ej: "+584143714004".
+    const phoneValue = (formData.telefonoCelular || '').trim();
+    const codeMatch = phoneValue.match(/^(\+\d{1,4})/);
+    const code = codeMatch ? codeMatch[1] : '';
+    const number = phoneValue.slice(code.length).replace(/\D/g, '');
 
+    if (!phoneValue || !code || number.trim() === '') {
+      newErrors.telefonoCelular = 'Este campo es requerido';
+    } else if (code === '+58') {
       // Para números venezolanos (+58), el número debe tener 10 dígitos y empezar con 4.
-      if (code === '+58') {
-        if (number.length !== 10 || !number.startsWith('4')) {
-          newErrors.telefonoCelular = 'Número venezolano inválido. Debe tener 10 dígitos y empezar con 4 (ej: 412...).';
-        }
-      } else {
-        // Para otros países, validar longitud mínima y máxima
-        if (number.length < 7 || number.length > 15) {
-          newErrors.telefonoCelular = 'Número de teléfono inválido';
-        }
+      if (number.length !== 10 || !number.startsWith('4')) {
+        newErrors.telefonoCelular = 'Número venezolano inválido. Debe tener 10 dígitos y empezar con 4 (ej: 412...).';
+      }
+    } else {
+      // Para otros países, validar longitud mínima y máxima
+      if (number.length < 7 || number.length > 15) {
+        newErrors.telefonoCelular = 'Número de teléfono inválido';
       }
     }
     
@@ -448,6 +526,28 @@ export default function ApplicantFormModal({
       } else if (!['V', 'E'].includes(formData.nacionalidad)) {
         newErrors.nacionalidad = 'Nacionalidad inválida';
       }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStepUbicacion = (): boolean => {
+    const newErrors: Partial<Record<keyof FormData, string>> = {};
+
+    // Validar estado
+    if (!formData.idEstado || formData.idEstado.trim() === '') {
+      newErrors.idEstado = 'Este campo es requerido';
+    }
+
+    // Validar municipio
+    if (!formData.numMunicipio || formData.numMunicipio.trim() === '') {
+      newErrors.numMunicipio = 'Este campo es requerido';
+    }
+
+    // Validar parroquia
+    if (!formData.numParroquia || formData.numParroquia.trim() === '') {
+      newErrors.numParroquia = 'Este campo es requerido';
     }
 
     setErrors(newErrors);
@@ -580,53 +680,20 @@ export default function ApplicantFormModal({
 
     // Solo validar nivel educativo si NO es jefe de hogar
     if (formData.jefeHogar === 'no') {
-      if (!formData.tipoEducativo || formData.tipoEducativo.trim() === '') {
-        newErrors.tipoEducativo = 'Este campo es requerido';
+      if (!formData.nivelEducativo || formData.nivelEducativo.trim() === '') {
+        newErrors.nivelEducativo = 'Este campo es requerido';
       }
-      if (!formData.numeroEducativo || formData.numeroEducativo.trim() === '') {
-        newErrors.numeroEducativo = 'Este campo es requerido';
-      }
-      // Solo validar años/semestres/trimestres si el nivel es 12, 13 o 14
-      const nivelNum = Number(formData.numeroEducativo);
-      if (nivelNum === 12 || nivelNum === 13 || nivelNum === 14) {
-        let anosValue = 0;
-        let semestresValue = 0;
-        let trimestresValue = 0;
-        
-        if (!formData.anosCursados || formData.anosCursados.trim() === '') {
-          newErrors.anosCursados = 'Este campo es requerido';
-        } else {
-          anosValue = Number(formData.anosCursados);
-          if (isNaN(anosValue) || anosValue < 0) {
-            newErrors.anosCursados = 'Debe ser un número válido';
-          }
+      // Solo validar tipo y tiempo de estudio si el nivel es técnico o universitario
+      if (formData.nivelEducativo && (formData.nivelEducativo.includes('Técnico') || formData.nivelEducativo.includes('Universitaria'))) {
+        if (!formData.tipoTiempoEstudioJefe || formData.tipoTiempoEstudioJefe.trim() === '') {
+          newErrors.tipoTiempoEstudioJefe = 'Este campo es requerido';
         }
-        if (!formData.semestresCursados || formData.semestresCursados.trim() === '') {
-          newErrors.semestresCursados = 'Este campo es requerido';
+        if (!formData.tiempoEstudioJefe || formData.tiempoEstudioJefe.trim() === '') {
+          newErrors.tiempoEstudioJefe = 'Este campo es requerido';
         } else {
-          semestresValue = Number(formData.semestresCursados);
-          if (isNaN(semestresValue) || semestresValue < 0) {
-            newErrors.semestresCursados = 'Debe ser un número válido';
-          } else if (!newErrors.anosCursados && semestresValue > anosValue * 2) {
-            // 1 año = 2 semestres, los semestres no pueden ser más de 2 veces los años
-            newErrors.semestresCursados = `Los semestres no pueden ser más de ${anosValue * 2} (2 semestres por año)`;
-          }
-        }
-        if (!formData.trimestresCursados || formData.trimestresCursados.trim() === '') {
-          newErrors.trimestresCursados = 'Este campo es requerido';
-        } else {
-          trimestresValue = Number(formData.trimestresCursados);
-          if (isNaN(trimestresValue) || trimestresValue < 0) {
-            newErrors.trimestresCursados = 'Debe ser un número válido';
-          } else {
-            // Validar congruencia con años (1 año = 4 trimestres)
-            if (!newErrors.anosCursados && trimestresValue > anosValue * 4) {
-              newErrors.trimestresCursados = `Los trimestres no pueden ser más de ${anosValue * 4} (4 trimestres por año)`;
-            }
-            // Validar congruencia con semestres (1 semestre = 2 trimestres)
-            if (!newErrors.semestresCursados && trimestresValue > semestresValue * 2) {
-              newErrors.trimestresCursados = `Los trimestres no pueden ser más de ${semestresValue * 2} (2 trimestres por semestre)`;
-            }
+          const tiempoValue = Number(formData.tiempoEstudioJefe);
+          if (isNaN(tiempoValue) || tiempoValue < 0) {
+            newErrors.tiempoEstudioJefe = 'Debe ser un número válido mayor o igual a 0';
           }
         }
       }
@@ -639,53 +706,22 @@ export default function ApplicantFormModal({
   const validateStep4 = (): boolean => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
 
-    if (!formData.tipoEducativoSolicitante || formData.tipoEducativoSolicitante.trim() === '') {
-      newErrors.tipoEducativoSolicitante = 'Este campo es requerido';
+    // Validar nivel educativo del solicitante
+    if (!formData.nivelEducativoSolicitante || formData.nivelEducativoSolicitante.trim() === '') {
+      newErrors.nivelEducativoSolicitante = 'Este campo es requerido';
     }
-    if (!formData.numeroEducativoSolicitante || formData.numeroEducativoSolicitante.trim() === '') {
-      newErrors.numeroEducativoSolicitante = 'Este campo es requerido';
-    }
-    // Solo validar años/semestres/trimestres si el nivel es 12, 13 o 14
-    const nivelNum = Number(formData.numeroEducativoSolicitante);
-    if (nivelNum === 12 || nivelNum === 13 || nivelNum === 14) {
-      let anosValue = 0;
-      let semestresValue = 0;
-      let trimestresValue = 0;
-      
-      if (!formData.anosCursadosSolicitante || formData.anosCursadosSolicitante.trim() === '') {
-        newErrors.anosCursadosSolicitante = 'Este campo es requerido';
-      } else {
-        anosValue = Number(formData.anosCursadosSolicitante);
-        if (isNaN(anosValue) || anosValue < 0) {
-          newErrors.anosCursadosSolicitante = 'Debe ser un número válido';
-        }
+    
+    // Solo validar tipo y tiempo de estudio si el nivel es técnico o universitario
+    if (formData.nivelEducativoSolicitante && (formData.nivelEducativoSolicitante.includes('Técnico') || formData.nivelEducativoSolicitante.includes('Universitaria'))) {
+      if (!formData.tipoTiempoEstudioSolicitante || formData.tipoTiempoEstudioSolicitante.trim() === '') {
+        newErrors.tipoTiempoEstudioSolicitante = 'Este campo es requerido';
       }
-      if (!formData.semestresCursadosSolicitante || formData.semestresCursadosSolicitante.trim() === '') {
-        newErrors.semestresCursadosSolicitante = 'Este campo es requerido';
+      if (!formData.tiempoEstudioSolicitante || formData.tiempoEstudioSolicitante.trim() === '') {
+        newErrors.tiempoEstudioSolicitante = 'Este campo es requerido';
       } else {
-        semestresValue = Number(formData.semestresCursadosSolicitante);
-        if (isNaN(semestresValue) || semestresValue < 0) {
-          newErrors.semestresCursadosSolicitante = 'Debe ser un número válido';
-        } else if (!newErrors.anosCursadosSolicitante && semestresValue > anosValue * 2) {
-          // 1 año = 2 semestres, los semestres no pueden ser más de 2 veces los años
-          newErrors.semestresCursadosSolicitante = `Los semestres no pueden ser más de ${anosValue * 2} (2 semestres por año)`;
-        }
-      }
-      if (!formData.trimestresCursadosSolicitante || formData.trimestresCursadosSolicitante.trim() === '') {
-        newErrors.trimestresCursadosSolicitante = 'Este campo es requerido';
-      } else {
-        trimestresValue = Number(formData.trimestresCursadosSolicitante);
-        if (isNaN(trimestresValue) || trimestresValue < 0) {
-          newErrors.trimestresCursadosSolicitante = 'Debe ser un número válido';
-        } else {
-          // Validar congruencia con años (1 año = 4 trimestres)
-          if (!newErrors.anosCursadosSolicitante && trimestresValue > anosValue * 4) {
-            newErrors.trimestresCursadosSolicitante = `Los trimestres no pueden ser más de ${anosValue * 4} (4 trimestres por año)`;
-          }
-          // Validar congruencia con semestres (1 semestre = 2 trimestres)
-          if (!newErrors.semestresCursadosSolicitante && trimestresValue > semestresValue * 2) {
-            newErrors.trimestresCursadosSolicitante = `Los trimestres no pueden ser más de ${semestresValue * 2} (2 trimestres por semestre)`;
-          }
+        const tiempoValue = Number(formData.tiempoEstudioSolicitante);
+        if (isNaN(tiempoValue) || tiempoValue < 0) {
+          newErrors.tiempoEstudioSolicitante = 'Debe ser un número válido mayor o igual a 0';
         }
       }
     }
@@ -737,32 +773,40 @@ export default function ApplicantFormModal({
         return;
       }
     }
-    // Paso 1: Nivel Educativo del Solicitante
+    // Paso 1: Ubicación
     if (currentStep === 1) {
+      const isValid = validateStepUbicacion();
+      if (!isValid) {
+        // No avanzar si hay errores de validación
+        return;
+      }
+    }
+    // Paso 2: Nivel Educativo del Solicitante
+    if (currentStep === 2) {
       const isValid = validateStep4();
       if (!isValid) {
         // No avanzar si hay errores de validación
         return;
       }
     }
-    // Paso 2: Trabajo
-    if (currentStep === 2) {
+    // Paso 3: Trabajo
+    if (currentStep === 3) {
       const isValid = validateStep5();
       if (!isValid) {
         // No avanzar si hay errores de validación
         return;
       }
     }
-    // Paso 3: Vivienda
-    if (currentStep === 3) {
+    // Paso 4: Vivienda
+    if (currentStep === 4) {
       const isValid = validateStep2();
       if (!isValid) {
         // No avanzar si hay errores de validación
         return;
       }
     }
-    // Paso 4: Familia y Hogar
-    if (currentStep === 4) {
+    // Paso 5: Familia y Hogar
+    if (currentStep === 5) {
       const isValid = validateStep3();
       if (!isValid) {
         // No avanzar si hay errores de validación
@@ -784,7 +828,7 @@ export default function ApplicantFormModal({
 
   const handleSubmit = async () => {
     if (currentStep === STEPS.length - 1) {
-      // Validar el paso 4 (Familia y Hogar) antes de enviar
+      // Validar el paso 5 (Familia y Hogar) antes de enviar
       const isValid = validateStep3();
       if (!isValid) {
         // No enviar si hay errores de validación
@@ -815,6 +859,8 @@ export default function ApplicantFormModal({
 
         // Llamar al callback de éxito (recarga la lista y maneja el modal de confirmación)
         // El componente padre ahora maneja el modal de confirmación
+        // Marcar que se debe limpiar el formulario cuando el modal se cierre
+        setShouldClearOnClose(true);
         onSubmit(result);
       } catch (error: any) {
         const errorMessage = error?.message || 'Error al registrar solicitante. Por favor, intente nuevamente.';
@@ -838,6 +884,7 @@ export default function ApplicantFormModal({
     const handleClickOutside = (event: MouseEvent) => {
       if (cedulaInputRef.current && !cedulaInputRef.current.contains(event.target as Node)) {
         setShowCedulaSuggestions(false);
+        setCedulaDropdownPosition(null);
       }
     };
 
@@ -862,6 +909,67 @@ export default function ApplicantFormModal({
     };
   }, [cedulaCheckTimeout, emailCheckTimeout]);
 
+
+  // Cargar municipios y parroquias cuando se cargan datos desde localStorage
+  useEffect(() => {
+    const loadLocationData = async () => {
+      if (formData.idEstado) {
+        try {
+          const { getMunicipiosAction } = await import('@/app/actions/ubicacion');
+          const result = await getMunicipiosAction(parseInt(formData.idEstado));
+          if (result.success && result.data) {
+            setMunicipios(result.data);
+            
+            // Si hay un municipio guardado, cargar las parroquias
+            if (formData.numMunicipio) {
+              const { getParroquiasAction } = await import('@/app/actions/ubicacion');
+              const parroquiasResult = await getParroquiasAction(parseInt(formData.idEstado), parseInt(formData.numMunicipio));
+              if (parroquiasResult.success && parroquiasResult.data) {
+                setParroquias(parroquiasResult.data);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error al cargar datos de ubicación:', error);
+        }
+      }
+    };
+    
+    // Solo cargar si el modal está abierto y hay datos de estado
+    if (isOpen && formData.idEstado) {
+      loadLocationData();
+    }
+  }, [isOpen, formData.idEstado, formData.numMunicipio]);
+
+  // Guardar datos en localStorage cada vez que formData cambie
+  useEffect(() => {
+    if (formData) {
+      saveFormDataToStorage(formData);
+    }
+  }, [formData]);
+
+  // Guardar el paso actual en localStorage cada vez que cambie
+  useEffect(() => {
+    saveCurrentStepToStorage(currentStep);
+  }, [currentStep]);
+
+  // Limpiar el formulario solo cuando el modal se cierra después de un registro exitoso
+  useEffect(() => {
+    if (!isOpen && shouldClearOnClose) {
+      // Limpiar el formulario solo cuando el modal se cierra después de un registro exitoso
+      const initialData = getInitialFormData();
+      setFormData(initialData);
+      clearFormDataFromStorage(); // Limpiar localStorage
+      setErrors({});
+      setCurrentStep(0);
+      setLockedFields(new Set());
+      setCedulaSuggestions([]);
+      setShowCedulaSuggestions(false);
+      setCedulaDropdownPosition(null);
+      setShouldClearOnClose(false); // Resetear el flag
+    }
+  }, [isOpen, shouldClearOnClose]);
+
   // Cargar catálogos cuando se abre el modal
   useEffect(() => {
     if (isOpen) {
@@ -871,6 +979,7 @@ export default function ApplicantFormModal({
           const { getCondicionTrabajoAction } = await import('@/app/actions/condicion-trabajo');
           const { getCondicionActividadAction } = await import('@/app/actions/condicion-actividad');
           const { getCaracteristicasByTipoAction } = await import('@/app/actions/caracteristicas');
+          const { getNivelesEducativosAction } = await import('@/app/actions/niveles-educativos');
           
           const [
             trabajoResult, 
@@ -882,6 +991,9 @@ export default function ApplicantFormModal({
             aguaPotableResult,
             aseoResult,
             eliminacionAguasNResult,
+            artefactosDomesticosResult,
+            nivelesEducativosResult,
+            estadosResult,
           ] = await Promise.all([
             getCondicionTrabajoAction(),
             getCondicionActividadAction(),
@@ -892,6 +1004,12 @@ export default function ApplicantFormModal({
             getCaracteristicasByTipoAction(5), // agua_potable
             getCaracteristicasByTipoAction(6), // aseo
             getCaracteristicasByTipoAction(7), // eliminacion_aguas_n
+            getCaracteristicasByTipoAction(8), // artefactos_domesticos
+            getNivelesEducativosAction(),
+            (async () => {
+              const { getEstadosAction } = await import('@/app/actions/ubicacion');
+              return getEstadosAction();
+            })(),
           ]);
 
           if (trabajoResult.success && trabajoResult.data) {
@@ -944,6 +1062,24 @@ export default function ApplicantFormModal({
           } else {
             console.error('Error al cargar eliminación de aguas negras:', eliminacionAguasNResult.error);
           }
+
+          if (artefactosDomesticosResult.success && artefactosDomesticosResult.data) {
+            setArtefactosDomesticos(artefactosDomesticosResult.data);
+          } else {
+            console.error('Error al cargar artefactos domésticos:', artefactosDomesticosResult.error);
+          }
+
+          if (nivelesEducativosResult.success && nivelesEducativosResult.data) {
+            setNivelesEducativos(nivelesEducativosResult.data);
+          } else {
+            console.error('Error al cargar niveles educativos:', nivelesEducativosResult.error);
+          }
+
+          if (estadosResult.success && estadosResult.data) {
+            setEstados(estadosResult.data);
+          } else {
+            console.error('Error al cargar estados:', estadosResult.error);
+          }
         } catch (error) {
           console.error('Error al cargar catálogos:', error);
         } finally {
@@ -955,6 +1091,68 @@ export default function ApplicantFormModal({
     }
   }, [isOpen]);
 
+  // Efecto para actualizar posición del dropdown cuando hay scroll, resize o cambios en errores
+  useEffect(() => {
+    if (showCedulaSuggestions && cedulaInputRef.current) {
+      const updatePosition = () => {
+        if (cedulaInputRef.current) {
+          const container = cedulaInputRef.current;
+          
+          // Buscar el InputGroup dentro del contenedor
+          const inputGroup = container.querySelector('div.flex.flex-col.gap-1');
+          
+          // Buscar el mensaje de error dentro del InputGroup
+          let targetElement: Element = container;
+          if (inputGroup) {
+            const errorMessage = inputGroup.querySelector('p.text-danger');
+            // Si hay mensaje de error, usar su posición, si no, usar el InputGroup completo
+            if (errorMessage) {
+              targetElement = errorMessage;
+            } else {
+              // Buscar el contenedor del input (div.flex.items-center.gap-2)
+              const inputContainer = inputGroup.querySelector('div.flex.items-center.gap-2');
+              if (inputContainer) {
+                targetElement = inputContainer;
+              } else {
+                targetElement = inputGroup;
+              }
+            }
+          }
+          
+          const rect = targetElement.getBoundingClientRect();
+          setCedulaDropdownPosition({
+            top: rect.bottom + 4,
+            left: rect.left,
+            width: rect.width,
+          });
+        }
+      };
+
+      // Actualizar posición inmediatamente
+      updatePosition();
+
+      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('resize', updatePosition);
+      
+      // Observar cambios en el DOM para detectar cuando aparece/desaparece el mensaje de error
+      const observer = new MutationObserver(updatePosition);
+      if (cedulaInputRef.current) {
+        observer.observe(cedulaInputRef.current, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['class', 'style'],
+        });
+      }
+      
+      return () => {
+        window.removeEventListener('scroll', updatePosition, true);
+        window.removeEventListener('resize', updatePosition);
+        observer.disconnect();
+      };
+    }
+  }, [showCedulaSuggestions, errors.cedulaNumero]);
+
   const handleClose = () => {
     // Limpiar timeouts al cerrar
     if (cedulaCheckTimeout) {
@@ -962,10 +1160,22 @@ export default function ApplicantFormModal({
       setCedulaCheckTimeout(null);
     }
     
-    setCurrentStep(0);
-    setFormData(getInitialFormData());
-    setErrors({});
+    // NO limpiar el formulario aquí - los datos deben persistir
+    // Solo cerrar el modal
     onClose();
+  };
+
+  const handleClearForm = () => {
+    // Limpiar todo el formulario y volver al principio
+    const initialData = getInitialFormData();
+    setFormData(initialData);
+    clearFormDataFromStorage(); // Limpiar localStorage
+    setErrors({});
+    setCurrentStep(0);
+    setLockedFields(new Set());
+    setCedulaSuggestions([]);
+    setShowCedulaSuggestions(false);
+    setCedulaDropdownPosition(null);
   };
 
   // Función para filtrar solo letras (incluyendo espacios y acentos)
@@ -1009,6 +1219,7 @@ export default function ApplicantFormModal({
       // Limpiar sugerencias
       setCedulaSuggestions([]);
       setShowCedulaSuggestions(false);
+      setCedulaDropdownPosition(null);
       // Limpiar errores
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -1067,9 +1278,9 @@ export default function ApplicantFormModal({
     } else if (field === 'telefonoLocal') {
       filteredValue = filterOnlyNumbers(value);
     } else if (field === 'telefonoCelular') {
-      // El PhoneInput ya maneja el filtrado, pero mantenemos una capa de seguridad
-      const codeMatch = value.match(/^(\+?\d*)/);
-      const code = codeMatch ? codeMatch[0] : '';
+      // Siempre asegurar que el código de país esté presente y empiece con '+'
+      const codeMatch = value.match(/^(\+\d{1,4})/);
+      const code = codeMatch ? codeMatch[1] : '+58'; // Por defecto Venezuela si no hay código
       const number = value.replace(code, '').replace(/\D/g, '');
       filteredValue = `${code}${number}`;
     }
@@ -1095,6 +1306,7 @@ export default function ApplicantFormModal({
     if (!cedulaNumero || cedulaNumero.trim() === '') {
       setCedulaSuggestions([]);
       setShowCedulaSuggestions(false);
+      setCedulaDropdownPosition(null);
       return;
     }
 
@@ -1117,6 +1329,7 @@ export default function ApplicantFormModal({
           }));
           setCedulaSuggestions([]);
           setShowCedulaSuggestions(false);
+          setCedulaDropdownPosition(null);
           return; // No buscar recomendaciones si es solicitante
         }
       }
@@ -1138,7 +1351,10 @@ export default function ApplicantFormModal({
         const beneficiarioResult = await getBeneficiarioByCedulaAction(cedula);
         
         if (beneficiarioResult.success && beneficiarioResult.data) {
-          autocompleteFromBeneficiario(beneficiarioResult.data);
+          autocompleteFromBeneficiario({
+            ...beneficiarioResult.data,
+            sexo: beneficiarioResult.data.sexo ?? undefined,
+          });
           return;
         }
       }
@@ -1182,7 +1398,43 @@ export default function ApplicantFormModal({
             }
 
             setCedulaSuggestions(allSuggestions);
-            setShowCedulaSuggestions(allSuggestions.length > 0 && !errors.cedulaNumero);
+            
+            // Calcular posición del dropdown usando fixed positioning
+            if (cedulaInputRef.current && allSuggestions.length > 0 && !errors.cedulaNumero) {
+              const container = cedulaInputRef.current;
+              
+              // Buscar el InputGroup dentro del contenedor
+              const inputGroup = container.querySelector('div.flex.flex-col.gap-1');
+              
+              // Buscar el mensaje de error dentro del InputGroup
+              let targetElement: Element = container;
+              if (inputGroup) {
+                const errorMessage = inputGroup.querySelector('p.text-danger');
+                // Si hay mensaje de error, usar su posición, si no, usar el InputGroup completo
+                if (errorMessage) {
+                  targetElement = errorMessage;
+                } else {
+                  // Buscar el contenedor del input (div.flex.items-center.gap-2)
+                  const inputContainer = inputGroup.querySelector('div.flex.items-center.gap-2');
+                  if (inputContainer) {
+                    targetElement = inputContainer;
+                  } else {
+                    targetElement = inputGroup;
+                  }
+                }
+              }
+              
+              const rect = targetElement.getBoundingClientRect();
+              setCedulaDropdownPosition({
+                top: rect.bottom + 4, // 4px de margen (mt-1)
+                left: rect.left,
+                width: rect.width,
+              });
+              setShowCedulaSuggestions(true);
+            } else {
+              setShowCedulaSuggestions(false);
+              setCedulaDropdownPosition(null);
+            }
             
             // Si hay una coincidencia exacta, autocompletar automáticamente
             const exactMatch = allSuggestions.find((c: any) => c.cedula === cedula);
@@ -1194,17 +1446,22 @@ export default function ApplicantFormModal({
                   autocompleteFromUsuario(usuarioResult.data);
                 }
               } else if (exactMatch.source === 'beneficiario') {
-                autocompleteFromBeneficiario(exactMatch);
+                autocompleteFromBeneficiario({
+                  ...exactMatch,
+                  sexo: exactMatch.sexo ?? undefined,
+                });
               }
             }
           } catch (error) {
             setCedulaSuggestions([]);
             setShowCedulaSuggestions(false);
+            setCedulaDropdownPosition(null);
           }
         }, 300);
       } else {
         setCedulaSuggestions([]);
         setShowCedulaSuggestions(false);
+        setCedulaDropdownPosition(null);
       }
 
       // Limpiar el error si la cédula no existe como solicitante
@@ -1339,14 +1596,25 @@ export default function ApplicantFormModal({
     
     setLockedFields(camposBloqueados);
 
-    // Limpiar errores y ocultar sugerencias
+    // Limpiar errores de todos los campos que se autocompletaron
     setErrors((prev) => {
       const newErrors = { ...prev };
       delete newErrors.cedulaNumero;
+      if (solicitante.nombres) delete newErrors.nombres;
+      if (solicitante.apellidos) delete newErrors.apellidos;
+      if (solicitante.fecha_nacimiento) delete newErrors.fechaNacimiento;
+      if (solicitante.sexo) delete newErrors.sexo;
+      if (telefonoCelular) {
+        delete newErrors.telefonoCelular;
+        delete newErrors.codigoPaisCelular;
+      }
+      if (solicitante.correo_electronico) delete newErrors.correoElectronico;
+      if (nacionalidadAsignada) delete newErrors.nacionalidad;
       return newErrors;
     });
     setShowCedulaSuggestions(false);
     setCedulaSuggestions([]);
+    setCedulaDropdownPosition(null);
   };
 
   // Función para autocompletar desde un usuario
@@ -1408,14 +1676,23 @@ export default function ApplicantFormModal({
     
     setLockedFields(camposBloqueados);
 
-    // Limpiar errores y ocultar sugerencias
+    // Limpiar errores de todos los campos que se autocompletaron
     setErrors((prev) => {
       const newErrors = { ...prev };
       delete newErrors.cedulaNumero;
+      if (usuario.nombres) delete newErrors.nombres;
+      if (usuario.apellidos) delete newErrors.apellidos;
+      if (telefonoCelular) {
+        delete newErrors.telefonoCelular;
+        delete newErrors.codigoPaisCelular;
+      }
+      if (usuario.correo_electronico) delete newErrors.correoElectronico;
+      if (nacionalidadAsignada) delete newErrors.nacionalidad;
       return newErrors;
     });
     setShowCedulaSuggestions(false);
     setCedulaSuggestions([]);
+    setCedulaDropdownPosition(null);
   };
 
   // Función para autocompletar desde un beneficiario
@@ -1472,14 +1749,20 @@ export default function ApplicantFormModal({
     
     setLockedFields(camposBloqueados);
 
-    // Limpiar errores y ocultar sugerencias
+    // Limpiar errores de todos los campos que se autocompletaron
     setErrors((prev) => {
       const newErrors = { ...prev };
-      delete newErrors.cedulaNumero;
+           delete newErrors.cedulaNumero;
+      if (beneficiario.nombres) delete newErrors.nombres;
+      if (beneficiario.apellidos) delete newErrors.apellidos;
+      if (beneficiario.fecha_nacimiento) delete newErrors.fechaNacimiento;
+      if (beneficiario.sexo) delete newErrors.sexo;
+      if (nacionalidadAsignada) delete newErrors.nacionalidad;
       return newErrors;
     });
     setShowCedulaSuggestions(false);
     setCedulaSuggestions([]);
+    setCedulaDropdownPosition(null);
   };
 
   const renderStep1 = () => (
@@ -1535,13 +1818,18 @@ export default function ApplicantFormModal({
         />
         {/* Lista de sugerencias de cédula */}
         <AnimatePresence>
-          {showCedulaSuggestions && cedulaSuggestions.length > 0 && !errors.cedulaNumero && (
+          {showCedulaSuggestions && cedulaSuggestions.length > 0 && !errors.cedulaNumero && cedulaDropdownPosition && (
             <motion.div
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+              className="fixed z-[100] bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+              style={{
+                top: `${cedulaDropdownPosition.top}px`,
+                left: `${cedulaDropdownPosition.left}px`,
+                width: `${cedulaDropdownPosition.width}px`,
+              }}
             >
               {cedulaSuggestions.map((item, index) => (
                 <motion.button
@@ -1555,7 +1843,10 @@ export default function ApplicantFormModal({
                         autocompleteFromUsuario(usuarioResult.data);
                       }
                     } else if (item.source === 'beneficiario') {
-                      autocompleteFromBeneficiario(item);
+                      autocompleteFromBeneficiario({
+                        ...item,
+                        sexo: item.sexo ?? undefined,
+                      });
                     } else {
                       // Fallback para compatibilidad con sugerencias antiguas
                       autocompleteFromSolicitante(item);
@@ -1611,7 +1902,6 @@ export default function ApplicantFormModal({
         <div className="flex flex-col gap-1">
           <label className="text-base font-normal text-foreground mb-1">Fecha de Nacimiento <span className="text-danger">*</span></label>
           <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600 pointer-events-none z-10" />
             <DatePicker
               value={formData.fechaNacimiento}
               onChange={(value) => updateField('fechaNacimiento', value)}
@@ -1725,6 +2015,116 @@ export default function ApplicantFormModal({
       )}
     </div>
   );
+
+  const renderStepUbicacion = () => {
+    // Cargar municipios cuando se selecciona un estado
+    const handleEstadoChange = async (idEstado: string) => {
+      // Actualizar estado y limpiar municipio y parroquia
+      setFormData((prev) => ({
+        ...prev,
+        idEstado,
+        numMunicipio: '',
+        numParroquia: '',
+      }));
+      clearErrors(['numMunicipio', 'numParroquia']);
+      
+      if (idEstado) {
+        try {
+          const { getMunicipiosAction } = await import('@/app/actions/ubicacion');
+          const result = await getMunicipiosAction(parseInt(idEstado));
+          if (result.success && result.data) {
+            setMunicipios(result.data);
+          } else {
+            setMunicipios([]);
+          }
+        } catch (error) {
+          console.error('Error al cargar municipios:', error);
+          setMunicipios([]);
+        }
+      } else {
+        setMunicipios([]);
+        setParroquias([]);
+      }
+    };
+
+    // Cargar parroquias cuando se selecciona un municipio
+    const handleMunicipioChange = async (numMunicipio: string) => {
+      // Actualizar municipio y limpiar parroquia
+      setFormData((prev) => ({
+        ...prev,
+        numMunicipio,
+        numParroquia: '',
+      }));
+      clearErrors(['numParroquia']);
+      
+      if (numMunicipio && formData.idEstado) {
+        try {
+          const { getParroquiasAction } = await import('@/app/actions/ubicacion');
+          const result = await getParroquiasAction(parseInt(formData.idEstado), parseInt(numMunicipio));
+          if (result.success && result.data) {
+            setParroquias(result.data);
+          } else {
+            setParroquias([]);
+          }
+        } catch (error) {
+          console.error('Error al cargar parroquias:', error);
+          setParroquias([]);
+        }
+      } else {
+        setParroquias([]);
+      }
+    };
+
+    return (
+      <div className="grid grid-cols-3 gap-x-6 gap-y-4">
+        <div className="col-span-1">
+          <Select
+            label="Estado *"
+            value={formData.idEstado}
+            onChange={(e) => handleEstadoChange(e.target.value)}
+            options={estados.map(estado => ({
+              value: estado.id_estado.toString(),
+              label: estado.nombre_estado,
+            }))}
+            placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar estado"}
+            error={errors.idEstado}
+            required
+            disabled={loadingCatalogos}
+          />
+        </div>
+        <div className="col-span-1">
+          <Select
+            label="Municipio *"
+            value={formData.numMunicipio}
+            onChange={(e) => handleMunicipioChange(e.target.value)}
+            options={municipios.map(municipio => ({
+              value: municipio.num_municipio.toString(),
+              label: municipio.nombre_municipio,
+            }))}
+            placeholder={formData.idEstado ? (loadingCatalogos ? "Cargando..." : "Seleccionar municipio") : "Primero seleccione un estado"}
+            error={errors.numMunicipio}
+            required
+            disabled={!formData.idEstado || loadingCatalogos}
+          />
+        </div>
+        <div className="col-span-1">
+          <Select
+            label="Parroquia *"
+            value={formData.numParroquia}
+            onChange={(e) => updateField('numParroquia', e.target.value)}
+            options={parroquias.map(parroquia => ({
+              value: parroquia.num_parroquia.toString(),
+              label: parroquia.nombre_parroquia,
+            }))}
+            placeholder={formData.numMunicipio ? (loadingCatalogos ? "Cargando..." : "Seleccionar parroquia") : "Primero seleccione un municipio"}
+            error={errors.numParroquia}
+            required
+            disabled={!formData.numMunicipio || loadingCatalogos}
+          />
+        </div>
+      </div>
+    );
+  };
 
   const renderStep2 = () => (
     <div className="grid grid-cols-3 gap-x-6 gap-y-4">
@@ -1872,11 +2272,11 @@ export default function ApplicantFormModal({
             Artefactos Domésticos
           </label>
           <div className="grid grid-cols-4 gap-x-4 gap-y-1">
-            {['Nevera', 'Lavadora', 'Computadora', 'Cable Satelital', 'Internet', 'Carro', 'Moto'].map((artefacto) => {
-              const isChecked = formData.artefactosDomesticos.includes(artefacto);
+            {artefactosDomesticos.map((artefacto) => {
+              const isChecked = formData.artefactosDomesticos.includes(artefacto.descripcion);
               return (
                 <label
-                  key={artefacto}
+                  key={artefacto.num_caracteristica}
                   className="flex items-center gap-2 cursor-pointer py-0.5 px-2 rounded-full transition-colors"
                 >
                   <div className="relative flex items-center justify-center">
@@ -1887,13 +2287,13 @@ export default function ApplicantFormModal({
                         if (e.target.checked) {
                           setFormData((prev) => ({
                             ...prev,
-                            artefactosDomesticos: [...prev.artefactosDomesticos, artefacto],
+                            artefactosDomesticos: [...prev.artefactosDomesticos, artefacto.descripcion],
                           }));
                         } else {
                           setFormData((prev) => ({
                             ...prev,
                             artefactosDomesticos: prev.artefactosDomesticos.filter(
-                              (a) => a !== artefacto
+                              (a) => a !== artefacto.descripcion
                             ),
                           }));
                         }
@@ -1917,7 +2317,7 @@ export default function ApplicantFormModal({
                       )}
                     </div>
                   </div>
-                  <span className="text-base text-foreground">{artefacto}</span>
+                  <span className="text-base text-foreground">{artefacto.descripcion}</span>
                 </label>
               );
             })}
@@ -2006,11 +2406,10 @@ export default function ApplicantFormModal({
                 tipoEducativo: '',
                 numeroEducativo: '',
                 nivelEducativo: '',
-                anosCursados: '',
-                semestresCursados: '',
-                trimestresCursados: '',
+                tipoTiempoEstudioJefe: '',
+                tiempoEstudioJefe: '',
               }));
-              clearErrors(['tipoEducativo', 'numeroEducativo', 'nivelEducativo', 'anosCursados', 'semestresCursados', 'trimestresCursados']);
+              clearErrors(['tipoEducativo', 'numeroEducativo', 'nivelEducativo', 'tipoTiempoEstudioJefe', 'tiempoEstudioJefe']);
             }
           }}
           options={[
@@ -2028,80 +2427,65 @@ export default function ApplicantFormModal({
         <>
           <div className="col-span-1">
             <Select
-              label="Tipo de Educación del Jefe de Hogar *"
-              value={formData.tipoEducativo}
-              onChange={(e) => handleTipoEducativoChange(e.target.value, 'JefeHogar')}
-              options={TIPOS_EDUCACION}
-              placeholder="Seleccionar tipo de educación"
-              error={errors.tipoEducativo}
+              label="Nivel Educativo del Jefe de Hogar *"
+              value={formData.nivelEducativo}
+              onChange={(e) => {
+                updateField('nivelEducativo', e.target.value);
+                // Limpiar campos relacionados
+                setFormData((prev) => ({
+                  ...prev,
+                  tipoEducativo: '',
+                  numeroEducativo: '',
+                  tipoTiempoEstudioJefe: '',
+                  tiempoEstudioJefe: '',
+                }));
+                clearErrors(['tipoEducativo', 'numeroEducativo', 'tipoTiempoEstudioJefe', 'tiempoEstudioJefe']);
+              }}
+              options={nivelesEducativos.map((nivel) => ({
+                value: nivel.descripcion,
+                label: nivel.descripcion,
+              }))}
+              placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar nivel educativo"}
+              error={errors.nivelEducativo}
               required
+              disabled={loadingCatalogos}
             />
           </div>
-          {formData.tipoEducativo && (
-            <>
-              {getNumerosPorTipo(formData.tipoEducativo).length > 1 ? (
-                <div className="col-span-1">
-                  <Select
-                    label="Grado/Número del Jefe de Hogar *"
-                    value={formData.numeroEducativo}
-                    onChange={(e) => handleNumeroEducativoChange(e.target.value, 'JefeHogar')}
-                    options={getNumerosPorTipo(formData.tipoEducativo)}
-                    placeholder="Seleccionar grado/número"
-                    error={errors.numeroEducativo}
-                    required
-                  />
-                </div>
-              ) : (
-                <div className="col-span-1">
-                  <Input
-                    label="Grado/Número del Jefe de Hogar *"
-                    type="text"
-                    value={formData.numeroEducativo || ''}
-                    readOnly
-                    className="bg-gray-100 cursor-not-allowed"
-                    placeholder="Asignado automáticamente"
-                  />
-                </div>
-              )}
-            </>
-          )}
-          {/* Solo mostrar campos de duración si el nivel es 12, 13 o 14 */}
-          {(Number(formData.numeroEducativo) === 12 || 
-            Number(formData.numeroEducativo) === 13 || 
-            Number(formData.numeroEducativo) === 14) && (
+          {/* Solo mostrar campos de duración para niveles técnicos y universitarios */}
+          {formData.nivelEducativo && 
+            (formData.nivelEducativo.includes('Técnico') || formData.nivelEducativo.includes('Universitaria')) && (
             <>
               <div className="col-span-1">
-                <Input
-                  label="Años Cursados del Jefe de Hogar *"
-                  type="number"
-                  value={formData.anosCursados}
-                  onChange={(e) => handleAnosChange(e.target.value, 'JefeHogar')}
-                  placeholder="Ingrese años"
-                  error={errors.anosCursados}
+                <Select
+                  label="Tipo de Tiempo del Jefe de Hogar *"
+                  value={formData.tipoTiempoEstudioJefe}
+                  onChange={(e) => {
+                    updateField('tipoTiempoEstudioJefe', e.target.value);
+                    // Limpiar tiempo de estudio cuando cambia el tipo
+                    setFormData((prev) => ({
+                      ...prev,
+                      tiempoEstudioJefe: '',
+                    }));
+                    clearErrors(['tiempoEstudioJefe']);
+                  }}
+                  options={[
+                    { value: 'Años', label: 'Años' },
+                    { value: 'Semestres', label: 'Semestres' },
+                    { value: 'Trimestres', label: 'Trimestres' },
+                  ]}
+                  placeholder="Seleccionar tipo"
+                  error={errors.tipoTiempoEstudioJefe}
                   required
-                  min="0"
                 />
               </div>
               <div className="col-span-1">
                 <Input
-                  label="Semestres Cursados del Jefe de Hogar *"
+                  label="Tiempo de Estudio del Jefe de Hogar *"
                   type="number"
-                  value={formData.semestresCursados}
-                  onChange={(e) => handleSemestresChange(e.target.value, 'JefeHogar')}
-                  placeholder="Ingrese semestres"
-                  error={errors.semestresCursados}
-                  required
-                  min="0"
-                />
-              </div>
-              <div className="col-span-1">
-                <Input
-                  label="Trimestres Cursados del Jefe de Hogar *"
-                  type="number"
-                  value={formData.trimestresCursados}
-                  onChange={(e) => updateField('trimestresCursados', e.target.value)}
-                  placeholder="Ingrese trimestres"
-                  error={errors.trimestresCursados}
+                  value={formData.tiempoEstudioJefe}
+                  onChange={(e) => updateField('tiempoEstudioJefe', e.target.value)}
+                  placeholder={`Ingrese ${formData.tipoTiempoEstudioJefe.toLowerCase() || 'cantidad'}`}
+                  error={errors.tiempoEstudioJefe}
                   required
                   min="0"
                 />
@@ -2115,83 +2499,68 @@ export default function ApplicantFormModal({
 
   const renderStep4 = () => (
     <div className="grid grid-cols-3 gap-x-6 gap-y-4">
-      {/* Fila 1: Tipo de Educación y Número */}
+      {/* Fila 1: Nivel Educativo */}
       <div className="col-span-1">
         <Select
-          label="Tipo de Educación *"
-          value={formData.tipoEducativoSolicitante}
-          onChange={(e) => handleTipoEducativoChange(e.target.value, 'Solicitante')}
-          options={TIPOS_EDUCACION}
-          placeholder="Seleccionar tipo de educación"
-          error={errors.tipoEducativoSolicitante}
+          label="Nivel Educativo *"
+          value={formData.nivelEducativoSolicitante}
+          onChange={(e) => {
+            updateField('nivelEducativoSolicitante', e.target.value);
+            // Limpiar campos relacionados
+            setFormData((prev) => ({
+              ...prev,
+              tipoEducativoSolicitante: '',
+              numeroEducativoSolicitante: '',
+              tipoTiempoEstudioSolicitante: '',
+              tiempoEstudioSolicitante: '',
+            }));
+            clearErrors(['tipoEducativoSolicitante', 'numeroEducativoSolicitante', 'tipoTiempoEstudioSolicitante', 'tiempoEstudioSolicitante']);
+          }}
+          options={nivelesEducativos.map((nivel) => ({
+            value: nivel.descripcion,
+            label: nivel.descripcion,
+          }))}
+          placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar nivel educativo"}
+          error={errors.nivelEducativoSolicitante}
           required
+          disabled={loadingCatalogos}
         />
       </div>
-      {formData.tipoEducativoSolicitante && (
-        <>
-          {getNumerosPorTipo(formData.tipoEducativoSolicitante).length > 1 ? (
-            <div className="col-span-1">
-              <Select
-                label="Grado/Número *"
-                value={formData.numeroEducativoSolicitante}
-                onChange={(e) => handleNumeroEducativoChange(e.target.value, 'Solicitante')}
-                options={getNumerosPorTipo(formData.tipoEducativoSolicitante)}
-                placeholder="Seleccionar grado/número"
-                error={errors.numeroEducativoSolicitante}
-                required
-              />
-            </div>
-          ) : (
-            <div className="col-span-1">
-              <Input
-                label="Grado/Número *"
-                type="text"
-                value={formData.numeroEducativoSolicitante || ''}
-                readOnly
-                className="bg-gray-100 cursor-not-allowed"
-                placeholder="Asignado automáticamente"
-              />
-            </div>
-          )}
-        </>
-      )}
-      {/* Solo mostrar campos de duración si el nivel es 12, 13 o 14 */}
-      {(Number(formData.numeroEducativoSolicitante) === 12 || 
-        Number(formData.numeroEducativoSolicitante) === 13 || 
-        Number(formData.numeroEducativoSolicitante) === 14) && (
+      {/* Solo mostrar campos de duración para niveles técnicos y universitarios */}
+      {formData.nivelEducativoSolicitante && 
+        (formData.nivelEducativoSolicitante.includes('Técnico') || formData.nivelEducativoSolicitante.includes('Universitaria')) && (
         <>
           <div className="col-span-1">
-            <Input
-              label="Años Cursados *"
-              type="number"
-              value={formData.anosCursadosSolicitante}
-              onChange={(e) => handleAnosChange(e.target.value, 'Solicitante')}
-              placeholder="Ingrese años"
-              error={errors.anosCursadosSolicitante}
+            <Select
+              label="Tipo de Tiempo *"
+              value={formData.tipoTiempoEstudioSolicitante}
+              onChange={(e) => {
+                updateField('tipoTiempoEstudioSolicitante', e.target.value);
+                // Limpiar tiempo de estudio cuando cambia el tipo
+                setFormData((prev) => ({
+                  ...prev,
+                  tiempoEstudioSolicitante: '',
+                }));
+                clearErrors(['tiempoEstudioSolicitante']);
+              }}
+              options={[
+                { value: 'Años', label: 'Años' },
+                { value: 'Semestres', label: 'Semestres' },
+                { value: 'Trimestres', label: 'Trimestres' },
+              ]}
+              placeholder="Seleccionar tipo"
+              error={errors.tipoTiempoEstudioSolicitante}
               required
-              min="0"
             />
           </div>
           <div className="col-span-1">
             <Input
-              label="Semestres Cursados *"
+              label="Tiempo de Estudio *"
               type="number"
-              value={formData.semestresCursadosSolicitante}
-              onChange={(e) => handleSemestresChange(e.target.value, 'Solicitante')}
-              placeholder="Ingrese semestres"
-              error={errors.semestresCursadosSolicitante}
-              required
-              min="0"
-            />
-          </div>
-          <div className="col-span-1">
-            <Input
-              label="Trimestres Cursados *"
-              type="number"
-              value={formData.trimestresCursadosSolicitante}
-              onChange={(e) => updateField('trimestresCursadosSolicitante', e.target.value)}
-              placeholder="Ingrese trimestres"
-              error={errors.trimestresCursadosSolicitante}
+              value={formData.tiempoEstudioSolicitante}
+              onChange={(e) => updateField('tiempoEstudioSolicitante', e.target.value)}
+              placeholder={`Ingrese ${formData.tipoTiempoEstudioSolicitante.toLowerCase() || 'cantidad'}`}
+              error={errors.tiempoEstudioSolicitante}
               required
               min="0"
             />
@@ -2318,12 +2687,14 @@ export default function ApplicantFormModal({
       case 0:
         return renderStep1(); // Identificación
       case 1:
-        return renderStep4(); // Nivel Educativo del Solicitante
+        return renderStepUbicacion(); // Ubicación
       case 2:
-        return renderStep5(); // Trabajo
+        return renderStep4(); // Nivel Educativo del Solicitante
       case 3:
-        return renderStep2(); // Vivienda
+        return renderStep5(); // Trabajo
       case 4:
+        return renderStep2(); // Vivienda
+      case 5:
         return renderStep3(); // Familia y Hogar
       default:
         return null;
@@ -2363,28 +2734,36 @@ export default function ApplicantFormModal({
         {/* Footer con botones */}
         <div className="flex flex-col border-t border-gray-200">
           {/* Nota sobre campos obligatorios */}
-          <div className="flex items-center gap-1 pt-2 pb-4">
+          <div className="flex items-center gap-1 pt-2 pb-2">
             <span className="text-danger font-medium text-sm">*</span>
             <span className="text-sm text-gray-600">Campo obligatorio</span>
           </div>
           
-          <div className="flex justify-end gap-4">
-            {currentStep > 0 && (
-              <Button variant="outline" size="xl" onClick={handleBack}>
-                <ArrowLeft className="w-5 h-5 mr-2" />
-                Atrás
-              </Button>
-            )}
-            {currentStep < STEPS.length - 1 ? (
-              <Button variant="primary" size="xl" onClick={handleNext}>
-                Siguiente
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            ) : (
-              <Button variant="primary" size="xl" onClick={handleSubmit}>
-                Registrar
-              </Button>
-            )}
+          <div className="flex justify-between items-center gap-4">
+            <button
+              onClick={handleClearForm}
+              className="text-sm text-gray-500 hover:text-gray-700 underline cursor-pointer transition-colors"
+            >
+              Limpiar Formulario
+            </button>
+            <div className="flex gap-4">
+              {currentStep > 0 && (
+                <Button variant="outline" size="xl" onClick={handleBack}>
+                  <ArrowLeft className="w-5 h-5 mr-2" />
+                  Atrás
+                </Button>
+              )}
+              {currentStep < STEPS.length - 1 ? (
+                <Button variant="primary" size="xl" onClick={handleNext}>
+                  Siguiente
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              ) : (
+                <Button variant="primary" size="xl" onClick={handleSubmit}>
+                  Registrar
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>

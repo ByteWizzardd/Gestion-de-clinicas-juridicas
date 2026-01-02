@@ -10,6 +10,7 @@ interface Usuario {
   nombre_completo: string;
   nombre_usuario: string;
   habilitado_sistema?: boolean;
+  fotoPerfil?: string | null;
 }
 
 interface GeneralInfoTabProps {
@@ -45,11 +46,11 @@ const GeneralInfoTab: React.FC<GeneralInfoTabProps> = ({ usuario }) => {
           </div>
         </div>
       </div>
-      {/* Datos Personales y de Sistema */}
+      {/* Datos Personales */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
         <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
           <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg>
-          Datos Personales y de Sistema
+          Datos Personales
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>

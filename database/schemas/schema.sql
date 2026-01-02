@@ -118,7 +118,8 @@ CREATE TABLE solicitantes (
     estado_civil VARCHAR(20) NOT NULL CHECK (estado_civil IN ('Soltero', 'Casado', 'Divorciado', 'Viudo')),
     
     concubinato BOOLEAN NOT NULL,
-    tiempo_estudio VARCHAR(50) NOT NULL,
+    tipo_tiempo_estudio VARCHAR(20) CHECK (tipo_tiempo_estudio IN ('Años', 'Semestres', 'Trimestres')),
+    tiempo_estudio INTEGER CHECK (tiempo_estudio >= 0),
     
     id_nivel_educativo INTEGER NOT NULL REFERENCES niveles_educativos(id_nivel_educativo),
     id_trabajo INTEGER REFERENCES condicion_trabajo(id_trabajo),
@@ -164,7 +165,8 @@ CREATE TABLE familias_y_hogares (
     jefe_hogar BOOLEAN NOT NULL, 
     
     ingresos_mensuales DECIMAL(10,2) NOT NULL CHECK (ingresos_mensuales >= 0),
-    tiempo_estudio_jefe VARCHAR(50),
+    tipo_tiempo_estudio_jefe VARCHAR(20) CHECK (tipo_tiempo_estudio_jefe IN ('Años', 'Semestres', 'Trimestres')),
+    tiempo_estudio_jefe INTEGER CHECK (tiempo_estudio_jefe >= 0),
     id_nivel_educativo_jefe INTEGER REFERENCES niveles_educativos(id_nivel_educativo),
     FOREIGN KEY (cedula_solicitante) REFERENCES solicitantes(cedula)
 );
@@ -277,6 +279,7 @@ CREATE TABLE citas (
     fecha_proxima_cita DATE,
     fecha_encuentro DATE NOT NULL,
     orientacion TEXT NOT NULL,
+    id_usuario_registro VARCHAR(20) REFERENCES usuarios(cedula), -- Usuario que registró la cita
     PRIMARY KEY (num_cita, id_caso)
 );
 
@@ -337,7 +340,106 @@ CREATE TABLE soportes (
     descripcion TEXT,
     
     fecha_consignacion DATE NOT NULL DEFAULT CURRENT_DATE,
+    
+    -- Campos de auditoría: quién subió el archivo
+    id_usuario_subio VARCHAR(20) REFERENCES usuarios(cedula),
+    
     PRIMARY KEY (num_soporte, id_caso)
+);
+
+-- 26.1) AUDITORÍA DE ELIMINACIÓN DE SOPORTES
+-- Tabla para registrar metadatos de soportes eliminados (sin guardar el archivo completo)
+CREATE TABLE auditoria_eliminacion_soportes (
+    id SERIAL PRIMARY KEY,
+    num_soporte INTEGER NOT NULL,
+    id_caso INTEGER NOT NULL,
+    nombre_archivo VARCHAR(150) NOT NULL,
+    tipo_mime VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    fecha_consignacion DATE NOT NULL,
+    tamano_bytes INTEGER, -- Tamaño del archivo en bytes (sin guardar el archivo)
+    id_usuario_subio VARCHAR(20) REFERENCES usuarios(cedula),
+    id_usuario_elimino VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    motivo TEXT, -- Motivo de la eliminación
+    fecha_eliminacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+);
+
+-- 26.2) AUDITORÍA DE ELIMINACIÓN DE CITAS
+-- Tabla para registrar información de citas eliminadas
+-- Solo guarda metadatos de la cita, no información adicional del caso
+CREATE TABLE auditoria_eliminacion_citas (
+    id SERIAL PRIMARY KEY,
+    num_cita INTEGER NOT NULL,
+    id_caso INTEGER NOT NULL,
+    fecha_encuentro DATE NOT NULL,
+    fecha_proxima_cita DATE,
+    orientacion TEXT NOT NULL,
+    id_usuario_registro VARCHAR(20) REFERENCES usuarios(cedula), -- Usuario que registró la cita originalmente
+    id_usuario_elimino VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    motivo TEXT, -- Motivo de la eliminación
+    fecha_eliminacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+);
+
+-- 26.3) AUDITORÍA DE ACTUALIZACIÓN DE CITAS
+-- Tabla para registrar todas las actualizaciones de citas
+-- Guarda el historial completo de cambios (valores anteriores y nuevos)
+CREATE TABLE auditoria_actualizacion_citas (
+    id SERIAL PRIMARY KEY,
+    num_cita INTEGER NOT NULL,
+    id_caso INTEGER NOT NULL,
+    -- Valores anteriores (antes de la actualización)
+    fecha_encuentro_anterior DATE,
+    fecha_proxima_cita_anterior DATE,
+    orientacion_anterior TEXT,
+    -- Valores nuevos (después de la actualización)
+    fecha_encuentro_nueva DATE,
+    fecha_proxima_cita_nueva DATE,
+    orientacion_nueva TEXT,
+    -- Información de auditoría
+    id_usuario_actualizo VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    fecha_actualizacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+);
+
+-- 26.4) AUDITORÍA DE ELIMINACIÓN DE USUARIOS
+-- Tabla para registrar la eliminación física de usuarios
+CREATE TABLE auditoria_eliminacion_usuario (
+    id SERIAL PRIMARY KEY,
+    usuario_eliminado VARCHAR(20) NOT NULL, -- Cédula del usuario eliminado
+    nombres_usuario_eliminado VARCHAR(100), -- Nombre del usuario eliminado (guardado antes de eliminar)
+    apellidos_usuario_eliminado VARCHAR(100), -- Apellido del usuario eliminado (guardado antes de eliminar)
+    eliminado_por VARCHAR(20) NOT NULL, -- Cédula del usuario que realizó la eliminación
+    motivo TEXT NOT NULL, -- Motivo de la eliminación
+    fecha TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+);
+
+-- 26.5) AUDITORÍA DE ACTUALIZACIÓN DE USUARIOS
+-- Tabla para registrar todas las actualizaciones de usuarios (campos, tipo de usuario, tipo_estudiante, tipo_profesor)
+CREATE TABLE auditoria_actualizacion_usuarios (
+    id SERIAL PRIMARY KEY,
+    ci_usuario VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    -- Valores anteriores (antes de la actualización)
+    nombres_anterior VARCHAR(100),
+    apellidos_anterior VARCHAR(100),
+    correo_electronico_anterior VARCHAR(100),
+    nombre_usuario_anterior VARCHAR(50),
+    telefono_celular_anterior VARCHAR(20),
+    habilitado_sistema_anterior BOOLEAN,
+    tipo_usuario_anterior VARCHAR(20),
+    tipo_estudiante_anterior VARCHAR(50),
+    tipo_profesor_anterior VARCHAR(20),
+    -- Valores nuevos (después de la actualización)
+    nombres_nuevo VARCHAR(100),
+    apellidos_nuevo VARCHAR(100),
+    correo_electronico_nuevo VARCHAR(100),
+    nombre_usuario_nuevo VARCHAR(50),
+    telefono_celular_nuevo VARCHAR(20),
+    habilitado_sistema_nuevo BOOLEAN,
+    tipo_usuario_nuevo VARCHAR(20),
+    tipo_estudiante_nuevo VARCHAR(50),
+    tipo_profesor_nuevo VARCHAR(20),
+    -- Información de auditoría
+    id_usuario_actualizo VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    fecha_actualizacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
 );
 
 -- 27) BENEFICIARIOS (PARENTESCO LIBRE)

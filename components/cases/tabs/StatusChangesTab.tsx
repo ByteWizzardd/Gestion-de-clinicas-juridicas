@@ -51,8 +51,7 @@ export default function StatusChangesTab({ cambiosEstatus }: StatusChangesTabPro
                   {cambio.nuevo_estatus}
                 </span>
               </div>
-              <p className="text-sm text-gray-500 flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
+              <p className="text-sm text-gray-500">
                 {formatDate(cambio.fecha)}
               </p>
             </div>
@@ -61,8 +60,7 @@ export default function StatusChangesTab({ cambiosEstatus }: StatusChangesTabPro
           <div className="space-y-4">
             {cambio.motivo && (
               <div>
-                <label className="text-sm font-medium text-gray-500 flex items-center gap-2 mb-2">
-                  <MessageSquare className="w-4 h-4" />
+                <label className="text-sm font-medium text-gray-500 mb-2">
                   Motivo del Cambio
                 </label>
                 <p className="text-base text-gray-900 mt-1 whitespace-pre-wrap bg-gray-50 rounded-lg p-3 border border-gray-200">
@@ -73,8 +71,7 @@ export default function StatusChangesTab({ cambiosEstatus }: StatusChangesTabPro
 
             <div>
               <label className="text-sm font-medium text-gray-500">Cambiado por</label>
-              <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
-                <User className="w-4 h-4 text-gray-400" />
+              <p className="text-base text-gray-900 mt-1">
                 {cambio.nombre_completo_usuario}
               </p>
             </div>

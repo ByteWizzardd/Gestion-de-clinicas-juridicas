@@ -103,7 +103,7 @@ export default function Modal({
               transition={{ duration: 0.2, ease: 'easeOut' }}
               className={`
                 bg-white rounded-xl shadow-xl w-full ${sizeStyles[size]} 
-                pointer-events-auto flex flex-col
+                pointer-events-auto flex flex-col max-h-[90vh] overflow-hidden
                 ${className}
               `}
               role="dialog"
@@ -146,7 +146,7 @@ export default function Modal({
               )}
 
               {/* Content */}
-              <div className={`flex-1 ${title ? 'p-6' : ''}`}>{children}</div>
+              <div className={`flex-1 ${title ? '' : 'p-6'} flex flex-col min-h-0`}>{children}</div>
 
               {/* Footer */}
               {footer && (

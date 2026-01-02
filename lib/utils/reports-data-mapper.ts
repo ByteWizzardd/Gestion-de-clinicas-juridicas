@@ -62,10 +62,14 @@ export function mapDistributionData(
 export function mapTopCasesData(
     dbData: Array<{ nombre_materia: string; cantidad: number }>
 ): TopCasesData[] {
-    return dbData.map((item) => ({
-        name: item.nombre_materia,
-        value: Number(item.cantidad),
-    }));
+    return dbData.map((item) => {
+        // Remover el prefijo "Materia " si existe para acortar las etiquetas
+        const name = item.nombre_materia.replace(/^Materia\s+/i, '');
+        return {
+            name,
+            value: Number(item.cantidad),
+        };
+    });
 }
 
 /**

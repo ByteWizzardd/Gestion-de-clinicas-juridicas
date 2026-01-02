@@ -148,13 +148,14 @@ export const usuariosQueries = {
    * Elimina un usuario y guarda su cédula
    */
   toggleHabilitado: async (
-    cedula: string
+    cedula: string,
+    cedula_actor: string
   ): Promise<{
     success: boolean;
     error?: { message: string; code?: string };
   }> => {
     try {
-      await pool.query("SELECT toggle_habilitado_usuario($1)", [cedula]);
+      await pool.query("SELECT toggle_habilitado_usuario($1, $2)", [cedula, cedula_actor]);
       return { success: true };
     } catch (error: unknown) {
       return {
@@ -198,6 +199,7 @@ export const usuariosQueries = {
     telefono_celular: string | null;
     habilitado_sistema: boolean;
     tipo_usuario: string;
+    fotoPerfil?: string | null;
     estudiante?: {
       nrc: string | null;
       term: string | null;
@@ -220,6 +222,15 @@ export const usuariosQueries = {
     const result: QueryResult = await pool.query(query, [cedula]);
     const row = result.rows[0];
     if (!row) return null;
+
+    // Obtener foto de perfil
+    const fotoBuffer = await usuariosQueries.getFotoPerfil(cedula);
+    let fotoPerfilBase64: string | null = null;
+    
+    if (fotoBuffer) {
+      fotoPerfilBase64 = `data:image/jpeg;base64,${fotoBuffer.toString('base64')}`;
+    }
+
     return {
       cedula: row.cedula,
       nombres: row.nombres,
@@ -230,6 +241,7 @@ export const usuariosQueries = {
       telefono_celular: row.telefono_celular,
       habilitado_sistema: row.habilitado_sistema,
       tipo_usuario: row.tipo_usuario,
+      fotoPerfil: fotoPerfilBase64,
       estudiante:
         row.estudiante_nrc || row.estudiante_term || row.estudiante_tipo
           ? {
@@ -282,6 +294,19 @@ export const usuariosQueries = {
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
+        
+        // Obtener el tipo_usuario actual del usuario para determinar qué valores pasar
+        const tipoUsuarioResult = await client.query(
+          'SELECT tipo_usuario FROM usuarios WHERE cedula = $1',
+          [data.cedula]
+        );
+        const tipoUsuarioActual = tipoUsuarioResult.rows[0]?.tipo_usuario || null;
+        
+        // Usar el tipo_usuario que se está pasando, o el actual si no se pasa
+        const tipoUsuarioParaValores = (data.tipo_usuario && data.tipo_usuario.trim() !== '') 
+          ? data.tipo_usuario 
+          : tipoUsuarioActual;
+        
         await client.query(
           `CALL update_all_by_cedula(
             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
@@ -293,16 +318,16 @@ export const usuariosQueries = {
             data.correo_electronico ?? null,
             data.nombre_usuario ?? null,
             data.telefono_celular ?? null,
-            data.tipo_usuario ?? null,
-            // Estudiante
-            data.tipo_usuario === "Estudiante" ? data.nrc ?? null : null,
-            data.tipo_usuario === "Estudiante" ? data.term ?? null : null,
-            data.tipo_usuario === "Estudiante" ? data.tipo_estudiante ?? null : null,
+            data.tipo_usuario && data.tipo_usuario.trim() !== '' ? data.tipo_usuario : null,
+            // Estudiante - usar tipoUsuarioParaValores para determinar si pasar valores
+            tipoUsuarioParaValores === "Estudiante" ? data.nrc ?? null : null,
+            tipoUsuarioParaValores === "Estudiante" ? data.term ?? null : null,
+            tipoUsuarioParaValores === "Estudiante" ? data.tipo_estudiante ?? null : null,
             // Profesor
-            data.tipo_usuario === "Profesor" ? data.term ?? null : null,
-            data.tipo_usuario === "Profesor" ? data.tipo_profesor ?? null : null,
+            tipoUsuarioParaValores === "Profesor" ? data.term ?? null : null,
+            tipoUsuarioParaValores === "Profesor" ? data.tipo_profesor ?? null : null,
             // Coordinador
-            data.tipo_usuario === "Coordinador" ? data.term ?? null : null,
+            tipoUsuarioParaValores === "Coordinador" ? data.term ?? null : null,
             //Cedula actor (Usuario que realiza la acción)
             data.cedula_actor
           ]
@@ -314,7 +339,32 @@ export const usuariosQueries = {
       } finally {
         client.release();
       }
-  }
+  },
+
+  /**
+   * Obtiene la foto de perfil de un usuario
+   */
+  getFotoPerfil: async (cedula: string): Promise<Buffer | null> => {
+    const query = loadSQL('usuarios/get-foto-perfil.sql');
+    const result: QueryResult = await pool.query(query, [cedula]);
+    return result.rows[0]?.foto_perfil || null;
+  },
+
+  /**
+   * Actualiza la foto de perfil de un usuario
+   */
+  updateFotoPerfil: async (cedula: string, fotoPerfil: Buffer): Promise<void> => {
+    const query = loadSQL('usuarios/update-foto-perfil.sql');
+    await pool.query(query, [cedula, fotoPerfil]);
+  },
+
+  /**
+   * Elimina la foto de perfil de un usuario (establece a NULL)
+   */
+  deleteFotoPerfil: async (cedula: string): Promise<void> => {
+    const query = loadSQL('usuarios/delete-foto-perfil.sql');
+    await pool.query(query, [cedula]);
+  },
 };
 
 
