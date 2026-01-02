@@ -28,12 +28,20 @@ export default function EditableAvatar({ fotoPerfil, cedula, nombreInicial, onPh
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setShowMenu(false);
+        setShowEditIcon(false);
       }
     };
 
     if (showMenu) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showMenu]);
+
+  // Ocultar el icono de edición cuando el menú se cierra
+  useEffect(() => {
+    if (!showMenu) {
+      setShowEditIcon(false);
     }
   }, [showMenu]);
 
