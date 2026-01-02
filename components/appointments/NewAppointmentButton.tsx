@@ -111,7 +111,7 @@ export default function NewAppointmentButton({
       onOpenChange={setIsOpen}
       align="left"
       className="relative"
-      menuClassName="bg-white border border-gray-300 rounded-2xl shadow-xl min-w-[200px] overflow-hidden py-2"
+      menuClassName="bg-white border border-gray-300 rounded-2xl shadow-xl w-[200px] overflow-hidden py-2"
     >
       <div onClick={(e) => e.stopPropagation()}>
         <button
