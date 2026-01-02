@@ -97,95 +97,52 @@ export default function DropdownMenu({
   }, [isOpen, onOpenChange, isInsideModal]);
 
   const updatePosition = () => {
-    if (triggerRef.current && menuRef.current) {
+    if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
       const spaceAbove = rect.top;
       const menuHeight = 300;
-      
-      // Obtener el ancho real del menú si está renderizado, o usar un estimado
-      const menuWidth = menuRef.current.offsetWidth || 200;
-      const spaceOnRight = window.innerWidth - rect.right;
-      const spaceOnLeft = rect.left;
+      // Usar el ancho del trigger como referencia, con un mínimo estimado
+      const estimatedMenuWidth = Math.max(rect.width, 200);
 
       const shouldOpenUp = spaceBelow < menuHeight && spaceAbove > spaceBelow;
       setOpenUpward(shouldOpenUp);
 
       let leftPosition = rect.left;
       
-      // Si align es "left", el menú se abre hacia la izquierda desde el borde derecho del trigger
-      if (align === 'left') {
-        // Calcular posición desde el borde derecho del trigger
-        leftPosition = rect.right - menuWidth;
-        
-        // Si no hay espacio a la izquierda, ajustar para que no se salga
-        if (leftPosition < 8) {
-          // Si hay más espacio a la derecha, abrir hacia la derecha
-          if (spaceOnRight > spaceOnLeft) {
-            leftPosition = rect.left;
-          } else {
-            // Mantener a la izquierda pero con margen mínimo
-            leftPosition = 8;
-          }
-        }
-      } else if (align === 'right') {
-        // Para "right", alinear con el borde derecho del trigger
-        leftPosition = rect.right;
-        
-        // Si se sale por la derecha, ajustar
-        if (leftPosition + menuWidth > window.innerWidth - 8) {
-          leftPosition = window.innerWidth - menuWidth - 8;
-        }
-      } else {
-        // Para "center" o default, centrar respecto al trigger
-        leftPosition = rect.left + (rect.width / 2) - (menuWidth / 2);
-        
-        // Ajustar si se sale por cualquier lado
+      // Calcular posición según el align
+      if (align === 'right') {
+        // Alinear desde el borde derecho del trigger hacia la izquierda
+        leftPosition = rect.right - estimatedMenuWidth;
+        // Asegurar que no se salga por la izquierda
         if (leftPosition < 8) {
           leftPosition = 8;
-        } else if (leftPosition + menuWidth > window.innerWidth - 8) {
-          leftPosition = window.innerWidth - menuWidth - 8;
         }
-      }
-      
-      // Asegurar que no se salga por la izquierda
-      leftPosition = Math.max(8, leftPosition);
-      
-      // Asegurar que no se salga por la derecha
-      leftPosition = Math.min(leftPosition, window.innerWidth - menuWidth - 8);
-
-      setCoords({
-        top: shouldOpenUp ? rect.top : rect.bottom,
-        left: leftPosition,
-        width: rect.width
-      });
-    } else if (triggerRef.current) {
-      // Si el menú aún no está renderizado, usar estimados
-      const rect = triggerRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const spaceAbove = rect.top;
-      const menuHeight = 300;
-      const estimatedMenuWidth = 200;
-      const spaceOnRight = window.innerWidth - rect.right;
-      const spaceOnLeft = rect.left;
-
-      const shouldOpenUp = spaceBelow < menuHeight && spaceAbove > spaceBelow;
-      setOpenUpward(shouldOpenUp);
-
-      let leftPosition = rect.left;
-      
-      if (align === 'left') {
-        leftPosition = rect.right - estimatedMenuWidth;
+        // Si aún se sale por la derecha, ajustar desde la derecha del trigger
+        if (leftPosition + estimatedMenuWidth > window.innerWidth - 8) {
+          leftPosition = Math.max(8, window.innerWidth - estimatedMenuWidth - 8);
+        }
+      } else if (align === 'center') {
+        // Centrar respecto al trigger
+        leftPosition = rect.left + (rect.width / 2) - (estimatedMenuWidth / 2);
+        // Ajustar si se sale por los bordes
         if (leftPosition < 8) {
-          if (spaceOnRight > spaceOnLeft) {
-            leftPosition = rect.left;
-          } else {
-            leftPosition = 8;
-          }
+          leftPosition = 8;
         }
+        if (leftPosition + estimatedMenuWidth > window.innerWidth - 8) {
+          leftPosition = window.innerWidth - estimatedMenuWidth - 8;
+        }
+      } else {
+        // align === 'left' (default)
+        // Alinear desde el borde izquierdo del trigger
+        leftPosition = rect.left;
+        // Asegurar que no se salga por la derecha de la pantalla
+        if (leftPosition + estimatedMenuWidth > window.innerWidth - 8) {
+          leftPosition = window.innerWidth - estimatedMenuWidth - 8;
+        }
+        // Asegurar que no se salga por la izquierda
+        leftPosition = Math.max(8, leftPosition);
       }
-      
-      leftPosition = Math.max(8, Math.min(leftPosition, window.innerWidth - estimatedMenuWidth - 8));
 
       setCoords({
         top: shouldOpenUp ? rect.top : rect.bottom,
@@ -197,27 +154,14 @@ export default function DropdownMenu({
 
   useEffect(() => {
     if (isOpen) {
-      // Usar requestAnimationFrame para asegurar que el menú esté renderizado
-      const update = () => {
-        requestAnimationFrame(() => {
-          updatePosition();
-        });
-      };
-      
-      update();
-      
-      // Recalcular después de que el menú se renderice completamente
-      const timeoutId = setTimeout(update, 0);
-      
+      updatePosition();
       window.addEventListener('scroll', updatePosition, true);
       window.addEventListener('resize', updatePosition);
-      
-      return () => {
-        clearTimeout(timeoutId);
-        window.removeEventListener('scroll', updatePosition, true);
-        window.removeEventListener('resize', updatePosition);
-      };
     }
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
   }, [isOpen, align]);
 
   useEffect(() => {
@@ -283,8 +227,7 @@ export default function DropdownMenu({
               position: 'fixed',
               top: openUpward ? coords.top - 4 : coords.top + 4,
               left: coords.left,
-              width: 'auto',
-              minWidth: coords.width,
+              width: coords.width,
               zIndex: isInsideModal ? 99999 : 9999,
               transform: openUpward ? 'translateY(-100%)' : undefined
             }}

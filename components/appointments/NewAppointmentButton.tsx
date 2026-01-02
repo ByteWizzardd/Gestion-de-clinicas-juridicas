@@ -109,9 +109,9 @@ export default function NewAppointmentButton({
     <DropdownMenu
       trigger={triggerButton}
       onOpenChange={setIsOpen}
-      align="left"
+      align="right"
       className="relative"
-      menuClassName="bg-white border border-gray-300 rounded-2xl shadow-xl w-[200px] overflow-hidden py-2"
+      menuClassName="bg-white border border-gray-300 rounded-2xl shadow-xl min-w-[200px] overflow-hidden py-2"
     >
       <div onClick={(e) => e.stopPropagation()}>
         <button
