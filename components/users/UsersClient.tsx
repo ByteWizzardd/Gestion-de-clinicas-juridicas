@@ -290,6 +290,8 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
             actions={[
               {
                 label: (row) => {
+                  // Ocultar acción si es el usuario actual
+                  if (row.cedula === currentUserCedula) return '';
                   const isHabilitado = row.estado === 'Habilitado';
                   return (
                     <span className="flex items-center gap-2">
@@ -330,7 +332,9 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
                     </span>
                   );
                 },
-                onClick: handleDisable,
+                onClick: (row) => {
+                  if (row.cedula !== currentUserCedula) handleDisable(row);
+                },
               },
             ]}
             hideEdit={(row: { cedula: string }) => row.cedula === currentUserCedula}
