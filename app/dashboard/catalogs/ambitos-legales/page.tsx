@@ -85,13 +85,33 @@ export default function AmbitosLegalesPage() {
 
     const handleUpdate = async (data: Record<string, string>) => {
         if (!editingItem) return;
+
+        let new_id_materia = editingItem.id_materia;
+        let new_num_categoria = editingItem.num_categoria;
+        let new_num_subcategoria = editingItem.num_subcategoria;
+
+        if (data.id_subcategoria) {
+            const parts = data.id_subcategoria.split('|');
+            if (parts.length === 3) {
+                new_id_materia = parts[0];
+                new_num_categoria = parts[1];
+                new_num_subcategoria = parts[2];
+            }
+        }
+
         const result = await updateAmbitoLegal(
             editingItem.id_materia,
             editingItem.num_categoria,
             editingItem.num_subcategoria,
             editingItem.num_ambito_legal,
-            { nombre_ambito_legal: data.nombre_ambito_legal }
+            {
+                nombre_ambito_legal: data.nombre_ambito_legal,
+                new_id_materia,
+                new_num_categoria,
+                new_num_subcategoria
+            }
         );
+
         if (result.success) {
             handleCloseModal();
             await loadData();
@@ -151,9 +171,16 @@ export default function AmbitosLegalesPage() {
                 onFieldChange={(name, value) => {
                     if (name === 'id_materia_temp') {
                         handleMateriaChange(value);
+                        // Clear downstream fields to force re-selection
+                        const updates: Record<string, string> = { id_categoria_temp: '', id_subcategoria: '' };
+                        return updates;
                     } else if (name === 'id_categoria_temp') {
                         handleCategoriaChange(value);
+                        // Clear subcategory to force re-selection
+                        const updates: Record<string, string> = { id_subcategoria: '' };
+                        return updates;
                     }
+                    return undefined;
                 }}
                 fields={[
                     {
@@ -161,7 +188,7 @@ export default function AmbitosLegalesPage() {
                         label: 'Materia',
                         type: 'select',
                         options: materias.map(m => ({ value: m.id_materia.toString(), label: m.nombre_materia })),
-                        required: !isEditMode,
+                        required: true,
                         defaultValue: isEditMode ? editingItem?.id_materia?.toString() : undefined
                     },
                     {
@@ -172,7 +199,7 @@ export default function AmbitosLegalesPage() {
                             value: `${c.id_materia}|${c.num_categoria}`,
                             label: c.nombre_categoria
                         })),
-                        required: !isEditMode,
+                        required: true,
                         defaultValue: isEditMode ? `${editingItem?.id_materia}|${editingItem?.num_categoria}` : undefined
                     },
                     {
@@ -183,7 +210,7 @@ export default function AmbitosLegalesPage() {
                             value: `${s.id_materia}|${s.num_categoria}|${s.num_subcategoria}`,
                             label: s.nombre_subcategoria
                         })),
-                        required: !isEditMode,
+                        required: true,
                         defaultValue: isEditMode ? `${editingItem?.id_materia}|${editingItem?.num_categoria}|${editingItem?.num_subcategoria}` : undefined
                     },
                     {

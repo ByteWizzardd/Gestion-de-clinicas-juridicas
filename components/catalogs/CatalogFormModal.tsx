@@ -19,7 +19,7 @@ interface CatalogFormModalProps {
         options?: { value: string; label: string }[];
         defaultValue?: string; // For edit mode
     }[];
-    onFieldChange?: (fieldName: string, value: string) => void;
+    onFieldChange?: (fieldName: string, value: string) => void | Record<string, string>;
 }
 
 export default function CatalogFormModal({
@@ -81,17 +81,26 @@ export default function CatalogFormModal({
     };
 
     const updateField = (name: string, value: string) => {
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => {
+            let nextData = { ...prev, [name]: value };
+
+            // Call the onChange callback if provided specifically for this update
+            if (onFieldChange) {
+                const updates = onFieldChange(name, value);
+                // If callback returns an object, merge it (e.g., to clear dependent fields)
+                if (updates && typeof updates === 'object') {
+                    nextData = { ...nextData, ...updates };
+                }
+            }
+            return nextData;
+        });
+
         if (errors[name]) {
             setErrors(prev => {
                 const newErrors = { ...prev };
                 delete newErrors[name];
                 return newErrors;
             });
-        }
-        // Call the onChange callback if provided
-        if (onFieldChange) {
-            onFieldChange(name, value);
         }
     };
 

@@ -56,7 +56,17 @@ export default function CategoriasPage() {
 
     const handleUpdate = async (data: Record<string, string>) => {
         if (!editingItem) return;
-        const result = await updateCategoria(editingItem.id_materia, editingItem.num_categoria, { nombre_categoria: data.nombre_categoria });
+
+        const new_id_materia = data.id_materia ? data.id_materia : editingItem.id_materia;
+
+        const result = await updateCategoria(
+            editingItem.id_materia,
+            editingItem.num_categoria,
+            {
+                nombre_categoria: data.nombre_categoria,
+                new_id_materia
+            }
+        );
         if (result.success) {
             handleCloseModal();
             await loadData();
