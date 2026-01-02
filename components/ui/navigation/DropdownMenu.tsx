@@ -39,15 +39,33 @@ export default function DropdownMenu({
     }
   }, [isOpen, onOpenChange]);
 
-  // Detectar modales y cerrar el dropdown automáticamente
+  // Detectar si el dropdown está dentro de un modal al montarse
+  const [isInsideModal, setIsInsideModal] = useState(false);
+  
+  useEffect(() => {
+    // Verificar si el trigger está dentro de un modal
+    if (triggerRef.current) {
+      const parentModal = triggerRef.current.closest('[role="dialog"]') || 
+                          triggerRef.current.closest('[aria-modal="true"]') ||
+                          triggerRef.current.closest('[data-modal]');
+      setIsInsideModal(!!parentModal);
+    }
+  }, []);
+
+  // Detectar NUEVOS modales y cerrar el dropdown automáticamente
+  // Solo cerrar si el dropdown NO está dentro del modal que se detecta
   useEffect(() => {
     if (!isOpen) return;
+    
+    // Si el dropdown está dentro de un modal, no cerrarlo por detección de modales
+    if (isInsideModal) {
+      setHasModal(false);
+      return;
+    }
 
-    const checkForModal = () => {
+    const checkForNewModal = () => {
       const modal = document.querySelector('[role="dialog"]') || 
-                    document.querySelector('[aria-modal="true"]') ||
-                    document.querySelector('.fixed.z-50') ||
-                    document.querySelector('[class*="backdrop"]');
+                    document.querySelector('[aria-modal="true"]');
       
       if (modal) {
         setHasModal(true);
@@ -58,73 +76,47 @@ export default function DropdownMenu({
       }
     };
 
-    const observer = new MutationObserver(() => {
-      checkForModal();
+    const observer = new MutationObserver((mutations) => {
+      // Solo verificar si se agregaron nuevos nodos
+      const hasNewNodes = mutations.some(m => m.addedNodes.length > 0);
+      if (hasNewNodes) {
+        checkForNewModal();
+      }
     });
 
     observer.observe(document.body, {
       childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['class', 'role', 'aria-modal', 'style']
-    });
-
-    // Verificar inmediatamente
-    checkForModal();
-
-    // También verificar cuando el body se bloquea
-    const checkBodyOverflow = () => {
-      if (document.body.style.overflow === 'hidden') {
-        checkForModal();
-      }
-    };
-
-    const styleObserver = new MutationObserver(checkBodyOverflow);
-    styleObserver.observe(document.body, {
-      attributes: true,
-      attributeFilter: ['style']
+      subtree: true
     });
 
     return () => {
       observer.disconnect();
-      styleObserver.disconnect();
     };
-  }, [isOpen, onOpenChange]);
+  }, [isOpen, onOpenChange, isInsideModal]);
 
   const updatePosition = () => {
-    if (triggerRef.current && menuRef.current) {
+    if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
       const spaceAbove = rect.top;
-      const menuHeight = 350;
-      const menuWidth = 200; // Ancho estimado del menú
+      const menuHeight = 300;
 
-      const shouldOpenUp = (spaceBelow < menuHeight && spaceAbove > spaceBelow) || (spaceAbove > spaceBelow && spaceBelow < 400);
+      const shouldOpenUp = spaceBelow < menuHeight && spaceAbove > spaceBelow;
       setOpenUpward(shouldOpenUp);
 
-      let leftPosition = rect.left + window.scrollX;
+      // Posición izquierda siempre alineada con el trigger
+      let leftPosition = rect.left;
       
-      if (align === 'left') {
-        // Para align="left", posicionar desde el borde derecho del botón hacia la izquierda
-        leftPosition = rect.right + window.scrollX - menuWidth;
-        const spaceOnLeft = rect.left;
-        const spaceOnRight = window.innerWidth - rect.right;
-        
-        // Si no hay espacio a la izquierda pero sí a la derecha, mostrar a la derecha
-        if (spaceOnLeft < menuWidth && spaceOnRight > menuWidth) {
-          leftPosition = rect.left + window.scrollX;
-        } else {
-          // Asegurar que no se salga por la izquierda
-          leftPosition = Math.max(8, leftPosition);
-        }
-      } else if (align === 'right') {
-        leftPosition = rect.left + rect.width + window.scrollX;
-      } else if (align === 'center') {
-        leftPosition = rect.left + rect.width / 2 + window.scrollX;
+      // Asegurar que no se salga por la derecha de la pantalla
+      if (leftPosition + rect.width > window.innerWidth) {
+        leftPosition = window.innerWidth - rect.width - 8;
       }
+      
+      // Asegurar que no se salga por la izquierda
+      leftPosition = Math.max(8, leftPosition);
 
       setCoords({
-        top: shouldOpenUp ? rect.top + window.scrollY : rect.bottom + window.scrollY,
+        top: shouldOpenUp ? rect.top : rect.bottom,
         left: leftPosition,
         width: rect.width
       });
@@ -187,12 +179,6 @@ export default function DropdownMenu({
     setIsOpen(!isOpen);
   };
 
-  const alignStyles: Record<string, any> = {
-    left: { left: coords.left, transform: 'translateX(0)' },
-    right: { left: coords.left, transform: 'translateX(-100%)' },
-    center: { left: coords.left, transform: 'translateX(-50%)' }
-  };
-
   return (
     <div className={`relative ${className}`} ref={triggerRef}>
       <div onClick={handleToggle} className="cursor-pointer">
@@ -206,16 +192,14 @@ export default function DropdownMenu({
             initial={{ opacity: 0, y: openUpward ? 10 : -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: openUpward ? 10 : -10, scale: 0.95 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
             style={{
               position: 'fixed',
-              top: openUpward ? coords.top - 8 : coords.top + 8,
-              ...alignStyles[align],
-              width: align === 'center' ? 'auto' : coords.width,
-              zIndex: hasModal ? 30 : 9999, // Reducir z-index cuando hay modal
-              pointerEvents: hasModal ? 'none' : 'auto', // Deshabilitar interacciones cuando hay modal
-              opacity: hasModal ? 0 : undefined, // Ocultar visualmente cuando hay modal
-              transform: openUpward ? `${alignStyles[align].transform || ''} translateY(-100%)` : alignStyles[align].transform
+              top: openUpward ? coords.top - 4 : coords.top + 4,
+              left: coords.left,
+              width: coords.width,
+              zIndex: isInsideModal ? 99999 : 9999,
+              transform: openUpward ? 'translateY(-100%)' : undefined
             }}
             className={menuClassName}
             onClick={(e) => {

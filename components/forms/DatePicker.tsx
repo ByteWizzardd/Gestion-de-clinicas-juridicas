@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import { motion } from 'motion/react';
 import { createPortal } from 'react-dom';
 
 interface DatePickerProps {
@@ -19,6 +19,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
   const [mounted, setMounted] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
+  const [isInsideModal, setIsInsideModal] = useState(false);
   
   const [currentMonth, setCurrentMonth] = useState(() => {
     if (value) {
@@ -46,6 +47,13 @@ export default function DatePicker({ value, onChange, error, required, disabled 
 
   useEffect(() => {
     setMounted(true);
+    // Detectar si está dentro de un modal
+    if (dropdownRef.current) {
+      const parentModal = dropdownRef.current.closest('[role="dialog"]') || 
+                          dropdownRef.current.closest('[aria-modal="true"]') ||
+                          dropdownRef.current.closest('[data-modal]');
+      setIsInsideModal(!!parentModal);
+    }
   }, []);
 
   // Calcular posición para el Portal
@@ -56,12 +64,12 @@ export default function DatePicker({ value, onChange, error, required, disabled 
       const spaceAbove = rect.top;
       const calendarHeight = 320;
 
-      const shouldOpenUp = (spaceBelow < calendarHeight && spaceAbove > spaceBelow) || (spaceAbove > spaceBelow && spaceBelow < 450);
+      const shouldOpenUp = spaceBelow < calendarHeight && spaceAbove > spaceBelow;
       setOpenUpward(shouldOpenUp);
 
       setCoords({
-        top: shouldOpenUp ? rect.top + window.scrollY : rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
+        top: shouldOpenUp ? rect.top : rect.bottom,
+        left: rect.left,
         width: rect.width
       });
     }
@@ -304,14 +312,15 @@ export default function DatePicker({ value, onChange, error, required, disabled 
           initial={{ opacity: 0, y: openUpward ? 10 : -10, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: openUpward ? 10 : -10, scale: 0.95 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
+          transition={{ duration: 0.15, ease: 'easeOut' }}
           className="datepicker-portal"
           style={{
             position: 'fixed',
-            top: openUpward ? coords.top - 8 : coords.top + 8,
+            top: openUpward ? coords.top - 4 : coords.top + 4,
             left: coords.left,
-            width: 250,
-            zIndex: 10001,
+            width: coords.width,
+            minWidth: 250,
+            zIndex: isInsideModal ? 99999 : 10001,
             pointerEvents: 'auto',
             transform: openUpward ? 'translateY(-100%)' : 'none',
             backgroundColor: 'white',
