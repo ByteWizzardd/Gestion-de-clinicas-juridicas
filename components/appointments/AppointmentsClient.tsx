@@ -52,6 +52,7 @@ export default function AppointmentsClient({
   const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteMotivo, setDeleteMotivo] = useState('');
   const [searchValue, setSearchValue] = useState('');
   
   // Filtros
@@ -294,18 +295,25 @@ export default function AppointmentsClient({
   const handleConfirmDelete = async () => {
     if (!appointmentToDelete) return;
 
+    if (!deleteMotivo.trim()) {
+      alert('El motivo de eliminación es obligatorio');
+      return;
+    }
+
     setIsDeleting(true);
     
     try {
       // Eliminar la cita
       const deleteResult = await deleteCitaAction({
         appointmentId: appointmentToDelete.id,
+        motivo: deleteMotivo.trim(),
       });
 
       if (deleteResult.success) {
         // Cerrar el modal
         setShowDeleteConfirmModal(false);
         setAppointmentToDelete(null);
+        setDeleteMotivo('');
         
         // Recargar citas después de eliminar
         const result = await getCitasAction();
@@ -330,6 +338,7 @@ export default function AppointmentsClient({
   const handleCancelDelete = () => {
     setShowDeleteConfirmModal(false);
     setAppointmentToDelete(null);
+    setDeleteMotivo('');
   };
 
   const formatDate = (date: Date) => {
@@ -528,24 +537,49 @@ export default function AppointmentsClient({
         message={
           appointmentToDelete ? (
             <div>
-              <p className="mb-2">
-                ¿Está seguro de que desea eliminar la cita del{' '}
+              <p className="mb-4 text-base text-foreground">
+                ¿Estás seguro de que deseas eliminar la cita del{' '}
                 <strong>{formatDate(appointmentToDelete.date)}</strong>?
               </p>
-              <p className="mb-2">
+              <p className="mb-2 text-base text-foreground">
                 <strong>Caso:</strong> {appointmentToDelete.caseDetail}
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="mb-6 text-red-600 font-semibold text-base">
                 Esta acción no se puede deshacer.
               </p>
+              <div className="flex flex-col gap-1">
+                <label className="text-base font-normal text-foreground mb-1">
+                  Motivo de la eliminación
+                </label>
+                <textarea
+                  className={`
+                    w-full p-4 rounded-lg border bg-[#E5E7EB]
+                    border-transparent
+                    focus:outline-none focus:ring-1
+                    focus:ring-primary
+                    text-base placeholder:text-[#717171] resize-none
+                    ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}
+                  `}
+                  rows={4}
+                  maxLength={500}
+                  value={deleteMotivo}
+                  onChange={e => setDeleteMotivo(e.target.value)}
+                  placeholder="Describe el motivo de la eliminación..."
+                  disabled={isDeleting}
+                />
+                <div className="text-right text-xs text-gray-500 mt-1">
+                  {deleteMotivo.length} / 500 caracteres
+                </div>
+              </div>
             </div>
           ) : (
             '¿Está seguro de que desea eliminar esta cita?'
           )
         }
-        confirmLabel="Eliminar"
+        confirmLabel={isDeleting ? 'Eliminando...' : 'Eliminar'}
         cancelLabel="Cancelar"
-        disabled={isDeleting}
+        disabled={isDeleting || !deleteMotivo.trim()}
+        confirmVariant="danger"
       />
     </div>
   );

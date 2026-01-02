@@ -8,6 +8,9 @@
 -- 
 -- Nota: Para establecer fecha_proxima_cita como NULL explícitamente,
 -- se debe pasar el string 'NULL' como texto. Para no actualizar, pasar NULL.
+-- 
+-- Nota: La variable de sesión 'app.usuario_actualiza_cita' debe establecerse antes
+-- de ejecutar esta query para que el trigger de auditoría funcione correctamente.
 
 UPDATE citas
 SET 

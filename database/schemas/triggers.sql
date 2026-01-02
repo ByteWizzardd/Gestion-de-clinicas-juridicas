@@ -137,3 +137,118 @@ CREATE TRIGGER trigger_auditoria_eliminacion_soporte
     BEFORE DELETE ON soportes
     FOR EACH ROW
     EXECUTE FUNCTION trigger_auditoria_eliminacion_soporte();
+
+-- Función trigger para registrar auditoría antes de eliminar una cita
+-- Solo guarda metadatos de la cita, no información adicional del caso
+CREATE OR REPLACE FUNCTION trigger_auditoria_eliminacion_cita()
+RETURNS TRIGGER AS $$
+DECLARE
+    cedula_usuario VARCHAR(20);
+    motivo_eliminacion TEXT;
+BEGIN
+    -- Obtener la cédula del usuario desde la variable de sesión
+    -- Esta variable se establece antes de eliminar la cita
+    BEGIN
+        cedula_usuario := current_setting('app.usuario_elimina_cita', true);
+        motivo_eliminacion := current_setting('app.motivo_eliminacion_cita', true);
+    EXCEPTION
+        WHEN OTHERS THEN
+            -- Si no se puede leer la variable, usar NULL (no bloquear la eliminación)
+            cedula_usuario := NULL;
+            motivo_eliminacion := NULL;
+    END;
+    
+    -- Registrar la auditoría en la tabla de auditoría antes de eliminar
+    -- Usamos OLD para acceder a los valores antes de la eliminación
+    -- Solo guardamos metadatos de la cita eliminada
+    IF cedula_usuario IS NOT NULL AND cedula_usuario != '' THEN
+        INSERT INTO auditoria_eliminacion_citas (
+            num_cita,
+            id_caso,
+            fecha_encuentro,
+            fecha_proxima_cita,
+            orientacion,
+            id_usuario_registro,
+            id_usuario_elimino,
+            motivo
+        ) VALUES (
+            OLD.num_cita,
+            OLD.id_caso,
+            OLD.fecha_encuentro,
+            OLD.fecha_proxima_cita,
+            OLD.orientacion,
+            OLD.id_usuario_registro,
+            cedula_usuario,
+            motivo_eliminacion
+        );
+    END IF;
+    
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger para registrar auditoría antes de eliminar una cita
+DROP TRIGGER IF EXISTS trigger_auditoria_eliminacion_cita ON citas;
+CREATE TRIGGER trigger_auditoria_eliminacion_cita
+    BEFORE DELETE ON citas
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_auditoria_eliminacion_cita();
+
+-- Función trigger para registrar auditoría después de actualizar una cita
+-- Usa OLD para valores anteriores y NEW para valores nuevos
+CREATE OR REPLACE FUNCTION trigger_auditoria_actualizacion_cita()
+RETURNS TRIGGER AS $$
+DECLARE
+    cedula_usuario VARCHAR(20);
+BEGIN
+    -- Obtener la cédula del usuario desde la variable de sesión
+    -- Esta variable se establece antes de actualizar la cita
+    BEGIN
+        cedula_usuario := current_setting('app.usuario_actualiza_cita', true);
+    EXCEPTION
+        WHEN OTHERS THEN
+            -- Si no se puede leer la variable, usar NULL (no bloquear la actualización)
+            cedula_usuario := NULL;
+    END;
+    
+    -- Registrar la auditoría solo si hay cambios reales y hay usuario
+    IF cedula_usuario IS NOT NULL AND cedula_usuario != '' THEN
+        -- Solo registrar si hubo cambios en los campos relevantes
+        IF (OLD.fecha_encuentro IS DISTINCT FROM NEW.fecha_encuentro) OR
+           (OLD.fecha_proxima_cita IS DISTINCT FROM NEW.fecha_proxima_cita) OR
+           (OLD.orientacion IS DISTINCT FROM NEW.orientacion) THEN
+            
+            INSERT INTO auditoria_actualizacion_citas (
+                num_cita,
+                id_caso,
+                fecha_encuentro_anterior,
+                fecha_proxima_cita_anterior,
+                orientacion_anterior,
+                fecha_encuentro_nueva,
+                fecha_proxima_cita_nueva,
+                orientacion_nueva,
+                id_usuario_actualizo
+            ) VALUES (
+                NEW.num_cita,
+                NEW.id_caso,
+                OLD.fecha_encuentro,
+                OLD.fecha_proxima_cita,
+                OLD.orientacion,
+                NEW.fecha_encuentro,
+                NEW.fecha_proxima_cita,
+                NEW.orientacion,
+                cedula_usuario
+            );
+        END IF;
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger para registrar auditoría después de actualizar una cita
+DROP TRIGGER IF EXISTS trigger_auditoria_actualizacion_cita ON citas;
+CREATE TRIGGER trigger_auditoria_actualizacion_cita
+    AFTER UPDATE ON citas
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_auditoria_actualizacion_cita();

@@ -279,6 +279,7 @@ CREATE TABLE citas (
     fecha_proxima_cita DATE,
     fecha_encuentro DATE NOT NULL,
     orientacion TEXT NOT NULL,
+    id_usuario_registro VARCHAR(20) REFERENCES usuarios(cedula), -- Usuario que registró la cita
     PRIMARY KEY (num_cita, id_caso)
 );
 
@@ -363,6 +364,42 @@ CREATE TABLE auditoria_eliminacion_soportes (
     id_usuario_elimino VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
     motivo TEXT, -- Motivo de la eliminación
     fecha_eliminacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 26.2) AUDITORÍA DE ELIMINACIÓN DE CITAS
+-- Tabla para registrar información de citas eliminadas
+-- Solo guarda metadatos de la cita, no información adicional del caso
+CREATE TABLE auditoria_eliminacion_citas (
+    id SERIAL PRIMARY KEY,
+    num_cita INTEGER NOT NULL,
+    id_caso INTEGER NOT NULL,
+    fecha_encuentro DATE NOT NULL,
+    fecha_proxima_cita DATE,
+    orientacion TEXT NOT NULL,
+    id_usuario_registro VARCHAR(20) REFERENCES usuarios(cedula), -- Usuario que registró la cita originalmente
+    id_usuario_elimino VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    motivo TEXT, -- Motivo de la eliminación
+    fecha_eliminacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 26.3) AUDITORÍA DE ACTUALIZACIÓN DE CITAS
+-- Tabla para registrar todas las actualizaciones de citas
+-- Guarda el historial completo de cambios (valores anteriores y nuevos)
+CREATE TABLE auditoria_actualizacion_citas (
+    id SERIAL PRIMARY KEY,
+    num_cita INTEGER NOT NULL,
+    id_caso INTEGER NOT NULL,
+    -- Valores anteriores (antes de la actualización)
+    fecha_encuentro_anterior DATE,
+    fecha_proxima_cita_anterior DATE,
+    orientacion_anterior TEXT,
+    -- Valores nuevos (después de la actualización)
+    fecha_encuentro_nueva DATE,
+    fecha_proxima_cita_nueva DATE,
+    orientacion_nueva TEXT,
+    -- Información de auditoría
+    id_usuario_actualizo VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 27) BENEFICIARIOS (PARENTESCO LIBRE)

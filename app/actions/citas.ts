@@ -63,6 +63,7 @@ export async function createCitaAction(params: CreateCitaParams): Promise<GetCit
     const newCita = await citasService.createAppointment({
       ...params,
       caseId: Number(params.caseId),
+      idUsuarioRegistro: authResult.user.cedula,
     });
 
     return {
@@ -286,6 +287,7 @@ export async function updateCitaAction(params: UpdateCitaParams): Promise<GetCit
       endDate: params.endDate,
       orientacion: params.orientacion,
       usuariosAtienden: params.usuariosAtienden,
+      idUsuarioActualizo: authResult.user.cedula,
     });
 
     return {
@@ -316,6 +318,7 @@ export async function updateCitaAction(params: UpdateCitaParams): Promise<GetCit
 
 export interface DeleteCitaParams {
   appointmentId: string;
+  motivo: string;
 }
 
 /**
@@ -343,9 +346,22 @@ export async function deleteCitaAction(params: DeleteCitaParams): Promise<GetCit
       };
     }
 
-    // Eliminar la cita
+    // Validar motivo
+    if (!params.motivo || params.motivo.trim() === '') {
+      return {
+        success: false,
+        error: {
+          message: 'El motivo de eliminación es obligatorio',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Eliminar la cita (registra auditoría antes de eliminar)
     const deletedCita = await citasService.deleteAppointment({
       appointmentId: params.appointmentId,
+      idUsuarioElimino: authResult.user.cedula,
+      motivo: params.motivo.trim(),
     });
 
     return {
