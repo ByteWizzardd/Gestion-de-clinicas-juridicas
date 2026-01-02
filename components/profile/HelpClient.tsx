@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import { HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
@@ -71,6 +71,11 @@ export default function HelpClient() {
     setOpenFaq(openFaq === id ? null : id);
   };
 
+  const breadcrumbItems = useMemo(() => [
+    { label: 'Perfil', href: '/dashboard/profile' },
+    { label: 'Preguntas frecuentes' },
+  ], []);
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <motion.div
@@ -78,12 +83,7 @@ export default function HelpClient() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <Breadcrumbs
-          items={[
-            { label: 'Perfil', href: '/dashboard/profile' },
-            { label: 'Preguntas frecuentes' },
-          ]}
-        />
+        <Breadcrumbs items={breadcrumbItems} />
       </motion.div>
 
       <motion.h1
