@@ -39,3 +39,91 @@ export async function createMateria(data: { nombre_materia: string }) {
         return { success: false, error: `Error al crear materia: ${errorMessage}` };
     }
 }
+
+/**
+ * Update an existing materia
+ */
+export async function updateMateria(id: number, data: { nombre_materia: string }) {
+    try {
+        const result = await pool.query(
+            'UPDATE materias SET nombre_materia = $2 WHERE id_materia = $1 RETURNING *',
+            [id, data.nombre_materia]
+        );
+
+        if (result.rows.length === 0) {
+            return { success: false, error: 'Materia no encontrada' };
+        }
+
+        revalidatePath('/dashboard/catalogs/materias');
+        return { success: true, data: result.rows[0] };
+    } catch (error) {
+        console.error('Error updating materia:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+        return { success: false, error: `Error al actualizar materia: ${errorMessage}` };
+    }
+}
+
+/**
+ * Toggle habilitado status for materia
+ */
+export async function toggleMateriaHabilitado(id: number) {
+    try {
+        const result = await pool.query(
+            'UPDATE materias SET habilitado = NOT habilitado WHERE id_materia = $1 RETURNING *',
+            [id]
+        );
+
+        if (result.rows.length === 0) {
+            return { success: false, error: 'Materia no encontrada' };
+        }
+
+        revalidatePath('/dashboard/catalogs/materias');
+        return { success: true, data: result.rows[0] };
+    } catch (error) {
+        console.error('Error toggling materia habilitado:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+        return { success: false, error: `Error al cambiar estado: ${errorMessage}` };
+    }
+}
+
+/**
+ * Delete a materia (only if no associations)
+ */
+export async function deleteMateria(id: number) {
+    try {
+        // Check for associations first
+        const checkResult = await pool.query(
+            `SELECT EXISTS (
+                SELECT 1 FROM categorias WHERE id_materia = $1
+                UNION
+                SELECT 1 FROM casos WHERE id_materia = $1
+            ) AS has_associations`,
+            [id]
+        );
+
+        if (checkResult.rows[0]?.has_associations === true) {
+            return {
+                success: false,
+                error: 'HAS_ASSOCIATIONS',
+                message: 'No se puede eliminar esta materia porque tiene categorías o casos asociados. Deshabilítela en su lugar.'
+            };
+        }
+
+        // No associations, safe to delete
+        const result = await pool.query(
+            'DELETE FROM materias WHERE id_materia = $1 RETURNING *',
+            [id]
+        );
+
+        if (result.rows.length === 0) {
+            return { success: false, error: 'Materia no encontrada' };
+        }
+
+        revalidatePath('/dashboard/catalogs/materias');
+        return { success: true, data: result.rows[0] };
+    } catch (error) {
+        console.error('Error deleting materia:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+        return { success: false, error: `Error al eliminar materia: ${errorMessage}` };
+    }
+}

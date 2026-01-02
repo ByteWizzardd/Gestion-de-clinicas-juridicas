@@ -16,6 +16,7 @@ interface CatalogDetailClientProps {
     filterLabel?: string; // Label para el filtro (ej: 'Estado', 'Habilitado')
     autoGenerateFilter?: boolean; // Si es true, genera opciones automáticamente desde los datos
     disableFilter?: boolean; // Si es true, no muestra filtro aunque haya opciones
+    renderActions?: (item: any) => React.ReactNode; // Custom render for actions column
 }
 
 export default function CatalogDetailClient({
@@ -28,7 +29,8 @@ export default function CatalogDetailClient({
     filterOptions,
     filterLabel = "Filtro",
     autoGenerateFilter = false,
-    disableFilter = false
+    disableFilter = false,
+    renderActions
 }: CatalogDetailClientProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterValue, setFilterValue] = useState('');
@@ -110,6 +112,10 @@ export default function CatalogDetailClient({
             <Table
                 data={filteredData}
                 columns={columns}
+                actions={renderActions ? [{
+                    label: (item: any) => renderActions(item) as React.ReactElement,
+                    onClick: () => { } // Actions are handled within the rendered component
+                }] : undefined}
             />
         </>
     );

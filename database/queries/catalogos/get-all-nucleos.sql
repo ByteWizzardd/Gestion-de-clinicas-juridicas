@@ -7,7 +7,8 @@ SELECT
     n.num_parroquia,
     e.nombre_estado,
     m.nombre_municipio,
-    p.nombre_parroquia
+    p.nombre_parroquia,
+    n.habilitado
 FROM nucleos n
 JOIN parroquias p ON n.id_estado = p.id_estado 
     AND n.num_municipio = p.num_municipio 

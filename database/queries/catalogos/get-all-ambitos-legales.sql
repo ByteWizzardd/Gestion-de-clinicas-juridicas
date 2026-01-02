@@ -7,7 +7,8 @@ SELECT
     a.nombre_ambito_legal,
     REPLACE(m.nombre_materia, 'Materia ', '') as nombre_materia,
     c.nombre_categoria,
-    s.nombre_subcategoria
+    s.nombre_subcategoria,
+    a.habilitado
 FROM ambitos_legales a
 JOIN materias m ON a.id_materia = m.id_materia
 JOIN categorias c ON a.id_materia = c.id_materia AND a.num_categoria = c.num_categoria

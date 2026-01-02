@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
-import { getParroquias, createParroquia } from "@/app/actions/catalogos/parroquias.actions";
+import CatalogActionsMenu from "@/components/catalogs/CatalogActionsMenu";
+import { getParroquias, createParroquia, updateParroquia, toggleParroquiaHabilitado, deleteParroquia } from "@/app/actions/catalogos/parroquias.actions";
 import { getEstados } from "@/app/actions/catalogos/estados.actions";
 import { getMunicipios } from "@/app/actions/catalogos/municipios.actions";
 
@@ -12,39 +13,82 @@ export default function ParroquiasPage() {
     const [estados, setEstados] = useState<any[]>([]);
     const [municipios, setMunicipios] = useState<any[]>([]);
     const [filteredMunicipios, setFilteredMunicipios] = useState<any[]>([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
 
-    useEffect(() => {
-        loadData();
-    }, []);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [editingItem, setEditingItem] = useState<any>(null);
+
+    useEffect(() => { loadData(); }, []);
 
     const loadData = async () => {
         const [parroquiasResult, estadosResult, municipiosResult] = await Promise.all([
-            getParroquias(),
-            getEstados(),
-            getMunicipios()
+            getParroquias(), getEstados(), getMunicipios()
         ]);
-
         if (parroquiasResult.success && parroquiasResult.data) setParroquias(parroquiasResult.data);
         if (estadosResult.success && estadosResult.data) setEstados(estadosResult.data);
         if (municipiosResult.success && municipiosResult.data) setMunicipios(municipiosResult.data);
     };
 
-    const handleEstadoChange = (estadoId: string) => {
-        const filtered = municipios.filter(m => m.id_estado.toString() === estadoId);
-        setFilteredMunicipios(filtered);
+    const handleFieldChange = (fieldName: string, value: string) => {
+        if (fieldName === 'id_estado') {
+            const filtered = municipios.filter(m => m.id_estado.toString() === value);
+            setFilteredMunicipios(filtered);
+        }
     };
 
     const handleAdd = async (data: Record<string, string>) => {
-        const result = await createParroquia(data as { id_municipio: string; nombre_parroquia: string });
-
+        const result = await createParroquia(data as { id_estado: string; id_municipio: string; nombre_parroquia: string });
         if (result.success) {
-            setIsModalOpen(false);
-            setFilteredMunicipios([]);
+            handleCloseModal();
             await loadData();
         } else {
             alert(result.error || 'Error al añadir parroquia');
         }
+    };
+
+    const handleEdit = (item: any) => {
+        setEditingItem(item);
+        setIsEditMode(true);
+        // Pre-filter municipios based on the item's state
+        const filtered = municipios.filter(m => m.id_estado === item.id_estado);
+        setFilteredMunicipios(filtered);
+        setIsModalOpen(true);
+    };
+
+    const handleUpdate = async (data: Record<string, string>) => {
+        if (!editingItem) return;
+        const result = await updateParroquia(
+            editingItem.id_estado,
+            editingItem.num_municipio,
+            editingItem.num_parroquia,
+            { nombre_parroquia: data.nombre_parroquia }
+        );
+        if (result.success) {
+            handleCloseModal();
+            await loadData();
+        } else {
+            alert(result.error || 'Error al actualizar parroquia');
+        }
+    };
+
+    const handleToggle = async (item: any) => {
+        const result = await toggleParroquiaHabilitado(item.id_estado, item.num_municipio, item.num_parroquia);
+        if (result.success) await loadData();
+        else alert(result.error);
+    };
+
+    const handleDelete = async (item: any) => {
+        if (!confirm(`¿Eliminar "${item.nombre_parroquia}"?`)) return;
+        const result = await deleteParroquia(item.id_estado, item.num_municipio, item.num_parroquia);
+        if (result.success) await loadData();
+        else alert(result.error === 'HAS_ASSOCIATIONS' ? result.message : result.error);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setIsEditMode(false);
+        setEditingItem(null);
+        setFilteredMunicipios([]);
     };
 
     return (
@@ -53,34 +97,51 @@ export default function ParroquiasPage() {
             <p className="mb-6 ml-3">Parroquias de Venezuela</p>
             <CatalogDetailClient
                 data={parroquias}
-                columns={["ID Estado", "ID Municipio", "ID Parroquia", "Parroquia", "Estado", "Municipio"]}
+                columns={["ID Parroquia", "Parroquia", "ID Estado", "ID Municipio", "Estado", "Municipio", "Habilitado"]}
                 addLabel="Añadir Parroquia"
                 onAddClick={() => setIsModalOpen(true)}
+                renderActions={(item: any) => (
+                    <CatalogActionsMenu
+                        item={item}
+                        onEdit={() => handleEdit(item)}
+                        onToggleHabilitado={() => handleToggle(item)}
+                        onDelete={() => handleDelete(item)}
+                    />
+                )}
             />
             <CatalogFormModal
                 isOpen={isModalOpen}
-                onClose={() => {
-                    setIsModalOpen(false);
-                    setFilteredMunicipios([]);
-                }}
-                onSubmit={handleAdd}
-                title="Añadir Parroquia"
+                onClose={handleCloseModal}
+                onSubmit={isEditMode ? handleUpdate : handleAdd}
+                title={isEditMode ? "Editar Parroquia" : "Añadir Parroquia"}
+                onFieldChange={handleFieldChange}
                 fields={[
                     {
-                        name: 'id_estado_temp',
+                        name: 'id_estado',
                         label: 'Estado',
                         type: 'select',
                         options: estados.map(e => ({ value: e.id_estado.toString(), label: e.nombre_estado })),
-                        required: true
+                        required: !isEditMode,
+                        defaultValue: isEditMode ? editingItem?.id_estado?.toString() : undefined
                     },
                     {
                         name: 'id_municipio',
                         label: 'Municipio',
                         type: 'select',
-                        options: filteredMunicipios.map(m => ({ value: m.id_municipio.toString(), label: m.nombre_municipio })),
-                        required: true
+                        options: filteredMunicipios.map(m => ({
+                            // Ensure we use num_municipio (aliased or not) - assuming data has num_municipio or id_municipio logic
+                            value: (m.num_municipio || m.id_municipio).toString(),
+                            label: m.nombre_municipio
+                        })),
+                        required: !isEditMode,
+                        defaultValue: isEditMode ? (editingItem?.num_municipio || editingItem?.id_municipio)?.toString() : undefined
                     },
-                    { name: 'nombre_parroquia', label: 'Nombre de la Parroquia', required: true }
+                    {
+                        name: 'nombre_parroquia',
+                        label: 'Nombre de la Parroquia',
+                        required: true,
+                        defaultValue: isEditMode ? editingItem?.nombre_parroquia : undefined
+                    }
                 ]}
             />
         </>

@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
-import { getMaterias } from "@/app/actions/catalogos/materias.actions";
+import CatalogActionsMenu from "@/components/catalogs/CatalogActionsMenu";
+import { getMaterias, updateMateria, toggleMateriaHabilitado, deleteMateria } from "@/app/actions/catalogos/materias.actions";
 
 export default function MateriasPage() {
     const [materias, setMaterias] = useState<any[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [editingItem, setEditingItem] = useState<any>(null);
 
     useEffect(() => {
         loadMaterias();
@@ -27,7 +30,6 @@ export default function MateriasPage() {
         if (result.success) {
             console.log('✅ Materia añadida, recargando lista...');
             setIsModalOpen(false);
-            // Force reload the data
             await loadMaterias();
         } else {
             console.error('Error al añadir materia:', result.error);
@@ -35,28 +37,95 @@ export default function MateriasPage() {
         }
     };
 
+    const handleEdit = (item: any) => {
+        setEditingItem(item);
+        setIsEditMode(true);
+        setIsModalOpen(true);
+    };
 
+    const handleUpdate = async (data: Record<string, string>) => {
+        if (!editingItem) return;
+
+        const result = await updateMateria(editingItem.id_materia, data as { nombre_materia: string });
+
+        if (result.success) {
+            setIsModalOpen(false);
+            setIsEditMode(false);
+            setEditingItem(null);
+            await loadMaterias();
+        } else {
+            alert(result.error || 'Error al actualizar materia');
+        }
+    };
+
+    const handleToggleHabilitado = async (item: any) => {
+        const result = await toggleMateriaHabilitado(item.id_materia);
+
+        if (result.success) {
+            await loadMaterias();
+        } else {
+            alert(result.error || 'Error al cambiar estado');
+        }
+    };
+
+    const handleDelete = async (item: any) => {
+        const confirmMessage = `¿Estás seguro de que deseas eliminar la materia "${item.nombre_materia}"?`;
+
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+
+        const result = await deleteMateria(item.id_materia);
+
+        if (result.success) {
+            await loadMaterias();
+        } else {
+            if (result.error === 'HAS_ASSOCIATIONS') {
+                alert(result.message || 'No se puede eliminar esta materia porque tiene asociaciones. Deshabilítela en su lugar.');
+            } else {
+                alert(result.error || 'Error al eliminar materia');
+            }
+        }
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setIsEditMode(false);
+        setEditingItem(null);
+    };
 
     return (
         <>
             <h1 className="text-4xl m-3 font-semibold font-primary">Materias</h1>
             <p className="mb-6 ml-3">Áreas principales del derecho que se manejan en el sistema</p>
 
-
-
             <CatalogDetailClient
                 data={materias}
-                columns={["ID Materia", "Materia"]}
+                columns={["ID Materia", "Materia", "Habilitado"]}
                 addLabel="Añadir Materia"
                 onAddClick={() => setIsModalOpen(true)}
+                renderActions={(item: any) => (
+                    <CatalogActionsMenu
+                        item={item}
+                        onEdit={() => handleEdit(item)}
+                        onToggleHabilitado={() => handleToggleHabilitado(item)}
+                        onDelete={() => handleDelete(item)}
+                    />
+                )}
             />
+
             <CatalogFormModal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onSubmit={handleAdd}
-                title="Añadir Materia"
+                onClose={handleCloseModal}
+                onSubmit={isEditMode ? handleUpdate : handleAdd}
+                title={isEditMode ? "Editar Materia" : "Añadir Materia"}
                 fields={[
-                    { name: 'nombre_materia', label: 'Nombre de la Materia', required: true }
+                    {
+                        name: 'nombre_materia',
+                        label: 'Nombre de la Materia',
+                        required: true,
+                        defaultValue: isEditMode ? editingItem?.nombre_materia : undefined
+                    }
                 ]}
             />
         </>

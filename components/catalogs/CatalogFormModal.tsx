@@ -17,6 +17,7 @@ interface CatalogFormModalProps {
         type?: 'text' | 'number' | 'select' | 'date';
         required?: boolean;
         options?: { value: string; label: string }[];
+        defaultValue?: string; // For edit mode
     }[];
     onFieldChange?: (fieldName: string, value: string) => void;
 }
@@ -29,7 +30,15 @@ export default function CatalogFormModal({
     fields,
     onFieldChange
 }: CatalogFormModalProps) {
-    const [formData, setFormData] = useState<Record<string, string>>({});
+    // Initialize formData with defaultValues if provided
+    const initialFormData = fields.reduce((acc, field) => {
+        if (field.defaultValue) {
+            acc[field.name] = field.defaultValue;
+        }
+        return acc;
+    }, {} as Record<string, string>);
+
+    const [formData, setFormData] = useState<Record<string, string>>(initialFormData);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     const handleSubmit = () => {
