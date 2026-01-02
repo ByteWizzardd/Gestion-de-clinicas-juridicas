@@ -19,7 +19,6 @@ export interface SoporteAuditRecord {
   tipo_mime: string | null;
   descripcion: string | null;
   fecha_consignacion: string | null;
-  fecha_subida: string | null;
   fecha_eliminacion: string;
   fecha: string; // Alias para fecha_eliminacion
   tamano_bytes: number | null;
@@ -87,6 +86,9 @@ export interface CitaActualizadaAuditRecord {
 export interface UsuarioEliminadoAuditRecord {
   id: number;
   usuario_eliminado: string;
+  nombres_usuario_eliminado: string | null;
+  apellidos_usuario_eliminado: string | null;
+  nombre_completo_usuario_eliminado: string | null;
   eliminado_por: string;
   motivo: string;
   fecha: string;
@@ -96,9 +98,15 @@ export interface UsuarioEliminadoAuditRecord {
 export interface UsuarioActualizadoAuditRecord {
   id: number;
   ci_usuario: string;
+  nombres_usuario: string | null;
+  apellidos_usuario: string | null;
+  nombre_completo_usuario: string | null;
   tipo_usuario_anterior: string;
   tipo_usuario_nuevo: string;
   actualizado_por: string;
+  nombres_actualizado_por: string | null;
+  apellidos_actualizado_por: string | null;
+  nombre_completo_actualizado_por: string | null;
   fecha: string;
 }
 
@@ -108,6 +116,7 @@ export interface AuditFilters {
   fechaFin?: string;
   idUsuario?: string;
   busqueda?: string;
+  orden?: 'asc' | 'desc'; // 'desc' = más reciente primero (por defecto), 'asc' = más antiguo primero
 }
 
 // Contadores de auditoría

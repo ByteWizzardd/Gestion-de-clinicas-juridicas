@@ -84,6 +84,7 @@ export const auditoriaEliminacionCitasQueries = {
     fechaFin?: string;
     idUsuario?: string;
     busqueda?: string;
+    orden?: 'asc' | 'desc';
   }): Promise<Array<{
     id: number;
     num_cita: number;
@@ -108,6 +109,7 @@ export const auditoriaEliminacionCitasQueries = {
       filters?.fechaFin || null,
       filters?.idUsuario || null,
       filters?.busqueda || null,
+      filters?.orden || 'desc', // Por defecto: más reciente primero
     ]);
     return result.rows;
   },

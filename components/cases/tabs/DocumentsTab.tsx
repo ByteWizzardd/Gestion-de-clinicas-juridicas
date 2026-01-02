@@ -20,7 +20,6 @@ interface DocumentsTabProps {
     nombres_usuario_subio: string | null;
     apellidos_usuario_subio: string | null;
     nombre_completo_usuario_subio: string | null;
-    fecha_subida: string | null;
   }>;
   onSoporteDeleted?: () => void;
 }
@@ -256,10 +255,10 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
                   Subido por
                 </label>
                 <p className="text-base text-gray-900 mt-1">{soporte.nombre_completo_usuario_subio}</p>
-                {soporte.fecha_subida && (
+                {soporte.fecha_consignacion && (
                   <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
-                    {formatDate(soporte.fecha_subida)}
+                    {formatDate(soporte.fecha_consignacion)}
                   </p>
                 )}
               </div>

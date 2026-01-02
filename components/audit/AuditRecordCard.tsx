@@ -24,14 +24,58 @@ interface AuditRecordCardProps {
 export default function AuditRecordCard({ record, type }: AuditRecordCardProps) {
   const [expanded, setExpanded] = useState(false);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (dateInput: string | Date | null | undefined) => {
+    // Si es null o undefined, retornar mensaje
+    if (!dateInput) {
+      return 'Fecha no disponible';
+    }
+    
+    // Si ya es un objeto Date, usarlo directamente
+    let date: Date;
+    if (dateInput instanceof Date) {
+      date = dateInput;
+    } else if (typeof dateInput === 'string') {
+      // Si el string incluye 'T' o es un timestamp, parsearlo correctamente
+      // PostgreSQL devuelve timestamps en formato ISO, que JavaScript interpreta como UTC
+      // Necesitamos extraer los componentes de fecha/hora localmente
+      if (dateInput.includes('T')) {
+        // Es un timestamp ISO (ej: "2026-01-02T05:24:00.000Z")
+        // Extraer los componentes de fecha y hora sin interpretar como UTC
+        const isoMatch = dateInput.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
+        if (isoMatch) {
+          const [, year, month, day, hour, minute] = isoMatch.map(Number);
+          // Crear fecha usando componentes locales (no UTC)
+          date = new Date(year, month - 1, day, hour, minute);
+        } else {
+          date = new Date(dateInput);
+        }
+      } else {
+        // Es solo una fecha (ej: "2026-01-02")
+        const parts = dateInput.split('-');
+        if (parts.length === 3) {
+          const [year, month, day] = parts.map(Number);
+          date = new Date(year, month - 1, day);
+        } else {
+          date = new Date(dateInput);
+        }
+      }
+    } else {
+      return 'Fecha no disponible';
+    }
+    
+    // Validar que la fecha sea válida
+    if (isNaN(date.getTime())) {
+      return 'Fecha inválida';
+    }
+    
     return date.toLocaleDateString('es-VE', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+      hour12: true,
+      timeZone: 'America/Caracas', // Zona horaria de Venezuela
     });
   };
 
@@ -46,13 +90,22 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
     switch (type) {
       case 'soporte': {
         const r = record as SoporteAuditRecord;
+        // Construir nombre completo del usuario que eliminó
+        let nombreCompletoElimino = r.nombre_completo_usuario_elimino;
+        if (!nombreCompletoElimino && (r.nombres_usuario_elimino || r.apellidos_usuario_elimino)) {
+          nombreCompletoElimino = `${r.nombres_usuario_elimino || ''} ${r.apellidos_usuario_elimino || ''}`.trim();
+        }
+        if (!nombreCompletoElimino) {
+          nombreCompletoElimino = 'Usuario desconocido';
+        }
+        
         return (
           <div className="flex items-center gap-3">
-            <FileText className="w-5 h-5 text-secondary" />
+            <FileText className="w-5 h-5 text-gray-600" />
             <div className="flex-1">
               <p className="font-semibold text-gray-900">{r.nombre_archivo}</p>
               <p className="text-sm text-gray-600">
-                Caso #{r.id_caso} • {r.nombre_completo_usuario_elimino || r.id_usuario_elimino}
+                Caso #{r.id_caso} • Eliminado por: {nombreCompletoElimino} (Cédula: {r.id_usuario_elimino})
               </p>
             </div>
           </div>
@@ -62,7 +115,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         const r = record as CitaEliminadaAuditRecord;
         return (
           <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-red-500" />
+            <Calendar className="w-5 h-5 text-gray-600" />
             <div className="flex-1">
               <p className="font-semibold text-gray-900">
                 Cita #{r.num_cita} - Caso #{r.id_caso}
@@ -78,7 +131,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         const r = record as CitaActualizadaAuditRecord;
         return (
           <div className="flex items-center gap-3">
-            <Check className="w-5 h-5 text-blue-500" />
+            <Check className="w-5 h-5 text-gray-600" />
             <div className="flex-1">
               <p className="font-semibold text-gray-900">
                 Cita #{r.num_cita} - Caso #{r.id_caso}
@@ -92,11 +145,22 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
       }
       case 'usuario-eliminado': {
         const r = record as UsuarioEliminadoAuditRecord;
+        // Construir nombre completo del usuario eliminado
+        let nombreCompletoEliminado = r.nombre_completo_usuario_eliminado;
+        if (!nombreCompletoEliminado && (r.nombres_usuario_eliminado || r.apellidos_usuario_eliminado)) {
+          nombreCompletoEliminado = `${r.nombres_usuario_eliminado || ''} ${r.apellidos_usuario_eliminado || ''}`.trim();
+        }
+        if (!nombreCompletoEliminado) {
+          nombreCompletoEliminado = 'Usuario desconocido';
+        }
+        
         return (
           <div className="flex items-center gap-3">
-            <User className="w-5 h-5 text-red-500" />
+            <User className="w-5 h-5 text-gray-600" />
             <div className="flex-1">
-              <p className="font-semibold text-gray-900">{r.usuario_eliminado}</p>
+              <p className="font-semibold text-gray-900">
+                {nombreCompletoEliminado} (Cédula: {r.usuario_eliminado})
+              </p>
               <p className="text-sm text-gray-600">Eliminado por: {r.eliminado_por}</p>
             </div>
           </div>
@@ -104,13 +168,24 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
       }
       case 'usuario-actualizado': {
         const r = record as UsuarioActualizadoAuditRecord;
+        // Construir nombre completo
+        let nombreCompleto = r.nombre_completo_usuario;
+        if (!nombreCompleto && (r.nombres_usuario || r.apellidos_usuario)) {
+          nombreCompleto = `${r.nombres_usuario || ''} ${r.apellidos_usuario || ''}`.trim();
+        }
+        if (!nombreCompleto) {
+          nombreCompleto = 'Usuario desconocido';
+        }
+        
         return (
           <div className="flex items-center gap-3">
-            <User className="w-5 h-5 text-blue-500" />
+            <User className="w-5 h-5 text-gray-600" />
             <div className="flex-1">
-              <p className="font-semibold text-gray-900">{r.ci_usuario}</p>
+              <p className="font-semibold text-gray-900">
+                {nombreCompleto}
+              </p>
               <p className="text-sm text-gray-600">
-                {r.tipo_usuario_anterior} → {r.tipo_usuario_nuevo}
+                Cédula: {r.ci_usuario} • {r.tipo_usuario_anterior} → {r.tipo_usuario_nuevo}
               </p>
             </div>
           </div>
@@ -140,9 +215,6 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 {r.fecha_consignacion && (
                   <p className="text-sm text-gray-600">Consignación: {formatDate(r.fecha_consignacion)}</p>
                 )}
-                {r.fecha_subida && (
-                  <p className="text-sm text-gray-600">Subida: {formatDate(r.fecha_subida)}</p>
-                )}
                 <p className="text-sm text-gray-600">Eliminación: {formatDate(r.fecha_eliminacion)}</p>
               </div>
             </div>
@@ -150,13 +222,26 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
               <div>
                 <p className="text-sm font-semibold text-gray-700 mb-1">Subido por</p>
                 <p className="text-sm text-gray-600">
-                  {r.nombre_completo_usuario_subio || r.id_usuario_subio || 'N/A'}
+                  {r.nombre_completo_usuario_subio || (r.nombres_usuario_subio && r.apellidos_usuario_subio 
+                    ? `${r.nombres_usuario_subio} ${r.apellidos_usuario_subio}`.trim()
+                    : r.id_usuario_subio) || 'N/A'}
+                  {r.id_usuario_subio && r.nombre_completo_usuario_subio && ` (Cédula: ${r.id_usuario_subio})`}
                 </p>
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-700 mb-1">Eliminado por</p>
                 <p className="text-sm text-gray-600">
-                  {r.nombre_completo_usuario_elimino || r.id_usuario_elimino}
+                  {(() => {
+                    // Construir nombre completo del usuario que eliminó
+                    let nombreCompletoElimino = r.nombre_completo_usuario_elimino;
+                    if (!nombreCompletoElimino && (r.nombres_usuario_elimino || r.apellidos_usuario_elimino)) {
+                      nombreCompletoElimino = `${r.nombres_usuario_elimino || ''} ${r.apellidos_usuario_elimino || ''}`.trim();
+                    }
+                    if (!nombreCompletoElimino) {
+                      nombreCompletoElimino = 'Usuario desconocido';
+                    }
+                    return `${nombreCompletoElimino} (Cédula: ${r.id_usuario_elimino})`;
+                  })()}
                 </p>
               </div>
             </div>
@@ -166,7 +251,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{r.motivo}</p>
               </div>
             )}
-            <div className="pt-2">
+            <div className="pt-2" onClick={(e) => e.stopPropagation()}>
               <Link 
                 href={`/dashboard/cases/${r.id_caso}`}
                 className="text-sm text-primary hover:underline"
@@ -210,7 +295,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{r.motivo}</p>
               </div>
             )}
-            <div className="pt-2">
+            <div className="pt-2" onClick={(e) => e.stopPropagation()}>
               <Link 
                 href={`/dashboard/cases/${r.id_caso}`}
                 className="text-sm text-primary hover:underline"
@@ -277,7 +362,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 </p>
               </div>
             </div>
-            <div className="pt-2">
+            <div className="pt-2" onClick={(e) => e.stopPropagation()}>
               <Link 
                 href={`/dashboard/cases/${r.id_caso}`}
                 className="text-sm text-primary hover:underline"
@@ -290,11 +375,22 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
       }
       case 'usuario-eliminado': {
         const r = record as UsuarioEliminadoAuditRecord;
+        // Construir nombre completo del usuario eliminado
+        let nombreCompletoEliminado = r.nombre_completo_usuario_eliminado;
+        if (!nombreCompletoEliminado && (r.nombres_usuario_eliminado || r.apellidos_usuario_eliminado)) {
+          nombreCompletoEliminado = `${r.nombres_usuario_eliminado || ''} ${r.apellidos_usuario_eliminado || ''}`.trim();
+        }
+        if (!nombreCompletoEliminado) {
+          nombreCompletoEliminado = 'Usuario desconocido';
+        }
+        
         return (
           <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
             <div>
               <p className="text-sm font-semibold text-gray-700 mb-1">Información</p>
-              <p className="text-sm text-gray-600">Usuario eliminado: {r.usuario_eliminado}</p>
+              <p className="text-sm text-gray-600">
+                Usuario eliminado: {nombreCompletoEliminado} (Cédula: {r.usuario_eliminado})
+              </p>
               <p className="text-sm text-gray-600">Eliminado por: {r.eliminado_por}</p>
               <p className="text-sm text-gray-600">Fecha: {formatDate(r.fecha)}</p>
             </div>
@@ -309,17 +405,39 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
       }
       case 'usuario-actualizado': {
         const r = record as UsuarioActualizadoAuditRecord;
+        // Construir nombre completo del usuario
+        let nombreCompleto = r.nombre_completo_usuario;
+        if (!nombreCompleto && (r.nombres_usuario || r.apellidos_usuario)) {
+          nombreCompleto = `${r.nombres_usuario || ''} ${r.apellidos_usuario || ''}`.trim();
+        }
+        if (!nombreCompleto) {
+          nombreCompleto = 'Usuario desconocido';
+        }
+        
+        // Construir nombre completo del usuario que actualizó
+        let nombreCompletoActualizadoPor = r.nombre_completo_actualizado_por;
+        if (!nombreCompletoActualizadoPor && (r.nombres_actualizado_por || r.apellidos_actualizado_por)) {
+          nombreCompletoActualizadoPor = `${r.nombres_actualizado_por || ''} ${r.apellidos_actualizado_por || ''}`.trim();
+        }
+        if (!nombreCompletoActualizadoPor) {
+          nombreCompletoActualizadoPor = 'Usuario desconocido';
+        }
+        
         return (
           <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
             <div>
               <p className="text-sm font-semibold text-gray-700 mb-1">Cambio de Tipo</p>
-              <p className="text-sm text-gray-600">Usuario: {r.ci_usuario}</p>
+              <p className="text-sm text-gray-600">
+                Usuario: {nombreCompleto} (Cédula: {r.ci_usuario})
+              </p>
               <p className="text-sm text-gray-600">
                 <span className="line-through text-red-500">{r.tipo_usuario_anterior}</span>
                 {' → '}
                 <span className="text-green-600">{r.tipo_usuario_nuevo}</span>
               </p>
-              <p className="text-sm text-gray-600">Actualizado por: {r.actualizado_por}</p>
+              <p className="text-sm text-gray-600">
+                Actualizado por: {nombreCompletoActualizadoPor} (Cédula: {r.actualizado_por})
+              </p>
               <p className="text-sm text-gray-600">Fecha: {formatDate(r.fecha)}</p>
             </div>
           </div>
@@ -345,22 +463,21 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between gap-4">
+      <div 
+        className="flex items-start justify-between gap-4 cursor-pointer"
+        onClick={() => setExpanded(!expanded)}
+      >
         <div className="flex-1">
           {renderSummary()}
           <p className="text-xs text-gray-500 mt-2">{formatDate(getDate())}</p>
         </div>
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="flex-shrink-0 p-2 hover:bg-gray-100 rounded-full transition-colors"
-          aria-label={expanded ? 'Contraer' : 'Expandir'}
-        >
+        <div className="flex-shrink-0 p-2 hover:bg-gray-100 rounded-full transition-colors">
           {expanded ? (
             <ChevronUp className="w-5 h-5 text-gray-600" />
           ) : (
             <ChevronDown className="w-5 h-5 text-gray-600" />
           )}
-        </button>
+        </div>
       </div>
 
       <AnimatePresence>

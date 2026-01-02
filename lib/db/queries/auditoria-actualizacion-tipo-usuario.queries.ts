@@ -24,12 +24,19 @@ export const auditoriaActualizacionTipoUsuarioQueries = {
     fechaFin?: string;
     idUsuario?: string;
     busqueda?: string;
+    orden?: 'asc' | 'desc';
   }): Promise<Array<{
     id: number;
     ci_usuario: string;
+    nombres_usuario: string | null;
+    apellidos_usuario: string | null;
+    nombre_completo_usuario: string | null;
     tipo_usuario_anterior: string;
     tipo_usuario_nuevo: string;
     actualizado_por: string;
+    nombres_actualizado_por: string | null;
+    apellidos_actualizado_por: string | null;
+    nombre_completo_actualizado_por: string | null;
     fecha: string;
   }>> => {
     const query = loadSQL('auditoria-actualizacion-tipo-usuario/get-all.sql');
@@ -38,6 +45,7 @@ export const auditoriaActualizacionTipoUsuarioQueries = {
       filters?.fechaFin || null,
       filters?.idUsuario || null,
       filters?.busqueda || null,
+      filters?.orden || 'desc', // Por defecto: más reciente primero
     ]);
     return result.rows;
   },

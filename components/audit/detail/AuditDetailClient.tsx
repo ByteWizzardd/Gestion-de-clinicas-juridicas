@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Input from '@/components/forms/Input';
-import DatePicker from '@/components/forms/DatePicker';
-import Button from '@/components/ui/Button';
+import { motion } from 'motion/react';
+import { ArrowUpDown, ArrowDown, ArrowUp } from 'lucide-react';
+import Search from '@/components/CaseTools/search';
+import Filter from '@/components/CaseTools/Filter';
 import AuditList from '../AuditList';
 import AuditRecordCard from '../AuditRecordCard';
 import Spinner from '@/components/ui/feedback/Spinner';
@@ -28,7 +29,7 @@ export default function AuditDetailClient({
   const [records, setRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<AuditFilters>({});
+  const [filters, setFilters] = useState<AuditFilters>({ orden: 'desc' }); // Por defecto: más reciente primero
   const [usuarioOptions, setUsuarioOptions] = useState<Array<{ value: string; label: string }>>([]);
 
   // Mapear auditType a tipo de record card
@@ -109,72 +110,74 @@ export default function AuditDetailClient({
     loadData();
   }, [auditType, filters]);
 
-  const handleFilterChange = (key: keyof AuditFilters, value: string | undefined) => {
+  const handleFilterChange = (key: keyof AuditFilters, value: string | 'asc' | 'desc' | undefined) => {
     setFilters((prev) => ({
       ...prev,
       [key]: value || undefined,
     }));
   };
 
-  const handleClearFilters = () => {
-    setFilters({});
+  const handleUsuarioChange = (value: string) => {
+    handleFilterChange('idUsuario', value || undefined);
   };
 
-  const hasActiveFilters = Object.values(filters).some((v) => v !== undefined && v !== '');
+  const handleOrdenChange = () => {
+    const nuevoOrden = filters.orden === 'desc' ? 'asc' : 'desc';
+    handleFilterChange('orden', nuevoOrden);
+  };
 
   return (
     <div className="w-full">
       {/* Encabezado */}
-      <div className="mb-6">
-        <h1 className="text-4xl font-semibold font-primary mb-2">{title}</h1>
-        <p className="text-gray-600">{description}</p>
-      </div>
+      <h1 className="text-4xl m-3 font-semibold font-primary">{title}</h1>
+      <p className="mb-6 ml-3">{description}</p>
 
       {/* Filtros */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <DatePicker
-            label="Fecha inicio"
-            value={filters.fechaInicio || ''}
-            onChange={(value) => handleFilterChange('fechaInicio', value)}
-          />
-          <DatePicker
-            label="Fecha fin"
-            value={filters.fechaFin || ''}
-            onChange={(value) => handleFilterChange('fechaFin', value)}
-          />
-          {usuarioOptions.length > 0 && (
-            <div className="flex flex-col gap-1">
-              <label className="text-base font-normal text-foreground mb-1">Usuario</label>
-              <select
-                className="w-full h-[40px] px-4 rounded-full border border-transparent bg-[#E5E7EB] focus:outline-none focus:ring-1 focus:ring-primary text-base"
-                value={filters.idUsuario || ''}
-                onChange={(e) => handleFilterChange('idUsuario', e.target.value || undefined)}
-              >
-                <option value="">Todos</option>
-                {usuarioOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-          <Input
-            label="Búsqueda"
-            placeholder="Buscar..."
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1, ease: "easeOut" }}
+        className="flex flex-nowrap gap-3 sm:gap-4 items-center w-full px-3 mb-4 md:mb-6 mt-4"
+      >
+        <div className="flex-1 min-w-0">
+          <Search
             value={filters.busqueda || ''}
-            onChange={(e) => handleFilterChange('busqueda', e.target.value || undefined)}
+            onChange={(value) => handleFilterChange('busqueda', value || undefined)}
+            placeholder="Buscar..."
           />
         </div>
-        {hasActiveFilters && (
-          <div className="mt-4">
-            <Button variant="outline" onClick={handleClearFilters}>
-              Limpiar filtros
-            </Button>
-          </div>
-        )}
-      </div>
+        <div className="flex gap-3 sm:gap-4 items-center shrink-0">
+          <button
+            type="button"
+            onClick={handleOrdenChange}
+            className="h-10 px-4 cursor-pointer rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors"
+            title={(filters.orden || 'desc') === 'desc' ? 'Más reciente primero' : 'Más antiguo primero'}
+          >
+            {(filters.orden || 'desc') === 'desc' ? (
+              <ArrowDown className="w-[18px] h-[18px] text-[#414040]" />
+            ) : (
+              <ArrowUp className="w-[18px] h-[18px] text-[#414040]" />
+            )}
+            <span className="text-base text-center">
+              {(filters.orden || 'desc') === 'desc' ? 'Más reciente' : 'Más antiguo'}
+            </span>
+          </button>
+          <Filter
+            nucleoFilter={usuarioOptions.length > 0 ? (filters.idUsuario || '') : undefined}
+            onNucleoChange={usuarioOptions.length > 0 ? handleUsuarioChange : undefined}
+            nucleoOptions={usuarioOptions.length > 0 ? usuarioOptions : []}
+            tramiteOptions={[]}
+            estatusOptions={[]}
+            nucleoLabel="Usuario"
+            nucleoAllLabel="Todos los usuarios"
+            fechaInicio={filters.fechaInicio}
+            fechaFin={filters.fechaFin}
+            onFechaInicioChange={(value) => handleFilterChange('fechaInicio', value || undefined)}
+            onFechaFinChange={(value) => handleFilterChange('fechaFin', value || undefined)}
+            showDateRange={true}
+          />
+        </div>
+      </motion.div>
 
       {/* Contenido */}
       {loading ? (

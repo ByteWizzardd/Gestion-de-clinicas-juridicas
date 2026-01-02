@@ -4,6 +4,7 @@
 -- $2 = fecha_fin (DATE, opcional)
 -- $3 = id_usuario_elimino (VARCHAR, opcional)
 -- $4 = busqueda (TEXT, opcional) - busca en nombre_archivo, descripcion
+-- $5 = orden (TEXT, opcional) - 'asc' o 'desc' (por defecto 'desc')
 SELECT 
     a.id,
     a.num_soporte,
@@ -12,7 +13,6 @@ SELECT
     a.tipo_mime,
     a.descripcion,
     a.fecha_consignacion,
-    a.fecha_subida,
     a.fecha_eliminacion,
     a.tamano_bytes,
     -- Información de auditoría: usuario que subió
@@ -39,4 +39,8 @@ WHERE
         OR a.nombre_archivo ILIKE '%' || $4 || '%'
         OR a.descripcion ILIKE '%' || $4 || '%'
     )
-ORDER BY a.fecha_eliminacion DESC, a.num_soporte DESC;
+ORDER BY 
+    CASE WHEN ($5::TEXT IS NULL OR $5::TEXT = 'desc') THEN a.fecha_eliminacion END DESC NULLS LAST,
+    CASE WHEN $5::TEXT = 'asc' THEN a.fecha_eliminacion END ASC NULLS FIRST,
+    CASE WHEN ($5::TEXT IS NULL OR $5::TEXT = 'desc') THEN a.num_soporte END DESC NULLS LAST,
+    CASE WHEN $5::TEXT = 'asc' THEN a.num_soporte END ASC NULLS FIRST;

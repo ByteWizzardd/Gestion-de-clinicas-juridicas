@@ -24,9 +24,13 @@ export const auditoriaEliminacionUsuarioQueries = {
     fechaFin?: string;
     idUsuario?: string;
     busqueda?: string;
+    orden?: 'asc' | 'desc';
   }): Promise<Array<{
     id: number;
     usuario_eliminado: string;
+    nombres_usuario_eliminado: string | null;
+    apellidos_usuario_eliminado: string | null;
+    nombre_completo_usuario_eliminado: string | null;
     eliminado_por: string;
     motivo: string;
     fecha: string;
@@ -37,6 +41,7 @@ export const auditoriaEliminacionUsuarioQueries = {
       filters?.fechaFin || null,
       filters?.idUsuario || null,
       filters?.busqueda || null,
+      filters?.orden || 'desc', // Por defecto: más reciente primero
     ]);
     return result.rows;
   },

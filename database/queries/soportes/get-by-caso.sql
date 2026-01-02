@@ -13,8 +13,7 @@ SELECT
     s.id_usuario_subio,
     u_subio.nombres AS nombres_usuario_subio,
     u_subio.apellidos AS apellidos_usuario_subio,
-    CONCAT(u_subio.nombres, ' ', u_subio.apellidos) AS nombre_completo_usuario_subio,
-    s.fecha_subida
+    CONCAT(u_subio.nombres, ' ', u_subio.apellidos) AS nombre_completo_usuario_subio
 FROM soportes s
 LEFT JOIN usuarios u_subio ON s.id_usuario_subio = u_subio.cedula
 WHERE s.id_caso = $1

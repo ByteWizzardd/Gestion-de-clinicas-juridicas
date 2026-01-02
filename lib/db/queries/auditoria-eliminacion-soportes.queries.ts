@@ -18,7 +18,6 @@ export const auditoriaEliminacionSoportesQueries = {
     tipo_mime: string;
     descripcion: string | null;
     fecha_consignacion: string;
-    fecha_subida: string | null;
     fecha_eliminacion: string;
     tamano_bytes: number;
     // Información de auditoría: usuario que subió
@@ -81,6 +80,7 @@ export const auditoriaEliminacionSoportesQueries = {
     fechaFin?: string;
     idUsuario?: string;
     busqueda?: string;
+    orden?: 'asc' | 'desc';
   }): Promise<Array<{
     id: number;
     num_soporte: number;
@@ -89,7 +89,6 @@ export const auditoriaEliminacionSoportesQueries = {
     tipo_mime: string | null;
     descripcion: string | null;
     fecha_consignacion: string | null;
-    fecha_subida: string | null;
     fecha_eliminacion: string;
     tamano_bytes: number | null;
     id_usuario_subio: string | null;
@@ -108,6 +107,7 @@ export const auditoriaEliminacionSoportesQueries = {
       filters?.fechaFin || null,
       filters?.idUsuario || null,
       filters?.busqueda || null,
+      filters?.orden || 'desc', // Por defecto: más reciente primero
     ]);
     return result.rows;
   },

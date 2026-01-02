@@ -1,9 +1,16 @@
--- Migración: Agregar trigger de auditoría para eliminación de soportes
+-- Migración: Eliminar columna fecha_subida de soportes y auditoria_eliminacion_soportes
 -- Fecha: 2026-01-02
--- Descripción: Crea un trigger BEFORE DELETE que registra la auditoría usando OLD
+-- Descripción: Elimina la columna fecha_subida ya que fecha_consignacion cumple la misma función
 
--- Función trigger para registrar auditoría antes de eliminar un soporte
--- Usa OLD para capturar los datos antes de la eliminación y guardarlos en tabla de auditoría
+-- Eliminar fecha_subida de la tabla soportes
+ALTER TABLE soportes
+DROP COLUMN IF EXISTS fecha_subida;
+
+-- Eliminar fecha_subida de la tabla auditoria_eliminacion_soportes
+ALTER TABLE auditoria_eliminacion_soportes
+DROP COLUMN IF EXISTS fecha_subida;
+
+-- Actualizar el trigger para remover fecha_subida
 CREATE OR REPLACE FUNCTION trigger_auditoria_eliminacion_soporte()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -51,10 +58,3 @@ BEGIN
     RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;
-
--- Trigger para registrar auditoría antes de eliminar un soporte
-DROP TRIGGER IF EXISTS trigger_auditoria_eliminacion_soporte ON soportes;
-CREATE TRIGGER trigger_auditoria_eliminacion_soporte
-    BEFORE DELETE ON soportes
-    FOR EACH ROW
-    EXECUTE FUNCTION trigger_auditoria_eliminacion_soporte();

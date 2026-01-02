@@ -4,6 +4,7 @@
 -- $2 = fecha_fin (DATE, opcional)
 -- $3 = id_usuario_actualizo (VARCHAR, opcional)
 -- $4 = busqueda (TEXT, opcional) - busca en num_cita, id_caso
+-- $5 = orden (TEXT, opcional) - 'asc' o 'desc' (por defecto 'desc')
 SELECT 
     a.id,
     a.num_cita,
@@ -33,4 +34,8 @@ WHERE
         OR a.num_cita::TEXT ILIKE '%' || $4 || '%'
         OR a.id_caso::TEXT ILIKE '%' || $4 || '%'
     )
-ORDER BY a.fecha_actualizacion DESC, a.num_cita DESC;
+ORDER BY 
+    CASE WHEN ($5::TEXT IS NULL OR $5::TEXT = 'desc') THEN a.fecha_actualizacion END DESC NULLS LAST,
+    CASE WHEN $5::TEXT = 'asc' THEN a.fecha_actualizacion END ASC NULLS FIRST,
+    CASE WHEN ($5::TEXT IS NULL OR $5::TEXT = 'desc') THEN a.num_cita END DESC NULLS LAST,
+    CASE WHEN $5::TEXT = 'asc' THEN a.num_cita END ASC NULLS FIRST;

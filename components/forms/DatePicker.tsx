@@ -291,7 +291,10 @@ export default function DatePicker({ value, onChange, error, required, disabled 
   return (
     <div className="relative" ref={dropdownRef}>
       <div
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!disabled) setIsOpen(!isOpen);
+        }}
         className={`
           w-full h-[40px] pl-12 pr-4 rounded-full border flex items-center relative
           ${error ? 'border-danger' : 'border-gray-300'}

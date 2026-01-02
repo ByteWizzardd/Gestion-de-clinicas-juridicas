@@ -17,8 +17,7 @@ INSERT INTO soportes (
     tipo_mime,
     descripcion,
     fecha_consignacion,
-    id_usuario_subio,
-    fecha_subida
+    id_usuario_subio
 )
 SELECT 
     COALESCE(MAX(num_soporte), 0) + 1,
@@ -28,8 +27,7 @@ SELECT
     $4,
     $5,
     COALESCE($6, CURRENT_DATE),
-    $7,
-    CURRENT_DATE
+    $7
 FROM soportes
 WHERE id_caso = $1
 RETURNING *;
