@@ -20,6 +20,7 @@ interface TableProps<T> {
   }[];
   hideEdit?: (data: T) => boolean;
   hideDelete?: (data: T) => boolean;
+  renderRowActions?: (data: T) => React.ReactNode;
 }
 
 export default function Table<T extends Record<string, unknown>>({
@@ -31,7 +32,8 @@ export default function Table<T extends Record<string, unknown>>({
   onDelete,
   actions,
   hideEdit,
-  hideDelete
+  hideDelete,
+  renderRowActions
 }: TableProps<T>) {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(initialRowsPerPage);
@@ -63,6 +65,7 @@ export default function Table<T extends Record<string, unknown>>({
                 actions={actions}
                 hideEdit={hideEdit}
                 hideDelete={hideDelete}
+                renderRowActions={renderRowActions}
               />
             ))
           ) : (

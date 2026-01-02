@@ -51,9 +51,10 @@ type TableRowProps<T> = {
     actions?: TableRowAction<T>[];
     hideEdit?: (data: T) => boolean;
     hideDelete?: (data: T) => boolean;
+    renderRowActions?: (data: T) => React.ReactNode;
 };
 
-export function TableRow<T extends Record<string, unknown>>({ data, rowIndex, onView, onEdit, onDelete, actions, hideEdit, hideDelete }: TableRowProps<T>) {
+export function TableRow<T extends Record<string, unknown>>({ data, rowIndex, onView, onEdit, onDelete, actions, hideEdit, hideDelete, renderRowActions }: TableRowProps<T>) {
     const cells = Object.values(data);
     const shouldHideEdit = hideEdit ? hideEdit(data) : false;
     const shouldHideDelete = hideDelete ? hideDelete(data) : false;
@@ -75,20 +76,24 @@ export function TableRow<T extends Record<string, unknown>>({ data, rowIndex, on
                 `}
             >
                 <div className="flex justify-center">
-                    <ActionMenu
-                        onView={onView ? () => onView(data) : undefined}
-                        onEdit={!shouldHideEdit && onEdit ? () => onEdit(data) : undefined}
-                        onDelete={!shouldHideDelete && onDelete ? () => onDelete(data) : undefined}
-                        customActions={actions
-                            ?.map(action => {
-                                const label = typeof action.label === 'function' ? action.label(data) : action.label;
-                                return {
-                                    label,
-                                    onClick: () => action.onClick(data)
-                                };
-                            })
-                        }
-                    />
+                    {(shouldHideEdit && shouldHideDelete && !actions && !renderRowActions) ? null : (
+                        renderRowActions ? renderRowActions(data) : (
+                            <ActionMenu
+                                onView={onView ? () => onView(data) : undefined}
+                                onEdit={!shouldHideEdit && onEdit ? () => onEdit(data) : undefined}
+                                onDelete={!shouldHideDelete && onDelete ? () => onDelete(data) : undefined}
+                                customActions={actions
+                                    ?.map(action => {
+                                        const label = typeof action.label === 'function' ? action.label(data) : action.label;
+                                        return {
+                                            label,
+                                            onClick: () => action.onClick(data)
+                                        };
+                                    })
+                                }
+                            />
+                        )
+                    )}
                 </div>
             </td>
         </tr>

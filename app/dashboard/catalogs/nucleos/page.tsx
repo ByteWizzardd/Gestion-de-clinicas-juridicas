@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
 import CatalogActionsMenu from "@/components/catalogs/CatalogActionsMenu";
+import CatalogViewModal from "@/components/catalogs/CatalogViewModal";
+import { Hash, FileText, CheckCircle2 } from "lucide-react";
 import { getNucleos, createNucleo, updateNucleo, toggleNucleoHabilitado, deleteNucleo } from "@/app/actions/catalogos/nucleos.actions";
 import { getParroquias } from "@/app/actions/catalogos/parroquias.actions";
 import { getEstados } from "@/app/actions/catalogos/estados.actions";
@@ -24,6 +26,8 @@ export default function NucleosPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [editingItem, setEditingItem] = useState<any>(null);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [viewItem, setViewItem] = useState<any>(null);
 
     useEffect(() => { loadData(); }, []);
 
@@ -86,6 +90,11 @@ export default function NucleosPage() {
         setIsModalOpen(true);
     };
 
+    const handleView = (item: any) => {
+        setViewItem(item);
+        setIsViewModalOpen(true);
+    };
+
     const handleUpdate = async (data: Record<string, string>) => {
         if (!editingItem) return;
         const result = await updateNucleo(
@@ -104,7 +113,7 @@ export default function NucleosPage() {
     };
 
     const handleToggle = async (item: any) => {
-        const result = await toggleNucleoHabilitado(item.id_estado, item.num_municipio, item.num_parroquia, item.num_nucleo);
+        const result = await toggleNucleoHabilitado(item.id_nucleo);
         if (result.success) await loadData();
         else alert(result.error);
     };
@@ -136,6 +145,7 @@ export default function NucleosPage() {
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}
+                        onView={() => handleView(item)}
                         onEdit={() => handleEdit(item)}
                         onToggleHabilitado={() => handleToggle(item)}
                         onDelete={() => handleDelete(item)}
@@ -179,6 +189,22 @@ export default function NucleosPage() {
                         required: true,
                         defaultValue: isEditMode ? editingItem?.nombre_nucleo : undefined
                     }
+                ]}
+            />
+            <CatalogViewModal
+                isOpen={isViewModalOpen}
+                onClose={() => setIsViewModalOpen(false)}
+                title="Detalles del Núcleo"
+                fields={[
+                    { label: "ID Estado", value: viewItem?.id_estado, icon: Hash },
+                    { label: "ID Municipio", value: viewItem?.num_municipio, icon: Hash },
+                    { label: "ID Parroquia", value: viewItem?.num_parroquia, icon: Hash },
+                    { label: "ID Núcleo", value: viewItem?.num_nucleo, icon: Hash },
+                    { label: "Núcleo", value: viewItem?.nombre_nucleo, icon: FileText, fullWidth: true },
+                    { label: "Parroquia", value: viewItem?.nombre_parroquia, icon: FileText },
+                    { label: "Municipio", value: viewItem?.nombre_municipio, icon: FileText },
+                    { label: "Estado", value: viewItem?.nombre_estado, icon: FileText },
+                    { label: "Habilitado", value: viewItem?.habilitado, icon: CheckCircle2 }
                 ]}
             />
         </>

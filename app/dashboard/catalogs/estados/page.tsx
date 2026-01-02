@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
 import CatalogActionsMenu from "@/components/catalogs/CatalogActionsMenu";
+import CatalogViewModal from "@/components/catalogs/CatalogViewModal";
+import { Hash, FileText, CheckCircle2 } from "lucide-react";
 import { getEstados, updateEstado, toggleEstadoHabilitado, deleteEstado } from "@/app/actions/catalogos/estados.actions";
 
 export default function EstadosPage() {
@@ -11,6 +13,8 @@ export default function EstadosPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [editingItem, setEditingItem] = useState<any>(null);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [viewItem, setViewItem] = useState<any>(null);
 
     useEffect(() => {
         loadEstados();
@@ -39,6 +43,11 @@ export default function EstadosPage() {
         setEditingItem(item);
         setIsEditMode(true);
         setIsModalOpen(true);
+    };
+
+    const handleView = (item: any) => {
+        setViewItem(item);
+        setIsViewModalOpen(true);
     };
 
     const handleUpdate = async (data: Record<string, string>) => {
@@ -95,6 +104,7 @@ export default function EstadosPage() {
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}
+                        onView={() => handleView(item)}
                         onEdit={() => handleEdit(item)}
                         onToggleHabilitado={() => handleToggleHabilitado(item)}
                         onDelete={() => handleDelete(item)}
@@ -113,6 +123,16 @@ export default function EstadosPage() {
                         required: true,
                         defaultValue: isEditMode ? editingItem?.nombre_estado : undefined
                     }
+                ]}
+            />
+            <CatalogViewModal
+                isOpen={isViewModalOpen}
+                onClose={() => setIsViewModalOpen(false)}
+                title="Detalles del Estado"
+                fields={[
+                    { label: "ID Estado", value: viewItem?.id_estado, icon: Hash },
+                    { label: "Estado", value: viewItem?.nombre_estado, icon: FileText, fullWidth: true },
+                    { label: "Habilitado", value: viewItem?.habilitado, icon: CheckCircle2 }
                 ]}
             />
         </>

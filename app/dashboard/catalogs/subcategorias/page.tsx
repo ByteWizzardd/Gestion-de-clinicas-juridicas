@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
 import CatalogActionsMenu from "@/components/catalogs/CatalogActionsMenu";
+import CatalogViewModal from "@/components/catalogs/CatalogViewModal";
+import { Hash, FileText, CheckCircle2 } from "lucide-react";
 import { getSubcategorias, createSubcategoria, updateSubcategoria, toggleSubcategoriaHabilitado, deleteSubcategoria } from "@/app/actions/catalogos/subcategorias.actions";
 import { getMaterias } from "@/app/actions/catalogos/materias.actions";
 import { getCategorias } from "@/app/actions/catalogos/categorias.actions";
@@ -18,6 +20,8 @@ export default function SubcategoriasPage() {
     const [isEditMode, setIsEditMode] = useState(false);
     const [editingItem, setEditingItem] = useState<any>(null);
     const [selectedMateria, setSelectedMateria] = useState('');
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [viewItem, setViewItem] = useState<any>(null);
 
     useEffect(() => { loadData(); }, []);
 
@@ -58,6 +62,11 @@ export default function SubcategoriasPage() {
         // Pre-filter categories based on item's materia
         handleMateriaChange(item.id_materia.toString());
         setIsModalOpen(true);
+    };
+
+    const handleView = (item: any) => {
+        setViewItem(item);
+        setIsViewModalOpen(true);
     };
 
     const handleUpdate = async (data: Record<string, string>) => {
@@ -106,11 +115,13 @@ export default function SubcategoriasPage() {
                 columns={["ID Materia", "ID Categoría", "ID Subcategoría", "Subcategoría", "Categoría", "Materia", "Habilitado"]}
                 addLabel="Añadir Subcategoría"
                 onAddClick={() => setIsModalOpen(true)}
-                filterField="id_materia"
+                filterField="nombre_materia"
+                filterTarget="materia"
                 autoGenerateFilter={true}
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}
+                        onView={() => handleView(item)}
                         onEdit={() => handleEdit(item)}
                         onToggleHabilitado={() => handleToggle(item)}
                         onDelete={() => handleDelete(item)}
@@ -150,6 +161,20 @@ export default function SubcategoriasPage() {
                         required: true,
                         defaultValue: isEditMode ? editingItem?.nombre_subcategoria : undefined
                     }
+                ]}
+            />
+            <CatalogViewModal
+                isOpen={isViewModalOpen}
+                onClose={() => setIsViewModalOpen(false)}
+                title="Detalles de la Subcategoría"
+                fields={[
+                    { label: "ID Materia", value: viewItem?.id_materia, icon: Hash },
+                    { label: "ID Categoría", value: viewItem?.num_categoria, icon: Hash },
+                    { label: "ID Subcategoría", value: viewItem?.num_subcategoria, icon: Hash },
+                    { label: "Subcategoría", value: viewItem?.nombre_subcategoria, icon: FileText, fullWidth: true },
+                    { label: "Categoría", value: viewItem?.nombre_categoria, icon: FileText },
+                    { label: "Materia", value: viewItem?.nombre_materia, icon: FileText },
+                    { label: "Habilitado", value: viewItem?.habilitado, icon: CheckCircle2 }
                 ]}
             />
         </>

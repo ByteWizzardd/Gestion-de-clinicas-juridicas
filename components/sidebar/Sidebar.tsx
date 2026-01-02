@@ -1,21 +1,21 @@
 'use client';
 
+import { useState, useEffect, memo } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getMenuByRole, type UserRole } from './menu-config';
 import ProfileDropdown from '@/components/ui/navigation/ProfileDropdown';
 import { getCurrentUserAction } from '@/app/actions/auth';
-import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface SidebarProps {
   role: UserRole;
   userName?: string;
 }
 
-export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarProps) {
+const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const menu = getMenuByRole(role);
@@ -127,10 +127,9 @@ export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarP
       animate={{
         opacity: 1,
         x: 0,
-        width: isCollapsed ? '5rem' : '14rem' // 80px (w-20) vs 224px (w-56)
       }}
       transition={{ duration: prefersReducedMotion ? 0 : 0.4, ease: "easeInOut" }}
-      className="bg-background flex flex-col h-[calc(100vh-2rem)] rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] m-4 relative group"
+      className={`bg-background flex flex-col h-[calc(100vh-2rem)] rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] m-4 relative group transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-56'}`}
     >
       {/* Botón de toggle (visible al hacer hover o siempre visible) */}
       <button
@@ -258,5 +257,6 @@ export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarP
       </motion.div>
     </motion.aside>
   );
-}
+});
 
+export default Sidebar;

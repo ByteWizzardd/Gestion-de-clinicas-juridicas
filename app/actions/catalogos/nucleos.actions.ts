@@ -52,16 +52,17 @@ export async function updateNucleo(id_estado: number, num_municipio: number, num
     }
 }
 
-export async function toggleNucleoHabilitado(id_estado: number, num_municipio: number, num_parroquia: number, num_nucleo: number) {
+export async function toggleNucleoHabilitado(id_nucleo: number) {
     try {
         const result = await pool.query(
-            'UPDATE nucleos SET habilitado = NOT habilitado WHERE id_estado = $1 AND num_municipio = $2 AND num_parroquia = $3 AND num_nucleo = $4 RETURNING *',
-            [id_estado, num_municipio, num_parroquia, num_nucleo]
+            'UPDATE nucleos SET habilitado = NOT habilitado WHERE id_nucleo = $1 RETURNING *',
+            [id_nucleo]
         );
         if (result.rows.length === 0) return { success: false, error: 'Núcleo no encontrado' };
         revalidatePath('/dashboard/catalogs/nucleos');
         return { success: true, data: result.rows[0] };
     } catch (error) {
+        console.error('Error in toggleNucleoHabilitado:', error);
         return { success: false, error: 'Error al cambiar estado' };
     }
 }

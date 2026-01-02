@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
 import CatalogActionsMenu from "@/components/catalogs/CatalogActionsMenu";
+import CatalogViewModal from "@/components/catalogs/CatalogViewModal";
+import { Hash, Calendar, CheckCircle2 } from "lucide-react";
 import { getSemestres, createSemestre, updateSemestre, toggleSemestreHabilitado, deleteSemestre } from "@/app/actions/catalogos/semestres.actions";
 
 export default function SemestresPage() {
@@ -11,6 +13,8 @@ export default function SemestresPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewItem, setViewItem] = useState<any>(null);
 
   useEffect(() => {
     loadSemestres();
@@ -37,6 +41,11 @@ export default function SemestresPage() {
     setEditingItem(item);
     setIsEditMode(true);
     setIsModalOpen(true);
+  };
+
+  const handleView = (item: any) => {
+    setViewItem(item);
+    setIsViewModalOpen(true);
   };
 
   const handleUpdate = async (data: Record<string, string>) => {
@@ -90,6 +99,7 @@ export default function SemestresPage() {
         renderActions={(item: any) => (
           <CatalogActionsMenu
             item={item}
+            onView={() => handleView(item)}
             onEdit={() => handleEdit(item)}
             onToggleHabilitado={() => handleToggleHabilitado(item)}
             onDelete={() => handleDelete(item)}
@@ -105,6 +115,17 @@ export default function SemestresPage() {
           { name: 'term', label: 'TERM (ej: 2024-1)', required: !isEditMode, defaultValue: isEditMode ? editingItem?.term : undefined },
           { name: 'fecha_inicio', label: 'Fecha de Inicio', type: 'date', required: true, defaultValue: isEditMode ? editingItem?.fecha_inicio : undefined },
           { name: 'fecha_fin', label: 'Fecha de Fin', type: 'date', required: true, defaultValue: isEditMode ? editingItem?.fecha_fin : undefined }
+        ]}
+      />
+      <CatalogViewModal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        title="Detalles del Semestre"
+        fields={[
+          { label: "Semestre (TERM)", value: viewItem?.term, icon: Hash, fullWidth: true },
+          { label: "Fecha de Inicio", value: viewItem?.fecha_inicio, icon: Calendar },
+          { label: "Fecha de Fin", value: viewItem?.fecha_fin, icon: Calendar },
+          { label: "Habilitado", value: viewItem?.habilitado, icon: CheckCircle2 }
         ]}
       />
     </>

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
 import CatalogActionsMenu from "@/components/catalogs/CatalogActionsMenu";
+import CatalogViewModal from "@/components/catalogs/CatalogViewModal";
+import { Hash, FileText, CheckCircle2 } from "lucide-react";
 import { getMaterias, updateMateria, toggleMateriaHabilitado, deleteMateria } from "@/app/actions/catalogos/materias.actions";
 
 export default function MateriasPage() {
@@ -11,6 +13,8 @@ export default function MateriasPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [editingItem, setEditingItem] = useState<any>(null);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [viewItem, setViewItem] = useState<any>(null);
 
     useEffect(() => {
         loadMaterias();
@@ -41,6 +45,11 @@ export default function MateriasPage() {
         setEditingItem(item);
         setIsEditMode(true);
         setIsModalOpen(true);
+    };
+
+    const handleView = (item: any) => {
+        setViewItem(item);
+        setIsViewModalOpen(true);
     };
 
     const handleUpdate = async (data: Record<string, string>) => {
@@ -107,6 +116,7 @@ export default function MateriasPage() {
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}
+                        onView={() => handleView(item)}
                         onEdit={() => handleEdit(item)}
                         onToggleHabilitado={() => handleToggleHabilitado(item)}
                         onDelete={() => handleDelete(item)}
@@ -126,6 +136,17 @@ export default function MateriasPage() {
                         required: true,
                         defaultValue: isEditMode ? editingItem?.nombre_materia : undefined
                     }
+                ]}
+            />
+
+            <CatalogViewModal
+                isOpen={isViewModalOpen}
+                onClose={() => setIsViewModalOpen(false)}
+                title="Detalles de la Materia"
+                fields={[
+                    { label: "ID Materia", value: viewItem?.id_materia, icon: Hash },
+                    { label: "Materia", value: viewItem?.nombre_materia, icon: FileText, fullWidth: true },
+                    { label: "Habilitado", value: viewItem?.habilitado, icon: CheckCircle2 }
                 ]}
             />
         </>

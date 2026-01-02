@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Modal from '../ui/feedback/Modal';
 import Button from '../ui/Button';
 import Select from '../forms/Select';
@@ -40,6 +40,20 @@ export default function CatalogFormModal({
 
     const [formData, setFormData] = useState<Record<string, string>>(initialFormData);
     const [errors, setErrors] = useState<Record<string, string>>({});
+
+    // Reset form data when the modal opens with new fields/defaultValues
+    useEffect(() => {
+        if (isOpen) {
+            const newFormData = fields.reduce((acc, field) => {
+                if (field.defaultValue) {
+                    acc[field.name] = field.defaultValue;
+                }
+                return acc;
+            }, {} as Record<string, string>);
+            setFormData(newFormData);
+            setErrors({});
+        }
+    }, [isOpen]);
 
     const handleSubmit = () => {
         const newErrors: Record<string, string> = {};

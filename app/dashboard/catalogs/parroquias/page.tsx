@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
 import CatalogActionsMenu from "@/components/catalogs/CatalogActionsMenu";
+import CatalogViewModal from "@/components/catalogs/CatalogViewModal";
+import { Hash, FileText, CheckCircle2 } from "lucide-react";
 import { getParroquias, createParroquia, updateParroquia, toggleParroquiaHabilitado, deleteParroquia } from "@/app/actions/catalogos/parroquias.actions";
 import { getEstados } from "@/app/actions/catalogos/estados.actions";
 import { getMunicipios } from "@/app/actions/catalogos/municipios.actions";
@@ -17,6 +19,8 @@ export default function ParroquiasPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [editingItem, setEditingItem] = useState<any>(null);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [viewItem, setViewItem] = useState<any>(null);
 
     useEffect(() => { loadData(); }, []);
 
@@ -53,6 +57,11 @@ export default function ParroquiasPage() {
         const filtered = municipios.filter(m => m.id_estado === item.id_estado);
         setFilteredMunicipios(filtered);
         setIsModalOpen(true);
+    };
+
+    const handleView = (item: any) => {
+        setViewItem(item);
+        setIsViewModalOpen(true);
     };
 
     const handleUpdate = async (data: Record<string, string>) => {
@@ -103,6 +112,7 @@ export default function ParroquiasPage() {
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}
+                        onView={() => handleView(item)}
                         onEdit={() => handleEdit(item)}
                         onToggleHabilitado={() => handleToggle(item)}
                         onDelete={() => handleDelete(item)}
@@ -142,6 +152,20 @@ export default function ParroquiasPage() {
                         required: true,
                         defaultValue: isEditMode ? editingItem?.nombre_parroquia : undefined
                     }
+                ]}
+            />
+            <CatalogViewModal
+                isOpen={isViewModalOpen}
+                onClose={() => setIsViewModalOpen(false)}
+                title="Detalles de la Parroquia"
+                fields={[
+                    { label: "ID Estado", value: viewItem?.id_estado, icon: Hash },
+                    { label: "ID Municipio", value: viewItem?.num_municipio, icon: Hash },
+                    { label: "ID Parroquia", value: viewItem?.num_parroquia, icon: Hash },
+                    { label: "Parroquia", value: viewItem?.nombre_parroquia, icon: FileText, fullWidth: true },
+                    { label: "Municipio", value: viewItem?.nombre_municipio, icon: FileText },
+                    { label: "Estado", value: viewItem?.nombre_estado, icon: FileText },
+                    { label: "Habilitado", value: viewItem?.habilitado, icon: CheckCircle2 }
                 ]}
             />
         </>

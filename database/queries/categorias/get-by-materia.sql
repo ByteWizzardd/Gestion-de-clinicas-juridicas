@@ -4,6 +4,6 @@ SELECT
     num_categoria,
     nombre_categoria
 FROM categorias
-WHERE id_materia = $1
+WHERE id_materia = $1 AND habilitado = true
 ORDER BY num_categoria;
 

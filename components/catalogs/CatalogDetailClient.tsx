@@ -17,6 +17,7 @@ interface CatalogDetailClientProps {
     autoGenerateFilter?: boolean; // Si es true, genera opciones automáticamente desde los datos
     disableFilter?: boolean; // Si es true, no muestra filtro aunque haya opciones
     renderActions?: (item: any) => React.ReactNode; // Custom render for actions column
+    filterTarget?: 'estatus' | 'materia' | 'nucleo' | 'tramite'; // Explicitly map to CaseTools filter slot
 }
 
 export default function CatalogDetailClient({
@@ -30,10 +31,12 @@ export default function CatalogDetailClient({
     filterLabel = "Filtro",
     autoGenerateFilter = false,
     disableFilter = false,
-    renderActions
+    renderActions,
+    filterTarget = 'estatus' // Default to estatus
 }: CatalogDetailClientProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterValue, setFilterValue] = useState('');
+    const [estatusFilterValue, setEstatusFilterValue] = useState('');
 
     // Auto-generate filter options from data if requested
     const generatedFilterOptions = useMemo(() => {
@@ -59,6 +62,13 @@ export default function CatalogDetailClient({
             }));
     }, [data, filterField, filterOptions, autoGenerateFilter]);
 
+    const estatusOptions = [
+        { value: 'true', label: 'Habilitado' },
+        { value: 'false', label: 'Deshabilitado' }
+    ];
+
+
+
     // Filter data based on search and filter
     const filteredData = useMemo(() => {
         let result = data;
@@ -75,6 +85,14 @@ export default function CatalogDetailClient({
             });
         }
 
+        // Apply estatus filter
+        if (estatusFilterValue) {
+            result = result.filter((item: any) => {
+                const status = item.habilitado ?? item.estatus ?? item.activo;
+                return String(status) === estatusFilterValue;
+            });
+        }
+
         // Apply search
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
@@ -87,7 +105,7 @@ export default function CatalogDetailClient({
         }
 
         return result;
-    }, [data, searchQuery, filterValue, filterField]);
+    }, [data, searchQuery, filterValue, filterField, estatusFilterValue]);
 
     // Only show filter if options are available and not explicitly disabled
     const hasFilter = !disableFilter && generatedFilterOptions.length > 0 && filterField;
@@ -100,22 +118,41 @@ export default function CatalogDetailClient({
                 searchValue={searchQuery}
                 onSearchChange={setSearchQuery}
                 {...(hasFilter && {
-                    estatusFilter: filterValue,
-                    onEstatusChange: setFilterValue,
-                    estatusOptions: generatedFilterOptions,
-                    tramiteFilter: '',
-                    onTramiteChange: () => { },
-                    tramiteOptions: []
+                    // Map filter functionality based on filterTarget
+                    ...(filterTarget === 'materia' ? {
+                        materiaFilter: filterValue,
+                        onMateriaChange: setFilterValue,
+                        materias: generatedFilterOptions.map(opt => ({
+                            id_materia: opt.value as any,
+                            nombre_materia: opt.label
+                        }))
+                    } : filterTarget === 'nucleo' ? {
+                        nucleoFilter: filterValue,
+                        onNucleoChange: setFilterValue,
+                        nucleoOptions: generatedFilterOptions
+                    } : filterTarget === 'tramite' ? {
+                        tramiteFilter: filterValue,
+                        onTramiteChange: setFilterValue,
+                        tramiteOptions: generatedFilterOptions
+                    } : {
+                        // Default to estatus
+                        estatusFilter: filterValue,
+                        onEstatusChange: setFilterValue,
+                        estatusOptions: generatedFilterOptions
+                    }),
+                    // Standard Estatus Filter (if not primary target)
+                    ...(filterTarget !== 'estatus' ? {
+                        estatusFilter: estatusFilterValue,
+                        onEstatusChange: setEstatusFilterValue,
+                        estatusOptions: estatusOptions
+                    } : {})
                 })}
             />
             <div className="mt-10"></div>
             <Table
                 data={filteredData}
                 columns={columns}
-                actions={renderActions ? [{
-                    label: (item: any) => renderActions(item) as React.ReactElement,
-                    onClick: () => { } // Actions are handled within the rendered component
-                }] : undefined}
+                renderRowActions={renderActions ? (item) => renderActions(item) : undefined}
             />
         </>
     );

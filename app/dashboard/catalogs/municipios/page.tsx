@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
+
 import CatalogActionsMenu from "@/components/catalogs/CatalogActionsMenu";
+import CatalogViewModal from "@/components/catalogs/CatalogViewModal";
+import { Hash, FileText, CheckCircle2 } from "lucide-react";
 import { getMunicipios, createMunicipio, updateMunicipio, toggleMunicipioHabilitado, deleteMunicipio } from "@/app/actions/catalogos/municipios.actions";
 import { getEstados } from "@/app/actions/catalogos/estados.actions";
 
@@ -13,6 +16,8 @@ export default function MunicipiosPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewItem, setViewItem] = useState<any>(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -29,6 +34,11 @@ export default function MunicipiosPage() {
   };
 
   const handleEdit = (item: any) => { setEditingItem(item); setIsEditMode(true); setIsModalOpen(true); };
+
+  const handleView = (item: any) => {
+    setViewItem(item);
+    setIsViewModalOpen(true);
+  };
 
   const handleUpdate = async (data: Record<string, string>) => {
     if (!editingItem) return;
@@ -60,7 +70,13 @@ export default function MunicipiosPage() {
         addLabel="Añadir Municipio"
         onAddClick={() => setIsModalOpen(true)}
         renderActions={(item: any) => (
-          <CatalogActionsMenu item={item} onEdit={() => handleEdit(item)} onToggleHabilitado={() => handleToggle(item)} onDelete={() => handleDelete(item)} />
+          <CatalogActionsMenu
+            item={item}
+            onView={() => handleView(item)}
+            onEdit={() => handleEdit(item)}
+            onToggleHabilitado={() => handleToggle(item)}
+            onDelete={() => handleDelete(item)}
+          />
         )}
       />
       <CatalogFormModal
@@ -78,6 +94,18 @@ export default function MunicipiosPage() {
             defaultValue: isEditMode ? editingItem?.id_estado?.toString() : undefined
           },
           { name: 'nombre_municipio', label: 'Nombre del Municipio', required: true, defaultValue: isEditMode ? editingItem?.nombre_municipio : undefined }
+        ]}
+      />
+      <CatalogViewModal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        title="Detalles del Municipio"
+        fields={[
+          { label: "ID Estado", value: viewItem?.id_estado, icon: Hash },
+          { label: "ID Municipio", value: viewItem?.num_municipio, icon: Hash },
+          { label: "Municipio", value: viewItem?.nombre_municipio, icon: FileText, fullWidth: true },
+          { label: "Estado", value: viewItem?.nombre_estado, icon: FileText },
+          { label: "Habilitado", value: viewItem?.habilitado, icon: CheckCircle2 }
         ]}
       />
     </>

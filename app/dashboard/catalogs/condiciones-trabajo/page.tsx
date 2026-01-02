@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
 import CatalogActionsMenu from "@/components/catalogs/CatalogActionsMenu";
+import CatalogViewModal from "@/components/catalogs/CatalogViewModal";
+import { Hash, FileText, CheckCircle2 } from "lucide-react";
 import { getCondicionesTrabajo, createCondicionTrabajo, updateCondicionTrabajo, toggleCondicionTrabajoHabilitado, deleteCondicionTrabajo } from "@/app/actions/catalogos/condiciones-trabajo.actions";
 
 export default function CondicionesTrabajoPage() {
@@ -11,6 +13,8 @@ export default function CondicionesTrabajoPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewItem, setViewItem] = useState<any>(null);
 
   useEffect(() => { loadCondiciones(); }, []);
 
@@ -26,6 +30,11 @@ export default function CondicionesTrabajoPage() {
   };
 
   const handleEdit = (item: any) => { setEditingItem(item); setIsEditMode(true); setIsModalOpen(true); };
+
+  const handleView = (item: any) => {
+    setViewItem(item);
+    setIsViewModalOpen(true);
+  };
 
   const handleUpdate = async (data: Record<string, string>) => {
     if (!editingItem) return;
@@ -57,7 +66,13 @@ export default function CondicionesTrabajoPage() {
         addLabel="Añadir Condición"
         onAddClick={() => setIsModalOpen(true)}
         renderActions={(item: any) => (
-          <CatalogActionsMenu item={item} onEdit={() => handleEdit(item)} onToggleHabilitado={() => handleToggle(item)} onDelete={() => handleDelete(item)} />
+          <CatalogActionsMenu
+            item={item}
+            onView={() => handleView(item)}
+            onEdit={() => handleEdit(item)}
+            onToggleHabilitado={() => handleToggle(item)}
+            onDelete={() => handleDelete(item)}
+          />
         )}
       />
       <CatalogFormModal
@@ -66,6 +81,16 @@ export default function CondicionesTrabajoPage() {
         onSubmit={isEditMode ? handleUpdate : handleAdd}
         title={isEditMode ? "Editar Condición" : "Añadir Condición de Trabajo"}
         fields={[{ name: 'nombre_trabajo', label: 'Nombre de la Condición', required: true, defaultValue: isEditMode ? editingItem?.nombre_trabajo : undefined }]}
+      />
+      <CatalogViewModal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        title="Detalles de Condición de Trabajo"
+        fields={[
+          { label: "ID Condición", value: viewItem?.id_trabajo, icon: Hash },
+          { label: "Nombre Condición", value: viewItem?.nombre_trabajo, icon: FileText, fullWidth: true },
+          { label: "Habilitado", value: viewItem?.habilitado, icon: CheckCircle2 }
+        ]}
       />
     </>
   );

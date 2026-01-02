@@ -104,10 +104,10 @@ function Filter({
       const isInsideMenu = menuRef.current?.contains(target);
       const isInsideSubmenu = submenuRef.current?.contains(target);
       const isInsideTrigger = triggerRef.current?.contains(target);
-      
+
       // Verificar si el clic está dentro del calendario del DatePicker (que usa createPortal)
       const isInsideDatePicker = (target as Element).closest?.('.datepicker-portal') !== null;
-      
+
       // Si el submenú de fechas está activo, no cerrar el menú principal al hacer clic dentro del submenú
       // Esto permite que los DatePicker funcionen correctamente
       if (activeSubmenu === 'fechas' && isInsideSubmenu) {
