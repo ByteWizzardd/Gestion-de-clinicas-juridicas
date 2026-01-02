@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import Tabs from '@/components/ui/Tabs';
@@ -26,6 +26,7 @@ import { getCurrentUserAction } from '@/app/actions/auth';
 export default function CaseDetailClient() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const id = params.id as string;
 
   const [caso, setCaso] = useState<any>(null);
@@ -37,7 +38,11 @@ export default function CaseDetailClient() {
   const [showAddBeneficiaryModal, setShowAddBeneficiaryModal] = useState(false);
   const [changingStatus, setChangingStatus] = useState(false);
   const [userRol, setUserRol] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>('general');
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    // Si viene el parámetro tab en la URL, usarlo como pestaña inicial
+    const tabParam = searchParams.get('tab');
+    return tabParam === 'acciones' ? 'acciones' : 'general';
+  });
 
   const fetchCaso = useCallback(async () => {
     const idCaso = parseInt(id, 10);

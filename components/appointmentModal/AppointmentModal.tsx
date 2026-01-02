@@ -14,6 +14,7 @@ import ConfirmModal from "../ui/feedback/ConfirmModal";
 import { X, Calendar } from "lucide-react";
 import { formatDate } from "@/lib/utils/date-formatter";
 import type { Appointment } from "@/types/appointment";
+import { useRouter } from "next/navigation";
 interface AppointmentModalProps {
   onClose: () => void;
   onSave: () => void;
@@ -31,6 +32,7 @@ interface FormData {
 
 export function AppointmentModal({ onClose, onSave, initialDate, appointment }: AppointmentModalProps) {
   const isEditing = !!appointment;
+  const router = useRouter();
 
   // Extraer el ID del caso del caseDetail si estamos editando
   const extractCaseId = (caseDetail: string): string => {
@@ -254,83 +256,91 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
     setSuccess(false);
     setLoading(true);
 
-    let result;
+    try {
+      let result;
 
-    if (isEditing && appointment) {
-      // Modo edición
-      // Construir objeto de actualización con los campos modificados
-      const updateParams: {
-        appointmentId: string;
-        date?: string;
-        endDate?: string | null;
-        orientacion?: string;
-        usuariosAtienden?: string[];
-      } = {
-        appointmentId: appointment.id,
-      };
-
-      // Incluir fecha si está presente (siempre se envía si hay fecha)
-      if (date) {
-        updateParams.date = date.toISOString().slice(0, 10);
-      }
-
-      // Manejar fecha de próxima cita
-      // Si endDate es null, significa que el usuario quiere eliminar la fecha
-      // Si endDate es undefined, no se envía (no se modifica)
-      if (endDate !== undefined) {
-        updateParams.endDate = endDate ? endDate.toISOString().slice(0, 10) : null;
-      }
-
-      // Incluir orientación si está presente y no está vacía
-      if (orientacion && orientacion.trim()) {
-        updateParams.orientacion = orientacion.trim();
-      }
-
-      // Incluir usuarios si hay seleccionados
-      if (usuariosAtienden.length > 0) {
-        updateParams.usuariosAtienden = usuariosAtienden;
-      }
-
-      result = await updateCitaAction(updateParams);
-    } else {
-      // Modo creación
-      result = await createCitaAction({
-        caseId: Number(selectedCaseID),
-        date: date ? date.toISOString().slice(0, 10) : "",
-        endDate: endDate ? endDate.toISOString().slice(0, 10) : undefined,
-        orientacion,
-        usuariosAtienden: usuariosAtienden,
-      });
-    }
-
-    setLoading(false);
-    if (result.success && result.data) {
-      setSuccess(true);
-
-      if (isEditing) {
-        // Modo edición: cerrar modal y recargar datos normalmente
-        setDate(initialDate || null);
-        setEndDate(null);
-        setSelectedCaseID("");
-        setOrientacion("");
-        setUsuariosAtienden([]);
-        setErrors({});
-        onSave();
-        if (onClose) onClose();
-      } else {
-        // Modo creación: guardar datos de la cita y mostrar modal de confirmación
-        const citaData = {
-          id_caso: Number(selectedCaseID),
-          fecha: date ? date.toISOString().slice(0, 10) : "",
-          orientacion: orientacion.trim(),
-          usuariosAtienden: usuariosAtienden,
+      if (isEditing && appointment) {
+        // Modo edición
+        // Construir objeto de actualización con los campos modificados
+        const updateParams: {
+          appointmentId: string;
+          date?: string;
+          endDate?: string | null;
+          orientacion?: string;
+          usuariosAtienden?: string[];
+        } = {
+          appointmentId: appointment.id,
         };
-        setCitaCreada(citaData);
-        setShowActionConfirmModal(true);
-        // NO cerrar el modal todavía, esperar respuesta del usuario
+
+        // Incluir fecha si está presente (siempre se envía si hay fecha)
+        if (date) {
+          updateParams.date = date.toISOString().slice(0, 10);
+        }
+
+        // Manejar fecha de próxima cita
+        // Si endDate es null, significa que el usuario quiere eliminar la fecha
+        // Si endDate es undefined, no se envía (no se modifica)
+        if (endDate !== undefined) {
+          updateParams.endDate = endDate ? endDate.toISOString().slice(0, 10) : null;
+        }
+
+        // Incluir orientación si está presente y no está vacía
+        if (orientacion && orientacion.trim()) {
+          updateParams.orientacion = orientacion.trim();
+        }
+
+        // Incluir usuarios si hay seleccionados
+        if (usuariosAtienden.length > 0) {
+          updateParams.usuariosAtienden = usuariosAtienden;
+        }
+
+        result = await updateCitaAction(updateParams);
+      } else {
+        // Modo creación
+        result = await createCitaAction({
+          caseId: Number(selectedCaseID),
+          date: date ? date.toISOString().slice(0, 10) : "",
+          endDate: endDate ? endDate.toISOString().slice(0, 10) : undefined,
+          orientacion,
+          usuariosAtienden: usuariosAtienden,
+        });
       }
-    } else {
-      setError(result.error?.message || (isEditing ? "Error al actualizar la cita" : "Error al crear la cita"));
+
+      setLoading(false);
+
+      if (result.success && result.data) {
+        setSuccess(true);
+
+        if (isEditing) {
+          // Modo edición: cerrar modal y recargar datos normalmente
+          setDate(initialDate || null);
+          setEndDate(null);
+          setSelectedCaseID("");
+          setOrientacion("");
+          setUsuariosAtienden([]);
+          setErrors({});
+          onSave();
+          if (onClose) onClose();
+        } else {
+          // Modo creación: guardar datos de la cita y mostrar modal de confirmación
+          const citaData = {
+            id_caso: Number(selectedCaseID),
+            fecha: date ? date.toISOString().slice(0, 10) : "",
+            orientacion: orientacion.trim(),
+            usuariosAtienden: usuariosAtienden,
+          };
+          setCitaCreada(citaData);
+          setShowActionConfirmModal(true);
+          // NO cerrar el modal todavía, esperar respuesta del usuario
+        }
+      } else {
+        setError(result.error?.message || (isEditing ? "Error al actualizar la cita" : "Error al crear la cita"));
+      }
+    } catch (error) {
+      console.error('Error al guardar cita:', error);
+      setLoading(false);
+      setError('Error al guardar la cita. Por favor, inténtelo de nuevo.');
+      setSuccess(false);
     }
   };
 
@@ -367,28 +377,29 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
       setCreatingAction(false);
 
       if (result.success) {
+        // Guardar el id_caso antes de limpiar el estado
+        const idCasoParaRedireccion = citaCreada.id_caso;
+        
         // Cerrar modal de confirmación
         setShowActionConfirmModal(false);
         // Marcar acción como registrada
         setActionRegistered(true);
         setError(null);
-        // Limpiar formulario después de un breve delay para mostrar el mensaje
+        // Limpiar formulario y cerrar modal inmediatamente
+        setDate(initialDate || null);
+        setEndDate(null);
+        setSelectedCaseID("");
+        setOrientacion("");
+        setUsuariosAtienden([]);
+        setErrors({});
+        setIsOpen(false);
+        setCitaCreada(null);
+        if (onClose) onClose();
+        
+        // Después de crear la acción exitosamente, redirigir al detalle del caso
         setTimeout(() => {
-          setDate(initialDate || null);
-          setEndDate(null);
-          setSelectedCaseID("");
-          setOrientacion("");
-          setUsuariosAtienden([]);
-          setErrors({});
-          // Cerrar modal de cita
-          setIsOpen(false);
-          setTimeout(() => {
-            setCitaCreada(null);
-            if (onClose) onClose();
-          }, 200);
-        }, 2000);
-        // Recargar datos
-        onSave();
+          router.push(`/dashboard/cases/${idCasoParaRedireccion}?tab=acciones`);
+        }, 500);
       } else {
         // Error al crear la acción (pero la cita ya está guardada)
         setError(result.error?.message || "Error al crear la acción. La cita fue guardada correctamente.");

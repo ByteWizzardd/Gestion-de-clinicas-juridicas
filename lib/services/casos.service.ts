@@ -171,14 +171,8 @@ export const casosService = {
             }
 
             // Obtener información relacionada en paralelo
-            const [
-                beneficiarios,
-                equipo,
-                acciones,
-                citas,
-                cambiosEstatus,
-                soportes
-            ] = await Promise.all([
+            // Usar Promise.allSettled para capturar errores individuales
+            const results = await Promise.allSettled([
                 beneficiariosQueries.getByCaso(idCaso),
                 asignacionesQueries.getEquipoByCaso(idCaso),
                 accionesQueries.getByCaso(idCaso),
@@ -186,6 +180,28 @@ export const casosService = {
                 cambiosEstatusQueries.getByCaso(idCaso),
                 soportesQueries.getByCaso(idCaso)
             ]);
+
+            const queryNames = ['beneficiarios', 'equipo', 'acciones', 'citas', 'cambiosEstatus', 'soportes'];
+            const errors: string[] = [];
+
+            // Procesar resultados y capturar errores
+            const beneficiarios = results[0].status === 'fulfilled' ? results[0].value : (errors.push(`${queryNames[0]}: ${results[0].reason instanceof Error ? results[0].reason.message : String(results[0].reason)}`), []);
+            const equipo = results[1].status === 'fulfilled' ? results[1].value : (errors.push(`${queryNames[1]}: ${results[1].reason instanceof Error ? results[1].reason.message : String(results[1].reason)}`), []);
+            const acciones = results[2].status === 'fulfilled' ? results[2].value : (errors.push(`${queryNames[2]}: ${results[2].reason instanceof Error ? results[2].reason.message : String(results[2].reason)}`), []);
+            const citas = results[3].status === 'fulfilled' ? results[3].value : (errors.push(`${queryNames[3]}: ${results[3].reason instanceof Error ? results[3].reason.message : String(results[3].reason)}`), []);
+            const cambiosEstatus = results[4].status === 'fulfilled' ? results[4].value : (errors.push(`${queryNames[4]}: ${results[4].reason instanceof Error ? results[4].reason.message : String(results[4].reason)}`), []);
+            const soportes = results[5].status === 'fulfilled' ? results[5].value : (errors.push(`${queryNames[5]}: ${results[5].reason instanceof Error ? results[5].reason.message : String(results[5].reason)}`), []);
+
+            // Si hay errores, lanzar con información detallada
+            if (errors.length > 0) {
+                const errorDetails = errors.join('; ');
+                console.error(`[getCasoByIdCompleto] Errores en queries para caso ${idCaso}:`, errorDetails);
+                throw new AppError(
+                    `Error al obtener información relacionada del caso: ${errorDetails}`,
+                    500,
+                    'CASO_ERROR'
+                );
+            }
 
             return {
                 ...caso,
@@ -200,10 +216,14 @@ export const casosService = {
             if (error instanceof NotFoundError) {
                 throw error;
             }
+            if (error instanceof AppError) {
+                throw error;
+            }
+            const originalMessage = error instanceof Error ? error.message : 'Error desconocido';
             throw new AppError(
-                'Error al obtener el caso completo',
+                `Error al obtener el caso completo: ${originalMessage}`,
                 500,
-                error instanceof Error ? error.message : 'Error desconocido'
+                'CASO_ERROR'
             );
         }
     },

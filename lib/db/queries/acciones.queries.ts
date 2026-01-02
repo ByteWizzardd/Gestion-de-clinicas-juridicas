@@ -54,8 +54,8 @@ export const accionesQueries = {
     // Parsear el JSON de ejecutores
     return result.rows.map(row => ({
       ...row,
-      ejecutores: typeof row.ejecutores === 'string' 
-        ? JSON.parse(row.ejecutores) 
+      ejecutores: typeof row.ejecutores === 'string'
+        ? JSON.parse(row.ejecutores)
         : row.ejecutores || []
     }));
   },
