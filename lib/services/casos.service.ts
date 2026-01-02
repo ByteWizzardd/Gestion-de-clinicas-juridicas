@@ -15,13 +15,13 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 const getCasoByIdQuery = readFileSync(
-  join(process.cwd(), 'database/queries/casos/get-by-id.sql'),
-  'utf8'
+    join(process.cwd(), 'database/queries/casos/get-by-id.sql'),
+    'utf8'
 );
 
 const getCaseIdsQuery = readFileSync(
-  join(process.cwd(), 'database/queries/casos/get-by-id-case.sql'),
-  'utf8'
+    join(process.cwd(), 'database/queries/casos/get-by-id-case.sql'),
+    'utf8'
 );
 
 /**
@@ -38,7 +38,7 @@ export const casosService = {
         try {
             // Usar la query optimizada que incluye el profesor responsable en un JOIN
             const casos = await casosQueries.getAllWithProfesor();
-            
+
             // El nombre_responsable ya viene del JOIN, solo asegurar que sea null si está vacío
             return casos.map(caso => ({
                 ...caso,
@@ -121,7 +121,7 @@ export const casosService = {
                 fecha_inicio_caso: validatedData.fecha_inicio_caso,
                 cedulaUsuarioRegistra: cedulaUsuario, // Pasar la cédula del usuario que registra (para variable de sesión del trigger)
             };
-            
+
             // Crear el caso - el trigger automáticamente creará el cambio_estatus inicial
             const nuevoCaso = await casosQueries.create(casoData);
 
@@ -138,7 +138,7 @@ export const casosService = {
             if (error && typeof error === 'object' && 'issues' in error) {
                 const zodError = error as { issues: Array<{ path: (string | number)[]; message: string }> };
                 const fields: Record<string, string[]> = {};
-                
+
                 zodError.issues.forEach((issue) => {
                     const path = issue.path.join('.');
                     if (!fields[path]) {

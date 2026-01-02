@@ -6,11 +6,13 @@ import Modal from "../ui/feedback/Modal";
 import Select from "../forms/Select";
 import MultiSelect from "../forms/MultiSelect";
 import { createCitaAction, updateCitaAction } from "@/app/actions/citas";
-import { getCaseIdsAction } from "@/app/actions/casos";
+import { getCaseIdsAction, createAccionAction } from "@/app/actions/casos";
 import { getUsuariosAction } from "@/app/actions/usuarios";
 import TextArea from "../forms/TextArea";
 import Button from "../ui/Button";
+import ConfirmModal from "../ui/feedback/ConfirmModal";
 import { X, Calendar } from "lucide-react";
+import { formatDate } from "@/lib/utils/date-formatter";
 import type { Appointment } from "@/types/appointment";
 interface AppointmentModalProps {
   onClose: () => void;
@@ -29,7 +31,7 @@ interface FormData {
 
 export function AppointmentModal({ onClose, onSave, initialDate, appointment }: AppointmentModalProps) {
   const isEditing = !!appointment;
-  
+
   // Extraer el ID del caso del caseDetail si estamos editando
   const extractCaseId = (caseDetail: string): string => {
     const match = caseDetail.match(/C-(\d+)/);
@@ -62,6 +64,17 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
   const [isOpen, setIsOpen] = useState(true);
   const [caseOptions, setCaseOptions] = useState<{ value: string; label: string }[]>([]);
   const [usuarioOptions, setUsuarioOptions] = useState<{ value: string; label: string }[]>([]);
+
+  // Estados para el modal de confirmación de acción
+  const [showActionConfirmModal, setShowActionConfirmModal] = useState(false);
+  const [creatingAction, setCreatingAction] = useState(false);
+  const [citaCreada, setCitaCreada] = useState<{
+    id_caso: number;
+    fecha: string;
+    orientacion: string;
+    usuariosAtienden: string[];
+  } | null>(null);
+  const [actionRegistered, setActionRegistered] = useState(false);
 
   useEffect(() => {
     async function fetchCaseIds() {
@@ -201,7 +214,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
     } else if (field === 'usuariosAtienden') {
       setUsuariosAtienden(value as string[]);
     }
-    
+
     // Limpiar error del campo cuando se modifica
     if (errors[field]) {
       setErrors((prev) => {
@@ -232,7 +245,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -242,7 +255,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
     setLoading(true);
 
     let result;
-    
+
     if (isEditing && appointment) {
       // Modo edición
       // Construir objeto de actualización con los campos modificados
@@ -293,18 +306,120 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
     setLoading(false);
     if (result.success && result.data) {
       setSuccess(true);
-      // Limpiar el formulario tras éxito
-      setDate(initialDate || null);
-      setEndDate(null);
-      setSelectedCaseID("");
-      setOrientacion("");
-      setUsuariosAtienden([]);
-      setErrors({});
-      onSave();
-      if (onClose) onClose();
+
+      if (isEditing) {
+        // Modo edición: cerrar modal y recargar datos normalmente
+        setDate(initialDate || null);
+        setEndDate(null);
+        setSelectedCaseID("");
+        setOrientacion("");
+        setUsuariosAtienden([]);
+        setErrors({});
+        onSave();
+        if (onClose) onClose();
+      } else {
+        // Modo creación: guardar datos de la cita y mostrar modal de confirmación
+        const citaData = {
+          id_caso: Number(selectedCaseID),
+          fecha: date ? date.toISOString().slice(0, 10) : "",
+          orientacion: orientacion.trim(),
+          usuariosAtienden: usuariosAtienden,
+        };
+        setCitaCreada(citaData);
+        setShowActionConfirmModal(true);
+        // NO cerrar el modal todavía, esperar respuesta del usuario
+      }
     } else {
       setError(result.error?.message || (isEditing ? "Error al actualizar la cita" : "Error al crear la cita"));
     }
+  };
+
+  const handleCreateAction = async () => {
+    if (!citaCreada) return;
+
+    setCreatingAction(true);
+    setError(null);
+
+    try {
+      // Construir detalle de la acción
+      const detalleAccion = `Cita realizada el ${formatDate(citaCreada.fecha)}`;
+
+      // Construir ejecutores
+      const ejecutores = citaCreada.usuariosAtienden.length > 0
+        ? citaCreada.usuariosAtienden.map(cedula => ({
+          idUsuario: cedula,
+          fechaEjecucion: citaCreada.fecha, // YYYY-MM-DD
+        }))
+        : undefined;
+
+      // Comentario: usar orientación si no está vacía
+      const comentario = citaCreada.orientacion.trim() || undefined;
+
+      // Crear la acción
+      const result = await createAccionAction(
+        citaCreada.id_caso,
+        detalleAccion,
+        comentario,
+        ejecutores,
+        undefined // fechaRegistro: usa fecha actual automáticamente
+      );
+
+      setCreatingAction(false);
+
+      if (result.success) {
+        // Cerrar modal de confirmación
+        setShowActionConfirmModal(false);
+        // Marcar acción como registrada
+        setActionRegistered(true);
+        setError(null);
+        // Limpiar formulario después de un breve delay para mostrar el mensaje
+        setTimeout(() => {
+          setDate(initialDate || null);
+          setEndDate(null);
+          setSelectedCaseID("");
+          setOrientacion("");
+          setUsuariosAtienden([]);
+          setErrors({});
+          // Cerrar modal de cita
+          setIsOpen(false);
+          setTimeout(() => {
+            setCitaCreada(null);
+            if (onClose) onClose();
+          }, 200);
+        }, 2000);
+        // Recargar datos
+        onSave();
+      } else {
+        // Error al crear la acción (pero la cita ya está guardada)
+        setError(result.error?.message || "Error al crear la acción. La cita fue guardada correctamente.");
+        // Permitir cerrar el modal de confirmación para continuar
+        setShowActionConfirmModal(false);
+      }
+    } catch (error) {
+      setCreatingAction(false);
+      setError(error instanceof Error ? error.message : "Error al crear la acción. La cita fue guardada correctamente.");
+      setShowActionConfirmModal(false);
+    }
+  };
+
+  const handleCancelAction = () => {
+    // Cerrar modal de confirmación
+    setShowActionConfirmModal(false);
+    // Limpiar formulario
+    setDate(initialDate || null);
+    setEndDate(null);
+    setSelectedCaseID("");
+    setOrientacion("");
+    setUsuariosAtienden([]);
+    setErrors({});
+    setCitaCreada(null);
+    // Cerrar modal de cita
+    setIsOpen(false);
+    setTimeout(() => {
+      if (onClose) onClose();
+    }, 200);
+    // Recargar datos
+    onSave();
   };
 
   return (
@@ -421,11 +536,9 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
                 Orientación <span className="text-danger">*</span>
               </label>
               <textarea
-                className={`w-full px-4 py-3 rounded-lg border bg-[#E5E7EB] ${
-                  errors.orientacion ? 'border-danger' : 'border-transparent'
-                } focus:outline-none focus:ring-1 ${
-                  errors.orientacion ? 'focus:ring-danger' : 'focus:ring-primary'
-                } text-base placeholder:text-[#717171] resize-none`}
+                className={`w-full px-4 py-3 rounded-lg border bg-[#E5E7EB] ${errors.orientacion ? 'border-danger' : 'border-transparent'
+                  } focus:outline-none focus:ring-1 ${errors.orientacion ? 'focus:ring-danger' : 'focus:ring-primary'
+                  } text-base placeholder:text-[#717171] resize-none`}
                 placeholder="Escribe aquí la orientación..."
                 maxLength={500}
                 value={orientacion}
@@ -447,7 +560,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
           )}
           {success && (
             <div className="col-span-3 text-success mb-2">
-              {isEditing ? '¡Cita actualizada exitosamente!' : '¡Cita creada exitosamente!'}
+              {isEditing ? '¡Cita actualizada exitosamente!' : '¡Cita registrada exitosamente!'}
             </div>
           )}
         </form>
@@ -459,16 +572,28 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
             <span className="text-danger font-medium text-sm">*</span>
             <span className="text-sm text-gray-600">Campo obligatorio</span>
           </div>
-          
+
           <div className="flex justify-end">
             <Button variant="primary" size="xl" onClick={handleSubmit} disabled={loading}>
-              {loading 
-                ? (isEditing ? 'Actualizando...' : 'Registrando...') 
+              {loading
+                ? (isEditing ? 'Actualizando...' : 'Registrando...')
                 : (isEditing ? 'Actualizar Cita' : 'Registrar Cita')}
             </Button>
           </div>
         </div>
       </div>
+
+      {/* Modal de confirmación para registrar como acción */}
+      <ConfirmModal
+        isOpen={showActionConfirmModal}
+        onClose={handleCancelAction}
+        onConfirm={handleCreateAction}
+        title="Confirmación"
+        message="Se ha registrado la cita. ¿Desea agregarla también al historial de acciones del caso?"
+        confirmLabel="Sí, agregar"
+        cancelLabel="No, solo cita"
+        disabled={creatingAction}
+      />
     </Modal>
   );
 }
