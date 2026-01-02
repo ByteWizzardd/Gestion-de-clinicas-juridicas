@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { getCitasAction } from '@/app/actions/citas';
+import { getCitasAction, deleteCitaAction } from '@/app/actions/citas';
 import CalendarWidget from '@/components/ui/calendar/CalendarWidget';
 import AppointmentList from '@/components/cards/AppointmentList';
 import AppointmentCardList from './AppointmentCardList';
@@ -15,6 +15,7 @@ import { AppointmentModal } from '../appointmentModal/AppointmentModal';
 import { AppointmentDetailModal } from '../appointmentModal/AppointmentDetailModal';
 import { AppointmentScheduleModal } from '../appointmentModal/AppointmentScheduleModal';
 import NewAppointmentButton from './NewAppointmentButton';
+import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 
 interface AppointmentFilterOptions {
   nucleos: Array<{ id_nucleo: number; nombre_nucleo: string }>;
@@ -48,6 +49,9 @@ export default function AppointmentsClient({
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+  const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   
   // Filtros
@@ -280,22 +284,52 @@ export default function AppointmentsClient({
     setShowModal(true);
   };
 
-  // Manejar eliminación de cita
-  const handleDeleteAppointment = async (appointment: Appointment) => {
-    const confirmDelete = window.confirm(
-      `¿Está seguro de que desea eliminar la cita del ${formatDate(appointment.date)}?`
-    );
-    if (confirmDelete) {
-      // TODO: Implementar acción de eliminar cita
-      console.log('Eliminar cita:', appointment);
-      // Recargar citas después de eliminar
-      const result = await getCitasAction();
-      if (result.success && result.data) {
-        if (Array.isArray(result.data)) {
-          setAppointments(result.data.map((apt: Appointment) => ({ ...apt, date: new Date(apt.date) })));
+  // Manejar eliminación de cita - Abre el modal de confirmación
+  const handleDeleteAppointment = (appointment: Appointment) => {
+    setAppointmentToDelete(appointment);
+    setShowDeleteConfirmModal(true);
+  };
+
+  // Confirmar eliminación de cita
+  const handleConfirmDelete = async () => {
+    if (!appointmentToDelete) return;
+
+    setIsDeleting(true);
+    
+    try {
+      // Eliminar la cita
+      const deleteResult = await deleteCitaAction({
+        appointmentId: appointmentToDelete.id,
+      });
+
+      if (deleteResult.success) {
+        // Cerrar el modal
+        setShowDeleteConfirmModal(false);
+        setAppointmentToDelete(null);
+        
+        // Recargar citas después de eliminar
+        const result = await getCitasAction();
+        if (result.success && result.data) {
+          if (Array.isArray(result.data)) {
+            setAppointments(result.data.map((apt: Appointment) => ({ ...apt, date: new Date(apt.date) })));
+          }
         }
+      } else {
+        // Mostrar error si la eliminación falló
+        alert(deleteResult.error?.message || 'Error al eliminar la cita');
       }
+    } catch (error) {
+      alert('Error inesperado al eliminar la cita');
+      console.error('Error al eliminar cita:', error);
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  // Cancelar eliminación
+  const handleCancelDelete = () => {
+    setShowDeleteConfirmModal(false);
+    setAppointmentToDelete(null);
   };
 
   const formatDate = (date: Date) => {
@@ -464,6 +498,7 @@ export default function AppointmentsClient({
             onClose={handleModalClose}
             onSave={handleModalSave}
             initialDate={modalDate || selectedDate}
+            appointment={editingAppointment}
           />
         )}
       </AnimatePresence>
@@ -483,6 +518,35 @@ export default function AppointmentsClient({
           />
         )}
       </AnimatePresence>
+
+      {/* Modal de confirmación para eliminar cita */}
+      <ConfirmModal
+        isOpen={showDeleteConfirmModal}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Eliminar cita"
+        message={
+          appointmentToDelete ? (
+            <div>
+              <p className="mb-2">
+                ¿Está seguro de que desea eliminar la cita del{' '}
+                <strong>{formatDate(appointmentToDelete.date)}</strong>?
+              </p>
+              <p className="mb-2">
+                <strong>Caso:</strong> {appointmentToDelete.caseDetail}
+              </p>
+              <p className="text-sm text-gray-600">
+                Esta acción no se puede deshacer.
+              </p>
+            </div>
+          ) : (
+            '¿Está seguro de que desea eliminar esta cita?'
+          )
+        }
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        disabled={isDeleting}
+      />
     </div>
   );
 }

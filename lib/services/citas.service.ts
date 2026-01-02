@@ -189,11 +189,23 @@ export const citasService = {
         // 1. Actualizar la cita si hay cambios
         if (params.date || params.endDate !== undefined || params.orientacion) {
           const updateQuery = await import('@/lib/db/sql-loader').then(m => m.loadSQL('citas/update.sql'));
+          
+          // Manejar fecha_proxima_cita: si es null explícitamente, enviar 'NULL' como string
+          // Si es undefined, enviar null para no actualizar
+          let endDateParam: string | null;
+          if (params.endDate === null) {
+            endDateParam = 'NULL'; // String especial para establecer como NULL
+          } else if (params.endDate !== undefined) {
+            endDateParam = params.endDate;
+          } else {
+            endDateParam = null; // No actualizar
+          }
+          
           const citaResult = await client.query(updateQuery, [
             num_cita,
             id_caso,
             params.date || null,
-            params.endDate !== undefined ? params.endDate : null,
+            endDateParam,
             params.orientacion || null
           ]);
 
@@ -231,6 +243,55 @@ export const citasService = {
       console.error('Error al actualizar la cita (detalle DB):', error);
       throw new AppError(
         "Error al actualizar la cita",
+        500,
+        error instanceof Error ? error.message : "Error desconocido"
+      );
+    }
+  },
+
+  /**
+   * Elimina una cita existente y todos sus registros relacionados
+   */
+  async deleteAppointment(params: {
+    appointmentId: string; // Formato: "cita-{num_cita}-{id_caso}-{timestamp}"
+  }): Promise<{ num_cita: number; id_caso: number }> {
+    try {
+      // Parsear el ID del appointment para obtener num_cita e id_caso
+      // Formato: "cita-{num_cita}-{id_caso}-{timestamp}"
+      const idParts = params.appointmentId.split('-');
+      if (idParts.length < 3 || idParts[0] !== 'cita') {
+        throw new AppError('ID de cita inválido', 400);
+      }
+
+      const num_cita = parseInt(idParts[1], 10);
+      const id_caso = parseInt(idParts[2], 10);
+
+      if (isNaN(num_cita) || isNaN(id_caso)) {
+        throw new AppError('ID de cita inválido: no se pudieron extraer num_cita e id_caso', 400);
+      }
+
+      // Usar transacción para eliminar registros relacionados y la cita de forma atómica
+      return await withTransaction(async (client) => {
+        // 1. Eliminar todos los registros de atienden relacionados con esta cita
+        const { loadSQL } = await import('@/lib/db/sql-loader');
+        const deleteAtiendenQuery = loadSQL('atienden/delete-by-cita.sql');
+        await client.query(deleteAtiendenQuery, [num_cita, id_caso]);
+
+        // 2. Eliminar la cita
+        const deleteCitaQuery = loadSQL('citas/delete.sql');
+        const citaResult = await client.query(deleteCitaQuery, [num_cita, id_caso]);
+
+        if (!citaResult.rows || citaResult.rows.length === 0) {
+          throw new AppError("No se pudo eliminar la cita. Verifique que la cita existe.", 404);
+        }
+
+        return { num_cita, id_caso };
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error al eliminar la cita (detalle DB):', error);
+      throw new AppError(
+        "Error al eliminar la cita",
         500,
         error instanceof Error ? error.message : "Error desconocido"
       );

@@ -313,3 +313,63 @@ export async function updateCitaAction(params: UpdateCitaParams): Promise<GetCit
     };
   }
 }
+
+export interface DeleteCitaParams {
+  appointmentId: string;
+}
+
+/**
+ * Server Action para eliminar una cita existente
+ */
+export async function deleteCitaAction(params: DeleteCitaParams): Promise<GetCitasResult> {
+  try {
+    // Verificar autenticación usando la función centralizada
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    // Validar formato de appointmentId
+    if (!params.appointmentId || !params.appointmentId.startsWith('cita-')) {
+      return {
+        success: false,
+        error: {
+          message: 'ID de cita inválido',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Eliminar la cita
+    const deletedCita = await citasService.deleteAppointment({
+      appointmentId: params.appointmentId,
+    });
+
+    return {
+      success: true,
+      data: deletedCita,
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'CITA_ERROR',
+        },
+      };
+    }
+
+    console.error('Error en deleteCitaAction:', error);
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al eliminar la cita',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  }
+}

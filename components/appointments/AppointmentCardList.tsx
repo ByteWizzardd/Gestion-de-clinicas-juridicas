@@ -159,15 +159,6 @@ export default function AppointmentCardList({
                     </div>
                   </div>
                 )}
-
-                {/* Título/Materia */}
-                {appointment.title && (
-                  <div className="pt-3 border-t border-gray-100">
-                    <p className="text-sm font-medium text-primary truncate">
-                      {appointment.title}
-                    </p>
-                  </div>
-                )}
               </div>
             </motion.div>
           ))}
