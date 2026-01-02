@@ -1,4 +1,4 @@
-import { Users, Briefcase, Calendar, User, Table, LayoutGrid, Clock } from 'lucide-react';
+import { Users, Briefcase, Calendar, User, Table, LayoutGrid, Clock, History } from 'lucide-react';
 
 export type UserRole = 'coordinator' | 'professor' | 'student';
 
@@ -67,6 +67,12 @@ export const fullMenu: MenuItem[] = [
     href: '/dashboard/reports',
     icon: Clock,
     roles: ['coordinator', 'professor', 'student'],
+  },
+  {
+    label: 'Auditoría',
+    href: '/dashboard/audit',
+    icon: History,
+    roles: ['coordinator'],
   },
 ];
 

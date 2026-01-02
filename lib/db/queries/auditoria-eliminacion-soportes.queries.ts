@@ -63,4 +63,52 @@ export const auditoriaEliminacionSoportesQueries = {
       fecha_eliminacion: result.rows[0].fecha_eliminacion,
     };
   },
+
+  /**
+   * Obtiene el conteo total de soportes eliminados
+   */
+  getCount: async (): Promise<number> => {
+    const query = loadSQL('auditoria-eliminacion-soportes/get-count.sql');
+    const result: QueryResult = await pool.query(query);
+    return parseInt(result.rows[0].total, 10);
+  },
+
+  /**
+   * Obtiene todos los soportes eliminados con filtros opcionales
+   */
+  getAll: async (filters?: {
+    fechaInicio?: string;
+    fechaFin?: string;
+    idUsuario?: string;
+    busqueda?: string;
+  }): Promise<Array<{
+    id: number;
+    num_soporte: number;
+    id_caso: number;
+    nombre_archivo: string;
+    tipo_mime: string | null;
+    descripcion: string | null;
+    fecha_consignacion: string | null;
+    fecha_subida: string | null;
+    fecha_eliminacion: string;
+    tamano_bytes: number | null;
+    id_usuario_subio: string | null;
+    nombres_usuario_subio: string | null;
+    apellidos_usuario_subio: string | null;
+    nombre_completo_usuario_subio: string | null;
+    id_usuario_elimino: string;
+    nombres_usuario_elimino: string | null;
+    apellidos_usuario_elimino: string | null;
+    nombre_completo_usuario_elimino: string | null;
+    motivo: string | null;
+  }>> => {
+    const query = loadSQL('auditoria-eliminacion-soportes/get-all.sql');
+    const result: QueryResult = await pool.query(query, [
+      filters?.fechaInicio || null,
+      filters?.fechaFin || null,
+      filters?.idUsuario || null,
+      filters?.busqueda || null,
+    ]);
+    return result.rows;
+  },
 };

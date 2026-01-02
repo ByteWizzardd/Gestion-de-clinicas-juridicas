@@ -66,4 +66,49 @@ export const auditoriaEliminacionCitasQueries = {
     }
     return result.rows[0];
   },
+
+  /**
+   * Obtiene el conteo total de citas eliminadas
+   */
+  getCount: async (): Promise<number> => {
+    const query = loadSQL('auditoria-eliminacion-citas/get-count.sql');
+    const result: QueryResult = await pool.query(query);
+    return parseInt(result.rows[0].total, 10);
+  },
+
+  /**
+   * Obtiene todas las citas eliminadas con filtros opcionales
+   */
+  getAll: async (filters?: {
+    fechaInicio?: string;
+    fechaFin?: string;
+    idUsuario?: string;
+    busqueda?: string;
+  }): Promise<Array<{
+    id: number;
+    num_cita: number;
+    id_caso: number;
+    fecha_encuentro: string;
+    fecha_proxima_cita: string | null;
+    orientacion: string;
+    fecha_eliminacion: string;
+    id_usuario_registro: string | null;
+    nombres_usuario_registro: string | null;
+    apellidos_usuario_registro: string | null;
+    nombre_completo_usuario_registro: string | null;
+    id_usuario_elimino: string;
+    nombres_usuario_elimino: string | null;
+    apellidos_usuario_elimino: string | null;
+    nombre_completo_usuario_elimino: string | null;
+    motivo: string | null;
+  }>> => {
+    const query = loadSQL('auditoria-eliminacion-citas/get-all.sql');
+    const result: QueryResult = await pool.query(query, [
+      filters?.fechaInicio || null,
+      filters?.fechaFin || null,
+      filters?.idUsuario || null,
+      filters?.busqueda || null,
+    ]);
+    return result.rows;
+  },
 };

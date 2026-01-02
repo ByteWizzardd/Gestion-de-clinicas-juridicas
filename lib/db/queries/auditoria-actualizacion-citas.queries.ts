@@ -60,4 +60,47 @@ export const auditoriaActualizacionCitasQueries = {
     const result: QueryResult = await pool.query(query, [idCaso]);
     return result.rows;
   },
+
+  /**
+   * Obtiene el conteo total de citas actualizadas
+   */
+  getCount: async (): Promise<number> => {
+    const query = loadSQL('auditoria-actualizacion-citas/get-count.sql');
+    const result: QueryResult = await pool.query(query);
+    return parseInt(result.rows[0].total, 10);
+  },
+
+  /**
+   * Obtiene todas las citas actualizadas con filtros opcionales
+   */
+  getAll: async (filters?: {
+    fechaInicio?: string;
+    fechaFin?: string;
+    idUsuario?: string;
+    busqueda?: string;
+  }): Promise<Array<{
+    id: number;
+    num_cita: number;
+    id_caso: number;
+    fecha_encuentro_anterior: string | null;
+    fecha_proxima_cita_anterior: string | null;
+    orientacion_anterior: string | null;
+    fecha_encuentro_nueva: string | null;
+    fecha_proxima_cita_nueva: string | null;
+    orientacion_nueva: string | null;
+    id_usuario_actualizo: string;
+    nombres_usuario_actualizo: string | null;
+    apellidos_usuario_actualizo: string | null;
+    nombre_completo_usuario_actualizo: string | null;
+    fecha_actualizacion: string;
+  }>> => {
+    const query = loadSQL('auditoria-actualizacion-citas/get-all.sql');
+    const result: QueryResult = await pool.query(query, [
+      filters?.fechaInicio || null,
+      filters?.fechaFin || null,
+      filters?.idUsuario || null,
+      filters?.busqueda || null,
+    ]);
+    return result.rows;
+  },
 };
