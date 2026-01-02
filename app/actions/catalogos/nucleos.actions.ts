@@ -20,15 +20,10 @@ export async function createNucleo(data: { id_estado: string; id_municipio: stri
         const num_municipio = parseInt(data.id_municipio);
         const num_parroquia = parseInt(data.id_parroquia);
 
-        const maxResult = await pool.query(
-            'SELECT COALESCE(MAX(num_nucleo), 0) + 1 as next_num FROM nucleos WHERE id_estado = $1 AND num_municipio = $2 AND num_parroquia = $3',
-            [id_estado, num_municipio, num_parroquia]
-        );
-        const nextNum = maxResult.rows[0].next_num;
-
+        // id_nucleo es SERIAL, se genera automáticamente
         const result = await pool.query(
-            'INSERT INTO nucleos (id_estado, num_municipio, num_parroquia, num_nucleo, nombre_nucleo) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-            [id_estado, num_municipio, num_parroquia, nextNum, data.nombre_nucleo]
+            'INSERT INTO nucleos (id_estado, num_municipio, num_parroquia, nombre_nucleo) VALUES ($1, $2, $3, $4) RETURNING *',
+            [id_estado, num_municipio, num_parroquia, data.nombre_nucleo]
         );
         revalidatePath('/dashboard/catalogs/nucleos');
         return { success: true, data: result.rows[0] };
@@ -38,11 +33,11 @@ export async function createNucleo(data: { id_estado: string; id_municipio: stri
     }
 }
 
-export async function updateNucleo(id_estado: number, num_municipio: number, num_parroquia: number, num_nucleo: number, data: { nombre_nucleo: string }) {
+export async function updateNucleo(id_nucleo: number, data: { nombre_nucleo: string }) {
     try {
         const result = await pool.query(
-            'UPDATE nucleos SET nombre_nucleo = $5 WHERE id_estado = $1 AND num_municipio = $2 AND num_parroquia = $3 AND num_nucleo = $4 RETURNING *',
-            [id_estado, num_municipio, num_parroquia, num_nucleo, data.nombre_nucleo]
+            'UPDATE nucleos SET nombre_nucleo = $2 WHERE id_nucleo = $1 RETURNING *',
+            [id_nucleo, data.nombre_nucleo]
         );
         if (result.rows.length === 0) return { success: false, error: 'Núcleo no encontrado' };
         revalidatePath('/dashboard/catalogs/nucleos');
@@ -67,13 +62,13 @@ export async function toggleNucleoHabilitado(id_nucleo: number) {
     }
 }
 
-export async function deleteNucleo(id_estado: number, num_municipio: number, num_parroquia: number, num_nucleo: number) {
+export async function deleteNucleo(id_nucleo: number) {
     try {
         const checkResult = await pool.query(
             `SELECT EXISTS (
-                SELECT 1 FROM casos WHERE id_estado = $1 AND num_municipio = $2 AND num_parroquia = $3 AND num_nucleo = $4
+                SELECT 1 FROM casos WHERE id_nucleo = $1
             ) AS has_associations`,
-            [id_estado, num_municipio, num_parroquia, num_nucleo]
+            [id_nucleo]
         );
         if (checkResult.rows[0]?.has_associations === true) {
             return {
@@ -83,8 +78,8 @@ export async function deleteNucleo(id_estado: number, num_municipio: number, num
             };
         }
         const result = await pool.query(
-            'DELETE FROM nucleos WHERE id_estado = $1 AND num_municipio = $2 AND num_parroquia = $3 AND num_nucleo = $4 RETURNING *',
-            [id_estado, num_municipio, num_parroquia, num_nucleo]
+            'DELETE FROM nucleos WHERE id_nucleo = $1 RETURNING *',
+            [id_nucleo]
         );
         if (result.rows.length === 0) return { success: false, error: 'Núcleo no encontrado' };
         revalidatePath('/dashboard/catalogs/nucleos');
