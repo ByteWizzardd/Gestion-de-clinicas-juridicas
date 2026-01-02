@@ -234,9 +234,11 @@ export default function DropdownMenu({
             className={menuClassName}
             onClick={(e) => {
               const target = e.target as HTMLElement;
-              const clickedButton = target.closest('button[data-close-menu]');
-              if (clickedButton) {
+              // Cerrar si se hace clic en un botón, a menos que tenga data-keep-open
+              const clickedButton = target.closest('button');
+              if (clickedButton && !clickedButton.hasAttribute('data-keep-open')) {
                 setIsOpen(false);
+                onOpenChange?.(false);
               }
             }}
           >
