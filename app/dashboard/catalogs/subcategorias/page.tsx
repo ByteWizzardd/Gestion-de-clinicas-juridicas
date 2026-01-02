@@ -62,7 +62,7 @@ export default function SubcategoriasPage() {
             <p className="mb-6 ml-3">Subcategorías dentro de cada categoría</p>
             <CatalogDetailClient
                 data={subcategorias}
-                columns={["ID Materia", "Número Categoría", "Número Subcategoría", "Nombre", "Categoría", "Materia"]}
+                columns={["ID Materia", "ID Categoría", "ID Subcategoría", "Subcategoría", "Categoría", "Materia"]}
                 addLabel="Añadir Subcategoría"
                 onAddClick={() => setIsModalOpen(true)}
                 filterField="id_materia"

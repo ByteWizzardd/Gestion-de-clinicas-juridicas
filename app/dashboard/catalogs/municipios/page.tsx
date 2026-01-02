@@ -46,10 +46,9 @@ export default function MunicipiosPage() {
       <p className="mb-6 ml-3">Municipios de Venezuela</p>
       <CatalogDetailClient
         data={municipios}
-        columns={["ID Estado", "Número Municipio", "Nombre", "Estado"]}
+        columns={["ID Estado", "ID Municipio", "Municipio", "Estado"]}
         addLabel="Añadir Municipio"
         onAddClick={() => setIsModalOpen(true)}
-        disableFilter={true}
       />
       <CatalogFormModal
         isOpen={isModalOpen}

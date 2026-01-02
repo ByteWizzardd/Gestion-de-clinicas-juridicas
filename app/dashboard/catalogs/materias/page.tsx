@@ -46,10 +46,9 @@ export default function MateriasPage() {
 
             <CatalogDetailClient
                 data={materias}
-                columns={["ID", "Nombre"]}
+                columns={["ID Materia", "Materia"]}
                 addLabel="Añadir Materia"
                 onAddClick={() => setIsModalOpen(true)}
-                disableFilter={true}
             />
             <CatalogFormModal
                 isOpen={isModalOpen}

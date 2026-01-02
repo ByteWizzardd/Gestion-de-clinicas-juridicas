@@ -13,3 +13,4 @@ SELECT
     (SELECT COUNT(*) FROM nucleos) as nucleos,
     (SELECT COUNT(*) FROM condicion_trabajo) as condiciones_trabajo,
     (SELECT COUNT(*) FROM condicion_actividad) as condiciones_actividad;
+

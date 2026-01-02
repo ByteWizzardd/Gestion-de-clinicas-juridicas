@@ -37,10 +37,9 @@ export default function TiposCaracteristicasPage() {
       <p className="mb-6 ml-3">Tipos de características de vivienda</p>
       <CatalogDetailClient
         data={tipos}
-        columns={["ID", "Nombre"]}
+        columns={["ID Tipo", "Tipo Característica"]}
         addLabel="Añadir Tipo"
         onAddClick={() => setIsModalOpen(true)}
-        disableFilter={true}
       />
       <CatalogFormModal
         isOpen={isModalOpen}

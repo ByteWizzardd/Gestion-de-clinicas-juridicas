@@ -115,8 +115,7 @@ export default function CatalogFormModal({
                                         type="date"
                                         value={formData[field.name] || ''}
                                         onChange={(e) => updateField(field.name, e.target.value)}
-                                        className={`w-full h-10 px-5 rounded-3xl border ${errors[field.name] ? 'border-danger' : 'border-transparent shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)]'
-                                            } bg-neutral-100 text-neutral-800/90 text-base font-normal focus:outline-none focus:ring-2 focus:ring-primary`}
+                                        className={`w-full h-[40px] px-4 rounded-full border ${errors[field.name] ? 'border-danger' : 'border-transparent'} bg-[#E5E7EB] text-base focus:outline-none focus:ring-1 ${errors[field.name] ? 'focus:ring-danger' : 'focus:ring-primary'}`}
                                     />
                                     {errors[field.name] && (
                                         <p className="text-xs text-danger mt-1">{errors[field.name]}</p>
@@ -132,8 +131,7 @@ export default function CatalogFormModal({
                                         type={field.type || 'text'}
                                         value={formData[field.name] || ''}
                                         onChange={(e) => updateField(field.name, e.target.value)}
-                                        className={`w-full h-10 px-5 rounded-3xl border ${errors[field.name] ? 'border-danger' : 'border-transparent shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)]'
-                                            } bg-neutral-100 text-neutral-800/90 text-base font-normal placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-primary`}
+                                        className={`w-full h-[40px] px-4 rounded-full border ${errors[field.name] ? 'border-danger' : 'border-transparent'} bg-[#E5E7EB] text-base placeholder:text-[#717171] focus:outline-none focus:ring-1 ${errors[field.name] ? 'focus:ring-danger' : 'focus:ring-primary'}`}
                                         placeholder={`Ingrese ${field.label.toLowerCase()}`}
                                     />
                                     {errors[field.name] && (
@@ -147,7 +145,7 @@ export default function CatalogFormModal({
 
                 {/* Footer */}
                 <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-                    <Button variant="secondary" onClick={handleClose}>
+                    <Button variant="outline" onClick={handleClose}>
                         Cancelar
                     </Button>
                     <Button variant="primary" onClick={handleSubmit}>

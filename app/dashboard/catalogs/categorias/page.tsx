@@ -53,7 +53,7 @@ export default function CategoriasPage() {
             <p className="mb-6 ml-3">Clasificaciones dentro de cada materia legal</p>
             <CatalogDetailClient
                 data={categorias}
-                columns={["ID Materia", "Número", "Nombre", "Materia"]}
+                columns={["ID Materia", "ID Categoría", "Categoría", "Materia"]}
                 addLabel="Añadir Categoría"
                 onAddClick={() => setIsModalOpen(true)}
                 filterField="nombre_materia"

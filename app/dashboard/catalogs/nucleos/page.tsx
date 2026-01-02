@@ -46,10 +46,9 @@ export default function NucleosPage() {
             <p className="mb-6 ml-3">Núcleos universitarios</p>
             <CatalogDetailClient
                 data={nucleos}
-                columns={["ID Parroquia", "Nombre", "Parroquia"]}
+                columns={["ID Núcleo", "Núcleo", "ID Estado", "ID Municipio", "ID Parroquia", "Estado", "Municipio", "Parroquia"]}
                 addLabel="Añadir Núcleo"
                 onAddClick={() => setIsModalOpen(true)}
-                disableFilter={true}
             />
             <CatalogFormModal
                 isOpen={isModalOpen}

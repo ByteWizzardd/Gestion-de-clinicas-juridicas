@@ -46,10 +46,9 @@ export default function CaracteristicasPage() {
       <p className="mb-6 ml-3">Características de vivienda de los solicitantes</p>
       <CatalogDetailClient
         data={caracteristicas}
-        columns={["ID Tipo", "Número", "Descripción", "Habilitado", "Tipo"]}
+        columns={["ID Tipo", "ID Característica", "Descripción", "Habilitado", "Tipo"]}
         addLabel="Añadir Característica"
         onAddClick={() => setIsModalOpen(true)}
-        disableFilter={true}
       />
       <CatalogFormModal
         isOpen={isModalOpen}

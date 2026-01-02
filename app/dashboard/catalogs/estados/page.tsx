@@ -40,10 +40,9 @@ export default function EstadosPage() {
             <p className="mb-6 ml-3">Estados del país registrados en el sistema</p>
             <CatalogDetailClient
                 data={estados}
-                columns={["ID", "Nombre"]}
+                columns={["ID Estado", "Estado"]}
                 addLabel="Añadir Estado"
                 onAddClick={() => setIsModalOpen(true)}
-                disableFilter={true}
             />
             <CatalogFormModal
                 isOpen={isModalOpen}

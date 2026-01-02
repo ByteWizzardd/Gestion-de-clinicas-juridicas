@@ -37,10 +37,9 @@ export default function CondicionesTrabajoPage() {
       <p className="mb-6 ml-3">Condiciones laborales de los solicitantes</p>
       <CatalogDetailClient
         data={condiciones}
-        columns={["ID", "Nombre"]}
+        columns={["ID Trabajo", "Condición Trabajo"]}
         addLabel="Añadir Condición"
         onAddClick={() => setIsModalOpen(true)}
-        disableFilter={true}
       />
       <CatalogFormModal
         isOpen={isModalOpen}

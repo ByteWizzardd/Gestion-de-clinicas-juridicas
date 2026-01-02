@@ -51,12 +51,12 @@ export default function Table<T extends Record<string, unknown>>({
       <TableContainer>
         <TableHeader title={columns} />
         <tbody className="border-t-2 border-t-transparent">
-          {paginatedData.length > 0 ? (
-            paginatedData.map((row, idx) => (
+          {pageData.length > 0 ? (
+            pageData.map((row, idx) => (
               <TableRow
-                key={startIndex + idx}
+                key={startIdx + idx}
                 data={row}
-                rowIndex={startIndex + idx}
+                rowIndex={startIdx + idx}
                 onView={onView}
                 onEdit={onEdit}
                 onDelete={onDelete}

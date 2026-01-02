@@ -53,10 +53,9 @@ export default function ParroquiasPage() {
             <p className="mb-6 ml-3">Parroquias de Venezuela</p>
             <CatalogDetailClient
                 data={parroquias}
-                columns={["ID Estado", "Número Municipio", "Número Parroquia", "Nombre", "Estado", "Municipio"]}
+                columns={["ID Estado", "ID Municipio", "ID Parroquia", "Parroquia", "Estado", "Municipio"]}
                 addLabel="Añadir Parroquia"
                 onAddClick={() => setIsModalOpen(true)}
-                disableFilter={true}
             />
             <CatalogFormModal
                 isOpen={isModalOpen}

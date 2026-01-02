@@ -40,7 +40,6 @@ export default function SemestresPage() {
         columns={["TERM", "Fecha Inicio", "Fecha Fin"]}
         addLabel="Añadir Semestre"
         onAddClick={() => setIsModalOpen(true)}
-        disableFilter={true}
       />
       <CatalogFormModal
         isOpen={isModalOpen}
