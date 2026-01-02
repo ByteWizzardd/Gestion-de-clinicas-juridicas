@@ -118,41 +118,9 @@ export default function CaseDetailClient() {
     );
   }
 
-  const tabs = [
-    {
-      id: 'general',
-      label: 'Información General',
-      content: <GeneralInfoTab caso={caso} />,
-    },
-    {
-      id: 'equipo',
-      label: 'Equipo Asignado',
-      content: <TeamTab equipo={caso.equipo} />,
-    },
-    {
-      id: 'acciones',
-      label: 'Historial de Acciones',
-      content: <ActionsHistoryTab acciones={caso.acciones} />,
-    },
-    {
-      id: 'citas',
-      label: 'Citas y Orientaciones',
-      content: <AppointmentsTab citas={caso.citas} />,
-    },
-    {
-      id: 'estatus',
-      label: 'Cambios de Estatus',
-      content: <StatusChangesTab cambiosEstatus={caso.cambiosEstatus} />,
-    },
-    {
-      id: 'documentos',
-      label: 'Soportes y Documentos',
-      content: <DocumentsTab soportes={caso.soportes} />,
-    },
-  ];
-
-  const codigoCaso = caso.id_caso.toString();
-  const nombreSolicitante = caso.nombre_completo_solicitante || 'Caso sin solicitante';
+  const handleRefresh = () => {
+    fetchCaso();
+  };
 
   const getStatusColor = (estatus: string | null) => {
     if (!estatus) return 'bg-gray-100 text-gray-800';
@@ -186,9 +154,41 @@ export default function CaseDetailClient() {
     }
   };
 
-  const handleRefresh = () => {
-    fetchCaso();
-  };
+  const codigoCaso = caso.id_caso.toString();
+  const nombreSolicitante = caso.nombre_completo_solicitante || 'Caso sin solicitante';
+
+  const tabs = [
+    {
+      id: 'general',
+      label: 'Información General',
+      content: <GeneralInfoTab caso={caso} />,
+    },
+    {
+      id: 'equipo',
+      label: 'Equipo Asignado',
+      content: <TeamTab equipo={caso.equipo} />,
+    },
+    {
+      id: 'acciones',
+      label: 'Historial de Acciones',
+      content: <ActionsHistoryTab acciones={caso.acciones} />,
+    },
+    {
+      id: 'citas',
+      label: 'Citas y Orientaciones',
+      content: <AppointmentsTab citas={caso.citas} />,
+    },
+    {
+      id: 'estatus',
+      label: 'Cambios de Estatus',
+      content: <StatusChangesTab cambiosEstatus={caso.cambiosEstatus} />,
+    },
+    {
+      id: 'documentos',
+      label: 'Soportes y Documentos',
+      content: <DocumentsTab soportes={caso.soportes} onSoporteDeleted={handleRefresh} />,
+    },
+  ];
 
   const estatusOptions = [
     { value: ESTATUS_CASO.EN_PROCESO, label: ESTATUS_CASO.EN_PROCESO },

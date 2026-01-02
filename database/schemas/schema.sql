@@ -339,7 +339,30 @@ CREATE TABLE soportes (
     descripcion TEXT,
     
     fecha_consignacion DATE NOT NULL DEFAULT CURRENT_DATE,
+    
+    -- Campos de auditoría: quién subió el archivo
+    id_usuario_subio VARCHAR(20) REFERENCES usuarios(cedula),
+    fecha_subida DATE DEFAULT CURRENT_DATE,
+    
     PRIMARY KEY (num_soporte, id_caso)
+);
+
+-- 26.1) AUDITORÍA DE ELIMINACIÓN DE SOPORTES
+-- Tabla para registrar metadatos de soportes eliminados (sin guardar el archivo completo)
+CREATE TABLE auditoria_eliminacion_soportes (
+    id SERIAL PRIMARY KEY,
+    num_soporte INTEGER NOT NULL,
+    id_caso INTEGER NOT NULL,
+    nombre_archivo VARCHAR(150) NOT NULL,
+    tipo_mime VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    fecha_consignacion DATE NOT NULL,
+    fecha_subida DATE,
+    tamano_bytes INTEGER, -- Tamaño del archivo en bytes (sin guardar el archivo)
+    id_usuario_subio VARCHAR(20) REFERENCES usuarios(cedula),
+    id_usuario_elimino VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    motivo TEXT, -- Motivo de la eliminación
+    fecha_eliminacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 27) BENEFICIARIOS (PARENTESCO LIBRE)

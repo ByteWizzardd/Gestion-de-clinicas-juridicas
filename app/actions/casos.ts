@@ -40,6 +40,30 @@ export interface UploadSoportesResult {
   };
 }
 
+export interface DownloadSoporteResult {
+  success: boolean;
+  data?: {
+    documento_data: string; // Base64
+    nombre_archivo: string;
+    tipo_mime: string;
+  };
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+export interface DeleteSoporteResult {
+  success: boolean;
+  data?: {
+    mensaje: string;
+  };
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
 export interface GetCasosResult {
   success: boolean;
   data?: any[];
@@ -148,11 +172,25 @@ export async function uploadSoportesAction(
       };
     }
 
+    // Límite de tamaño: 10MB
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB en bytes
+
     // Procesar cada archivo
     const resultados = [];
     for (const file of files) {
       if (!file || file.size === 0) {
         continue;
+      }
+
+      // Validar tamaño del archivo
+      if (file.size > MAX_FILE_SIZE) {
+        return {
+          success: false,
+          error: {
+            message: `El archivo "${file.name}" excede el límite de 10MB. Tamaño: ${(file.size / 1024 / 1024).toFixed(2)}MB`,
+            code: 'FILE_TOO_LARGE',
+          },
+        };
       }
 
       // Convertir el archivo a Buffer
@@ -167,6 +205,7 @@ export async function uploadSoportesAction(
         tipo_mime: file.type || 'application/octet-stream',
         descripcion: undefined,
         fecha_consignacion: new Date(),
+        id_usuario_subio: authResult.user.cedula, // Registrar quién subió el archivo
       });
 
       resultados.push({
@@ -187,6 +226,139 @@ export async function uploadSoportesAction(
     };
   } catch (error) {
     return handleServerActionError(error, 'uploadSoportesAction', 'UPLOAD_ERROR');
+  }
+}
+
+/**
+ * Server Action para descargar un soporte/documento
+ */
+export async function downloadSoporteAction(
+  idCaso: number,
+  numSoporte: number
+): Promise<DownloadSoporteResult> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    if (isNaN(idCaso) || isNaN(numSoporte)) {
+      return {
+        success: false,
+        error: {
+          message: 'ID de caso o número de soporte inválido',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Obtener el documento de la base de datos
+    const documento = await soportesQueries.getDocumento(idCaso, numSoporte);
+
+    if (!documento) {
+      return {
+        success: false,
+        error: {
+          message: 'Soporte no encontrado',
+          code: 'NOT_FOUND',
+        },
+      };
+    }
+
+    // Convertir el Buffer a base64
+    const base64Data = documento.documento_data.toString('base64');
+
+    return {
+      success: true,
+      data: {
+        documento_data: base64Data,
+        nombre_archivo: documento.nombre_archivo,
+        tipo_mime: documento.tipo_mime,
+      },
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'downloadSoporteAction', 'DOWNLOAD_ERROR');
+  }
+}
+
+export interface DeleteSoporteResult {
+  success: boolean;
+  data?: {
+    mensaje: string;
+  };
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+/**
+ * Server Action para eliminar un soporte/documento
+ */
+export async function deleteSoporteAction(
+  idCaso: number,
+  numSoporte: number,
+  motivo: string
+): Promise<DeleteSoporteResult> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    if (isNaN(idCaso) || isNaN(numSoporte)) {
+      return {
+        success: false,
+        error: {
+          message: 'ID de caso o número de soporte inválido',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    if (!motivo || motivo.trim() === '') {
+      return {
+        success: false,
+        error: {
+          message: 'El motivo de eliminación es obligatorio',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Eliminar el soporte de la base de datos (registra auditoría antes de eliminar)
+    const deleted = await soportesQueries.delete(idCaso, numSoporte, authResult.user.cedula, motivo.trim());
+
+    if (!deleted) {
+      return {
+        success: false,
+        error: {
+          message: 'Soporte no encontrado',
+          code: 'NOT_FOUND',
+        },
+      };
+    }
+
+    // Revalidar cache de la página de casos
+    revalidatePath('/dashboard/cases');
+    revalidatePath(`/dashboard/cases/${idCaso}`);
+
+    return {
+      success: true,
+      data: {
+        mensaje: 'Soporte eliminado correctamente',
+      },
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'deleteSoporteAction', 'DELETE_ERROR');
   }
 }
 

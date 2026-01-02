@@ -13,6 +13,8 @@ interface AddDocumentModalProps {
   onSuccess?: () => void;
 }
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB en bytes
+
 export default function AddDocumentModal({ isOpen, onClose, idCaso, onSuccess }: AddDocumentModalProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
@@ -21,6 +23,19 @@ export default function AddDocumentModal({ isOpen, onClose, idCaso, onSuccess }:
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
+      setError(null);
+      
+      // Validar tamaño de cada archivo
+      const invalidFiles = newFiles.filter(file => file.size > MAX_FILE_SIZE);
+      if (invalidFiles.length > 0) {
+        const fileNames = invalidFiles.map(f => f.name).join(', ');
+        setError(`Los siguientes archivos exceden el límite de 10MB: ${fileNames}`);
+        // Solo añadir archivos válidos
+        const validFiles = newFiles.filter(file => file.size <= MAX_FILE_SIZE);
+        setFiles((prev) => [...prev, ...validFiles]);
+        return;
+      }
+      
       setFiles((prev) => [...prev, ...newFiles]);
     }
   };
@@ -35,6 +50,14 @@ export default function AddDocumentModal({ isOpen, onClose, idCaso, onSuccess }:
 
     if (files.length === 0) {
       setError('Debe seleccionar al menos un archivo');
+      return;
+    }
+
+    // Validar tamaño nuevamente antes de enviar (por si acaso)
+    const invalidFiles = files.filter(file => file.size > MAX_FILE_SIZE);
+    if (invalidFiles.length > 0) {
+      const fileNames = invalidFiles.map(f => f.name).join(', ');
+      setError(`Los siguientes archivos exceden el límite de 10MB: ${fileNames}`);
       return;
     }
 
@@ -110,6 +133,9 @@ export default function AddDocumentModal({ isOpen, onClose, idCaso, onSuccess }:
             {error && (
               <p className="text-xs text-danger mt-1">{error}</p>
             )}
+            <p className="text-xs text-gray-500 mt-1">
+              Tamaño máximo por archivo: 10MB
+            </p>
           </div>
         </div>
 
@@ -124,8 +150,8 @@ export default function AddDocumentModal({ isOpen, onClose, idCaso, onSuccess }:
                 <span className="flex-1 text-sm text-gray-700 truncate">
                   {file.name}
                 </span>
-                <span className="text-xs text-gray-500">
-                  ({(file.size / 1024).toFixed(2)} KB)
+                <span className={`text-xs ${file.size > MAX_FILE_SIZE ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
+                  ({(file.size / 1024 / 1024).toFixed(2)} MB)
                 </span>
                 <button
                   type="button"

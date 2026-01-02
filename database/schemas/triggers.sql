@@ -101,3 +101,39 @@ CREATE TRIGGER trigger_crear_cambio_estatus_inicial
     FOR EACH ROW
     EXECUTE FUNCTION trigger_crear_cambio_estatus_inicial();
 
+-- Función trigger para registrar auditoría antes de eliminar un soporte
+CREATE OR REPLACE FUNCTION trigger_auditoria_eliminacion_soporte()
+RETURNS TRIGGER AS $$
+DECLARE
+    cedula_usuario VARCHAR(20);
+BEGIN
+    -- Obtener la cédula del usuario desde la variable de sesión
+    -- Esta variable se establece antes de eliminar el soporte
+    BEGIN
+        cedula_usuario := current_setting('app.usuario_elimina_soporte', true);
+    EXCEPTION
+        WHEN OTHERS THEN
+            -- Si no se puede leer la variable, usar NULL (no bloquear la eliminación)
+            cedula_usuario := NULL;
+    END;
+    
+    -- Si hay usuario, registrar la auditoría antes de eliminar
+    IF cedula_usuario IS NOT NULL AND cedula_usuario != '' THEN
+        -- Actualizar los campos de auditoría antes de que se elimine el registro
+        UPDATE soportes
+        SET id_usuario_elimino = cedula_usuario,
+            fecha_eliminacion = CURRENT_DATE
+        WHERE id_caso = OLD.id_caso 
+          AND num_soporte = OLD.num_soporte;
+    END IF;
+    
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger para registrar auditoría antes de eliminar un soporte
+DROP TRIGGER IF EXISTS trigger_auditoria_eliminacion_soporte ON soportes;
+CREATE TRIGGER trigger_auditoria_eliminacion_soporte
+    BEFORE DELETE ON soportes
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_auditoria_eliminacion_soporte();

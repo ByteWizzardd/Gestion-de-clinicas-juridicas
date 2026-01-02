@@ -76,13 +76,24 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <Breadcrumbs
-        items={[
-          { label: 'Perfil' },
-        ]}
-      />
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <Breadcrumbs
+          items={[
+            { label: 'Perfil' },
+          ]}
+        />
+      </motion.div>
 
-      <div className="mb-6 sm:mb-8 relative">
+      <motion.div 
+        className="mb-6 sm:mb-8 relative"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
         <div className="flex items-center gap-4 mb-4">
           <PhotoUploadHeader
             currentPhoto={user.fotoPerfil || null}
@@ -115,9 +126,15 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </motion.div>
 
-      <GeneralInfoTab user={user} />
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+      >
+        <GeneralInfoTab user={user} />
+      </motion.div>
     </div>
   );
 }

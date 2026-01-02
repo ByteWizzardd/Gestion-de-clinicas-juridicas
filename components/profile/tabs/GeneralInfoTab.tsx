@@ -1,5 +1,6 @@
 // components/profile/tabs/GeneralInfoTab.tsx
 import React from 'react';
+import { motion } from 'motion/react';
 
 interface User {
   cedula: string;
@@ -28,7 +29,12 @@ const GeneralInfoTab: React.FC<GeneralInfoTabProps> = ({ user }) => {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Información de Contacto */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+      <motion.div 
+        className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
         <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
           <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -45,10 +51,15 @@ const GeneralInfoTab: React.FC<GeneralInfoTabProps> = ({ user }) => {
             </p>
           </div>
         </div>
-      </div>
+      </motion.div>
       
       {/* Datos Personales */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+      <motion.div 
+        className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+      >
         <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
           <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg>
           Datos Personales
@@ -76,7 +87,7 @@ const GeneralInfoTab: React.FC<GeneralInfoTabProps> = ({ user }) => {
             </p>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

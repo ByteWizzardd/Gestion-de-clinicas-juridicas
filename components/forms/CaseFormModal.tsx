@@ -78,6 +78,7 @@ export default function CaseFormModal({
   const [loadingCaseNumber, setLoadingCaseNumber] = useState(false);
   const [archivos, setArchivos] = useState<File[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   // Cargar catálogos y siguiente número de caso al abrir el modal
   // También actualizar la fecha actual (misma lógica que DateTime)
@@ -316,9 +317,24 @@ export default function CaseFormModal({
     onClose();
   };
 
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB en bytes
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
+      setFileError(null);
+      
+      // Validar tamaño de cada archivo
+      const invalidFiles = newFiles.filter(file => file.size > MAX_FILE_SIZE);
+      if (invalidFiles.length > 0) {
+        const fileNames = invalidFiles.map(f => f.name).join(', ');
+        setFileError(`Los siguientes archivos exceden el límite de 10MB: ${fileNames}`);
+        // Solo añadir archivos válidos
+        const validFiles = newFiles.filter(file => file.size <= MAX_FILE_SIZE);
+        setArchivos((prev) => [...prev, ...validFiles]);
+        return;
+      }
+      
       setArchivos((prev) => [...prev, ...newFiles]);
     }
   };
@@ -608,8 +624,8 @@ export default function CaseFormModal({
                         <span className="text-sm text-foreground truncate" title={archivo.name}>
                           {archivo.name}
                         </span>
-                        <span className="text-xs text-gray-500 flex-shrink-0">
-                          ({(archivo.size / 1024).toFixed(1)} KB)
+                        <span className={`text-xs flex-shrink-0 ${archivo.size > MAX_FILE_SIZE ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
+                          ({(archivo.size / 1024 / 1024).toFixed(2)} MB)
                         </span>
                       </div>
                       <button
@@ -624,6 +640,12 @@ export default function CaseFormModal({
                   ))}
                 </div>
               )}
+              {fileError && (
+                <p className="text-xs text-danger mt-1">{fileError}</p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Tamaño máximo por archivo: 10MB
+              </p>
             </div>
           </div>
         </div>
