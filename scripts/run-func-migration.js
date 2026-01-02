@@ -1,6 +1,6 @@
-const { Pool } = require('pg');
-const { readFileSync, existsSync } = require('fs');
-const { join } = require('path');
+import { Pool } from 'pg';
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
 
 // Cargar variables de entorno manualmente
 function loadEnv() {
@@ -23,6 +23,11 @@ function loadEnv() {
 }
 
 loadEnv();
+
+/**
+ * To use ES modules in Node.js, ensure your package.json has "type": "module"
+ * or rename this file to .mjs if needed.
+ */
 
 async function runMigration() {
   const pool = new Pool({

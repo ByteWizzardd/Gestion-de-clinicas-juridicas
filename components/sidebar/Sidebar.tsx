@@ -3,9 +3,11 @@
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { LogOut } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { getMenuByRole, type UserRole } from './menu-config';
+import ProfileDropdown from '@/components/ui/navigation/ProfileDropdown';
+import { getCurrentUserAction } from '@/app/actions/auth';
 
 interface SidebarProps {
   role: UserRole;
@@ -17,11 +19,59 @@ export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarP
   const router = useRouter();
   const menu = getMenuByRole(role);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ nombre: string; rol: string } | null>(null);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mediaQuery.matches);
+    
+    const handleChange = (e: MediaQueryListEvent) => {
+      setPrefersReducedMotion(e.matches);
+    };
+    
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  // Función para obtener datos del usuario
+  const fetchUserData = async () => {
+    try {
+      const result = await getCurrentUserAction();
+      if (result.success && result.data) {
+        setCurrentUser({
+          nombre: `${result.data.nombres} ${result.data.apellidos}`,
+          rol: result.data.rol,
+        });
+        setFotoPerfil(result.data.fotoPerfil || null);
+      }
+    } catch (error) {
+      console.error('Error al obtener datos del usuario:', error);
+    }
+  };
+
+  // Obtener información del usuario y foto de perfil al montar
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  // Escuchar eventos de actualización de foto de perfil
+  useEffect(() => {
+    const handlePhotoUpdate = () => {
+      fetchUserData();
+    };
+
+    window.addEventListener('photoProfileUpdated', handlePhotoUpdate);
+    return () => {
+      window.removeEventListener('photoProfileUpdated', handlePhotoUpdate);
+    };
+  }, []);
 
   // Función para obtener el label del rol en español
   const getRoleLabel = (role: UserRole): string => {
     const roleLabels: Record<UserRole, string> = {
-      admin: 'Administrador',
+      coordinator: 'Coordinador',
       professor: 'Profesor',
       student: 'Estudiante',
     };
@@ -35,10 +85,8 @@ export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarP
     try {
       // Limpiar todos los datos del formulario de solicitante del localStorage
       try {
-        // Limpiar la clave específica del formulario y el paso actual
         localStorage.removeItem('applicant_form_data');
         localStorage.removeItem('applicant_form_current_step');
-        // También limpiar cualquier clave antigua que pueda existir (por compatibilidad)
         const keysToRemove: string[] = [];
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
@@ -55,7 +103,6 @@ export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarP
       const result = await logoutAction();
 
       if (result.success) {
-        // Redirigir al login
         router.push('/auth/login');
       } else {
         console.error('Error al cerrar sesión');
@@ -67,8 +114,16 @@ export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarP
     }
   };
 
+  const displayName = currentUser?.nombre || userName;
+  const displayRole = currentUser?.rol || getRoleLabel(role);
+
   return (
-    <aside className="w-56 bg-background flex flex-col h-[calc(100vh-2rem)] rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] m-4">
+    <motion.aside 
+      initial={prefersReducedMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: prefersReducedMotion ? 0 : 0.4, ease: "easeOut" }}
+      className="w-56 bg-background flex flex-col h-[calc(100vh-2rem)] rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] m-4"
+    >
       <div className="p-6 flex justify-center">
         <Image src="/image.png" alt="DER Logo" width={240} height={87} className="object-contain"/>
       </div>
@@ -76,12 +131,17 @@ export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarP
       {/* Menú de Navegación */}
       <nav className="flex-1 overflow-y-auto mt-[-8] p-4">
         <ul className="space-y-1">
-          {menu.map((item) => {
+          {menu.map((item, index) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
 
             return (
-              <li key={item.href}>
+              <motion.li 
+                key={item.href}
+                initial={prefersReducedMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1 + index * 0.05, ease: "easeOut" }}
+              >
                 <Link 
                   href={item.href}
                   className={`flex items-center gap-3 px-4 py-3 transition-all duration-200
@@ -90,31 +150,50 @@ export default function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarP
                   <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-foreground'}`} />
                   <span>{item.label}</span>
                 </Link>
-              </li>
+              </motion.li>
             );
           })}
         </ul>
       </nav>
 
       {/* Footer del Sidebar */}
-      <div className="px-4 pb-8 space-y-3">
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0"></div>
+      <motion.div 
+        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.4, ease: "easeOut" }}
+        className="px-4 pb-8"
+      >
+        <ProfileDropdown
+          userName={displayName}
+          userRole={displayRole}
+          onProfileClick={() => router.push('/dashboard/profile')}
+          onPasswordClick={() => router.push('/dashboard/profile/change-password')}
+          onNotificationsClick={() => router.push('/dashboard/profile/notifications')}
+          onHelpClick={() => router.push('/dashboard/profile/help')}
+          onLogoutClick={handleLogout}
+      >
+          <div className="flex items-center gap-3 mb-5 cursor-pointer hover:opacity-80 transition-opacity">
+            {fotoPerfil ? (
+              <img 
+                src={fotoPerfil} 
+                alt="Foto de perfil" 
+                className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-gray-200"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center">
+                <span className="text-gray-500 text-sm font-medium">
+                  {displayName.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
           <div className="flex-1 min-w-0">
-            <p className="text-base font-medium text-foreground truncate">{userName}</p>
-            <p className="text-xs text-gray-600">{getRoleLabel(role)}</p>
+              <p className="text-base font-medium text-foreground truncate">{displayName}</p>
+              <p className="text-xs text-gray-600">{displayRole}</p>
           </div>
         </div>
-
-        <button 
-          onClick={handleLogout} 
-          disabled={isLoggingOut}
-          className="w-full bg-primary text-white px-3 py-1.5 rounded-lg text-base cursor-pointer font-medium flex items-center justify-center gap-2 hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-          <LogOut className="w-4 h-4"/>
-          <span>{isLoggingOut ? 'Cerrando...' : 'Cerrar Sesión'}</span>
-        </button>
-      </div>
-    </aside>
+        </ProfileDropdown>
+      </motion.div>
+    </motion.aside>
   );
 }
 

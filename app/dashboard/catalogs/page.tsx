@@ -1,24 +1,12 @@
-import CatalogsClient from "@/components/catalogs/CatalogsClient";
-import { getCatalogCounts } from "@/app/actions/catalogos";
+import CaseTools from "@/components/CaseTools/CaseTools";
+import Table from "@/components/Table/Table";
+import { authorizeRole } from '@/lib/utils/auth-utils';
+
+export const dynamic = 'force-dynamic';
 
 export default async function CatalogsPage() {
-  const result = await getCatalogCounts();
-
-  const counts = result.success ? result.data : {
-    materias: 0,
-    categorias: 0,
-    subcategorias: 0,
-    ambitos_legales: 0,
-    tipos_caracteristicas: 0,
-    caracteristicas: 0,
-    estados: 0,
-    municipios: 0,
-    parroquias: 0,
-    semestres: 0,
-    nucleos: 0,
-    condiciones_trabajo: 0,
-    condiciones_actividad: 0
-  };
+  // Solo permitir al Coordinador (coordinator)
+  await authorizeRole(['coordinator']);
 
   return (
     <>

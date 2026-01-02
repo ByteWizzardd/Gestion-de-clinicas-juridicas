@@ -34,7 +34,7 @@ export async function requireAuth(
     const user = await verifyToken(token);
     (request as AuthenticatedRequest).user = user;
     return request as AuthenticatedRequest;
-  } catch (error) {
+  } catch {
     throw new UnauthorizedError('Token inválido o expirado');
   }
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { Calendar, User, Users, FileText, Building2, Scale } from 'lucide-react';
+import Link from 'next/link';
 import { formatDate, calculateAge } from '@/lib/utils/date-formatter';
 
 interface GeneralInfoTabProps {
@@ -59,23 +60,20 @@ export default function GeneralInfoTab({ caso }: GeneralInfoTabProps) {
           </div>
           <div>
             <label className="text-sm font-medium text-gray-500">Fecha de Solicitud</label>
-            <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gray-400" />
+            <p className="text-base text-gray-900 mt-1">
               {caso.fecha_solicitud ? formatDate(caso.fecha_solicitud) : 'N/A'}
             </p>
           </div>
           <div>
             <label className="text-sm font-medium text-gray-500">Fecha de Inicio</label>
-            <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gray-400" />
+            <p className="text-base text-gray-900 mt-1">
               {caso.fecha_inicio_caso ? formatDate(caso.fecha_inicio_caso) : 'N/A'}
             </p>
           </div>
           {caso.fecha_fin_caso && (
             <div>
               <label className="text-sm font-medium text-gray-500">Fecha de Fin</label>
-              <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-gray-400" />
+              <p className="text-base text-gray-900 mt-1">
                 {formatDate(caso.fecha_fin_caso)}
               </p>
             </div>
@@ -87,8 +85,7 @@ export default function GeneralInfoTab({ caso }: GeneralInfoTabProps) {
           {caso.nombre_nucleo && (
             <div>
               <label className="text-sm font-medium text-gray-500">Núcleo</label>
-              <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-gray-400" />
+              <p className="text-base text-gray-900 mt-1">
                 {caso.nombre_nucleo}
               </p>
             </div>
@@ -96,24 +93,27 @@ export default function GeneralInfoTab({ caso }: GeneralInfoTabProps) {
           {caso.nombre_materia && (
             <div>
               <label className="text-sm font-medium text-gray-500">Materia</label>
-              <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
-                <Scale className="w-4 h-4 text-gray-400" />
+              <p className="text-base text-gray-900 mt-1">
                 {caso.nombre_materia}
               </p>
             </div>
           )}
-          {caso.nombre_categoria && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Categoría</label>
-              <p className="text-base text-gray-900 mt-1">{caso.nombre_categoria}</p>
-            </div>
-          )}
-          {caso.nombre_subcategoria && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Subcategoría</label>
-              <p className="text-base text-gray-900 mt-1">{caso.nombre_subcategoria}</p>
-            </div>
-          )}
+          {caso.nombre_categoria &&
+            caso.nombre_categoria.toLowerCase() !== 'sin categoría' &&
+            caso.nombre_categoria.toLowerCase() !== 'n/a' && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Categoría</label>
+                <p className="text-base text-gray-900 mt-1">{caso.nombre_categoria}</p>
+              </div>
+            )}
+          {caso.nombre_subcategoria &&
+            caso.nombre_subcategoria.toLowerCase() !== 'sin subcategoría' &&
+            caso.nombre_subcategoria.toLowerCase() !== 'n/a' && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Subcategoría</label>
+                <p className="text-base text-gray-900 mt-1">{caso.nombre_subcategoria}</p>
+              </div>
+            )}
         </div>
         {caso.observaciones && (
           <div className="mt-4">
@@ -133,7 +133,18 @@ export default function GeneralInfoTab({ caso }: GeneralInfoTabProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-gray-500">Nombre Completo</label>
-              <p className="text-base text-gray-900 mt-1">{caso.nombre_completo_solicitante}</p>
+              <p className="text-base mt-1">
+                {caso.cedula ? (
+                  <Link
+                    href={`/dashboard/applicants/${caso.cedula}`}
+                    className="text-primary hover:underline font-medium transition-colors"
+                  >
+                    {caso.nombre_completo_solicitante}
+                  </Link>
+                ) : (
+                  <span className="text-gray-900">{caso.nombre_completo_solicitante}</span>
+                )}
+              </p>
             </div>
             {caso.cedula && (
               <div>
@@ -170,8 +181,7 @@ export default function GeneralInfoTab({ caso }: GeneralInfoTabProps) {
                     )}
                     <div>
                       <label className="text-sm font-medium text-gray-500">Fecha de Nacimiento</label>
-                      <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gray-400" />
+                      <p className="text-base text-gray-900 mt-1">
                         {beneficiario.fecha_nac ? formatDate(beneficiario.fecha_nac) : 'N/A'}
                         {edad !== null && ` (${edad} años)`}
                       </p>

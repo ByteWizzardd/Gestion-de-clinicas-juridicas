@@ -1,6 +1,6 @@
 'use client';
 
-import { MapPin, Home, Droplet, Trash2, Sparkles } from 'lucide-react';
+import { MapPin, Home, Sparkles, Package } from 'lucide-react';
 
 interface LocationHousingTabProps {
   solicitante: {
@@ -16,16 +16,33 @@ interface LocationHousingTabProps {
     agua_potable?: string | null;
     eliminacion_aguas_n?: string | null;
     aseo?: string | null;
+    artefactos_domesticos?: string[] | string | null;
   };
 }
 
 export default function LocationHousingTab({ solicitante }: LocationHousingTabProps) {
+  // Procesar artefactos domésticos (puede venir como JSON string o array)
+  let artefactos: string[] = [];
+  if (solicitante.artefactos_domesticos) {
+    if (typeof solicitante.artefactos_domesticos === 'string') {
+      try {
+        const parsed = JSON.parse(solicitante.artefactos_domesticos);
+        artefactos = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        artefactos = [];
+      }
+    } else if (Array.isArray(solicitante.artefactos_domesticos)) {
+      artefactos = solicitante.artefactos_domesticos;
+    }
+  }
+
   // Verificar si hay información de ubicación o vivienda
   const hasLocation = solicitante.nombre_estado || solicitante.nombre_municipio || solicitante.nombre_parroquia;
   const hasHousing = solicitante.tipo_vivienda || solicitante.cant_habitaciones !== null || solicitante.cant_banos !== null;
   const hasServices = solicitante.agua_potable || solicitante.eliminacion_aguas_n || solicitante.aseo;
+  const hasArtefactos = artefactos.length > 0;
 
-  if (!hasLocation && !hasHousing && !hasServices) {
+  if (!hasLocation && !hasHousing && !hasServices && !hasArtefactos) {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
         <p className="text-gray-500 text-lg">No hay información de ubicación y vivienda disponible</p>
@@ -122,32 +139,43 @@ export default function LocationHousingTab({ solicitante }: LocationHousingTabPr
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {solicitante.agua_potable && (
-            <div className="flex items-start gap-3">
-              <Droplet className="w-5 h-5 text-primary mt-1" />
-              <div>
-                <label className="text-sm font-medium text-gray-500">Agua Potable</label>
-                <p className="text-base text-gray-900 mt-1">{solicitante.agua_potable}</p>
-              </div>
+            <div>
+              <label className="text-sm font-medium text-gray-500">Agua Potable</label>
+              <p className="text-base text-gray-900 mt-1">{solicitante.agua_potable}</p>
             </div>
           )}
           {solicitante.eliminacion_aguas_n && (
-            <div className="flex items-start gap-3">
-              <Trash2 className="w-5 h-5 text-primary mt-1" />
-              <div>
-                <label className="text-sm font-medium text-gray-500">Eliminación de Aguas Negras</label>
-                <p className="text-base text-gray-900 mt-1">{solicitante.eliminacion_aguas_n}</p>
-              </div>
+            <div>
+              <label className="text-sm font-medium text-gray-500">Eliminación de Aguas Negras</label>
+              <p className="text-base text-gray-900 mt-1">{solicitante.eliminacion_aguas_n}</p>
             </div>
           )}
           {solicitante.aseo && (
-            <div className="flex items-start gap-3">
-              <Sparkles className="w-5 h-5 text-primary mt-1" />
-              <div>
-                <label className="text-sm font-medium text-gray-500">Servicio de Aseo</label>
-                <p className="text-base text-gray-900 mt-1">{solicitante.aseo}</p>
-              </div>
+            <div>
+              <label className="text-sm font-medium text-gray-500">Servicio de Aseo</label>
+              <p className="text-base text-gray-900 mt-1">{solicitante.aseo}</p>
             </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Artefactos Domésticos */}
+      {hasArtefactos && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+            <Package className="w-5 h-5 text-primary" />
+            Artefactos Domésticos
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {artefactos.map((artefacto, index) => (
+              <span
+                key={index}
+                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary border border-primary/20"
+              >
+                {artefacto}
+              </span>
+            ))}
           </div>
         </div>
       )}

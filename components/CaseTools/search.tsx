@@ -7,7 +7,7 @@ interface SearchProps {
   placeholder?: string;
 }
 
-function Search({ value, onChange, placeholder = "Buscar caso..." }: SearchProps) {
+function Search({ value, onChange, placeholder = 'Buscar caso...' }: SearchProps) {
   return (
     <search className="flex items-center">
       <form

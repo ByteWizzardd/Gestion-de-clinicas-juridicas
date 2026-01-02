@@ -103,7 +103,7 @@ export default function Modal({
               transition={{ duration: 0.2, ease: 'easeOut' }}
               className={`
                 bg-white rounded-xl shadow-xl w-full ${sizeStyles[size]} 
-                pointer-events-auto flex flex-col
+                pointer-events-auto flex flex-col max-h-[90vh] overflow-hidden
                 ${className}
               `}
               role="dialog"
@@ -114,7 +114,7 @@ export default function Modal({
               {showCloseButton && !title && (
                 <button
                   onClick={onClose}
-                  className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
+                  className="absolute top-6 right-6 p-2 text-gray-400 hover:text-primary hover:bg-red-100 rounded-md transition-colors z-10"
                   style={{ cursor: 'pointer' }}
                   aria-label="Cerrar modal"
                   type="button"
@@ -134,7 +134,7 @@ export default function Modal({
                   {showCloseButton && (
                     <button
                       onClick={onClose}
-                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+                      className="p-2 text-gray-400 hover:text-primary hover:bg-red-100 rounded-md transition-colors"
                       style={{ cursor: 'pointer' }}
                       aria-label="Cerrar modal"
                       type="button"
@@ -146,7 +146,7 @@ export default function Modal({
               )}
 
               {/* Content */}
-              <div className={`flex-1 ${title ? 'p-6' : ''}`}>{children}</div>
+              <div className={`flex-1 ${title ? '' : 'p-6'} flex flex-col min-h-0`}>{children}</div>
 
               {/* Footer */}
               {footer && (

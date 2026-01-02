@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import type { JSX } from "react";
 import { TableContainer } from "@/components/Table/TableContainer";
 import { TableHeader } from "@/components/Table/TableHeader";
 import { TableRow } from "@/components/Table/TableRow";
@@ -13,6 +14,12 @@ interface TableProps<T> {
   onView?: (data: T) => void;
   onEdit?: (data: T) => void;
   onDelete?: (data: T) => void;
+  actions?: {
+    label: string | JSX.Element | ((data: T) => string | JSX.Element);
+    onClick: (data: T) => void;
+  }[];
+  hideEdit?: (data: T) => boolean;
+  hideDelete?: (data: T) => boolean;
 }
 
 export default function Table<T extends Record<string, unknown>>({
@@ -21,7 +28,10 @@ export default function Table<T extends Record<string, unknown>>({
   columns,
   onView,
   onEdit,
-  onDelete
+  onDelete,
+  actions,
+  hideEdit,
+  hideDelete
 }: TableProps<T>) {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(initialRowsPerPage);
@@ -40,17 +50,28 @@ export default function Table<T extends Record<string, unknown>>({
     <>
       <TableContainer>
         <TableHeader title={columns} />
-        <tbody className="flex flex-col gap-2">
-          {pageData.map((row, idx) => (
-            <TableRow
-              key={idx}
-              data={row}
-              rowIndex={idx}
-              onView={onView}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-          ))}
+        <tbody className="border-t-2 border-t-transparent">
+          {paginatedData.length > 0 ? (
+            paginatedData.map((row, idx) => (
+              <TableRow
+                key={startIndex + idx}
+                data={row}
+                rowIndex={startIndex + idx}
+                onView={onView}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                actions={actions}
+                hideEdit={hideEdit}
+                hideDelete={hideDelete}
+              />
+            ))
+          ) : (
+            <tr>
+              <td colSpan={columns.length + 1} className="text-center py-8 text-gray-500">
+                No se encontraron casos que coincidan con los filtros
+              </td>
+            </tr>
+          )}
         </tbody>
       </TableContainer>
       <TablePagination

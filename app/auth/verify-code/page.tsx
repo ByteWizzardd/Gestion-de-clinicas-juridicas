@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/forms/Input";
 import { ArrowLeft } from "lucide-react";
@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 
-export default function VerifyCodePage() {
+function VerifyCodeContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [isExiting, setIsExiting] = useState(false);
@@ -202,6 +202,18 @@ export default function VerifyCodePage() {
                 </AnimatePresence>
             </div>
         </div>
+    );
+}
+
+export default function VerifyCodePage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-screen items-center justify-center bg-background">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+        }>
+            <VerifyCodeContent />
+        </Suspense>
     );
 }
 

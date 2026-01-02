@@ -42,8 +42,8 @@ export default function KPIDashboard({ data, loading = false }: KPIDashboardProp
     }
 
     const porcentajeMateriaComun = data.totalCasos > 0
-        ? Math.round((data.cantidadMateriaComun / data.totalCasos) * 100)
-        : 0;
+        ? ((data.cantidadMateriaComun / data.totalCasos) * 100).toFixed(2)
+        : "0.00";
 
     return (
         <div className="w-full relative font-primary">

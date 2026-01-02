@@ -39,7 +39,24 @@ export default function CasesTab({ casos }: CasesTabProps) {
     tramite: caso.tramite || 'N/A',
     estatus: caso.estatus || 'N/A',
     nucleo: caso.nombre_nucleo || 'N/A',
-    materia: caso.nombre_materia || 'N/A'
+    materia: (() => {
+      const materia = caso.nombre_materia || 'Sin materia';
+      const categoria = caso.nombre_categoria?.trim() || '';
+      const subcategoria = caso.nombre_subcategoria?.trim() || '';
+
+      const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría' && categoria.toLowerCase() !== 'n/a';
+      const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría' && subcategoria.toLowerCase() !== 'n/a';
+
+      let text = materia;
+      if (hasCategoria && hasSubcategoria) {
+        text += ` - ${categoria} ${subcategoria}`;
+      } else if (hasCategoria) {
+        text += ` - ${categoria}`;
+      } else if (hasSubcategoria) {
+        text += ` - ${subcategoria}`;
+      }
+      return text;
+    })()
   }));
 
   const handleView = (data: Record<string, unknown>) => {

@@ -1,22 +1,23 @@
 -- Obtener distribución de casos por estatus
 -- Retorna nombre del estatus y cantidad de casos
 -- Parámetros: $1 = fecha_inicio (opcional), $2 = fecha_fin (opcional), $3 = id_nucleo (opcional), $4 = term (opcional)
-SELECT 
-    COALESCE(ce.nuevo_estatus, 'En proceso') AS nombre_estatus,
-    COUNT(DISTINCT c.id_caso) AS cantidad
-FROM casos c
-LEFT JOIN se_le_asigna sla ON c.id_caso = sla.id_caso
-LEFT JOIN (
-    SELECT DISTINCT ON (id_caso) 
-        id_caso, 
+-- ESTRATEGIA: Primero obtener el último estatus de cada caso en un CTE, luego hacer LEFT JOIN desde casos
+WITH ultimo_estatus_por_caso AS (
+    -- Para cada caso, obtener el último cambio de estatus (el de num_cambio más alto)
+    SELECT DISTINCT ON (id_caso)
+        id_caso,
         nuevo_estatus
     FROM cambio_estatus
     ORDER BY id_caso, num_cambio DESC
-) ce ON c.id_caso = ce.id_caso
+)
+SELECT 
+    COALESCE(ue.nuevo_estatus, 'En proceso') AS nombre_estatus,
+    COUNT(*) AS cantidad
+FROM casos c
+LEFT JOIN ultimo_estatus_por_caso ue ON c.id_caso = ue.id_caso
 WHERE 
-    ($1::DATE IS NULL OR c.fecha_solicitud >= $1)
-    AND ($2::DATE IS NULL OR c.fecha_solicitud <= $2)
+    ($1::DATE IS NULL OR c.fecha_inicio_caso >= $1)
+    AND ($2::DATE IS NULL OR c.fecha_inicio_caso <= $2)
     AND ($3::INTEGER IS NULL OR c.id_nucleo = $3)
-    AND ($4::VARCHAR IS NULL OR sla.term = $4)
-GROUP BY ce.nuevo_estatus
+GROUP BY COALESCE(ue.nuevo_estatus, 'En proceso')
 ORDER BY cantidad DESC;

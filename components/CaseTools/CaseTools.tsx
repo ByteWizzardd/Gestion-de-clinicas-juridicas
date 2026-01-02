@@ -7,12 +7,22 @@ type CaseToolsProps = {
     onAddClick?: () => void;
     searchValue?: string;
     onSearchChange?: (value: string) => void;
-    estatusFilter?: string;
+    searchPlaceholder?: string;
+    nucleoFilter?: string;
     tramiteFilter?: string;
-    onEstatusChange?: (value: string) => void;
+    estatusFilter?: string;
+    casosAsignadosFilter?: boolean;
+    onNucleoChange?: (value: string) => void;
+    nucleoOptions?: { value: string; label: string }[];
     onTramiteChange?: (value: string) => void;
-    estatusOptions?: { value: string; label: string }[];
+    onEstatusChange?: (value: string) => void;
+    onCasosAsignadosChange?: (value: boolean) => void;
     tramiteOptions?: { value: string; label: string }[];
+    estatusOptions?: { value: string; label: string }[];
+    showCasosAsignados?: boolean;
+    materiaFilter?: string;
+    onMateriaChange?: (value: string) => void;
+    materias?: { id_materia: number; nombre_materia: string }[];
 };
 
 function CaseTools({
@@ -20,32 +30,51 @@ function CaseTools({
     onAddClick,
     searchValue = '',
     onSearchChange,
-    estatusFilter = '',
+    searchPlaceholder,
+    nucleoFilter = '',
     tramiteFilter = '',
-    onEstatusChange,
+    estatusFilter = '',
+    casosAsignadosFilter = false,
+    onNucleoChange,
+    nucleoOptions,
     onTramiteChange,
+    onEstatusChange,
+    onCasosAsignadosChange,
+    tramiteOptions = [],
     estatusOptions = [],
-    tramiteOptions = []
+    showCasosAsignados = false,
+    materiaFilter = '',
+    onMateriaChange,
+    materias = []
 }: CaseToolsProps) {
     const hasSearch = onSearchChange !== undefined;
-    const hasFilter = onEstatusChange !== undefined && onTramiteChange !== undefined;
+    const hasFilter = onNucleoChange !== undefined || onTramiteChange !== undefined || onEstatusChange !== undefined || onCasosAsignadosChange !== undefined || onMateriaChange !== undefined;
 
     return (
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center w-full px-3">
             {hasSearch && (
-                <div className="flex-1 w-full sm:min-w-0">
-                    <Search value={searchValue} onChange={onSearchChange} />
+                <div className="flex-1 min-w-0">
+                    <Search value={searchValue} onChange={onSearchChange} placeholder={searchPlaceholder} />
                 </div>
             )}
-            <div className="flex gap-3 sm:gap-4 items-center flex-shrink-0 justify-end">
+            <div className="flex gap-3 sm:gap-4 items-center shrink-0">
                 {hasFilter && (
                     <Filter
-                        estatusFilter={estatusFilter}
+                        nucleoFilter={nucleoFilter}
+                        nucleoOptions={nucleoOptions}
                         tramiteFilter={tramiteFilter}
-                        onEstatusChange={onEstatusChange}
+                        estatusFilter={estatusFilter}
+                        casosAsignadosFilter={casosAsignadosFilter}
+                        onNucleoChange={onNucleoChange}
                         onTramiteChange={onTramiteChange}
-                        estatusOptions={estatusOptions}
+                        onEstatusChange={onEstatusChange}
+                        onCasosAsignadosChange={onCasosAsignadosChange}
                         tramiteOptions={tramiteOptions}
+                        estatusOptions={estatusOptions}
+                        showCasosAsignados={showCasosAsignados}
+                        materiaFilter={materiaFilter}
+                        onMateriaChange={onMateriaChange}
+                        materias={materias}
                     />
                 )}
                 <Add label={addLabel} onClick={onAddClick} />

@@ -45,8 +45,7 @@ export default function TeamTab({ equipo }: TeamTabProps) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-gray-500">Nombre Completo</label>
-                    <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
-                      <User className="w-4 h-4 text-gray-400" />
+                    <p className="text-base text-gray-900 mt-1">
                       {profesor.nombre_completo}
                     </p>
                   </div>
@@ -57,8 +56,7 @@ export default function TeamTab({ equipo }: TeamTabProps) {
                   {profesor.correo_electronico && (
                     <div>
                       <label className="text-sm font-medium text-gray-500">Correo Electrónico</label>
-                      <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
-                        <Mail className="w-4 h-4 text-gray-400" />
+                      <p className="text-base text-gray-900 mt-1">
                         {profesor.correo_electronico}
                       </p>
                     </div>
@@ -66,8 +64,7 @@ export default function TeamTab({ equipo }: TeamTabProps) {
                   {profesor.telefono_celular && (
                     <div>
                       <label className="text-sm font-medium text-gray-500">Teléfono</label>
-                      <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
-                        <Phone className="w-4 h-4 text-gray-400" />
+                      <p className="text-base text-gray-900 mt-1">
                         {profesor.telefono_celular}
                       </p>
                     </div>
@@ -81,11 +78,10 @@ export default function TeamTab({ equipo }: TeamTabProps) {
                   <div>
                     <label className="text-sm font-medium text-gray-500">Estado</label>
                     <p className="text-base text-gray-900 mt-1">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        profesor.habilitado 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${profesor.habilitado
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-800'
+                        }`}>
                         {profesor.habilitado ? 'Activo' : 'Inactivo'}
                       </span>
                     </p>
@@ -110,8 +106,7 @@ export default function TeamTab({ equipo }: TeamTabProps) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-gray-500">Nombre Completo</label>
-                    <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
-                      <User className="w-4 h-4 text-gray-400" />
+                    <p className="text-base text-gray-900 mt-1">
                       {estudiante.nombre_completo}
                     </p>
                   </div>
@@ -122,8 +117,7 @@ export default function TeamTab({ equipo }: TeamTabProps) {
                   {estudiante.correo_electronico && (
                     <div>
                       <label className="text-sm font-medium text-gray-500">Correo Electrónico</label>
-                      <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
-                        <Mail className="w-4 h-4 text-gray-400" />
+                      <p className="text-base text-gray-900 mt-1">
                         {estudiante.correo_electronico}
                       </p>
                     </div>
@@ -131,8 +125,7 @@ export default function TeamTab({ equipo }: TeamTabProps) {
                   {estudiante.telefono_celular && (
                     <div>
                       <label className="text-sm font-medium text-gray-500">Teléfono</label>
-                      <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
-                        <Phone className="w-4 h-4 text-gray-400" />
+                      <p className="text-base text-gray-900 mt-1">
                         {estudiante.telefono_celular}
                       </p>
                     </div>

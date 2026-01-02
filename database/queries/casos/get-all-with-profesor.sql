@@ -21,7 +21,7 @@ SELECT
     vc.apellidos_solicitante,
     vc.nombre_completo_solicitante,
     vc.nombre_nucleo,
-    vc.nombre_materia,
+    TRIM(REGEXP_REPLACE(vc.nombre_materia, '^\s*Materia\s+', '', 'i')) AS nombre_materia,
     vc.nombre_categoria,
     vc.nombre_subcategoria,
     prof.nombre_completo_profesor AS nombre_responsable

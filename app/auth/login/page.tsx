@@ -127,7 +127,7 @@ export default function LoginPage() {
                                 {error}
                             </div>
                         )}
-                        <div className="flex flex-col gap-4 !font-urbanist">
+                        <div className="flex flex-col gap-4 font-urbanist!">
                             <Input 
                                 label="Nombre de usuario" 
                                 placeholder="Ingrese su nombre de usuario" 
@@ -141,7 +141,7 @@ export default function LoginPage() {
                             <Input 
                                 label="Contraseña" 
                                 placeholder="Ingrese su contraseña" 
-                                className="bg-gray-200 !text-base"
+                                className="bg-gray-200 text-base!"
                                 name="password"
                                 type="password"
                                 value={formData.password}
@@ -150,13 +150,13 @@ export default function LoginPage() {
                             />
                             <Link href="/auth/forgot-password" className="text-base text-primary text-right -mt-2 hover:underline">¿Olvidó su contraseña?</Link>
                         </div>
-                            <div className="flex flex-col gap-2 mt-4 !font-urbanist">
+                            <div className="flex flex-col gap-2 mt-4 font-urbanist!">
                                 <Button 
                                     children="Ingresar a tu cuenta" 
                                     variant="primary" 
                                     size="lg" 
                                     isLoading={isLoading}  
-                                    className="!rounded-3xl !text-xl w-full" 
+                                    className="rounded-3xl! text-xl! w-full" 
                                     type="submit"
                                     disabled={isLoading}
                                 />

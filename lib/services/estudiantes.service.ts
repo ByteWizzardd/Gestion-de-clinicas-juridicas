@@ -1,9 +1,7 @@
 import ExcelJS from 'exceljs';
 import { pool } from '@/lib/db/pool';
-import { usuariosQueries } from '@/lib/db/queries/usuarios.queries';
-import { estudiantesQueries } from '@/lib/db/queries/estudiantes.queries';
 import { hashPassword } from '@/lib/utils/security';
-import { AppError, ValidationError } from '@/lib/utils/errors';
+import { ValidationError } from '@/lib/utils/errors';
 
 export interface EstudianteRow {
   cedula: string;
@@ -124,7 +122,7 @@ function parseCSVLine(line: string): string[] {
 /**
  * Parsea un archivo CSV
  */
-async function parseCSV(file: File): Promise<any[]> {
+async function parseCSV(file: File): Promise<EstudianteRow[]> {
   const text = await file.text();
   // Remover BOM si existe
   const textWithoutBOM = text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
@@ -164,7 +162,7 @@ async function parseCSV(file: File): Promise<any[]> {
   const crnIndex = getIndex('CRN');
   
   // Parsear filas
-  const rows: any[] = [];
+  const rows: EstudianteRow[] = [];
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i];
     // Parsear CSV usando la misma función helper
@@ -172,11 +170,12 @@ async function parseCSV(file: File): Promise<any[]> {
     
     if (values.length > Math.max(cedulaIndex, nombreIndex, emailIndex, usuarioIndex, crnIndex)) {
       rows.push({
-        CEDULA: values[cedulaIndex] || '',
-        NOMBRE_ESTUDIANTE: values[nombreIndex] || '',
-        ESTU_EMAIL_ADDRESS: values[emailIndex] || '',
-        UCAB_USER: values[usuarioIndex] || '',
-        CRN: values[crnIndex] || '',
+        cedula: values[cedulaIndex] || '',
+        nombres: values[nombreIndex] || '',
+        apellidos: '', 
+        correo_electronico: values[emailIndex] || '',
+        nombre_usuario: values[usuarioIndex] || '',
+        nrc: values[crnIndex] || '',
       });
     }
   }
@@ -187,7 +186,7 @@ async function parseCSV(file: File): Promise<any[]> {
 /**
  * Parsea un archivo Excel
  */
-async function parseExcel(file: File): Promise<any[]> {
+async function parseExcel(file: File): Promise<EstudianteRow[]> {
   const arrayBuffer = await file.arrayBuffer();
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(arrayBuffer);
@@ -220,7 +219,7 @@ async function parseExcel(file: File): Promise<any[]> {
   const crnIndex = getIndex('CRN');
   
   // Parsear filas
-  const rows: any[] = [];
+  const rows: EstudianteRow[] = [];
   for (let i = 2; i <= worksheet.rowCount; i++) {
     const row = worksheet.getRow(i);
     const values: string[] = [];
@@ -231,11 +230,12 @@ async function parseExcel(file: File): Promise<any[]> {
     
     if (values.length > Math.max(cedulaIndex, nombreIndex, emailIndex, usuarioIndex, crnIndex)) {
       rows.push({
-        CEDULA: values[cedulaIndex] || '',
-        NOMBRE_ESTUDIANTE: values[nombreIndex] || '',
-        ESTU_EMAIL_ADDRESS: values[emailIndex] || '',
-        UCAB_USER: values[usuarioIndex] || '',
-        CRN: values[crnIndex] || '',
+        cedula: values[cedulaIndex] || "",
+        nombres: values[nombreIndex] || "",
+        apellidos: "",
+        correo_electronico: values[emailIndex] || "",
+        nombre_usuario: values[usuarioIndex] || "",
+        nrc: values[crnIndex] || "",
       });
     }
   }
@@ -247,7 +247,7 @@ async function parseExcel(file: File): Promise<any[]> {
  * Procesa y valida las filas del archivo
  */
 function processRows(
-  rows: any[],
+  rows: EstudianteRow[],
   term: string,
   existingCedulas: Set<string>
 ): ProcessedRow[] {
@@ -261,10 +261,10 @@ function processRows(
     
     // Validar y normalizar cédula
     let cedula = '';
-    if (!row.CEDULA || row.CEDULA.trim() === '') {
+    if (!row.cedula || row.cedula.trim() === '') {
       errors.push('Cédula es requerida');
     } else {
-      cedula = normalizeCedula(row.CEDULA);
+      cedula = normalizeCedula(row.cedula);
       if (cedula.length < 3) {
         errors.push('Cédula inválida');
       }
@@ -273,10 +273,10 @@ function processRows(
     // Validar y parsear nombre completo
     let nombres = '';
     let apellidos = '';
-    if (!row.NOMBRE_ESTUDIANTE || row.NOMBRE_ESTUDIANTE.trim() === '') {
+    if (!row.nombres || row.nombres.trim() === '') {
       errors.push('Nombre completo es requerido');
     } else {
-      const parsed = parseNombreCompleto(row.NOMBRE_ESTUDIANTE);
+      const parsed = parseNombreCompleto(row.nombres);
       nombres = parsed.nombres;
       apellidos = parsed.apellidos;
       if (!nombres || nombres.trim() === '') {
@@ -289,10 +289,10 @@ function processRows(
     
     // Validar y normalizar correo
     let correo = '';
-    if (!row.ESTU_EMAIL_ADDRESS || row.ESTU_EMAIL_ADDRESS.trim() === '') {
+    if (!row.correo_electronico || row.correo_electronico.trim() === '') {
       errors.push('Correo electrónico es requerido');
     } else {
-      correo = normalizeEmail(row.ESTU_EMAIL_ADDRESS);
+      correo = normalizeEmail(row.correo_electronico);
       if (!validateEmailDomain(correo)) {
         errors.push('El correo debe tener dominio @est.ucab.edu.ve o @ucab.edu.ve');
       }
@@ -300,18 +300,18 @@ function processRows(
     
     // Validar nombre de usuario
     let nombreUsuario = '';
-    if (!row.UCAB_USER || row.UCAB_USER.trim() === '') {
+    if (!row.nombre_usuario || row.nombre_usuario.trim() === '') {
       errors.push('Nombre de usuario (UCAB_USER) es requerido');
     } else {
-      nombreUsuario = row.UCAB_USER.trim();
+      nombreUsuario = row.nombre_usuario.trim();
     }
     
     // Validar NRC
     let nrc = '';
-    if (!row.CRN || row.CRN.trim() === '') {
+    if (!row.nrc || row.nrc.trim() === '') {
       errors.push('NRC (CRN) es requerido');
     } else {
-      nrc = row.CRN.trim();
+      nrc = row.nrc.trim();
     }
     
     // Verificar duplicados en el mismo archivo
@@ -355,7 +355,7 @@ function processRows(
  */
 async function getExistingCedulas(): Promise<Set<string>> {
   const result = await pool.query('SELECT cedula FROM usuarios');
-  return new Set(result.rows.map((row: any) => row.cedula));
+  return new Set(result.rows.map((row: EstudianteRow) => row.cedula));
 }
 
 /**
@@ -378,7 +378,7 @@ export async function bulkCreateEstudiantes(
   
   // Determinar tipo de archivo y parsearlo
   const fileName = file.name.toLowerCase();
-  let rows: any[];
+  let rows: EstudianteRow[];
   
   if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
     rows = await parseExcel(file);
@@ -420,7 +420,6 @@ export async function bulkCreateEstudiantes(
     const estudianteQuery = loadSQL('estudiantes/create-or-update.sql');
     
     let successCount = 0;
-    let errorCount = 0;
     
     for (const processedRow of validRows) {
       if (!processedRow.data) continue;
@@ -449,7 +448,6 @@ export async function bulkCreateEstudiantes(
         
         successCount++;
       } catch (error) {
-        errorCount++;
         processedRow.errors.push(
           error instanceof Error ? error.message : 'Error desconocido al insertar'
         );

@@ -1,6 +1,6 @@
-import { Users, Briefcase, Calendar, User, Table, LayoutGrid, Clock } from 'lucide-react';
+import { Users, Briefcase, Calendar, User, Table, LayoutGrid, Clock, Eye } from 'lucide-react';
 
-export type UserRole = 'admin' | 'professor' | 'student';
+export type UserRole = 'coordinator' | 'professor' | 'student';
 
 export interface MenuItem {
   label: string;
@@ -19,9 +19,9 @@ export const fullMenu: MenuItem[] = [
     label: 'Dashboard',
     href: '/dashboard',
     icon: LayoutGrid,
-    roles: ['admin', 'professor', 'student'],
+    roles: ['coordinator', 'professor', 'student'],
     labelByRole: {
-      admin: 'Dashboard',
+      coordinator: 'Dashboard',
       professor: 'Mi Panel',
       student: 'Mi Panel',
     },
@@ -30,25 +30,31 @@ export const fullMenu: MenuItem[] = [
     label: 'Casos',
     href: '/dashboard/cases',
     icon: Briefcase,
-    roles: ['admin', 'professor', 'student'],
+    roles: ['coordinator', 'professor', 'student'],
   },
   {
     label: 'Solicitantes',
     href: '/dashboard/applicants',
     icon: User,
-    roles: ['admin', 'professor', 'student'],
+    roles: ['coordinator', 'professor', 'student'],
   },
   {
     label: 'Citas',
     href: '/dashboard/appointments',
     icon: Calendar,
-    roles: ['admin', 'professor', 'student'],
+    roles: ['coordinator', 'professor', 'student'],
   },
   {
-    label: 'Gestión de Usuarios',
+    label: 'Reportes',
+    href: '/dashboard/reports',
+    icon: Clock,
+    roles: ['coordinator', 'professor', 'student'],
+  },
+  {
+    label: 'Usuarios',
     href: '/dashboard/users',
     icon: Users,
-    roles: ['admin'],
+    roles: ['coordinator'],
   },
   {
     label: 'Gestión de Equipo',
@@ -57,16 +63,16 @@ export const fullMenu: MenuItem[] = [
     roles: ['professor'],
   },
   {
-    label: 'Gestión de Catálogos',
+    label: 'Catálogos',
     href: '/dashboard/catalogs',
     icon: Table,
-    roles: ['admin'],
+    roles: ['coordinator'],
   },
   {
-    label: 'Reportes',
-    href: '/dashboard/reports',
-    icon: Clock,
-    roles: ['professor', 'student'],
+    label: 'Auditoría',
+    href: '/dashboard/audit',
+    icon: Eye,
+    roles: ['coordinator'],
   },
 ];
 
@@ -83,7 +89,7 @@ export function getMenuByRole(role: UserRole): MenuItem[] {
 
 // Configuración de menús por rol (alternativa más explícita)
 export const menuByRole: Record<UserRole, MenuItem[]> = {
-  admin: getMenuByRole('admin'),
+  coordinator: getMenuByRole('coordinator'),
   professor: getMenuByRole('professor'),
   student: getMenuByRole('student'),
 };
