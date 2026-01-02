@@ -11,6 +11,7 @@ interface DropdownMenuProps {
   className?: string;
   menuClassName?: string;
   onOpenChange?: (isOpen: boolean) => void;
+  disabled?: boolean;
 }
 
 export default function DropdownMenu({
@@ -19,7 +20,8 @@ export default function DropdownMenu({
   align = 'left',
   className = '',
   menuClassName = '',
-  onOpenChange
+  onOpenChange,
+  disabled = false
 }: DropdownMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
@@ -184,6 +186,7 @@ export default function DropdownMenu({
   }, [isOpen, onOpenChange]);
 
   const handleToggle = () => {
+    if (disabled) return;
     setIsOpen(!isOpen);
   };
 
@@ -195,7 +198,7 @@ export default function DropdownMenu({
 
   return (
     <div className={`relative ${className}`} ref={triggerRef}>
-      <div onClick={handleToggle} className="cursor-pointer">
+      <div onClick={handleToggle} className={disabled ? 'cursor-not-allowed' : 'cursor-pointer'}>
         {typeof trigger === 'function' ? trigger(isOpen) : trigger}
       </div>
 
