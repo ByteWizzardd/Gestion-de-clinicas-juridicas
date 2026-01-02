@@ -295,7 +295,7 @@ export default function AppointmentsClient({
     if (!appointmentToDelete) return;
 
     setIsDeleting(true);
-    
+
     try {
       // Eliminar la cita
       const deleteResult = await deleteCitaAction({

@@ -346,10 +346,11 @@ export async function deleteCitaAction(params: DeleteCitaParams): Promise<GetCit
       appointmentId: params.appointmentId,
     });
 
-    return {
+    const result = {
       success: true,
       data: deletedCita,
     };
+    return result;
   } catch (error) {
     if (error instanceof AppError) {
       return {
@@ -361,13 +362,13 @@ export async function deleteCitaAction(params: DeleteCitaParams): Promise<GetCit
       };
     }
 
-    console.error('Error en deleteCitaAction:', error);
-    return {
+    const errorResult = {
       success: false,
       error: {
         message: error instanceof Error ? error.message : 'Error al eliminar la cita',
         code: 'UNKNOWN_ERROR',
       },
     };
+    return errorResult;
   }
 }

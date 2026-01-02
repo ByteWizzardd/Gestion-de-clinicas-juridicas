@@ -61,6 +61,47 @@ export const accionesQueries = {
   },
 
   /**
+   * Busca una acción relacionada con una cita específica
+   */
+  findByCita: async (
+    idCaso: number,
+    fechaCita: string,
+    orientacion: string
+  ): Promise<{
+    num_accion: number;
+    id_caso: number;
+    detalle_accion: string;
+    comentario: string | null;
+    id_usuario_registra: string;
+    fecha_registro: string;
+  } | null> => {
+    const query = loadSQL('acciones/find-by-cita.sql');
+    const result: QueryResult = await pool.query(query, [idCaso, fechaCita, orientacion]);
+    return result.rows[0] || null;
+  },
+
+  /**
+   * Elimina una acción específica
+   */
+  delete: async (numAccion: number, idCaso: number): Promise<void> => {
+    const query = loadSQL('acciones/delete.sql');
+    await pool.query(query, [numAccion, idCaso]);
+  },
+
+  /**
+   * Actualiza una acción específica
+   */
+  update: async (
+    numAccion: number,
+    idCaso: number,
+    detalleAccion: string,
+    comentario?: string | null
+  ): Promise<void> => {
+    const query = loadSQL('acciones/update.sql');
+    await pool.query(query, [numAccion, idCaso, detalleAccion, comentario]);
+  },
+
+  /**
    * Obtiene las acciones más recientes de los casos asignados al usuario
    */
   getRecentByUsuario: async (
@@ -92,8 +133,8 @@ export const accionesQueries = {
     // Parsear el JSON de ejecutores
     return result.rows.map(row => ({
       ...row,
-      ejecutores: typeof row.ejecutores === 'string' 
-        ? JSON.parse(row.ejecutores) 
+      ejecutores: typeof row.ejecutores === 'string'
+        ? JSON.parse(row.ejecutores)
         : row.ejecutores || []
     }));
   },

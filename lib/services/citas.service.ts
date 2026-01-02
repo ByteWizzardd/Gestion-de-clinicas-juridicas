@@ -1,6 +1,7 @@
 import { citasQueries, type CitaCompleta } from '@/lib/db/queries/citas.queries';
 import { AppError } from '@/lib/utils/errors';
 import { withTransaction } from '@/lib/db/transactions';
+import { loadSQL } from '@/lib/db/sql-loader';
 
 /**
  * Servicio para la entidad Citas
@@ -114,7 +115,7 @@ export const citasService = {
       // Usar transacción para crear cita y registros en atienden de forma atómica
       return await withTransaction(async (client) => {
         // 1. Crear la cita
-        const createQuery = await import('@/lib/db/sql-loader').then(m => m.loadSQL('citas/create.sql'));
+        const createQuery = loadSQL('citas/create.sql');
         const citaResult = await client.query(createQuery, [
           caseIdNumber,
           params.date,
@@ -130,7 +131,6 @@ export const citasService = {
 
         // 2. Crear registros en atienden si hay usuarios seleccionados
         if (params.usuariosAtienden && params.usuariosAtienden.length > 0) {
-          const { loadSQL } = await import('@/lib/db/sql-loader');
           const atiendenQuery = loadSQL('atienden/create.sql');
           
           for (const usuarioCedula of params.usuariosAtienden) {
@@ -188,7 +188,7 @@ export const citasService = {
       return await withTransaction(async (client) => {
         // 1. Actualizar la cita si hay cambios
         if (params.date || params.endDate !== undefined || params.orientacion) {
-          const updateQuery = await import('@/lib/db/sql-loader').then(m => m.loadSQL('citas/update.sql'));
+          const updateQuery = loadSQL('citas/update.sql');
           
           // Manejar fecha_proxima_cita: si es null explícitamente, enviar 'NULL' como string
           // Si es undefined, enviar null para no actualizar
@@ -217,14 +217,13 @@ export const citasService = {
         // 2. Actualizar registros en atienden si se proporcionaron usuarios
         if (params.usuariosAtienden !== undefined) {
           // Primero eliminar todos los registros existentes
-          const { loadSQL } = await import('@/lib/db/sql-loader');
           const deleteQuery = loadSQL('atienden/delete-by-cita.sql');
           await client.query(deleteQuery, [num_cita, id_caso]);
 
           // Luego crear los nuevos registros si hay usuarios seleccionados
           if (params.usuariosAtienden.length > 0) {
             const createQuery = loadSQL('atienden/create.sql');
-            
+
             for (const usuarioCedula of params.usuariosAtienden) {
               await client.query(createQuery, [
                 usuarioCedula,
@@ -233,6 +232,75 @@ export const citasService = {
                 null // fecha_registro se usa CURRENT_DATE por defecto
               ]);
             }
+          }
+        }
+
+        // 3. Buscar y actualizar acción relacionada si se cambió fecha u orientación
+        if (params.date || params.orientacion) {
+          try {
+            // Obtener la cita actualizada para buscar la acción
+            const getCitaQuery = loadSQL('citas/get-by-id.sql');
+            const citaActualizada = await client.query(getCitaQuery, [num_cita, id_caso]);
+
+            if (citaActualizada.rows.length > 0) {
+              const cita = citaActualizada.rows[0];
+              const { accionesQueries } = await import('@/lib/db/queries/acciones.queries');
+              const { ejecutanQueries } = await import('@/lib/db/queries/ejecutan.queries');
+
+              // Buscar acción relacionada (usando la fecha original ya que no cambió)
+              const fechaCitaOriginal = params.date || cita.fecha_encuentro;
+              const orientacionOriginal = cita.orientacion;
+
+              // Convertir fecha al formato español DD/MM/YYYY para matching
+              const fechaObjOriginal = new Date(fechaCitaOriginal);
+              const diaOriginal = String(fechaObjOriginal.getDate()).padStart(2, '0');
+              const mesOriginal = String(fechaObjOriginal.getMonth() + 1).padStart(2, '0');
+              const anioOriginal = fechaObjOriginal.getFullYear();
+              const fechaFormateadaOriginal = `${diaOriginal}/${mesOriginal}/${anioOriginal}`;
+
+              const accionRelacionada = await accionesQueries.findByCita(id_caso, fechaFormateadaOriginal, orientacionOriginal);
+
+              if (accionRelacionada) {
+                // Actualizar detalle de la acción si cambió la fecha
+                let nuevoDetalle = accionRelacionada.detalle_accion;
+                if (params.date) {
+                  // Extraer la fecha del detalle y reemplazarla
+                  const fechaFormateada = new Date(params.date).toLocaleDateString('es-ES');
+                  nuevoDetalle = `Cita realizada el ${fechaFormateada}`;
+                }
+
+                // Actualizar comentario si cambió la orientación
+                let nuevoComentario = accionRelacionada.comentario;
+                if (params.orientacion !== undefined) {
+                  nuevoComentario = params.orientacion;
+                }
+
+                // Actualizar la acción
+                await accionesQueries.update(accionRelacionada.num_accion, id_caso, nuevoDetalle, nuevoComentario);
+
+                // Si cambiaron los usuarios que atendieron, actualizar ejecutores
+                if (params.usuariosAtienden !== undefined) {
+                  // Eliminar ejecutores existentes
+                  await ejecutanQueries.deleteByAccion(accionRelacionada.num_accion, id_caso);
+
+                  // Crear nuevos ejecutores si hay usuarios
+                  if (params.usuariosAtienden.length > 0) {
+                    const createEjecutanQuery = loadSQL('ejecutan/create.sql');
+                    for (const usuarioCedula of params.usuariosAtienden) {
+                      const fechaEjecucion = params.date || cita.fecha_encuentro;
+                      await client.query(createEjecutanQuery, [
+                        usuarioCedula,
+                        accionRelacionada.num_accion,
+                        id_caso,
+                        fechaEjecucion
+                      ]);
+                    }
+                  }
+                }
+              }
+            }
+          } catch (error) {
+            // No fallar la actualización de la cita por error en eliminación de acción
           }
         }
 
@@ -247,6 +315,25 @@ export const citasService = {
         error instanceof Error ? error.message : "Error desconocido"
       );
     }
+  },
+
+  /**
+   * Busca una acción relacionada con una cita específica
+   */
+  async findAccionByCita(
+    idCaso: number,
+    fechaCita: string,
+    orientacion: string
+  ): Promise<{
+    num_accion: number;
+    id_caso: number;
+    detalle_accion: string;
+    comentario: string | null;
+    id_usuario_registra: string;
+    fecha_registro: string;
+  } | null> {
+    const { accionesQueries } = await import('@/lib/db/queries/acciones.queries');
+    return await accionesQueries.findByCita(idCaso, fechaCita, orientacion);
   },
 
   /**
@@ -272,12 +359,92 @@ export const citasService = {
 
       // Usar transacción para eliminar registros relacionados y la cita de forma atómica
       return await withTransaction(async (client) => {
-        // 1. Eliminar todos los registros de atienden relacionados con esta cita
-        const { loadSQL } = await import('@/lib/db/sql-loader');
+        // 1. Obtener información de la cita antes de eliminarla
+        const getCitaQuery = loadSQL('citas/get-by-id.sql');
+        const citaInfo = await client.query(getCitaQuery, [num_cita, id_caso]);
+
+        let cita = null;
+        if (citaInfo.rows.length === 0) {
+          // Si la cita no existe, intentar eliminar de todas formas los registros relacionados
+          // por si quedaron huérfanos
+        } else {
+          cita = citaInfo.rows[0];
+        }
+
+        // 2. Buscar si hay una acción relacionada con esta cita
+        try {
+          if (cita) {
+            // Convertir fecha al formato español DD/MM/YYYY para matching
+            const fechaObj = new Date(cita.fecha_encuentro);
+            const dia = String(fechaObj.getDate()).padStart(2, '0');
+            const mes = String(fechaObj.getMonth() + 1).padStart(2, '0');
+            const anio = fechaObj.getFullYear();
+            const fechaFormateada = `${dia}/${mes}/${anio}`;
+
+            // Buscar acciones que coincidan exactamente con:
+            // 1. Fecha en detalle_accion
+            // 2. Comentario (orientación)
+            // 3. Caso específico
+            const findAccionQuery = `
+              SELECT a.num_accion, a.id_caso, a.detalle_accion, a.comentario, a.id_usuario_registra, a.fecha_registro
+              FROM acciones a
+              WHERE a.id_caso = $1::INTEGER
+                AND a.detalle_accion = 'Cita realizada el ' || $2::TEXT
+                AND (a.comentario = $3::TEXT OR (a.comentario IS NULL AND $3::TEXT IS NULL))
+              ORDER BY a.fecha_registro DESC, a.num_accion DESC
+              LIMIT 1
+            `;
+
+            const accionResult = await client.query(findAccionQuery, [id_caso, fechaFormateada, cita.orientacion]);
+
+            if (accionResult.rows.length > 0) {
+              const accionRelacionada = accionResult.rows[0];
+
+              // Verificar que los ejecutores también coincidan (comparación adicional de seguridad)
+              const ejecutoresCitaQuery = `
+                SELECT id_usuario
+                FROM atienden
+                WHERE num_cita = $1::INTEGER AND id_caso = $2::INTEGER
+                ORDER BY id_usuario
+              `;
+
+              const ejecutoresAccionQuery = `
+                SELECT id_usuario_ejecuta as id_usuario
+                FROM ejecutan
+                WHERE num_accion = $1::INTEGER AND id_caso = $2::INTEGER
+                ORDER BY id_usuario_ejecuta
+              `;
+
+              const [ejecutoresCitaResult, ejecutoresAccionResult] = await Promise.all([
+                client.query(ejecutoresCitaQuery, [num_cita, id_caso]),
+                client.query(ejecutoresAccionQuery, [accionRelacionada.num_accion, id_caso])
+              ]);
+
+              // Comparar listas de ejecutores
+              const ejecutoresCita = ejecutoresCitaResult.rows.map(r => r.id_usuario).sort();
+              const ejecutoresAccion = ejecutoresAccionResult.rows.map(r => r.id_usuario).sort();
+
+              const ejecutoresCoinciden = JSON.stringify(ejecutoresCita) === JSON.stringify(ejecutoresAccion);
+
+              if (ejecutoresCoinciden) {
+                // Solo eliminar si todo coincide: fecha, comentario y ejecutores
+                const { ejecutanQueries } = await import('@/lib/db/queries/ejecutan.queries');
+                await ejecutanQueries.deleteByAccion(accionRelacionada.num_accion, id_caso);
+
+                const { accionesQueries } = await import('@/lib/db/queries/acciones.queries');
+                await accionesQueries.delete(accionRelacionada.num_accion, id_caso);
+              }
+            }
+          }
+        } catch (error) {
+          // No fallar la eliminación de la cita por error en eliminación de acción
+        }
+
+        // 4. Eliminar todos los registros de atienden relacionados con esta cita
         const deleteAtiendenQuery = loadSQL('atienden/delete-by-cita.sql');
         await client.query(deleteAtiendenQuery, [num_cita, id_caso]);
 
-        // 2. Eliminar la cita
+        // 5. Eliminar la cita
         const deleteCitaQuery = loadSQL('citas/delete.sql');
         const citaResult = await client.query(deleteCitaQuery, [num_cita, id_caso]);
 
