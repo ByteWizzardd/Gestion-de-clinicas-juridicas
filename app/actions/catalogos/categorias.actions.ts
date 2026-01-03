@@ -3,6 +3,7 @@
 import { pool } from '@/lib/db/pool';
 import { revalidatePath } from 'next/cache';
 import { getAllCategorias } from '@/lib/db/queries/catalogos.queries';
+import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 
 export async function getCategorias() {
     try {
@@ -130,6 +131,14 @@ export async function updateCategoria(
                 return { success: true, data: newCategory };
             } else {
                 // Simple update (Name only)
+                const authResult = await requireAuthInServerActionWithCode();
+                if (!authResult.success || !authResult.user) {
+                    await client.query('ROLLBACK');
+                    return { success: false, error: 'No autorizado' };
+                }
+
+                await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+
                 const result = await client.query(
                     'UPDATE categorias SET nombre_categoria = $3 WHERE id_materia = $1 AND num_categoria = $2 RETURNING *',
                     [id_materia, num_categoria, data.nombre_categoria]
@@ -152,24 +161,50 @@ export async function updateCategoria(
 }
 
 export async function toggleCategoriaHabilitado(id_materia: number, num_categoria: number) {
+    const client = await pool.connect();
     try {
-        const result = await pool.query(
+        await client.query('BEGIN');
+
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'No autorizado' };
+        }
+
+        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+
+        const result = await client.query(
             'UPDATE categorias SET habilitado = NOT habilitado WHERE id_materia = $1 AND num_categoria = $2 RETURNING *',
             [id_materia, num_categoria]
         );
-        if (result.rows.length === 0) return { success: false, error: 'Categoría no encontrada' };
+        if (result.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'Categoría no encontrada' };
+        }
+
+        await client.query('COMMIT');
         revalidatePath('/dashboard/catalogs/categorias');
         return { success: true, data: result.rows[0] };
     } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error toggling categoria habilitado:', error);
         return { success: false, error: 'Error al cambiar estado' };
+    } finally {
+        client.release();
     }
 }
 
-export async function deleteCategoria(id_materia: number, num_categoria: number) {
+export async function deleteCategoria(id_materia: number, num_categoria: number, motivo?: string) {
     try {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
+
+            const authResult = await requireAuthInServerActionWithCode();
+            if (!authResult.success || !authResult.user) {
+                await client.query('ROLLBACK');
+                return { success: false, error: 'No autorizado' };
+            }
 
             // 1. Check for Active Cases in the entire hierarchy
             // We need to check if ANY case points to ANY ambito legal that belongs to ANY subcategory of THIS category.
@@ -189,7 +224,11 @@ export async function deleteCategoria(id_materia: number, num_categoria: number)
                 };
             }
 
-            // 2. Cascading Delete (Safe because no cases exist)
+            // 2. Establecer variables de sesión para auditoría
+            await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
+            await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [motivo || '']);
+
+            // 3. Cascading Delete (Safe because no cases exist)
 
             // Delete Ambitos Legales
             await client.query(

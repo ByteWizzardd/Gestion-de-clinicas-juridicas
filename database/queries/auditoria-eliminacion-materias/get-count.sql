@@ -1,0 +1,2 @@
+SELECT COUNT(*) as total
+FROM auditoria_eliminacion_materias;

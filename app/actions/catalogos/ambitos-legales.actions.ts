@@ -3,6 +3,7 @@
 import { pool } from '@/lib/db/pool';
 import { revalidatePath } from 'next/cache';
 import { getAllAmbitosLegales } from '@/lib/db/queries/catalogos.queries';
+import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 
 export async function getAmbitosLegales() {
     try {
@@ -68,6 +69,14 @@ export async function updateAmbitoLegal(
 
             if (!hierarchyChanged) {
                 // Simple update
+                const authResult = await requireAuthInServerActionWithCode();
+                if (!authResult.success || !authResult.user) {
+                    await client.query('ROLLBACK');
+                    return { success: false, error: 'No autorizado' };
+                }
+
+                await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+
                 const result = await client.query(
                     'UPDATE ambitos_legales SET nombre_ambito_legal = $5 WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3 AND num_ambito_legal = $4 RETURNING *',
                     [id_materia, num_categoria, num_subcategoria, num_ambito_legal, data.nombre_ambito_legal]
@@ -124,42 +133,85 @@ export async function updateAmbitoLegal(
 }
 
 export async function toggleAmbitoLegalHabilitado(id_materia: number, num_categoria: number, num_subcategoria: number, num_ambito_legal: number) {
+    const client = await pool.connect();
     try {
-        const result = await pool.query(
+        await client.query('BEGIN');
+
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'No autorizado' };
+        }
+
+        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+
+        const result = await client.query(
             'UPDATE ambitos_legales SET habilitado = NOT habilitado WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3 AND num_ambito_legal = $4 RETURNING *',
             [id_materia, num_categoria, num_subcategoria, num_ambito_legal]
         );
-        if (result.rows.length === 0) return { success: false, error: 'Ámbito legal no encontrado' };
+        if (result.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'Ámbito legal no encontrado' };
+        }
+
+        await client.query('COMMIT');
         revalidatePath('/dashboard/catalogs/ambitos-legales');
         return { success: true, data: result.rows[0] };
     } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error toggling ambito legal habilitado:', error);
         return { success: false, error: 'Error al cambiar estado' };
+    } finally {
+        client.release();
     }
 }
 
-export async function deleteAmbitoLegal(id_materia: number, num_categoria: number, num_subcategoria: number, num_ambito_legal: number) {
+export async function deleteAmbitoLegal(id_materia: number, num_categoria: number, num_subcategoria: number, num_ambito_legal: number, motivo?: string) {
+    const client = await pool.connect();
     try {
-        const checkResult = await pool.query(
+        await client.query('BEGIN');
+
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'No autorizado' };
+        }
+
+        const checkResult = await client.query(
             `SELECT EXISTS (
                 SELECT 1 FROM casos WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3 AND num_ambito = $4
             ) AS has_associations`,
             [id_materia, num_categoria, num_subcategoria, num_ambito_legal]
         );
         if (checkResult.rows[0]?.has_associations === true) {
+            await client.query('ROLLBACK');
             return {
                 success: false,
                 error: 'HAS_ASSOCIATIONS',
                 message: 'No se puede eliminar porque tiene casos asociados.'
             };
         }
-        const result = await pool.query(
+
+        await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [motivo || '']);
+
+        const result = await client.query(
             'DELETE FROM ambitos_legales WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3 AND num_ambito_legal = $4 RETURNING *',
             [id_materia, num_categoria, num_subcategoria, num_ambito_legal]
         );
-        if (result.rows.length === 0) return { success: false, error: 'Ámbito legal no encontrado' };
+        if (result.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'Ámbito legal no encontrado' };
+        }
+
+        await client.query('COMMIT');
         revalidatePath('/dashboard/catalogs/ambitos-legales');
         return { success: true, data: result.rows[0] };
     } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error deleting ambito legal:', error);
         return { success: false, error: 'Error al eliminar ámbito legal' };
+    } finally {
+        client.release();
     }
 }

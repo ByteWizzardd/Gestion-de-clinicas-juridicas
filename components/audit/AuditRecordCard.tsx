@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, ChevronUp, FileText, Calendar, User, X, Check } from 'lucide-react';
+import { ChevronDown, ChevronUp, FileText, Calendar, User, X, Check, BookOpen, GraduationCap, Building, Briefcase, Activity, Tag, Tags, Scale, MapPin, Building2, Home, FolderTree } from 'lucide-react';
 import Link from 'next/link';
 import UserAvatar from '@/components/ui/UserAvatar';
 import type { 
@@ -13,9 +13,23 @@ import type {
   UsuarioActualizadoCamposAuditRecord
 } from '@/types/audit';
 
-type AuditRecord = SoporteAuditRecord | CitaEliminadaAuditRecord | CitaActualizadaAuditRecord | UsuarioEliminadoAuditRecord | UsuarioActualizadoCamposAuditRecord;
+type AuditRecord = SoporteAuditRecord | CitaEliminadaAuditRecord | CitaActualizadaAuditRecord | UsuarioEliminadoAuditRecord | UsuarioActualizadoCamposAuditRecord | any;
 
-type AuditRecordType = 'soporte' | 'cita-eliminada' | 'cita-actualizada' | 'usuario-eliminado' | 'usuario-actualizado-campos';
+type AuditRecordType = 'soporte' | 'cita-eliminada' | 'cita-actualizada' | 'usuario-eliminado' | 'usuario-actualizado-campos'
+  | 'estado-eliminado' | 'estado-actualizado'
+  | 'materia-eliminada' | 'materia-actualizada'
+  | 'nivel-educativo-eliminado' | 'nivel-educativo-actualizado'
+  | 'nucleo-eliminado' | 'nucleo-actualizado'
+  | 'condicion-trabajo-eliminada' | 'condicion-trabajo-actualizada'
+  | 'condicion-actividad-eliminada' | 'condicion-actividad-actualizada'
+  | 'tipo-caracteristica-eliminado' | 'tipo-caracteristica-actualizado'
+  | 'semestre-eliminado' | 'semestre-actualizado'
+  | 'municipio-eliminado' | 'municipio-actualizado'
+  | 'parroquia-eliminada' | 'parroquia-actualizada'
+  | 'categoria-eliminada' | 'categoria-actualizada'
+  | 'subcategoria-eliminada' | 'subcategoria-actualizada'
+  | 'ambito-legal-eliminado' | 'ambito-legal-actualizado'
+  | 'caracteristica-eliminada' | 'caracteristica-actualizada';
 
 interface AuditRecordCardProps {
   record: AuditRecord;
@@ -292,6 +306,134 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                   <> • {r.tipo_usuario_anterior} → {r.tipo_usuario_nuevo}</>
                 )}
                 {' • '}Actualizado por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_actualizo,
+                  r.nombres_usuario_actualizo,
+                  r.apellidos_usuario_actualizo,
+                  r.id_usuario_actualizo
+                )}
+              </p>
+            </div>
+          </div>
+        );
+      }
+      // Catálogos - casos genéricos para eliminados
+      case 'estado-eliminado':
+      case 'materia-eliminada':
+      case 'nivel-educativo-eliminado':
+      case 'nucleo-eliminado':
+      case 'condicion-trabajo-eliminada':
+      case 'condicion-actividad-eliminada':
+      case 'tipo-caracteristica-eliminado':
+      case 'semestre-eliminado':
+      case 'municipio-eliminado':
+      case 'parroquia-eliminada':
+      case 'categoria-eliminada':
+      case 'subcategoria-eliminada':
+      case 'ambito-legal-eliminado':
+      case 'caracteristica-eliminada': {
+        const r = record as any;
+        const iconMap: Record<string, any> = {
+          'estado-eliminado': MapPin,
+          'materia-eliminada': BookOpen,
+          'nivel-educativo-eliminado': GraduationCap,
+          'nucleo-eliminado': Building,
+          'condicion-trabajo-eliminada': Briefcase,
+          'condicion-actividad-eliminada': Activity,
+          'tipo-caracteristica-eliminado': Tag,
+          'semestre-eliminado': Calendar,
+          'municipio-eliminado': Building2,
+          'parroquia-eliminada': Home,
+          'categoria-eliminada': FolderTree,
+          'subcategoria-eliminada': FileText,
+          'ambito-legal-eliminado': Scale,
+          'caracteristica-eliminada': Tags,
+        };
+        const Icon = iconMap[type] || FileText;
+        const nameField = r.nombre_estado || r.nombre_materia || r.descripcion || r.nombre_nucleo || 
+          r.nombre_trabajo || r.nombre_actividad || r.nombre_tipo_caracteristica || r.term || 
+          r.nombre_municipio || r.nombre_parroquia || r.nombre_categoria || r.nombre_subcategoria || 
+          r.nombre_ambito_legal || r.descripcion || 'N/A';
+        const idField = r.id_estado || r.id_materia || r.id_nivel_educativo || r.id_nucleo || 
+          r.id_trabajo || r.id_actividad || r.id_tipo || r.term || 
+          `${r.id_estado || ''}-${r.num_municipio || ''}` || 
+          `${r.id_estado || ''}-${r.num_municipio || ''}-${r.num_parroquia || ''}` ||
+          `${r.id_materia || ''}-${r.num_categoria || ''}` ||
+          `${r.id_materia || ''}-${r.num_categoria || ''}-${r.num_subcategoria || ''}` ||
+          `${r.id_materia || ''}-${r.num_categoria || ''}-${r.num_subcategoria || ''}-${r.num_ambito_legal || ''}` ||
+          `${r.id_tipo_caracteristica || ''}-${r.num_caracteristica || ''}` || 'N/A';
+        
+        return (
+          <div className="flex items-center gap-3">
+            <Icon className="w-5 h-5 text-gray-600" />
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">{nameField}</p>
+              <p className="text-sm text-gray-600">
+                ID: {idField} • Eliminado por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_elimino,
+                  r.nombres_usuario_elimino,
+                  r.apellidos_usuario_elimino,
+                  r.id_usuario_elimino
+                )}
+              </p>
+            </div>
+          </div>
+        );
+      }
+      // Catálogos - casos genéricos para actualizados
+      case 'estado-actualizado':
+      case 'materia-actualizada':
+      case 'nivel-educativo-actualizado':
+      case 'nucleo-actualizado':
+      case 'condicion-trabajo-actualizada':
+      case 'condicion-actividad-actualizada':
+      case 'tipo-caracteristica-actualizado':
+      case 'semestre-actualizado':
+      case 'municipio-actualizado':
+      case 'parroquia-actualizada':
+      case 'categoria-actualizada':
+      case 'subcategoria-actualizada':
+      case 'ambito-legal-actualizado':
+      case 'caracteristica-actualizada': {
+        const r = record as any;
+        const iconMap: Record<string, any> = {
+          'estado-actualizado': MapPin,
+          'materia-actualizada': BookOpen,
+          'nivel-educativo-actualizado': GraduationCap,
+          'nucleo-actualizado': Building,
+          'condicion-trabajo-actualizada': Briefcase,
+          'condicion-actividad-actualizada': Activity,
+          'tipo-caracteristica-actualizado': Tag,
+          'semestre-actualizado': Calendar,
+          'municipio-actualizado': Building2,
+          'parroquia-actualizada': Home,
+          'categoria-actualizada': FolderTree,
+          'subcategoria-actualizada': FileText,
+          'ambito-legal-actualizado': Scale,
+          'caracteristica-actualizada': Tags,
+        };
+        const Icon = iconMap[type] || FileText;
+        const nameField = r.nombre_estado_nuevo || r.nombre_materia_nuevo || r.descripcion_nuevo || r.nombre_nucleo_nuevo || 
+          r.nombre_trabajo_nuevo || r.nombre_actividad_nuevo || r.nombre_tipo_caracteristica_nuevo || r.term || 
+          r.nombre_municipio_nuevo || r.nombre_parroquia_nuevo || r.nombre_categoria_nuevo || r.nombre_subcategoria_nuevo || 
+          r.nombre_ambito_legal_nuevo || r.descripcion_nuevo || 'N/A';
+        const idField = r.id_estado || r.id_materia || r.id_nivel_educativo || r.id_nucleo || 
+          r.id_trabajo || r.id_actividad || r.id_tipo || r.term || 
+          `${r.id_estado || ''}-${r.num_municipio || ''}` || 
+          `${r.id_estado || ''}-${r.num_municipio || ''}-${r.num_parroquia || ''}` ||
+          `${r.id_materia || ''}-${r.num_categoria || ''}` ||
+          `${r.id_materia || ''}-${r.num_categoria || ''}-${r.num_subcategoria || ''}` ||
+          `${r.id_materia || ''}-${r.num_categoria || ''}-${r.num_subcategoria || ''}-${r.num_ambito_legal || ''}` ||
+          `${r.id_tipo_caracteristica || ''}-${r.num_caracteristica || ''}` || 'N/A';
+        
+        return (
+          <div className="flex items-center gap-3">
+            <Check className="w-5 h-5 text-gray-600" />
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">{nameField}</p>
+              <p className="text-sm text-gray-600">
+                ID: {idField} • Actualizado por:{' '}
                 {renderUserLink(
                   r.nombre_completo_usuario_actualizo,
                   r.nombres_usuario_actualizo,
@@ -738,6 +880,190 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           </div>
         );
       }
+      // Catálogos - casos genéricos para eliminados
+      case 'estado-eliminado':
+      case 'materia-eliminada':
+      case 'nivel-educativo-eliminado':
+      case 'nucleo-eliminado':
+      case 'condicion-trabajo-eliminada':
+      case 'condicion-actividad-eliminada':
+      case 'tipo-caracteristica-eliminado':
+      case 'semestre-eliminado':
+      case 'municipio-eliminado':
+      case 'parroquia-eliminada':
+      case 'categoria-eliminada':
+      case 'subcategoria-eliminada':
+      case 'ambito-legal-eliminado':
+      case 'caracteristica-eliminada': {
+        const r = record as any;
+        const nameField = r.nombre_estado || r.nombre_materia || r.descripcion || r.nombre_nucleo || 
+          r.nombre_trabajo || r.nombre_actividad || r.nombre_tipo_caracteristica || r.term || 
+          r.nombre_municipio || r.nombre_parroquia || r.nombre_categoria || r.nombre_subcategoria || 
+          r.nombre_ambito_legal || r.descripcion || 'N/A';
+        const idField = r.id_estado || r.id_materia || r.id_nivel_educativo || r.id_nucleo || 
+          r.id_trabajo || r.id_actividad || r.id_tipo || r.term || 
+          `${r.id_estado || ''}-${r.num_municipio || ''}` || 
+          `${r.id_estado || ''}-${r.num_municipio || ''}-${r.num_parroquia || ''}` ||
+          `${r.id_materia || ''}-${r.num_categoria || ''}` ||
+          `${r.id_materia || ''}-${r.num_categoria || ''}-${r.num_subcategoria || ''}` ||
+          `${r.id_materia || ''}-${r.num_categoria || ''}-${r.num_subcategoria || ''}-${r.num_ambito_legal || ''}` ||
+          `${r.id_tipo_caracteristica || ''}-${r.num_caracteristica || ''}` || 'N/A';
+        
+        return (
+          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">Información</p>
+                <p className="text-sm text-gray-600">Nombre: {nameField}</p>
+                <p className="text-sm text-gray-600">ID: {idField}</p>
+                {r.habilitado !== null && (
+                  <p className="text-sm text-gray-600">Habilitado: {r.habilitado ? 'Sí' : 'No'}</p>
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
+                <p className="text-sm text-gray-600">
+                  Eliminado por:{' '}
+                  {renderUserLink(
+                    r.nombre_completo_usuario_elimino,
+                    r.nombres_usuario_elimino,
+                    r.apellidos_usuario_elimino,
+                    r.id_usuario_elimino
+                  )}
+                </p>
+                <p className="text-sm text-gray-600">Fecha eliminación: {formatDate(r.fecha_eliminacion)}</p>
+              </div>
+            </div>
+            {r.motivo && (
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">Motivo de eliminación</p>
+                <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{r.motivo}</p>
+              </div>
+            )}
+          </div>
+        );
+      }
+      // Catálogos - casos genéricos para actualizados
+      case 'estado-actualizado':
+      case 'materia-actualizada':
+      case 'nivel-educativo-actualizado':
+      case 'nucleo-actualizado':
+      case 'condicion-trabajo-actualizada':
+      case 'condicion-actividad-actualizada':
+      case 'tipo-caracteristica-actualizado':
+      case 'semestre-actualizado':
+      case 'municipio-actualizado':
+      case 'parroquia-actualizada':
+      case 'categoria-actualizada':
+      case 'subcategoria-actualizada':
+      case 'ambito-legal-actualizado':
+      case 'caracteristica-actualizada': {
+        const r = record as any;
+        const nameFieldAnterior = r.nombre_estado_anterior || r.nombre_materia_anterior || r.descripcion_anterior || r.nombre_nucleo_anterior || 
+          r.nombre_trabajo_anterior || r.nombre_actividad_anterior || r.nombre_tipo_caracteristica_anterior || r.term || 
+          r.nombre_municipio_anterior || r.nombre_parroquia_anterior || r.nombre_categoria_anterior || r.nombre_subcategoria_anterior || 
+          r.nombre_ambito_legal_anterior || r.descripcion_anterior || 'N/A';
+        const nameFieldNuevo = r.nombre_estado_nuevo || r.nombre_materia_nuevo || r.descripcion_nuevo || r.nombre_nucleo_nuevo || 
+          r.nombre_trabajo_nuevo || r.nombre_actividad_nuevo || r.nombre_tipo_caracteristica_nuevo || r.term || 
+          r.nombre_municipio_nuevo || r.nombre_parroquia_nuevo || r.nombre_categoria_nuevo || r.nombre_subcategoria_nuevo || 
+          r.nombre_ambito_legal_nuevo || r.descripcion_nuevo || 'N/A';
+        const idField = r.id_estado || r.id_materia || r.id_nivel_educativo || r.id_nucleo || 
+          r.id_trabajo || r.id_actividad || r.id_tipo || r.term || 
+          `${r.id_estado || ''}-${r.num_municipio || ''}` || 
+          `${r.id_estado || ''}-${r.num_municipio || ''}-${r.num_parroquia || ''}` ||
+          `${r.id_materia || ''}-${r.num_categoria || ''}` ||
+          `${r.id_materia || ''}-${r.num_categoria || ''}-${r.num_subcategoria || ''}` ||
+          `${r.id_materia || ''}-${r.num_categoria || ''}-${r.num_subcategoria || ''}-${r.num_ambito_legal || ''}` ||
+          `${r.id_tipo_caracteristica || ''}-${r.num_caracteristica || ''}` || 'N/A';
+        
+        return (
+          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Cambios Realizados</p>
+              <p className="text-sm text-gray-600 mb-3">ID: {idField}</p>
+              
+              {(nameFieldAnterior !== nameFieldNuevo) && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Nombre:{' '}
+                    <span className="line-through text-red-500">
+                      {nameFieldAnterior}
+                    </span>
+                    {' → '}
+                    <span className="text-green-600">
+                      {nameFieldNuevo}
+                    </span>
+                  </p>
+                </div>
+              )}
+              
+              {(r.habilitado_anterior !== null && r.habilitado_nuevo !== null && r.habilitado_anterior !== r.habilitado_nuevo) && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Habilitado:{' '}
+                    <span className="line-through text-red-500">
+                      {r.habilitado_anterior ? 'Sí' : 'No'}
+                    </span>
+                    {' → '}
+                    <span className="text-green-600">
+                      {r.habilitado_nuevo ? 'Sí' : 'No'}
+                    </span>
+                  </p>
+                </div>
+              )}
+              
+              {/* Campos específicos para semestres */}
+              {type === 'semestre-actualizado' && (
+                <>
+                  {(r.fecha_inicio_anterior !== r.fecha_inicio_nuevo) && (
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-600">
+                        Fecha inicio:{' '}
+                        <span className="line-through text-red-500">
+                          {r.fecha_inicio_anterior ? formatDate(r.fecha_inicio_anterior) : 'N/A'}
+                        </span>
+                        {' → '}
+                        <span className="text-green-600">
+                          {r.fecha_inicio_nuevo ? formatDate(r.fecha_inicio_nuevo) : 'N/A'}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                  {(r.fecha_fin_anterior !== r.fecha_fin_nuevo) && (
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-600">
+                        Fecha fin:{' '}
+                        <span className="line-through text-red-500">
+                          {r.fecha_fin_anterior ? formatDate(r.fecha_fin_anterior) : 'N/A'}
+                        </span>
+                        {' → '}
+                        <span className="text-green-600">
+                          {r.fecha_fin_nuevo ? formatDate(r.fecha_fin_nuevo) : 'N/A'}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
+              <p className="text-sm text-gray-600">
+                Actualizado por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_actualizo,
+                  r.nombres_usuario_actualizo,
+                  r.apellidos_usuario_actualizo,
+                  r.id_usuario_actualizo
+                )}
+              </p>
+              <p className="text-sm text-gray-600">
+                Fecha actualización: {formatDate(r.fecha_actualizacion)}
+              </p>
+            </div>
+          </div>
+        );
+      }
     }
   };
 
@@ -753,6 +1079,38 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         return (record as UsuarioEliminadoAuditRecord).fecha;
       case 'usuario-actualizado-campos':
         return (record as UsuarioActualizadoCamposAuditRecord).fecha_actualizacion;
+      // Catálogos eliminados
+      case 'estado-eliminado':
+      case 'materia-eliminada':
+      case 'nivel-educativo-eliminado':
+      case 'nucleo-eliminado':
+      case 'condicion-trabajo-eliminada':
+      case 'condicion-actividad-eliminada':
+      case 'tipo-caracteristica-eliminado':
+      case 'semestre-eliminado':
+      case 'municipio-eliminado':
+      case 'parroquia-eliminada':
+      case 'categoria-eliminada':
+      case 'subcategoria-eliminada':
+      case 'ambito-legal-eliminado':
+      case 'caracteristica-eliminada':
+        return (record as any).fecha_eliminacion;
+      // Catálogos actualizados
+      case 'estado-actualizado':
+      case 'materia-actualizada':
+      case 'nivel-educativo-actualizado':
+      case 'nucleo-actualizado':
+      case 'condicion-trabajo-actualizada':
+      case 'condicion-actividad-actualizada':
+      case 'tipo-caracteristica-actualizado':
+      case 'semestre-actualizado':
+      case 'municipio-actualizado':
+      case 'parroquia-actualizada':
+      case 'categoria-actualizada':
+      case 'subcategoria-actualizada':
+      case 'ambito-legal-actualizado':
+      case 'caracteristica-actualizada':
+        return (record as any).fecha_actualizacion;
     }
   };
 

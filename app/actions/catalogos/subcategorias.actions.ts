@@ -3,6 +3,7 @@
 import { pool } from '@/lib/db/pool';
 import { revalidatePath } from 'next/cache';
 import { getAllSubcategorias } from '@/lib/db/queries/catalogos.queries';
+import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 
 export async function getSubcategorias() {
     try {
@@ -38,56 +39,119 @@ export async function createSubcategoria(data: { id_materia: string; num_categor
 }
 
 export async function updateSubcategoria(id_materia: number, num_categoria: number, num_subcategoria: number, data: { nombre_subcategoria: string }) {
+    const client = await pool.connect();
     try {
-        const result = await pool.query(
+        await client.query('BEGIN');
+
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'No autorizado' };
+        }
+
+        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+
+        const result = await client.query(
             'UPDATE subcategorias SET nombre_subcategoria = $4 WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3 RETURNING *',
             [id_materia, num_categoria, num_subcategoria, data.nombre_subcategoria]
         );
-        if (result.rows.length === 0) return { success: false, error: 'Subcategoría no encontrada' };
+        if (result.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'Subcategoría no encontrada' };
+        }
+
+        await client.query('COMMIT');
         revalidatePath('/dashboard/catalogs/subcategorias');
         return { success: true, data: result.rows[0] };
     } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error updating subcategoria:', error);
         return { success: false, error: 'Error al actualizar subcategoría' };
+    } finally {
+        client.release();
     }
 }
 
 export async function toggleSubcategoriaHabilitado(id_materia: number, num_categoria: number, num_subcategoria: number) {
+    const client = await pool.connect();
     try {
-        const result = await pool.query(
+        await client.query('BEGIN');
+
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'No autorizado' };
+        }
+
+        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+
+        const result = await client.query(
             'UPDATE subcategorias SET habilitado = NOT habilitado WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3 RETURNING *',
             [id_materia, num_categoria, num_subcategoria]
         );
-        if (result.rows.length === 0) return { success: false, error: 'Subcategoría no encontrada' };
+        if (result.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'Subcategoría no encontrada' };
+        }
+
+        await client.query('COMMIT');
         revalidatePath('/dashboard/catalogs/subcategorias');
         return { success: true, data: result.rows[0] };
     } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error toggling subcategoria habilitado:', error);
         return { success: false, error: 'Error al cambiar estado' };
+    } finally {
+        client.release();
     }
 }
 
-export async function deleteSubcategoria(id_materia: number, num_categoria: number, num_subcategoria: number) {
+export async function deleteSubcategoria(id_materia: number, num_categoria: number, num_subcategoria: number, motivo?: string) {
+    const client = await pool.connect();
     try {
-        const checkResult = await pool.query(
+        await client.query('BEGIN');
+
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'No autorizado' };
+        }
+
+        const checkResult = await client.query(
             `SELECT EXISTS (
                 SELECT 1 FROM ambitos_legales WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3
             ) AS has_associations`,
             [id_materia, num_categoria, num_subcategoria]
         );
         if (checkResult.rows[0]?.has_associations === true) {
+            await client.query('ROLLBACK');
             return {
                 success: false,
                 error: 'HAS_ASSOCIATIONS',
                 message: 'No se puede eliminar porque tiene ámbitos legales asociados.'
             };
         }
-        const result = await pool.query(
+
+        await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [motivo || '']);
+
+        const result = await client.query(
             'DELETE FROM subcategorias WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3 RETURNING *',
             [id_materia, num_categoria, num_subcategoria]
         );
-        if (result.rows.length === 0) return { success: false, error: 'Subcategoría no encontrada' };
+        if (result.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'Subcategoría no encontrada' };
+        }
+
+        await client.query('COMMIT');
         revalidatePath('/dashboard/catalogs/subcategorias');
         return { success: true, data: result.rows[0] };
     } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error deleting subcategoria:', error);
         return { success: false, error: 'Error al eliminar subcategoría' };
+    } finally {
+        client.release();
     }
 }

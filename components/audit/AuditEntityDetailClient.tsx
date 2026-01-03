@@ -8,7 +8,21 @@ import AuditDetailClient from './detail/AuditDetailClient';
 
 interface AuditOperation {
   label: string;
-  auditType: 'soportes' | 'citas-eliminadas' | 'citas-actualizadas' | 'usuarios-eliminados' | 'usuarios-actualizados-campos';
+  auditType: 'soportes' | 'citas-eliminadas' | 'citas-actualizadas' | 'usuarios-eliminados' | 'usuarios-actualizados-campos' 
+    | 'estados-eliminados' | 'estados-actualizados'
+    | 'materias-eliminadas' | 'materias-actualizadas'
+    | 'niveles-educativos-eliminados' | 'niveles-educativos-actualizados'
+    | 'nucleos-eliminados' | 'nucleos-actualizados'
+    | 'condiciones-trabajo-eliminadas' | 'condiciones-trabajo-actualizadas'
+    | 'condiciones-actividad-eliminadas' | 'condiciones-actividad-actualizadas'
+    | 'tipos-caracteristicas-eliminados' | 'tipos-caracteristicas-actualizados'
+    | 'semestres-eliminados' | 'semestres-actualizados'
+    | 'municipios-eliminados' | 'municipios-actualizados'
+    | 'parroquias-eliminadas' | 'parroquias-actualizadas'
+    | 'categorias-eliminadas' | 'categorias-actualizadas'
+    | 'subcategorias-eliminadas' | 'subcategorias-actualizadas'
+    | 'ambitos-legales-eliminados' | 'ambitos-legales-actualizados'
+    | 'caracteristicas-eliminadas' | 'caracteristicas-actualizadas';
   title: string;
   description: string;
   emptyMessage: string;

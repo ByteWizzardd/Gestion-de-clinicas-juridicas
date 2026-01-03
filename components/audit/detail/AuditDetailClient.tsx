@@ -10,8 +10,36 @@ import AuditRecordCard from '../AuditRecordCard';
 import Spinner from '@/components/ui/feedback/Spinner';
 import type { AuditFilters } from '@/types/audit';
 
-type AuditType = 'soportes' | 'citas-eliminadas' | 'citas-actualizadas' | 'usuarios-eliminados' | 'usuarios-actualizados-campos';
-type AuditRecordType = 'soporte' | 'cita-eliminada' | 'cita-actualizada' | 'usuario-eliminado' | 'usuario-actualizado-campos';
+type AuditType = 'soportes' | 'citas-eliminadas' | 'citas-actualizadas' | 'usuarios-eliminados' | 'usuarios-actualizados-campos' 
+  | 'estados-eliminados' | 'estados-actualizados'
+  | 'materias-eliminadas' | 'materias-actualizadas'
+  | 'niveles-educativos-eliminados' | 'niveles-educativos-actualizados'
+  | 'nucleos-eliminados' | 'nucleos-actualizados'
+  | 'condiciones-trabajo-eliminadas' | 'condiciones-trabajo-actualizadas'
+  | 'condiciones-actividad-eliminadas' | 'condiciones-actividad-actualizadas'
+  | 'tipos-caracteristicas-eliminados' | 'tipos-caracteristicas-actualizados'
+  | 'semestres-eliminados' | 'semestres-actualizados'
+  | 'municipios-eliminados' | 'municipios-actualizados'
+  | 'parroquias-eliminadas' | 'parroquias-actualizadas'
+  | 'categorias-eliminadas' | 'categorias-actualizadas'
+  | 'subcategorias-eliminadas' | 'subcategorias-actualizadas'
+  | 'ambitos-legales-eliminados' | 'ambitos-legales-actualizados'
+  | 'caracteristicas-eliminadas' | 'caracteristicas-actualizadas';
+type AuditRecordType = 'soporte' | 'cita-eliminada' | 'cita-actualizada' | 'usuario-eliminado' | 'usuario-actualizado-campos' 
+  | 'estado-eliminado' | 'estado-actualizado'
+  | 'materia-eliminada' | 'materia-actualizada'
+  | 'nivel-educativo-eliminado' | 'nivel-educativo-actualizado'
+  | 'nucleo-eliminado' | 'nucleo-actualizado'
+  | 'condicion-trabajo-eliminada' | 'condicion-trabajo-actualizada'
+  | 'condicion-actividad-eliminada' | 'condicion-actividad-actualizada'
+  | 'tipo-caracteristica-eliminado' | 'tipo-caracteristica-actualizado'
+  | 'semestre-eliminado' | 'semestre-actualizado'
+  | 'municipio-eliminado' | 'municipio-actualizado'
+  | 'parroquia-eliminada' | 'parroquia-actualizada'
+  | 'categoria-eliminada' | 'categoria-actualizada'
+  | 'subcategoria-eliminada' | 'subcategoria-actualizada'
+  | 'ambito-legal-eliminado' | 'ambito-legal-actualizado'
+  | 'caracteristica-eliminada' | 'caracteristica-actualizada';
 
 interface AuditDetailClientProps {
   title: string;
@@ -41,6 +69,34 @@ export default function AuditDetailClient({
     'citas-actualizadas': 'cita-actualizada',
     'usuarios-eliminados': 'usuario-eliminado',
     'usuarios-actualizados-campos': 'usuario-actualizado-campos',
+    'estados-eliminados': 'estado-eliminado',
+    'estados-actualizados': 'estado-actualizado',
+    'materias-eliminadas': 'materia-eliminada',
+    'materias-actualizadas': 'materia-actualizada',
+    'niveles-educativos-eliminados': 'nivel-educativo-eliminado',
+    'niveles-educativos-actualizados': 'nivel-educativo-actualizado',
+    'nucleos-eliminados': 'nucleo-eliminado',
+    'nucleos-actualizados': 'nucleo-actualizado',
+    'condiciones-trabajo-eliminadas': 'condicion-trabajo-eliminada',
+    'condiciones-trabajo-actualizadas': 'condicion-trabajo-actualizada',
+    'condiciones-actividad-eliminadas': 'condicion-actividad-eliminada',
+    'condiciones-actividad-actualizadas': 'condicion-actividad-actualizada',
+    'tipos-caracteristicas-eliminados': 'tipo-caracteristica-eliminado',
+    'tipos-caracteristicas-actualizados': 'tipo-caracteristica-actualizado',
+    'semestres-eliminados': 'semestre-eliminado',
+    'semestres-actualizados': 'semestre-actualizado',
+    'municipios-eliminados': 'municipio-eliminado',
+    'municipios-actualizados': 'municipio-actualizado',
+    'parroquias-eliminadas': 'parroquia-eliminada',
+    'parroquias-actualizadas': 'parroquia-actualizada',
+    'categorias-eliminadas': 'categoria-eliminada',
+    'categorias-actualizadas': 'categoria-actualizada',
+    'subcategorias-eliminadas': 'subcategoria-eliminada',
+    'subcategorias-actualizadas': 'subcategoria-actualizada',
+    'ambitos-legales-eliminados': 'ambito-legal-eliminado',
+    'ambitos-legales-actualizados': 'ambito-legal-actualizado',
+    'caracteristicas-eliminadas': 'caracteristica-eliminada',
+    'caracteristicas-actualizadas': 'caracteristica-actualizada',
   };
 
   // Cargar opciones de usuarios
@@ -77,7 +133,35 @@ export default function AuditDetailClient({
           getCitasEliminadasAuditAction,
           getCitasActualizadasAuditAction,
           getUsuariosEliminadosAuditAction,
-          getUsuariosActualizadosCamposAuditAction
+          getUsuariosActualizadosCamposAuditAction,
+          getEstadosEliminadosAuditAction,
+          getEstadosActualizadosAuditAction,
+          getMateriasEliminadasAuditAction,
+          getMateriasActualizadasAuditAction,
+          getNivelesEducativosEliminadosAuditAction,
+          getNivelesEducativosActualizadosAuditAction,
+          getNucleosEliminadosAuditAction,
+          getNucleosActualizadosAuditAction,
+          getCondicionesTrabajoEliminadasAuditAction,
+          getCondicionesTrabajoActualizadasAuditAction,
+          getCondicionesActividadEliminadasAuditAction,
+          getCondicionesActividadActualizadasAuditAction,
+          getTiposCaracteristicasEliminadosAuditAction,
+          getTiposCaracteristicasActualizadosAuditAction,
+          getSemestresEliminadosAuditAction,
+          getSemestresActualizadosAuditAction,
+          getMunicipiosEliminadosAuditAction,
+          getMunicipiosActualizadosAuditAction,
+          getParroquiasEliminadasAuditAction,
+          getParroquiasActualizadasAuditAction,
+          getCategoriasEliminadasAuditAction,
+          getCategoriasActualizadasAuditAction,
+          getSubcategoriasEliminadasAuditAction,
+          getSubcategoriasActualizadasAuditAction,
+          getAmbitosLegalesEliminadosAuditAction,
+          getAmbitosLegalesActualizadosAuditAction,
+          getCaracteristicasEliminadasAuditAction,
+          getCaracteristicasActualizadasAuditAction
         } = await import('@/app/actions/audit');
 
         let data: any[];
@@ -96,6 +180,90 @@ export default function AuditDetailClient({
             break;
           case 'usuarios-actualizados-campos':
             data = await getUsuariosActualizadosCamposAuditAction(filters);
+            break;
+          case 'estados-eliminados':
+            data = await getEstadosEliminadosAuditAction(filters);
+            break;
+          case 'estados-actualizados':
+            data = await getEstadosActualizadosAuditAction(filters);
+            break;
+          case 'materias-eliminadas':
+            data = await getMateriasEliminadasAuditAction(filters);
+            break;
+          case 'materias-actualizadas':
+            data = await getMateriasActualizadasAuditAction(filters);
+            break;
+          case 'niveles-educativos-eliminados':
+            data = await getNivelesEducativosEliminadosAuditAction(filters);
+            break;
+          case 'niveles-educativos-actualizados':
+            data = await getNivelesEducativosActualizadosAuditAction(filters);
+            break;
+          case 'nucleos-eliminados':
+            data = await getNucleosEliminadosAuditAction(filters);
+            break;
+          case 'nucleos-actualizados':
+            data = await getNucleosActualizadosAuditAction(filters);
+            break;
+          case 'condiciones-trabajo-eliminadas':
+            data = await getCondicionesTrabajoEliminadasAuditAction(filters);
+            break;
+          case 'condiciones-trabajo-actualizadas':
+            data = await getCondicionesTrabajoActualizadasAuditAction(filters);
+            break;
+          case 'condiciones-actividad-eliminadas':
+            data = await getCondicionesActividadEliminadasAuditAction(filters);
+            break;
+          case 'condiciones-actividad-actualizadas':
+            data = await getCondicionesActividadActualizadasAuditAction(filters);
+            break;
+          case 'tipos-caracteristicas-eliminados':
+            data = await getTiposCaracteristicasEliminadosAuditAction(filters);
+            break;
+          case 'tipos-caracteristicas-actualizados':
+            data = await getTiposCaracteristicasActualizadosAuditAction(filters);
+            break;
+          case 'semestres-eliminados':
+            data = await getSemestresEliminadosAuditAction(filters);
+            break;
+          case 'semestres-actualizados':
+            data = await getSemestresActualizadosAuditAction(filters);
+            break;
+          case 'municipios-eliminados':
+            data = await getMunicipiosEliminadosAuditAction(filters);
+            break;
+          case 'municipios-actualizados':
+            data = await getMunicipiosActualizadosAuditAction(filters);
+            break;
+          case 'parroquias-eliminadas':
+            data = await getParroquiasEliminadasAuditAction(filters);
+            break;
+          case 'parroquias-actualizadas':
+            data = await getParroquiasActualizadasAuditAction(filters);
+            break;
+          case 'categorias-eliminadas':
+            data = await getCategoriasEliminadasAuditAction(filters);
+            break;
+          case 'categorias-actualizadas':
+            data = await getCategoriasActualizadasAuditAction(filters);
+            break;
+          case 'subcategorias-eliminadas':
+            data = await getSubcategoriasEliminadasAuditAction(filters);
+            break;
+          case 'subcategorias-actualizadas':
+            data = await getSubcategoriasActualizadasAuditAction(filters);
+            break;
+          case 'ambitos-legales-eliminados':
+            data = await getAmbitosLegalesEliminadosAuditAction(filters);
+            break;
+          case 'ambitos-legales-actualizados':
+            data = await getAmbitosLegalesActualizadosAuditAction(filters);
+            break;
+          case 'caracteristicas-eliminadas':
+            data = await getCaracteristicasEliminadasAuditAction(filters);
+            break;
+          case 'caracteristicas-actualizadas':
+            data = await getCaracteristicasActualizadasAuditAction(filters);
             break;
           default:
             throw new Error('Tipo de auditoría no válido');
