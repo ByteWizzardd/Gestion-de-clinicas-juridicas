@@ -8,7 +8,10 @@ type Notificacion = {
   cedula_emisor: string;
   titulo: string;
   mensaje: string;
-  fecha_creacion: string | Date;
+  // En DB/migración actual la columna se llama `fecha`
+  fecha?: string | Date;
+  // Mantener compatibilidad si luego renombramos a `fecha_creacion`
+  fecha_creacion?: string | Date;
   leida: boolean;
 }
 
@@ -37,7 +40,13 @@ export function useNotifications() {
             id: String(n.id_notificacion),
             title: n.titulo,
             message: n.mensaje,
-            time: typeof n.fecha_creacion === 'string' ? new Date(n.fecha_creacion).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' }) : n.fecha_creacion.toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' }),
+            time: (() => {
+              const rawDate = n.fecha_creacion ?? n.fecha;
+              if (!rawDate) return '';
+              const date = rawDate instanceof Date ? rawDate : new Date(rawDate);
+              if (Number.isNaN(date.getTime())) return '';
+              return date.toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
+            })(),
             read: n.leida,
           }))
         );
@@ -48,8 +57,8 @@ export function useNotifications() {
             : res.error?.message || 'Error al obtener notificaciones'
         );
       }
-    } catch  {
-      setError('Error al obtener notificaciones');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al obtener notificaciones');
     } finally {
       setLoading(false);
     }

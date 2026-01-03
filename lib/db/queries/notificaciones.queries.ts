@@ -3,13 +3,13 @@ import { pool } from "../pool";
 import { QueryResult } from "pg";
 
 export interface Notificacion {
-  id_notificacion: number;
-  cedula_receptor: string;
-  cedula_emisor: string;
-  titulo: string;
-  mensaje: string;
-  fecha_creacion: Date;
-  leida: boolean;
+    id_notificacion: number;
+    cedula_receptor: string;
+    cedula_emisor: string;
+    titulo: string;
+    mensaje: string;
+    fecha: Date;
+    leida: boolean;
 }
 
 /**

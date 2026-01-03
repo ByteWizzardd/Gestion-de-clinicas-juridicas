@@ -34,7 +34,7 @@ const Notification: React.FC<NotificationProps> = () => {
     <DropdownMenu
       trigger={triggerButton}
       align="right"
-      menuClassName="w-[90vw] max-w-lg sm:w-[32rem] md:w-[36rem] lg:w-[40rem] left-1/2 -translate-x-1/2"
+      menuClassName="w-[90vw] max-w-lg sm:w-[32rem] md:w-[36rem] lg:w-[40rem] left-1/2 -translate-x-[60%]"
     >
       <AnimatePresence>
         <motion.div
