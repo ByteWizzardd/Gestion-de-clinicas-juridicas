@@ -40,6 +40,11 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
     id_caso: number;
     detalle_accion: string;
     comentario: string | null;
+    ejecutores?: Array<{
+      id_usuario_ejecuta: string;
+      nombre_completo: string;
+      fecha_ejecucion: string;
+    }>;
   } | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -48,12 +53,29 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
     id_caso: number;
     detalle_accion: string;
     comentario: string | null;
+    ejecutores?: Array<{
+      id_usuario: string;
+      nombres: string;
+      apellidos: string;
+      nombre_completo: string;
+      fecha_ejecucion: string;
+    }>;
   }) => {
+    console.log('DEBUG ActionsHistoryTab - handleEditAccion called with:', accion);
+    
+    // Mapear ejecutores de la estructura de BD a la estructura que espera el modal
+    const ejecutoresMapeados = accion.ejecutores?.map(ejecutor => ({
+      id_usuario_ejecuta: ejecutor.id_usuario,
+      nombre_completo: ejecutor.nombre_completo,
+      fecha_ejecucion: ejecutor.fecha_ejecucion
+    }));
+
     setAccionToEdit({
       num_accion: accion.num_accion,
       id_caso: accion.id_caso,
       detalle_accion: accion.detalle_accion,
-      comentario: accion.comentario
+      comentario: accion.comentario,
+      ejecutores: ejecutoresMapeados
     });
     setShowEditModal(true);
   };
@@ -146,14 +168,14 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleEditAccion(accion)}
-                className="text-blue-500 hover:text-blue-700 p-1 rounded transition-colors"
+                className="text-gray-500 hover:text-gray-700 p-1 rounded transition-colors"
                 title="Editar acción"
               >
                 <Pencil className="w-5 h-5" />
               </button>
               <button
                 onClick={() => handleDeleteAccion(accion)}
-                className="text-red-500 hover:text-red-700 p-1 rounded transition-colors"
+                className="text-gray-500 hover:text-gray-700 p-1 rounded transition-colors"
                 title="Eliminar acción"
               >
                 <Trash2 className="w-5 h-5" />

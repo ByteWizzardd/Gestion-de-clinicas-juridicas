@@ -43,13 +43,25 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
   // Cargar usuarios disponibles al abrir el modal y datos de edición
   useEffect(() => {
     if (isOpen) {
+      console.log('DEBUG AddActionModal - Modal opened, editingAction:', editingAction);
       loadUsuarios();
       if (editingAction) {
+        console.log('DEBUG AddActionModal - Loading edit data:', {
+          detalle_accion: editingAction.detalle_accion,
+          comentario: editingAction.comentario,
+          ejecutores: editingAction.ejecutores
+        });
         // Cargar datos para edición
-        setDetalleAccion(editingAction.detalle_accion);
+        setDetalleAccion(editingAction.detalle_accion || '');
         setComentario(editingAction.comentario || '');
-        setUsuariosSeleccionados(editingAction.ejecutores?.map(e => e.id_usuario_ejecuta) || []);
-        setFechaEjecucion(editingAction.ejecutores?.[0]?.fecha_ejecucion || '');
+        const ejecutoresIds = editingAction.ejecutores?.map(e => e.id_usuario_ejecuta) || [];
+        const fechaEjec = editingAction.ejecutores?.[0]?.fecha_ejecucion || '';
+        console.log('DEBUG AddActionModal - Setting form data:', {
+          ejecutoresIds,
+          fechaEjec
+        });
+        setUsuariosSeleccionados(ejecutoresIds);
+        setFechaEjecucion(fechaEjec);
       } else {
         // Limpiar formulario para nueva acción
         setDetalleAccion('');
@@ -57,6 +69,14 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
         setUsuariosSeleccionados([]);
         setFechaEjecucion('');
       }
+    } else {
+      // Limpiar cuando se cierra el modal
+      setDetalleAccion('');
+      setComentario('');
+      setUsuariosSeleccionados([]);
+      setFechaEjecucion('');
+      setError(null);
+      setErrors({});
     }
   }, [isOpen, editingAction]);
 
@@ -257,7 +277,14 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
           ) : (
             <>
               {/* Grid de formulario */}
-              <form noValidate className="grid grid-cols-2 gap-x-8 gap-y-4">
+              <form 
+                onSubmit={(e) => {
+                  console.log('DEBUG AddActionModal - Form onSubmit triggered');
+                  handleSubmit(e);
+                }} 
+                noValidate 
+                className="grid grid-cols-2 gap-x-8 gap-y-4"
+              >
                 {/* Detalle de la Acción (ocupa todo el ancho) */}
                 <div className="col-span-2">
                   <TextArea
@@ -345,6 +372,19 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
                     {error}
                   </div>
                 )}
+
+                {/* Botón de submit dentro del formulario */}
+                <div className="col-span-2 flex justify-end pt-4">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="xl"
+                    disabled={loading || loadingData}
+                    isLoading={loading}
+                  >
+                    {editingAction ? 'Actualizar Acción' : 'Registrar Acción'}
+                  </Button>
+                </div>
               </form>
             </>
           )}
@@ -353,21 +393,9 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
         {/* Footer fijo */}
         <div className="flex-shrink-0 flex flex-col border-t border-gray-200 px-8 py-4 bg-white">
           {/* Nota sobre campos obligatorios */}
-          <div className="flex items-center gap-1 mb-4">
+          <div className="flex items-center gap-1">
             <span className="text-danger font-medium text-sm">*</span>
             <span className="text-sm text-gray-600">Campo obligatorio</span>
-          </div>
-          
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              variant="primary"
-              size="xl"
-              disabled={loading || loadingData}
-              isLoading={loading}
-            >
-              {editingAction ? 'Actualizar Acción' : 'Registrar Acción'}
-            </Button>
           </div>
         </div>
       </div>

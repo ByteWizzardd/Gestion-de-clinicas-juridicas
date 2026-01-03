@@ -409,18 +409,28 @@ export const casosService = {
 
         return await withTransaction(async (client) => {
             // Verificar que la acción existe antes de actualizar
-            const checkQuery = 'SELECT num_accion, detalle_accion FROM acciones WHERE num_accion = $1 AND id_caso = $2';
+            const checkQuery = 'SELECT num_accion, detalle_accion, comentario FROM acciones WHERE num_accion = $1 AND id_caso = $2';
             const existingAction = await client.query(checkQuery, [params.numAccion, params.idCaso]);
+            
+            if (existingAction.rows.length === 0) {
+                throw new NotFoundError('La acción no existe');
+            }
+            
             console.log('DEBUG updateAccion - Existing action before update:', existingAction.rows[0]);
 
-            // Actualizar la acción
-            await accionesQueries.update(params.numAccion, params.idCaso, params.detalleAccion, params.comentario);
+            // Actualizar la acción usando client de la transacción
+            const updateAccionQuery = loadSQL('acciones/update.sql');
+            await client.query(updateAccionQuery, [params.numAccion, params.idCaso, params.detalleAccion, params.comentario]);
             console.log('DEBUG updateAccion - Action updated in database');
 
             // Si se proporcionan ejecutores, actualizarlos
             if (params.ejecutores !== undefined) {
-                // Eliminar ejecutores existentes
-                await ejecutanQueries.deleteByAccion(params.numAccion, params.idCaso);
+                console.log('DEBUG updateAccion - Updating ejecutores:', params.ejecutores);
+                
+                // Eliminar ejecutores existentes usando client
+                const deleteEjecutanQuery = loadSQL('ejecutan/delete-by-accion.sql');
+                await client.query(deleteEjecutanQuery, [params.numAccion, params.idCaso]);
+                console.log('DEBUG updateAccion - Existing ejecutores deleted');
 
                 // Crear nuevos ejecutores si hay usuarios
                 if (params.ejecutores.length > 0) {
@@ -433,6 +443,7 @@ export const casosService = {
                             ejecutor.fechaEjecucion
                         ]);
                     }
+                    console.log('DEBUG updateAccion - New ejecutores created:', params.ejecutores.length);
                 }
             }
 
