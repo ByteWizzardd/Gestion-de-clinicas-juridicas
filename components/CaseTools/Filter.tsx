@@ -21,7 +21,7 @@ interface FilterProps {
   showCasosAsignados?: boolean;
   materiaFilter?: string;
   onMateriaChange?: (value: string) => void;
-  materias?: { id_materia: number; nombre_materia: string }[];
+  materias?: { id_materia: number; nombre_materia: string; habilitado?: boolean }[];
   nucleoLabel?: string;
   nucleoAllLabel?: string;
   fechaInicio?: string;
@@ -57,7 +57,7 @@ function Filter({
 }: FilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<'nucleo' | 'materia' | 'tramite' | 'estatus' | 'fechas' | null>(null);
-  const [nucleos, setNucleos] = useState<Array<{ id_nucleo: number; nombre_nucleo: string }>>([]);
+  const [nucleos, setNucleos] = useState<Array<{ id_nucleo: number; nombre_nucleo: string; habilitado?: boolean }>>([]);
   const [mounted, setMounted] = useState(false);
   const [submenuPosition, setSubmenuPosition] = useState({ top: 0, right: 0 });
 
@@ -170,7 +170,9 @@ function Filter({
           if (nucleoOptions && nucleoOptions.length > 0) {
             options = nucleoOptions;
           } else {
-            options = nucleos.map(n => ({ value: n.id_nucleo.toString(), label: n.nombre_nucleo }));
+            options = nucleos
+              .filter((n) => n.habilitado !== false)
+              .map(n => ({ value: n.id_nucleo.toString(), label: n.nombre_nucleo }));
           }
           onChangeHandler = onNucleoChange || (() => { });
           allLabel = nucleoAllLabel;
@@ -181,7 +183,9 @@ function Filter({
           allLabel = 'Todos los trámites';
           break;
         case 'materia':
-          options = materias.map(m => ({ value: m.id_materia.toString(), label: m.nombre_materia }));
+          options = materias
+            .filter((m) => m.habilitado !== false)
+            .map(m => ({ value: m.id_materia.toString(), label: m.nombre_materia }));
           onChangeHandler = onMateriaChange || (() => { });
           allLabel = 'Todas las materias';
           break;
@@ -227,7 +231,9 @@ function Filter({
           allLabel = 'Todos los trámites';
           break;
         case 'materia':
-          options = materias.map(m => ({ value: m.id_materia.toString(), label: m.nombre_materia }));
+          options = materias
+            .filter((m) => m.habilitado !== false)
+            .map(m => ({ value: m.id_materia.toString(), label: m.nombre_materia }));
           handler = onMateriaChange || (() => { });
           allLabel = 'Todas las materias';
           break;

@@ -22,7 +22,7 @@ type CaseToolsProps = {
     showCasosAsignados?: boolean;
     materiaFilter?: string;
     onMateriaChange?: (value: string) => void;
-    materias?: { id_materia: number; nombre_materia: string }[];
+    materias?: { id_materia: number; nombre_materia: string; habilitado?: boolean }[];
 };
 
 function CaseTools({

@@ -199,8 +199,12 @@ export default function DropdownMenu({
             style={{
               position: 'fixed',
               top: openUpward ? coords.top - 4 : coords.top + 4,
-              // Centrar el menú respecto al trigger
-              left: coords.left + coords.width / 2,
+              // Alinear el menú según el parámetro align
+              left: align === 'right' 
+                ? coords.left + coords.width 
+                : align === 'center'
+                ? coords.left + coords.width / 2
+                : coords.left, // 'left' por defecto - alineado al borde izquierdo
               // Solo setear width si menuClassName NO define un ancho (w-*)
               ...(menuClassName && /w-\[?\d/.test(menuClassName) ? {} : { width: coords.width }),
               zIndex: isInsideModal ? 99999 : 9999,

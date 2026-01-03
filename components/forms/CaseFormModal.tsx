@@ -66,13 +66,14 @@ export default function CaseFormModal({
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
-  const [nucleos, setNucleos] = useState<Array<{ id_nucleo: number; nombre_nucleo: string }>>([]);
-  const [materias, setMaterias] = useState<Array<{ id_materia: number; nombre_materia: string }>>([]);
-  const [categorias, setCategorias] = useState<Array<{ num_categoria: number; nombre_categoria: string }>>([]);
-  const [subcategorias, setSubcategorias] = useState<Array<{ num_subcategoria: number; nombre_subcategoria: string }>>([]);
+  const [nucleos, setNucleos] = useState<Array<{ id_nucleo: number; nombre_nucleo: string; habilitado?: boolean }>>([]);
+  const [materias, setMaterias] = useState<Array<{ id_materia: number; nombre_materia: string; habilitado?: boolean }>>([]);
+  const [categorias, setCategorias] = useState<Array<{ num_categoria: number; nombre_categoria: string; habilitado?: boolean }>>([]);
+  const [subcategorias, setSubcategorias] = useState<Array<{ num_subcategoria: number; nombre_subcategoria: string; habilitado?: boolean }>>([]);
   const [ambitosLegales, setAmbitosLegales] = useState<Array<{ 
     num_ambito_legal: number; 
     nombre_ambito_legal: string;
+    habilitado?: boolean;
   }>>([]);
   const [loadingCatalogos, setLoadingCatalogos] = useState(false);
   const [loadingCaseNumber, setLoadingCaseNumber] = useState(false);
@@ -481,10 +482,12 @@ export default function CaseFormModal({
               label="Núcleo *"
               value={formData.nucleo}
               onChange={(e) => updateField('nucleo', e.target.value)}
-              options={nucleos.map((nucleo) => ({
-                value: nucleo.id_nucleo.toString(),
-                label: nucleo.nombre_nucleo,
-              }))}
+              options={nucleos
+                .filter((nucleo) => nucleo.habilitado !== false)
+                .map((nucleo) => ({
+                  value: nucleo.id_nucleo.toString(),
+                  label: nucleo.nombre_nucleo,
+                }))}
               placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar núcleo"}
               error={errors.nucleo}
               required
@@ -514,10 +517,12 @@ export default function CaseFormModal({
                   label="Categoría *"
                   value={formData.categoria}
                   onChange={(e) => updateField('categoria', e.target.value)}
-                  options={categorias.map((cat) => ({
-                    value: cat.num_categoria.toString(),
-                    label: cat.nombre_categoria,
-                  }))}
+                  options={categorias
+                    .filter((cat) => cat.habilitado !== false)
+                    .map((cat) => ({
+                      value: cat.num_categoria.toString(),
+                      label: cat.nombre_categoria,
+                    }))}
                   placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar categoría"}
                   error={errors.categoria}
                   required
@@ -528,10 +533,12 @@ export default function CaseFormModal({
                   label="Subcategoría *"
                   value={formData.subcategoria}
                   onChange={(e) => updateField('subcategoria', e.target.value)}
-                  options={subcategorias.map((sub) => ({
-                    value: sub.num_subcategoria.toString(),
-                    label: sub.nombre_subcategoria,
-                  }))}
+                  options={subcategorias
+                    .filter((sub) => sub.habilitado !== false)
+                    .map((sub) => ({
+                      value: sub.num_subcategoria.toString(),
+                      label: sub.nombre_subcategoria,
+                    }))}
                   placeholder={formData.categoria ? "Seleccionar subcategoría" : "Primero seleccione categoría"}
                   error={errors.subcategoria}
                   required
@@ -543,10 +550,12 @@ export default function CaseFormModal({
                   label="Ámbito Legal *"
                   value={formData.ambitoLegal}
                   onChange={(e) => updateField('ambitoLegal', e.target.value)}
-                  options={ambitosLegales.map((ambito) => ({
-                    value: ambito.num_ambito_legal.toString(),
-                    label: ambito.nombre_ambito_legal,
-                  }))}
+                  options={ambitosLegales
+                    .filter((ambito) => ambito.habilitado !== false)
+                    .map((ambito) => ({
+                      value: ambito.num_ambito_legal.toString(),
+                      label: ambito.nombre_ambito_legal,
+                    }))}
                   placeholder={formData.subcategoria ? "Seleccionar ámbito legal" : "Primero seleccione subcategoría"}
                   error={errors.ambitoLegal}
                   required
@@ -563,10 +572,12 @@ export default function CaseFormModal({
                 label="Ámbito Legal *"
                 value={formData.ambitoLegal}
                 onChange={(e) => updateField('ambitoLegal', e.target.value)}
-                options={ambitosLegales.map((ambito) => ({
-                  value: ambito.num_ambito_legal.toString(),
-                  label: ambito.nombre_ambito_legal,
-                }))}
+                options={ambitosLegales
+                  .filter((ambito) => ambito.habilitado !== false)
+                  .map((ambito) => ({
+                    value: ambito.num_ambito_legal.toString(),
+                    label: ambito.nombre_ambito_legal,
+                  }))}
                 placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar ámbito legal"}
                 error={errors.ambitoLegal}
                 required

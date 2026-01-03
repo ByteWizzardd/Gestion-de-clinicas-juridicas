@@ -5,31 +5,36 @@
 -- 1) ESTADOS
 CREATE TABLE estados (
     id_estado SERIAL PRIMARY KEY,
-    nombre_estado VARCHAR(100) NOT NULL
+    nombre_estado VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 -- 2) NIVELES EDUCATIVOS
 CREATE TABLE niveles_educativos (
     id_nivel_educativo SERIAL PRIMARY KEY,
-    descripcion VARCHAR(100) NOT NULL
+    descripcion VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 -- 3) CONDICIÓN TRABAJO
 CREATE TABLE condicion_trabajo (
     id_trabajo SERIAL PRIMARY KEY,
-    nombre_trabajo VARCHAR(100) NOT NULL
+    nombre_trabajo VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 -- 4) CONDICIÓN ACTIVIDAD
 CREATE TABLE condicion_actividad (
     id_actividad SERIAL PRIMARY KEY,
-    nombre_actividad VARCHAR(100) NOT NULL
+    nombre_actividad VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 -- 5) TIPO CARACTERÍSTICAS
 CREATE TABLE tipo_caracteristicas (
     id_tipo SERIAL PRIMARY KEY,
-    nombre_tipo_caracteristica VARCHAR(100) NOT NULL
+    nombre_tipo_caracteristica VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE
 );
 -- Tipos: tipo_vivienda, material_piso, material_paredes, material_techo, 
 --        agua_potable, aseo, eliminacion_aguas_n, artefactos_domesticos
@@ -37,7 +42,8 @@ CREATE TABLE tipo_caracteristicas (
 -- 6) MATERIAS
 CREATE TABLE materias (
     id_materia SERIAL PRIMARY KEY,
-    nombre_materia VARCHAR(100) NOT NULL
+    nombre_materia VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 -- 7) SEMESTRES
@@ -45,6 +51,7 @@ CREATE TABLE semestres (
     term VARCHAR(20) PRIMARY KEY,
     fecha_inicio DATE NOT NULL,
     fecha_fin DATE NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     CONSTRAINT chk_fechas CHECK (fecha_fin >= fecha_inicio)
 );
 
@@ -70,6 +77,7 @@ CREATE TABLE municipios (
     id_estado INTEGER NOT NULL,
     num_municipio INTEGER NOT NULL, 
     nombre_municipio VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     
     PRIMARY KEY (id_estado, num_municipio),
     FOREIGN KEY (id_estado) REFERENCES estados(id_estado)
@@ -81,6 +89,7 @@ CREATE TABLE parroquias (
     num_municipio INTEGER NOT NULL,
     num_parroquia INTEGER NOT NULL,
     nombre_parroquia VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     
     PRIMARY KEY (id_estado, num_municipio, num_parroquia),
     FOREIGN KEY (id_estado, num_municipio) REFERENCES municipios(id_estado, num_municipio)
@@ -90,6 +99,7 @@ CREATE TABLE parroquias (
 CREATE TABLE nucleos (
     id_nucleo SERIAL PRIMARY KEY,
     nombre_nucleo VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     
     id_estado INTEGER NOT NULL,
     num_municipio INTEGER NOT NULL,
@@ -190,6 +200,7 @@ CREATE TABLE categorias (
     id_materia INTEGER NOT NULL,
     num_categoria INTEGER NOT NULL,
     nombre_categoria VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (id_materia, num_categoria),
     FOREIGN KEY (id_materia) REFERENCES materias(id_materia)
 );
@@ -200,6 +211,7 @@ CREATE TABLE subcategorias (
     num_categoria INTEGER NOT NULL,
     num_subcategoria INTEGER NOT NULL,
     nombre_subcategoria VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (id_materia, num_categoria, num_subcategoria),
     FOREIGN KEY (id_materia, num_categoria) REFERENCES categorias(id_materia, num_categoria)
 );
@@ -211,6 +223,7 @@ CREATE TABLE ambitos_legales (
     num_subcategoria INTEGER NOT NULL,
     num_ambito_legal INTEGER NOT NULL,
     nombre_ambito_legal VARCHAR(200) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (id_materia, num_categoria, num_subcategoria, num_ambito_legal),
     FOREIGN KEY (id_materia, num_categoria, num_subcategoria) 
     REFERENCES subcategorias(id_materia, num_categoria, num_subcategoria)

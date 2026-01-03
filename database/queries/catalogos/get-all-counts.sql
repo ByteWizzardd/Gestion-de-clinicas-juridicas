@@ -12,5 +12,6 @@ SELECT
     (SELECT COUNT(*) FROM semestres) as semestres,
     (SELECT COUNT(*) FROM nucleos) as nucleos,
     (SELECT COUNT(*) FROM condicion_trabajo) as condiciones_trabajo,
-    (SELECT COUNT(*) FROM condicion_actividad) as condiciones_actividad;
+    (SELECT COUNT(*) FROM condicion_actividad) as condiciones_actividad,
+    (SELECT COUNT(*) FROM niveles_educativos) as niveles_educativos;
 

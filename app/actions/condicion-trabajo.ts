@@ -7,7 +7,7 @@ import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 
 export interface GetCondicionTrabajoResult {
   success: boolean;
-  data?: Array<{ id_trabajo: number; nombre_trabajo: string }>;
+  data?: Array<{ id_trabajo: number; nombre_trabajo: string; habilitado?: boolean }>;
   error?: {
     message: string;
     code?: string;

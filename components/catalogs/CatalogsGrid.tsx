@@ -13,7 +13,8 @@ import {
     Calendar,
     Building,
     Briefcase,
-    Activity
+    Activity,
+    GraduationCap
 } from 'lucide-react';
 import CatalogCard from '@/components/cards/CatalogCard';
 
@@ -31,6 +32,7 @@ export interface CatalogCount {
     nucleos: number;
     condiciones_trabajo: number;
     condiciones_actividad: number;
+    niveles_educativos: number;
 }
 
 interface CatalogsGridProps {
@@ -150,6 +152,14 @@ export default function CatalogsGrid({ counts, searchQuery = '' }: CatalogsGridP
             count: counts.condiciones_actividad,
             icon: Activity,
             href: '/dashboard/catalogs/condiciones-actividad'
+        },
+        {
+            id: 14,
+            title: 'Niveles Educativos',
+            description: 'Niveles educativos de los solicitantes y jefes de hogar. Permite clasificar el nivel de educación alcanzado.',
+            count: counts.niveles_educativos,
+            icon: GraduationCap,
+            href: '/dashboard/catalogs/niveles-educativos'
         }
     ];
 

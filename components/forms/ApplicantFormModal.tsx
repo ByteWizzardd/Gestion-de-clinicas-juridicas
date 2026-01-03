@@ -299,20 +299,20 @@ export default function ApplicantFormModal({
   const [lockedFields, setLockedFields] = useState<Set<keyof FormData>>(new Set());
 
   // Estados para catálogos
-  const [condicionesTrabajo, setCondicionesTrabajo] = useState<Array<{ id_trabajo: number; nombre_trabajo: string }>>([]);
-  const [condicionesActividad, setCondicionesActividad] = useState<Array<{ id_actividad: number; nombre_actividad: string }>>([]);
-  const [tiposVivienda, setTiposVivienda] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
-  const [materialesPiso, setMaterialesPiso] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
-  const [materialesParedes, setMaterialesParedes] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
-  const [materialesTecho, setMaterialesTecho] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
-  const [aguaPotable, setAguaPotable] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
-  const [aseo, setAseo] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
-  const [eliminacionAguasN, setEliminacionAguasN] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
-  const [artefactosDomesticos, setArtefactosDomesticos] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
-  const [nivelesEducativos, setNivelesEducativos] = useState<Array<{ id_nivel_educativo: number; descripcion: string }>>([]);
-  const [estados, setEstados] = useState<Array<{ id_estado: number; nombre_estado: string }>>([]);
-  const [municipios, setMunicipios] = useState<Array<{ id_estado: number; num_municipio: number; nombre_municipio: string }>>([]);
-  const [parroquias, setParroquias] = useState<Array<{ id_estado: number; num_municipio: number; num_parroquia: number; nombre_parroquia: string }>>([]);
+  const [condicionesTrabajo, setCondicionesTrabajo] = useState<Array<{ id_trabajo: number; nombre_trabajo: string; habilitado?: boolean }>>([]);
+  const [condicionesActividad, setCondicionesActividad] = useState<Array<{ id_actividad: number; nombre_actividad: string; habilitado?: boolean }>>([]);
+  const [tiposVivienda, setTiposVivienda] = useState<Array<{ num_caracteristica: number; descripcion: string; habilitado?: boolean }>>([]);
+  const [materialesPiso, setMaterialesPiso] = useState<Array<{ num_caracteristica: number; descripcion: string; habilitado?: boolean }>>([]);
+  const [materialesParedes, setMaterialesParedes] = useState<Array<{ num_caracteristica: number; descripcion: string; habilitado?: boolean }>>([]);
+  const [materialesTecho, setMaterialesTecho] = useState<Array<{ num_caracteristica: number; descripcion: string; habilitado?: boolean }>>([]);
+  const [aguaPotable, setAguaPotable] = useState<Array<{ num_caracteristica: number; descripcion: string; habilitado?: boolean }>>([]);
+  const [aseo, setAseo] = useState<Array<{ num_caracteristica: number; descripcion: string; habilitado?: boolean }>>([]);
+  const [eliminacionAguasN, setEliminacionAguasN] = useState<Array<{ num_caracteristica: number; descripcion: string; habilitado?: boolean }>>([]);
+  const [artefactosDomesticos, setArtefactosDomesticos] = useState<Array<{ num_caracteristica: number; descripcion: string; habilitado?: boolean }>>([]);
+  const [nivelesEducativos, setNivelesEducativos] = useState<Array<{ id_nivel_educativo: number; descripcion: string; habilitado?: boolean }>>([]);
+  const [estados, setEstados] = useState<Array<{ id_estado: number; nombre_estado: string; habilitado?: boolean }>>([]);
+  const [municipios, setMunicipios] = useState<Array<{ id_estado: number; num_municipio: number; nombre_municipio: string; habilitado?: boolean }>>([]);
+  const [parroquias, setParroquias] = useState<Array<{ id_estado: number; num_municipio: number; num_parroquia: number; nombre_parroquia: string; habilitado?: boolean }>>([]);
   const [loadingCatalogos, setLoadingCatalogos] = useState(false);
 
   // Helper para limpiar errores de campos específicos
@@ -2083,10 +2083,12 @@ export default function ApplicantFormModal({
             label="Estado *"
             value={formData.idEstado}
             onChange={(e) => handleEstadoChange(e.target.value)}
-            options={estados.map(estado => ({
-              value: estado.id_estado.toString(),
-              label: estado.nombre_estado,
-            }))}
+            options={estados
+              .filter((estado) => estado.habilitado !== false)
+              .map(estado => ({
+                value: estado.id_estado.toString(),
+                label: estado.nombre_estado,
+              }))}
             placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar estado"}
             error={errors.idEstado}
             required
@@ -2098,10 +2100,12 @@ export default function ApplicantFormModal({
             label="Municipio *"
             value={formData.numMunicipio}
             onChange={(e) => handleMunicipioChange(e.target.value)}
-            options={municipios.map(municipio => ({
-              value: municipio.num_municipio.toString(),
-              label: municipio.nombre_municipio,
-            }))}
+            options={municipios
+              .filter((municipio) => municipio.habilitado !== false)
+              .map(municipio => ({
+                value: municipio.num_municipio.toString(),
+                label: municipio.nombre_municipio,
+              }))}
             placeholder={formData.idEstado ? (loadingCatalogos ? "Cargando..." : "Seleccionar municipio") : "Primero seleccione un estado"}
             error={errors.numMunicipio}
             required
@@ -2113,10 +2117,12 @@ export default function ApplicantFormModal({
             label="Parroquia *"
             value={formData.numParroquia}
             onChange={(e) => updateField('numParroquia', e.target.value)}
-            options={parroquias.map(parroquia => ({
-              value: parroquia.num_parroquia.toString(),
-              label: parroquia.nombre_parroquia,
-            }))}
+            options={parroquias
+              .filter((parroquia) => parroquia.habilitado !== false)
+              .map(parroquia => ({
+                value: parroquia.num_parroquia.toString(),
+                label: parroquia.nombre_parroquia,
+              }))}
             placeholder={formData.numMunicipio ? (loadingCatalogos ? "Cargando..." : "Seleccionar parroquia") : "Primero seleccione un municipio"}
             error={errors.numParroquia}
             required
@@ -2178,10 +2184,12 @@ export default function ApplicantFormModal({
           label="Material del Piso *"
           value={formData.materialPiso}
           onChange={(e) => updateField('materialPiso', e.target.value)}
-          options={materialesPiso.map(mp => ({
-            value: mp.descripcion,
-            label: mp.descripcion,
-          }))}
+          options={materialesPiso
+            .filter((mp) => mp.habilitado !== false)
+            .map(mp => ({
+              value: mp.descripcion,
+              label: mp.descripcion,
+            }))}
           placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar material"}
           error={errors.materialPiso}
           required
@@ -2208,10 +2216,12 @@ export default function ApplicantFormModal({
           label="Material de Techo *"
           value={formData.materialTecho}
           onChange={(e) => updateField('materialTecho', e.target.value)}
-          options={materialesTecho.map(mt => ({
-            value: mt.descripcion,
-            label: mt.descripcion,
-          }))}
+          options={materialesTecho
+            .filter((mt) => mt.habilitado !== false)
+            .map(mt => ({
+              value: mt.descripcion,
+              label: mt.descripcion,
+            }))}
           placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar material"}
           error={errors.materialTecho}
           required
@@ -2240,10 +2250,12 @@ export default function ApplicantFormModal({
           label="Eliminación de Aguas Negras *"
           value={formData.eliminacionAguasN}
           onChange={(e) => updateField('eliminacionAguasN', e.target.value)}
-          options={eliminacionAguasN.map(ean => ({
-            value: ean.descripcion,
-            label: ean.descripcion,
-          }))}
+          options={eliminacionAguasN
+            .filter((ean) => ean.habilitado !== false)
+            .map(ean => ({
+              value: ean.descripcion,
+              label: ean.descripcion,
+            }))}
           placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar opción"}
           error={errors.eliminacionAguasN}
           required
@@ -2255,10 +2267,12 @@ export default function ApplicantFormModal({
           label="Aseo *"
           value={formData.aseo}
           onChange={(e) => updateField('aseo', e.target.value)}
-          options={aseo.map(a => ({
-            value: a.descripcion,
-            label: a.descripcion,
-          }))}
+          options={aseo
+            .filter((a) => a.habilitado !== false)
+            .map(a => ({
+              value: a.descripcion,
+              label: a.descripcion,
+            }))}
           placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar opción"}
           error={errors.aseo}
           required
@@ -2273,7 +2287,9 @@ export default function ApplicantFormModal({
             Artefactos Domésticos
           </label>
           <div className="grid grid-cols-4 gap-x-4 gap-y-1">
-            {artefactosDomesticos.map((artefacto) => {
+            {artefactosDomesticos
+              .filter((artefacto) => artefacto.habilitado !== false)
+              .map((artefacto) => {
               const isChecked = formData.artefactosDomesticos.includes(artefacto.descripcion);
               return (
                 <label
@@ -2442,10 +2458,12 @@ export default function ApplicantFormModal({
                 }));
                 clearErrors(['tipoEducativo', 'numeroEducativo', 'tipoTiempoEstudioJefe', 'tiempoEstudioJefe']);
               }}
-              options={nivelesEducativos.map((nivel) => ({
-                value: nivel.descripcion,
-                label: nivel.descripcion,
-              }))}
+              options={nivelesEducativos
+                .filter((nivel) => nivel.habilitado !== false)
+                .map((nivel) => ({
+                  value: nivel.descripcion,
+                  label: nivel.descripcion,
+                }))}
               placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar nivel educativo"}
               error={errors.nivelEducativo}
               required
@@ -2517,10 +2535,12 @@ export default function ApplicantFormModal({
             }));
             clearErrors(['tipoEducativoSolicitante', 'numeroEducativoSolicitante', 'tipoTiempoEstudioSolicitante', 'tiempoEstudioSolicitante']);
           }}
-          options={nivelesEducativos.map((nivel) => ({
-            value: nivel.descripcion,
-            label: nivel.descripcion,
-          }))}
+          options={nivelesEducativos
+            .filter((nivel) => nivel.habilitado !== false)
+            .map((nivel) => ({
+              value: nivel.descripcion,
+              label: nivel.descripcion,
+            }))}
           placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar nivel educativo"}
           error={errors.nivelEducativoSolicitante}
           required
@@ -2668,7 +2688,7 @@ export default function ApplicantFormModal({
             value={formData.condicionActividad}
             onChange={(e) => updateField('condicionActividad', e.target.value)}
             options={condicionesActividad
-              .filter(ca => ca.id_actividad !== 0) // Excluir "buscando trabajo"
+              .filter(ca => ca.id_actividad !== 0 && ca.habilitado !== false) // Excluir "buscando trabajo" y deshabilitados
               .map(ca => ({
                 value: ca.nombre_actividad,
                 label: ca.nombre_actividad,

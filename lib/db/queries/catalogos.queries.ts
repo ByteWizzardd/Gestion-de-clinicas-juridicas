@@ -105,3 +105,10 @@ export async function getAllCondicionesActividad() {
     const result = await pool.query(query);
     return result.rows;
 }
+
+// Niveles Educativos
+export async function getAllNivelesEducativos() {
+    const query = loadQuery('get-all-niveles-educativos.sql');
+    const result = await pool.query(query);
+    return result.rows;
+}
