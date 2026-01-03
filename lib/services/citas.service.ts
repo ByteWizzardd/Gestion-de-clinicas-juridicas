@@ -235,8 +235,8 @@ export const citasService = {
           }
         }
 
-        // 3. Buscar y actualizar acción relacionada si se cambió fecha u orientación
-        if (params.date || params.orientacion) {
+        // 3. Sincronización bidireccional: Si la cita está registrada como acción, actualizarla también
+        if (params.date || params.orientacion || params.usuariosAtienden) {
           try {
             // Obtener la cita actualizada para buscar la acción
             const getCitaQuery = loadSQL('citas/get-by-id.sql');
@@ -247,55 +247,90 @@ export const citasService = {
               const { accionesQueries } = await import('@/lib/db/queries/acciones.queries');
               const { ejecutanQueries } = await import('@/lib/db/queries/ejecutan.queries');
 
-              // Buscar acción relacionada (usando la fecha original ya que no cambió)
-              const fechaCitaOriginal = params.date || cita.fecha_encuentro;
-              const orientacionOriginal = cita.orientacion;
+              // Buscar TODAS las acciones relacionadas con citas para este caso
+              // Luego verificar cuál corresponde exactamente a esta cita por ejecutores
+              const findAccionesQuery = `
+                SELECT a.num_accion, a.id_caso, a.detalle_accion, a.comentario, a.id_usuario_registra, a.fecha_registro
+                FROM acciones a
+                WHERE a.id_caso = $1
+                  AND a.detalle_accion LIKE 'Cita realizada el %'
+              `;
 
-              // Convertir fecha al formato español DD/MM/YYYY para matching
-              const fechaObjOriginal = new Date(fechaCitaOriginal);
-              const diaOriginal = String(fechaObjOriginal.getDate()).padStart(2, '0');
-              const mesOriginal = String(fechaObjOriginal.getMonth() + 1).padStart(2, '0');
-              const anioOriginal = fechaObjOriginal.getFullYear();
-              const fechaFormateadaOriginal = `${diaOriginal}/${mesOriginal}/${anioOriginal}`;
+              const accionesResult = await client.query(findAccionesQuery, [id_caso]);
 
-              const accionRelacionada = await accionesQueries.findByCita(id_caso, fechaFormateadaOriginal, orientacionOriginal);
+              // Para cada acción de cita, verificar si corresponde a esta cita por ejecutores
+              for (const accion of accionesResult.rows) {
+                // Comparar ejecutores para identificar cuál acción corresponde a esta cita
+                const ejecutoresCitaQuery = `
+                  SELECT id_usuario
+                  FROM atienden
+                  WHERE num_cita = $1 AND id_caso = $2
+                  ORDER BY id_usuario
+                `;
 
-              if (accionRelacionada) {
-                // Actualizar detalle de la acción si cambió la fecha
-                let nuevoDetalle = accionRelacionada.detalle_accion;
-                if (params.date) {
-                  // Extraer la fecha del detalle y reemplazarla
-                  const fechaFormateada = new Date(params.date).toLocaleDateString('es-ES');
-                  nuevoDetalle = `Cita realizada el ${fechaFormateada}`;
-                }
+                const ejecutoresAccionQuery = `
+                  SELECT id_usuario_ejecuta as id_usuario
+                  FROM ejecutan
+                  WHERE num_accion = $1 AND id_caso = $2
+                  ORDER BY id_usuario_ejecuta
+                `;
 
-                // Actualizar comentario si cambió la orientación
-                let nuevoComentario = accionRelacionada.comentario;
-                if (params.orientacion !== undefined) {
-                  nuevoComentario = params.orientacion;
-                }
+                const [ejecutoresCitaResult, ejecutoresAccionResult] = await Promise.all([
+                  client.query(ejecutoresCitaQuery, [num_cita, id_caso]),
+                  client.query(ejecutoresAccionQuery, [accion.num_accion, id_caso])
+                ]);
 
-                // Actualizar la acción
-                await accionesQueries.update(accionRelacionada.num_accion, id_caso, nuevoDetalle, nuevoComentario);
+                // Comparar listas de ejecutores ordenadas
+                const ejecutoresCita = ejecutoresCitaResult.rows.map(r => r.id_usuario).sort();
+                const ejecutoresAccion = ejecutoresAccionResult.rows.map(r => r.id_usuario).sort();
 
-                // Si cambiaron los usuarios que atendieron, actualizar ejecutores
-                if (params.usuariosAtienden !== undefined) {
-                  // Eliminar ejecutores existentes
-                  await ejecutanQueries.deleteByAccion(accionRelacionada.num_accion, id_caso);
+                const ejecutoresCoinciden = JSON.stringify(ejecutoresCita) === JSON.stringify(ejecutoresAccion);
 
-                  // Crear nuevos ejecutores si hay usuarios
-                  if (params.usuariosAtienden.length > 0) {
-                    const createEjecutanQuery = loadSQL('ejecutan/create.sql');
-                    for (const usuarioCedula of params.usuariosAtienden) {
-                      const fechaEjecucion = params.date || cita.fecha_encuentro;
-                      await client.query(createEjecutanQuery, [
-                        usuarioCedula,
-                        accionRelacionada.num_accion,
-                        id_caso,
-                        fechaEjecucion
-                      ]);
+                if (ejecutoresCoinciden) {
+                  // ¡Esta acción corresponde a la cita! Actualizarla
+                  let nuevoDetalle = accion.detalle_accion;
+                  let nuevoComentario = accion.comentario;
+
+                  // Si cambió la fecha, actualizar el detalle
+                  if (params.date) {
+                    const nuevaFechaObj = new Date(params.date);
+                    const nuevoDia = String(nuevaFechaObj.getDate()).padStart(2, '0');
+                    const nuevoMes = String(nuevaFechaObj.getMonth() + 1).padStart(2, '0');
+                    const nuevoAnio = nuevaFechaObj.getFullYear();
+                    const nuevaFechaFormateada = `${nuevoDia}/${nuevoMes}/${nuevoAnio}`;
+                    nuevoDetalle = `Cita realizada el ${nuevaFechaFormateada}`;
+                  }
+
+                  // Si cambió la orientación, actualizar el comentario
+                  if (params.orientacion !== undefined) {
+                    nuevoComentario = params.orientacion;
+                  }
+
+                  // Actualizar la acción
+                  await accionesQueries.update(accion.num_accion, id_caso, nuevoDetalle, nuevoComentario);
+
+                  // Si cambiaron los ejecutores, actualizar los ejecutores de la acción
+                  if (params.usuariosAtienden !== undefined) {
+                    // Eliminar ejecutores existentes de la acción
+                    await ejecutanQueries.deleteByAccion(accion.num_accion, id_caso);
+
+                    // Crear nuevos ejecutores si hay usuarios
+                    if (params.usuariosAtienden.length > 0) {
+                      const createEjecutanQuery = loadSQL('ejecutan/create.sql');
+                      for (const usuarioCedula of params.usuariosAtienden) {
+                        const fechaEjecucion = params.date || cita.fecha_encuentro;
+                        await client.query(createEjecutanQuery, [
+                          usuarioCedula,
+                          accion.num_accion,
+                          id_caso,
+                          fechaEjecucion
+                        ]);
+                      }
                     }
                   }
+
+                  // Solo actualizar la primera acción que coincida (debería haber solo una)
+                  break;
                 }
               }
             }
