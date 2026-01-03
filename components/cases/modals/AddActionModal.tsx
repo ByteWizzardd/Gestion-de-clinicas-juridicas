@@ -40,6 +40,9 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
   const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ detalleAccion?: string; ejecutores?: string; fechaEjecucion?: string }>({});
 
+  // Determinar si es una acción de cita (no se puede cambiar caso ni fecha)
+  const isCitaAction = editingAction?.detalle_accion?.startsWith('Cita realizada el');
+
   // Cargar usuarios disponibles al abrir el modal y datos de edición
   useEffect(() => {
     if (isOpen) {
@@ -126,14 +129,14 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
       return;
     }
 
-    // Validar usuarios seleccionados
-    if (usuariosSeleccionados.length === 0) {
+    // Validar usuarios seleccionados (solo si no está deshabilitado)
+    if (!isCitaAction && usuariosSeleccionados.length === 0) {
       setErrors(prev => ({ ...prev, ejecutores: 'Debe seleccionar al menos un usuario' }));
       return;
     }
 
-    // Validar fecha de ejecución
-    if (!fechaEjecucion) {
+    // Validar fecha de ejecución (solo si no está deshabilitado)
+    if (!isCitaAction && !fechaEjecucion) {
       setErrors(prev => ({ ...prev, fechaEjecucion: 'La fecha de ejecución es requerida' }));
       return;
     }
@@ -266,6 +269,15 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
           <h2 className="text-2xl font-normal text-foreground">
             {editingAction ? 'Editar Acción' : 'Registrar Nueva Acción'}
           </h2>
+
+          {/* Nota para acciones de cita */}
+          {isCitaAction && (
+            <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700">
+                <strong>Acción vinculada a cita:</strong> Algunos campos están deshabilitados para mantener la sincronización con la cita correspondiente.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Área de contenido */}
@@ -316,7 +328,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
                   <div className="flex flex-col gap-1">
                     <label className="text-base font-normal text-foreground mb-1 flex items-center gap-2">
                       <Users className="w-4 h-4" />
-                      Usuarios Ejecutores *
+                      Usuarios Ejecutores {isCitaAction ? '' : '*'}
                     </label>
                     <MultiSelect
                       options={usuariosOptions}
@@ -332,9 +344,14 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
                         }
                       }}
                       placeholder="Seleccionar usuarios..."
-                      disabled={loading}
+                      disabled={loading || isCitaAction}
                       error={errors.ejecutores}
                     />
+                    {isCitaAction && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        No se pueden modificar los ejecutores de acciones vinculadas a citas
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -343,7 +360,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
                   <div className="flex flex-col gap-1">
                     <label className="text-base font-normal text-foreground mb-1 flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
-                      Fecha de Ejecución *
+                      Fecha de Ejecución {isCitaAction ? '' : '*'}
                     </label>
                     <DatePicker
                       value={fechaEjecucion}
@@ -357,9 +374,14 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
                           });
                         }
                       }}
-                      disabled={loading}
+                      disabled={loading || isCitaAction}
                       required
                     />
+                    {isCitaAction && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        No se puede modificar la fecha de acciones vinculadas a citas
+                      </p>
+                    )}
                     {errors.fechaEjecucion && (
                       <p className="text-xs text-danger mt-1">{errors.fechaEjecucion}</p>
                     )}
