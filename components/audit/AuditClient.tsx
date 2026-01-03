@@ -2,19 +2,26 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { FileX, CalendarX, CalendarCheck, UserX, UserCheck } from 'lucide-react';
-import AuditTypeCard from './AuditTypeCard';
+import { FileText, Calendar, Users } from 'lucide-react';
+import AuditEntityCard from './AuditEntityCard';
 import { getAuditCountsAction } from '@/app/actions/audit';
 import type { AuditCounts } from '@/types/audit';
 import Spinner from '@/components/ui/feedback/Spinner';
 import Search from '@/components/CaseTools/search';
 
-interface AuditCard {
+interface AuditOperation {
+  label: string;
+  count: number;
+  href: string;
+}
+
+interface AuditEntity {
   title: string;
   description: string;
-  count: number;
   icon: React.ComponentType<{ className?: string }>;
-  href: string;
+  operations: AuditOperation[];
+  totalCount: number;
+  href: string; // URL de la página de detalle de la entidad
 }
 
 export default function AuditClient() {
@@ -39,61 +46,79 @@ export default function AuditClient() {
     loadCounts();
   }, []);
 
-  // Definir todas las cards de auditoría (antes de los returns condicionales)
-  const allCards: AuditCard[] = useMemo(() => {
+  // Agrupar cards por entidad con sus operaciones
+  const entities: AuditEntity[] = useMemo(() => {
     if (!counts) {
       return [];
     }
     return [
       {
-        title: "Soportes Eliminados",
-        description: "Documentos y archivos que han sido eliminados del sistema",
-        count: counts.soportes,
-        icon: FileX,
-        href: "/dashboard/audit/soportes"
+        title: "Soportes",
+        description: "Documentos y archivos del sistema",
+        icon: FileText,
+        totalCount: counts.soportes,
+        href: "/dashboard/audit/soportes",
+        operations: [
+          {
+            label: "Eliminados",
+            count: counts.soportes,
+            href: "/dashboard/audit/soportes"
+          }
+        ]
       },
       {
-        title: "Citas Eliminadas",
-        description: "Citas que han sido eliminadas del sistema",
-        count: counts.citasEliminadas,
-        icon: CalendarX,
-        href: "/dashboard/audit/citas-eliminadas"
+        title: "Citas",
+        description: "Registro de citas del sistema",
+        icon: Calendar,
+        totalCount: counts.citasEliminadas + counts.citasActualizadas,
+        href: "/dashboard/audit/citas",
+        operations: [
+          {
+            label: "Eliminadas",
+            count: counts.citasEliminadas,
+            href: "/dashboard/audit/citas-eliminadas"
+          },
+          {
+            label: "Actualizadas",
+            count: counts.citasActualizadas,
+            href: "/dashboard/audit/citas-actualizadas"
+          }
+        ]
       },
       {
-        title: "Citas Actualizadas",
-        description: "Registro de cambios realizados en las citas",
-        count: counts.citasActualizadas,
-        icon: CalendarCheck,
-        href: "/dashboard/audit/citas-actualizadas"
-      },
-      {
-        title: "Usuarios Eliminados",
-        description: "Usuarios que han sido eliminados del sistema",
-        count: counts.usuariosEliminados,
-        icon: UserX,
-        href: "/dashboard/audit/usuarios-eliminados"
-      },
-      {
-        title: "Usuarios Actualizados",
-        description: "Registro completo de todos los cambios en usuarios",
-        count: counts.usuariosActualizadosCampos,
-        icon: UserCheck,
-        href: "/dashboard/audit/usuarios-actualizados-campos"
+        title: "Usuarios",
+        description: "Registro de usuarios del sistema",
+        icon: Users,
+        totalCount: counts.usuariosEliminados + counts.usuariosActualizadosCampos,
+        href: "/dashboard/audit/usuarios",
+        operations: [
+          {
+            label: "Eliminados",
+            count: counts.usuariosEliminados,
+            href: "/dashboard/audit/usuarios-eliminados"
+          },
+          {
+            label: "Actualizados",
+            count: counts.usuariosActualizadosCampos,
+            href: "/dashboard/audit/usuarios-actualizados-campos"
+          }
+        ]
       }
     ];
   }, [counts]);
 
-  // Filtrar cards basándose en la búsqueda
-  const filteredCards = useMemo(() => {
+  // Filtrar entidades basándose en la búsqueda
+  const filteredEntities = useMemo(() => {
     if (!searchQuery.trim()) {
-      return allCards;
+      return entities;
     }
     const query = searchQuery.toLowerCase().trim();
-    return allCards.filter(card => 
-      card.title.toLowerCase().includes(query) ||
-      card.description.toLowerCase().includes(query)
+    return entities.filter(entity => 
+      entity.title.toLowerCase().includes(query) ||
+      entity.description.toLowerCase().includes(query) ||
+      entity.operations.some(op => op.label.toLowerCase().includes(query))
     );
-  }, [searchQuery, allCards]);
+  }, [searchQuery, entities]);
 
   if (loading) {
     return (
@@ -127,12 +152,12 @@ export default function AuditClient() {
         <Search
           value={searchQuery}
           onChange={setSearchQuery}
-          placeholder="Buscar por tipo de auditoría..."
+          placeholder="Buscar por entidad..."
         />
       </motion.div>
 
-      {/* Cards filtradas */}
-      {filteredCards.length === 0 ? (
+      {/* Cards de entidades filtradas */}
+      {filteredEntities.length === 0 ? (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
           <p className="text-gray-500 text-lg">No se encontraron resultados para "{searchQuery}"</p>
         </div>
@@ -143,14 +168,15 @@ export default function AuditClient() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.1 }}
         >
-          {filteredCards.map((card) => (
-            <AuditTypeCard
-              key={card.href}
-              title={card.title}
-              description={card.description}
-              count={card.count}
-              icon={card.icon}
-              href={card.href}
+          {filteredEntities.map((entity) => (
+            <AuditEntityCard
+              key={entity.title}
+              title={entity.title}
+              description={entity.description}
+              totalCount={entity.totalCount}
+              icon={entity.icon}
+              operations={entity.operations}
+              href={entity.href}
             />
           ))}
         </motion.div>

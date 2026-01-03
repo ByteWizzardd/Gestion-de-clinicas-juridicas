@@ -18,6 +18,7 @@ interface AuditDetailClientProps {
   description: string;
   auditType: AuditType;
   emptyMessage?: string;
+  hideHeader?: boolean; // Si es true, no muestra el título y descripción (útil cuando está dentro de tabs)
 }
 
 export default function AuditDetailClient({
@@ -25,6 +26,7 @@ export default function AuditDetailClient({
   description,
   auditType,
   emptyMessage = 'No se encontraron registros',
+  hideHeader = false,
 }: AuditDetailClientProps) {
   const [records, setRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -128,9 +130,13 @@ export default function AuditDetailClient({
 
   return (
     <div className="w-full">
-      {/* Encabezado */}
-      <h1 className="text-4xl m-3 font-semibold font-primary">{title}</h1>
-      <p className="mb-6 ml-3">{description}</p>
+      {/* Encabezado (solo si no está oculto) */}
+      {!hideHeader && (
+        <>
+          <h1 className="text-4xl m-3 font-semibold font-primary">{title}</h1>
+          <p className="mb-6 ml-3">{description}</p>
+        </>
+      )}
 
       {/* Filtros */}
       <motion.div

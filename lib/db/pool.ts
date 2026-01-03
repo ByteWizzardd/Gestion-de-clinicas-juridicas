@@ -14,9 +14,11 @@ const config: PoolConfig = {
   connectionString: process.env.DATABASE_URL,
   max: 20, // Máximo de conexiones en el pool
   idleTimeoutMillis: 30000, // Tiempo de espera antes de cerrar conexiones inactivas
-  connectionTimeoutMillis: 10000, // Tiempo máximo para establecer conexión (aumentado a 10s)
+  connectionTimeoutMillis: 60000, // Timeout para establecer conexión (60s - necesario para Neon que puede estar "dormido")
   statement_timeout: 30000, // Timeout para queries (30 segundos)
   query_timeout: 30000, // Timeout para queries (30 segundos)
+  // Configuración adicional para Neon
+  ssl: process.env.DATABASE_URL?.includes('neon.tech') ? { rejectUnauthorized: false } : undefined,
 };
 
 // Crear el pool de conexiones
