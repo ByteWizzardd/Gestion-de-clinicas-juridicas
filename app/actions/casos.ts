@@ -9,15 +9,17 @@ import { asignacionesQueries } from '@/lib/db/queries/asignaciones.queries';
 import { profesoresQueries } from '@/lib/db/queries/profesores.queries';
 import { estudiantesQueries } from '@/lib/db/queries/estudiantes.queries';
 import { semestresQueries } from '@/lib/db/queries/semestres.queries';
+import { usuariosQueries } from '@/lib/db/queries/usuarios.queries';
 import { pool } from '@/lib/db/pool';
 import { loadSQL } from '@/lib/db/sql-loader';
-import { AppError, UnauthorizedError, ValidationError } from '@/lib/utils/errors';
-import { requireAuthInServerActionWithCode, requireAuthInServerActionOrThrow } from '@/lib/utils/server-auth';
+import { AppError } from '@/lib/utils/errors';
+import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { handleServerActionError } from '@/lib/utils/server-action-helpers';
+import { notificarVariosUsuariosAction } from './notificaciones';
 
 export interface CreateCasoResult {
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: {
     message: string;
     code?: string;
@@ -66,7 +68,7 @@ export interface DeleteSoporteResult {
 
 export interface GetCasosResult {
   success: boolean;
-  data?: any[];
+  data?: unknown[];
   error?: {
     message: string;
     code?: string;
@@ -86,7 +88,7 @@ export interface GetNextCaseNumberResult {
 
 export interface GetCasoByIdResult {
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: {
     message: string;
     code?: string;
@@ -106,7 +108,7 @@ export interface CasoOption {
  * Nota: Un caso se asocia a un SOLICITANTE (la persona que solicita el servicio legal).
  * El usuario que registra el caso (estudiante/profesor) es diferente del solicitante asociado al caso.
  */
-export async function createCasoAction(data: any): Promise<CreateCasoResult> {
+export async function createCasoAction(data: unknown): Promise<CreateCasoResult> {
   try {
     // Verificar autenticación
     const authResult = await requireAuthInServerActionWithCode();
@@ -525,7 +527,7 @@ export async function createAccionAction(
   comentario?: string,
   ejecutores?: Array<{ idUsuario: string; fechaEjecucion: string }>,
   fechaRegistro?: string
-): Promise<{ success: boolean; data?: any; error?: { message: string; code?: string } }> {
+): Promise<{ success: boolean; data?: unknown; error?: { message: string; code?: string } }> {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -628,7 +630,7 @@ export async function changeStatusAction(
   idCaso: number,
   nuevoEstatus: string,
   motivo?: string
-): Promise<{ success: boolean; data?: any; error?: { message: string; code?: string } }> {
+): Promise<{ success: boolean; data?: unknown; error?: { message: string; code?: string } }> {
   try {
     // Verificar autenticación
     const authResult = await requireAuthInServerActionWithCode();
@@ -836,6 +838,7 @@ export async function getAccionesRecientesAction(limite: number = 10): Promise<G
   }
 }
 
+// Server Action para asignar equipo (profesores y estudiantes) a un caso
 export async function asignarEquipoAction(
   idCaso: number,
   profesores: string[],
@@ -843,7 +846,17 @@ export async function asignarEquipoAction(
 ): Promise<AsignarEquipoResult> {
   try {
     // Verificar autenticación
-    const user = await requireAuthInServerActionOrThrow();
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    const cedulaEmisor = authResult.user.cedula;
+    const emisor = await usuariosQueries.getCompleteByCedula(cedulaEmisor);
+    const nombreEmisor = emisor?.nombre_completo || cedulaEmisor;
 
     // Obtener el semestre actual
     const semestres = await semestresQueries.getAll();
@@ -972,6 +985,23 @@ export async function asignarEquipoAction(
       }
 
       await client.query('COMMIT');
+
+      // Notificar solo si la asignación fue exitosa
+      if (profesoresNuevos.length > 0) {
+        await notificarVariosUsuariosAction({
+          cedulasReceptores: profesoresNuevos,
+          titulo: 'Asignación a caso',
+          mensaje: `Has sido asignado como profesor supervisor al caso #${idCaso} por ${nombreEmisor}. Por favor, revisa los detalles en el sistema.`,
+        });
+      }
+
+      if (estudiantesNuevos.length > 0) {
+        await notificarVariosUsuariosAction({
+          cedulasReceptores: estudiantesNuevos,
+          titulo: 'Asignación a caso',
+          mensaje: `Has sido asignado al caso #${idCaso} por ${nombreEmisor}. Por favor, revisa los detalles en el sistema.`,
+        });
+      }
 
       revalidatePath(`/dashboard/cases/${idCaso}`);
 

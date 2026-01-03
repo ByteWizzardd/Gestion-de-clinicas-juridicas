@@ -468,23 +468,23 @@ export default function ApplicantFormModal({
     }
     
     // Validar teléfono celular
-    if (!formData.telefonoCelular || formData.telefonoCelular.replace(/\+\d+/,'').trim() === '') {
-      newErrors.telefonoCelular = 'Este campo es requerido';
-    } else {
-      const codeMatch = formData.telefonoCelular.match(/^(\+\d{1,3})/);
-      const code = codeMatch ? codeMatch[1] : '';
-      const number = formData.telefonoCelular.replace(code, '');
+    // Nota: el valor esperado es "<codigoPais><numero>", ej: "+584143714004".
+    const phoneValue = (formData.telefonoCelular || '').trim();
+    const codeMatch = phoneValue.match(/^(\+\d{1,4})/);
+    const code = codeMatch ? codeMatch[1] : '';
+    const number = phoneValue.slice(code.length).replace(/\D/g, '');
 
+    if (!phoneValue || !code || number.trim() === '') {
+      newErrors.telefonoCelular = 'Este campo es requerido';
+    } else if (code === '+58') {
       // Para números venezolanos (+58), el número debe tener 10 dígitos y empezar con 4.
-      if (code === '+58') {
-        if (number.length !== 10 || !number.startsWith('4')) {
-          newErrors.telefonoCelular = 'Número venezolano inválido. Debe tener 10 dígitos y empezar con 4 (ej: 412...).';
-        }
-      } else {
-        // Para otros países, validar longitud mínima y máxima
-        if (number.length < 7 || number.length > 15) {
-          newErrors.telefonoCelular = 'Número de teléfono inválido';
-        }
+      if (number.length !== 10 || !number.startsWith('4')) {
+        newErrors.telefonoCelular = 'Número venezolano inválido. Debe tener 10 dígitos y empezar con 4 (ej: 412...).';
+      }
+    } else {
+      // Para otros países, validar longitud mínima y máxima
+      if (number.length < 7 || number.length > 15) {
+        newErrors.telefonoCelular = 'Número de teléfono inválido';
       }
     }
     
@@ -1279,9 +1279,9 @@ export default function ApplicantFormModal({
     } else if (field === 'telefonoLocal') {
       filteredValue = filterOnlyNumbers(value);
     } else if (field === 'telefonoCelular') {
-      // El PhoneInput ya maneja el filtrado, pero mantenemos una capa de seguridad
-      const codeMatch = value.match(/^(\+?\d*)/);
-      const code = codeMatch ? codeMatch[0] : '';
+      // Siempre asegurar que el código de país esté presente y empiece con '+'
+      const codeMatch = value.match(/^(\+\d{1,4})/);
+      const code = codeMatch ? codeMatch[1] : '+58'; // Por defecto Venezuela si no hay código
       const number = value.replace(code, '').replace(/\D/g, '');
       filteredValue = `${code}${number}`;
     }
@@ -1753,7 +1753,7 @@ export default function ApplicantFormModal({
     // Limpiar errores de todos los campos que se autocompletaron
     setErrors((prev) => {
       const newErrors = { ...prev };
-      delete newErrors.cedulaNumero;
+           delete newErrors.cedulaNumero;
       if (beneficiario.nombres) delete newErrors.nombres;
       if (beneficiario.apellidos) delete newErrors.apellidos;
       if (beneficiario.fecha_nacimiento) delete newErrors.fechaNacimiento;

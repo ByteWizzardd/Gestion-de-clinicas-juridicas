@@ -79,6 +79,26 @@ function getNivelEducativoDescripcion(numeroEducativo: string): string {
   return 'Sin Nivel'; // Fallback
 }
 
+
+function buildTelefonoCelular(input: {
+  telefonoCelular?: unknown;
+  codigoPaisCelular?: unknown;
+}): string {
+  const rawTelefono = (input.telefonoCelular ?? "").toString().trim();
+
+  // Si ya viene en formato internacional, usarlo tal cual (sin espacios)
+  if (rawTelefono.startsWith("+")) {
+    const normalized = rawTelefono.replace(/\s+/g, "");
+    return normalized;
+  }
+
+  // Si viene solo el número, concatenar con código país (o default +58)
+  const rawCode = (input.codigoPaisCelular ?? "+58").toString().trim();
+  const normalizedCode = rawCode.startsWith("+") ? rawCode : `+${rawCode}`;
+  const onlyDigits = rawTelefono.replace(/\D/g, "");
+  return `${normalizedCode}${onlyDigits}`;
+}
+
 /**
  * Busca o crea un nivel educativo por su descripción
  * @param client - Cliente de base de datos
@@ -186,6 +206,10 @@ export const solicitantesService = {
       // Construir cédula con formato V-XXXX (con guión)
       const cedula = `${data.cedulaTipo}-${data.cedulaNumero}`;
       const sexo = data.sexo === 'Masculino' ? 'M' : 'F';
+      const telefonoCelularCompleto = buildTelefonoCelular({
+        telefonoCelular: data.telefonoCelular,
+        codigoPaisCelular: data.codigoPaisCelular,
+      });
       
       // Asignar nacionalidad según el tipo de cédula
       // NOTA: El schema solo permite 'V' (Venezolano) o 'E' (Extranjero)
@@ -267,7 +291,7 @@ export const solicitantesService = {
             data.nombres,
             data.apellidos,
             data.correoElectronico,
-            `${data.codigoPaisCelular}${data.telefonoCelular}`,
+            telefonoCelularCompleto,
             data.fechaNacimiento,
             sexo,
             nacionalidad,
@@ -408,7 +432,7 @@ export const solicitantesService = {
       const solicitanteResult: QueryResult = await client.query(updateSolicitanteQuery, [
         cedula,
         data.telefonoLocal || null,
-        `${data.codigoPaisCelular}${data.telefonoCelular}`,
+        telefonoCelularCompleto,
         estadoCivil,
         concubinato,
         tipoTiempoEstudioSolicitante,
