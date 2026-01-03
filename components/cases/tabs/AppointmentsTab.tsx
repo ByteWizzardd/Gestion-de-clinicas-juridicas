@@ -111,7 +111,23 @@ export default function AppointmentsTab({ citas, onRefresh, onEditAppointment }:
     setShowDeleteConfirmModal(false);
     setCitaToDelete(null);
   };
-  if (!citas || citas.length === 0) {
+
+  // Ordenar citas por fecha de registro (descendente - más recientes primero)
+  const citasOrdenadas = citas ? [...citas].sort((a, b) => {
+    const fechaA = new Date(a.fecha_encuentro);
+    const fechaB = new Date(b.fecha_encuentro);
+    return fechaB.getTime() - fechaA.getTime(); // Más recientes primero
+  }).map(cita => ({
+    ...cita,
+    // Ordenar atenciones por fecha de registro (descendente)
+    atenciones: cita.atenciones ? [...cita.atenciones].sort((a, b) => {
+      const fechaA = new Date(a.fecha_registro);
+      const fechaB = new Date(b.fecha_registro);
+      return fechaB.getTime() - fechaA.getTime();
+    }) : []
+  })) : [];
+
+  if (!citasOrdenadas || citasOrdenadas.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
         <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -122,7 +138,7 @@ export default function AppointmentsTab({ citas, onRefresh, onEditAppointment }:
 
   return (
     <div className="space-y-4">
-      {citas.map((cita) => (
+      {citasOrdenadas.map((cita) => (
         <div key={`${cita.num_cita}-${cita.id_caso}`} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
           <div className="flex items-start justify-between mb-4">
             <div>
