@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getNotificacionesAction, GetNotificacionesResult } from '@/app/actions/notificaciones';
+import {
+  deleteNotificacionAction,
+  getNotificacionesAction,
+  GetNotificacionesResult,
+  markNotificacionLeidaAction,
+} from '@/app/actions/notificaciones';
 
 // Debe coincidir con la interfaz Notificacion del backend
 type Notificacion = {
@@ -68,5 +73,35 @@ export function useNotifications() {
     fetchNotifications();
   }, [fetchNotifications]);
 
-  return { notifications, loading, error, refetch: fetchNotifications };
+  const markAsRead = useCallback(
+    async (id: string) => {
+      setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
+
+      const numericId = Number(id);
+      if (!Number.isFinite(numericId)) return;
+
+      const res = await markNotificacionLeidaAction(numericId);
+      if (!res.success) {
+        await fetchNotifications();
+      }
+    },
+    [fetchNotifications]
+  );
+
+  const remove = useCallback(
+    async (id: string) => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+
+      const numericId = Number(id);
+      if (!Number.isFinite(numericId)) return;
+
+      const res = await deleteNotificacionAction(numericId);
+      if (!res.success) {
+        await fetchNotifications();
+      }
+    },
+    [fetchNotifications]
+  );
+
+  return { notifications, loading, error, refetch: fetchNotifications, markAsRead, remove };
 }

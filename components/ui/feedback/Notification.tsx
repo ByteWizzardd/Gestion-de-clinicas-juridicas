@@ -3,7 +3,7 @@
 import { Bell } from 'lucide-react';
 import DropdownMenu from '../navigation/DropdownMenu';
 import { AnimatePresence, motion } from 'motion/react';
-import { useNotifications } from './useNotifications';
+import { useNotifications } from '../../../lib/hook/useNotifications';
 
 interface NotificationProps {
   count?: number;
@@ -13,7 +13,7 @@ interface NotificationProps {
 // NotificationItem viene de useNotifications
 
 const Notification: React.FC<NotificationProps> = () => {
-  const { notifications, loading, error } = useNotifications();
+  const { notifications, loading, error, markAsRead, remove } = useNotifications();
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const triggerButton = (
@@ -54,12 +54,22 @@ const Notification: React.FC<NotificationProps> = () => {
               <div className="px-4 py-8 text-base text-red-500 text-center">{error}</div>
             ) : notifications.length > 0 ? (
               notifications.map((notification) => (
-                <button
+                <div
                   key={notification.id}
+                  role="button"
+                  tabIndex={0}
                   className={`
-                    w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0
+                    w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 cursor-pointer
                     ${!notification.read ? 'bg-primary-light/10' : ''}
                   `}
+                  onClick={() => {
+                    if (!notification.read) markAsRead(notification.id);
+                  }}
+                  onKeyDown={e => {
+                    if ((e.key === 'Enter' || e.key === ' ') && !notification.read) {
+                      markAsRead(notification.id);
+                    }
+                  }}
                 >
                   <div className="flex items-start gap-3">
                     {!notification.read && (
@@ -70,8 +80,20 @@ const Notification: React.FC<NotificationProps> = () => {
                       <p className="text-base text-neutral-600 mt-1 line-clamp-2">{notification.message}</p>
                       <p className="text-base text-neutral-500 mt-1">{notification.time}</p>
                     </div>
+
+                    <button
+                      type="button"
+                      className="text-sm text-red-600 hover:text-red-700 font-medium shrink-0"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        remove(notification.id);
+                      }}
+                    >
+                      Eliminar
+                    </button>
                   </div>
-                </button>
+                </div>
               ))
             ) : (
               <div className="px-4 py-8 text-base text-gray-500 text-center">

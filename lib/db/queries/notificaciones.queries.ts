@@ -45,4 +45,22 @@ export const notificacionesQueries = {
         const result: QueryResult = await pool.query(query, [cedulaReceptor]);
         return result.rows as Notificacion[];
     },
+
+    /**
+     * Marca una notificación como leída (solo si pertenece al receptor)
+     */
+    markAsRead: async (idNotificacion: number, cedulaReceptor: string): Promise<{ id_notificacion: number } | null> => {
+        const query = loadSQL('notificaciones/mark-as-read.sql');
+        const result: QueryResult = await pool.query(query, [idNotificacion, cedulaReceptor]);
+        return (result.rows[0] as { id_notificacion: number } | undefined) ?? null;
+    },
+
+    /**
+     * Elimina una notificación (solo si pertenece al receptor)
+     */
+    delete: async (idNotificacion: number, cedulaReceptor: string): Promise<{ id_notificacion: number } | null> => {
+        const query = loadSQL('notificaciones/delete.sql');
+        const result: QueryResult = await pool.query(query, [idNotificacion, cedulaReceptor]);
+        return (result.rows[0] as { id_notificacion: number } | undefined) ?? null;
+    },
 };

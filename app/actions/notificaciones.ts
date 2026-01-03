@@ -114,3 +114,51 @@ export async function getNotificacionesAction(): Promise<GetNotificacionesResult
     );
   }
 }
+
+export interface UpdateNotificacionResult {
+  success: boolean;
+  data?: { id_notificacion: number };
+  error?: { message: string; code?: string };
+}
+
+/**
+ * Server Action para marcar una notificación como leída (del usuario autenticado)
+ */
+export async function markNotificacionLeidaAction(idNotificacion: number): Promise<UpdateNotificacionResult> {
+  try {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return { success: false, error: authResult.error! };
+    }
+
+    const cedula = authResult.user.cedula;
+    const updated = await notificacionesQueries.markAsRead(idNotificacion, cedula);
+    if (!updated) {
+      return { success: false, error: { message: 'Notificación no encontrada', code: 'NOT_FOUND' } };
+    }
+    return { success: true, data: updated };
+  } catch (error) {
+    return handleServerActionError(error, 'markNotificacionLeidaAction', 'NOTIFICACION_MARK_READ_ERROR');
+  }
+}
+
+/**
+ * Server Action para eliminar una notificación (del usuario autenticado)
+ */
+export async function deleteNotificacionAction(idNotificacion: number): Promise<UpdateNotificacionResult> {
+  try {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return { success: false, error: authResult.error! };
+    }
+
+    const cedula = authResult.user.cedula;
+    const deleted = await notificacionesQueries.delete(idNotificacion, cedula);
+    if (!deleted) {
+      return { success: false, error: { message: 'Notificación no encontrada', code: 'NOT_FOUND' } };
+    }
+    return { success: true, data: deleted };
+  } catch (error) {
+    return handleServerActionError(error, 'deleteNotificacionAction', 'NOTIFICACION_DELETE_ERROR');
+  }
+}
