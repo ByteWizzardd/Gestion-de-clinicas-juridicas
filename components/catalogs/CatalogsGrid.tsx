@@ -168,10 +168,15 @@ export default function CatalogsGrid({ counts, searchQuery = '' }: CatalogsGridP
         catalog.description.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    // Ordenar alfabéticamente por título
+    const sortedCatalogs = filteredCatalogs.sort((a, b) => 
+        a.title.localeCompare(b.title, 'es', { sensitivity: 'base' })
+    );
+
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-            {filteredCatalogs.length > 0 ? (
-                filteredCatalogs.map((catalog) => (
+            {sortedCatalogs.length > 0 ? (
+                sortedCatalogs.map((catalog) => (
                     <CatalogCard
                         key={catalog.id}
                         title={catalog.title}

@@ -4,6 +4,7 @@ import { Bell } from 'lucide-react';
 import DropdownMenu from '../navigation/DropdownMenu';
 import { AnimatePresence, motion } from 'motion/react';
 import { useNotifications } from '../../../lib/hook/useNotifications';
+import { useEffect, useRef } from 'react';
 
 interface NotificationProps {
   count?: number;
@@ -15,6 +16,26 @@ interface NotificationProps {
 const Notification: React.FC<NotificationProps> = () => {
   const { notifications, loading, error, markAsRead, remove } = useNotifications();
   const unreadCount = notifications.filter(n => !n.read).length;
+  const hasMarkedAsReadRef = useRef(false);
+
+  // Función para marcar todas las notificaciones no leídas como leídas
+  const markAllUnreadAsRead = () => {
+    const unreadNotifications = notifications.filter(n => !n.read);
+    unreadNotifications.forEach(notification => {
+      markAsRead(notification.id);
+    });
+  };
+
+  // Resetear el flag cuando el dropdown se cierra
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      hasMarkedAsReadRef.current = false;
+    } else if (!hasMarkedAsReadRef.current) {
+      // Marcar todas las no leídas como leídas cuando se abre el dropdown
+      hasMarkedAsReadRef.current = true;
+      markAllUnreadAsRead();
+    }
+  };
 
   const triggerButton = (
     <button 
@@ -35,6 +56,7 @@ const Notification: React.FC<NotificationProps> = () => {
       trigger={triggerButton}
       align="right"
       menuClassName="w-[90vw] max-w-lg sm:w-[32rem] md:w-[36rem] lg:w-[40rem] left-1/2 -translate-x-[60%]"
+      onOpenChange={handleOpenChange}
     >
       <AnimatePresence>
         <motion.div
@@ -56,20 +78,10 @@ const Notification: React.FC<NotificationProps> = () => {
               notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  role="button"
-                  tabIndex={0}
                   className={`
-                    w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 cursor-pointer
+                    w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0
                     ${!notification.read ? 'bg-primary-light/10' : ''}
                   `}
-                  onClick={() => {
-                    if (!notification.read) markAsRead(notification.id);
-                  }}
-                  onKeyDown={e => {
-                    if ((e.key === 'Enter' || e.key === ' ') && !notification.read) {
-                      markAsRead(notification.id);
-                    }
-                  }}
                 >
                   <div className="flex items-start gap-3">
                     {!notification.read && (
