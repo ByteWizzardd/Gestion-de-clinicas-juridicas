@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useRef, useEffect, JSX } from 'react';
+import { useState, useRef, useEffect, JSX } from 'react';
 import { MoreHorizontal, Eye, Pencil, Trash2 } from 'lucide-react';
 
 type CustomAction = {
@@ -62,7 +62,7 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions }: 
     };
   }, [isOpen]);
 
-  const handleAction = (action: (() => void) | undefined) => {
+  const handleAction = (action: () => void | undefined) => {
     if (action) {
       action();
       setIsOpen(false);
@@ -105,31 +105,16 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions }: 
               )}
             </>
           )}
-          {customActions && customActions.filter(action => action.label !== '' && action.label !== null).map((action, idx) => {
-            // Si el label es un elemento React (JSX.Element), renderizarlo directamente sin wrapper de button
-            // para evitar anidar botones
-            const isReactElement = typeof action.label !== 'string' && React.isValidElement(action.label);
-            
-            if (isReactElement) {
-              return (
-                <div key={idx} className="w-full">
-                  {action.label}
-                </div>
-              );
-            }
-            
-            // Si es un string, usar button como antes
-            return (
-              <button
-                key={idx}
-                onClick={action.onClick}
-                className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-yellow-600 flex items-center gap-3 transition-colors cursor-pointer"
-              >
-                {action.label}
-              </button>
-            );
-          })}
-          {onDelete && (onView || onEdit || (customActions && customActions.filter(action => action.label !== '' && action.label !== null).length > 0)) && (
+          {customActions && customActions.filter(action => action.label !== '' && action.label !== null).map((action, idx) => (
+            <button
+              key={idx}
+              onClick={action.onClick}
+              className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-yellow-600 flex items-center gap-3 transition-colors cursor-pointer"
+            >
+              {action.label}
+            </button>
+          ))}
+          {onDelete && (onView || onEdit || (customActions && customActions.length > 0)) && (
             <div className="border-t border-gray-100 my-1"></div>
           )}
           {onDelete && (
@@ -143,4 +128,3 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions }: 
     </div>
   );
 }
-
