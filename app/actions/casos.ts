@@ -9,10 +9,11 @@ import { asignacionesQueries } from '@/lib/db/queries/asignaciones.queries';
 import { profesoresQueries } from '@/lib/db/queries/profesores.queries';
 import { estudiantesQueries } from '@/lib/db/queries/estudiantes.queries';
 import { semestresQueries } from '@/lib/db/queries/semestres.queries';
+import { usuariosQueries } from '@/lib/db/queries/usuarios.queries';
 import { pool } from '@/lib/db/pool';
 import { loadSQL } from '@/lib/db/sql-loader';
-import { AppError, UnauthorizedError, ValidationError } from '@/lib/utils/errors';
-import { requireAuthInServerActionWithCode, requireAuthInServerActionOrThrow } from '@/lib/utils/server-auth';
+import { AppError } from '@/lib/utils/errors';
+import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 import { notificarVariosUsuariosAction } from './notificaciones';
 
@@ -845,6 +846,17 @@ export async function asignarEquipoAction(
 ): Promise<AsignarEquipoResult> {
   try {
     // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    const cedulaEmisor = authResult.user.cedula;
+    const emisor = await usuariosQueries.getCompleteByCedula(cedulaEmisor);
+    const nombreEmisor = emisor?.nombre_completo || cedulaEmisor;
 
     // Obtener el semestre actual
     const semestres = await semestresQueries.getAll();
@@ -896,11 +908,6 @@ export async function asignarEquipoAction(
         
         if (profesoresInvalidos.length > 0) {
           await client.query('ROLLBACK');
-          await notificarVariosUsuariosAction({
-            cedulasReceptores: profesoresNuevos,
-            titulo: 'Asignación a caso',
-            mensaje: `Has sido asignado al caso #${idCaso}. Por favor, revisa los detalles en el sistema.`,
-          })
           return {
             success: false,
             error: {
@@ -914,11 +921,6 @@ export async function asignarEquipoAction(
       // Verificar que los estudiantes nuevos existan (en cualquier semestre)
       if (estudiantesNuevos.length > 0) {
         const estudiantesInvalidos = estudiantesNuevos.filter(cedula => !estudiantesAllActiveCedulas.has(cedula));
-        await notificarVariosUsuariosAction({
-          cedulasReceptores: estudiantesNuevos,
-          titulo: 'Asignación a caso',
-          mensaje: `Has sido asignado al caso #${idCaso}. Por favor, revisa los detalles en el sistema.`,
-        })
         
         if (estudiantesInvalidos.length > 0) {
           await client.query('ROLLBACK');
@@ -983,6 +985,23 @@ export async function asignarEquipoAction(
       }
 
       await client.query('COMMIT');
+
+      // Notificar solo si la asignación fue exitosa
+      if (profesoresNuevos.length > 0) {
+        await notificarVariosUsuariosAction({
+          cedulasReceptores: profesoresNuevos,
+          titulo: 'Asignación a caso',
+          mensaje: `Has sido asignado como profesor supervisor al caso #${idCaso} por ${nombreEmisor}. Por favor, revisa los detalles en el sistema.`,
+        });
+      }
+
+      if (estudiantesNuevos.length > 0) {
+        await notificarVariosUsuariosAction({
+          cedulasReceptores: estudiantesNuevos,
+          titulo: 'Asignación a caso',
+          mensaje: `Has sido asignado al caso #${idCaso} por ${nombreEmisor}. Por favor, revisa los detalles en el sistema.`,
+        });
+      }
 
       revalidatePath(`/dashboard/cases/${idCaso}`);
 
