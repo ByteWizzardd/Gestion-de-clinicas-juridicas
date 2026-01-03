@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button';
 import TextArea from '@/components/forms/TextArea';
 import DatePicker from '@/components/forms/DatePicker';
 import MultiSelect from '@/components/forms/MultiSelect';
-import { createAccionAction } from '@/app/actions/casos';
+import { createAccionAction, updateAccionAction } from '@/app/actions/casos';
 import { getUsuariosAction } from '@/app/actions/usuarios';
 import { X, Users, Calendar } from 'lucide-react';
 
@@ -15,9 +15,21 @@ interface AddActionModalProps {
   onClose: () => void;
   idCaso: number;
   onSuccess?: () => void;
+  editingAction?: {
+    num_accion: number;
+    id_caso: number;
+    detalle_accion: string;
+    comentario: string | null;
+    ejecutores?: Array<{
+      id_usuario_ejecuta: string;
+      nombre_completo: string;
+      fecha_ejecucion: string;
+    }>;
+  };
+  onActionAdded?: () => void;
 }
 
-export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess }: AddActionModalProps) {
+export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, editingAction, onActionAdded }: AddActionModalProps) {
   const [detalleAccion, setDetalleAccion] = useState('');
   const [comentario, setComentario] = useState('');
   const [usuariosSeleccionados, setUsuariosSeleccionados] = useState<string[]>([]);
@@ -28,12 +40,25 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess }: A
   const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ detalleAccion?: string; ejecutores?: string; fechaEjecucion?: string }>({});
 
-  // Cargar usuarios disponibles al abrir el modal
+  // Cargar usuarios disponibles al abrir el modal y datos de edición
   useEffect(() => {
     if (isOpen) {
       loadUsuarios();
+      if (editingAction) {
+        // Cargar datos para edición
+        setDetalleAccion(editingAction.detalle_accion);
+        setComentario(editingAction.comentario || '');
+        setUsuariosSeleccionados(editingAction.ejecutores?.map(e => e.id_usuario_ejecuta) || []);
+        setFechaEjecucion(editingAction.ejecutores?.[0]?.fecha_ejecucion || '');
+      } else {
+        // Limpiar formulario para nueva acción
+        setDetalleAccion('');
+        setComentario('');
+        setUsuariosSeleccionados([]);
+        setFechaEjecucion('');
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, editingAction]);
 
   const loadUsuarios = async () => {
     setLoadingData(true);
@@ -66,6 +91,14 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess }: A
     e.preventDefault();
     setError(null);
     setErrors({});
+
+    console.log('DEBUG AddActionModal - handleSubmit called at', new Date().toISOString(), {
+      editingAction: !!editingAction,
+      detalleAccion,
+      comentario,
+      fechaEjecucion,
+      usuariosSeleccionados
+    });
 
     // Validar detalle de acción
     if (!detalleAccion.trim()) {
@@ -100,28 +133,59 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess }: A
       const day = String(now.getDate()).padStart(2, '0');
       const fechaRegistro = `${year}-${month}-${day}`;
 
-      const result = await createAccionAction(
-        idCaso,
-        detalleAccion.trim(),
-        comentario.trim() || undefined,
-        ejecutoresData,
-        fechaRegistro
-      );
-      
-      if (!result.success) {
-        setError(result.error?.message || 'Error al crear la acción');
-        return;
+      let result;
+      if (editingAction) {
+        console.log('DEBUG AddActionModal - Updating action', {
+          numAccion: editingAction.num_accion,
+          idCaso,
+          detalleAccion: detalleAccion.trim(),
+          comentario: comentario.trim() || undefined,
+          ejecutoresData
+        });
+
+        // Modo edición
+        result = await updateAccionAction({
+          numAccion: editingAction.num_accion,
+          idCaso: idCaso,
+          detalleAccion: detalleAccion.trim(),
+          comentario: comentario.trim() || undefined,
+          ejecutores: ejecutoresData,
+        });
+
+        if (!result.success) {
+          setError(result.error?.message || 'Error al actualizar la acción');
+          return;
+        }
+      } else {
+        // Modo creación
+        result = await createAccionAction(
+          idCaso,
+          detalleAccion.trim(),
+          comentario.trim() || undefined,
+          ejecutoresData,
+          fechaRegistro
+        );
+
+        if (!result.success) {
+          setError(result.error?.message || 'Error al crear la acción');
+          return;
+        }
       }
 
-      // Limpiar formulario
-      setDetalleAccion('');
-      setComentario('');
-      setUsuariosSeleccionados([]);
-      setFechaEjecucion('');
+      // Limpiar formulario solo en modo creación
+      if (!editingAction) {
+        setDetalleAccion('');
+        setComentario('');
+        setUsuariosSeleccionados([]);
+        setFechaEjecucion('');
+      }
       setErrors({});
+      console.log('DEBUG AddActionModal - handleSubmit completed successfully');
       onSuccess?.();
+      onActionAdded?.();
       onClose();
     } catch (err) {
+      console.log('DEBUG AddActionModal - handleSubmit failed:', err);
       setError(err instanceof Error ? err.message : 'Error al crear la acción');
     } finally {
       setLoading(false);
@@ -179,7 +243,9 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess }: A
           </button>
 
           {/* Título */}
-          <h2 className="text-2xl font-normal text-foreground">Registrar Nueva Acción</h2>
+          <h2 className="text-2xl font-normal text-foreground">
+            {editingAction ? 'Editar Acción' : 'Registrar Nueva Acción'}
+          </h2>
         </div>
 
         {/* Área de contenido */}
@@ -191,7 +257,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess }: A
           ) : (
             <>
               {/* Grid de formulario */}
-              <form onSubmit={handleSubmit} noValidate className="grid grid-cols-2 gap-x-8 gap-y-4">
+              <form noValidate className="grid grid-cols-2 gap-x-8 gap-y-4">
                 {/* Detalle de la Acción (ocupa todo el ancho) */}
                 <div className="col-span-2">
                   <TextArea
@@ -293,14 +359,14 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess }: A
           </div>
           
           <div className="flex justify-end">
-            <Button 
-              variant="primary" 
-              size="xl" 
-              onClick={handleSubmit}
+            <Button
+              type="submit"
+              variant="primary"
+              size="xl"
               disabled={loading || loadingData}
               isLoading={loading}
             >
-              Registrar Acción
+              {editingAction ? 'Actualizar Acción' : 'Registrar Acción'}
             </Button>
           </div>
         </div>

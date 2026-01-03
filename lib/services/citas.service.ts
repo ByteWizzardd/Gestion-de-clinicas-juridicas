@@ -244,8 +244,6 @@ export const citasService = {
 
             if (citaActualizada.rows.length > 0) {
               const cita = citaActualizada.rows[0];
-              const { accionesQueries } = await import('@/lib/db/queries/acciones.queries');
-              const { ejecutanQueries } = await import('@/lib/db/queries/ejecutan.queries');
 
               // Buscar TODAS las acciones relacionadas con citas para este caso
               // Luego verificar cuál corresponde exactamente a esta cita por ejecutores
@@ -258,8 +256,22 @@ export const citasService = {
 
               const accionesResult = await client.query(findAccionesQuery, [id_caso]);
 
+              console.log('DEBUG updateAppointment - Acciones relacionadas con citas encontradas:', {
+                totalAcciones: accionesResult.rows.length,
+                acciones: accionesResult.rows.map(a => ({
+                  num_accion: a.num_accion,
+                  detalle_accion: a.detalle_accion,
+                  comentario: a.comentario
+                }))
+              });
+
               // Para cada acción de cita, verificar si corresponde a esta cita por ejecutores
               for (const accion of accionesResult.rows) {
+                console.log('DEBUG updateAppointment - Verificando acción:', {
+                  num_accion: accion.num_accion,
+                  detalle_accion: accion.detalle_accion,
+                  comentario: accion.comentario
+                });
                 // Comparar ejecutores para identificar cuál acción corresponde a esta cita
                 const ejecutoresCitaQuery = `
                   SELECT id_usuario
@@ -286,7 +298,19 @@ export const citasService = {
 
                 const ejecutoresCoinciden = JSON.stringify(ejecutoresCita) === JSON.stringify(ejecutoresAccion);
 
+                console.log('DEBUG updateAppointment - Ejecutores comparison:', {
+                  num_accion: accion.num_accion,
+                  ejecutoresCita,
+                  ejecutoresAccion,
+                  ejecutoresCoinciden
+                });
+
                 if (ejecutoresCoinciden) {
+                  console.log('DEBUG updateAppointment - ¡ACCIÓN ENCONTRADA! Se actualizará:', {
+                    num_accion: accion.num_accion,
+                    id_caso: accion.id_caso,
+                    detalle_accion: accion.detalle_accion
+                  });
                   // ¡Esta acción corresponde a la cita! Actualizarla
                   let nuevoDetalle = accion.detalle_accion;
                   let nuevoComentario = accion.comentario;
@@ -306,13 +330,22 @@ export const citasService = {
                     nuevoComentario = params.orientacion;
                   }
 
-                  // Actualizar la acción
-                  await accionesQueries.update(accion.num_accion, id_caso, nuevoDetalle, nuevoComentario);
+                  console.log('DEBUG updateAppointment - Actualizando acción con:', {
+                    nuevoDetalle,
+                    nuevoComentario
+                  });
+
+                  // Actualizar la acción usando client de la transacción
+                  const updateAccionQuery = loadSQL('acciones/update.sql');
+                  await client.query(updateAccionQuery, [accion.num_accion, id_caso, nuevoDetalle, nuevoComentario]);
 
                   // Si cambiaron los ejecutores, actualizar los ejecutores de la acción
                   if (params.usuariosAtienden !== undefined) {
-                    // Eliminar ejecutores existentes de la acción
-                    await ejecutanQueries.deleteByAccion(accion.num_accion, id_caso);
+                    console.log('DEBUG updateAppointment - Actualizando ejecutores de la acción');
+
+                    // Eliminar ejecutores existentes de la acción usando client
+                    const deleteEjecutanQuery = loadSQL('ejecutan/delete-by-accion.sql');
+                    await client.query(deleteEjecutanQuery, [accion.num_accion, id_caso]);
 
                     // Crear nuevos ejecutores si hay usuarios
                     if (params.usuariosAtienden.length > 0) {
@@ -326,9 +359,11 @@ export const citasService = {
                           fechaEjecucion
                         ]);
                       }
+                      console.log('DEBUG updateAppointment - Ejecutores actualizados');
                     }
                   }
 
+                  console.log('DEBUG updateAppointment - Acción actualizada exitosamente');
                   // Solo actualizar la primera acción que coincida (debería haber solo una)
                   break;
                 }
@@ -400,6 +435,7 @@ export const citasService = {
 
         let cita = null;
         if (citaInfo.rows.length === 0) {
+          console.log('DEBUG deleteAppointment - Cita no encontrada en BD, eliminando solo registros relacionados');
           // Si la cita no existe, intentar eliminar de todas formas los registros relacionados
           // por si quedaron huérfanos
         } else {
@@ -416,24 +452,43 @@ export const citasService = {
             const anio = fechaObj.getFullYear();
             const fechaFormateada = `${dia}/${mes}/${anio}`;
 
-            // Buscar acciones que coincidan exactamente con:
-            // 1. Fecha en detalle_accion
-            // 2. Comentario (orientación)
-            // 3. Caso específico
-            const findAccionQuery = `
+            // DEBUG: Log de la cita que se va a eliminar
+            console.log('DEBUG deleteAppointment - Cita a eliminar:', {
+              num_cita,
+              id_caso,
+              fecha_encuentro: cita.fecha_encuentro,
+              orientacion: cita.orientacion,
+              fechaFormateada
+            });
+
+            // Buscar TODAS las acciones relacionadas con citas para este caso
+            // Luego verificar cuál corresponde exactamente a esta cita
+            const findAccionesQuery = `
               SELECT a.num_accion, a.id_caso, a.detalle_accion, a.comentario, a.id_usuario_registra, a.fecha_registro
               FROM acciones a
               WHERE a.id_caso = $1::INTEGER
-                AND a.detalle_accion = 'Cita realizada el ' || $2::TEXT
-                AND (a.comentario = $3::TEXT OR (a.comentario IS NULL AND $3::TEXT IS NULL))
-              ORDER BY a.fecha_registro DESC, a.num_accion DESC
-              LIMIT 1
+                AND a.detalle_accion LIKE 'Cita realizada el %'
             `;
 
-            const accionResult = await client.query(findAccionQuery, [id_caso, fechaFormateada, cita.orientacion]);
+            const accionesResult = await client.query(findAccionesQuery, [id_caso]);
 
-            if (accionResult.rows.length > 0) {
-              const accionRelacionada = accionResult.rows[0];
+            console.log('DEBUG deleteAppointment - Acciones relacionadas con citas encontradas:', {
+              totalAcciones: accionesResult.rows.length,
+              acciones: accionesResult.rows.map(a => ({
+                num_accion: a.num_accion,
+                detalle_accion: a.detalle_accion,
+                comentario: a.comentario
+              }))
+            });
+
+            // Para cada acción de cita, verificar si corresponde a esta cita por ejecutores
+            let accionRelacionada = null;
+            for (const accion of accionesResult.rows) {
+              console.log('DEBUG deleteAppointment - Verificando acción:', {
+                num_accion: accion.num_accion,
+                detalle_accion: accion.detalle_accion,
+                comentario: accion.comentario
+              });
 
               // Verificar que los ejecutores también coincidan (comparación adicional de seguridad)
               const ejecutoresCitaQuery = `
@@ -452,7 +507,7 @@ export const citasService = {
 
               const [ejecutoresCitaResult, ejecutoresAccionResult] = await Promise.all([
                 client.query(ejecutoresCitaQuery, [num_cita, id_caso]),
-                client.query(ejecutoresAccionQuery, [accionRelacionada.num_accion, id_caso])
+                client.query(ejecutoresAccionQuery, [accion.num_accion, id_caso])
               ]);
 
               // Comparar listas de ejecutores
@@ -461,14 +516,44 @@ export const citasService = {
 
               const ejecutoresCoinciden = JSON.stringify(ejecutoresCita) === JSON.stringify(ejecutoresAccion);
 
-              if (ejecutoresCoinciden) {
-                // Solo eliminar si todo coincide: fecha, comentario y ejecutores
-                const { ejecutanQueries } = await import('@/lib/db/queries/ejecutan.queries');
-                await ejecutanQueries.deleteByAccion(accionRelacionada.num_accion, id_caso);
+              console.log('DEBUG deleteAppointment - Ejecutores comparison:', {
+                num_accion: accion.num_accion,
+                ejecutoresCita,
+                ejecutoresAccion,
+                ejecutoresCoinciden
+              });
 
-                const { accionesQueries } = await import('@/lib/db/queries/acciones.queries');
-                await accionesQueries.delete(accionRelacionada.num_accion, id_caso);
+              if (ejecutoresCoinciden) {
+                // ¡Esta acción corresponde a la cita!
+                accionRelacionada = accion;
+                console.log('DEBUG deleteAppointment - ¡ACCIÓN ENCONTRADA! Se eliminará:', {
+                  num_accion: accionRelacionada.num_accion,
+                  id_caso: accionRelacionada.id_caso,
+                  detalle_accion: accionRelacionada.detalle_accion
+                });
+                break; // Salir del loop, ya encontramos la acción correcta
               }
+            }
+
+            // Eliminar la acción encontrada (si existe)
+            if (accionRelacionada) {
+              console.log('DEBUG deleteAppointment - Eliminando acción relacionada:', {
+                num_accion: accionRelacionada.num_accion,
+                id_caso: accionRelacionada.id_caso,
+                detalle_accion: accionRelacionada.detalle_accion
+              });
+
+              // Eliminar ejecutores primero usando client de la transacción
+              const deleteEjecutanQuery = loadSQL('ejecutan/delete-by-accion.sql');
+              await client.query(deleteEjecutanQuery, [accionRelacionada.num_accion, id_caso]);
+
+              // Eliminar la acción usando client de la transacción
+              const deleteAccionQuery = loadSQL('acciones/delete.sql');
+              await client.query(deleteAccionQuery, [accionRelacionada.num_accion, id_caso]);
+
+              console.log('DEBUG deleteAppointment - Acción eliminada exitosamente');
+            } else {
+              console.log('DEBUG deleteAppointment - No se encontró ninguna acción que corresponda exactamente a esta cita');
             }
           }
         } catch (error) {

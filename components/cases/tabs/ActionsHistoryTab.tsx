@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { History, User, Calendar, Users, Trash2 } from 'lucide-react';
+import { History, User, Calendar, Users, Trash2, Pencil } from 'lucide-react';
 import { formatDate } from '@/lib/utils/date-formatter';
 import { deleteAccionAction } from '@/app/actions/casos';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
+import AddActionModal from '@/components/cases/modals/AddActionModal';
 
 interface ActionsHistoryTabProps {
   acciones?: Array<{
@@ -33,6 +34,29 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
   const [accionToDelete, setAccionToDelete] = useState<{ num_accion: number; id_caso: number; detalle_accion: string } | null>(null);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [accionToEdit, setAccionToEdit] = useState<{
+    num_accion: number;
+    id_caso: number;
+    detalle_accion: string;
+    comentario: string | null;
+  } | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  const handleEditAccion = (accion: {
+    num_accion: number;
+    id_caso: number;
+    detalle_accion: string;
+    comentario: string | null;
+  }) => {
+    setAccionToEdit({
+      num_accion: accion.num_accion,
+      id_caso: accion.id_caso,
+      detalle_accion: accion.detalle_accion,
+      comentario: accion.comentario
+    });
+    setShowEditModal(true);
+  };
 
   const handleDeleteAccion = (accion: {
     num_accion: number;
@@ -81,6 +105,16 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
     }
   };
 
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setAccionToEdit(null);
+  };
+
+  const handleActionUpdated = () => {
+    onRefresh?.();
+    handleCloseEditModal();
+  };
+
   const handleCancelDelete = () => {
     setShowDeleteConfirmModal(false);
     setAccionToDelete(null);
@@ -109,13 +143,22 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
                 </p>
               )}
             </div>
-            <button
-              onClick={() => handleDeleteAccion(accion)}
-              className="text-red-500 hover:text-red-700 p-1 rounded transition-colors"
-              title="Eliminar acción"
-            >
-              <Trash2 className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleEditAccion(accion)}
+                className="text-blue-500 hover:text-blue-700 p-1 rounded transition-colors"
+                title="Editar acción"
+              >
+                <Pencil className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => handleDeleteAccion(accion)}
+                className="text-red-500 hover:text-red-700 p-1 rounded transition-colors"
+                title="Eliminar acción"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -187,6 +230,17 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
         cancelLabel="Cancelar"
         disabled={isDeleting}
       />
+
+      {/* Modal para editar acción */}
+      {showEditModal && accionToEdit && (
+        <AddActionModal
+          isOpen={showEditModal}
+          onClose={handleCloseEditModal}
+          onActionAdded={handleActionUpdated}
+          idCaso={accionToEdit.id_caso}
+          editingAction={accionToEdit}
+        />
+      )}
     </div>
   );
 }

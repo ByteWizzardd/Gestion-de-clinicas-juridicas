@@ -5,11 +5,13 @@ import { nucleosQueries } from '@/lib/db/queries/nucleos.queries';
 import { ambitosLegalesQueries } from '@/lib/db/queries/ambitos-legales.queries';
 import { beneficiariosQueries } from '@/lib/db/queries/beneficiarios.queries';
 import { accionesQueries } from '@/lib/db/queries/acciones.queries';
+import { ejecutanQueries } from '@/lib/db/queries/ejecutan.queries';
 import { citasQueries } from '@/lib/db/queries/citas.queries';
 import { soportesQueries } from '@/lib/db/queries/soportes.queries';
 import { asignacionesQueries } from '@/lib/db/queries/asignaciones.queries';
 import { AppError, ValidationError, NotFoundError } from '@/lib/utils/errors';
 import { withTransaction } from '@/lib/db/transactions';
+import { loadSQL } from '@/lib/db/sql-loader';
 import { CreateCasoSchema, CreateCasoInput } from '@/lib/validations/casos.schema';
 import { ESTATUS_CASO } from '@/lib/constants/status';
 import { readFileSync } from 'fs';
@@ -273,77 +275,92 @@ export const casosService = {
                 const accion = accionResult.rows[0];
 
                 // 2. Si la acción comienza con "Cita realizada el", buscar y eliminar la cita correspondiente
-                // Aplicar EXACTAMENTE la misma lógica que en citas.service.ts
+                // Aplicar EXACTAMENTE la misma lógica que en citas.service.ts (buscar por ejecutores)
                 if (accion.detalle_accion.startsWith('Cita realizada el')) {
-                    console.log('[DEBUG] Acción es de cita, iniciando eliminación bidireccional:', accion.detalle_accion);
-                    // Extraer fecha del título (formato: "Cita realizada el DD/MM/YYYY")
-                    const fechaMatch = accion.detalle_accion.match(/Cita realizada el (\d{2}\/\d{2}\/\d{4})/);
+                    console.log('[DEBUG deleteAccion] Acción es de cita, iniciando eliminación bidireccional:', accion.detalle_accion);
 
-                    if (fechaMatch) {
-                        const fechaFormateada = fechaMatch[1]; // DD/MM/YYYY
+                    // Buscar TODAS las citas para este caso
+                    const findCitasQuery = `
+                        SELECT c.num_cita, c.id_caso, c.fecha_encuentro, c.orientacion
+                        FROM citas c
+                        WHERE c.id_caso = $1
+                    `;
 
-                        // Convertir fecha del formato DD/MM/YYYY a YYYY-MM-DD para BD
-                        const [dia, mes, anio] = fechaFormateada.split('/');
-                        const fechaBD = `${anio}-${mes}-${dia}`;
+                    const citasResult = await client.query(findCitasQuery, [idCaso]);
 
-                        // Buscar citas que coincidan exactamente (MISMA LÓGICA QUE EN CITAS)
-                        const findCitaQuery = `
-                            SELECT c.num_cita, c.id_caso, c.fecha_encuentro, c.orientacion
-                            FROM citas c
-                            WHERE c.id_caso = $1
-                              AND c.fecha_encuentro = $2::DATE
-                              AND (c.orientacion = $3 OR (c.orientacion IS NULL AND $3 IS NULL))
+                    console.log('[DEBUG deleteAccion] Citas encontradas para el caso:', {
+                        totalCitas: citasResult.rows.length,
+                        citas: citasResult.rows.map(c => ({
+                            num_cita: c.num_cita,
+                            fecha_encuentro: c.fecha_encuentro,
+                            orientacion: c.orientacion
+                        }))
+                    });
+
+                    // Obtener ejecutores de la acción
+                    const ejecutoresAccionQuery = `
+                        SELECT id_usuario_ejecuta as id_usuario
+                        FROM ejecutan
+                        WHERE num_accion = $1 AND id_caso = $2
+                        ORDER BY id_usuario_ejecuta
+                    `;
+
+                    const ejecutoresAccionResult = await client.query(ejecutoresAccionQuery, [numAccion, idCaso]);
+                    const ejecutoresAccion = ejecutoresAccionResult.rows.map(r => r.id_usuario).sort();
+
+                    console.log('[DEBUG deleteAccion] Ejecutores de la acción:', ejecutoresAccion);
+
+                    // Para cada cita, verificar si corresponde a esta acción por ejecutores
+                    let citaRelacionada = null;
+                    for (const cita of citasResult.rows) {
+                        // Obtener ejecutores de la cita
+                        const ejecutoresCitaQuery = `
+                            SELECT id_usuario
+                            FROM atienden
+                            WHERE num_cita = $1 AND id_caso = $2
+                            ORDER BY id_usuario
                         `;
 
-                        const citaResult = await client.query(findCitaQuery, [idCaso, fechaBD, accion.comentario]);
+                        const ejecutoresCitaResult = await client.query(ejecutoresCitaQuery, [cita.num_cita, idCaso]);
+                        const ejecutoresCita = ejecutoresCitaResult.rows.map(r => r.id_usuario).sort();
 
-                        if (citaResult.rows.length > 0) {
-                            const cita = citaResult.rows[0];
-                            console.log('[DEBUG] Cita encontrada para eliminación:', cita);
+                        console.log('[DEBUG deleteAccion] Comparando ejecutores:', {
+                            num_cita: cita.num_cita,
+                            ejecutoresCita,
+                            ejecutoresAccion,
+                            coinciden: JSON.stringify(ejecutoresCita) === JSON.stringify(ejecutoresAccion)
+                        });
 
-                            // Verificar que los ejecutores también coincidan
-                            const ejecutoresCitaQuery = `
-                                SELECT id_usuario
-                                FROM atienden
-                                WHERE num_cita = $1 AND id_caso = $2
-                                ORDER BY id_usuario
-                            `;
+                        // Comparar listas de ejecutores
+                        const ejecutoresCoinciden = JSON.stringify(ejecutoresCita) === JSON.stringify(ejecutoresAccion);
 
-                            const ejecutoresAccionQuery = `
-                                SELECT id_usuario_ejecuta as id_usuario
-                                FROM ejecutan
-                                WHERE num_accion = $1 AND id_caso = $2
-                                ORDER BY id_usuario_ejecuta
-                            `;
-
-                            const [ejecutoresCitaResult, ejecutoresAccionResult] = await Promise.all([
-                                client.query(ejecutoresCitaQuery, [cita.num_cita, idCaso]),
-                                client.query(ejecutoresAccionQuery, [numAccion, idCaso])
-                            ]);
-
-                            // Comparar listas de ejecutores
-                            const ejecutoresCita = ejecutoresCitaResult.rows.map(r => r.id_usuario).sort();
-                            const ejecutoresAccion = ejecutoresAccionResult.rows.map(r => r.id_usuario).sort();
-
-                            const ejecutoresCoinciden = JSON.stringify(ejecutoresCita) === JSON.stringify(ejecutoresAccion);
-
-                            if (ejecutoresCoinciden) {
-                                // Eliminar registros de atienden y la cita
-                                const deleteAtiendenQuery = `
-                                    DELETE FROM atienden
-                                    WHERE num_cita = $1 AND id_caso = $2
-                                `;
-
-                                await client.query(deleteAtiendenQuery, [cita.num_cita, idCaso]);
-
-                                const deleteCitaQuery = `
-                                    DELETE FROM citas
-                                    WHERE num_cita = $1 AND id_caso = $2
-                                `;
-
-                                await client.query(deleteCitaQuery, [cita.num_cita, idCaso]);
-                            }
+                        if (ejecutoresCoinciden) {
+                            // ¡Esta cita corresponde a la acción!
+                            citaRelacionada = cita;
+                            console.log('[DEBUG deleteAccion] ¡CITA ENCONTRADA! Se eliminará:', {
+                                num_cita: citaRelacionada.num_cita,
+                                id_caso: citaRelacionada.id_caso,
+                                fecha_encuentro: citaRelacionada.fecha_encuentro
+                            });
+                            break; // Salir del loop, ya encontramos la cita correcta
                         }
+                    }
+
+                    // Eliminar la cita encontrada (si existe)
+                    if (citaRelacionada) {
+                        console.log('[DEBUG deleteAccion] Eliminando cita relacionada');
+
+                        // Eliminar registros de atienden primero
+                        const deleteAtiendenQuery = loadSQL('atienden/delete-by-cita.sql');
+                        await client.query(deleteAtiendenQuery, [citaRelacionada.num_cita, idCaso]);
+
+                        // Eliminar la cita
+                        const deleteCitaQuery = loadSQL('citas/delete.sql');
+                        await client.query(deleteCitaQuery, [citaRelacionada.num_cita, idCaso]);
+
+                        console.log('[DEBUG deleteAccion] Cita eliminada exitosamente');
+                    } else {
+                        console.log('[DEBUG deleteAccion] No se encontró ninguna cita que corresponda exactamente a esta acción');
                     }
                 }
 
@@ -379,6 +396,57 @@ export const casosService = {
                 error instanceof Error ? error.message : "Error desconocido"
             );
         }
+    },
+
+    updateAccion: async (params: {
+        numAccion: number;
+        idCaso: number;
+        detalleAccion: string;
+        comentario: string | null;
+        ejecutores?: Array<{ idUsuario: string; fechaEjecucion: string }>;
+    }) => {
+        console.log('DEBUG updateAccion - Updating action with params:', params);
+
+        return await withTransaction(async (client) => {
+            // Verificar que la acción existe antes de actualizar
+            const checkQuery = 'SELECT num_accion, detalle_accion FROM acciones WHERE num_accion = $1 AND id_caso = $2';
+            const existingAction = await client.query(checkQuery, [params.numAccion, params.idCaso]);
+            console.log('DEBUG updateAccion - Existing action before update:', existingAction.rows[0]);
+
+            // Actualizar la acción
+            await accionesQueries.update(params.numAccion, params.idCaso, params.detalleAccion, params.comentario);
+            console.log('DEBUG updateAccion - Action updated in database');
+
+            // Si se proporcionan ejecutores, actualizarlos
+            if (params.ejecutores !== undefined) {
+                // Eliminar ejecutores existentes
+                await ejecutanQueries.deleteByAccion(params.numAccion, params.idCaso);
+
+                // Crear nuevos ejecutores si hay usuarios
+                if (params.ejecutores.length > 0) {
+                    const createEjecutanQuery = loadSQL('ejecutan/create.sql');
+                    for (const ejecutor of params.ejecutores) {
+                        await client.query(createEjecutanQuery, [
+                            ejecutor.idUsuario,
+                            params.numAccion,
+                            params.idCaso,
+                            ejecutor.fechaEjecucion
+                        ]);
+                    }
+                }
+            }
+
+            // Verificar que la acción se actualizó correctamente
+            const updatedAction = await client.query(checkQuery, [params.numAccion, params.idCaso]);
+            console.log('DEBUG updateAccion - Action after update:', updatedAction.rows[0]);
+
+            return {
+                num_accion: params.numAccion,
+                id_caso: params.idCaso,
+                detalle_accion: params.detalleAccion,
+                comentario: params.comentario,
+            };
+        });
     },
 };
 
