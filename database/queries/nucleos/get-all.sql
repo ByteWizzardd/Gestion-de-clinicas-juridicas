@@ -5,5 +5,6 @@ SELECT DISTINCT ON (nombre_nucleo)
     id_nucleo,
     nombre_nucleo
 FROM nucleos
+WHERE habilitado = true
 ORDER BY nombre_nucleo, id_nucleo;
 

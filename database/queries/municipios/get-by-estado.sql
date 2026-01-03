@@ -5,6 +5,6 @@ SELECT
     num_municipio,
     nombre_municipio
 FROM municipios
-WHERE id_estado = $1
+WHERE id_estado = $1 AND habilitado = true
 ORDER BY num_municipio, nombre_municipio;
 

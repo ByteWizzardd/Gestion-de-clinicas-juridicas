@@ -51,7 +51,7 @@ function CaseTools({
     const hasFilter = onNucleoChange !== undefined || onTramiteChange !== undefined || onEstatusChange !== undefined || onCasosAsignadosChange !== undefined || onMateriaChange !== undefined;
 
     return (
-        <div className="flex flex-nowrap gap-3 sm:gap-4 items-center w-full px-3">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center w-full px-3">
             {hasSearch && (
                 <div className="flex-1 min-w-0">
                     <Search value={searchValue} onChange={onSearchChange} placeholder={searchPlaceholder} />

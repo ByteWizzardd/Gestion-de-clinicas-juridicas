@@ -6,6 +6,6 @@ SELECT
     num_parroquia,
     nombre_parroquia
 FROM parroquias
-WHERE id_estado = $1 AND num_municipio = $2
+WHERE id_estado = $1 AND num_municipio = $2 AND habilitado = true
 ORDER BY num_parroquia, nombre_parroquia;
 

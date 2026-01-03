@@ -10,7 +10,7 @@ interface SearchProps {
 function Search({ value, onChange, placeholder = 'Buscar caso...' }: SearchProps) {
   return (
     <search className="flex items-center">
-      <form 
+      <form
         className="flex items-center h-10 border border-primary rounded-full bg-transparent w-full max-w-2xl"
         onSubmit={(e) => e.preventDefault()}
       >
@@ -27,7 +27,7 @@ function Search({ value, onChange, placeholder = 'Buscar caso...' }: SearchProps
           />
           <SearchIcon className="w-[18px] h-[18px] text-[#414040] mr-3" />
         </label>
-      </form> 
+      </form>
     </search>
   );
 }
