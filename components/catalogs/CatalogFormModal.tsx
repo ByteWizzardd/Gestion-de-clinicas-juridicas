@@ -82,18 +82,21 @@ export default function CatalogFormModal({
 
     const updateField = (name: string, value: string) => {
         setFormData(prev => {
-            let nextData = { ...prev, [name]: value };
+            const nextData = { ...prev, [name]: value };
+            return nextData;
+        });
 
-            // Call the onChange callback if provided specifically for this update
-            if (onFieldChange) {
+        // Call the onChange callback after state update using useEffect
+        if (onFieldChange) {
+            // Use setTimeout to defer the callback until after render
+            setTimeout(() => {
                 const updates = onFieldChange(name, value);
                 // If callback returns an object, merge it (e.g., to clear dependent fields)
                 if (updates && typeof updates === 'object') {
-                    nextData = { ...nextData, ...updates };
+                    setFormData(prev => ({ ...prev, ...updates }));
                 }
-            }
-            return nextData;
-        });
+            }, 0);
+        }
 
         if (errors[name]) {
             setErrors(prev => {
