@@ -7,6 +7,7 @@ import { updateUsuarioByCedulaAction } from '@/app/actions/usuarios';
 import { UpdateUserSchema } from '@/lib/validations/user.schema';
 import { getSemestresAction } from '@/app/actions/estudiantes';
 import PhoneInput from '../forms/PhoneInput';
+import { validateEmailFormat, validateEmailDomain } from '@/lib/utils/email-validation';
 
 interface Usuario {
   cedula: string;
@@ -85,8 +86,10 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
 
     // Validar correo electrónico
     if (form.correo_electronico && form.correo_electronico.trim()) {
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correo_electronico)) {
+      if (!validateEmailFormat(form.correo_electronico)) {
         newErrors.correo_electronico = 'Correo electrónico inválido';
+      } else if (!validateEmailDomain(form.correo_electronico)) {
+        newErrors.correo_electronico = 'El correo debe tener dominio @est.ucab.edu.ve o @ucab.edu.ve';
       }
     }
 

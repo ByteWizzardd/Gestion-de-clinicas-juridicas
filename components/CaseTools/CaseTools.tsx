@@ -77,7 +77,7 @@ function CaseTools({
                         materias={materias}
                     />
                 )}
-                <Add label={addLabel} onClick={onAddClick} />
+                {(addLabel || onAddClick) && <Add label={addLabel} onClick={onAddClick} />}
             </div>
         </div>
     );

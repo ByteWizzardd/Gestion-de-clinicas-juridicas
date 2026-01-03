@@ -87,5 +87,22 @@ export const profesoresQueries = {
     ]);
     return result.rows;
   },
+
+  /**
+   * Crea un nuevo profesor
+   */
+  create: async (data: {
+    cedula_profesor: string;
+    term: string;
+    tipo_profesor: string;
+  }): Promise<any> => {
+    const query = loadSQL('profesores/create.sql');
+    const result: QueryResult = await pool.query(query, [
+      data.cedula_profesor,
+      data.term,
+      data.tipo_profesor,
+    ]);
+    return result.rows[0];
+  },
 };
 

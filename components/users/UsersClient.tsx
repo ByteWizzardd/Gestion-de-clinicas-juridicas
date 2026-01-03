@@ -3,12 +3,15 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
+import { UserPlus, Users } from 'lucide-react';
 import ConfirmModal from '../ui/feedback/ConfirmModal';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import BulkUploadModal from './BulkUploadModal';
 import { getUsuariosAction, deleteUsuarioFisicoAction, getUsuarioInfoByCedulaAction, toggleHabilitadoUsuarioAction } from '@/app/actions/usuarios';
 import EditUserModal from './EditUserModal';
+import CreateUserModal from './CreateUserModal';
+import DropdownMenu from '@/components/ui/navigation/DropdownMenu';
 
 // Simulación: obtener tipo de usuario actual (debería venir de contexto/auth real)
 
@@ -38,11 +41,72 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
 
   const [usuarios, setUsuarios] = useState<Usuario[]>(initialUsuarios);
   const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
+  const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [tipoFilter, setTipoFilter] = useState('');
   const [loading, setLoading] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const router = useRouter();
+
+  // Cerrar el dropdown cuando se detecta que un modal se ha abierto
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+
+    // Escuchar cambios en el DOM para detectar modales
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (node.nodeType === 1) {
+            const element = node as HTMLElement;
+            // Verificar si el elemento o sus hijos son modales
+            if (
+              element.getAttribute('role') === 'dialog' ||
+              element.getAttribute('aria-modal') === 'true' ||
+              (element.classList.contains('fixed') && element.classList.contains('z-50')) ||
+              element.querySelector('[role="dialog"]') ||
+              element.querySelector('[aria-modal="true"]')
+            ) {
+              setIsDropdownOpen(false);
+              return;
+            }
+          }
+        }
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'role', 'aria-modal']
+    });
+
+    // También verificar cuando el body se bloquea (indicador de modal)
+    const checkBodyOverflow = () => {
+      if (document.body.style.overflow === 'hidden') {
+        const modal = document.querySelector('[role="dialog"]') || 
+                      document.querySelector('[aria-modal="true"]');
+        if (modal) {
+          setIsDropdownOpen(false);
+        }
+      }
+    };
+
+    const styleObserver = new MutationObserver(checkBodyOverflow);
+    styleObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['style']
+    });
+
+    // Verificar inmediatamente
+    checkBodyOverflow();
+
+    return () => {
+      observer.disconnect();
+      styleObserver.disconnect();
+    };
+  }, [isDropdownOpen]);
 
   // Detectar preferencia de movimiento reducido
   useEffect(() => {
@@ -215,6 +279,10 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
   const handleBulkUploadSuccess = () => {
     loadUsuarios();
   };
+
+  const handleCreateUserSuccess = () => {
+    loadUsuarios();
+  };
   
   // Validación de motivo
   const isMotivoValido = deleteMotivo.trim().length > 0;
@@ -248,19 +316,88 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
       >
-        <CaseTools 
-          addLabel="Cargar Estudiantes por Lotes" 
-          onAddClick={() => setIsBulkUploadModalOpen(true)}
-          searchValue={searchValue}
-          onSearchChange={setSearchValue}
-          searchPlaceholder="Buscar usuario..."
-          estatusFilter={tipoFilter}
-          onEstatusChange={setTipoFilter}
-          estatusOptions={tipoOptions}
-          tramiteFilter=""
-          onTramiteChange={() => {}}
-          tramiteOptions={[]}
-        />
+        <div className="flex flex-nowrap gap-3 sm:gap-4 items-center w-full px-3">
+          <div className="flex-1 min-w-0">
+            <CaseTools 
+              searchValue={searchValue}
+              onSearchChange={setSearchValue}
+              searchPlaceholder="Buscar usuario..."
+              estatusFilter={tipoFilter}
+              onEstatusChange={setTipoFilter}
+              estatusOptions={tipoOptions}
+              tramiteFilter=""
+              onTramiteChange={() => {}}
+              tramiteOptions={[]}
+            />
+          </div>
+          <div className="flex gap-3 sm:gap-4 items-center shrink-0">
+            <DropdownMenu
+              trigger={(isOpen) => (
+                <motion.button
+                  type="button"
+                  className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-primary text-white rounded-full hover:bg-primary-dark transition-colors font-medium whitespace-nowrap"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>Registrar Usuario</span>
+                  <svg 
+                    className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2.5" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </motion.button>
+              )}
+              onOpenChange={setIsDropdownOpen}
+              align="left"
+              className="relative"
+              menuClassName="bg-white border border-gray-300 rounded-2xl shadow-xl min-w-[220px] overflow-hidden py-2"
+            >
+              <div onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    // Cerrar inmediatamente
+                    setIsDropdownOpen(false);
+                    // Usar un microtask para asegurar que el estado se actualice primero
+                    Promise.resolve().then(() => {
+                      setIsCreateUserModalOpen(true);
+                    });
+                  }}
+                  className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 cursor-pointer"
+                >
+                  <UserPlus className="w-5 h-5 text-primary" />
+                  <span>Registrar usuario</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    // Cerrar inmediatamente
+                    setIsDropdownOpen(false);
+                    // Usar un microtask para asegurar que el estado se actualice primero
+                    Promise.resolve().then(() => {
+                      setIsBulkUploadModalOpen(true);
+                    });
+                  }}
+                  className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 cursor-pointer"
+                >
+                  <Users className="w-5 h-5 text-primary" />
+                  <span>Registrar usuarios por lotes</span>
+                </button>
+              </div>
+            </DropdownMenu>
+          </div>
+        </div>
       </motion.div>
       
       <div className="mt-10"></div>
@@ -348,6 +485,12 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         isOpen={isBulkUploadModalOpen}
         onClose={() => setIsBulkUploadModalOpen(false)}
         onSuccess={handleBulkUploadSuccess}
+      />
+
+      <CreateUserModal
+        isOpen={isCreateUserModalOpen}
+        onClose={() => setIsCreateUserModalOpen(false)}
+        onSuccess={handleCreateUserSuccess}
       />
 
       <EditUserModal

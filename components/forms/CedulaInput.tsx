@@ -116,6 +116,7 @@ interface CedulaInputProps {
   required?: boolean;
   onSelectCedula?: (cedula: string) => void;
   searchType?: SearchType; // Tipo de búsqueda: solicitante, profesor o estudiante
+  disableSuggestions?: boolean; // Desactivar recomendaciones automáticas
 }
 
 export default function CedulaInput({
@@ -129,6 +130,7 @@ export default function CedulaInput({
   required,
   onSelectCedula,
   searchType = 'solicitante',
+  disableSuggestions = false,
 }: CedulaInputProps) {
   const [suggestions, setSuggestions] = useState<Solicitante[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -159,6 +161,13 @@ export default function CedulaInput({
 
   // Buscar cédulas mientras el usuario escribe (con debounce)
   useEffect(() => {
+    // Si las sugerencias están desactivadas, no buscar
+    if (disableSuggestions) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
@@ -209,7 +218,7 @@ export default function CedulaInput({
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [value, tipoValue, searchType]);
+  }, [value, tipoValue, searchType, disableSuggestions]);
 
   const handleSelectSuggestion = (solicitante: Solicitante) => {
     // Separar el tipo de cédula del número

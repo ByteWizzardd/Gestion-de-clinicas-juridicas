@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { validateEmailDomain } from '@/lib/utils/email-validation';
 
 /**
  * Schema de validación para actualizar un usuario completo
@@ -12,7 +13,17 @@ export const UpdateUserSchema = z.object({
   tipo_usuario: z.enum(['Estudiante', 'Profesor', 'Coordinador'], {
     errorMap: () => ({ message: 'Tipo de usuario inválido' }),
   }).optional(),
-  correo_electronico: z.string().email('Correo electrónico inválido').optional(),
+  correo_electronico: z.string()
+    .email('Correo electrónico inválido')
+    .refine((val) => {
+      if (!val || val.trim() === '') {
+        return true; // Es opcional
+      }
+      return validateEmailDomain(val);
+    }, {
+      message: 'El correo debe tener dominio @est.ucab.edu.ve o @ucab.edu.ve'
+    })
+    .optional(),
   telefono: z.string().optional().refine((val) => {
     // Si está vacío o es null, es válido (opcional)
     if (!val || val.trim() === '' || val.trim() === '+58') {

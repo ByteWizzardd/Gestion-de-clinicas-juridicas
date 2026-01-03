@@ -11,6 +11,7 @@ import Select from './Select';
 import Button from '../ui/Button';
 import { ArrowRight, ArrowLeft, Calendar } from 'lucide-react';
 import DatePicker from './DatePicker';
+import { validateEmailFormat } from '@/lib/utils/email-validation';
 
 interface ApplicantFormModalProps {
   isOpen: boolean;
@@ -505,7 +506,7 @@ export default function ApplicantFormModal({
     // Validar correo electrónico
     if (!formData.correoElectronico.trim()) {
       newErrors.correoElectronico = 'Este campo es requerido';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.correoElectronico)) {
+    } else if (!validateEmailFormat(formData.correoElectronico)) {
       newErrors.correoElectronico = 'Correo electrónico inválido';
     }
     
@@ -1488,7 +1489,7 @@ export default function ApplicantFormModal({
     }
 
     // Validar formato de email básico antes de verificar
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!validateEmailFormat(email)) {
       // No verificar si el formato es inválido, la validación de formato se hará en validateStep1
       return;
     }
@@ -1533,11 +1534,13 @@ export default function ApplicantFormModal({
     cedula: string;
     nombres: string;
     apellidos: string;
-    fecha_nacimiento: string;
-    telefono_celular: string;
-    correo_electronico: string;
-    sexo: string;
-    nacionalidad: string;
+    fecha_nacimiento?: string | null;
+    telefono_celular?: string | null;
+    correo_electronico?: string;
+    sexo?: string;
+    nacionalidad?: string;
+    nombre_completo?: string;
+    source?: 'usuario' | 'beneficiario';
   }) => {
     // Extraer tipo y número de cédula
     // La cédula viene como "V-12345678" (con guión)
@@ -1604,9 +1607,8 @@ export default function ApplicantFormModal({
       if (solicitante.apellidos) delete newErrors.apellidos;
       if (solicitante.fecha_nacimiento) delete newErrors.fechaNacimiento;
       if (solicitante.sexo) delete newErrors.sexo;
-      if (telefonoCelular) {
+      if (telefonoCompleto) {
         delete newErrors.telefonoCelular;
-        delete newErrors.codigoPaisCelular;
       }
       if (solicitante.correo_electronico) delete newErrors.correoElectronico;
       if (nacionalidadAsignada) delete newErrors.nacionalidad;
@@ -1682,9 +1684,8 @@ export default function ApplicantFormModal({
       delete newErrors.cedulaNumero;
       if (usuario.nombres) delete newErrors.nombres;
       if (usuario.apellidos) delete newErrors.apellidos;
-      if (telefonoCelular) {
+      if (telefonoCompleto) {
         delete newErrors.telefonoCelular;
-        delete newErrors.codigoPaisCelular;
       }
       if (usuario.correo_electronico) delete newErrors.correoElectronico;
       if (nacionalidadAsignada) delete newErrors.nacionalidad;

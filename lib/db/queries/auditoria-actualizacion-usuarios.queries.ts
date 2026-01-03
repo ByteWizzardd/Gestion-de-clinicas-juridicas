@@ -125,4 +125,34 @@ export const auditoriaActualizacionUsuariosQueries = {
         : null,
     }));
   },
+
+  /**
+   * Inserta un registro de auditoría para creación de usuario
+   */
+  create: async (data: {
+    ci_usuario: string;
+    nombres_nuevo: string;
+    apellidos_nuevo: string;
+    correo_electronico_nuevo: string;
+    nombre_usuario_nuevo: string;
+    telefono_celular_nuevo: string | null;
+    tipo_usuario_nuevo: string;
+    tipo_estudiante_nuevo: string | null;
+    tipo_profesor_nuevo: string | null;
+    id_usuario_actualizo: string;
+  }): Promise<void> => {
+    const query = loadSQL('auditoria-actualizacion-usuarios/create.sql');
+    await pool.query(query, [
+      data.ci_usuario,
+      data.nombres_nuevo,
+      data.apellidos_nuevo,
+      data.correo_electronico_nuevo,
+      data.nombre_usuario_nuevo,
+      data.telefono_celular_nuevo,
+      data.tipo_usuario_nuevo,
+      data.tipo_estudiante_nuevo,
+      data.tipo_profesor_nuevo,
+      data.id_usuario_actualizo,
+    ]);
+  },
 };
