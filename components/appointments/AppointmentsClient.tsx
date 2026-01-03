@@ -340,7 +340,7 @@ export default function AppointmentsClient({
   };
 
   return (
-    <div className="h-full relative">
+    <div className="h-full relative ">
       <motion.div 
         className="mb-4 md:mb-6 mt-4"
         initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
@@ -373,7 +373,7 @@ export default function AppointmentsClient({
                 exit={{ opacity: 0 }}
                 transition={{ duration: prefersReducedMotion ? 0 : 0.3 }}
               >
-                <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6 pb-6">
                   <motion.div 
                     className="h-[calc(100vh-10rem)]"
                     initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
@@ -388,21 +388,23 @@ export default function AppointmentsClient({
                     />
                   </motion.div>
 
-                  <motion.div 
-                    className="pr-6 h-[calc(100vh-10rem)]"
+                  <motion.div
+                    className="pr-6 h-[calc(100vh-10rem)] flex flex-col"
                     initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.15, ease: "easeOut" }}
                   >
-                    <AppointmentList
-                      appointments={displayedAppointments}
-                      selectedMonth={selectedMonth}
-                      selectedDate={filterByDate ? selectedDate : null}
-                      onAddAppointment={handleAddAppointment}
-                      onScheduleAppointment={handleScheduleAppointment}
-                      onShowAllMonth={filterByDate ? handleShowAllMonth : undefined}
-                      onAppointmentClick={handleAppointmentClick}
-                    />
+                    <div className="flex-1 min-h-0">
+                      <AppointmentList
+                        appointments={displayedAppointments}
+                        selectedMonth={selectedMonth}
+                        selectedDate={filterByDate ? selectedDate : null}
+                        onAddAppointment={handleAddAppointment}
+                        onScheduleAppointment={handleScheduleAppointment}
+                        onShowAllMonth={filterByDate ? handleShowAllMonth : undefined}
+                        onAppointmentClick={handleAppointmentClick}
+                      />
+                    </div>
                   </motion.div>
                 </div>
               </motion.div>

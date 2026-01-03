@@ -110,7 +110,7 @@ export default function AppointmentList({
   };
 
   return (
-    <div className="relative pb-6">
+    <div className="relative h-full">
       <div className="bg-white rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] h-full flex flex-col">
       {/* Header con título y botón */}
       <div className="pt-6 px-6 pb-0">
@@ -148,7 +148,7 @@ export default function AppointmentList({
       </div>
 
       {/* Lista de citas dentro del contenedor único */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         {sortedAppointments.length === 0 ? (
           <div className="text-center text-gray-500 py-8 px-6">
             <p>
