@@ -15,23 +15,13 @@ export default function AppointmentCard({ appointment, onClick }: AppointmentCar
     return `${day}/${month}/${year}`;
   };
 
-  const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours, 10);
-    const ampm = hour >= 12 ? 'pm' : 'am';
-    const hour12 = hour % 12 || 12;
-    return `${hour12}:${minutes} ${ampm}`;
-  };
 
   return (
     <div className="relative cursor-pointer hover:bg-gray-100 rounded-lg p-2 -m-2 transition-colors" onClick={onClick}>
-      {/* Primera línea: Caso - Fecha (izquierda) y Hora (derecha) */}
-      <div className="flex items-start justify-between mb-1">
+      {/* Primera línea: Caso y Fecha */}
+      <div className="mb-1">
         <p className="text-base text-black font-normal">
           {appointment.caseDetail.split('(')[0].trim()} ({appointment.client}) {formatDate(appointment.date)}
-        </p>
-        <p className="text-base text-primary font-normal whitespace-nowrap">
-          {formatTime(appointment.time)}
         </p>
       </div>
 

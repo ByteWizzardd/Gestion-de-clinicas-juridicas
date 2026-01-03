@@ -25,4 +25,12 @@ export const ejecutanQueries = {
     ]);
     return result.rows[0];
   },
+
+  /**
+   * Elimina todos los ejecutores de una acción específica
+   */
+  deleteByAccion: async (numAccion: number, idCaso: number): Promise<void> => {
+    const query = loadSQL('ejecutan/delete-by-accion.sql');
+    await pool.query(query, [numAccion, idCaso]);
+  },
 };

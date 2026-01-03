@@ -9,10 +9,10 @@
  */
 export function formatDate(date: string | Date | null | undefined): string {
   if (!date) return 'N/A';
-  
+
   try {
     let day: number, month: number, year: number;
-    
+
     if (typeof date === 'string') {
       // Si es un string, parsear manualmente para evitar problemas de zona horaria
       if (date.includes('-')) {
@@ -23,20 +23,20 @@ export function formatDate(date: string | Date | null | undefined): string {
       } else {
         // Si no tiene formato esperado, intentar con Date
         const dateObj = new Date(date);
-    if (isNaN(dateObj.getTime())) {
-      return 'N/A';
-    }
+        if (isNaN(dateObj.getTime())) {
+          return 'N/A';
+        }
         day = dateObj.getDate();
         month = dateObj.getMonth() + 1;
         year = dateObj.getFullYear();
       }
     } else {
-      // Si es un objeto Date, usar los métodos locales
+      // Si es un objeto Date
       day = date.getDate();
       month = date.getMonth() + 1;
       year = date.getFullYear();
     }
-    
+
     return `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
   } catch (error) {
     console.error('Error formatting date:', error);
@@ -51,26 +51,25 @@ export function formatDate(date: string | Date | null | undefined): string {
  */
 export function calculateAge(fechaNacimiento: string | Date | null | undefined): number | null {
   if (!fechaNacimiento) return null;
-  
+
   try {
     const birthDate = typeof fechaNacimiento === 'string' ? new Date(fechaNacimiento) : fechaNacimiento;
-    
+
     if (isNaN(birthDate.getTime())) {
       return null;
     }
-    
+
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    
+
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
-    
+
     return age;
   } catch (error) {
     console.error('Error calculating age:', error);
     return null;
   }
 }
-

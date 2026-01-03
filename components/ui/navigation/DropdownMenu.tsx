@@ -102,20 +102,47 @@ export default function DropdownMenu({
       const spaceBelow = window.innerHeight - rect.bottom;
       const spaceAbove = rect.top;
       const menuHeight = 300;
+      // Usar el ancho del trigger como referencia, con un mínimo estimado
+      const estimatedMenuWidth = Math.max(rect.width, 200);
 
       const shouldOpenUp = spaceBelow < menuHeight && spaceAbove > spaceBelow;
       setOpenUpward(shouldOpenUp);
 
-      // Posición izquierda siempre alineada con el trigger
       let leftPosition = rect.left;
       
-      // Asegurar que no se salga por la derecha de la pantalla
-      if (leftPosition + rect.width > window.innerWidth) {
-        leftPosition = window.innerWidth - rect.width - 8;
+      // Calcular posición según el align
+      if (align === 'right') {
+        // Alinear desde el borde derecho del trigger hacia la izquierda
+        leftPosition = rect.right - estimatedMenuWidth;
+        // Asegurar que no se salga por la izquierda
+        if (leftPosition < 8) {
+          leftPosition = 8;
+        }
+        // Si aún se sale por la derecha, ajustar desde la derecha del trigger
+        if (leftPosition + estimatedMenuWidth > window.innerWidth - 8) {
+          leftPosition = Math.max(8, window.innerWidth - estimatedMenuWidth - 8);
+        }
+      } else if (align === 'center') {
+        // Centrar respecto al trigger
+        leftPosition = rect.left + (rect.width / 2) - (estimatedMenuWidth / 2);
+        // Ajustar si se sale por los bordes
+        if (leftPosition < 8) {
+          leftPosition = 8;
+        }
+        if (leftPosition + estimatedMenuWidth > window.innerWidth - 8) {
+          leftPosition = window.innerWidth - estimatedMenuWidth - 8;
+        }
+      } else {
+        // align === 'left' (default)
+        // Alinear desde el borde izquierdo del trigger
+        leftPosition = rect.left;
+        // Asegurar que no se salga por la derecha de la pantalla
+        if (leftPosition + estimatedMenuWidth > window.innerWidth - 8) {
+          leftPosition = window.innerWidth - estimatedMenuWidth - 8;
+        }
+        // Asegurar que no se salga por la izquierda
+        leftPosition = Math.max(8, leftPosition);
       }
-      
-      // Asegurar que no se salga por la izquierda
-      leftPosition = Math.max(8, leftPosition);
 
       setCoords({
         top: shouldOpenUp ? rect.top : rect.bottom,
@@ -213,9 +240,11 @@ export default function DropdownMenu({
             className={menuClassName}
             onClick={(e) => {
               const target = e.target as HTMLElement;
-              const clickedButton = target.closest('button[data-close-menu]');
-              if (clickedButton) {
+              // Cerrar si se hace clic en un botón, a menos que tenga data-keep-open
+              const clickedButton = target.closest('button');
+              if (clickedButton && !clickedButton.hasAttribute('data-keep-open')) {
                 setIsOpen(false);
+                onOpenChange?.(false);
               }
             }}
           >

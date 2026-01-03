@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button';
 import TextArea from '@/components/forms/TextArea';
 import DatePicker from '@/components/forms/DatePicker';
 import MultiSelect from '@/components/forms/MultiSelect';
-import { createAccionAction } from '@/app/actions/casos';
+import { createAccionAction, updateAccionAction } from '@/app/actions/casos';
 import { getUsuariosAction } from '@/app/actions/usuarios';
 import { X, Users, Calendar } from 'lucide-react';
 
@@ -15,9 +15,21 @@ interface AddActionModalProps {
   onClose: () => void;
   idCaso: number;
   onSuccess?: () => void;
+  editingAction?: {
+    num_accion: number;
+    id_caso: number;
+    detalle_accion: string;
+    comentario: string | null;
+    ejecutores?: Array<{
+      id_usuario_ejecuta: string;
+      nombre_completo: string;
+      fecha_ejecucion: string;
+    }>;
+  };
+  onActionAdded?: () => void;
 }
 
-export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess }: AddActionModalProps) {
+export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, editingAction, onActionAdded }: AddActionModalProps) {
   const [detalleAccion, setDetalleAccion] = useState('');
   const [comentario, setComentario] = useState('');
   const [usuariosSeleccionados, setUsuariosSeleccionados] = useState<string[]>([]);
@@ -28,12 +40,48 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess }: A
   const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ detalleAccion?: string; ejecutores?: string; fechaEjecucion?: string }>({});
 
-  // Cargar usuarios disponibles al abrir el modal
+  // Determinar si es una acción de cita (no se puede cambiar caso ni fecha)
+  const isCitaAction = editingAction?.detalle_accion?.startsWith('Cita realizada el');
+
+  // Cargar usuarios disponibles al abrir el modal y datos de edición
   useEffect(() => {
     if (isOpen) {
+      console.log('DEBUG AddActionModal - Modal opened, editingAction:', editingAction);
       loadUsuarios();
+      if (editingAction) {
+        console.log('DEBUG AddActionModal - Loading edit data:', {
+          detalle_accion: editingAction.detalle_accion,
+          comentario: editingAction.comentario,
+          ejecutores: editingAction.ejecutores
+        });
+        // Cargar datos para edición
+        setDetalleAccion(editingAction.detalle_accion || '');
+        setComentario(editingAction.comentario || '');
+        const ejecutoresIds = editingAction.ejecutores?.map(e => e.id_usuario_ejecuta) || [];
+        const fechaEjec = editingAction.ejecutores?.[0]?.fecha_ejecucion || '';
+        console.log('DEBUG AddActionModal - Setting form data:', {
+          ejecutoresIds,
+          fechaEjec
+        });
+        setUsuariosSeleccionados(ejecutoresIds);
+        setFechaEjecucion(fechaEjec);
+      } else {
+        // Limpiar formulario para nueva acción
+        setDetalleAccion('');
+        setComentario('');
+        setUsuariosSeleccionados([]);
+        setFechaEjecucion('');
+      }
+    } else {
+      // Limpiar cuando se cierra el modal
+      setDetalleAccion('');
+      setComentario('');
+      setUsuariosSeleccionados([]);
+      setFechaEjecucion('');
+      setError(null);
+      setErrors({});
     }
-  }, [isOpen]);
+  }, [isOpen, editingAction]);
 
   const loadUsuarios = async () => {
     setLoadingData(true);
@@ -67,20 +115,28 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess }: A
     setError(null);
     setErrors({});
 
+    console.log('DEBUG AddActionModal - handleSubmit called at', new Date().toISOString(), {
+      editingAction: !!editingAction,
+      detalleAccion,
+      comentario,
+      fechaEjecucion,
+      usuariosSeleccionados
+    });
+
     // Validar detalle de acción
     if (!detalleAccion.trim()) {
       setErrors(prev => ({ ...prev, detalleAccion: 'Este campo es requerido' }));
       return;
     }
 
-    // Validar usuarios seleccionados
-    if (usuariosSeleccionados.length === 0) {
+    // Validar usuarios seleccionados (solo si no está deshabilitado)
+    if (!isCitaAction && usuariosSeleccionados.length === 0) {
       setErrors(prev => ({ ...prev, ejecutores: 'Debe seleccionar al menos un usuario' }));
       return;
     }
 
-    // Validar fecha de ejecución
-    if (!fechaEjecucion) {
+    // Validar fecha de ejecución (solo si no está deshabilitado)
+    if (!isCitaAction && !fechaEjecucion) {
       setErrors(prev => ({ ...prev, fechaEjecucion: 'La fecha de ejecución es requerida' }));
       return;
     }
@@ -100,28 +156,59 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess }: A
       const day = String(now.getDate()).padStart(2, '0');
       const fechaRegistro = `${year}-${month}-${day}`;
 
-      const result = await createAccionAction(
-        idCaso,
-        detalleAccion.trim(),
-        comentario.trim() || undefined,
-        ejecutoresData,
-        fechaRegistro
-      );
-      
-      if (!result.success) {
-        setError(result.error?.message || 'Error al crear la acción');
-        return;
+      let result;
+      if (editingAction) {
+        console.log('DEBUG AddActionModal - Updating action', {
+          numAccion: editingAction.num_accion,
+          idCaso,
+          detalleAccion: detalleAccion.trim(),
+          comentario: comentario.trim() || undefined,
+          ejecutoresData
+        });
+
+        // Modo edición
+        result = await updateAccionAction({
+          numAccion: editingAction.num_accion,
+          idCaso: idCaso,
+          detalleAccion: detalleAccion.trim(),
+          comentario: comentario.trim() || undefined,
+          ejecutores: ejecutoresData,
+        });
+
+        if (!result.success) {
+          setError(result.error?.message || 'Error al actualizar la acción');
+          return;
+        }
+      } else {
+        // Modo creación
+        result = await createAccionAction(
+          idCaso,
+          detalleAccion.trim(),
+          comentario.trim() || undefined,
+          ejecutoresData,
+          fechaRegistro
+        );
+
+        if (!result.success) {
+          setError(result.error?.message || 'Error al crear la acción');
+          return;
+        }
       }
 
-      // Limpiar formulario
-      setDetalleAccion('');
-      setComentario('');
-      setUsuariosSeleccionados([]);
-      setFechaEjecucion('');
+      // Limpiar formulario solo en modo creación
+      if (!editingAction) {
+        setDetalleAccion('');
+        setComentario('');
+        setUsuariosSeleccionados([]);
+        setFechaEjecucion('');
+      }
       setErrors({});
+      console.log('DEBUG AddActionModal - handleSubmit completed successfully');
       onSuccess?.();
+      onActionAdded?.();
       onClose();
     } catch (err) {
+      console.log('DEBUG AddActionModal - handleSubmit failed:', err);
       setError(err instanceof Error ? err.message : 'Error al crear la acción');
     } finally {
       setLoading(false);
@@ -179,7 +266,18 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess }: A
           </button>
 
           {/* Título */}
-          <h2 className="text-2xl font-normal text-foreground">Registrar Nueva Acción</h2>
+          <h2 className="text-2xl font-normal text-foreground">
+            {editingAction ? 'Editar Acción' : 'Registrar Nueva Acción'}
+          </h2>
+
+          {/* Nota para acciones de cita */}
+          {isCitaAction && (
+            <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700">
+                <strong>Acción vinculada a cita:</strong> Algunos campos están deshabilitados para mantener la sincronización con la cita correspondiente.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Área de contenido */}
@@ -191,7 +289,14 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess }: A
           ) : (
             <>
               {/* Grid de formulario */}
-              <form onSubmit={handleSubmit} noValidate className="grid grid-cols-2 gap-x-8 gap-y-4">
+              <form 
+                onSubmit={(e) => {
+                  console.log('DEBUG AddActionModal - Form onSubmit triggered');
+                  handleSubmit(e);
+                }} 
+                noValidate 
+                className="grid grid-cols-2 gap-x-8 gap-y-4"
+              >
                 {/* Detalle de la Acción (ocupa todo el ancho) */}
                 <div className="col-span-2">
                   <TextArea
@@ -223,7 +328,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess }: A
                   <div className="flex flex-col gap-1">
                     <label className="text-base font-normal text-foreground mb-1 flex items-center gap-2">
                       <Users className="w-4 h-4" />
-                      Usuarios Ejecutores *
+                      Usuarios Ejecutores {isCitaAction ? '' : '*'}
                     </label>
                     <MultiSelect
                       options={usuariosOptions}
@@ -239,9 +344,14 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess }: A
                         }
                       }}
                       placeholder="Seleccionar usuarios..."
-                      disabled={loading}
+                      disabled={loading || isCitaAction}
                       error={errors.ejecutores}
                     />
+                    {isCitaAction && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        No se pueden modificar los ejecutores de acciones vinculadas a citas
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -250,7 +360,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess }: A
                   <div className="flex flex-col gap-1">
                     <label className="text-base font-normal text-foreground mb-1 flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
-                      Fecha de Ejecución *
+                      Fecha de Ejecución {isCitaAction ? '' : '*'}
                     </label>
                     <DatePicker
                       value={fechaEjecucion}
@@ -264,9 +374,14 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess }: A
                           });
                         }
                       }}
-                      disabled={loading}
+                      disabled={loading || isCitaAction}
                       required
                     />
+                    {isCitaAction && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        No se puede modificar la fecha de acciones vinculadas a citas
+                      </p>
+                    )}
                     {errors.fechaEjecucion && (
                       <p className="text-xs text-danger mt-1">{errors.fechaEjecucion}</p>
                     )}
@@ -279,6 +394,19 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess }: A
                     {error}
                   </div>
                 )}
+
+                {/* Botón de submit dentro del formulario */}
+                <div className="col-span-2 flex justify-end pt-4">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="xl"
+                    disabled={loading || loadingData}
+                    isLoading={loading}
+                  >
+                    {editingAction ? 'Actualizar Acción' : 'Registrar Acción'}
+                  </Button>
+                </div>
               </form>
             </>
           )}
@@ -287,21 +415,9 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess }: A
         {/* Footer fijo */}
         <div className="flex-shrink-0 flex flex-col border-t border-gray-200 px-8 py-4 bg-white">
           {/* Nota sobre campos obligatorios */}
-          <div className="flex items-center gap-1 mb-4">
+          <div className="flex items-center gap-1">
             <span className="text-danger font-medium text-sm">*</span>
             <span className="text-sm text-gray-600">Campo obligatorio</span>
-          </div>
-          
-          <div className="flex justify-end">
-            <Button 
-              variant="primary" 
-              size="xl" 
-              onClick={handleSubmit}
-              disabled={loading || loadingData}
-              isLoading={loading}
-            >
-              Registrar Acción
-            </Button>
           </div>
         </div>
       </div>

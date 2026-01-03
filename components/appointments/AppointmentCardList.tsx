@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Calendar, Clock, User, FileText, MapPin } from 'lucide-react';
+import { Calendar, User, FileText, MapPin } from 'lucide-react';
 import type { Appointment } from '@/types/appointment';
 import ActionMenu from '@/components/ui/ActionMenu';
 import { AppointmentDetailModal } from '../appointmentModal/AppointmentDetailModal';
@@ -32,13 +32,6 @@ export default function AppointmentCardList({
     return `${day}/${month}/${year}`;
   };
 
-  const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours, 10);
-    const ampm = hour >= 12 ? 'pm' : 'am';
-    const hour12 = hour % 12 || 12;
-    return `${hour12}:${minutes} ${ampm}`;
-  };
 
   const handleView = (appointment: Appointment) => {
     if (onView) {
@@ -103,18 +96,12 @@ export default function AppointmentCardList({
 
               {/* Contenido de la card */}
               <div className="pr-8">
-                {/* Fecha y hora */}
+                {/* Fecha */}
                 <div className="flex items-center gap-2 mb-3">
                   <Calendar className="w-5 h-5 text-primary" />
-                  <div>
-                    <p className="text-lg font-semibold text-gray-900">
-                      {formatDate(appointment.date)}
-                    </p>
-                    <p className="text-sm text-gray-500 flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      {formatTime(appointment.time)}
-                    </p>
-                  </div>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {formatDate(appointment.date)}
+                  </p>
                 </div>
 
                 {/* Caso relacionado */}

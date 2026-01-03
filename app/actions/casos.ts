@@ -553,7 +553,7 @@ export async function createAccionAction(
     }
 
     const cedulaUsuario = authResult.user.cedula;
-    
+
     // Obtener la fecha actual del cliente en formato YYYY-MM-DD para evitar problemas de zona horaria
     // Si no se proporciona fechaRegistro, usar la fecha actual del cliente
     const fechaRegistroStr = fechaRegistro || (() => {
@@ -575,6 +575,7 @@ export async function createAccionAction(
       fechaRegistroStr, // Fecha de registro explícita
     ]);
     const accion = accionResult.rows[0];
+    console.log('[DEBUG] createAccionAction - Acción creada:', accion);
 
     // Crear registros de ejecutores si se proporcionaron
     if (ejecutores && ejecutores.length > 0) {
@@ -1032,6 +1033,155 @@ export async function asignarEquipoAction(
       success: false,
       error: {
         message: error instanceof Error ? error.message : 'Error al asignar equipo',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  }
+}
+
+export interface DeleteAccionParams {
+  numAccion: number;
+  idCaso: number;
+}
+
+export interface DeleteAccionResult {
+  success: boolean;
+  data?: {
+    num_accion: number;
+    id_caso: number;
+  };
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+export interface UpdateAccionParams {
+  numAccion: number;
+  idCaso: number;
+  detalleAccion: string;
+  comentario?: string;
+  ejecutores?: Array<{ idUsuario: string; fechaEjecucion: string }>;
+}
+
+export interface UpdateAccionResult {
+  success: boolean;
+  data?: any;
+  error?: { message: string; code?: string };
+}
+
+/**
+ * Server Action para eliminar una acción específica
+ */
+export async function deleteAccionAction(params: DeleteAccionParams): Promise<DeleteAccionResult> {
+  try {
+    // Verificar autenticación usando la función centralizada
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    // Validar parámetros
+    if (!params.numAccion || !params.idCaso) {
+      return {
+        success: false,
+        error: {
+          message: 'Parámetros inválidos: numAccion e idCaso son requeridos',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Eliminar la acción
+    const result = await casosService.deleteAccion({
+      numAccion: params.numAccion,
+      idCaso: params.idCaso,
+    });
+
+    return {
+      success: true,
+      data: result,
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'ACCION_ERROR',
+        },
+      };
+    }
+
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al eliminar la acción',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  }
+}
+
+/**
+ * Server Action para actualizar una acción específica
+ */
+export async function updateAccionAction(params: UpdateAccionParams): Promise<UpdateAccionResult> {
+  try {
+    // Verificar autenticación usando la función centralizada
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    // Validar parámetros
+    if (!params.numAccion || !params.idCaso || !params.detalleAccion || params.detalleAccion.trim() === '') {
+      return {
+        success: false,
+        error: {
+          message: 'Parámetros inválidos: numAccion, idCaso y detalleAccion son requeridos',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Actualizar la acción
+    const result = await casosService.updateAccion({
+      numAccion: params.numAccion,
+      idCaso: params.idCaso,
+      detalleAccion: params.detalleAccion.trim(),
+      comentario: params.comentario?.trim() || null,
+      ejecutores: params.ejecutores,
+    });
+
+    // Invalidar el cache de Next.js para este caso
+    revalidatePath(`/dashboard/cases/${params.idCaso}`);
+
+    return {
+      success: true,
+      data: result,
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'ACCION_ERROR',
+        },
+      };
+    }
+
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al actualizar la acción',
         code: 'UNKNOWN_ERROR',
       },
     };

@@ -34,13 +34,11 @@ export interface UpdateCitaParams {
 /**
  * Server Action para obtener todas las citas
  */
-export async function createCitaAction(params: CreateCitaParams): Promise<GetCitasResult> { 
+export async function createCitaAction(params: CreateCitaParams): Promise<GetCitasResult> {
   try {
     const parseResult = appointmentSchema.safeParse(params);
-    console.log('DEBUG createCitaAction params:', params);
-    console.log('DEBUG createCitaAction parseResult:', parseResult);
     if (!parseResult.success) {
-      console.error('Validación fallida en createCitaAction:', parseResult.error);
+      console.error('[DEBUG] createCitaAction - Validación fallida:', parseResult.error);
       return {
         success: false,
         error: {
@@ -364,10 +362,11 @@ export async function deleteCitaAction(params: DeleteCitaParams): Promise<GetCit
       motivo: params.motivo.trim(),
     });
 
-    return {
+    const result = {
       success: true,
       data: deletedCita,
     };
+    return result;
   } catch (error) {
     if (error instanceof AppError) {
       return {
@@ -379,13 +378,13 @@ export async function deleteCitaAction(params: DeleteCitaParams): Promise<GetCit
       };
     }
 
-    console.error('Error en deleteCitaAction:', error);
-    return {
+    const errorResult = {
       success: false,
       error: {
         message: error instanceof Error ? error.message : 'Error al eliminar la cita',
         code: 'UNKNOWN_ERROR',
       },
     };
+    return errorResult;
   }
 }

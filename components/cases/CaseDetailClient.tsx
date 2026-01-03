@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import Tabs from '@/components/ui/Tabs';
@@ -20,12 +20,14 @@ import AddDocumentModal from '@/components/cases/modals/AddDocumentModal';
 import AssignTeamModal from '@/components/cases/modals/AssignTeamModal';
 import AddActionModal from '@/components/cases/modals/AddActionModal';
 import AddBeneficiaryModal from '@/components/cases/modals/AddBeneficiaryModal';
+import { AppointmentModal } from '@/components/appointmentModal/AppointmentModal';
 import { ChevronDown, Plus, Pencil } from 'lucide-react';
 import { getCurrentUserAction } from '@/app/actions/auth';
 
 export default function CaseDetailClient() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const id = params.id as string;
 
   const [caso, setCaso] = useState<any>(null);
@@ -35,9 +37,15 @@ export default function CaseDetailClient() {
   const [showAssignTeamModal, setShowAssignTeamModal] = useState(false);
   const [showAddActionModal, setShowAddActionModal] = useState(false);
   const [showAddBeneficiaryModal, setShowAddBeneficiaryModal] = useState(false);
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [editingAppointment, setEditingAppointment] = useState<any>(null);
   const [changingStatus, setChangingStatus] = useState(false);
   const [userRol, setUserRol] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>('general');
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    // Si viene el parámetro tab en la URL, usarlo como pestaña inicial
+    const tabParam = searchParams.get('tab');
+    return tabParam === 'acciones' ? 'acciones' : 'general';
+  });
 
   const fetchCaso = useCallback(async () => {
     const idCaso = parseInt(id, 10);
@@ -160,6 +168,28 @@ export default function CaseDetailClient() {
     }
   };
 
+  const handleEditAppointment = (cita: any) => {
+    console.log('DEBUG CaseDetailClient - Editing appointment:', cita);
+    // Convertir la cita al formato que espera el AppointmentModal
+    const appointmentData = {
+      id_cita: cita.num_cita,
+      id_caso: cita.id_caso,
+      fecha_encuentro: cita.fecha_encuentro,
+      fecha_proxima_cita: cita.fecha_proxima_cita,
+      orientacion: cita.orientacion,
+      atenciones: cita.atenciones || []
+    };
+
+    setEditingAppointment(appointmentData);
+    setShowAppointmentModal(true);
+  };
+
+  const handleAppointmentSaved = () => {
+    setShowAppointmentModal(false);
+    setEditingAppointment(null);
+    fetchCaso(); // Recargar los datos
+  };
+
   const codigoCaso = caso.id_caso.toString();
   const nombreSolicitante = caso.nombre_completo_solicitante || 'Caso sin solicitante';
 
@@ -177,12 +207,16 @@ export default function CaseDetailClient() {
     {
       id: 'acciones',
       label: 'Historial de Acciones',
-      content: <ActionsHistoryTab acciones={caso.acciones} />,
+      content: <ActionsHistoryTab acciones={caso.acciones} onRefresh={fetchCaso} />,
     },
     {
       id: 'citas',
       label: 'Citas y Orientaciones',
-      content: <AppointmentsTab citas={caso.citas} />,
+      content: <AppointmentsTab
+        citas={caso.citas}
+        onRefresh={fetchCaso}
+        onEditAppointment={handleEditAppointment}
+      />,
     },
     {
       id: 'estatus',
@@ -361,6 +395,17 @@ export default function CaseDetailClient() {
         beneficiariosActuales={caso.beneficiarios}
         onSuccess={handleRefresh}
       />
+
+      {showAppointmentModal && (
+        <AppointmentModal
+          onClose={() => {
+            setShowAppointmentModal(false);
+            setEditingAppointment(null);
+          }}
+          onSave={handleAppointmentSaved}
+          appointment={editingAppointment}
+        />
+      )}
 
       <motion.div
         initial={{ opacity: 0, y: 10 }}
