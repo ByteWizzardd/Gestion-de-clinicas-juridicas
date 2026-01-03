@@ -1008,3 +1008,76 @@ export async function asignarEquipoAction(
     };
   }
 }
+
+export interface DeleteAccionParams {
+  numAccion: number;
+  idCaso: number;
+}
+
+export interface DeleteAccionResult {
+  success: boolean;
+  data?: {
+    num_accion: number;
+    id_caso: number;
+  };
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+/**
+ * Server Action para eliminar una acción específica
+ */
+export async function deleteAccionAction(params: DeleteAccionParams): Promise<DeleteAccionResult> {
+  try {
+    // Verificar autenticación usando la función centralizada
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    // Validar parámetros
+    if (!params.numAccion || !params.idCaso) {
+      return {
+        success: false,
+        error: {
+          message: 'Parámetros inválidos: numAccion e idCaso son requeridos',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Eliminar la acción
+    const result = await casosService.deleteAccion({
+      numAccion: params.numAccion,
+      idCaso: params.idCaso,
+    });
+
+    return {
+      success: true,
+      data: result,
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || 'ACCION_ERROR',
+        },
+      };
+    }
+
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al eliminar la acción',
+        code: 'UNKNOWN_ERROR',
+      },
+    };
+  }
+}

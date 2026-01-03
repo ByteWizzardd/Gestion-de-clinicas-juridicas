@@ -1,7 +1,10 @@
 'use client';
 
-import { History, User, Calendar, Users } from 'lucide-react';
+import { useState } from 'react';
+import { History, User, Calendar, Users, Trash2 } from 'lucide-react';
 import { formatDate } from '@/lib/utils/date-formatter';
+import { deleteAccionAction } from '@/app/actions/casos';
+import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 
 interface ActionsHistoryTabProps {
   acciones?: Array<{
@@ -23,9 +26,66 @@ interface ActionsHistoryTabProps {
       fecha_ejecucion: string;
     }>;
   }>;
+  onRefresh?: () => void;
 }
 
-export default function ActionsHistoryTab({ acciones }: ActionsHistoryTabProps) {
+export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistoryTabProps) {
+  const [accionToDelete, setAccionToDelete] = useState<{ num_accion: number; id_caso: number; detalle_accion: string } | null>(null);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteAccion = (accion: {
+    num_accion: number;
+    id_caso: number;
+    detalle_accion: string;
+  }) => {
+    setAccionToDelete({
+      num_accion: accion.num_accion,
+      id_caso: accion.id_caso,
+      detalle_accion: accion.detalle_accion
+    });
+    setShowDeleteConfirmModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!accionToDelete) return;
+
+    setIsDeleting(true);
+
+    try {
+      const result = await deleteAccionAction({
+        numAccion: accionToDelete.num_accion,
+        idCaso: accionToDelete.id_caso,
+      });
+
+      if (result.success) {
+        // Cerrar modal y limpiar estado
+        setShowDeleteConfirmModal(false);
+        setAccionToDelete(null);
+
+        // Recargar los datos del caso
+        if (onRefresh) {
+          onRefresh();
+        } else {
+          // Fallback: recargar la página
+          window.location.reload();
+        }
+      } else {
+        alert(result.error?.message || 'Error al eliminar la acción');
+      }
+    } catch (error) {
+      alert('Error inesperado al eliminar la acción');
+      console.error('Error al eliminar acción:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirmModal(false);
+    setAccionToDelete(null);
+  };
+
   if (!acciones || acciones.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
@@ -49,6 +109,13 @@ export default function ActionsHistoryTab({ acciones }: ActionsHistoryTabProps) 
                 </p>
               )}
             </div>
+            <button
+              onClick={() => handleDeleteAccion(accion)}
+              className="text-red-500 hover:text-red-700 p-1 rounded transition-colors"
+              title="Eliminar acción"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
           </div>
 
           <div className="space-y-4">
@@ -91,6 +158,35 @@ export default function ActionsHistoryTab({ acciones }: ActionsHistoryTabProps) 
           </div>
         </div>
       ))}
+
+      {/* Modal de confirmación para eliminar acción */}
+      <ConfirmModal
+        isOpen={showDeleteConfirmModal}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Eliminar acción"
+        message={
+          accionToDelete ? (
+            <div>
+              <p className="mb-2">
+                ¿Está seguro de que desea eliminar la acción{' '}
+                <strong>#{accionToDelete.num_accion}</strong>?
+              </p>
+              <p className="mb-2">
+                <strong>Detalle:</strong> {accionToDelete.detalle_accion}
+              </p>
+              <p className="text-sm text-gray-600">
+                Esta acción no se puede deshacer.
+              </p>
+            </div>
+          ) : (
+            '¿Está seguro de que desea eliminar esta acción?'
+          )
+        }
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        disabled={isDeleting}
+      />
     </div>
   );
 }

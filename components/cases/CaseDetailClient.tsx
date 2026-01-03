@@ -182,7 +182,7 @@ export default function CaseDetailClient() {
     {
       id: 'acciones',
       label: 'Historial de Acciones',
-      content: <ActionsHistoryTab acciones={caso.acciones} />,
+      content: <ActionsHistoryTab acciones={caso.acciones} onRefresh={fetchCaso} />,
     },
     {
       id: 'citas',

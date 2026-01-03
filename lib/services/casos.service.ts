@@ -9,6 +9,7 @@ import { citasQueries } from '@/lib/db/queries/citas.queries';
 import { soportesQueries } from '@/lib/db/queries/soportes.queries';
 import { asignacionesQueries } from '@/lib/db/queries/asignaciones.queries';
 import { AppError, ValidationError, NotFoundError } from '@/lib/utils/errors';
+import { withTransaction } from '@/lib/db/transactions';
 import { CreateCasoSchema, CreateCasoInput } from '@/lib/validations/casos.schema';
 import { ESTATUS_CASO } from '@/lib/constants/status';
 import { readFileSync } from 'fs';
@@ -241,6 +242,143 @@ export const casosService = {
     getAllCaseIds: async (): Promise<number[]> => {
         const ids = await casosQueries.getAllIds();
         return ids;
+    },
+
+    /**
+     * Elimina una acción específica y todos sus ejecutores asociados
+     */
+    deleteAccion: async (params: {
+      numAccion: number;
+      idCaso: number;
+    }): Promise<{ num_accion: number; id_caso: number }> => {
+        try {
+            // Asegurar que los parámetros sean números
+            const numAccion = Number(params.numAccion);
+            const idCaso = Number(params.idCaso);
+
+            return await withTransaction(async (client) => {
+                // 1. Obtener información completa de la acción antes de eliminarla
+                const getAccionQuery = `
+                    SELECT num_accion, id_caso, detalle_accion, comentario
+                    FROM acciones
+                    WHERE num_accion = $1 AND id_caso = $2
+                `;
+
+                const accionResult = await client.query(getAccionQuery, [numAccion, idCaso]);
+
+                if (accionResult.rows.length === 0) {
+                    throw new AppError('La acción no existe', 404);
+                }
+
+                const accion = accionResult.rows[0];
+
+                // 2. Si la acción comienza con "Cita realizada el", buscar y eliminar la cita correspondiente
+                // Aplicar EXACTAMENTE la misma lógica que en citas.service.ts
+                if (accion.detalle_accion.startsWith('Cita realizada el')) {
+                    console.log('[DEBUG] Acción es de cita, iniciando eliminación bidireccional:', accion.detalle_accion);
+                    // Extraer fecha del título (formato: "Cita realizada el DD/MM/YYYY")
+                    const fechaMatch = accion.detalle_accion.match(/Cita realizada el (\d{2}\/\d{2}\/\d{4})/);
+
+                    if (fechaMatch) {
+                        const fechaFormateada = fechaMatch[1]; // DD/MM/YYYY
+
+                        // Convertir fecha del formato DD/MM/YYYY a YYYY-MM-DD para BD
+                        const [dia, mes, anio] = fechaFormateada.split('/');
+                        const fechaBD = `${anio}-${mes}-${dia}`;
+
+                        // Buscar citas que coincidan exactamente (MISMA LÓGICA QUE EN CITAS)
+                        const findCitaQuery = `
+                            SELECT c.num_cita, c.id_caso, c.fecha_encuentro, c.orientacion
+                            FROM citas c
+                            WHERE c.id_caso = $1
+                              AND c.fecha_encuentro = $2::DATE
+                              AND (c.orientacion = $3 OR (c.orientacion IS NULL AND $3 IS NULL))
+                        `;
+
+                        const citaResult = await client.query(findCitaQuery, [idCaso, fechaBD, accion.comentario]);
+
+                        if (citaResult.rows.length > 0) {
+                            const cita = citaResult.rows[0];
+                            console.log('[DEBUG] Cita encontrada para eliminación:', cita);
+
+                            // Verificar que los ejecutores también coincidan
+                            const ejecutoresCitaQuery = `
+                                SELECT id_usuario
+                                FROM atienden
+                                WHERE num_cita = $1 AND id_caso = $2
+                                ORDER BY id_usuario
+                            `;
+
+                            const ejecutoresAccionQuery = `
+                                SELECT id_usuario_ejecuta as id_usuario
+                                FROM ejecutan
+                                WHERE num_accion = $1 AND id_caso = $2
+                                ORDER BY id_usuario_ejecuta
+                            `;
+
+                            const [ejecutoresCitaResult, ejecutoresAccionResult] = await Promise.all([
+                                client.query(ejecutoresCitaQuery, [cita.num_cita, idCaso]),
+                                client.query(ejecutoresAccionQuery, [numAccion, idCaso])
+                            ]);
+
+                            // Comparar listas de ejecutores
+                            const ejecutoresCita = ejecutoresCitaResult.rows.map(r => r.id_usuario).sort();
+                            const ejecutoresAccion = ejecutoresAccionResult.rows.map(r => r.id_usuario).sort();
+
+                            const ejecutoresCoinciden = JSON.stringify(ejecutoresCita) === JSON.stringify(ejecutoresAccion);
+
+                            if (ejecutoresCoinciden) {
+                                // Eliminar registros de atienden y la cita
+                                const deleteAtiendenQuery = `
+                                    DELETE FROM atienden
+                                    WHERE num_cita = $1 AND id_caso = $2
+                                `;
+
+                                await client.query(deleteAtiendenQuery, [cita.num_cita, idCaso]);
+
+                                const deleteCitaQuery = `
+                                    DELETE FROM citas
+                                    WHERE num_cita = $1 AND id_caso = $2
+                                `;
+
+                                await client.query(deleteCitaQuery, [cita.num_cita, idCaso]);
+                            }
+                        }
+                    }
+                }
+
+                // 3. Eliminar ejecutores asociados a la acción
+                const deleteEjecutoresQuery = `
+                    DELETE FROM ejecutan
+                    WHERE num_accion = $1 AND id_caso = $2
+                `;
+
+                await client.query(deleteEjecutoresQuery, [numAccion, idCaso]);
+
+                // 4. Eliminar la acción
+                const deleteAccionQuery = `
+                    DELETE FROM acciones
+                    WHERE num_accion = $1 AND id_caso = $2
+                    RETURNING num_accion, id_caso
+                `;
+
+                const result = await client.query(deleteAccionQuery, [numAccion, idCaso]);
+
+                if (result.rows.length === 0) {
+                    throw new AppError('No se pudo eliminar la acción', 500);
+                }
+
+                return result.rows[0];
+            });
+        } catch (error) {
+            // eslint-disable-next-line no-console
+            console.error('Error al eliminar la acción (detalle DB):', error);
+            throw new AppError(
+                "Error al eliminar la acción",
+                500,
+                error instanceof Error ? error.message : "Error desconocido"
+            );
+        }
     },
 };
 
