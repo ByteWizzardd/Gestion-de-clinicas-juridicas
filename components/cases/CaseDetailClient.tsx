@@ -20,6 +20,7 @@ import AddDocumentModal from '@/components/cases/modals/AddDocumentModal';
 import AssignTeamModal from '@/components/cases/modals/AssignTeamModal';
 import AddActionModal from '@/components/cases/modals/AddActionModal';
 import AddBeneficiaryModal from '@/components/cases/modals/AddBeneficiaryModal';
+import { AppointmentModal } from '@/components/appointmentModal/AppointmentModal';
 import { ChevronDown, Plus, Pencil } from 'lucide-react';
 import { getCurrentUserAction } from '@/app/actions/auth';
 
@@ -36,6 +37,8 @@ export default function CaseDetailClient() {
   const [showAssignTeamModal, setShowAssignTeamModal] = useState(false);
   const [showAddActionModal, setShowAddActionModal] = useState(false);
   const [showAddBeneficiaryModal, setShowAddBeneficiaryModal] = useState(false);
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [editingAppointment, setEditingAppointment] = useState<any>(null);
   const [changingStatus, setChangingStatus] = useState(false);
   const [userRol, setUserRol] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>(() => {
@@ -165,6 +168,28 @@ export default function CaseDetailClient() {
     }
   };
 
+  const handleEditAppointment = (cita: any) => {
+    console.log('DEBUG CaseDetailClient - Editing appointment:', cita);
+    // Convertir la cita al formato que espera el AppointmentModal
+    const appointmentData = {
+      id_cita: cita.num_cita,
+      id_caso: cita.id_caso,
+      fecha_encuentro: cita.fecha_encuentro,
+      fecha_proxima_cita: cita.fecha_proxima_cita,
+      orientacion: cita.orientacion,
+      atenciones: cita.atenciones || []
+    };
+
+    setEditingAppointment(appointmentData);
+    setShowAppointmentModal(true);
+  };
+
+  const handleAppointmentSaved = () => {
+    setShowAppointmentModal(false);
+    setEditingAppointment(null);
+    fetchCaso(); // Recargar los datos
+  };
+
   const codigoCaso = caso.id_caso.toString();
   const nombreSolicitante = caso.nombre_completo_solicitante || 'Caso sin solicitante';
 
@@ -187,7 +212,11 @@ export default function CaseDetailClient() {
     {
       id: 'citas',
       label: 'Citas y Orientaciones',
-      content: <AppointmentsTab citas={caso.citas} />,
+      content: <AppointmentsTab
+        citas={caso.citas}
+        onRefresh={fetchCaso}
+        onEditAppointment={handleEditAppointment}
+      />,
     },
     {
       id: 'estatus',
@@ -366,6 +395,17 @@ export default function CaseDetailClient() {
         beneficiariosActuales={caso.beneficiarios}
         onSuccess={handleRefresh}
       />
+
+      {showAppointmentModal && (
+        <AppointmentModal
+          onClose={() => {
+            setShowAppointmentModal(false);
+            setEditingAppointment(null);
+          }}
+          onSave={handleAppointmentSaved}
+          appointment={editingAppointment}
+        />
+      )}
 
       <motion.div
         initial={{ opacity: 0, y: 10 }}

@@ -1,7 +1,10 @@
 'use client';
 
-import { Calendar, Clock, Users, FileText } from 'lucide-react';
+import { useState } from 'react';
+import { Calendar, Clock, Users, FileText, Trash2, Pencil } from 'lucide-react';
 import { formatDate } from '@/lib/utils/date-formatter';
+import { deleteCitaAction } from '@/app/actions/citas';
+import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 
 interface AppointmentsTabProps {
   citas?: Array<{
@@ -18,9 +21,96 @@ interface AppointmentsTabProps {
       fecha_registro: string;
     }>;
   }>;
+  onRefresh?: () => void;
+  onEditAppointment?: (cita: {
+    num_cita: number;
+    id_caso: number;
+    fecha_encuentro: string;
+    fecha_proxima_cita: string | null;
+    orientacion: string;
+    atenciones: Array<{
+      id_usuario: string;
+      nombres: string;
+      apellidos: string;
+      nombre_completo: string;
+      fecha_registro: string;
+    }>;
+  }) => void;
 }
 
-export default function AppointmentsTab({ citas }: AppointmentsTabProps) {
+export default function AppointmentsTab({ citas, onRefresh, onEditAppointment }: AppointmentsTabProps) {
+  const [citaToDelete, setCitaToDelete] = useState<{ num_cita: number; id_caso: number; fecha_encuentro: string } | null>(null);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleEditAppointment = (cita: {
+    num_cita: number;
+    id_caso: number;
+    fecha_encuentro: string;
+    fecha_proxima_cita: string | null;
+    orientacion: string;
+    atenciones: Array<{
+      id_usuario: string;
+      nombres: string;
+      apellidos: string;
+      nombre_completo: string;
+      fecha_registro: string;
+    }>;
+  }) => {
+    console.log('DEBUG AppointmentsTab - handleEditAppointment called with:', cita);
+    onEditAppointment?.(cita);
+  };
+
+  const handleDeleteAppointment = (cita: {
+    num_cita: number;
+    id_caso: number;
+    fecha_encuentro: string;
+  }) => {
+    setCitaToDelete({
+      num_cita: cita.num_cita,
+      id_caso: cita.id_caso,
+      fecha_encuentro: cita.fecha_encuentro
+    });
+    setShowDeleteConfirmModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!citaToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const result = await deleteCitaAction({
+        appointmentId: `cita-${citaToDelete.num_cita}-${citaToDelete.id_caso}-${new Date(citaToDelete.fecha_encuentro).getTime()}`
+      });
+
+      if (result.success) {
+        // Cerrar modal y limpiar estado
+        setShowDeleteConfirmModal(false);
+        setCitaToDelete(null);
+
+        // Recargar los datos del caso
+        if (onRefresh) {
+          onRefresh();
+        } else {
+          // Fallback: recargar la página
+          window.location.reload();
+        }
+      } else {
+        console.error('Error deleting appointment:', result.error);
+        alert(result.error?.message || 'Error al eliminar la cita');
+      }
+    } catch (error) {
+      console.error('Error deleting appointment:', error);
+      alert('Error inesperado al eliminar la cita');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirmModal(false);
+    setCitaToDelete(null);
+  };
   if (!citas || citas.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
@@ -40,6 +130,22 @@ export default function AppointmentsTab({ citas }: AppointmentsTabProps) {
               <p className="text-sm text-gray-500 mt-1">
                 Fecha de encuentro: {formatDate(cita.fecha_encuentro)}
               </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleEditAppointment(cita)}
+                className="text-gray-500 hover:text-gray-700 p-1 rounded transition-colors"
+                title="Editar cita"
+              >
+                <Pencil className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => handleDeleteAppointment(cita)}
+                className="text-gray-500 hover:text-gray-700 p-1 rounded transition-colors"
+                title="Eliminar cita"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
             </div>
           </div>
 
@@ -82,6 +188,35 @@ export default function AppointmentsTab({ citas }: AppointmentsTabProps) {
           </div>
         </div>
       ))}
+
+      {/* Modal de confirmación para eliminar cita */}
+      <ConfirmModal
+        isOpen={showDeleteConfirmModal}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Eliminar cita"
+        message={
+          citaToDelete ? (
+            <div>
+              <p className="mb-2">
+                ¿Está seguro de que desea eliminar la cita{' '}
+                <strong>#{citaToDelete.num_cita}</strong>?
+              </p>
+              <p className="mb-2">
+                <strong>Fecha de encuentro:</strong> {formatDate(citaToDelete.fecha_encuentro)}
+              </p>
+              <p className="text-sm text-gray-600">
+                Esta acción no se puede deshacer y también eliminará la acción correspondiente si existe.
+              </p>
+            </div>
+          ) : (
+            '¿Está seguro de que desea eliminar esta cita?'
+          )
+        }
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        disabled={isDeleting}
+      />
     </div>
   );
 }
