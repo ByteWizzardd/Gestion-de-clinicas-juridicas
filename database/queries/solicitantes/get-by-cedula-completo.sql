@@ -17,6 +17,7 @@ SELECT
     vs.estado_civil,
     vs.concubinato,
     vs.tiempo_estudio,
+    vs.tipo_tiempo_estudio,
     
     -- Información del núcleo (obtenido del caso más reciente)
     n.id_nucleo,
@@ -48,6 +49,7 @@ SELECT
     fh.ingresos_mensuales,
     fh.tiempo_estudio_jefe,
     fh.id_nivel_educativo_jefe,
+    ne_jefe.descripcion AS nivel_educativo_jefe,
     
     -- Información de la vivienda
     v.cant_habitaciones,
@@ -139,6 +141,7 @@ LEFT JOIN niveles_educativos ne ON vs.id_nivel_educativo = ne.id_nivel_educativo
 LEFT JOIN condicion_trabajo ct ON vs.id_trabajo = ct.id_trabajo
 LEFT JOIN condicion_actividad ca ON vs.id_actividad = ca.id_actividad
 LEFT JOIN familias_y_hogares fh ON vs.cedula = fh.cedula_solicitante
+LEFT JOIN niveles_educativos ne_jefe ON fh.id_nivel_educativo_jefe = ne_jefe.id_nivel_educativo
 LEFT JOIN viviendas v ON vs.cedula = v.cedula_solicitante
 WHERE vs.cedula = $1;
 

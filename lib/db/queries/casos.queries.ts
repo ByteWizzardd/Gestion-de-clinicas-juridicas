@@ -488,5 +488,24 @@ export const casosQueries = {
     ]);
     return result.rows;
   },
+
+  /**
+   * Elimina físicamente un caso y todas sus referencias asociadas
+   * @param idCaso - ID del caso a eliminar
+   * @param cedulaActor - Cédula del usuario que realiza la eliminación
+   * @param motivo - Motivo de la eliminación (obligatorio)
+   */
+  deleteFisico: async (
+    idCaso: number,
+    cedulaActor: string,
+    motivo: string
+  ): Promise<void> => {
+    // Llama a la función que ya realiza la auditoría internamente
+    await pool.query("SELECT eliminar_caso_fisico($1, $2, $3)", [
+      idCaso,
+      cedulaActor,
+      motivo,
+    ]);
+  },
 };
 

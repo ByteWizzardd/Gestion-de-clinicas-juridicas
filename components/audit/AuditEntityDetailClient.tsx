@@ -8,21 +8,23 @@ import AuditDetailClient from './detail/AuditDetailClient';
 
 interface AuditOperation {
   label: string;
-  auditType: 'soportes' | 'soportes-creados' | 'citas-eliminadas' | 'citas-actualizadas' | 'citas-creadas' | 'usuarios-eliminados' | 'usuarios-actualizados-campos' | 'usuarios-creados' 
-    | 'estados-eliminados' | 'estados-actualizados' | 'estados-insertados'
-    | 'materias-eliminadas' | 'materias-actualizadas' | 'materias-insertadas'
-    | 'niveles-educativos-eliminados' | 'niveles-educativos-actualizados' | 'niveles-educativos-insertados'
-    | 'nucleos-eliminados' | 'nucleos-actualizados' | 'nucleos-insertados'
-    | 'condiciones-trabajo-eliminadas' | 'condiciones-trabajo-actualizadas' | 'condiciones-trabajo-insertadas'
-    | 'condiciones-actividad-eliminadas' | 'condiciones-actividad-actualizadas' | 'condiciones-actividad-insertadas'
-    | 'tipos-caracteristicas-eliminados' | 'tipos-caracteristicas-actualizados' | 'tipos-caracteristicas-insertados'
-    | 'semestres-eliminados' | 'semestres-actualizados' | 'semestres-insertados'
-    | 'municipios-eliminados' | 'municipios-actualizados' | 'municipios-insertados'
-    | 'parroquias-eliminadas' | 'parroquias-actualizadas' | 'parroquias-insertadas'
-    | 'categorias-eliminadas' | 'categorias-actualizadas' | 'categorias-insertadas'
-    | 'subcategorias-eliminadas' | 'subcategorias-actualizadas' | 'subcategorias-insertadas'
-    | 'ambitos-legales-eliminados' | 'ambitos-legales-actualizados' | 'ambitos-legales-insertados'
-    | 'caracteristicas-eliminadas' | 'caracteristicas-actualizadas' | 'caracteristicas-insertadas';
+  auditType: 'soportes' | 'soportes-creados' | 'citas-eliminadas' | 'citas-actualizadas' | 'citas-creadas' | 'usuarios-eliminados' | 'usuarios-actualizados-campos' | 'usuarios-creados'
+  | 'solicitantes-eliminados' | 'solicitantes-actualizados' | 'solicitantes-creados'
+  | 'casos-eliminados' | 'casos-actualizados' | 'casos-creados'
+  | 'estados-eliminados' | 'estados-actualizados' | 'estados-insertados'
+  | 'materias-eliminadas' | 'materias-actualizadas' | 'materias-insertadas'
+  | 'niveles-educativos-eliminados' | 'niveles-educativos-actualizados' | 'niveles-educativos-insertados'
+  | 'nucleos-eliminados' | 'nucleos-actualizados' | 'nucleos-insertados'
+  | 'condiciones-trabajo-eliminadas' | 'condiciones-trabajo-actualizadas' | 'condiciones-trabajo-insertadas'
+  | 'condiciones-actividad-eliminadas' | 'condiciones-actividad-actualizadas' | 'condiciones-actividad-insertadas'
+  | 'tipos-caracteristicas-eliminados' | 'tipos-caracteristicas-actualizados' | 'tipos-caracteristicas-insertados'
+  | 'semestres-eliminados' | 'semestres-actualizados' | 'semestres-insertados'
+  | 'municipios-eliminados' | 'municipios-actualizados' | 'municipios-insertados'
+  | 'parroquias-eliminadas' | 'parroquias-actualizadas' | 'parroquias-insertadas'
+  | 'categorias-eliminadas' | 'categorias-actualizadas' | 'categorias-insertadas'
+  | 'subcategorias-eliminadas' | 'subcategorias-actualizadas' | 'subcategorias-insertadas'
+  | 'ambitos-legales-eliminados' | 'ambitos-legales-actualizados' | 'ambitos-legales-insertados'
+  | 'caracteristicas-eliminadas' | 'caracteristicas-actualizadas' | 'caracteristicas-insertadas';
   title: string;
   description: string;
   emptyMessage: string;

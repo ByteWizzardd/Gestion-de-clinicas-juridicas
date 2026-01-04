@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { FileText, Calendar, Users, MapPin, BookOpen, FolderTree, Building2, Home, Building, Briefcase, Activity, GraduationCap, Tag, Tags, Scale, Calendar as CalendarIcon } from 'lucide-react';
+import { FileText, Calendar, Users, User, MapPin, BookOpen, FolderTree, Building2, Home, Building, Briefcase, Activity, GraduationCap, Tag, Tags, Scale, Calendar as CalendarIcon } from 'lucide-react';
 import AuditEntityCard from './AuditEntityCard';
 import { getAuditCountsAction } from '@/app/actions/audit';
 import type { AuditCounts } from '@/types/audit';
@@ -111,6 +111,54 @@ export default function AuditClient() {
             label: "Eliminados",
             count: counts.usuariosEliminados,
             href: "/dashboard/audit/usuarios?tab=usuarios-eliminados"
+          }
+        ]
+      },
+      {
+        title: "Casos",
+        description: "Registro de casos del sistema",
+        icon: Scale,
+        totalCount: (counts.casosEliminados || 0) + (counts.casosActualizados || 0) + (counts.casosCreados || 0),
+        href: "/dashboard/audit/casos",
+        operations: [
+          {
+            label: "Creados",
+            count: counts.casosCreados || 0,
+            href: "/dashboard/audit/casos?tab=casos-creados"
+          },
+          {
+            label: "Actualizados",
+            count: counts.casosActualizados || 0,
+            href: "/dashboard/audit/casos?tab=casos-actualizados"
+          },
+          {
+            label: "Eliminados",
+            count: counts.casosEliminados || 0,
+            href: "/dashboard/audit/casos?tab=casos-eliminados"
+          }
+        ]
+      },
+      {
+        title: "Solicitantes",
+        description: "Registro de solicitantes del sistema",
+        icon: User,
+        totalCount: (counts.solicitantesEliminados || 0) + (counts.solicitantesActualizados || 0) + (counts.solicitantesCreados || 0),
+        href: "/dashboard/audit/solicitantes",
+        operations: [
+          {
+            label: "Creados",
+            count: counts.solicitantesCreados || 0,
+            href: "/dashboard/audit/solicitantes?tab=solicitantes-creados"
+          },
+          {
+            label: "Actualizados",
+            count: counts.solicitantesActualizados || 0,
+            href: "/dashboard/audit/solicitantes?tab=solicitantes-actualizados"
+          },
+          {
+            label: "Eliminados",
+            count: counts.solicitantesEliminados || 0,
+            href: "/dashboard/audit/solicitantes?tab=solicitantes-eliminados"
           }
         ]
       },
@@ -390,7 +438,7 @@ export default function AuditClient() {
       return entities;
     }
     const query = searchQuery.toLowerCase().trim();
-    return entities.filter(entity => 
+    return entities.filter(entity =>
       entity.title.toLowerCase().includes(query) ||
       entity.description.toLowerCase().includes(query) ||
       entity.operations.some(op => op.label.toLowerCase().includes(query))

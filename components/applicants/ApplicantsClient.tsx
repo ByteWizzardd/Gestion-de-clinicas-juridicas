@@ -29,6 +29,7 @@ export default function ApplicantsClient({
   const router = useRouter();
   const [solicitantes, setSolicitantes] = useState<Solicitante[]>(initialSolicitantes);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedApplicant, setSelectedApplicant] = useState<any | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [registeredCedula, setRegisteredCedula] = useState<{ tipo: string; numero: string } | null>(null);
   const [registeredNombre, setRegisteredNombre] = useState<string>('');
@@ -102,18 +103,44 @@ export default function ApplicantsClient({
     router.push(`/dashboard/applicants/${solicitante.cedula}`);
   };
 
-  const handleEdit = (data: Record<string, unknown>) => {
+  const handleEdit = async (data: Record<string, unknown>) => {
     const solicitante = data as Solicitante;
-    alert(`Editar solicitante: ${solicitante.nombre_completo}`);
+    try {
+      const { getSolicitanteByIdAction } = await import('@/app/actions/solicitantes');
+      const result = await getSolicitanteByIdAction(solicitante.cedula);
+
+      if (result.success && result.data) {
+        setSelectedApplicant(result.data);
+        setIsModalOpen(true);
+      } else {
+        alert('No se pudo cargar la información completa del solicitante.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Ocurrió un error al cargar los datos.');
+    }
   };
 
-  const handleDelete = (data: Record<string, unknown>) => {
+  const handleDelete = async (data: Record<string, unknown>) => {
     const solicitante = data as Solicitante;
     const confirmDelete = window.confirm(
       `¿Está seguro de que desea eliminar al solicitante ${solicitante.nombre_completo}?`
     );
     if (confirmDelete) {
-      alert(`Eliminar solicitante: ${solicitante.nombre_completo}`);
+      try {
+        const { deleteSolicitanteAction } = await import('@/app/actions/solicitantes');
+        const result = await deleteSolicitanteAction(solicitante.cedula, 'Eliminado desde la interfaz de administración');
+
+        if (result.success) {
+          alert('Solicitante eliminado exitosamente');
+          await handleRefresh();
+        } else {
+          alert(`Error al eliminar: ${result.error?.message || 'Error desconocido'}`);
+        }
+      } catch (e) {
+        console.error(e);
+        alert('Ocurrió un error al intentar eliminar el solicitante');
+      }
     }
   };
 
@@ -142,7 +169,10 @@ export default function ApplicantsClient({
       >
         <CaseTools
           addLabel="Añadir Solicitante"
-          onAddClick={() => setIsModalOpen(true)}
+          onAddClick={() => {
+            setSelectedApplicant(null);
+            setIsModalOpen(true);
+          }}
           searchValue={searchValue}
           onSearchChange={setSearchValue}
           nucleoFilter={nucleoFilter}
@@ -174,11 +204,13 @@ export default function ApplicantsClient({
 
       <ApplicantFormModal
         isOpen={isModalOpen && !showConfirmModal}
+        initialData={selectedApplicant}
         onClose={() => {
           setIsModalOpen(false);
           setShowConfirmModal(false);
           setRegisteredCedula(null);
           setRegisteredNombre('');
+          setSelectedApplicant(null);
         }}
         onSubmit={async (data: unknown) => {
           const solicitante = (data as any).data?.solicitante;
@@ -195,7 +227,14 @@ export default function ApplicantsClient({
 
           await handleRefresh();
           setIsModalOpen(false);
-          setShowConfirmModal(true);
+
+          if (!selectedApplicant) {
+            setShowConfirmModal(true);
+          } else {
+            setSelectedApplicant(null);
+            setRegisteredCedula(null);
+            setRegisteredNombre('');
+          }
         }}
       />
 

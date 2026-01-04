@@ -1,6 +1,6 @@
 -- Retorna todos los solicitantes
 -- Un solicitante es una persona que tiene todos los datos completos requeridos
--- Y que tiene al menos un caso registrado
+-- Muestra todos los solicitantes independientemente de si tienen casos o no
 
 SELECT 
     s.cedula,
@@ -21,10 +21,10 @@ SELECT
         SELECT fecha_solicitud FROM casos ca WHERE ca.cedula = s.cedula 
         ORDER BY fecha_solicitud DESC
         LIMIT 1
-    ) AS fecha_solicitud
+    ) AS fecha_solicitud,
+    (
+        SELECT COUNT(*) FROM casos ca WHERE ca.cedula = s.cedula
+    ) AS cantidad_casos
 FROM solicitantes s
 INNER JOIN view_solicitantes_completo vs ON s.cedula = vs.cedula
-WHERE EXISTS (
-    SELECT 1 FROM casos ca WHERE ca.cedula = s.cedula
-)
 ORDER BY s.cedula;

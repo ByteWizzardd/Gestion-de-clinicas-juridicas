@@ -10,7 +10,8 @@ import AuditRecordCard from '../AuditRecordCard';
 import Spinner from '@/components/ui/feedback/Spinner';
 import type { AuditFilters } from '@/types/audit';
 
-type AuditType = 'soportes' | 'soportes-creados' | 'citas-eliminadas' | 'citas-actualizadas' | 'citas-creadas' | 'usuarios-eliminados' | 'usuarios-actualizados-campos' | 'usuarios-creados' 
+type AuditType = 'soportes' | 'soportes-creados' | 'citas-eliminadas' | 'citas-actualizadas' | 'citas-creadas' | 'usuarios-eliminados' | 'usuarios-actualizados-campos' | 'usuarios-creados'
+  | 'solicitantes-eliminados' | 'solicitantes-actualizados' | 'solicitantes-creados'
   | 'estados-eliminados' | 'estados-actualizados' | 'estados-insertados'
   | 'materias-eliminadas' | 'materias-actualizadas' | 'materias-insertadas'
   | 'niveles-educativos-eliminados' | 'niveles-educativos-actualizados' | 'niveles-educativos-insertados'
@@ -24,8 +25,11 @@ type AuditType = 'soportes' | 'soportes-creados' | 'citas-eliminadas' | 'citas-a
   | 'categorias-eliminadas' | 'categorias-actualizadas' | 'categorias-insertadas'
   | 'subcategorias-eliminadas' | 'subcategorias-actualizadas' | 'subcategorias-insertadas'
   | 'ambitos-legales-eliminados' | 'ambitos-legales-actualizados' | 'ambitos-legales-insertados'
-  | 'caracteristicas-eliminadas' | 'caracteristicas-actualizadas' | 'caracteristicas-insertadas';
-type AuditRecordType = 'soporte' | 'cita-eliminada' | 'cita-actualizada' | 'cita-creada' | 'usuario-eliminado' | 'usuario-actualizado-campos' 
+  | 'caracteristicas-eliminadas' | 'caracteristicas-actualizadas' | 'caracteristicas-insertadas'
+  | 'casos-eliminados' | 'casos-actualizados' | 'casos-creados';
+
+type AuditRecordType = 'soporte' | 'soporte-creado' | 'cita-eliminada' | 'cita-actualizada' | 'cita-creada' | 'usuario-eliminado' | 'usuario-actualizado-campos' | 'usuario-creado'
+  | 'solicitante-eliminado' | 'solicitante-actualizado' | 'solicitante-creado'
   | 'estado-eliminado' | 'estado-actualizado' | 'estado-insertado'
   | 'materia-eliminada' | 'materia-actualizada' | 'materia-insertada'
   | 'nivel-educativo-eliminado' | 'nivel-educativo-actualizado' | 'nivel-educativo-insertado'
@@ -39,7 +43,8 @@ type AuditRecordType = 'soporte' | 'cita-eliminada' | 'cita-actualizada' | 'cita
   | 'categoria-eliminada' | 'categoria-actualizada' | 'categoria-insertada'
   | 'subcategoria-eliminada' | 'subcategoria-actualizada' | 'subcategoria-insertada'
   | 'ambito-legal-eliminado' | 'ambito-legal-actualizado' | 'ambito-legal-insertado'
-  | 'caracteristica-eliminada' | 'caracteristica-actualizada' | 'caracteristica-insertada';
+  | 'caracteristica-eliminada' | 'caracteristica-actualizada' | 'caracteristica-insertada'
+  | 'caso-eliminado' | 'caso-actualizado' | 'caso-creado';
 
 interface AuditDetailClientProps {
   title: string;
@@ -72,6 +77,9 @@ export default function AuditDetailClient({
     'usuarios-eliminados': 'usuario-eliminado',
     'usuarios-actualizados-campos': 'usuario-actualizado-campos',
     'usuarios-creados': 'usuario-creado',
+    'solicitantes-eliminados': 'solicitante-eliminado',
+    'solicitantes-actualizados': 'solicitante-actualizado',
+    'solicitantes-creados': 'solicitante-creado',
     'estados-eliminados': 'estado-eliminado',
     'estados-actualizados': 'estado-actualizado',
     'materias-eliminadas': 'materia-eliminada',
@@ -115,6 +123,10 @@ export default function AuditDetailClient({
     'subcategorias-insertadas': 'subcategoria-insertada',
     'ambitos-legales-insertados': 'ambito-legal-insertado',
     'caracteristicas-insertadas': 'caracteristica-insertada',
+    // Casos
+    'casos-eliminados': 'caso-eliminado',
+    'casos-actualizados': 'caso-actualizado',
+    'casos-creados': 'caso-creado',
   };
 
   // Cargar opciones de usuarios
@@ -144,9 +156,9 @@ export default function AuditDetailClient({
       try {
         setLoading(true);
         setError(null);
-        
+
         // Importar la Server Action correspondiente dinámicamente
-        const { 
+        const {
           getSoportesAuditAction,
           getSoportesCreadosAuditAction,
           getCitasEliminadasAuditAction,
@@ -155,6 +167,9 @@ export default function AuditDetailClient({
           getUsuariosEliminadosAuditAction,
           getUsuariosActualizadosCamposAuditAction,
           getUsuariosCreadosAuditAction,
+          getSolicitantesEliminadosAuditAction,
+          getSolicitantesActualizadosAuditAction,
+          getSolicitantesCreadosAuditAction,
           getEstadosEliminadosAuditAction,
           getEstadosActualizadosAuditAction,
           getMateriasEliminadasAuditAction,
@@ -196,7 +211,11 @@ export default function AuditDetailClient({
           getCategoriasInsertadasAuditAction,
           getSubcategoriasInsertadasAuditAction,
           getAmbitosLegalesInsertadosAuditAction,
-          getCaracteristicasInsertadasAuditAction
+          getCaracteristicasInsertadasAuditAction,
+          // Casos
+          getCasosEliminadosAuditAction,
+          getCasosActualizadosAuditAction,
+          getCasosCreadosAuditAction
         } = await import('@/app/actions/audit');
 
         let data: any[];
@@ -224,6 +243,15 @@ export default function AuditDetailClient({
             break;
           case 'usuarios-creados':
             data = await getUsuariosCreadosAuditAction(filters);
+            break;
+          case 'solicitantes-eliminados':
+            data = await getSolicitantesEliminadosAuditAction(filters);
+            break;
+          case 'solicitantes-actualizados':
+            data = await getSolicitantesActualizadosAuditAction(filters);
+            break;
+          case 'solicitantes-creados':
+            data = await getSolicitantesCreadosAuditAction(filters);
             break;
           case 'estados-eliminados':
             data = await getEstadosEliminadosAuditAction(filters);
@@ -352,10 +380,20 @@ export default function AuditDetailClient({
           case 'caracteristicas-insertadas':
             data = await getCaracteristicasInsertadasAuditAction(filters);
             break;
+          // Casos
+          case 'casos-eliminados':
+            data = await getCasosEliminadosAuditAction(filters);
+            break;
+          case 'casos-actualizados':
+            data = await getCasosActualizadosAuditAction(filters);
+            break;
+          case 'casos-creados':
+            data = await getCasosCreadosAuditAction(filters);
+            break;
           default:
             throw new Error('Tipo de auditoría no válido');
         }
-        
+
         setRecords(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error al cargar datos');
@@ -450,10 +488,10 @@ export default function AuditDetailClient({
           <p>Error: {error}</p>
         </div>
       ) : (
-        <AuditList 
-          records={records} 
+        <AuditList
+          records={records}
           recordType={recordTypeMap[auditType]}
-          emptyMessage={emptyMessage} 
+          emptyMessage={emptyMessage}
         />
       )}
     </div>

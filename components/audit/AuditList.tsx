@@ -19,7 +19,8 @@ type AuditRecordType = 'soporte' | 'cita-eliminada' | 'cita-actualizada' | 'cita
   | 'categoria-eliminada' | 'categoria-actualizada' | 'categoria-insertada'
   | 'subcategoria-eliminada' | 'subcategoria-actualizada' | 'subcategoria-insertada'
   | 'ambito-legal-eliminado' | 'ambito-legal-actualizado' | 'ambito-legal-insertado'
-  | 'caracteristica-eliminada' | 'caracteristica-actualizada' | 'caracteristica-insertada';
+  | 'caracteristica-eliminada' | 'caracteristica-actualizada' | 'caracteristica-insertada'
+  | 'caso-eliminado' | 'caso-actualizado' | 'caso-creado';
 
 interface AuditListProps {
   records: any[];

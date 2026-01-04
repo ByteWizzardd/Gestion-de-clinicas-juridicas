@@ -22,9 +22,10 @@ interface SelectSmallProps {
   options: SelectOption[];
   className?: string;
   error?: boolean;
+  disabled?: boolean;
 }
 
-function SelectSmall({ value, onChange, options, className = '', error = false }: SelectSmallProps) {
+function SelectSmall({ value, onChange, options, className = '', error = false, disabled = false }: SelectSmallProps) {
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef<HTMLDivElement>(null);
 
@@ -55,13 +56,15 @@ function SelectSmall({ value, onChange, options, className = '', error = false }
     <div ref={selectRef} className={`relative ${className}`}>
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
         className={`
           w-full h-[40px] px-3 pr-8 rounded-full border flex items-center justify-between
           ${error ? 'border-danger' : 'border-gray-300'}
           focus:outline-none focus:ring-1 focus:ring-primary
-          bg-white cursor-pointer transition-colors
+          bg-white transition-colors
           text-base font-normal text-foreground
+          ${disabled ? 'opacity-50 cursor-not-allowed bg-gray-100' : 'cursor-pointer'}
         `}
       >
         <span className={selectedOption ? 'text-foreground' : 'text-[#717171]'}>
@@ -73,7 +76,7 @@ function SelectSmall({ value, onChange, options, className = '', error = false }
       </button>
 
       <AnimatePresence>
-        {isOpen && (
+        {isOpen && !disabled && (
           <motion.div
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -117,6 +120,7 @@ interface CedulaInputProps {
   onSelectCedula?: (cedula: string) => void;
   searchType?: SearchType; // Tipo de búsqueda: solicitante, profesor o estudiante
   disableSuggestions?: boolean; // Desactivar recomendaciones automáticas
+  disabled?: boolean;
 }
 
 export default function CedulaInput({
@@ -131,6 +135,7 @@ export default function CedulaInput({
   onSelectCedula,
   searchType = 'solicitante',
   disableSuggestions = false,
+  disabled = false,
 }: CedulaInputProps) {
   const [suggestions, setSuggestions] = useState<Solicitante[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -183,7 +188,7 @@ export default function CedulaInput({
         setIsSearching(true);
         // Buscar con el tipo de cédula incluido y el guión (formato: V-XXXX)
         const searchQuery = tipoValue ? `${tipoValue}-${value.trim()}` : value.trim();
-        
+
         let result;
         if (searchType === 'profesor') {
           const { searchProfesoresAction } = await import('@/app/actions/profesores');
@@ -196,7 +201,7 @@ export default function CedulaInput({
           const { searchSolicitantesAction } = await import('@/app/actions/solicitantes');
           result = await searchSolicitantesAction(searchQuery, 'cedula');
         }
-        
+
         if (result.success && result.data) {
           setSuggestions(result.data);
           setShowSuggestions(result.data.length > 0);
@@ -225,7 +230,7 @@ export default function CedulaInput({
     // La cédula viene como "V-12345678" (con guión)
     let tipoCedula = tipoValue;
     let numeroCedula = solicitante.cedula;
-    
+
     // Si la cédula tiene formato "V-XXXX", extraer el tipo y el número
     const cedulaMatch = solicitante.cedula.match(/^([VEJP])-?(.+)$/);
     if (cedulaMatch) {
@@ -236,20 +241,20 @@ export default function CedulaInput({
       tipoCedula = solicitante.cedula[0];
       numeroCedula = solicitante.cedula.substring(1);
     }
-    
+
     // Actualizar el tipo si hay callback
     if (onTipoChange && tipoCedula !== tipoValue) {
       onTipoChange(tipoCedula);
     }
-    
+
     // Actualizar el número de cédula
     const syntheticEvent = {
       target: { value: numeroCedula },
     } as React.ChangeEvent<HTMLInputElement>;
-    
+
     onChange(syntheticEvent);
     setShowSuggestions(false);
-    
+
     if (onSelectCedula) {
       onSelectCedula(solicitante.cedula);
     }
@@ -259,7 +264,7 @@ export default function CedulaInput({
     <div className="flex flex-col gap-1" ref={containerRef}>
       {label && (
         <label className="text-base font-normal text-foreground mb-1">
-          {label.split(' *').map((part, index, array) => 
+          {label.split(' *').map((part, index, array) =>
             index < array.length - 1 ? (
               <span key={index}>
                 {part} <span className="text-danger">*</span>
@@ -282,6 +287,7 @@ export default function CedulaInput({
           options={tipoOptions}
           className="w-14"
           error={!!error}
+          disabled={disabled}
         />
         {/* Input de cédula */}
         <div className="flex-1 relative">
@@ -289,8 +295,9 @@ export default function CedulaInput({
             value={value}
             onChange={onChange}
             placeholder={placeholder}
+            disabled={disabled}
             onFocus={() => {
-              if (suggestions.length > 0) {
+              if (!disabled && suggestions.length > 0) {
                 setShowSuggestions(true);
               }
             }}
@@ -300,13 +307,14 @@ export default function CedulaInput({
               focus:outline-none focus:ring-1 
               ${error ? 'focus:ring-danger' : 'focus:ring-primary'}
               text-base placeholder:text-[#717171]
+              ${disabled ? 'opacity-50 cursor-not-allowed text-gray-500' : ''}
             `}
             required={required}
           />
-          
+
           {/* Lista de sugerencias */}
           <AnimatePresence>
-            {showSuggestions && suggestions.length > 0 && (
+            {showSuggestions && suggestions.length > 0 && !disabled && (
               <motion.div
                 initial={{ opacity: 0, y: -10, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -346,4 +354,3 @@ export default function CedulaInput({
     </div>
   );
 }
-

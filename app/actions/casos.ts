@@ -10,6 +10,7 @@ import { profesoresQueries } from '@/lib/db/queries/profesores.queries';
 import { estudiantesQueries } from '@/lib/db/queries/estudiantes.queries';
 import { semestresQueries } from '@/lib/db/queries/semestres.queries';
 import { usuariosQueries } from '@/lib/db/queries/usuarios.queries';
+import { casosQueries } from '@/lib/db/queries/casos.queries';
 import { pool } from '@/lib/db/pool';
 import { loadSQL } from '@/lib/db/sql-loader';
 import { AppError } from '@/lib/utils/errors';
@@ -131,6 +132,39 @@ export async function createCasoAction(data: unknown): Promise<CreateCasoResult>
     };
   } catch (error) {
     return handleServerActionError(error, 'createCasoAction', 'CASO_ERROR');
+  }
+}
+
+/**
+ * Server Action para actualizar un caso existente
+ */
+export async function updateCasoAction(
+  idCaso: number,
+  data: unknown
+): Promise<{ success: boolean; data?: unknown; error?: { message: string; code?: string; fields?: Record<string, string[]> } }> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    const cedulaUsuario = authResult.user.cedula;
+    const casoActualizado = await casosService.updateCaso(idCaso, data, cedulaUsuario);
+
+    // Revalidar cache de la página de casos
+    revalidatePath('/dashboard/cases');
+    revalidatePath(`/dashboard/cases/${idCaso}`);
+
+    return {
+      success: true,
+      data: casoActualizado,
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'updateCasoAction', 'CASO_ERROR');
   }
 }
 
@@ -405,7 +439,7 @@ export async function getCasosByUsuarioAction(): Promise<GetCasosResult> {
 
     const cedulaUsuario = authResult.user.cedula;
     console.log('🔍 Buscando casos para usuario:', cedulaUsuario);
-    
+
     // Debug: Verificar si hay asignaciones en se_le_asigna
     const { pool } = await import('@/lib/db/pool');
     const debugQuery = await pool.query(
@@ -418,10 +452,10 @@ export async function getCasosByUsuarioAction(): Promise<GetCasosResult> {
     } else {
       console.log('   ⚠️  No hay asignaciones en se_le_asigna para esta cédula');
     }
-    
+
     const { casosQueries } = await import('@/lib/db/queries/casos.queries');
     const casos = await casosQueries.getByUsuario(cedulaUsuario);
-    
+
     console.log('📊 Casos encontrados por query:', casos.length);
     if (casos.length > 0) {
       console.log('   Primer caso:', JSON.stringify(casos[0], null, 2));
@@ -563,7 +597,7 @@ export async function createAccionAction(
       const day = String(now.getDate()).padStart(2, '0');
       return `${year}-${month}-${day}`;
     })();
-    
+
     // Crear la acción usando el cliente de la transacción
     const createAccionQuery = loadSQL('acciones/create.sql');
     const accionResult = await client.query(createAccionQuery, [
@@ -889,7 +923,7 @@ export async function asignarEquipoAction(
 
       // Identificar profesores nuevos (que no estaban asignados antes)
       const profesoresNuevos = profesores.filter(cedula => !profesoresActuales.includes(cedula));
-      
+
       // Identificar estudiantes nuevos (que no estaban asignados antes)
       const estudiantesNuevos = estudiantes.filter(cedula => !estudiantesActuales.includes(cedula));
 
@@ -906,7 +940,7 @@ export async function asignarEquipoAction(
       // Verificar que los profesores nuevos existan (en cualquier semestre)
       if (profesoresNuevos.length > 0) {
         const profesoresInvalidos = profesoresNuevos.filter(cedula => !profesoresAllActiveCedulas.has(cedula));
-        
+
         if (profesoresInvalidos.length > 0) {
           await client.query('ROLLBACK');
           return {
@@ -922,7 +956,7 @@ export async function asignarEquipoAction(
       // Verificar que los estudiantes nuevos existan (en cualquier semestre)
       if (estudiantesNuevos.length > 0) {
         const estudiantesInvalidos = estudiantesNuevos.filter(cedula => !estudiantesAllActiveCedulas.has(cedula));
-        
+
         if (estudiantesInvalidos.length > 0) {
           await client.query('ROLLBACK');
           return {
@@ -963,8 +997,8 @@ export async function asignarEquipoAction(
         if (profesorInfo) {
           // Si el profesor está en el semestre actual, usar ese term
           // Si no, usar el term más reciente donde esté registrado
-          const termToUse = profesorInfo.term === currentTerm 
-            ? currentTerm 
+          const termToUse = profesorInfo.term === currentTerm
+            ? currentTerm
             : profesorInfo.term;
           await asignacionesQueries.createSupervisa(termToUse, cedula, idCaso, true);
         }
@@ -978,8 +1012,8 @@ export async function asignarEquipoAction(
         if (estudianteInfo) {
           // Si el estudiante está en el semestre actual, usar ese term
           // Si no, usar el term más reciente donde esté registrado
-          const termToUse = estudianteInfo.term === currentTerm 
-            ? currentTerm 
+          const termToUse = estudianteInfo.term === currentTerm
+            ? currentTerm
             : estudianteInfo.term;
           await asignacionesQueries.createSeLeAsigna(termToUse, cedula, idCaso, true);
         }
@@ -1185,5 +1219,88 @@ export async function updateAccionAction(params: UpdateAccionParams): Promise<Up
         code: 'UNKNOWN_ERROR',
       },
     };
+  }
+}
+
+export interface DeleteCasoResult {
+  success: boolean;
+  data?: {
+    mensaje: string;
+  };
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+/**
+ * Server Action para eliminar un caso permanentemente
+ */
+export async function deleteCasoAction(
+  idCaso: number,
+  motivo: string
+): Promise<DeleteCasoResult> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    // Validar que el ID del caso sea válido
+    if (isNaN(idCaso) || idCaso <= 0) {
+      return {
+        success: false,
+        error: {
+          message: 'ID de caso inválido',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Validar que el motivo no esté vacío
+    if (!motivo || motivo.trim() === '') {
+      return {
+        success: false,
+        error: {
+          message: 'El motivo de eliminación es obligatorio',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    // Validar que el usuario sea coordinador (solo coordinadores pueden eliminar casos)
+    if (authResult.user.rol !== 'Coordinador') {
+      return {
+        success: false,
+        error: {
+          message: 'Solo los coordinadores pueden eliminar casos permanentemente',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    // Eliminar el caso (la función maneja todas las referencias y la auditoría)
+    await casosQueries.deleteFisico(
+      idCaso,
+      authResult.user.cedula,
+      motivo.trim()
+    );
+
+    // Revalidar cache de las páginas relacionadas
+    revalidatePath('/dashboard/cases');
+    revalidatePath(`/dashboard/cases/${idCaso}`);
+
+    return {
+      success: true,
+      data: {
+        mensaje: 'Caso eliminado correctamente',
+      },
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'deleteCasoAction', 'DELETE_ERROR');
   }
 }

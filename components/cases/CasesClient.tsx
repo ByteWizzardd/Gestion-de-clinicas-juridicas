@@ -7,9 +7,10 @@ import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import CaseFormModal from '@/components/forms/CaseFormModal';
 import Spinner from '@/components/ui/feedback/Spinner';
+import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
-import { getCasosAction, getCasosByUsuarioAction } from '@/app/actions/casos';
-import { createCasoAction, uploadSoportesAction } from '@/app/actions/casos';
+import { getCasosAction, getCasosByUsuarioAction, deleteCasoAction } from '@/app/actions/casos';
+import { createCasoAction, updateCasoAction, uploadSoportesAction } from '@/app/actions/casos';
 import { getMateriasAction } from '@/app/actions/materias';
 
 interface Caso {
@@ -67,6 +68,13 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   const [initialCedula, setInitialCedula] = useState<string>('');
   const [initialCedulaTipo, setInitialCedulaTipo] = useState<string>('V');
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [casoToDelete, setCasoToDelete] = useState<{ id_caso: number; codigo: string; solicitante: string } | null>(null);
+  const [deleteMotivo, setDeleteMotivo] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // State for editing
+  const [editingCase, setEditingCase] = useState<Caso | null>(null);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -147,8 +155,6 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       } else {
         // Restaurar todos los casos (usando cache local para velocidad)
         setCasos(allCasos);
-        // Opcional: refrescar en background si se desea frescura total
-        // fetchCasos(); 
       }
     } catch (error) {
       console.error('Error al cambiar filtro de asignación:', error);
@@ -227,20 +233,58 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
   const handleEdit = (data: Record<string, unknown>) => {
     const caso = data as TableRow;
-    alert(`Editar caso: ${caso.codigo}`);
+    const fullCase = filteredCasos.find(c => c.id_caso.toString() === caso.codigo);
+    if (fullCase) {
+      setEditingCase(fullCase);
+      setIsModalOpen(true);
+    }
   };
 
   const handleDelete = (data: Record<string, unknown>) => {
     const caso = data as TableRow;
-    alert(`Eliminar caso: ${caso.codigo}`);
+    const casoCompleto = casos.find(c => c.id_caso.toString() === caso.codigo);
+    if (casoCompleto) {
+      setCasoToDelete({
+        id_caso: casoCompleto.id_caso,
+        codigo: caso.codigo,
+        solicitante: casoCompleto.nombre_completo_solicitante || casoCompleto.cedula,
+      });
+      setShowConfirm(true);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!casoToDelete) return;
+    setDeleteLoading(true);
+
+    const result = await deleteCasoAction(
+      casoToDelete.id_caso,
+      deleteMotivo
+    );
+
+    setDeleteLoading(false);
+
+    if (!result.success) {
+      alert(result.error?.message || 'Error al eliminar caso');
+      return;
+    }
+
+    // Actualizar la lista de casos
+    setCasos((prev) => prev.filter(c => c.id_caso !== casoToDelete.id_caso));
+    setAllCasos((prev) => prev.filter(c => c.id_caso !== casoToDelete.id_caso));
+    setShowConfirm(false);
+    setCasoToDelete(null);
+    setDeleteMotivo('');
   };
 
   const handleAddCase = () => {
+    setEditingCase(null);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    setEditingCase(null);
   };
 
   const handleSubmitCase = async (data: unknown) => {
@@ -248,13 +292,61 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       const caseData = data as any;
       const archivos = Array.isArray(caseData.archivos) ? caseData.archivos : [];
 
+      if (editingCase) {
+        // Lógica de Actualización
+        const updateData = {
+          id_caso: caseData.id_caso,
+          tramite: caseData.tramite,
+          observaciones: caseData.observaciones,
+          fecha_fin_caso: caseData.fecha_fin_caso,
+          id_nucleo: caseData.id_nucleo,
+          id_materia: caseData.id_materia,
+          num_categoria: caseData.num_categoria ?? 0,
+          num_subcategoria: caseData.num_subcategoria ?? 0,
+          num_ambito_legal: caseData.num_ambito_legal,
+          fecha_solicitud: caseData.fecha_solicitud,
+        };
+
+        const result = await updateCasoAction(caseData.id_caso, updateData);
+
+        if (!result.success) {
+          const errorMessage = result.error?.message || 'Error al actualizar el caso';
+          alert(`Error: ${errorMessage}`);
+          return;
+        }
+
+        // Subir archivos si hay nuevos
+        if (archivos.length > 0) {
+          const formData = new FormData();
+          archivos.forEach((archivo: File) => {
+            formData.append('archivos', archivo);
+          });
+
+          try {
+            const uploadResult = await uploadSoportesAction(Number(caseData.id_caso), formData);
+            if (!uploadResult.success) {
+              alert(`Caso actualizado, pero error al subir archivos: ${uploadResult.error?.message}`);
+            }
+          } catch (uploadErr) {
+            alert('Caso actualizado, pero error al subir archivos');
+          }
+        }
+
+        alert('Caso actualizado exitosamente');
+        setIsModalOpen(false);
+        setEditingCase(null);
+        fetchCasos();
+        return;
+      }
+
+      // Lógica de Creación (existente)
       const casoDataSinArchivos = {
         fecha_solicitud: caseData.fecha_solicitud,
         fecha_inicio_caso: caseData.fecha_inicio_caso,
         cedula: caseData.cedula,
         id_materia: caseData.id_materia,
-        num_categoria: caseData.num_categoria ?? 0, // Usar 0 si es null/undefined
-        num_subcategoria: caseData.num_subcategoria ?? 0, // Usar 0 si es null/undefined
+        num_categoria: caseData.num_categoria ?? 0,
+        num_subcategoria: caseData.num_subcategoria ?? 0,
         num_ambito_legal: caseData.num_ambito_legal,
         tramite: caseData.tramite,
         estatus: caseData.estatus,
@@ -311,7 +403,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       fetchCasos();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
-      alert(`Error al crear el caso: ${errorMessage}`);
+      alert(`Error al procesar el caso: ${errorMessage}`);
     }
   };
 
@@ -395,8 +487,55 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
         onSubmit={handleSubmitCase}
         initialCedula={initialCedula}
         initialCedulaTipo={initialCedulaTipo}
+        isEditing={!!editingCase}
+        initialData={editingCase}
+      />
+
+      <ConfirmModal
+        isOpen={showConfirm}
+        onClose={() => {
+          setShowConfirm(false);
+          setDeleteMotivo('');
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Eliminar caso permanentemente"
+        message={
+          <div>
+            <p className="mb-4 text-base text-foreground">
+              ¿Estás seguro de que deseas eliminar el caso <strong>{casoToDelete?.codigo}</strong> del solicitante <strong>{casoToDelete?.solicitante}</strong>?
+            </p>
+            <p className="mb-6 text-red-600 font-semibold text-base">
+              Esta acción es irreversible y solo puede realizarla un coordinador. Se eliminarán todas las referencias asociadas (citas, acciones, soportes, etc.).
+            </p>
+            <div className="flex flex-col gap-1">
+              <label className="text-base font-normal text-foreground mb-1">
+                Motivo de la eliminación
+              </label>
+              <textarea
+                className={`
+                  w-full p-4 rounded-lg border bg-[#E5E7EB] border-transparent
+                  focus:outline-none focus:ring-1 focus:ring-primary
+                  text-base placeholder:text-[#717171] resize-none
+                  ${deleteLoading ? 'opacity-50 cursor-not-allowed' : ''}
+                `}
+                rows={4}
+                maxLength={250}
+                value={deleteMotivo}
+                onChange={e => setDeleteMotivo(e.target.value)}
+                placeholder="Describe el motivo de la eliminación..."
+                disabled={deleteLoading}
+              />
+              <div className="text-right text-xs text-gray-500 mt-1">
+                {deleteMotivo.length} / 250 caracteres
+              </div>
+            </div>
+          </div>
+        }
+        confirmLabel={deleteLoading ? 'Eliminando...' : 'Eliminar'}
+        cancelLabel="Cancelar"
+        disabled={deleteLoading || !deleteMotivo.trim()}
+        confirmVariant="danger"
       />
     </>
   );
 }
-
