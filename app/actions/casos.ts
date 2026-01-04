@@ -1066,7 +1066,7 @@ export interface UpdateAccionParams {
 
 export interface UpdateAccionResult {
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: { message: string; code?: string };
 }
 
