@@ -1,6 +1,7 @@
 'use server';
 
 import { citasService } from '@/lib/services/citas.service';
+import { notificarVariosUsuariosAction } from '@/app/actions/notificaciones';
 import { AppError, UnauthorizedError } from '@/lib/utils/errors';
 import { appointmentSchema } from '@/lib/validations/appointment.schema';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
@@ -146,6 +147,7 @@ export async function getAppointmentFilterOptionsAction(): Promise<GetAppointmen
   }
 }
 
+// Server Action para obtener todas las citas
 export async function getCitasAction(): Promise<GetCitasResult> {
   try {
     // Verificar autenticación
@@ -287,6 +289,17 @@ export async function updateCitaAction(params: UpdateCitaParams): Promise<GetCit
       usuariosAtienden: params.usuariosAtienden,
       idUsuarioActualizo: authResult.user.cedula,
     });
+
+    const id_caso = updatedCita ? updatedCita.id_caso : null;
+    const usuariosAtienden = params.usuariosAtienden || [];
+    // Notificar a los usuarios asignados a la cita sobre la actualización
+    if (id_caso && usuariosAtienden.length > 0) {
+      await notificarVariosUsuariosAction({
+        cedulasReceptores: usuariosAtienden,
+        titulo: 'Cita actualizada',
+        mensaje: `La cita del caso #${id_caso} para la fecha ${params.date || 'actualizada'} ha sido modificada. Por favor, revisa los detalles en el sistema.`,
+      });
+    }
 
     return {
       success: true,

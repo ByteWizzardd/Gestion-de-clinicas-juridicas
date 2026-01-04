@@ -642,13 +642,13 @@ export async function changeStatusAction(
       };
     }
 
-    const estatusValidos = ['En proceso', 'Archivado', 'Entregado', 'Asesoría'];
+    const estatusValidos = ["En proceso", "Archivado", "Entregado", "Asesoría"];
     if (!estatusValidos.includes(nuevoEstatus)) {
       return {
         success: false,
         error: {
-          message: 'Estatus inválido',
-          code: 'VALIDATION_ERROR',
+          message: "Estatus inválido",
+          code: "VALIDATION_ERROR",
         },
       };
     }
@@ -660,6 +660,21 @@ export async function changeStatusAction(
       cedulaUsuario,
       motivo?.trim() || undefined
     );
+
+
+    // Obtener todos los participantes del caso (profesores y estudiantes)
+    const equipo = await asignacionesQueries.getEquipoByCaso(idCaso);
+    const cedulasParticipantes = equipo
+      .filter((m) => m.habilitado)
+      .map((m) => m.cedula);
+
+    if (cedulasParticipantes.length > 0) {
+      await notificarVariosUsuariosAction({
+        cedulasReceptores: cedulasParticipantes,
+        titulo: 'Cambio de estatus en caso',
+        mensaje: `El caso #${idCaso} ha cambiado su estatus a "${nuevoEstatus}". Por favor, revisa los detalles en el sistema.`,
+      });
+    }
 
     revalidatePath(`/dashboard/cases/${idCaso}`);
 
