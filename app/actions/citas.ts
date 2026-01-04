@@ -2,10 +2,12 @@
 
 import { citasService } from '@/lib/services/citas.service';
 import { notificarVariosUsuariosAction } from '@/app/actions/notificaciones';
-import { AppError, UnauthorizedError } from '@/lib/utils/errors';
+import { AppError } from '@/lib/utils/errors';
 import { appointmentSchema } from '@/lib/validations/appointment.schema';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { handleServerActionError } from '@/lib/utils/server-action-helpers';
+import { revalidatePath } from 'next/cache';
+
 
 export interface GetCitasResult {
   success: boolean;
@@ -35,21 +37,21 @@ export interface UpdateCitaParams {
 /**
  * Server Action para obtener todas las citas
  */
-export async function createCitaAction(params: CreateCitaParams): Promise<GetCitasResult> {
+export async function createCitaAction(
+  params: CreateCitaParams
+): Promise<GetCitasResult> {
   try {
     const parseResult = appointmentSchema.safeParse(params);
     if (!parseResult.success) {
-      console.error('[DEBUG] createCitaAction - Validación fallida:', parseResult.error);
       return {
         success: false,
         error: {
-          message: 'Datos inválidos',
-          code: 'VALIDATION_ERROR',
+          message: "Datos inválidos",
+          code: "VALIDATION_ERROR",
         },
       };
     }
 
-    // Verificar autenticación
     const authResult = await requireAuthInServerActionWithCode();
     if (!authResult.success || !authResult.user) {
       return {
@@ -58,22 +60,51 @@ export async function createCitaAction(params: CreateCitaParams): Promise<GetCit
       };
     }
 
-    // Convertir caseId a número antes de guardar en la base de datos
+    // Crear la cita primero
     const newCita = await citasService.createAppointment({
       ...params,
       caseId: Number(params.caseId),
       idUsuarioRegistro: authResult.user.cedula,
     });
 
+
+    // Construir appointmentId si no existe
+    let appointmentId = '';
+    if ('appointmentId' in newCita && typeof newCita.appointmentId === 'string') {
+      appointmentId = newCita.appointmentId;
+    } else if ('num_cita' in newCita && 'id_caso' in newCita) {
+      appointmentId = `cita-${newCita.num_cita}-${newCita.id_caso}`;
+    }
+
+    let idCasoNotificar: number | null = null;
+    try {
+      const citaInfo = citasService.getCitaInfoByAppointmentId(appointmentId);
+      idCasoNotificar = citaInfo?.id_caso ?? null;
+    } catch {
+      idCasoNotificar = null;
+    }
+
+    // Notificar a los usuarios asignados a la cita sobre la creación
+    const usuariosAtienden = params.usuariosAtienden || [];
+    if (idCasoNotificar && usuariosAtienden.length > 0) {
+      await notificarVariosUsuariosAction({
+        cedulasReceptores: usuariosAtienden,
+        titulo: "Nueva cita asignada",
+        mensaje: `Se te ha asignado una nueva cita #${newCita.num_cita} para el caso #${idCasoNotificar} en la fecha ${params.date}. Haz clic para ver la cita.`,
+      });
+    }
+
+    // Revalidar la caché de citas
+    revalidatePath("/dashboard/citas");
+
     return {
       success: true,
       data: newCita,
     };
   } catch (error) {
-    return handleServerActionError(error, 'createCitaAction', 'CITA_ERROR');
+    return handleServerActionError(error, "createCitaAction", "CITA_ERROR");
   }
 }
-
 export interface GetAppointmentFilterOptionsResult {
   success: boolean;
   data?: {
@@ -297,7 +328,7 @@ export async function updateCitaAction(params: UpdateCitaParams): Promise<GetCit
       await notificarVariosUsuariosAction({
         cedulasReceptores: usuariosAtienden,
         titulo: 'Cita actualizada',
-        mensaje: `La cita del caso #${id_caso} para la fecha ${params.date || 'actualizada'} ha sido modificada. Por favor, revisa los detalles en el sistema.`,
+        mensaje: `La cita #${params.appointmentId} del caso #${id_caso} para la fecha ${params.date || 'actualizada'} ha sido modificada. Haz clic para ver la cita.`,
       });
     }
 
@@ -327,6 +358,7 @@ export async function updateCitaAction(params: UpdateCitaParams): Promise<GetCit
   }
 }
 
+// Server Action para eliminar una cita existente
 export interface DeleteCitaParams {
   appointmentId: string;
   motivo: string;
@@ -368,12 +400,35 @@ export async function deleteCitaAction(params: DeleteCitaParams): Promise<GetCit
       };
     }
 
+    // Consultar usuarios asignados antes de eliminar la cita (para poder notificar)
+    let usuariosAtienden: string[] = [];
+    let idCasoParaNotificar: number | null = null;
+    try {
+      const snapshot = await citasService.getUsuariosAtiendenByAppointmentId(params.appointmentId);
+      usuariosAtienden = snapshot?.usuariosAtienden || [];
+      idCasoParaNotificar = snapshot?.id_caso || null;
+    } catch {
+      // Si falla el parsing/consulta, seguimos pero no notificamos
+      usuariosAtienden = [];
+      idCasoParaNotificar = null;
+    }
+
     // Eliminar la cita (registra auditoría antes de eliminar)
     const deletedCita = await citasService.deleteAppointment({
       appointmentId: params.appointmentId,
       idUsuarioElimino: authResult.user.cedula,
       motivo: params.motivo.trim(),
     });
+
+    // Notificar a los usuarios asignados sobre la eliminación (la cita ya no existe, así que enlazamos al caso)
+    if (idCasoParaNotificar && usuariosAtienden.length > 0) {
+      await notificarVariosUsuariosAction({
+        cedulasReceptores: usuariosAtienden,
+        titulo: 'Cita eliminada',
+        mensaje: `La cita que atendías del caso #${idCasoParaNotificar} ha sido eliminada. Haz clic para ver el caso.`,
+      });
+    }
+    
 
     const result = {
       success: true,

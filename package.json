@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "cleanup:notificaciones": "node scripts/cleanup-notificaciones.mjs"
+    "cleanup:notificaciones": "node scripts/cleanup-notificaciones.mjs",
+    "reminders:citas": "node scripts/send-cita-reminders.mjs"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

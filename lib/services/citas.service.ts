@@ -2,12 +2,24 @@ import { citasQueries, type CitaCompleta } from '@/lib/db/queries/citas.queries'
 import { AppError } from '@/lib/utils/errors';
 import { withTransaction } from '@/lib/db/transactions';
 import { loadSQL } from '@/lib/db/sql-loader';
+import { atiendenQueries } from '@/lib/db/queries/atienden.queries';
 
 /**
  * Servicio para la entidad Citas
  * Contiene la lógica de negocio para el módulo de Programación y Consultas
  */
 export const citasService = {
+    /**
+     * Obtiene el id_caso y num_cita a partir del appointmentId
+     */
+    getCitaInfoByAppointmentId(appointmentId: string): { num_cita: number; id_caso: number } | null {
+      const idParts = appointmentId.split('-');
+      if (idParts.length < 3 || idParts[0] !== 'cita') return null;
+      const num_cita = parseInt(idParts[1], 10);
+      const id_caso = parseInt(idParts[2], 10);
+      if (isNaN(num_cita) || isNaN(id_caso)) return null;
+      return { num_cita, id_caso };
+    },
   /**
    * Obtiene todas las citas formateadas para el frontend
    */
@@ -86,7 +98,7 @@ export const citasService = {
           isMultiplePeople,
           nextAppointmentDate,
         };
-      });
+      }); 
     } catch (error) {
       throw new AppError(
         "Error al obtener las citas",
@@ -106,7 +118,10 @@ export const citasService = {
     orientacion: string;
     usuariosAtienden?: string[];
     idUsuarioRegistro: string; // Cedula del usuario que registra la cita
-  }): Promise<{ num_cita: number; id_caso: number }> {
+  }): Promise<{
+    num_cita: number;
+    id_caso: number;
+  }> {
     try {
       const caseIdNumber = typeof params.caseId === 'string' ? parseInt(params.caseId, 10) : params.caseId;
       if (isNaN(caseIdNumber)) {
@@ -151,7 +166,6 @@ export const citasService = {
       });
     } catch (error) {
       // Log detallado para depuración
-      // eslint-disable-next-line no-console
       console.error('Error al crear la cita (detalle DB):', error);
       throw new AppError(
         "Error al crear la cita",
@@ -376,7 +390,7 @@ export const citasService = {
                 }
               }
             }
-          } catch (error) {
+          } catch {
             // No fallar la actualización de la cita por error en eliminación de acción
           }
         }
@@ -384,7 +398,6 @@ export const citasService = {
         return { num_cita, id_caso };
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error('Error al actualizar la cita (detalle DB):', error);
       throw new AppError(
         "Error al actualizar la cita",
@@ -565,7 +578,7 @@ export const citasService = {
               console.log('DEBUG deleteAppointment - No se encontró ninguna acción que corresponda exactamente a esta cita');
             }
           }
-        } catch (error) {
+        } catch {
           // No fallar la eliminación de la cita por error en eliminación de acción
         }
 
@@ -588,7 +601,6 @@ export const citasService = {
         return { num_cita, id_caso };
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error('Error al eliminar la cita (detalle DB):', error);
       throw new AppError(
         "Error al eliminar la cita",
@@ -596,6 +608,27 @@ export const citasService = {
         error instanceof Error ? error.message : "Error desconocido"
       );
     }
+  },
+
+  /**
+   * Obtiene las cédulas de los usuarios que atienden una cita a partir del appointmentId
+   * (Formato: "cita-{num_cita}-{id_caso}-{timestamp}")
+   */
+  async getUsuariosAtiendenByAppointmentId(appointmentId: string): Promise<{ id_caso: number; usuariosAtienden: string[] } | null> {
+    const citaInfo = this.getCitaInfoByAppointmentId(appointmentId);
+    if (!citaInfo) {
+      throw new AppError('ID de cita inválido', 400);
+    }
+    const { num_cita, id_caso } = citaInfo;
+    const atenciones = await atiendenQueries.getByCita(num_cita, id_caso);
+    const usuariosAtienden = Array.from(
+      new Set(
+        atenciones
+          .map((a) => a.id_usuario)
+          .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+      )
+    );
+    return { id_caso, usuariosAtienden };
   },
 };
 
