@@ -7,6 +7,7 @@ SELECT
     a.num_ambito_legal,
     a.nombre_ambito_legal,
     a.habilitado,
+    s.nombre_subcategoria,
     
     a.fecha_eliminacion,
     a.id_usuario_elimino,
@@ -17,6 +18,7 @@ SELECT
     a.motivo
 FROM auditoria_eliminacion_ambitos_legales a
 LEFT JOIN usuarios u ON a.id_usuario_elimino = u.cedula
+LEFT JOIN subcategorias s ON a.id_materia = s.id_materia AND a.num_categoria = s.num_categoria AND a.num_subcategoria = s.num_subcategoria
 WHERE 
     ($1::DATE IS NULL OR a.fecha_eliminacion::DATE >= $1)
     AND ($2::DATE IS NULL OR a.fecha_eliminacion::DATE <= $2)

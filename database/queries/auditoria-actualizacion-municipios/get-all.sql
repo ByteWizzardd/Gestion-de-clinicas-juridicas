@@ -7,7 +7,7 @@ SELECT
     a.nombre_municipio_nuevo,
     a.habilitado_anterior,
     a.habilitado_nuevo,
-    
+    e.nombre_estado,
     a.fecha_actualizacion,
     a.id_usuario_actualizo,
     u.nombres AS nombres_usuario_actualizo,
@@ -16,6 +16,7 @@ SELECT
     u.foto_perfil AS foto_perfil_usuario_actualizo
 FROM auditoria_actualizacion_municipios a
 LEFT JOIN usuarios u ON a.id_usuario_actualizo = u.cedula
+LEFT JOIN estados e ON a.id_estado = e.id_estado
 WHERE 
     ($1::DATE IS NULL OR a.fecha_actualizacion::DATE >= $1)
     AND ($2::DATE IS NULL OR a.fecha_actualizacion::DATE <= $2)

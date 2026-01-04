@@ -16,26 +16,42 @@ export async function getAmbitosLegales() {
 }
 
 export async function createAmbitoLegal(data: { id_materia: string; num_categoria: string; num_subcategoria: string; nombre_ambito_legal: string }) {
+    const client = await pool.connect();
     try {
+        await client.query('BEGIN');
+
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'No autorizado' };
+        }
+
+        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+
         const id_materia = parseInt(data.id_materia);
         const num_categoria = parseInt(data.num_categoria);
         const num_subcategoria = parseInt(data.num_subcategoria);
 
-        const maxResult = await pool.query(
+        const maxResult = await client.query(
             'SELECT COALESCE(MAX(num_ambito_legal), 0) + 1 as next_num FROM ambitos_legales WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3',
             [id_materia, num_categoria, num_subcategoria]
         );
         const nextNum = maxResult.rows[0].next_num;
 
-        const result = await pool.query(
+        const result = await client.query(
             'INSERT INTO ambitos_legales (id_materia, num_categoria, num_subcategoria, num_ambito_legal, nombre_ambito_legal) VALUES ($1, $2, $3, $4, $5) RETURNING *',
             [id_materia, num_categoria, num_subcategoria, nextNum, data.nombre_ambito_legal]
         );
+
+        await client.query('COMMIT');
         revalidatePath('/dashboard/catalogs/ambitos-legales');
         return { success: true, data: result.rows[0] };
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Error creating ambito legal:', error);
         return { success: false, error: 'Error al crear ámbito legal' };
+    } finally {
+        client.release();
     }
 }
 
@@ -87,6 +103,12 @@ export async function updateAmbitoLegal(
                 return { success: true, data: result.rows[0] };
             } else {
                 // Move operation
+                const authResult = await requireAuthInServerActionWithCode();
+                if (!authResult.success || !authResult.user) {
+                    await client.query('ROLLBACK');
+                    return { success: false, error: 'No autorizado' };
+                }
+
                 // 1. Get new ID
                 const maxResult = await client.query(
                     'SELECT COALESCE(MAX(num_ambito_legal), 0) + 1 as next_num FROM ambitos_legales WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3',
@@ -95,6 +117,7 @@ export async function updateAmbitoLegal(
                 const nextNum = maxResult.rows[0].next_num;
 
                 // 2. Insert new record
+                await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
                 const insertResult = await client.query(
                     'INSERT INTO ambitos_legales (id_materia, num_categoria, num_subcategoria, num_ambito_legal, nombre_ambito_legal) VALUES ($1, $2, $3, $4, $5) RETURNING *',
                     [target_id_materia, target_num_categoria, target_num_subcategoria, nextNum, data.nombre_ambito_legal]
@@ -110,7 +133,9 @@ export async function updateAmbitoLegal(
                         id_materia, num_categoria, num_subcategoria, num_ambito_legal]
                 );
 
-                // 4. Delete old record
+                // 4. Delete old record (set session variables for audit trigger)
+                await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
+                await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", ['Movido a nueva jerarquía']);
                 await client.query(
                     'DELETE FROM ambitos_legales WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3 AND num_ambito_legal = $4',
                     [id_materia, num_categoria, num_subcategoria, num_ambito_legal]
@@ -179,7 +204,7 @@ export async function deleteAmbitoLegal(id_materia: number, num_categoria: numbe
 
         const checkResult = await client.query(
             `SELECT EXISTS (
-                SELECT 1 FROM casos WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3 AND num_ambito = $4
+                SELECT 1 FROM casos WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3 AND num_ambito_legal = $4
             ) AS has_associations`,
             [id_materia, num_categoria, num_subcategoria, num_ambito_legal]
         );

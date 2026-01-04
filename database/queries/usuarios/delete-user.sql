@@ -45,7 +45,7 @@ BEGIN
     END IF;
 
     BEGIN
-        -- Eliminar referencias
+        -- Eliminar referencias operativas (no de auditoría)
         DELETE FROM password_reset_tokens WHERE cedula_usuario = p_cedula_usuario;
         DELETE FROM atienden WHERE id_usuario = p_cedula_usuario;
         DELETE FROM ejecutan WHERE id_usuario_ejecuta = p_cedula_usuario;
@@ -56,6 +56,18 @@ BEGIN
         DELETE FROM coordinadores WHERE id_coordinador = p_cedula_usuario;
         DELETE FROM estudiantes WHERE cedula_estudiante = p_cedula_usuario;
         DELETE FROM profesores WHERE cedula_profesor = p_cedula_usuario;
+        
+        -- Actualizar referencias en notificaciones
+        UPDATE notificaciones SET cedula_emisor = NULL WHERE cedula_emisor = p_cedula_usuario;
+        UPDATE notificaciones SET cedula_receptor = NULL WHERE cedula_receptor = p_cedula_usuario;
+        
+        -- Actualizar referencias en citas
+        UPDATE citas SET id_usuario_registro = NULL WHERE id_usuario_registro = p_cedula_usuario;
+        UPDATE citas SET id_usuario_actualizo = NULL WHERE id_usuario_actualizo = p_cedula_usuario;
+        
+        -- Actualizar referencias en soportes
+        UPDATE soportes SET id_usuario_subio = NULL WHERE id_usuario_subio = p_cedula_usuario;
+        UPDATE soportes SET id_usuario_elimino = NULL WHERE id_usuario_elimino = p_cedula_usuario;
 
         -- Auditoría de eliminación (guardar antes de eliminar)
         INSERT INTO auditoria_eliminacion_usuario (
@@ -75,11 +87,13 @@ BEGIN
         );
 
         -- Eliminar de usuarios (después de guardar la auditoría)
+        -- Las foreign keys de auditoría deben permitir la eliminación (ON DELETE SET NULL)
         DELETE FROM usuarios WHERE cedula = p_cedula_usuario;
 
     EXCEPTION
         WHEN foreign_key_violation THEN
-            RAISE EXCEPTION 'No se puede eliminar el usuario porque aún tiene referencias activas. Use disable.sql (Soft Delete) en su lugar.';
+            -- Obtener más detalles sobre qué foreign key está causando el problema
+            RAISE EXCEPTION 'No se puede eliminar el usuario porque aún tiene referencias activas en tablas operativas. Detalle: %. Use disable.sql (Soft Delete) en su lugar.', SQLERRM;
         WHEN OTHERS THEN
             RAISE EXCEPTION 'Error al eliminar usuario: %', SQLERRM;
     END;

@@ -22,22 +22,33 @@ export async function getMaterias() {
  * Create a new materia
  */
 export async function createMateria(data: { nombre_materia: string }) {
+    const client = await pool.connect();
     try {
-        console.log('🔵 createMateria called with:', data);
-        const result = await pool.query(
+        await client.query('BEGIN');
+
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'No autorizado' };
+        }
+
+        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+
+        const result = await client.query(
             'INSERT INTO materias (nombre_materia) VALUES ($1) RETURNING *',
             [data.nombre_materia]
         );
-        console.log('✅ Materia created successfully:', result.rows[0]);
 
-        // Revalidate the path to clear Next.js cache
+        await client.query('COMMIT');
         revalidatePath('/dashboard/catalogs/materias');
-
         return { success: true, data: result.rows[0] };
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('❌ Error creating materia:', error);
         const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
         return { success: false, error: `Error al crear materia: ${errorMessage}` };
+    } finally {
+        client.release();
     }
 }
 

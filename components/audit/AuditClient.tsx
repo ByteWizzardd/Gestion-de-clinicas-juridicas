@@ -56,13 +56,18 @@ export default function AuditClient() {
         title: "Soportes",
         description: "Documentos y archivos del sistema",
         icon: FileText,
-        totalCount: counts.soportes,
+        totalCount: counts.soportes + (counts.soportesCreados || 0),
         href: "/dashboard/audit/soportes",
         operations: [
           {
             label: "Eliminados",
             count: counts.soportes,
             href: "/dashboard/audit/soportes"
+          },
+          {
+            label: "Creados",
+            count: counts.soportesCreados || 0,
+            href: "/dashboard/audit/soportes?tab=soportes-creados"
           }
         ]
       },
@@ -70,7 +75,7 @@ export default function AuditClient() {
         title: "Citas",
         description: "Registro de citas del sistema",
         icon: Calendar,
-        totalCount: counts.citasEliminadas + counts.citasActualizadas,
+        totalCount: counts.citasEliminadas + counts.citasActualizadas + (counts.citasCreadas || 0),
         href: "/dashboard/audit/citas",
         operations: [
           {
@@ -89,27 +94,32 @@ export default function AuditClient() {
         title: "Usuarios",
         description: "Registro de usuarios del sistema",
         icon: Users,
-        totalCount: counts.usuariosEliminados + counts.usuariosActualizadosCampos,
+        totalCount: counts.usuariosEliminados + counts.usuariosActualizadosCampos + (counts.usuariosCreados || 0),
         href: "/dashboard/audit/usuarios",
         operations: [
           {
-            label: "Eliminados",
-            count: counts.usuariosEliminados,
-            href: "/dashboard/audit/usuarios-eliminados"
+            label: "Creados",
+            count: counts.usuariosCreados || 0,
+            href: "/dashboard/audit/usuarios?tab=usuarios-creados"
           },
           {
             label: "Actualizados",
             count: counts.usuariosActualizadosCampos,
-            href: "/dashboard/audit/usuarios-actualizados-campos"
+            href: "/dashboard/audit/usuarios?tab=usuarios-actualizados-campos"
+          },
+          {
+            label: "Eliminados",
+            count: counts.usuariosEliminados,
+            href: "/dashboard/audit/usuarios?tab=usuarios-eliminados"
           }
         ]
       },
       // Catálogos
-      ...(counts.estadosEliminados !== undefined || counts.estadosActualizados !== undefined ? [{
+      ...(counts.estadosEliminados !== undefined || counts.estadosActualizados !== undefined || counts.estadosInsertados !== undefined ? [{
         title: "Estados",
         description: "Registro de estados del sistema",
         icon: MapPin,
-        totalCount: (counts.estadosEliminados || 0) + (counts.estadosActualizados || 0),
+        totalCount: (counts.estadosEliminados || 0) + (counts.estadosActualizados || 0) + (counts.estadosInsertados || 0),
         href: "/dashboard/audit/catalogos/estados",
         operations: [
           {
@@ -124,11 +134,11 @@ export default function AuditClient() {
           }
         ]
       }] : []),
-      ...(counts.materiasEliminadas !== undefined || counts.materiasActualizadas !== undefined ? [{
+      ...(counts.materiasEliminadas !== undefined || counts.materiasActualizadas !== undefined || counts.materiasInsertadas !== undefined ? [{
         title: "Materias",
         description: "Registro de materias del sistema",
         icon: BookOpen,
-        totalCount: (counts.materiasEliminadas || 0) + (counts.materiasActualizadas || 0),
+        totalCount: (counts.materiasEliminadas || 0) + (counts.materiasActualizadas || 0) + (counts.materiasInsertadas || 0),
         href: "/dashboard/audit/catalogos/materias",
         operations: [
           {
@@ -143,11 +153,11 @@ export default function AuditClient() {
           }
         ]
       }] : []),
-      ...(counts.nivelesEducativosEliminados !== undefined || counts.nivelesEducativosActualizados !== undefined ? [{
+      ...(counts.nivelesEducativosEliminados !== undefined || counts.nivelesEducativosActualizados !== undefined || counts.nivelesEducativosInsertados !== undefined ? [{
         title: "Niveles Educativos",
         description: "Registro de niveles educativos del sistema",
         icon: GraduationCap,
-        totalCount: (counts.nivelesEducativosEliminados || 0) + (counts.nivelesEducativosActualizados || 0),
+        totalCount: (counts.nivelesEducativosEliminados || 0) + (counts.nivelesEducativosActualizados || 0) + (counts.nivelesEducativosInsertados || 0),
         href: "/dashboard/audit/catalogos/niveles-educativos",
         operations: [
           {
@@ -162,11 +172,11 @@ export default function AuditClient() {
           }
         ]
       }] : []),
-      ...(counts.nucleosEliminados !== undefined || counts.nucleosActualizados !== undefined ? [{
+      ...(counts.nucleosEliminados !== undefined || counts.nucleosActualizados !== undefined || counts.nucleosInsertados !== undefined ? [{
         title: "Núcleos",
         description: "Registro de núcleos del sistema",
         icon: Building,
-        totalCount: (counts.nucleosEliminados || 0) + (counts.nucleosActualizados || 0),
+        totalCount: (counts.nucleosEliminados || 0) + (counts.nucleosActualizados || 0) + (counts.nucleosInsertados || 0),
         href: "/dashboard/audit/catalogos/nucleos",
         operations: [
           {
@@ -181,11 +191,11 @@ export default function AuditClient() {
           }
         ]
       }] : []),
-      ...(counts.condicionesTrabajoEliminadas !== undefined || counts.condicionesTrabajoActualizadas !== undefined ? [{
+      ...(counts.condicionesTrabajoEliminadas !== undefined || counts.condicionesTrabajoActualizadas !== undefined || counts.condicionesTrabajoInsertadas !== undefined ? [{
         title: "Condiciones de Trabajo",
         description: "Registro de condiciones de trabajo del sistema",
         icon: Briefcase,
-        totalCount: (counts.condicionesTrabajoEliminadas || 0) + (counts.condicionesTrabajoActualizadas || 0),
+        totalCount: (counts.condicionesTrabajoEliminadas || 0) + (counts.condicionesTrabajoActualizadas || 0) + (counts.condicionesTrabajoInsertadas || 0),
         href: "/dashboard/audit/catalogos/condiciones-trabajo",
         operations: [
           {
@@ -200,11 +210,11 @@ export default function AuditClient() {
           }
         ]
       }] : []),
-      ...(counts.condicionesActividadEliminadas !== undefined || counts.condicionesActividadActualizadas !== undefined ? [{
+      ...(counts.condicionesActividadEliminadas !== undefined || counts.condicionesActividadActualizadas !== undefined || counts.condicionesActividadInsertadas !== undefined ? [{
         title: "Condiciones de Actividad",
         description: "Registro de condiciones de actividad del sistema",
         icon: Activity,
-        totalCount: (counts.condicionesActividadEliminadas || 0) + (counts.condicionesActividadActualizadas || 0),
+        totalCount: (counts.condicionesActividadEliminadas || 0) + (counts.condicionesActividadActualizadas || 0) + (counts.condicionesActividadInsertadas || 0),
         href: "/dashboard/audit/catalogos/condiciones-actividad",
         operations: [
           {
@@ -219,11 +229,11 @@ export default function AuditClient() {
           }
         ]
       }] : []),
-      ...(counts.tiposCaracteristicasEliminados !== undefined || counts.tiposCaracteristicasActualizados !== undefined ? [{
+      ...(counts.tiposCaracteristicasEliminados !== undefined || counts.tiposCaracteristicasActualizados !== undefined || counts.tiposCaracteristicasInsertados !== undefined ? [{
         title: "Tipos de Características",
         description: "Registro de tipos de características del sistema",
         icon: Tag,
-        totalCount: (counts.tiposCaracteristicasEliminados || 0) + (counts.tiposCaracteristicasActualizados || 0),
+        totalCount: (counts.tiposCaracteristicasEliminados || 0) + (counts.tiposCaracteristicasActualizados || 0) + (counts.tiposCaracteristicasInsertados || 0),
         href: "/dashboard/audit/catalogos/tipos-caracteristicas",
         operations: [
           {
@@ -238,11 +248,11 @@ export default function AuditClient() {
           }
         ]
       }] : []),
-      ...(counts.semestresEliminados !== undefined || counts.semestresActualizados !== undefined ? [{
+      ...(counts.semestresEliminados !== undefined || counts.semestresActualizados !== undefined || counts.semestresInsertados !== undefined ? [{
         title: "Semestres",
         description: "Registro de semestres del sistema",
         icon: CalendarIcon,
-        totalCount: (counts.semestresEliminados || 0) + (counts.semestresActualizados || 0),
+        totalCount: (counts.semestresEliminados || 0) + (counts.semestresActualizados || 0) + (counts.semestresInsertados || 0),
         href: "/dashboard/audit/catalogos/semestres",
         operations: [
           {
@@ -257,11 +267,11 @@ export default function AuditClient() {
           }
         ]
       }] : []),
-      ...(counts.municipiosEliminados !== undefined || counts.municipiosActualizados !== undefined ? [{
+      ...(counts.municipiosEliminados !== undefined || counts.municipiosActualizados !== undefined || counts.municipiosInsertados !== undefined ? [{
         title: "Municipios",
         description: "Registro de municipios del sistema",
         icon: Building2,
-        totalCount: (counts.municipiosEliminados || 0) + (counts.municipiosActualizados || 0),
+        totalCount: (counts.municipiosEliminados || 0) + (counts.municipiosActualizados || 0) + (counts.municipiosInsertados || 0),
         href: "/dashboard/audit/catalogos/municipios",
         operations: [
           {
@@ -276,11 +286,11 @@ export default function AuditClient() {
           }
         ]
       }] : []),
-      ...(counts.parroquiasEliminadas !== undefined || counts.parroquiasActualizadas !== undefined ? [{
+      ...(counts.parroquiasEliminadas !== undefined || counts.parroquiasActualizadas !== undefined || counts.parroquiasInsertadas !== undefined ? [{
         title: "Parroquias",
         description: "Registro de parroquias del sistema",
         icon: Home,
-        totalCount: (counts.parroquiasEliminadas || 0) + (counts.parroquiasActualizadas || 0),
+        totalCount: (counts.parroquiasEliminadas || 0) + (counts.parroquiasActualizadas || 0) + (counts.parroquiasInsertadas || 0),
         href: "/dashboard/audit/catalogos/parroquias",
         operations: [
           {
@@ -295,11 +305,11 @@ export default function AuditClient() {
           }
         ]
       }] : []),
-      ...(counts.categoriasEliminadas !== undefined || counts.categoriasActualizadas !== undefined ? [{
+      ...(counts.categoriasEliminadas !== undefined || counts.categoriasActualizadas !== undefined || counts.categoriasInsertadas !== undefined ? [{
         title: "Categorías",
         description: "Registro de categorías del sistema",
         icon: FolderTree,
-        totalCount: (counts.categoriasEliminadas || 0) + (counts.categoriasActualizadas || 0),
+        totalCount: (counts.categoriasEliminadas || 0) + (counts.categoriasActualizadas || 0) + (counts.categoriasInsertadas || 0),
         href: "/dashboard/audit/catalogos/categorias",
         operations: [
           {
@@ -314,11 +324,11 @@ export default function AuditClient() {
           }
         ]
       }] : []),
-      ...(counts.subcategoriasEliminadas !== undefined || counts.subcategoriasActualizadas !== undefined ? [{
+      ...(counts.subcategoriasEliminadas !== undefined || counts.subcategoriasActualizadas !== undefined || counts.subcategoriasInsertadas !== undefined ? [{
         title: "Subcategorías",
         description: "Registro de subcategorías del sistema",
         icon: FileText,
-        totalCount: (counts.subcategoriasEliminadas || 0) + (counts.subcategoriasActualizadas || 0),
+        totalCount: (counts.subcategoriasEliminadas || 0) + (counts.subcategoriasActualizadas || 0) + (counts.subcategoriasInsertadas || 0),
         href: "/dashboard/audit/catalogos/subcategorias",
         operations: [
           {
@@ -333,11 +343,11 @@ export default function AuditClient() {
           }
         ]
       }] : []),
-      ...(counts.ambitosLegalesEliminados !== undefined || counts.ambitosLegalesActualizados !== undefined ? [{
+      ...(counts.ambitosLegalesEliminados !== undefined || counts.ambitosLegalesActualizados !== undefined || counts.ambitosLegalesInsertados !== undefined ? [{
         title: "Ámbitos Legales",
         description: "Registro de ámbitos legales del sistema",
         icon: Scale,
-        totalCount: (counts.ambitosLegalesEliminados || 0) + (counts.ambitosLegalesActualizados || 0),
+        totalCount: (counts.ambitosLegalesEliminados || 0) + (counts.ambitosLegalesActualizados || 0) + (counts.ambitosLegalesInsertados || 0),
         href: "/dashboard/audit/catalogos/ambitos-legales",
         operations: [
           {
@@ -352,11 +362,11 @@ export default function AuditClient() {
           }
         ]
       }] : []),
-      ...(counts.caracteristicasEliminadas !== undefined || counts.caracteristicasActualizadas !== undefined ? [{
+      ...(counts.caracteristicasEliminadas !== undefined || counts.caracteristicasActualizadas !== undefined || counts.caracteristicasInsertadas !== undefined ? [{
         title: "Características",
         description: "Registro de características del sistema",
         icon: Tags,
-        totalCount: (counts.caracteristicasEliminadas || 0) + (counts.caracteristicasActualizadas || 0),
+        totalCount: (counts.caracteristicasEliminadas || 0) + (counts.caracteristicasActualizadas || 0) + (counts.caracteristicasInsertadas || 0),
         href: "/dashboard/audit/catalogos/caracteristicas",
         operations: [
           {

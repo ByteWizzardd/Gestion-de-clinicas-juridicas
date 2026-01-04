@@ -16,22 +16,38 @@ export async function getCategorias() {
 }
 
 export async function createCategoria(data: { id_materia: string; nombre_categoria: string }) {
+    const client = await pool.connect();
     try {
-        const maxResult = await pool.query(
+        await client.query('BEGIN');
+
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'No autorizado' };
+        }
+
+        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+
+        const maxResult = await client.query(
             'SELECT COALESCE(MAX(num_categoria), 0) + 1 as next_num FROM categorias WHERE id_materia = $1',
             [parseInt(data.id_materia)]
         );
         const nextNum = maxResult.rows[0].next_num;
 
-        const result = await pool.query(
+        const result = await client.query(
             'INSERT INTO categorias (id_materia, num_categoria, nombre_categoria) VALUES ($1, $2, $3) RETURNING *',
             [parseInt(data.id_materia), nextNum, data.nombre_categoria]
         );
+
+        await client.query('COMMIT');
         revalidatePath('/dashboard/catalogs/categorias');
         return { success: true, data: result.rows[0] };
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Error creating categoria:', error);
         return { success: false, error: 'Error al crear categoría' };
+    } finally {
+        client.release();
     }
 }
 
@@ -52,6 +68,11 @@ export async function updateCategoria(
 
             if (target_id_materia !== id_materia) {
                 // Cascading Move Operation
+                const authResult = await requireAuthInServerActionWithCode();
+                if (!authResult.success || !authResult.user) {
+                    await client.query('ROLLBACK');
+                    return { success: false, error: 'No autorizado' };
+                }
 
                 // 1. Get new num_categoria for target materia
                 const maxResult = await client.query(
@@ -61,11 +82,16 @@ export async function updateCategoria(
                 const nextNum = maxResult.rows[0].next_num;
 
                 // 2. Insert new category
+                await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
                 const insertResult = await client.query(
                     'INSERT INTO categorias (id_materia, num_categoria, nombre_categoria) VALUES ($1, $2, $3) RETURNING *',
                     [target_id_materia, nextNum, data.nombre_categoria]
                 );
                 const newCategory = insertResult.rows[0];
+
+                // Set session variables for deletions
+                await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
+                await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", ['Movido a nueva jerarquía']);
 
                 // 3. Move Subcategories
                 const subcategorias = await client.query(
@@ -76,6 +102,7 @@ export async function updateCategoria(
                 for (const sub of subcategorias.rows) {
                     const old_num_sub = sub.num_subcategoria;
 
+                    await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
                     await client.query(
                         'INSERT INTO subcategorias (id_materia, num_categoria, num_subcategoria, nombre_subcategoria) VALUES ($1, $2, $3, $4)',
                         [target_id_materia, nextNum, sub.num_subcategoria, sub.nombre_subcategoria]
@@ -90,6 +117,7 @@ export async function updateCategoria(
                     for (const ambito of ambitos.rows) {
                         const old_num_ambito = ambito.num_ambito_legal;
 
+                        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
                         await client.query(
                             'INSERT INTO ambitos_legales (id_materia, num_categoria, num_subcategoria, num_ambito_legal, nombre_ambito_legal) VALUES ($1, $2, $3, $4, $5)',
                             [target_id_materia, nextNum, sub.num_subcategoria, ambito.num_ambito_legal, ambito.nombre_ambito_legal]
@@ -106,21 +134,21 @@ export async function updateCategoria(
                             ]
                         );
 
-                        // Delete old Ambito
+                        // Delete old Ambito (session variables already set above)
                         await client.query(
                             'DELETE FROM ambitos_legales WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3 AND num_ambito_legal = $4',
                             [id_materia, num_categoria, old_num_sub, old_num_ambito]
                         );
                     }
 
-                    // Delete old Subcategory
+                    // Delete old Subcategory (session variables already set above)
                     await client.query(
                         'DELETE FROM subcategorias WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3',
                         [id_materia, num_categoria, old_num_sub]
                     );
                 }
 
-                // 6. Delete old Category
+                // 6. Delete old Category (session variables already set above)
                 await client.query(
                     'DELETE FROM categorias WHERE id_materia = $1 AND num_categoria = $2',
                     [id_materia, num_categoria]

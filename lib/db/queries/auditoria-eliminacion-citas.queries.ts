@@ -103,6 +103,13 @@ export const auditoriaEliminacionCitasQueries = {
     nombre_completo_usuario_elimino: string | null;
     foto_perfil_usuario_elimino: string | null;
     motivo: string | null;
+    usuarios_atendieron?: Array<{
+      id_usuario: string;
+      nombres: string | null;
+      apellidos: string | null;
+      nombre_completo: string | null;
+      fecha_registro: string;
+    }>;
   }>> => {
     const query = loadSQL('auditoria-eliminacion-citas/get-all.sql');
     const result: QueryResult = await pool.query(query, [
@@ -112,12 +119,15 @@ export const auditoriaEliminacionCitasQueries = {
       filters?.busqueda || null,
       filters?.orden || 'desc', // Por defecto: más reciente primero
     ]);
-    // Convertir foto_perfil de Buffer a base64
+    // Convertir foto_perfil de Buffer a base64 y parsear usuarios_atendieron
     return result.rows.map(row => ({
       ...row,
       foto_perfil_usuario_elimino: row.foto_perfil_usuario_elimino 
         ? `data:image/jpeg;base64,${(row.foto_perfil_usuario_elimino as Buffer).toString('base64')}`
         : null,
+      usuarios_atendieron: row.usuarios_atendieron ? (typeof row.usuarios_atendieron === 'string' 
+        ? JSON.parse(row.usuarios_atendieron) 
+        : row.usuarios_atendieron) : [],
     }));
   },
 };

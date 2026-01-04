@@ -5,7 +5,7 @@ SELECT
     a.num_municipio,
     a.nombre_municipio,
     a.habilitado,
-    
+    e.nombre_estado,
     a.fecha_eliminacion,
     a.id_usuario_elimino,
     u.nombres AS nombres_usuario_elimino,
@@ -15,6 +15,7 @@ SELECT
     a.motivo
 FROM auditoria_eliminacion_municipios a
 LEFT JOIN usuarios u ON a.id_usuario_elimino = u.cedula
+LEFT JOIN estados e ON a.id_estado = e.id_estado
 WHERE 
     ($1::DATE IS NULL OR a.fecha_eliminacion::DATE >= $1)
     AND ($2::DATE IS NULL OR a.fecha_eliminacion::DATE <= $2)

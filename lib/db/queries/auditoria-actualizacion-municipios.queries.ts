@@ -32,6 +32,7 @@ export const auditoriaActualizacionMunicipiosQueries = {
     nombre_municipio_nuevo: string | null;
     habilitado_anterior: boolean | null;
     habilitado_nuevo: boolean | null;
+    nombre_estado: string | null;
     fecha_actualizacion: string;
     id_usuario_actualizo: string;
     nombres_usuario_actualizo: string | null;

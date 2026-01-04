@@ -30,16 +30,30 @@ export async function getNivelesEducativos() {
  * Create a new nivel educativo
  */
 export async function createNivelEducativo(data: { descripcion: string }) {
+    const client = await pool.connect();
     try {
-        console.log('🔵 createNivelEducativo called with:', data);
+        await client.query('BEGIN');
+
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'No autorizado' };
+        }
+
+        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+
         const query = loadQuery('create-nivel-educativo.sql');
-        const result = await pool.query(query, [data.descripcion]);
-        console.log('✅ Nivel educativo created successfully:', result.rows[0]);
+        const result = await client.query(query, [data.descripcion]);
+
+        await client.query('COMMIT');
         revalidatePath('/dashboard/catalogs/niveles-educativos');
         return { success: true, data: result.rows[0] };
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('❌ Error creating nivel educativo:', error);
         return { success: false, error: 'Error al crear nivel educativo' };
+    } finally {
+        client.release();
     }
 }
 

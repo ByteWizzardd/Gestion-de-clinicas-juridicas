@@ -70,7 +70,11 @@ export default function ParroquiasPage() {
             editingItem.id_estado,
             editingItem.num_municipio,
             editingItem.num_parroquia,
-            { nombre_parroquia: data.nombre_parroquia }
+            { 
+                nombre_parroquia: data.nombre_parroquia,
+                id_estado: data.id_estado,
+                id_municipio: data.id_municipio
+            }
         );
         if (result.success) {
             handleCloseModal();

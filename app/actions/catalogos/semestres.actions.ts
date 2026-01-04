@@ -16,17 +16,33 @@ export async function getSemestres() {
 }
 
 export async function createSemestre(data: { term: string; fecha_inicio: string; fecha_fin: string }) {
+    const client = await pool.connect();
     try {
-        const result = await pool.query(
+        await client.query('BEGIN');
+
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'No autorizado' };
+        }
+
+        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+
+        const result = await client.query(
             'INSERT INTO semestres (term, fecha_inicio, fecha_fin) VALUES ($1, $2, $3) RETURNING *',
             [data.term, data.fecha_inicio, data.fecha_fin]
         );
+
+        await client.query('COMMIT');
         revalidatePath('/dashboard/catalogs/semestres');
         return { success: true, data: result.rows[0] };
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Error creating semestre:', error);
         const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
         return { success: false, error: `Error al crear semestre: ${errorMessage}` };
+    } finally {
+        client.release();
     }
 }
 
@@ -110,7 +126,13 @@ export async function deleteSemestre(term: string, motivo?: string) {
         }
 
         const checkResult = await client.query(
-            `SELECT EXISTS (SELECT 1 FROM casos WHERE term = $1) AS has_associations`,
+            `SELECT EXISTS (
+                SELECT 1 FROM coordinadores WHERE term = $1
+                UNION
+                SELECT 1 FROM estudiantes WHERE term = $1
+                UNION
+                SELECT 1 FROM profesores WHERE term = $1
+            ) AS has_associations`,
             [term]
         );
         if (checkResult.rows[0]?.has_associations === true) {
@@ -118,7 +140,7 @@ export async function deleteSemestre(term: string, motivo?: string) {
             return {
                 success: false,
                 error: 'HAS_ASSOCIATIONS',
-                message: 'No se puede eliminar este semestre porque tiene casos asociados.'
+                message: 'No se puede eliminar este semestre porque tiene usuarios (estudiantes, profesores o coordinadores) asociados.'
             };
         }
 

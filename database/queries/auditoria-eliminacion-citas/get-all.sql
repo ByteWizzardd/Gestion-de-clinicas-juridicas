@@ -25,7 +25,26 @@ SELECT
     CONCAT(u_elimino.nombres, ' ', u_elimino.apellidos) AS nombre_completo_usuario_elimino,
     u_elimino.foto_perfil AS foto_perfil_usuario_elimino,
     -- Motivo de la eliminación
-    a.motivo
+    a.motivo,
+    -- Información de usuarios que atendieron la cita (desde la tabla de auditoría)
+    -- Nota: Los usuarios que atendieron se guardan en la tabla atienden, pero como la cita fue eliminada,
+    -- necesitamos obtenerlos desde la tabla de auditoría si está disponible, o desde atienden si aún existen
+    COALESCE(
+        (SELECT json_agg(
+            json_build_object(
+                'id_usuario', at.id_usuario,
+                'nombres', u_at.nombres,
+                'apellidos', u_at.apellidos,
+                'nombre_completo', u_at.nombres || ' ' || u_at.apellidos,
+                'fecha_registro', at.fecha_registro
+            )
+            ORDER BY at.fecha_registro DESC
+        )
+        FROM atienden at
+        INNER JOIN usuarios u_at ON at.id_usuario = u_at.cedula
+        WHERE at.num_cita = a.num_cita AND at.id_caso = a.id_caso),
+        '[]'::json
+    ) AS usuarios_atendieron
 FROM auditoria_eliminacion_citas a
 LEFT JOIN usuarios u_registro ON a.id_usuario_registro = u_registro.cedula
 LEFT JOIN usuarios u_elimino ON a.id_usuario_elimino = u_elimino.cedula

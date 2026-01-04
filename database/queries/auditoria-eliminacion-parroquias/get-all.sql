@@ -6,7 +6,8 @@ SELECT
     a.num_parroquia,
     a.nombre_parroquia,
     a.habilitado,
-    
+    e.nombre_estado,
+    m.nombre_municipio,
     a.fecha_eliminacion,
     a.id_usuario_elimino,
     u.nombres AS nombres_usuario_elimino,
@@ -16,6 +17,8 @@ SELECT
     a.motivo
 FROM auditoria_eliminacion_parroquias a
 LEFT JOIN usuarios u ON a.id_usuario_elimino = u.cedula
+LEFT JOIN estados e ON a.id_estado = e.id_estado
+LEFT JOIN municipios m ON a.id_estado = m.id_estado AND a.num_municipio = m.num_municipio
 WHERE 
     ($1::DATE IS NULL OR a.fecha_eliminacion::DATE >= $1)
     AND ($2::DATE IS NULL OR a.fecha_eliminacion::DATE <= $2)

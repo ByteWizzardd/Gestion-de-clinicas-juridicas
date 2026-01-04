@@ -1058,14 +1058,22 @@ BEGIN
     END IF;
     
     IF OLD.nombre_parroquia IS DISTINCT FROM NEW.nombre_parroquia OR
-       OLD.habilitado IS DISTINCT FROM NEW.habilitado THEN
+       OLD.habilitado IS DISTINCT FROM NEW.habilitado OR
+       OLD.id_estado IS DISTINCT FROM NEW.id_estado OR
+       OLD.num_municipio IS DISTINCT FROM NEW.num_municipio THEN
         BEGIN
             INSERT INTO auditoria_actualizacion_parroquias (
             id_estado, num_municipio, num_parroquia, nombre_parroquia_anterior, nombre_parroquia_nuevo,
-            habilitado_anterior, habilitado_nuevo, id_usuario_actualizo
+            habilitado_anterior, habilitado_nuevo,
+            id_estado_anterior, id_estado_nuevo,
+            num_municipio_anterior, num_municipio_nuevo,
+            id_usuario_actualizo
         ) VALUES (
             NEW.id_estado, NEW.num_municipio, NEW.num_parroquia, OLD.nombre_parroquia, NEW.nombre_parroquia,
-            OLD.habilitado, NEW.habilitado, v_usuario
+            OLD.habilitado, NEW.habilitado,
+            OLD.id_estado, NEW.id_estado,
+            OLD.num_municipio, NEW.num_municipio,
+            v_usuario
         );
         EXCEPTION
             WHEN OTHERS THEN

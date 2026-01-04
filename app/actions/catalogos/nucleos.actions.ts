@@ -16,25 +16,45 @@ export async function getNucleos() {
 }
 
 export async function createNucleo(data: { id_estado: string; id_municipio: string; id_parroquia: string; nombre_nucleo: string }) {
+    const client = await pool.connect();
     try {
+        await client.query('BEGIN');
+
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'No autorizado' };
+        }
+
+        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+
         const id_estado = parseInt(data.id_estado);
         const num_municipio = parseInt(data.id_municipio);
         const num_parroquia = parseInt(data.id_parroquia);
 
-        // id_nucleo es SERIAL, se genera automáticamente
-        const result = await pool.query(
+        const result = await client.query(
             'INSERT INTO nucleos (id_estado, num_municipio, num_parroquia, nombre_nucleo) VALUES ($1, $2, $3, $4) RETURNING *',
             [id_estado, num_municipio, num_parroquia, data.nombre_nucleo]
         );
+
+        await client.query('COMMIT');
         revalidatePath('/dashboard/catalogs/nucleos');
         return { success: true, data: result.rows[0] };
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Error creating nucleo:', error);
         return { success: false, error: 'Error al crear núcleo' };
+    } finally {
+        client.release();
     }
 }
 
-export async function updateNucleo(id_nucleo: number, data: { nombre_nucleo: string }) {
+export async function updateNucleo(id_nucleo: number, data: { 
+    nombre_nucleo?: string;
+    id_estado?: string;
+    id_municipio?: string;
+    id_parroquia?: string;
+}) {
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
@@ -47,10 +67,37 @@ export async function updateNucleo(id_nucleo: number, data: { nombre_nucleo: str
 
         await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
 
-        const result = await client.query(
-            'UPDATE nucleos SET nombre_nucleo = $2 WHERE id_nucleo = $1 RETURNING *',
-            [id_nucleo, data.nombre_nucleo]
-        );
+        // Construir la query dinámicamente basada en los campos proporcionados
+        const updates: string[] = [];
+        const values: any[] = [];
+        let paramIndex = 1;
+
+        if (data.nombre_nucleo !== undefined) {
+            updates.push(`nombre_nucleo = $${paramIndex++}`);
+            values.push(data.nombre_nucleo);
+        }
+        if (data.id_estado !== undefined) {
+            updates.push(`id_estado = $${paramIndex++}`);
+            values.push(parseInt(data.id_estado));
+        }
+        if (data.id_municipio !== undefined) {
+            updates.push(`num_municipio = $${paramIndex++}`);
+            values.push(parseInt(data.id_municipio));
+        }
+        if (data.id_parroquia !== undefined) {
+            updates.push(`num_parroquia = $${paramIndex++}`);
+            values.push(parseInt(data.id_parroquia));
+        }
+
+        if (updates.length === 0) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'No se proporcionaron campos para actualizar' };
+        }
+
+        values.push(id_nucleo);
+        const query = `UPDATE nucleos SET ${updates.join(', ')} WHERE id_nucleo = $${paramIndex} RETURNING *`;
+        
+        const result = await client.query(query, values);
         if (result.rows.length === 0) {
             await client.query('ROLLBACK');
             return { success: false, error: 'Núcleo no encontrado' };

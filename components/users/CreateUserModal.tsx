@@ -50,6 +50,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
   const [errors, setErrors] = useState<Partial<Record<keyof CreateUserForm, string>>>({});
   const cedulaCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const emailCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const usernameCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Resetear formulario cuando se abre el modal
   useEffect(() => {
@@ -214,6 +215,42 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
     }
   };
 
+  const checkUsernameExists = async (username: string) => {
+    if (!username || username.trim() === '') {
+      // Limpiar error si el nombre de usuario está vacío
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.nombre_usuario;
+        return newErrors;
+      });
+      return;
+    }
+    
+    try {
+      // Verificar si el nombre de usuario ya está registrado como usuario
+      const { checkUsernameExistsUsuarioAction } = await import('@/app/actions/usuarios');
+      const usernameResult = await checkUsernameExistsUsuarioAction(username);
+      
+      if (usernameResult.success && usernameResult.exists) {
+        // Si el nombre de usuario existe, mostrar error
+        setErrors((prev) => ({
+          ...prev,
+          nombre_usuario: `El nombre de usuario ${username} ya está registrado como usuario`,
+        }));
+      } else {
+        // Si no existe, limpiar el error
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.nombre_usuario;
+          return newErrors;
+        });
+      }
+    } catch (err) {
+      // En caso de error, no mostrar nada (puede ser un error de red, etc.)
+      console.error('Error al verificar nombre de usuario:', err);
+    }
+  };
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -286,6 +323,35 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
     };
   }, [form.correo_electronico]);
 
+  // Efecto para verificar nombre de usuario cuando cambia
+  useEffect(() => {
+    // Limpiar timeout anterior si existe
+    if (usernameCheckTimeoutRef.current) {
+      clearTimeout(usernameCheckTimeoutRef.current);
+    }
+
+    // Verificar si el nombre de usuario tiene al menos 3 caracteres
+    if (form.nombre_usuario && form.nombre_usuario.trim().length >= 3) {
+      usernameCheckTimeoutRef.current = setTimeout(() => {
+        checkUsernameExists(form.nombre_usuario);
+      }, 500); // Debounce de 500ms
+    } else {
+      // Si el nombre de usuario es muy corto, limpiar el error
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.nombre_usuario;
+        return newErrors;
+      });
+    }
+
+    // Cleanup
+    return () => {
+      if (usernameCheckTimeoutRef.current) {
+        clearTimeout(usernameCheckTimeoutRef.current);
+      }
+    };
+  }, [form.nombre_usuario]);
+
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof CreateUserForm, string>> = {};
     
@@ -322,6 +388,9 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
     // Validar nombre de usuario
     if (!form.nombre_usuario || form.nombre_usuario.trim() === '') {
       newErrors.nombre_usuario = 'El nombre de usuario es requerido';
+    } else if (errors.nombre_usuario && errors.nombre_usuario.includes('ya está registrado')) {
+      // Mantener el error de nombre de usuario duplicado si existe
+      newErrors.nombre_usuario = errors.nombre_usuario;
     }
 
     // Validar teléfono (si está presente)

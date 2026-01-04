@@ -3,29 +3,36 @@ import AuditEntityDetailClient from '@/components/audit/AuditEntityDetailClient'
 
 export const dynamic = 'force-dynamic';
 
-export default async function CondicionesTrabajoAuditPage() {
+export default async function CondiciónTrabajoAuditPage() {
   await authorizeRole(['coordinator']);
 
   return (
     <div className="m-3">
       <AuditEntityDetailClient
-        entityTitle="Condiciones de Trabajo"
-        entityDescription="Registro completo de todas las acciones realizadas sobre las condiciones de trabajo del sistema"
-        defaultTab="condiciones-trabajo-eliminadas"
+        entityTitle="Condiciones Trabajo"
+        entityDescription="Registro completo de todas las acciones realizadas sobre los condiciones trabajo del sistema"
+        defaultTab="condiciones-trabajo-insertadas"
         operations={[
           {
-            label: 'Eliminadas',
-            auditType: 'condiciones-trabajo-eliminadas',
-            title: 'Condiciones de Trabajo Eliminadas',
-            description: 'Registro completo de todas las condiciones de trabajo eliminadas del sistema',
-            emptyMessage: 'No se encontraron condiciones de trabajo eliminadas'
+            label: 'Creados',
+            auditType: 'condiciones-trabajo-insertadas',
+            title: 'Condiciones Trabajo Creadas',
+            description: 'Registro completo de todas las condiciones de trabajo creadas en el sistema',
+            emptyMessage: 'No se encontraron condiciones de trabajo creadas'
           },
           {
-            label: 'Actualizadas',
+            label: 'Actualizados',
             auditType: 'condiciones-trabajo-actualizadas',
-            title: 'Condiciones de Trabajo Actualizadas',
+            title: 'Condiciones Trabajo Actualizadas',
             description: 'Registro completo de todos los cambios realizados en las condiciones de trabajo',
             emptyMessage: 'No se encontraron condiciones de trabajo actualizadas'
+          },
+          {
+            label: 'Eliminados',
+            auditType: 'condiciones-trabajo-eliminadas',
+            title: 'Condiciones Trabajo Eliminadas',
+            description: 'Registro completo de todas las condiciones de trabajo eliminadas del sistema',
+            emptyMessage: 'No se encontraron condiciones de trabajo eliminadas'
           }
         ]}
       />

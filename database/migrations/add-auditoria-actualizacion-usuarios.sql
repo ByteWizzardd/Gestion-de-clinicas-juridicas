@@ -7,7 +7,7 @@
 -- Guarda el historial completo de todas las actualizaciones
 CREATE TABLE IF NOT EXISTS auditoria_actualizacion_usuarios (
     id SERIAL PRIMARY KEY,
-    ci_usuario VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    ci_usuario VARCHAR(20) NOT NULL REFERENCES usuarios(cedula) ON DELETE SET NULL,
     -- Valores anteriores (antes de la actualización)
     nombres_anterior VARCHAR(100),
     apellidos_anterior VARCHAR(100),

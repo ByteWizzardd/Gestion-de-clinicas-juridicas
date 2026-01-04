@@ -16,16 +16,32 @@ export async function getCondicionesTrabajo() {
 }
 
 export async function createCondicionTrabajo(data: { nombre_trabajo: string }) {
+    const client = await pool.connect();
     try {
-        const result = await pool.query(
+        await client.query('BEGIN');
+
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'No autorizado' };
+        }
+
+        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+
+        const result = await client.query(
             'INSERT INTO condicion_trabajo (nombre_trabajo) VALUES ($1) RETURNING *',
             [data.nombre_trabajo]
         );
+
+        await client.query('COMMIT');
         revalidatePath('/dashboard/catalogs/condiciones-trabajo');
         return { success: true, data: result.rows[0] };
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Error creating condicion trabajo:', error);
         return { success: false, error: 'Error al crear condición de trabajo' };
+    } finally {
+        client.release();
     }
 }
 
@@ -109,7 +125,7 @@ export async function deleteCondicionTrabajo(id: number, motivo?: string) {
         }
 
         const checkResult = await client.query(
-            `SELECT EXISTS (SELECT 1 FROM clientes WHERE id_trabajo = $1) AS has_associations`,
+            `SELECT EXISTS (SELECT 1 FROM solicitantes WHERE id_trabajo = $1) AS has_associations`,
             [id]
         );
         if (checkResult.rows[0]?.has_associations === true) {
@@ -117,7 +133,7 @@ export async function deleteCondicionTrabajo(id: number, motivo?: string) {
             return {
                 success: false,
                 error: 'HAS_ASSOCIATIONS',
-                message: 'No se puede eliminar porque tiene clientes asociados.'
+                message: 'No se puede eliminar porque tiene solicitantes asociados.'
             };
         }
 

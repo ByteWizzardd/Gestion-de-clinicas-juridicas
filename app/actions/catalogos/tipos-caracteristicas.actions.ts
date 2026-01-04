@@ -16,20 +16,36 @@ export async function getTiposCaracteristicas() {
 }
 
 export async function createTipoCaracteristica(data: { nombre_tipo_caracteristica: string }) {
+    const client = await pool.connect();
     try {
+        await client.query('BEGIN');
+
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'No autorizado' };
+        }
+
+        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+
         // Obtenemos el siguiente ID manualmente por si no es autoincremental
-        const maxResult = await pool.query('SELECT COALESCE(MAX(id_tipo), 0) + 1 as next_id FROM tipo_caracteristicas');
+        const maxResult = await client.query('SELECT COALESCE(MAX(id_tipo), 0) + 1 as next_id FROM tipo_caracteristicas');
         const nextId = maxResult.rows[0].next_id;
 
-        const result = await pool.query(
+        const result = await client.query(
             'INSERT INTO tipo_caracteristicas (id_tipo, nombre_tipo_caracteristica, habilitado) VALUES ($1, $2, true) RETURNING *',
             [nextId, data.nombre_tipo_caracteristica]
         );
+
+        await client.query('COMMIT');
         revalidatePath('/dashboard/catalogs/tipos-caracteristicas');
         return { success: true, data: result.rows[0] };
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Error creating tipo caracteristica:', error);
         return { success: false, error: 'Error al crear tipo de característica' };
+    } finally {
+        client.release();
     }
 }
 

@@ -10,36 +10,36 @@ import AuditRecordCard from '../AuditRecordCard';
 import Spinner from '@/components/ui/feedback/Spinner';
 import type { AuditFilters } from '@/types/audit';
 
-type AuditType = 'soportes' | 'citas-eliminadas' | 'citas-actualizadas' | 'usuarios-eliminados' | 'usuarios-actualizados-campos' 
-  | 'estados-eliminados' | 'estados-actualizados'
-  | 'materias-eliminadas' | 'materias-actualizadas'
-  | 'niveles-educativos-eliminados' | 'niveles-educativos-actualizados'
-  | 'nucleos-eliminados' | 'nucleos-actualizados'
-  | 'condiciones-trabajo-eliminadas' | 'condiciones-trabajo-actualizadas'
-  | 'condiciones-actividad-eliminadas' | 'condiciones-actividad-actualizadas'
-  | 'tipos-caracteristicas-eliminados' | 'tipos-caracteristicas-actualizados'
-  | 'semestres-eliminados' | 'semestres-actualizados'
-  | 'municipios-eliminados' | 'municipios-actualizados'
-  | 'parroquias-eliminadas' | 'parroquias-actualizadas'
-  | 'categorias-eliminadas' | 'categorias-actualizadas'
-  | 'subcategorias-eliminadas' | 'subcategorias-actualizadas'
-  | 'ambitos-legales-eliminados' | 'ambitos-legales-actualizados'
-  | 'caracteristicas-eliminadas' | 'caracteristicas-actualizadas';
-type AuditRecordType = 'soporte' | 'cita-eliminada' | 'cita-actualizada' | 'usuario-eliminado' | 'usuario-actualizado-campos' 
-  | 'estado-eliminado' | 'estado-actualizado'
-  | 'materia-eliminada' | 'materia-actualizada'
-  | 'nivel-educativo-eliminado' | 'nivel-educativo-actualizado'
-  | 'nucleo-eliminado' | 'nucleo-actualizado'
-  | 'condicion-trabajo-eliminada' | 'condicion-trabajo-actualizada'
-  | 'condicion-actividad-eliminada' | 'condicion-actividad-actualizada'
-  | 'tipo-caracteristica-eliminado' | 'tipo-caracteristica-actualizado'
-  | 'semestre-eliminado' | 'semestre-actualizado'
-  | 'municipio-eliminado' | 'municipio-actualizado'
-  | 'parroquia-eliminada' | 'parroquia-actualizada'
-  | 'categoria-eliminada' | 'categoria-actualizada'
-  | 'subcategoria-eliminada' | 'subcategoria-actualizada'
-  | 'ambito-legal-eliminado' | 'ambito-legal-actualizado'
-  | 'caracteristica-eliminada' | 'caracteristica-actualizada';
+type AuditType = 'soportes' | 'soportes-creados' | 'citas-eliminadas' | 'citas-actualizadas' | 'citas-creadas' | 'usuarios-eliminados' | 'usuarios-actualizados-campos' | 'usuarios-creados' 
+  | 'estados-eliminados' | 'estados-actualizados' | 'estados-insertados'
+  | 'materias-eliminadas' | 'materias-actualizadas' | 'materias-insertadas'
+  | 'niveles-educativos-eliminados' | 'niveles-educativos-actualizados' | 'niveles-educativos-insertados'
+  | 'nucleos-eliminados' | 'nucleos-actualizados' | 'nucleos-insertados'
+  | 'condiciones-trabajo-eliminadas' | 'condiciones-trabajo-actualizadas' | 'condiciones-trabajo-insertadas'
+  | 'condiciones-actividad-eliminadas' | 'condiciones-actividad-actualizadas' | 'condiciones-actividad-insertadas'
+  | 'tipos-caracteristicas-eliminados' | 'tipos-caracteristicas-actualizados' | 'tipos-caracteristicas-insertados'
+  | 'semestres-eliminados' | 'semestres-actualizados' | 'semestres-insertados'
+  | 'municipios-eliminados' | 'municipios-actualizados' | 'municipios-insertados'
+  | 'parroquias-eliminadas' | 'parroquias-actualizadas' | 'parroquias-insertadas'
+  | 'categorias-eliminadas' | 'categorias-actualizadas' | 'categorias-insertadas'
+  | 'subcategorias-eliminadas' | 'subcategorias-actualizadas' | 'subcategorias-insertadas'
+  | 'ambitos-legales-eliminados' | 'ambitos-legales-actualizados' | 'ambitos-legales-insertados'
+  | 'caracteristicas-eliminadas' | 'caracteristicas-actualizadas' | 'caracteristicas-insertadas';
+type AuditRecordType = 'soporte' | 'cita-eliminada' | 'cita-actualizada' | 'cita-creada' | 'usuario-eliminado' | 'usuario-actualizado-campos' 
+  | 'estado-eliminado' | 'estado-actualizado' | 'estado-insertado'
+  | 'materia-eliminada' | 'materia-actualizada' | 'materia-insertada'
+  | 'nivel-educativo-eliminado' | 'nivel-educativo-actualizado' | 'nivel-educativo-insertado'
+  | 'nucleo-eliminado' | 'nucleo-actualizado' | 'nucleo-insertado'
+  | 'condicion-trabajo-eliminada' | 'condicion-trabajo-actualizada' | 'condicion-trabajo-insertada'
+  | 'condicion-actividad-eliminada' | 'condicion-actividad-actualizada' | 'condicion-actividad-insertada'
+  | 'tipo-caracteristica-eliminado' | 'tipo-caracteristica-actualizado' | 'tipo-caracteristica-insertado'
+  | 'semestre-eliminado' | 'semestre-actualizado' | 'semestre-insertado'
+  | 'municipio-eliminado' | 'municipio-actualizado' | 'municipio-insertado'
+  | 'parroquia-eliminada' | 'parroquia-actualizada' | 'parroquia-insertada'
+  | 'categoria-eliminada' | 'categoria-actualizada' | 'categoria-insertada'
+  | 'subcategoria-eliminada' | 'subcategoria-actualizada' | 'subcategoria-insertada'
+  | 'ambito-legal-eliminado' | 'ambito-legal-actualizado' | 'ambito-legal-insertado'
+  | 'caracteristica-eliminada' | 'caracteristica-actualizada' | 'caracteristica-insertada';
 
 interface AuditDetailClientProps {
   title: string;
@@ -65,10 +65,13 @@ export default function AuditDetailClient({
   // Mapear auditType a tipo de record card
   const recordTypeMap: Record<AuditType, AuditRecordType> = {
     'soportes': 'soporte',
+    'soportes-creados': 'soporte-creado',
     'citas-eliminadas': 'cita-eliminada',
     'citas-actualizadas': 'cita-actualizada',
+    'citas-creadas': 'cita-creada',
     'usuarios-eliminados': 'usuario-eliminado',
     'usuarios-actualizados-campos': 'usuario-actualizado-campos',
+    'usuarios-creados': 'usuario-creado',
     'estados-eliminados': 'estado-eliminado',
     'estados-actualizados': 'estado-actualizado',
     'materias-eliminadas': 'materia-eliminada',
@@ -97,6 +100,21 @@ export default function AuditDetailClient({
     'ambitos-legales-actualizados': 'ambito-legal-actualizado',
     'caracteristicas-eliminadas': 'caracteristica-eliminada',
     'caracteristicas-actualizadas': 'caracteristica-actualizada',
+    // Inserciones
+    'estados-insertados': 'estado-insertado',
+    'materias-insertadas': 'materia-insertada',
+    'niveles-educativos-insertados': 'nivel-educativo-insertado',
+    'nucleos-insertados': 'nucleo-insertado',
+    'condiciones-trabajo-insertadas': 'condicion-trabajo-insertada',
+    'condiciones-actividad-insertadas': 'condicion-actividad-insertada',
+    'tipos-caracteristicas-insertados': 'tipo-caracteristica-insertado',
+    'semestres-insertados': 'semestre-insertado',
+    'municipios-insertados': 'municipio-insertado',
+    'parroquias-insertadas': 'parroquia-insertada',
+    'categorias-insertadas': 'categoria-insertada',
+    'subcategorias-insertadas': 'subcategoria-insertada',
+    'ambitos-legales-insertados': 'ambito-legal-insertado',
+    'caracteristicas-insertadas': 'caracteristica-insertada',
   };
 
   // Cargar opciones de usuarios
@@ -130,10 +148,13 @@ export default function AuditDetailClient({
         // Importar la Server Action correspondiente dinámicamente
         const { 
           getSoportesAuditAction,
+          getSoportesCreadosAuditAction,
           getCitasEliminadasAuditAction,
           getCitasActualizadasAuditAction,
+          getCitasCreadasAuditAction,
           getUsuariosEliminadosAuditAction,
           getUsuariosActualizadosCamposAuditAction,
+          getUsuariosCreadosAuditAction,
           getEstadosEliminadosAuditAction,
           getEstadosActualizadosAuditAction,
           getMateriasEliminadasAuditAction,
@@ -161,7 +182,21 @@ export default function AuditDetailClient({
           getAmbitosLegalesEliminadosAuditAction,
           getAmbitosLegalesActualizadosAuditAction,
           getCaracteristicasEliminadasAuditAction,
-          getCaracteristicasActualizadasAuditAction
+          getCaracteristicasActualizadasAuditAction,
+          getEstadosInsertadosAuditAction,
+          getMateriasInsertadasAuditAction,
+          getNivelesEducativosInsertadosAuditAction,
+          getNucleosInsertadosAuditAction,
+          getCondicionesTrabajoInsertadasAuditAction,
+          getCondicionesActividadInsertadasAuditAction,
+          getTiposCaracteristicasInsertadosAuditAction,
+          getSemestresInsertadosAuditAction,
+          getMunicipiosInsertadosAuditAction,
+          getParroquiasInsertadasAuditAction,
+          getCategoriasInsertadasAuditAction,
+          getSubcategoriasInsertadasAuditAction,
+          getAmbitosLegalesInsertadosAuditAction,
+          getCaracteristicasInsertadasAuditAction
         } = await import('@/app/actions/audit');
 
         let data: any[];
@@ -169,17 +204,26 @@ export default function AuditDetailClient({
           case 'soportes':
             data = await getSoportesAuditAction(filters);
             break;
+          case 'soportes-creados':
+            data = await getSoportesCreadosAuditAction(filters);
+            break;
           case 'citas-eliminadas':
             data = await getCitasEliminadasAuditAction(filters);
             break;
           case 'citas-actualizadas':
             data = await getCitasActualizadasAuditAction(filters);
             break;
+          case 'citas-creadas':
+            data = await getCitasCreadasAuditAction(filters);
+            break;
           case 'usuarios-eliminados':
             data = await getUsuariosEliminadosAuditAction(filters);
             break;
           case 'usuarios-actualizados-campos':
             data = await getUsuariosActualizadosCamposAuditAction(filters);
+            break;
+          case 'usuarios-creados':
+            data = await getUsuariosCreadosAuditAction(filters);
             break;
           case 'estados-eliminados':
             data = await getEstadosEliminadosAuditAction(filters);
@@ -264,6 +308,49 @@ export default function AuditDetailClient({
             break;
           case 'caracteristicas-actualizadas':
             data = await getCaracteristicasActualizadasAuditAction(filters);
+            break;
+          // Inserciones
+          case 'estados-insertados':
+            data = await getEstadosInsertadosAuditAction(filters);
+            break;
+          case 'materias-insertadas':
+            data = await getMateriasInsertadasAuditAction(filters);
+            break;
+          case 'niveles-educativos-insertados':
+            data = await getNivelesEducativosInsertadosAuditAction(filters);
+            break;
+          case 'nucleos-insertados':
+            data = await getNucleosInsertadosAuditAction(filters);
+            break;
+          case 'condiciones-trabajo-insertadas':
+            data = await getCondicionesTrabajoInsertadasAuditAction(filters);
+            break;
+          case 'condiciones-actividad-insertadas':
+            data = await getCondicionesActividadInsertadasAuditAction(filters);
+            break;
+          case 'tipos-caracteristicas-insertados':
+            data = await getTiposCaracteristicasInsertadosAuditAction(filters);
+            break;
+          case 'semestres-insertados':
+            data = await getSemestresInsertadosAuditAction(filters);
+            break;
+          case 'municipios-insertados':
+            data = await getMunicipiosInsertadosAuditAction(filters);
+            break;
+          case 'parroquias-insertadas':
+            data = await getParroquiasInsertadasAuditAction(filters);
+            break;
+          case 'categorias-insertadas':
+            data = await getCategoriasInsertadasAuditAction(filters);
+            break;
+          case 'subcategorias-insertadas':
+            data = await getSubcategoriasInsertadasAuditAction(filters);
+            break;
+          case 'ambitos-legales-insertados':
+            data = await getAmbitosLegalesInsertadosAuditAction(filters);
+            break;
+          case 'caracteristicas-insertadas':
+            data = await getCaracteristicasInsertadasAuditAction(filters);
             break;
           default:
             throw new Error('Tipo de auditoría no válido');

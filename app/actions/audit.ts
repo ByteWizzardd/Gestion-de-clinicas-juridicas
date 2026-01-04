@@ -3,10 +3,13 @@
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { mapSystemRoleToSidebarRole } from '@/lib/utils/role-mapper';
 import { auditoriaEliminacionSoportesQueries } from '@/lib/db/queries/auditoria-eliminacion-soportes.queries';
+import { auditoriaInsercionSoportesQueries } from '@/lib/db/queries/auditoria-insercion-soportes.queries';
 import { auditoriaEliminacionCitasQueries } from '@/lib/db/queries/auditoria-eliminacion-citas.queries';
 import { auditoriaActualizacionCitasQueries } from '@/lib/db/queries/auditoria-actualizacion-citas.queries';
+import { auditoriaInsercionCitasQueries } from '@/lib/db/queries/auditoria-insercion-citas.queries';
 import { auditoriaEliminacionUsuarioQueries } from '@/lib/db/queries/auditoria-eliminacion-usuario.queries';
 import { auditoriaActualizacionUsuariosQueries } from '@/lib/db/queries/auditoria-actualizacion-usuarios.queries';
+import { auditoriaInsercionUsuariosQueries } from '@/lib/db/queries/auditoria-insercion-usuarios.queries';
 import { auditoriaEliminacionEstadosQueries } from '@/lib/db/queries/auditoria-eliminacion-estados.queries';
 import { auditoriaActualizacionEstadosQueries } from '@/lib/db/queries/auditoria-actualizacion-estados.queries';
 import { auditoriaEliminacionMateriasQueries } from '@/lib/db/queries/auditoria-eliminacion-materias.queries';
@@ -35,6 +38,20 @@ import { auditoriaEliminacionAmbitosLegalesQueries } from '@/lib/db/queries/audi
 import { auditoriaActualizacionAmbitosLegalesQueries } from '@/lib/db/queries/auditoria-actualizacion-ambitos-legales.queries';
 import { auditoriaEliminacionCaracteristicasQueries } from '@/lib/db/queries/auditoria-eliminacion-caracteristicas.queries';
 import { auditoriaActualizacionCaracteristicasQueries } from '@/lib/db/queries/auditoria-actualizacion-caracteristicas.queries';
+import { auditoriaInsercionEstadosQueries } from '@/lib/db/queries/auditoria-insercion-estados.queries';
+import { auditoriaInsercionMateriasQueries } from '@/lib/db/queries/auditoria-insercion-materias.queries';
+import { auditoriaInsercionNivelesEducativosQueries } from '@/lib/db/queries/auditoria-insercion-niveles-educativos.queries';
+import { auditoriaInsercionNucleosQueries } from '@/lib/db/queries/auditoria-insercion-nucleos.queries';
+import { auditoriaInsercionCondicionesTrabajoQueries } from '@/lib/db/queries/auditoria-insercion-condiciones-trabajo.queries';
+import { auditoriaInsercionCondicionesActividadQueries } from '@/lib/db/queries/auditoria-insercion-condiciones-actividad.queries';
+import { auditoriaInsercionTiposCaracteristicasQueries } from '@/lib/db/queries/auditoria-insercion-tipos-caracteristicas.queries';
+import { auditoriaInsercionSemestresQueries } from '@/lib/db/queries/auditoria-insercion-semestres.queries';
+import { auditoriaInsercionMunicipiosQueries } from '@/lib/db/queries/auditoria-insercion-municipios.queries';
+import { auditoriaInsercionParroquiasQueries } from '@/lib/db/queries/auditoria-insercion-parroquias.queries';
+import { auditoriaInsercionCategoriasQueries } from '@/lib/db/queries/auditoria-insercion-categorias.queries';
+import { auditoriaInsercionSubcategoriasQueries } from '@/lib/db/queries/auditoria-insercion-subcategorias.queries';
+import { auditoriaInsercionAmbitosLegalesQueries } from '@/lib/db/queries/auditoria-insercion-ambitos-legales.queries';
+import { auditoriaInsercionCaracteristicasQueries } from '@/lib/db/queries/auditoria-insercion-caracteristicas.queries';
 import type { AuditFilters, AuditCounts } from '@/types/audit';
 
 /**
@@ -55,7 +72,7 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
 
   try {
     const [
-      soportes, citasEliminadas, citasActualizadas, usuariosEliminados, usuariosActualizadosCampos,
+      soportesEliminados, soportesCreados, citasEliminadas, citasActualizadas, citasCreadas, usuariosEliminados, usuariosActualizadosCampos, usuariosCreados,
       estadosEliminados, estadosActualizados,
       materiasEliminadas, materiasActualizadas,
       nivelesEducativosEliminados, nivelesEducativosActualizados,
@@ -69,13 +86,21 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       categoriasEliminadas, categoriasActualizadas,
       subcategoriasEliminadas, subcategoriasActualizadas,
       ambitosLegalesEliminados, ambitosLegalesActualizados,
-      caracteristicasEliminadas, caracteristicasActualizadas
+      caracteristicasEliminadas, caracteristicasActualizadas,
+      // Inserciones
+      estadosInsertados, materiasInsertadas, nivelesEducativosInsertados, nucleosInsertados,
+      condicionesTrabajoInsertadas, condicionesActividadInsertadas, tiposCaracteristicasInsertados,
+      semestresInsertados, municipiosInsertados, parroquiasInsertadas, categoriasInsertadas,
+      subcategoriasInsertadas, ambitosLegalesInsertados, caracteristicasInsertadas
     ] = await Promise.all([
       auditoriaEliminacionSoportesQueries.getCount(),
+      auditoriaInsercionSoportesQueries.getCount().catch(() => 0),
       auditoriaEliminacionCitasQueries.getCount(),
       auditoriaActualizacionCitasQueries.getCount(),
+      auditoriaInsercionCitasQueries.getCount().catch(() => 0),
       auditoriaEliminacionUsuarioQueries.getCount(),
       auditoriaActualizacionUsuariosQueries.getCount(),
+      auditoriaInsercionUsuariosQueries.getCount().catch(() => 0),
       // Catálogos - manejar errores si las tablas aún no existen
       auditoriaEliminacionEstadosQueries.getCount().catch(() => 0),
       auditoriaActualizacionEstadosQueries.getCount().catch(() => 0),
@@ -105,14 +130,32 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       auditoriaActualizacionAmbitosLegalesQueries.getCount().catch(() => 0),
       auditoriaEliminacionCaracteristicasQueries.getCount().catch(() => 0),
       auditoriaActualizacionCaracteristicasQueries.getCount().catch(() => 0),
+      // Inserciones
+      auditoriaInsercionEstadosQueries.getCount().catch(() => 0),
+      auditoriaInsercionMateriasQueries.getCount().catch(() => 0),
+      auditoriaInsercionNivelesEducativosQueries.getCount().catch(() => 0),
+      auditoriaInsercionNucleosQueries.getCount().catch(() => 0),
+      auditoriaInsercionCondicionesTrabajoQueries.getCount().catch(() => 0),
+      auditoriaInsercionCondicionesActividadQueries.getCount().catch(() => 0),
+      auditoriaInsercionTiposCaracteristicasQueries.getCount().catch(() => 0),
+      auditoriaInsercionSemestresQueries.getCount().catch(() => 0),
+      auditoriaInsercionMunicipiosQueries.getCount().catch(() => 0),
+      auditoriaInsercionParroquiasQueries.getCount().catch(() => 0),
+      auditoriaInsercionCategoriasQueries.getCount().catch(() => 0),
+      auditoriaInsercionSubcategoriasQueries.getCount().catch(() => 0),
+      auditoriaInsercionAmbitosLegalesQueries.getCount().catch(() => 0),
+      auditoriaInsercionCaracteristicasQueries.getCount().catch(() => 0),
     ]);
 
     return {
-      soportes,
+      soportes: soportesEliminados,
+      soportesCreados: soportesCreados || 0,
       citasEliminadas,
       citasActualizadas,
+      citasCreadas: citasCreadas || 0,
       usuariosEliminados,
       usuariosActualizadosCampos,
+      usuariosCreados: usuariosCreados || 0,
       estadosEliminados: estadosEliminados || 0,
       estadosActualizados: estadosActualizados || 0,
       materiasEliminadas: materiasEliminadas || 0,
@@ -141,10 +184,29 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       ambitosLegalesActualizados: ambitosLegalesActualizados || 0,
       caracteristicasEliminadas: caracteristicasEliminadas || 0,
       caracteristicasActualizadas: caracteristicasActualizadas || 0,
+      // Inserciones
+      estadosInsertados: estadosInsertados || 0,
+      materiasInsertadas: materiasInsertadas || 0,
+      nivelesEducativosInsertados: nivelesEducativosInsertados || 0,
+      nucleosInsertados: nucleosInsertados || 0,
+      condicionesTrabajoInsertadas: condicionesTrabajoInsertadas || 0,
+      condicionesActividadInsertadas: condicionesActividadInsertadas || 0,
+      tiposCaracteristicasInsertados: tiposCaracteristicasInsertados || 0,
+      semestresInsertados: semestresInsertados || 0,
+      municipiosInsertados: municipiosInsertados || 0,
+      parroquiasInsertadas: parroquiasInsertadas || 0,
+      categoriasInsertadas: categoriasInsertadas || 0,
+      subcategoriasInsertadas: subcategoriasInsertadas || 0,
+      ambitosLegalesInsertados: ambitosLegalesInsertados || 0,
+      caracteristicasInsertadas: caracteristicasInsertadas || 0,
     };
   } catch (error) {
     console.error('Error obteniendo contadores de auditoría:', error);
-    throw new Error('Error al obtener contadores de auditoría');
+    // Log detallado del error para debugging
+    if (error instanceof Error) {
+      console.error('Error details:', error.message, error.stack);
+    }
+    throw new Error(`Error al obtener contadores de auditoría: ${error instanceof Error ? error.message : 'Error desconocido'}`);
   }
 }
 
@@ -175,6 +237,36 @@ export async function getSoportesAuditAction(filters?: AuditFilters) {
   } catch (error) {
     console.error('Error obteniendo auditoría de soportes:', error);
     throw new Error('Error al obtener auditoría de soportes');
+  }
+}
+
+/**
+ * Obtiene soportes creados con filtros
+ */
+export async function getSoportesCreadosAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+  
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+
+  try {
+    const records = await auditoriaInsercionSoportesQueries.getAll(filters);
+    // Mapear campos para compatibilidad con tipos
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_creacion,
+      usuario_accion: r.id_usuario_subio,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_subio || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de soportes creados:', error);
+    throw new Error('Error al obtener auditoría de soportes creados');
   }
 }
 
@@ -239,6 +331,36 @@ export async function getCitasActualizadasAuditAction(filters?: AuditFilters) {
 }
 
 /**
+ * Obtiene citas creadas con filtros
+ */
+export async function getCitasCreadasAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+  
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+
+  try {
+    const records = await auditoriaInsercionCitasQueries.getAll(filters);
+    // Mapear campos para compatibilidad con tipos
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_creacion,
+      usuario_accion: r.id_usuario_creo,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de citas creadas:', error);
+    throw new Error('Error al obtener auditoría de citas creadas');
+  }
+}
+
+/**
  * Obtiene usuarios eliminados con filtros
  */
 export async function getUsuariosEliminadosAuditAction(filters?: AuditFilters) {
@@ -288,6 +410,35 @@ export async function getUsuariosActualizadosCamposAuditAction(filters?: AuditFi
   } catch (error) {
     console.error('Error obteniendo auditoría de usuarios actualizados (campos):', error);
     throw new Error('Error al obtener auditoría de usuarios actualizados (campos)');
+  }
+}
+
+/**
+ * Obtiene usuarios creados con filtros
+ */
+export async function getUsuariosCreadosAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+
+  try {
+    const records = await auditoriaInsercionUsuariosQueries.getAll(filters);
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_creacion,
+      usuario_accion: r.id_usuario_creo,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de usuarios creados:', error);
+    throw new Error('Error al obtener auditoría de usuarios creados');
   }
 }
 
@@ -1026,5 +1177,373 @@ export async function getCaracteristicasActualizadasAuditAction(filters?: AuditF
   } catch (error) {
     console.error('Error obteniendo auditoría de caracteristicas actualizadas:', error);
     throw new Error('Error al obtener auditoría de caracteristicas actualizadas');
+  }
+}
+
+// =========================================================
+// FUNCIONES DE AUDITORÍA DE INSERCIONES
+// =========================================================
+
+/**
+ * Obtiene estados insertados con filtros
+ */
+export async function getEstadosInsertadosAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+  try {
+    const records = await auditoriaInsercionEstadosQueries.getAll(filters);
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_creacion,
+      usuario_accion: r.id_usuario_creo,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de estados insertados:', error);
+    throw new Error('Error al obtener auditoría de estados insertados');
+  }
+}
+
+/**
+ * Obtiene materias insertadas con filtros
+ */
+export async function getMateriasInsertadasAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+  try {
+    const records = await auditoriaInsercionMateriasQueries.getAll(filters);
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_creacion,
+      usuario_accion: r.id_usuario_creo,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de materias insertadas:', error);
+    throw new Error('Error al obtener auditoría de materias insertadas');
+  }
+}
+
+/**
+ * Obtiene niveles educativos insertados con filtros
+ */
+export async function getNivelesEducativosInsertadosAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+  try {
+    const records = await auditoriaInsercionNivelesEducativosQueries.getAll(filters);
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_creacion,
+      usuario_accion: r.id_usuario_creo,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de niveles educativos insertados:', error);
+    throw new Error('Error al obtener auditoría de niveles educativos insertados');
+  }
+}
+
+/**
+ * Obtiene nucleos insertados con filtros
+ */
+export async function getNucleosInsertadosAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+  try {
+    const records = await auditoriaInsercionNucleosQueries.getAll(filters);
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_creacion,
+      usuario_accion: r.id_usuario_creo,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de nucleos insertados:', error);
+    throw new Error('Error al obtener auditoría de nucleos insertados');
+  }
+}
+
+/**
+ * Obtiene condiciones trabajo insertadas con filtros
+ */
+export async function getCondicionesTrabajoInsertadasAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+  try {
+    const records = await auditoriaInsercionCondicionesTrabajoQueries.getAll(filters);
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_creacion,
+      usuario_accion: r.id_usuario_creo,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de condiciones trabajo insertadas:', error);
+    throw new Error('Error al obtener auditoría de condiciones trabajo insertadas');
+  }
+}
+
+/**
+ * Obtiene condiciones actividad insertadas con filtros
+ */
+export async function getCondicionesActividadInsertadasAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+  try {
+    const records = await auditoriaInsercionCondicionesActividadQueries.getAll(filters);
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_creacion,
+      usuario_accion: r.id_usuario_creo,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de condiciones actividad insertadas:', error);
+    throw new Error('Error al obtener auditoría de condiciones actividad insertadas');
+  }
+}
+
+/**
+ * Obtiene tipos caracteristicas insertados con filtros
+ */
+export async function getTiposCaracteristicasInsertadosAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+  try {
+    const records = await auditoriaInsercionTiposCaracteristicasQueries.getAll(filters);
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_creacion,
+      usuario_accion: r.id_usuario_creo,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de tipos caracteristicas insertados:', error);
+    throw new Error('Error al obtener auditoría de tipos caracteristicas insertados');
+  }
+}
+
+/**
+ * Obtiene semestres insertados con filtros
+ */
+export async function getSemestresInsertadosAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+  try {
+    const records = await auditoriaInsercionSemestresQueries.getAll(filters);
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_creacion,
+      usuario_accion: r.id_usuario_creo,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de semestres insertados:', error);
+    throw new Error('Error al obtener auditoría de semestres insertados');
+  }
+}
+
+/**
+ * Obtiene municipios insertados con filtros
+ */
+export async function getMunicipiosInsertadosAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+  try {
+    const records = await auditoriaInsercionMunicipiosQueries.getAll(filters);
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_creacion,
+      usuario_accion: r.id_usuario_creo,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de municipios insertados:', error);
+    throw new Error('Error al obtener auditoría de municipios insertados');
+  }
+}
+
+/**
+ * Obtiene parroquias insertadas con filtros
+ */
+export async function getParroquiasInsertadasAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+  try {
+    const records = await auditoriaInsercionParroquiasQueries.getAll(filters);
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_creacion,
+      usuario_accion: r.id_usuario_creo,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de parroquias insertadas:', error);
+    throw new Error('Error al obtener auditoría de parroquias insertadas');
+  }
+}
+
+/**
+ * Obtiene categorias insertadas con filtros
+ */
+export async function getCategoriasInsertadasAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+  try {
+    const records = await auditoriaInsercionCategoriasQueries.getAll(filters);
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_creacion,
+      usuario_accion: r.id_usuario_creo,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de categorias insertadas:', error);
+    throw new Error('Error al obtener auditoría de categorias insertadas');
+  }
+}
+
+/**
+ * Obtiene subcategorias insertadas con filtros
+ */
+export async function getSubcategoriasInsertadasAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+  try {
+    const records = await auditoriaInsercionSubcategoriasQueries.getAll(filters);
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_creacion,
+      usuario_accion: r.id_usuario_creo,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de subcategorias insertadas:', error);
+    throw new Error('Error al obtener auditoría de subcategorias insertadas');
+  }
+}
+
+/**
+ * Obtiene ambitos legales insertados con filtros
+ */
+export async function getAmbitosLegalesInsertadosAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+  try {
+    const records = await auditoriaInsercionAmbitosLegalesQueries.getAll(filters);
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_creacion,
+      usuario_accion: r.id_usuario_creo,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de ambitos legales insertados:', error);
+    throw new Error('Error al obtener auditoría de ambitos legales insertados');
+  }
+}
+
+/**
+ * Obtiene caracteristicas insertadas con filtros
+ */
+export async function getCaracteristicasInsertadasAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+  try {
+    const records = await auditoriaInsercionCaracteristicasQueries.getAll(filters);
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_creacion,
+      usuario_accion: r.id_usuario_creo,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de caracteristicas insertadas:', error);
+    throw new Error('Error al obtener auditoría de caracteristicas insertadas');
   }
 }

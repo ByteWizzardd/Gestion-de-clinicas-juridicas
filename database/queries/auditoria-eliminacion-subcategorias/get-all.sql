@@ -6,6 +6,7 @@ SELECT
     a.num_subcategoria,
     a.nombre_subcategoria,
     a.habilitado,
+    c.nombre_categoria,
     
     a.fecha_eliminacion,
     a.id_usuario_elimino,
@@ -16,6 +17,7 @@ SELECT
     a.motivo
 FROM auditoria_eliminacion_subcategorias a
 LEFT JOIN usuarios u ON a.id_usuario_elimino = u.cedula
+LEFT JOIN categorias c ON a.id_materia = c.id_materia AND a.num_categoria = c.num_categoria
 WHERE 
     ($1::DATE IS NULL OR a.fecha_eliminacion::DATE >= $1)
     AND ($2::DATE IS NULL OR a.fecha_eliminacion::DATE <= $2)

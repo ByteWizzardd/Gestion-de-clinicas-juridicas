@@ -11,8 +11,15 @@ export default async function SoportesAuditPage() {
       <AuditEntityDetailClient
         entityTitle="Soportes"
         entityDescription="Registro completo de todas las acciones realizadas sobre los documentos y archivos del sistema"
-        defaultTab="soportes"
+        defaultTab="soportes-creados"
         operations={[
+          {
+            label: 'Creados',
+            auditType: 'soportes-creados',
+            title: 'Soportes Creados',
+            description: 'Registro completo de todos los documentos y archivos subidos al sistema',
+            emptyMessage: 'No se encontraron soportes creados'
+          },
           {
             label: 'Eliminados',
             auditType: 'soportes',

@@ -29,6 +29,7 @@ export const auditoriaEliminacionMunicipiosQueries = {
     id_estado: number;
     num_municipio: number;
     nombre_municipio: string;
+    nombre_estado: string | null;
     habilitado: boolean | null;
     fecha_eliminacion: string;
     id_usuario_elimino: string;

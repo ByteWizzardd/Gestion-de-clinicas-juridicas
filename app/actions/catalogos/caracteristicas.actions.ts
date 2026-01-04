@@ -16,22 +16,38 @@ export async function getCaracteristicas() {
 }
 
 export async function createCaracteristica(data: { id_tipo_caracteristica: string; descripcion: string }) {
+    const client = await pool.connect();
     try {
-        const maxResult = await pool.query(
+        await client.query('BEGIN');
+
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'No autorizado' };
+        }
+
+        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+
+        const maxResult = await client.query(
             'SELECT COALESCE(MAX(num_caracteristica), 0) + 1 as next_num FROM caracteristicas WHERE id_tipo_caracteristica = $1',
             [parseInt(data.id_tipo_caracteristica)]
         );
         const nextNum = maxResult.rows[0].next_num;
 
-        const result = await pool.query(
+        const result = await client.query(
             'INSERT INTO caracteristicas (id_tipo_caracteristica, num_caracteristica, descripcion, habilitado) VALUES ($1, $2, $3, true) RETURNING *',
             [parseInt(data.id_tipo_caracteristica), nextNum, data.descripcion]
         );
+
+        await client.query('COMMIT');
         revalidatePath('/dashboard/catalogs/caracteristicas');
         return { success: true, data: result.rows[0] };
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Error creating caracteristica:', error);
         return { success: false, error: 'Error al crear característica' };
+    } finally {
+        client.release();
     }
 }
 
@@ -95,6 +111,12 @@ export async function updateCaracteristica(id_tipo_caracteristica: number, num_c
         try {
             await client.query('BEGIN');
 
+            const authResult = await requireAuthInServerActionWithCode();
+            if (!authResult.success || !authResult.user) {
+                await client.query('ROLLBACK');
+                return { success: false, error: 'No autorizado' };
+            }
+
             // 2. Crear nueva en el nuevo tipo
             const newTypeId = parseInt(data.new_id_tipo_caracteristica);
             const maxResult = await client.query(
@@ -111,12 +133,19 @@ export async function updateCaracteristica(id_tipo_caracteristica: number, num_c
             );
             const isEnabled = currentResult.rows[0]?.habilitado ?? true;
 
+            // Establecer variable de sesión para creación
+            await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+
             const insertResult = await client.query(
                 'INSERT INTO caracteristicas (id_tipo_caracteristica, num_caracteristica, descripcion, habilitado) VALUES ($1, $2, $3, $4) RETURNING *',
                 [newTypeId, nextNum, data.descripcion, isEnabled]
             );
 
-            // 3. Borrar el viejo
+            // 3. Establecer variables de sesión para eliminación
+            await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
+            await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", ['Movido a nuevo tipo']);
+
+            // 4. Borrar el viejo
             await client.query(
                 'DELETE FROM caracteristicas WHERE id_tipo_caracteristica = $1 AND num_caracteristica = $2',
                 [id_tipo_caracteristica, num_caracteristica]

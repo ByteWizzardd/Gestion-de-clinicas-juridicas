@@ -16,16 +16,32 @@ export async function getCondicionesActividad() {
 }
 
 export async function createCondicionActividad(data: { nombre_actividad: string }) {
+    const client = await pool.connect();
     try {
-        const result = await pool.query(
+        await client.query('BEGIN');
+
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'No autorizado' };
+        }
+
+        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+
+        const result = await client.query(
             'INSERT INTO condicion_actividad (nombre_actividad) VALUES ($1) RETURNING *',
             [data.nombre_actividad]
         );
+
+        await client.query('COMMIT');
         revalidatePath('/dashboard/catalogs/condiciones-actividad');
         return { success: true, data: result.rows[0] };
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Error creating condicion actividad:', error);
         return { success: false, error: 'Error al crear condición de actividad' };
+    } finally {
+        client.release();
     }
 }
 
@@ -109,7 +125,7 @@ export async function deleteCondicionActividad(id: number, motivo?: string) {
         }
 
         const checkResult = await client.query(
-            `SELECT EXISTS (SELECT 1 FROM clientes WHERE id_actividad = $1) AS has_associations`,
+            `SELECT EXISTS (SELECT 1 FROM solicitantes WHERE id_actividad = $1) AS has_associations`,
             [id]
         );
         if (checkResult.rows[0]?.has_associations === true) {
@@ -117,7 +133,7 @@ export async function deleteCondicionActividad(id: number, motivo?: string) {
             return {
                 success: false,
                 error: 'HAS_ASSOCIATIONS',
-                message: 'No se puede eliminar porque tiene clientes asociados.'
+                message: 'No se puede eliminar porque tiene solicitantes asociados.'
             };
         }
 

@@ -3,29 +3,36 @@ import AuditEntityDetailClient from '@/components/audit/AuditEntityDetailClient'
 
 export const dynamic = 'force-dynamic';
 
-export default async function CondicionesActividadAuditPage() {
+export default async function CondiciónActividadAuditPage() {
   await authorizeRole(['coordinator']);
 
   return (
     <div className="m-3">
       <AuditEntityDetailClient
-        entityTitle="Condiciones de Actividad"
-        entityDescription="Registro completo de todas las acciones realizadas sobre las condiciones de actividad del sistema"
-        defaultTab="condiciones-actividad-eliminadas"
+        entityTitle="Condiciones Actividad"
+        entityDescription="Registro completo de todas las acciones realizadas sobre los condiciones actividad del sistema"
+        defaultTab="condiciones-actividad-insertadas"
         operations={[
           {
-            label: 'Eliminadas',
-            auditType: 'condiciones-actividad-eliminadas',
-            title: 'Condiciones de Actividad Eliminadas',
-            description: 'Registro completo de todas las condiciones de actividad eliminadas del sistema',
-            emptyMessage: 'No se encontraron condiciones de actividad eliminadas'
+            label: 'Creados',
+            auditType: 'condiciones-actividad-insertadas',
+            title: 'Condiciones Actividad Creadas',
+            description: 'Registro completo de todas las condiciones de actividad creadas en el sistema',
+            emptyMessage: 'No se encontraron condiciones de actividad creadas'
           },
           {
-            label: 'Actualizadas',
+            label: 'Actualizados',
             auditType: 'condiciones-actividad-actualizadas',
-            title: 'Condiciones de Actividad Actualizadas',
+            title: 'Condiciones Actividad Actualizadas',
             description: 'Registro completo de todos los cambios realizados en las condiciones de actividad',
             emptyMessage: 'No se encontraron condiciones de actividad actualizadas'
+          },
+          {
+            label: 'Eliminados',
+            auditType: 'condiciones-actividad-eliminadas',
+            title: 'Condiciones Actividad Eliminadas',
+            description: 'Registro completo de todas las condiciones de actividad eliminadas del sistema',
+            emptyMessage: 'No se encontraron condiciones de actividad eliminadas'
           }
         ]}
       />

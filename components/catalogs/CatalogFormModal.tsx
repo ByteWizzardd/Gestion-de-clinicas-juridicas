@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Modal from '../ui/feedback/Modal';
 import Button from '../ui/Button';
 import Select from '../forms/Select';
+import DatePicker from '../forms/DatePicker';
 import { X } from 'lucide-react';
 
 interface CatalogFormModalProps {
@@ -141,21 +142,21 @@ export default function CatalogFormModal({
                                     error={errors[field.name]}
                                 />
                             ) : field.type === 'date' ? (
-                                <>
-                                    <label className="block text-base font-normal text-foreground mb-1">
+                                <div className="space-y-1">
+                                    <label className="block text-base font-normal text-foreground">
                                         {field.label}
                                         {field.required && <span className="text-danger ml-1">*</span>}
                                     </label>
-                                    <input
-                                        type="date"
+                                    <DatePicker
                                         value={formData[field.name] || ''}
-                                        onChange={(e) => updateField(field.name, e.target.value)}
-                                        className={`w-full h-[40px] px-4 rounded-full border ${errors[field.name] ? 'border-danger' : 'border-transparent'} bg-[#E5E7EB] text-base focus:outline-none focus:ring-1 ${errors[field.name] ? 'focus:ring-danger' : 'focus:ring-primary'}`}
+                                        onChange={(value) => updateField(field.name, value)}
+                                        error={errors[field.name]}
+                                        required={field.required}
                                     />
                                     {errors[field.name] && (
                                         <p className="text-xs text-danger mt-1">{errors[field.name]}</p>
                                     )}
-                                </>
+                                </div>
                             ) : (
                                 <>
                                     <label className="block text-base font-normal text-foreground mb-1">

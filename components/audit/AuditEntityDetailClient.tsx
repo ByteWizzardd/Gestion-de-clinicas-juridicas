@@ -8,21 +8,21 @@ import AuditDetailClient from './detail/AuditDetailClient';
 
 interface AuditOperation {
   label: string;
-  auditType: 'soportes' | 'citas-eliminadas' | 'citas-actualizadas' | 'usuarios-eliminados' | 'usuarios-actualizados-campos' 
-    | 'estados-eliminados' | 'estados-actualizados'
-    | 'materias-eliminadas' | 'materias-actualizadas'
-    | 'niveles-educativos-eliminados' | 'niveles-educativos-actualizados'
-    | 'nucleos-eliminados' | 'nucleos-actualizados'
-    | 'condiciones-trabajo-eliminadas' | 'condiciones-trabajo-actualizadas'
-    | 'condiciones-actividad-eliminadas' | 'condiciones-actividad-actualizadas'
-    | 'tipos-caracteristicas-eliminados' | 'tipos-caracteristicas-actualizados'
-    | 'semestres-eliminados' | 'semestres-actualizados'
-    | 'municipios-eliminados' | 'municipios-actualizados'
-    | 'parroquias-eliminadas' | 'parroquias-actualizadas'
-    | 'categorias-eliminadas' | 'categorias-actualizadas'
-    | 'subcategorias-eliminadas' | 'subcategorias-actualizadas'
-    | 'ambitos-legales-eliminados' | 'ambitos-legales-actualizados'
-    | 'caracteristicas-eliminadas' | 'caracteristicas-actualizadas';
+  auditType: 'soportes' | 'soportes-creados' | 'citas-eliminadas' | 'citas-actualizadas' | 'citas-creadas' | 'usuarios-eliminados' | 'usuarios-actualizados-campos' | 'usuarios-creados' 
+    | 'estados-eliminados' | 'estados-actualizados' | 'estados-insertados'
+    | 'materias-eliminadas' | 'materias-actualizadas' | 'materias-insertadas'
+    | 'niveles-educativos-eliminados' | 'niveles-educativos-actualizados' | 'niveles-educativos-insertados'
+    | 'nucleos-eliminados' | 'nucleos-actualizados' | 'nucleos-insertados'
+    | 'condiciones-trabajo-eliminadas' | 'condiciones-trabajo-actualizadas' | 'condiciones-trabajo-insertadas'
+    | 'condiciones-actividad-eliminadas' | 'condiciones-actividad-actualizadas' | 'condiciones-actividad-insertadas'
+    | 'tipos-caracteristicas-eliminados' | 'tipos-caracteristicas-actualizados' | 'tipos-caracteristicas-insertados'
+    | 'semestres-eliminados' | 'semestres-actualizados' | 'semestres-insertados'
+    | 'municipios-eliminados' | 'municipios-actualizados' | 'municipios-insertados'
+    | 'parroquias-eliminadas' | 'parroquias-actualizadas' | 'parroquias-insertadas'
+    | 'categorias-eliminadas' | 'categorias-actualizadas' | 'categorias-insertadas'
+    | 'subcategorias-eliminadas' | 'subcategorias-actualizadas' | 'subcategorias-insertadas'
+    | 'ambitos-legales-eliminados' | 'ambitos-legales-actualizados' | 'ambitos-legales-insertados'
+    | 'caracteristicas-eliminadas' | 'caracteristicas-actualizadas' | 'caracteristicas-insertadas';
   title: string;
   description: string;
   emptyMessage: string;

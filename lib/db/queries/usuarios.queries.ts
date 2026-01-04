@@ -3,7 +3,6 @@ import { pool } from '../pool';
 import { QueryResult } from 'pg';
 import { estudiantesQueries } from './estudiantes.queries';
 import { profesoresQueries } from './profesores.queries';
-import { auditoriaActualizacionUsuariosQueries } from './auditoria-actualizacion-usuarios.queries';
 
 /**
  * Queries para la entidad Usuarios
@@ -65,6 +64,25 @@ export const usuariosQueries = {
   > => {
     const query = loadSQL("usuarios/search-by-email.sql");
     const result: QueryResult = await pool.query(query, [email]);
+    return result.rows;
+  },
+
+  /**
+   * Busca usuarios por nombre_usuario (búsqueda exacta)
+   */
+  searchByUsername: async (
+    username: string
+  ): Promise<
+    Array<{
+      cedula: string;
+      nombres: string;
+      apellidos: string;
+      nombre_usuario: string;
+      nombre_completo: string;
+    }>
+  > => {
+    const query = loadSQL("usuarios/search-by-username.sql");
+    const result: QueryResult = await pool.query(query, [username]);
     return result.rows;
   },
 
@@ -137,91 +155,102 @@ export const usuariosQueries = {
     };
     cedula_actor?: string;
   }): Promise<void> => {
-    // Verificar que el usuario no exista
-    const existingUser = await pool.query(
-      'SELECT 1 FROM usuarios WHERE cedula = $1',
-      [data.cedula]
-    );
-    if (existingUser.rows.length > 0) {
-      throw new Error(`El usuario con cédula ${data.cedula} ya existe`);
-    }
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    // Verificar que el correo no esté en uso
-    const existingEmail = await pool.query(
-      'SELECT 1 FROM usuarios WHERE correo_electronico = $1',
-      [data.correo_electronico]
-    );
-    if (existingEmail.rows.length > 0) {
-      throw new Error(`El correo electrónico ${data.correo_electronico} ya está en uso`);
-    }
-
-    // Verificar que el nombre_usuario no esté en uso
-    const existingUsername = await pool.query(
-      'SELECT 1 FROM usuarios WHERE nombre_usuario = $1',
-      [data.nombre_usuario]
-    );
-    if (existingUsername.rows.length > 0) {
-      throw new Error(`El nombre de usuario ${data.nombre_usuario} ya está en uso`);
-    }
-
-    // Insertar en tabla usuarios
-    const insertQuery = loadSQL('usuarios/create.sql');
-    await pool.query(insertQuery, [
-      data.cedula,
-      data.nombres,
-      data.apellidos,
-      data.correo_electronico,
-      data.nombre_usuario,
-      data.contrasena,
-      data.telefono_celular || null,
-      data.tipo_usuario,
-    ]);
-
-    // Insertar en la tabla correspondiente según el tipo
-    if (data.tipo_usuario === 'Estudiante') {
-      if (!data.estudiante?.term || !data.estudiante?.tipo_estudiante || !data.estudiante?.nrc) {
-        throw new Error('Para crear un estudiante se requiere term, tipo_estudiante y nrc');
+      // Verificar que el usuario no exista
+      const existingUser = await client.query(
+        'SELECT 1 FROM usuarios WHERE cedula = $1',
+        [data.cedula]
+      );
+      if (existingUser.rows.length > 0) {
+        await client.query('ROLLBACK');
+        throw new Error(`El usuario con cédula ${data.cedula} ya existe`);
       }
-      await estudiantesQueries.createOrUpdate({
-        term: data.estudiante.term,
-        cedula_estudiante: data.cedula,
-        tipo_estudiante: data.estudiante.tipo_estudiante,
-        nrc: data.estudiante.nrc,
-      });
-    } else if (data.tipo_usuario === 'Profesor') {
-      if (!data.profesor?.term || !data.profesor?.tipo_profesor) {
-        throw new Error('Para crear un profesor se requiere term y tipo_profesor');
+
+      // Verificar que el correo no esté en uso
+      const existingEmail = await client.query(
+        'SELECT 1 FROM usuarios WHERE correo_electronico = $1',
+        [data.correo_electronico]
+      );
+      if (existingEmail.rows.length > 0) {
+        await client.query('ROLLBACK');
+        throw new Error(`El correo electrónico ${data.correo_electronico} ya está en uso`);
       }
-      await profesoresQueries.create({
-        cedula_profesor: data.cedula,
-        term: data.profesor.term,
-        tipo_profesor: data.profesor.tipo_profesor,
-      });
-    } else if (data.tipo_usuario === 'Coordinador') {
-      if (!data.coordinador?.term) {
-        throw new Error('Para crear un coordinador se requiere term');
+
+      // Verificar que el nombre_usuario no esté en uso
+      const existingUsername = await client.query(
+        'SELECT 1 FROM usuarios WHERE nombre_usuario = $1',
+        [data.nombre_usuario]
+      );
+      if (existingUsername.rows.length > 0) {
+        await client.query('ROLLBACK');
+        throw new Error(`El nombre de usuario ${data.nombre_usuario} ya está en uso`);
       }
-      const insertCoordinadorQuery = loadSQL('coordinadores/create.sql');
-      await pool.query(insertCoordinadorQuery, [
+
+      // Establecer variable de sesión para el trigger de auditoría
+      if (data.cedula_actor) {
+        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [data.cedula_actor]);
+      }
+
+      // Insertar en tabla usuarios (el trigger capturará la auditoría automáticamente)
+      const insertQuery = loadSQL('usuarios/create.sql');
+      await client.query(insertQuery, [
         data.cedula,
-        data.coordinador.term,
+        data.nombres,
+        data.apellidos,
+        data.correo_electronico,
+        data.nombre_usuario,
+        data.contrasena,
+        data.telefono_celular || null,
+        data.tipo_usuario,
       ]);
-    }
 
-    // Registrar en auditoría
-    if (data.cedula_actor) {
-      await auditoriaActualizacionUsuariosQueries.create({
-        ci_usuario: data.cedula,
-        nombres_nuevo: data.nombres,
-        apellidos_nuevo: data.apellidos,
-        correo_electronico_nuevo: data.correo_electronico,
-        nombre_usuario_nuevo: data.nombre_usuario,
-        telefono_celular_nuevo: data.telefono_celular || null,
-        tipo_usuario_nuevo: data.tipo_usuario,
-        tipo_estudiante_nuevo: data.estudiante?.tipo_estudiante || null,
-        tipo_profesor_nuevo: data.profesor?.tipo_profesor || null,
-        id_usuario_actualizo: data.cedula_actor,
-      });
+      // Insertar en la tabla correspondiente según el tipo
+      if (data.tipo_usuario === 'Estudiante') {
+        if (!data.estudiante?.term || !data.estudiante?.tipo_estudiante || !data.estudiante?.nrc) {
+          await client.query('ROLLBACK');
+          throw new Error('Para crear un estudiante se requiere term, tipo_estudiante y nrc');
+        }
+        // Usar el client de la transacción en lugar de pool.query
+        const insertEstudianteQuery = loadSQL('estudiantes/create-or-update.sql');
+        await client.query(insertEstudianteQuery, [
+          data.estudiante.term,
+          data.cedula,
+          data.estudiante.tipo_estudiante,
+          data.estudiante.nrc,
+        ]);
+      } else if (data.tipo_usuario === 'Profesor') {
+        if (!data.profesor?.term || !data.profesor?.tipo_profesor) {
+          await client.query('ROLLBACK');
+          throw new Error('Para crear un profesor se requiere term y tipo_profesor');
+        }
+        // Usar el client de la transacción en lugar de pool.query
+        const insertProfesorQuery = loadSQL('profesores/create.sql');
+        await client.query(insertProfesorQuery, [
+          data.cedula,
+          data.profesor.term,
+          data.profesor.tipo_profesor,
+        ]);
+      } else if (data.tipo_usuario === 'Coordinador') {
+        if (!data.coordinador?.term) {
+          await client.query('ROLLBACK');
+          throw new Error('Para crear un coordinador se requiere term');
+        }
+        const insertCoordinadorQuery = loadSQL('coordinadores/create.sql');
+        await client.query(insertCoordinadorQuery, [
+          data.cedula,
+          data.coordinador.term,
+        ]);
+      }
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
     }
   },
 

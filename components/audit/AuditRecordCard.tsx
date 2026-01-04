@@ -6,30 +6,33 @@ import { ChevronDown, ChevronUp, FileText, Calendar, User, X, Check, BookOpen, G
 import Link from 'next/link';
 import UserAvatar from '@/components/ui/UserAvatar';
 import type { 
-  SoporteAuditRecord, 
+  SoporteAuditRecord,
+  SoporteCreadoAuditRecord,
   CitaEliminadaAuditRecord, 
   CitaActualizadaAuditRecord,
+  CitaCreadaAuditRecord,
   UsuarioEliminadoAuditRecord,
-  UsuarioActualizadoCamposAuditRecord
+  UsuarioActualizadoCamposAuditRecord,
+  UsuarioCreadoAuditRecord
 } from '@/types/audit';
 
-type AuditRecord = SoporteAuditRecord | CitaEliminadaAuditRecord | CitaActualizadaAuditRecord | UsuarioEliminadoAuditRecord | UsuarioActualizadoCamposAuditRecord | any;
+type AuditRecord = SoporteAuditRecord | SoporteCreadoAuditRecord | CitaEliminadaAuditRecord | CitaActualizadaAuditRecord | CitaCreadaAuditRecord | UsuarioEliminadoAuditRecord | UsuarioActualizadoCamposAuditRecord | UsuarioCreadoAuditRecord | any;
 
-type AuditRecordType = 'soporte' | 'cita-eliminada' | 'cita-actualizada' | 'usuario-eliminado' | 'usuario-actualizado-campos'
-  | 'estado-eliminado' | 'estado-actualizado'
-  | 'materia-eliminada' | 'materia-actualizada'
-  | 'nivel-educativo-eliminado' | 'nivel-educativo-actualizado'
-  | 'nucleo-eliminado' | 'nucleo-actualizado'
-  | 'condicion-trabajo-eliminada' | 'condicion-trabajo-actualizada'
-  | 'condicion-actividad-eliminada' | 'condicion-actividad-actualizada'
-  | 'tipo-caracteristica-eliminado' | 'tipo-caracteristica-actualizado'
-  | 'semestre-eliminado' | 'semestre-actualizado'
-  | 'municipio-eliminado' | 'municipio-actualizado'
-  | 'parroquia-eliminada' | 'parroquia-actualizada'
-  | 'categoria-eliminada' | 'categoria-actualizada'
-  | 'subcategoria-eliminada' | 'subcategoria-actualizada'
-  | 'ambito-legal-eliminado' | 'ambito-legal-actualizado'
-  | 'caracteristica-eliminada' | 'caracteristica-actualizada';
+type AuditRecordType = 'soporte' | 'soporte-creado' | 'cita-eliminada' | 'cita-actualizada' | 'cita-creada' | 'usuario-eliminado' | 'usuario-actualizado-campos' | 'usuario-creado'
+  | 'estado-eliminado' | 'estado-actualizado' | 'estado-insertado'
+  | 'materia-eliminada' | 'materia-actualizada' | 'materia-insertada'
+  | 'nivel-educativo-eliminado' | 'nivel-educativo-actualizado' | 'nivel-educativo-insertado'
+  | 'nucleo-eliminado' | 'nucleo-actualizado' | 'nucleo-insertado'
+  | 'condicion-trabajo-eliminada' | 'condicion-trabajo-actualizada' | 'condicion-trabajo-insertada'
+  | 'condicion-actividad-eliminada' | 'condicion-actividad-actualizada' | 'condicion-actividad-insertada'
+  | 'tipo-caracteristica-eliminado' | 'tipo-caracteristica-actualizado' | 'tipo-caracteristica-insertado'
+  | 'semestre-eliminado' | 'semestre-actualizado' | 'semestre-insertado'
+  | 'municipio-eliminado' | 'municipio-actualizado' | 'municipio-insertado'
+  | 'parroquia-eliminada' | 'parroquia-actualizada' | 'parroquia-insertada'
+  | 'categoria-eliminada' | 'categoria-actualizada' | 'categoria-insertada'
+  | 'subcategoria-eliminada' | 'subcategoria-actualizada' | 'subcategoria-insertada'
+  | 'ambito-legal-eliminado' | 'ambito-legal-actualizado' | 'ambito-legal-insertado'
+  | 'caracteristica-eliminada' | 'caracteristica-actualizada' | 'caracteristica-insertada';
 
 interface AuditRecordCardProps {
   record: AuditRecord;
@@ -90,6 +93,95 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
       hour: '2-digit',
       minute: '2-digit',
       hour12: true,
+      timeZone: 'America/Caracas', // Zona horaria de Venezuela
+    });
+  };
+
+  const formatOnlyDate = (dateInput: string | Date | null | undefined) => {
+    if (!dateInput) return 'Fecha no disponible';
+    
+    let date: Date;
+    if (dateInput instanceof Date) {
+      date = dateInput;
+    } else if (typeof dateInput === 'string') {
+      const parts = dateInput.split('-');
+      if (parts.length === 3) {
+        const [year, month, day] = parts.map(Number);
+        date = new Date(year, month - 1, day);
+      } else {
+        date = new Date(dateInput);
+      }
+    } else {
+      return 'Fecha no disponible';
+    }
+    
+    if (isNaN(date.getTime())) return 'Fecha inválida';
+    
+    return date.toLocaleDateString('es-VE', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const areDatesEqual = (d1: any, d2: any) => {
+    if (!d1 && !d2) return true;
+    if (!d1 || !d2) return false;
+    const date1 = new Date(d1);
+    const date2 = new Date(d2);
+    if (isNaN(date1.getTime()) || isNaN(date2.getTime())) return d1 === d2;
+    // Comparar solo la parte de la fecha (año, mes, día)
+    return date1.getFullYear() === date2.getFullYear() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getDate() === date2.getDate();
+  };
+
+  const formatDateOnly = (dateInput: string | Date | null | undefined) => {
+    // Si es null o undefined, retornar mensaje
+    if (!dateInput) {
+      return 'Fecha no disponible';
+    }
+    
+    // Si ya es un objeto Date, usarlo directamente
+    let date: Date;
+    if (dateInput instanceof Date) {
+      date = dateInput;
+    } else if (typeof dateInput === 'string') {
+      // Si el string incluye 'T' o es un timestamp, parsearlo correctamente
+      if (dateInput.includes('T')) {
+        // Es un timestamp ISO (ej: "2026-01-02T05:24:00.000Z")
+        // Extraer los componentes de fecha sin interpretar como UTC
+        const isoMatch = dateInput.match(/^(\d{4})-(\d{2})-(\d{2})T/);
+        if (isoMatch) {
+          const [, year, month, day] = isoMatch.map(Number);
+          // Crear fecha usando componentes locales (no UTC)
+          date = new Date(year, month - 1, day);
+        } else {
+          date = new Date(dateInput);
+        }
+      } else {
+        // Es solo una fecha (ej: "2026-01-02")
+        const parts = dateInput.split('-');
+        if (parts.length === 3) {
+          const [year, month, day] = parts.map(Number);
+          date = new Date(year, month - 1, day);
+        } else {
+          date = new Date(dateInput);
+        }
+      }
+    } else {
+      return 'Fecha no disponible';
+    }
+    
+    // Validar que la fecha sea válida
+    if (isNaN(date.getTime())) {
+      return 'Fecha inválida';
+    }
+    
+    return date.toLocaleDateString('es-VE', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
       timeZone: 'America/Caracas', // Zona horaria de Venezuela
     });
   };
@@ -187,6 +279,26 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           </div>
         );
       }
+      case 'soporte-creado': {
+        const r = record as SoporteCreadoAuditRecord;
+        return (
+          <div className="flex items-center gap-3">
+            <FileText className="w-5 h-5 text-gray-600" />
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">{r.nombre_archivo}</p>
+              <p className="text-sm text-gray-600">
+                Caso #{r.id_caso} • Subido por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_subio,
+                  r.nombres_usuario_subio,
+                  r.apellidos_usuario_subio,
+                  r.id_usuario_subio
+                )}
+              </p>
+            </div>
+          </div>
+        );
+      }
       case 'cita-eliminada': {
         const r = record as CitaEliminadaAuditRecord;
         return (
@@ -204,12 +316,41 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 </Link>
               </p>
               <p className="text-sm text-gray-600">
-                {formatDate(r.fecha_encuentro)} • Eliminado por:{' '}
+                Eliminado por:{' '}
                 {renderUserLink(
                   r.nombre_completo_usuario_elimino,
                   r.nombres_usuario_elimino,
                   r.apellidos_usuario_elimino,
                   r.id_usuario_elimino
+                )}
+              </p>
+            </div>
+          </div>
+        );
+      }
+      case 'cita-creada': {
+        const r = record as CitaCreadaAuditRecord;
+        return (
+          <div className="flex items-center gap-3">
+            <Calendar className="w-5 h-5 text-gray-600" />
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">
+                Cita #{r.num_cita} -{' '}
+                <Link
+                  href={`/dashboard/cases/${r.id_caso}`}
+                  className="text-primary hover:underline font-medium transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Caso #{r.id_caso}
+                </Link>
+              </p>
+              <p className="text-sm text-gray-600">
+                Creado por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_creo,
+                  r.nombres_usuario_creo,
+                  r.apellidos_usuario_creo,
+                  r.id_usuario_creo
                 )}
               </p>
             </div>
@@ -272,6 +413,44 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           </div>
         );
       }
+      case 'usuario-creado': {
+        const r = record as UsuarioCreadoAuditRecord;
+        // Construir nombre completo
+        let nombreCompleto = `${r.nombres} ${r.apellidos}`.trim();
+        if (!nombreCompleto) {
+          nombreCompleto = 'Usuario desconocido';
+        }
+
+        return (
+          <div className="flex items-center gap-3">
+            <User className="w-5 h-5 text-gray-600" />
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">
+                {r.cedula ? (
+                  <Link
+                    href={`/dashboard/users/${r.cedula}`}
+                    className="text-primary hover:underline font-medium transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {nombreCompleto}
+                  </Link>
+                ) : (
+                  nombreCompleto
+                )}
+              </p>
+              <p className="text-sm text-gray-600">
+                Cédula: {r.cedula} • Creado por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_creo,
+                  r.nombres_usuario_creo,
+                  r.apellidos_usuario_creo,
+                  r.id_usuario_creo
+                )}
+              </p>
+            </div>
+          </div>
+        );
+      }
       case 'usuario-actualizado-campos': {
         const r = record as UsuarioActualizadoCamposAuditRecord;
         // Construir nombre completo
@@ -282,7 +461,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         if (!nombreCompleto) {
           nombreCompleto = 'Usuario desconocido';
         }
-        
+
         return (
           <div className="flex items-center gap-3">
             <UserAvatar fotoPerfil={r.foto_perfil_usuario} size={25} />
@@ -331,7 +510,22 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
       case 'categoria-eliminada':
       case 'subcategoria-eliminada':
       case 'ambito-legal-eliminado':
-      case 'caracteristica-eliminada': {
+      case 'caracteristica-eliminada':
+      // Inserciones
+      case 'estado-insertado':
+      case 'materia-insertada':
+      case 'nivel-educativo-insertado':
+      case 'nucleo-insertado':
+      case 'condicion-trabajo-insertada':
+      case 'condicion-actividad-insertada':
+      case 'tipo-caracteristica-insertado':
+      case 'semestre-insertado':
+      case 'municipio-insertado':
+      case 'parroquia-insertada':
+      case 'categoria-insertada':
+      case 'subcategoria-insertada':
+      case 'ambito-legal-insertado':
+      case 'caracteristica-insertada': {
         const r = record as any;
         const iconMap: Record<string, any> = {
           'estado-eliminado': MapPin,
@@ -348,33 +542,145 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           'subcategoria-eliminada': FileText,
           'ambito-legal-eliminado': Scale,
           'caracteristica-eliminada': Tags,
+          // Inserciones
+          'estado-insertado': MapPin,
+          'materia-insertada': BookOpen,
+          'nivel-educativo-insertado': GraduationCap,
+          'nucleo-insertado': Building,
+          'condicion-trabajo-insertada': Briefcase,
+          'condicion-actividad-insertada': Activity,
+          'tipo-caracteristica-insertado': Tag,
+          'semestre-insertado': Calendar,
+          'municipio-insertado': Building2,
+          'parroquia-insertada': Home,
+          'categoria-insertada': FolderTree,
+          'subcategoria-insertada': FileText,
+          'ambito-legal-insertado': Scale,
+          'caracteristica-insertada': Tags,
         };
         const Icon = iconMap[type] || FileText;
-        const nameField = r.nombre_estado || r.nombre_materia || r.descripcion || r.nombre_nucleo || 
-          r.nombre_trabajo || r.nombre_actividad || r.nombre_tipo_caracteristica || r.term || 
-          r.nombre_municipio || r.nombre_parroquia || r.nombre_categoria || r.nombre_subcategoria || 
-          r.nombre_ambito_legal || r.descripcion || 'N/A';
+        
+        // Priorizar el nombre de la entidad misma sobre las entidades fuertes
+        // Determinar el nombre según el tipo específico de auditoría
+        let nameField: string;
+        if (type === 'categoria-eliminada' || type === 'categoria-insertada') {
+          nameField = r.nombre_categoria || 'N/A';
+        } else if (type === 'subcategoria-eliminada' || type === 'subcategoria-insertada') {
+          nameField = r.nombre_subcategoria || 'N/A';
+        } else if (type === 'ambito-legal-eliminado' || type === 'ambito-legal-insertado') {
+          nameField = r.nombre_ambito_legal || 'N/A';
+        } else if (type === 'estado-eliminado' || type === 'estado-insertado') {
+          nameField = r.nombre_estado || 'N/A';
+        } else if (type === 'materia-eliminada' || type === 'materia-insertada') {
+          nameField = r.nombre_materia || 'N/A';
+        } else if (type === 'nucleo-eliminado' || type === 'nucleo-insertado') {
+          nameField = r.nombre_nucleo || 'N/A';
+        } else if (type === 'condicion-trabajo-eliminada' || type === 'condicion-trabajo-insertada') {
+          nameField = r.nombre_trabajo || 'N/A';
+        } else if (type === 'condicion-actividad-eliminada' || type === 'condicion-actividad-insertada') {
+          nameField = r.nombre_actividad || 'N/A';
+        } else if (type === 'tipo-caracteristica-eliminado' || type === 'tipo-caracteristica-insertado') {
+          nameField = r.nombre_tipo_caracteristica || 'N/A';
+        } else if (type === 'municipio-eliminado' || type === 'municipio-insertado') {
+          nameField = r.nombre_municipio || 'N/A';
+        } else if (type === 'parroquia-eliminada' || type === 'parroquia-insertada') {
+          nameField = r.nombre_parroquia || 'N/A';
+        } else if (type === 'nivel-educativo-eliminado' || type === 'nivel-educativo-insertado' || 
+                   type === 'caracteristica-eliminada' || type === 'caracteristica-insertada') {
+          // Estos usan descripcion en lugar de nombre
+          nameField = r.descripcion || 'N/A';
+        } else if (type === 'semestre-eliminado' || type === 'semestre-insertado') {
+          nameField = r.term || 'N/A';
+        } else {
+          // Fallback para otros casos
+          nameField = r.descripcion || 'N/A';
+        }
+        
+        // Para características, mostrar solo num_caracteristica (sin guión)
+        const caracteristicaId = r.num_caracteristica != null ? r.num_caracteristica : null;
+        
         const idField = r.id_estado || r.id_materia || r.id_nivel_educativo || r.id_nucleo || 
           r.id_trabajo || r.id_actividad || r.id_tipo || r.term || 
-          `${r.id_estado || ''}-${r.num_municipio || ''}` || 
-          `${r.id_estado || ''}-${r.num_municipio || ''}-${r.num_parroquia || ''}` ||
-          `${r.id_materia || ''}-${r.num_categoria || ''}` ||
-          `${r.id_materia || ''}-${r.num_categoria || ''}-${r.num_subcategoria || ''}` ||
-          `${r.id_materia || ''}-${r.num_categoria || ''}-${r.num_subcategoria || ''}-${r.num_ambito_legal || ''}` ||
-          `${r.id_tipo_caracteristica || ''}-${r.num_caracteristica || ''}` || 'N/A';
+          (r.id_estado != null && r.num_municipio != null ? `${r.id_estado}-${r.num_municipio}` : null) || 
+          (r.id_estado != null && r.num_municipio != null && r.num_parroquia != null ? `${r.id_estado}-${r.num_municipio}-${r.num_parroquia}` : null) ||
+          (r.id_materia != null && r.num_categoria != null ? `${r.id_materia}-${r.num_categoria}` : null) ||
+          (r.id_materia != null && r.num_categoria != null && r.num_subcategoria != null ? `${r.id_materia}-${r.num_categoria}-${r.num_subcategoria}` : null) ||
+          (r.id_materia != null && r.num_categoria != null && r.num_subcategoria != null && r.num_ambito_legal != null ? `${r.id_materia}-${r.num_categoria}-${r.num_subcategoria}-${r.num_ambito_legal}` : null) ||
+          caracteristicaId || 'N/A';
+        
+        const isInserted = type.includes('-insertado') || type.includes('-insertada');
+        const actionText = isInserted ? 'Creado por' : 'Eliminado por';
+        const usuarioField = isInserted ? {
+          nombre: r.nombre_completo_usuario_creo,
+          nombres: r.nombres_usuario_creo,
+          apellidos: r.apellidos_usuario_creo,
+          id: r.id_usuario_creo
+        } : {
+          nombre: r.nombre_completo_usuario_elimino,
+          nombres: r.nombres_usuario_elimino,
+          apellidos: r.apellidos_usuario_elimino,
+          id: r.id_usuario_elimino
+        };
+        
+        // Para características, mostrar también el tipo de característica
+        const tipoCaracteristica = (type === 'caracteristica-eliminada' || type === 'caracteristica-insertada') 
+          ? r.nombre_tipo_caracteristica 
+          : null;
+        
+        // Para categorías, mostrar también la materia
+        const materiaCategoria = (type === 'categoria-eliminada' || type === 'categoria-insertada') 
+          ? r.nombre_materia 
+          : null;
+        
+        // Para subcategorías, mostrar también la categoría
+        const categoriaSubcategoria = (type === 'subcategoria-eliminada' || type === 'subcategoria-insertada') 
+          ? r.nombre_categoria 
+          : null;
+        
+        // Para ámbitos legales, mostrar también la subcategoría
+        const subcategoriaAmbito = (type === 'ambito-legal-eliminado' || type === 'ambito-legal-insertado') 
+          ? r.nombre_subcategoria 
+          : null;
+        
+        // Para municipios, mostrar también el estado
+        const estadoMunicipio = (type === 'municipio-eliminado' || type === 'municipio-insertado') 
+          ? r.nombre_estado 
+          : null;
+        
+        // Para parroquias, mostrar también el municipio y el estado
+        const municipioParroquia = (type === 'parroquia-eliminada' || type === 'parroquia-insertada') 
+          ? r.nombre_municipio 
+          : null;
+        const estadoParroquia = (type === 'parroquia-eliminada' || type === 'parroquia-insertada') 
+          ? r.nombre_estado 
+          : null;
         
         return (
           <div className="flex items-center gap-3">
             <Icon className="w-5 h-5 text-gray-600" />
             <div className="flex-1">
-              <p className="font-semibold text-gray-900">{nameField}</p>
+              <p className="font-semibold text-gray-900">
+                {nameField}
+                {tipoCaracteristica && (
+                  <span className="text-gray-500 font-normal ml-2">({tipoCaracteristica})</span>
+                )}
+                {materiaCategoria && (
+                  <span className="text-gray-500 font-normal ml-2">({materiaCategoria})</span>
+                )}
+                {categoriaSubcategoria && (
+                  <span className="text-gray-500 font-normal ml-2">({categoriaSubcategoria})</span>
+                )}
+                {subcategoriaAmbito && (
+                  <span className="text-gray-500 font-normal ml-2">({subcategoriaAmbito})</span>
+                )}
+              </p>
               <p className="text-sm text-gray-600">
-                ID: {idField} • Eliminado por:{' '}
+                ID: {idField} • {actionText}:{' '}
                 {renderUserLink(
-                  r.nombre_completo_usuario_elimino,
-                  r.nombres_usuario_elimino,
-                  r.apellidos_usuario_elimino,
-                  r.id_usuario_elimino
+                  usuarioField.nombre,
+                  usuarioField.nombres,
+                  usuarioField.apellidos,
+                  usuarioField.id
                 )}
               </p>
             </div>
@@ -414,24 +720,112 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           'caracteristica-actualizada': Tags,
         };
         const Icon = iconMap[type] || FileText;
-        const nameField = r.nombre_estado_nuevo || r.nombre_materia_nuevo || r.descripcion_nuevo || r.nombre_nucleo_nuevo || 
-          r.nombre_trabajo_nuevo || r.nombre_actividad_nuevo || r.nombre_tipo_caracteristica_nuevo || r.term || 
-          r.nombre_municipio_nuevo || r.nombre_parroquia_nuevo || r.nombre_categoria_nuevo || r.nombre_subcategoria_nuevo || 
-          r.nombre_ambito_legal_nuevo || r.descripcion_nuevo || 'N/A';
+        
+        // Priorizar el nombre de la entidad misma sobre las entidades fuertes
+        // Determinar el nombre según el tipo específico de auditoría
+        let nameField: string;
+        if (type === 'categoria-actualizada') {
+          nameField = r.nombre_categoria_nuevo || 'N/A';
+        } else if (type === 'subcategoria-actualizada') {
+          nameField = r.nombre_subcategoria_nuevo || 'N/A';
+        } else if (type === 'ambito-legal-actualizado') {
+          nameField = r.nombre_ambito_legal_nuevo || 'N/A';
+        } else if (type === 'estado-actualizado') {
+          nameField = r.nombre_estado_nuevo || 'N/A';
+        } else if (type === 'materia-actualizada') {
+          nameField = r.nombre_materia_nuevo || 'N/A';
+        } else if (type === 'nucleo-actualizado') {
+          nameField = r.nombre_nucleo_nuevo || 'N/A';
+        } else if (type === 'condicion-trabajo-actualizada') {
+          nameField = r.nombre_trabajo_nuevo || 'N/A';
+        } else if (type === 'condicion-actividad-actualizada') {
+          nameField = r.nombre_actividad_nuevo || 'N/A';
+        } else if (type === 'tipo-caracteristica-actualizado') {
+          nameField = r.nombre_tipo_caracteristica_nuevo || 'N/A';
+        } else if (type === 'municipio-actualizado') {
+          nameField = r.nombre_municipio_nuevo || 'N/A';
+        } else if (type === 'parroquia-actualizada') {
+          nameField = r.nombre_parroquia_nuevo || 'N/A';
+        } else if (type === 'nivel-educativo-actualizado' || type === 'caracteristica-actualizada') {
+          // Estos usan descripcion en lugar de nombre
+          nameField = r.descripcion_nuevo || 'N/A';
+        } else if (type === 'semestre-actualizado') {
+          nameField = r.term || 'N/A';
+        } else {
+          // Fallback para otros casos
+          nameField = r.descripcion_nuevo || 'N/A';
+        }
+        
+        // Para características, mostrar solo num_caracteristica (sin guión)
+        const caracteristicaId = r.num_caracteristica != null ? r.num_caracteristica : null;
+        
         const idField = r.id_estado || r.id_materia || r.id_nivel_educativo || r.id_nucleo || 
           r.id_trabajo || r.id_actividad || r.id_tipo || r.term || 
-          `${r.id_estado || ''}-${r.num_municipio || ''}` || 
-          `${r.id_estado || ''}-${r.num_municipio || ''}-${r.num_parroquia || ''}` ||
-          `${r.id_materia || ''}-${r.num_categoria || ''}` ||
-          `${r.id_materia || ''}-${r.num_categoria || ''}-${r.num_subcategoria || ''}` ||
-          `${r.id_materia || ''}-${r.num_categoria || ''}-${r.num_subcategoria || ''}-${r.num_ambito_legal || ''}` ||
-          `${r.id_tipo_caracteristica || ''}-${r.num_caracteristica || ''}` || 'N/A';
+          (r.id_estado != null && r.num_municipio != null ? `${r.id_estado}-${r.num_municipio}` : null) || 
+          (r.id_estado != null && r.num_municipio != null && r.num_parroquia != null ? `${r.id_estado}-${r.num_municipio}-${r.num_parroquia}` : null) ||
+          (r.id_materia != null && r.num_categoria != null ? `${r.id_materia}-${r.num_categoria}` : null) ||
+          (r.id_materia != null && r.num_categoria != null && r.num_subcategoria != null ? `${r.id_materia}-${r.num_categoria}-${r.num_subcategoria}` : null) ||
+          (r.id_materia != null && r.num_categoria != null && r.num_subcategoria != null && r.num_ambito_legal != null ? `${r.id_materia}-${r.num_categoria}-${r.num_subcategoria}-${r.num_ambito_legal}` : null) ||
+          caracteristicaId || 'N/A';
+        
+        // Para características, mostrar también el tipo de característica
+        const tipoCaracteristica = type === 'caracteristica-actualizada' 
+          ? r.nombre_tipo_caracteristica 
+          : null;
+        
+        // Para categorías, mostrar también la materia
+        const materiaCategoria = type === 'categoria-actualizada' 
+          ? r.nombre_materia 
+          : null;
+        
+        // Para subcategorías, mostrar también la categoría
+        const categoriaSubcategoria = type === 'subcategoria-actualizada' 
+          ? r.nombre_categoria 
+          : null;
+        
+        // Para ámbitos legales, mostrar también la subcategoría
+        const subcategoriaAmbito = type === 'ambito-legal-actualizado' 
+          ? r.nombre_subcategoria 
+          : null;
+        
+        // Para municipios, mostrar también el estado
+        const estadoMunicipioActualizado = type === 'municipio-actualizado' 
+          ? r.nombre_estado 
+          : null;
+        
+        // Para parroquias, mostrar también el municipio y el estado
+        const municipioParroquiaActualizada = type === 'parroquia-actualizada' 
+          ? r.nombre_municipio 
+          : null;
+        const estadoParroquiaActualizada = type === 'parroquia-actualizada' 
+          ? r.nombre_estado 
+          : null;
         
         return (
           <div className="flex items-center gap-3">
             <Check className="w-5 h-5 text-gray-600" />
             <div className="flex-1">
-              <p className="font-semibold text-gray-900">{nameField}</p>
+              <p className="font-semibold text-gray-900">
+                {nameField}
+                {tipoCaracteristica && (
+                  <span className="text-gray-500 font-normal ml-2">({tipoCaracteristica})</span>
+                )}
+                {materiaCategoria && (
+                  <span className="text-gray-500 font-normal ml-2">({materiaCategoria})</span>
+                )}
+                {categoriaSubcategoria && (
+                  <span className="text-gray-500 font-normal ml-2">({categoriaSubcategoria})</span>
+                )}
+                {subcategoriaAmbito && (
+                  <span className="text-gray-500 font-normal ml-2">({subcategoriaAmbito})</span>
+                )}
+                {estadoMunicipioActualizado && (
+                  <span className="text-gray-500 font-normal ml-2">({estadoMunicipioActualizado})</span>
+                )}
+                {municipioParroquiaActualizada && estadoParroquiaActualizada && (
+                  <span className="text-gray-500 font-normal ml-2">({municipioParroquiaActualizada}, {estadoParroquiaActualizada})</span>
+                )}
+              </p>
               <p className="text-sm text-gray-600">
                 ID: {idField} • Actualizado por:{' '}
                 {renderUserLink(
@@ -517,6 +911,54 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           </div>
         );
       }
+      case 'soporte-creado': {
+        const r = record as SoporteCreadoAuditRecord;
+        return (
+          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">Información del Documento</p>
+                <p className="text-sm text-gray-600">Nombre: {r.nombre_archivo}</p>
+                <p className="text-sm text-gray-600">Tipo: {r.tipo_mime || 'N/A'}</p>
+                <p className="text-sm text-gray-600">Tamaño: {formatFileSize(r.tamano_bytes)}</p>
+                {r.descripcion && (
+                  <p className="text-sm text-gray-600">Descripción: {r.descripcion}</p>
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">Fechas</p>
+                {r.fecha_consignacion && (
+                  <p className="text-sm text-gray-600">Consignación: {formatDateOnly(r.fecha_consignacion)}</p>
+                )}
+                <p className="text-sm text-gray-600">Fecha creación: {formatDate(r.fecha_creacion)}</p>
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Subido por</p>
+              <p className="text-sm text-gray-600">
+                {r.id_usuario_subio ? (
+                  renderUserLink(
+                    r.nombre_completo_usuario_subio,
+                    r.nombres_usuario_subio,
+                    r.apellidos_usuario_subio,
+                    r.id_usuario_subio
+                  )
+                ) : (
+                  <span className="text-gray-600">N/A</span>
+                )}
+              </p>
+            </div>
+            <div className="pt-2" onClick={(e) => e.stopPropagation()}>
+              <Link
+                href={`/dashboard/cases/${r.id_caso}`}
+                className="text-sm text-primary hover:underline"
+              >
+                Ver caso #{r.id_caso} →
+              </Link>
+            </div>
+          </div>
+        );
+      }
       case 'cita-eliminada': {
         const r = record as CitaEliminadaAuditRecord;
         return (
@@ -525,11 +967,28 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
               <div>
                 <p className="text-sm font-semibold text-gray-700 mb-1">Información de la Cita</p>
                 <p className="text-sm text-gray-600">Número: {r.num_cita}</p>
-                <p className="text-sm text-gray-600">Fecha encuentro: {formatDate(r.fecha_encuentro)}</p>
+                <p className="text-sm text-gray-600">Fecha encuentro: {formatDateOnly(r.fecha_encuentro)}</p>
                 {r.fecha_proxima_cita && (
-                  <p className="text-sm text-gray-600">Próxima cita: {formatDate(r.fecha_proxima_cita)}</p>
+                  <p className="text-sm text-gray-600">Próxima cita: {formatDateOnly(r.fecha_proxima_cita)}</p>
                 )}
                 <p className="text-sm text-gray-600">Orientación: {r.orientacion}</p>
+                {r.usuarios_atendieron && Array.isArray(r.usuarios_atendieron) && r.usuarios_atendieron.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-sm font-semibold text-gray-700 mb-1">Atendida por:</p>
+                    <div className="space-y-1">
+                      {r.usuarios_atendieron.map((usuario: any, idx: number) => (
+                        <p key={idx} className="text-sm text-gray-600">
+                          {renderUserLink(
+                            usuario.nombre_completo,
+                            usuario.nombres,
+                            usuario.apellidos,
+                            usuario.id_usuario
+                          )}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
@@ -573,6 +1032,62 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           </div>
         );
       }
+      case 'cita-creada': {
+        const r = record as CitaCreadaAuditRecord;
+        return (
+          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">Información de la Cita</p>
+                <p className="text-sm text-gray-600">Número: {r.num_cita}</p>
+                <p className="text-sm text-gray-600">Fecha encuentro: {formatDateOnly(r.fecha_encuentro)}</p>
+                {r.fecha_proxima_cita && (
+                  <p className="text-sm text-gray-600">Próxima cita: {formatDateOnly(r.fecha_proxima_cita)}</p>
+                )}
+                <p className="text-sm text-gray-600">Orientación: {r.orientacion}</p>
+                {r.usuarios_atendieron && Array.isArray(r.usuarios_atendieron) && r.usuarios_atendieron.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-sm font-semibold text-gray-700 mb-1">Atendida por:</p>
+                    <div className="space-y-1">
+                      {r.usuarios_atendieron.map((usuario: any, idx: number) => (
+                        <p key={idx} className="text-sm text-gray-600">
+                          {renderUserLink(
+                            usuario.nombre_completo,
+                            usuario.nombres,
+                            usuario.apellidos,
+                            usuario.id_usuario
+                          )}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
+                <p className="text-sm text-gray-600">
+                  Creado por:{' '}
+                  {renderUserLink(
+                    r.nombre_completo_usuario_creo,
+                    r.nombres_usuario_creo,
+                    r.apellidos_usuario_creo,
+                    r.id_usuario_creo
+                  )}
+                </p>
+                <p className="text-sm text-gray-600">Fecha creación: {formatDate(r.fecha_creacion)}</p>
+              </div>
+            </div>
+            <div className="pt-2" onClick={(e) => e.stopPropagation()}>
+              <Link 
+                href={`/dashboard/cases/${r.id_caso}`}
+                className="text-sm text-primary hover:underline"
+              >
+                Ver caso #{r.id_caso} →
+              </Link>
+            </div>
+          </div>
+        );
+      }
       case 'cita-actualizada': {
         const r = record as CitaActualizadaAuditRecord;
         return (
@@ -584,11 +1099,11 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                   <div className="mb-2">
                     <p className="text-sm text-gray-600">
                       <span className="line-through text-red-500">
-                        {r.fecha_encuentro_anterior ? formatDate(r.fecha_encuentro_anterior) : 'N/A'}
+                        {r.fecha_encuentro_anterior ? formatDateOnly(r.fecha_encuentro_anterior) : 'N/A'}
                       </span>
                       {' → '}
                       <span className="text-green-600">
-                        {r.fecha_encuentro_nueva ? formatDate(r.fecha_encuentro_nueva) : 'N/A'}
+                        {r.fecha_encuentro_nueva ? formatDateOnly(r.fecha_encuentro_nueva) : 'N/A'}
                       </span>
                     </p>
                   </div>
@@ -598,11 +1113,11 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                     <p className="text-sm text-gray-600">
                       Próxima cita:{' '}
                       <span className="line-through text-red-500">
-                        {r.fecha_proxima_cita_anterior ? formatDate(r.fecha_proxima_cita_anterior) : 'N/A'}
+                        {r.fecha_proxima_cita_anterior ? formatDateOnly(r.fecha_proxima_cita_anterior) : 'N/A'}
                       </span>
                       {' → '}
                       <span className="text-green-600">
-                        {r.fecha_proxima_cita_nueva ? formatDate(r.fecha_proxima_cita_nueva) : 'N/A'}
+                        {r.fecha_proxima_cita_nueva ? formatDateOnly(r.fecha_proxima_cita_nueva) : 'N/A'}
                       </span>
                     </p>
                   </div>
@@ -616,6 +1131,23 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                     <p className="text-sm text-green-600 bg-green-50 p-2 rounded mt-1">
                       {r.orientacion_nueva || 'N/A'}
                     </p>
+                  </div>
+                )}
+                {r.usuarios_atendieron && Array.isArray(r.usuarios_atendieron) && r.usuarios_atendieron.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-sm font-semibold text-gray-700 mb-1">Atendida por:</p>
+                    <div className="space-y-1">
+                      {r.usuarios_atendieron.map((usuario: any, idx: number) => (
+                        <p key={idx} className="text-sm text-gray-600">
+                          {renderUserLink(
+                            usuario.nombre_completo,
+                            usuario.nombres,
+                            usuario.apellidos,
+                            usuario.id_usuario
+                          )}
+                        </p>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -694,6 +1226,73 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
               <div>
                 <p className="text-sm font-semibold text-gray-700 mb-1">Motivo</p>
                 <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{r.motivo}</p>
+              </div>
+            )}
+          </div>
+        );
+      }
+      case 'usuario-creado': {
+        const r = record as UsuarioCreadoAuditRecord;
+        // Construir nombre completo del usuario
+        let nombreCompleto = `${r.nombres} ${r.apellidos}`.trim();
+        if (!nombreCompleto) {
+          nombreCompleto = 'Usuario desconocido';
+        }
+
+        return (
+          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Información del Usuario</p>
+              <p className="text-sm text-gray-600">
+                Nombre:{' '}
+                {r.cedula ? (
+                  <Link
+                    href={`/dashboard/users/${r.cedula}`}
+                    className="text-primary hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {nombreCompleto}
+                  </Link>
+                ) : (
+                  nombreCompleto
+                )}
+              </p>
+              <p className="text-sm text-gray-600">Cédula: {r.cedula}</p>
+              <p className="text-sm text-gray-600">Correo: {r.correo_electronico || 'N/A'}</p>
+              <p className="text-sm text-gray-600">Nombre de usuario: {r.nombre_usuario || 'N/A'}</p>
+              {r.telefono_celular && (
+                <p className="text-sm text-gray-600">Teléfono: {r.telefono_celular}</p>
+              )}
+              <p className="text-sm text-gray-600">Tipo: {r.tipo_usuario || 'N/A'}</p>
+              {r.tipo_estudiante && (
+                <p className="text-sm text-gray-600">Tipo estudiante: {r.tipo_estudiante}</p>
+              )}
+              {r.tipo_profesor && (
+                <p className="text-sm text-gray-600">Tipo profesor: {r.tipo_profesor}</p>
+              )}
+              <p className="text-sm text-gray-600">Habilitado: {r.habilitado_sistema ? 'Sí' : 'No'}</p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
+              <p className="text-sm text-gray-600">Fecha creación: {formatDate(r.fecha_creacion)}</p>
+              <p className="text-sm text-gray-600">
+                Creado por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_creo,
+                  r.nombres_usuario_creo,
+                  r.apellidos_usuario_creo,
+                  r.id_usuario_creo
+                )}
+              </p>
+            </div>
+            {r.cedula && (
+              <div className="pt-2" onClick={(e) => e.stopPropagation()}>
+                <Link
+                  href={`/dashboard/users/${r.cedula}`}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Ver usuario →
+                </Link>
               </div>
             )}
           </div>
@@ -896,18 +1495,65 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
       case 'ambito-legal-eliminado':
       case 'caracteristica-eliminada': {
         const r = record as any;
-        const nameField = r.nombre_estado || r.nombre_materia || r.descripcion || r.nombre_nucleo || 
-          r.nombre_trabajo || r.nombre_actividad || r.nombre_tipo_caracteristica || r.term || 
-          r.nombre_municipio || r.nombre_parroquia || r.nombre_categoria || r.nombre_subcategoria || 
-          r.nombre_ambito_legal || r.descripcion || 'N/A';
-        const idField = r.id_estado || r.id_materia || r.id_nivel_educativo || r.id_nucleo || 
-          r.id_trabajo || r.id_actividad || r.id_tipo || r.term || 
-          `${r.id_estado || ''}-${r.num_municipio || ''}` || 
-          `${r.id_estado || ''}-${r.num_municipio || ''}-${r.num_parroquia || ''}` ||
-          `${r.id_materia || ''}-${r.num_categoria || ''}` ||
-          `${r.id_materia || ''}-${r.num_categoria || ''}-${r.num_subcategoria || ''}` ||
-          `${r.id_materia || ''}-${r.num_categoria || ''}-${r.num_subcategoria || ''}-${r.num_ambito_legal || ''}` ||
-          `${r.id_tipo_caracteristica || ''}-${r.num_caracteristica || ''}` || 'N/A';
+        
+        // Determinar el nombre según el tipo específico de auditoría
+        let nameField: string;
+        if (type === 'categoria-eliminada') {
+          nameField = r.nombre_categoria || 'N/A';
+        } else if (type === 'subcategoria-eliminada') {
+          nameField = r.nombre_subcategoria || 'N/A';
+        } else if (type === 'ambito-legal-eliminado') {
+          nameField = r.nombre_ambito_legal || 'N/A';
+        } else if (type === 'estado-eliminado') {
+          nameField = r.nombre_estado || 'N/A';
+        } else if (type === 'materia-eliminada') {
+          nameField = r.nombre_materia || 'N/A';
+        } else if (type === 'nucleo-eliminado') {
+          nameField = r.nombre_nucleo || 'N/A';
+        } else if (type === 'condicion-trabajo-eliminada') {
+          nameField = r.nombre_trabajo || 'N/A';
+        } else if (type === 'condicion-actividad-eliminada') {
+          nameField = r.nombre_actividad || 'N/A';
+        } else if (type === 'tipo-caracteristica-eliminado') {
+          nameField = r.nombre_tipo_caracteristica || 'N/A';
+        } else if (type === 'municipio-eliminado') {
+          nameField = r.nombre_municipio || 'N/A';
+        } else if (type === 'parroquia-eliminada') {
+          nameField = r.nombre_parroquia || 'N/A';
+        } else if (type === 'nivel-educativo-eliminado' || type === 'caracteristica-eliminada') {
+          // Estos usan descripcion en lugar de nombre
+          nameField = r.descripcion || 'N/A';
+        } else if (type === 'semestre-eliminado') {
+          nameField = r.term || 'N/A';
+        } else {
+          // Fallback para otros casos
+          nameField = r.descripcion || 'N/A';
+        }
+        
+        // Para características, mostrar solo num_caracteristica (sin guión)
+        const caracteristicaId = r.num_caracteristica != null ? r.num_caracteristica : null;
+        
+        const idField = r.id_estado || r.id_materia || r.id_nivel_educativo || r.id_nucleo ||
+          r.id_trabajo || r.id_actividad || r.id_tipo || r.term ||
+          (r.id_estado != null && r.num_municipio != null ? `${r.id_estado}-${r.num_municipio}` : null) ||
+          (r.id_estado != null && r.num_municipio != null && r.num_parroquia != null ? `${r.id_estado}-${r.num_municipio}-${r.num_parroquia}` : null) ||
+          (r.id_materia != null && r.num_categoria != null ? `${r.id_materia}-${r.num_categoria}` : null) ||
+          (r.id_materia != null && r.num_categoria != null && r.num_subcategoria != null ? `${r.id_materia}-${r.num_categoria}-${r.num_subcategoria}` : null) ||
+          (r.id_materia != null && r.num_categoria != null && r.num_subcategoria != null && r.num_ambito_legal != null ? `${r.id_materia}-${r.num_categoria}-${r.num_subcategoria}-${r.num_ambito_legal}` : null) ||
+          caracteristicaId || 'N/A';
+        
+        // Obtener información de la entidad fuerte
+        const entidadFuerte = 
+          type === 'categoria-eliminada' ? r.nombre_materia :
+          type === 'subcategoria-eliminada' ? r.nombre_categoria :
+          type === 'ambito-legal-eliminado' ? r.nombre_subcategoria :
+          type === 'caracteristica-eliminada' ? r.nombre_tipo_caracteristica :
+          type === 'municipio-eliminado' ? r.nombre_estado :
+          type === 'parroquia-eliminada' ? r.nombre_municipio :
+          null;
+        
+        // Para parroquias, también mostrar el estado
+        const estadoParroquiaEliminada = type === 'parroquia-eliminada' ? r.nombre_estado : null;
         
         return (
           <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
@@ -915,7 +1561,34 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
               <div>
                 <p className="text-sm font-semibold text-gray-700 mb-1">Información</p>
                 <p className="text-sm text-gray-600">Nombre: {nameField}</p>
-                <p className="text-sm text-gray-600">ID: {idField}</p>
+                {entidadFuerte && (
+                  <p className="text-sm text-gray-600">
+                    {type === 'categoria-eliminada' ? 'Materia' : 
+                     type === 'subcategoria-eliminada' ? 'Categoría' :
+                     type === 'ambito-legal-eliminado' ? 'Subcategoría' :
+                     type === 'municipio-eliminado' ? 'Estado' :
+                     type === 'parroquia-eliminada' ? 'Municipio' :
+                     'Tipo'}: {entidadFuerte}
+                  </p>
+                )}
+                {estadoParroquiaEliminada && (
+                  <p className="text-sm text-gray-600">Estado: {estadoParroquiaEliminada}</p>
+                )}
+                {/* Para semestres, el term es el ID, así que no mostramos ID por separado */}
+                {type !== 'semestre-eliminado' && (
+                  <p className="text-sm text-gray-600">ID: {idField}</p>
+                )}
+                {/* Para semestres, mostrar todos los atributos */}
+                {type === 'semestre-eliminado' && (
+                  <>
+                    {r.fecha_inicio && (
+                      <p className="text-sm text-gray-600">Fecha inicio: {formatOnlyDate(r.fecha_inicio)}</p>
+                    )}
+                    {r.fecha_fin && (
+                      <p className="text-sm text-gray-600">Fecha fin: {formatOnlyDate(r.fecha_fin)}</p>
+                    )}
+                  </>
+                )}
                 {r.habilitado !== null && (
                   <p className="text-sm text-gray-600">Habilitado: {r.habilitado ? 'Sí' : 'No'}</p>
                 )}
@@ -943,6 +1616,137 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           </div>
         );
       }
+      // Inserciones
+      case 'estado-insertado':
+      case 'materia-insertada':
+      case 'nivel-educativo-insertado':
+      case 'nucleo-insertado':
+      case 'condicion-trabajo-insertada':
+      case 'condicion-actividad-insertada':
+      case 'tipo-caracteristica-insertado':
+      case 'semestre-insertado':
+      case 'municipio-insertado':
+      case 'parroquia-insertada':
+      case 'categoria-insertada':
+      case 'subcategoria-insertada':
+      case 'ambito-legal-insertado':
+      case 'caracteristica-insertada': {
+        const r = record as any;
+        
+        // Determinar el nombre según el tipo específico de auditoría
+        let nameField: string;
+        if (type === 'categoria-insertada') {
+          nameField = r.nombre_categoria || 'N/A';
+        } else if (type === 'subcategoria-insertada') {
+          nameField = r.nombre_subcategoria || 'N/A';
+        } else if (type === 'ambito-legal-insertado') {
+          nameField = r.nombre_ambito_legal || 'N/A';
+        } else if (type === 'estado-insertado') {
+          nameField = r.nombre_estado || 'N/A';
+        } else if (type === 'materia-insertada') {
+          nameField = r.nombre_materia || 'N/A';
+        } else if (type === 'nucleo-insertado') {
+          nameField = r.nombre_nucleo || 'N/A';
+        } else if (type === 'condicion-trabajo-insertada') {
+          nameField = r.nombre_trabajo || 'N/A';
+        } else if (type === 'condicion-actividad-insertada') {
+          nameField = r.nombre_actividad || 'N/A';
+        } else if (type === 'tipo-caracteristica-insertado') {
+          nameField = r.nombre_tipo_caracteristica || 'N/A';
+        } else if (type === 'municipio-insertado') {
+          nameField = r.nombre_municipio || 'N/A';
+        } else if (type === 'parroquia-insertada') {
+          nameField = r.nombre_parroquia || 'N/A';
+        } else if (type === 'nivel-educativo-insertado' || type === 'caracteristica-insertada') {
+          // Estos usan descripcion en lugar de nombre
+          nameField = r.descripcion || 'N/A';
+        } else if (type === 'semestre-insertado') {
+          nameField = r.term || 'N/A';
+        } else {
+          // Fallback para otros casos
+          nameField = r.descripcion || 'N/A';
+        }
+        
+        // Para características, mostrar solo num_caracteristica (sin guión)
+        const caracteristicaId = r.num_caracteristica != null ? r.num_caracteristica : null;
+        
+        const idField = r.id_estado || r.id_materia || r.id_nivel_educativo || r.id_nucleo ||
+          r.id_trabajo || r.id_actividad || r.id_tipo || r.term ||
+          (r.id_estado != null && r.num_municipio != null ? `${r.id_estado}-${r.num_municipio}` : null) ||
+          (r.id_estado != null && r.num_municipio != null && r.num_parroquia != null ? `${r.id_estado}-${r.num_municipio}-${r.num_parroquia}` : null) ||
+          (r.id_materia != null && r.num_categoria != null ? `${r.id_materia}-${r.num_categoria}` : null) ||
+          (r.id_materia != null && r.num_categoria != null && r.num_subcategoria != null ? `${r.id_materia}-${r.num_categoria}-${r.num_subcategoria}` : null) ||
+          (r.id_materia != null && r.num_categoria != null && r.num_subcategoria != null && r.num_ambito_legal != null ? `${r.id_materia}-${r.num_categoria}-${r.num_subcategoria}-${r.num_ambito_legal}` : null) ||
+          caracteristicaId || 'N/A';
+        
+        // Obtener información de la entidad fuerte
+        const entidadFuerte = 
+          type === 'categoria-insertada' ? r.nombre_materia :
+          type === 'subcategoria-insertada' ? r.nombre_categoria :
+          type === 'ambito-legal-insertado' ? r.nombre_subcategoria :
+          type === 'caracteristica-insertada' ? r.nombre_tipo_caracteristica :
+          type === 'municipio-insertado' ? r.nombre_estado :
+          type === 'parroquia-insertada' ? r.nombre_municipio :
+          null;
+        
+        // Para parroquias, también mostrar el estado
+        const estadoParroquiaInsertada = type === 'parroquia-insertada' ? r.nombre_estado : null;
+        
+        return (
+          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">Información</p>
+                <p className="text-sm text-gray-600">Nombre: {nameField}</p>
+                {entidadFuerte && (
+                  <p className="text-sm text-gray-600">
+                    {type === 'categoria-insertada' ? 'Materia' : 
+                     type === 'subcategoria-insertada' ? 'Categoría' :
+                     type === 'ambito-legal-insertado' ? 'Subcategoría' :
+                     type === 'municipio-insertado' ? 'Estado' :
+                     type === 'parroquia-insertada' ? 'Municipio' :
+                     'Tipo'}: {entidadFuerte}
+                  </p>
+                )}
+                {estadoParroquiaInsertada && (
+                  <p className="text-sm text-gray-600">Estado: {estadoParroquiaInsertada}</p>
+                )}
+                {/* Para semestres, el term es el ID, así que no mostramos ID por separado */}
+                {type !== 'semestre-insertado' && (
+                  <p className="text-sm text-gray-600">ID: {idField}</p>
+                )}
+                {/* Para semestres, mostrar todos los atributos */}
+                {type === 'semestre-insertado' && (
+                  <>
+                    {r.fecha_inicio && (
+                      <p className="text-sm text-gray-600">Fecha inicio: {formatOnlyDate(r.fecha_inicio)}</p>
+                    )}
+                    {r.fecha_fin && (
+                      <p className="text-sm text-gray-600">Fecha fin: {formatOnlyDate(r.fecha_fin)}</p>
+                    )}
+                  </>
+                )}
+                {r.habilitado !== null && (
+                  <p className="text-sm text-gray-600">Habilitado: {r.habilitado ? 'Sí' : 'No'}</p>
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
+                <p className="text-sm text-gray-600">
+                  Creado por:{' '}
+                  {renderUserLink(
+                    r.nombre_completo_usuario_creo,
+                    r.nombres_usuario_creo,
+                    r.apellidos_usuario_creo,
+                    r.id_usuario_creo
+                  )}
+                </p>
+                <p className="text-sm text-gray-600">Fecha creación: {formatDate(r.fecha_creacion)}</p>
+              </div>
+            </div>
+          </div>
+        );
+      }
       // Catálogos - casos genéricos para actualizados
       case 'estado-actualizado':
       case 'materia-actualizada':
@@ -959,28 +1763,86 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
       case 'ambito-legal-actualizado':
       case 'caracteristica-actualizada': {
         const r = record as any;
-        const nameFieldAnterior = r.nombre_estado_anterior || r.nombre_materia_anterior || r.descripcion_anterior || r.nombre_nucleo_anterior || 
-          r.nombre_trabajo_anterior || r.nombre_actividad_anterior || r.nombre_tipo_caracteristica_anterior || r.term || 
-          r.nombre_municipio_anterior || r.nombre_parroquia_anterior || r.nombre_categoria_anterior || r.nombre_subcategoria_anterior || 
-          r.nombre_ambito_legal_anterior || r.descripcion_anterior || 'N/A';
-        const nameFieldNuevo = r.nombre_estado_nuevo || r.nombre_materia_nuevo || r.descripcion_nuevo || r.nombre_nucleo_nuevo || 
-          r.nombre_trabajo_nuevo || r.nombre_actividad_nuevo || r.nombre_tipo_caracteristica_nuevo || r.term || 
-          r.nombre_municipio_nuevo || r.nombre_parroquia_nuevo || r.nombre_categoria_nuevo || r.nombre_subcategoria_nuevo || 
-          r.nombre_ambito_legal_nuevo || r.descripcion_nuevo || 'N/A';
+        
+        // Determinar el nombre según el tipo específico de auditoría
+        let nameFieldAnterior: string;
+        let nameFieldNuevo: string;
+        if (type === 'categoria-actualizada') {
+          nameFieldAnterior = r.nombre_categoria_anterior || 'N/A';
+          nameFieldNuevo = r.nombre_categoria_nuevo || 'N/A';
+        } else if (type === 'subcategoria-actualizada') {
+          nameFieldAnterior = r.nombre_subcategoria_anterior || 'N/A';
+          nameFieldNuevo = r.nombre_subcategoria_nuevo || 'N/A';
+        } else if (type === 'ambito-legal-actualizado') {
+          nameFieldAnterior = r.nombre_ambito_legal_anterior || 'N/A';
+          nameFieldNuevo = r.nombre_ambito_legal_nuevo || 'N/A';
+        } else if (type === 'estado-actualizado') {
+          nameFieldAnterior = r.nombre_estado_anterior || 'N/A';
+          nameFieldNuevo = r.nombre_estado_nuevo || 'N/A';
+        } else if (type === 'materia-actualizada') {
+          nameFieldAnterior = r.nombre_materia_anterior || 'N/A';
+          nameFieldNuevo = r.nombre_materia_nuevo || 'N/A';
+        } else if (type === 'nucleo-actualizado') {
+          nameFieldAnterior = r.nombre_nucleo_anterior || 'N/A';
+          nameFieldNuevo = r.nombre_nucleo_nuevo || 'N/A';
+        } else if (type === 'condicion-trabajo-actualizada') {
+          nameFieldAnterior = r.nombre_trabajo_anterior || 'N/A';
+          nameFieldNuevo = r.nombre_trabajo_nuevo || 'N/A';
+        } else if (type === 'condicion-actividad-actualizada') {
+          nameFieldAnterior = r.nombre_actividad_anterior || 'N/A';
+          nameFieldNuevo = r.nombre_actividad_nuevo || 'N/A';
+        } else if (type === 'tipo-caracteristica-actualizado') {
+          nameFieldAnterior = r.nombre_tipo_caracteristica_anterior || 'N/A';
+          nameFieldNuevo = r.nombre_tipo_caracteristica_nuevo || 'N/A';
+        } else if (type === 'municipio-actualizado') {
+          nameFieldAnterior = r.nombre_municipio_anterior || 'N/A';
+          nameFieldNuevo = r.nombre_municipio_nuevo || 'N/A';
+        } else if (type === 'parroquia-actualizada') {
+          nameFieldAnterior = r.nombre_parroquia_anterior || 'N/A';
+          nameFieldNuevo = r.nombre_parroquia_nuevo || 'N/A';
+        } else if (type === 'nivel-educativo-actualizado' || type === 'caracteristica-actualizada') {
+          // Estos usan descripcion en lugar de nombre
+          nameFieldAnterior = r.descripcion_anterior || 'N/A';
+          nameFieldNuevo = r.descripcion_nuevo || 'N/A';
+        } else {
+          // Fallback para otros casos
+          nameFieldAnterior = r.descripcion_anterior || 'N/A';
+          nameFieldNuevo = r.descripcion_nuevo || 'N/A';
+        }
+        
+        // Para características, mostrar solo num_caracteristica (sin guión)
+        const caracteristicaId = r.num_caracteristica != null ? r.num_caracteristica : null;
+        
         const idField = r.id_estado || r.id_materia || r.id_nivel_educativo || r.id_nucleo || 
           r.id_trabajo || r.id_actividad || r.id_tipo || r.term || 
-          `${r.id_estado || ''}-${r.num_municipio || ''}` || 
-          `${r.id_estado || ''}-${r.num_municipio || ''}-${r.num_parroquia || ''}` ||
-          `${r.id_materia || ''}-${r.num_categoria || ''}` ||
-          `${r.id_materia || ''}-${r.num_categoria || ''}-${r.num_subcategoria || ''}` ||
-          `${r.id_materia || ''}-${r.num_categoria || ''}-${r.num_subcategoria || ''}-${r.num_ambito_legal || ''}` ||
-          `${r.id_tipo_caracteristica || ''}-${r.num_caracteristica || ''}` || 'N/A';
+          (r.id_estado != null && r.num_municipio != null ? `${r.id_estado}-${r.num_municipio}` : null) || 
+          (r.id_estado != null && r.num_municipio != null && r.num_parroquia != null ? `${r.id_estado}-${r.num_municipio}-${r.num_parroquia}` : null) ||
+          (r.id_materia != null && r.num_categoria != null ? `${r.id_materia}-${r.num_categoria}` : null) ||
+          (r.id_materia != null && r.num_categoria != null && r.num_subcategoria != null ? `${r.id_materia}-${r.num_categoria}-${r.num_subcategoria}` : null) ||
+          (r.id_materia != null && r.num_categoria != null && r.num_subcategoria != null && r.num_ambito_legal != null ? `${r.id_materia}-${r.num_categoria}-${r.num_subcategoria}-${r.num_ambito_legal}` : null) ||
+          caracteristicaId || 'N/A';
+        
+        // Obtener información de la entidad fuerte
+        const entidadFuerte = 
+          type === 'categoria-actualizada' ? r.nombre_materia :
+          type === 'subcategoria-actualizada' ? r.nombre_categoria :
+          type === 'ambito-legal-actualizado' ? r.nombre_subcategoria :
+          type === 'caracteristica-actualizada' ? r.nombre_tipo_caracteristica :
+          type === 'municipio-actualizado' ? r.nombre_estado :
+          type === 'parroquia-actualizada' ? r.nombre_municipio :
+          null;
+        
+        // Para parroquias, también mostrar el estado
+        const estadoParroquiaActualizadaDetalle = type === 'parroquia-actualizada' ? r.nombre_estado : null;
         
         return (
           <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
             <div>
               <p className="text-sm font-semibold text-gray-700 mb-1">Cambios Realizados</p>
-              <p className="text-sm text-gray-600 mb-3">ID: {idField}</p>
+              {/* Para semestres, el term es el ID, así que no mostramos ID por separado */}
+              {type !== 'semestre-actualizado' && (
+                <p className="text-sm text-gray-600 mb-3">ID: {idField}</p>
+              )}
               
               {(nameFieldAnterior !== nameFieldNuevo) && (
                 <div className="mb-2">
@@ -1015,30 +1877,154 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
               {/* Campos específicos para semestres */}
               {type === 'semestre-actualizado' && (
                 <>
-                  {(r.fecha_inicio_anterior !== r.fecha_inicio_nuevo) && (
+                  {!areDatesEqual(r.fecha_inicio_anterior, r.fecha_inicio_nuevo) && (
                     <div className="mb-2">
                       <p className="text-sm text-gray-600">
                         Fecha inicio:{' '}
                         <span className="line-through text-red-500">
-                          {r.fecha_inicio_anterior ? formatDate(r.fecha_inicio_anterior) : 'N/A'}
+                          {r.fecha_inicio_anterior ? formatOnlyDate(r.fecha_inicio_anterior) : 'N/A'}
                         </span>
                         {' → '}
                         <span className="text-green-600">
-                          {r.fecha_inicio_nuevo ? formatDate(r.fecha_inicio_nuevo) : 'N/A'}
+                          {r.fecha_inicio_nuevo ? formatOnlyDate(r.fecha_inicio_nuevo) : 'N/A'}
                         </span>
                       </p>
                     </div>
                   )}
-                  {(r.fecha_fin_anterior !== r.fecha_fin_nuevo) && (
+                  {!areDatesEqual(r.fecha_fin_anterior, r.fecha_fin_nuevo) && (
                     <div className="mb-2">
                       <p className="text-sm text-gray-600">
                         Fecha fin:{' '}
                         <span className="line-through text-red-500">
-                          {r.fecha_fin_anterior ? formatDate(r.fecha_fin_anterior) : 'N/A'}
+                          {r.fecha_fin_anterior ? formatOnlyDate(r.fecha_fin_anterior) : 'N/A'}
                         </span>
                         {' → '}
                         <span className="text-green-600">
-                          {r.fecha_fin_nuevo ? formatDate(r.fecha_fin_nuevo) : 'N/A'}
+                          {r.fecha_fin_nuevo ? formatOnlyDate(r.fecha_fin_nuevo) : 'N/A'}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+              
+              {/* Campos específicos para núcleos: estado, municipio y parroquia */}
+              {type === 'nucleo-actualizado' && (
+                <>
+                  {(r.id_estado_anterior !== r.id_estado_nuevo || r.num_municipio_anterior !== r.num_municipio_nuevo || r.num_parroquia_anterior !== r.num_parroquia_nuevo) && (
+                    <>
+                      {(r.id_estado_anterior !== r.id_estado_nuevo || (r.nombre_estado_anterior !== r.nombre_estado_nuevo && (r.nombre_estado_anterior || r.nombre_estado_nuevo))) && (
+                        <div className="mb-2">
+                          <p className="text-sm text-gray-600">
+                            Estado:{' '}
+                            <span className="line-through text-red-500">
+                              {r.nombre_estado_anterior || 'N/A'}
+                            </span>
+                            {' → '}
+                            <span className="text-green-600">
+                              {r.nombre_estado_nuevo || 'N/A'}
+                            </span>
+                          </p>
+                        </div>
+                      )}
+                      {(r.num_municipio_anterior !== r.num_municipio_nuevo || (r.nombre_municipio_anterior !== r.nombre_municipio_nuevo && (r.nombre_municipio_anterior || r.nombre_municipio_nuevo))) && (
+                        <div className="mb-2">
+                          <p className="text-sm text-gray-600">
+                            Municipio:{' '}
+                            <span className="line-through text-red-500">
+                              {r.nombre_municipio_anterior || 'N/A'}
+                            </span>
+                            {' → '}
+                            <span className="text-green-600">
+                              {r.nombre_municipio_nuevo || 'N/A'}
+                            </span>
+                          </p>
+                        </div>
+                      )}
+                      {(r.num_parroquia_anterior !== r.num_parroquia_nuevo || (r.nombre_parroquia_anterior !== r.nombre_parroquia_nuevo && (r.nombre_parroquia_anterior || r.nombre_parroquia_nuevo))) && (
+                        <div className="mb-2">
+                          <p className="text-sm text-gray-600">
+                            Parroquia:{' '}
+                            <span className="line-through text-red-500">
+                              {r.nombre_parroquia_anterior || 'N/A'}
+                            </span>
+                            {' → '}
+                            <span className="text-green-600">
+                              {r.nombre_parroquia_nuevo || 'N/A'}
+                            </span>
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+              
+              {/* Campos específicos para parroquias: estado y municipio */}
+              {type === 'parroquia-actualizada' && (
+                <>
+                  {(r.id_estado_anterior !== r.id_estado_nuevo || r.num_municipio_anterior !== r.num_municipio_nuevo) && (
+                    <>
+                      {(r.id_estado_anterior !== r.id_estado_nuevo || (r.nombre_estado_anterior !== r.nombre_estado_nuevo && (r.nombre_estado_anterior || r.nombre_estado_nuevo))) && (
+                        <div className="mb-2">
+                          <p className="text-sm text-gray-600">
+                            Estado:{' '}
+                            <span className="line-through text-red-500">
+                              {r.nombre_estado_anterior || 'N/A'}
+                            </span>
+                            {' → '}
+                            <span className="text-green-600">
+                              {r.nombre_estado_nuevo || 'N/A'}
+                            </span>
+                          </p>
+                        </div>
+                      )}
+                      {(r.num_municipio_anterior !== r.num_municipio_nuevo || (r.nombre_municipio_anterior !== r.nombre_municipio_nuevo && (r.nombre_municipio_anterior || r.nombre_municipio_nuevo))) && (
+                        <div className="mb-2">
+                          <p className="text-sm text-gray-600">
+                            Municipio:{' '}
+                            <span className="line-through text-red-500">
+                              {r.nombre_municipio_anterior || 'N/A'}
+                            </span>
+                            {' → '}
+                            <span className="text-green-600">
+                              {r.nombre_municipio_nuevo || 'N/A'}
+                            </span>
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+              
+              {/* Campos específicos para subcategorías: materia y categoría */}
+              {type === 'subcategoria-actualizada' && (
+                <>
+                  {(r.id_materia_anterior !== r.id_materia_nuevo || (r.nombre_materia_anterior !== r.nombre_materia_nuevo && (r.nombre_materia_anterior || r.nombre_materia_nuevo))) && (
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-600">
+                        Materia:{' '}
+                        <span className="line-through text-red-500">
+                          {r.nombre_materia_anterior || 'N/A'}
+                        </span>
+                        {' → '}
+                        <span className="text-green-600">
+                          {r.nombre_materia_nuevo || 'N/A'}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                  {(r.num_categoria_anterior !== r.num_categoria_nuevo || r.id_materia_anterior !== r.id_materia_nuevo || (r.nombre_categoria_anterior !== r.nombre_categoria_nuevo && (r.nombre_categoria_anterior || r.nombre_categoria_nuevo))) && (
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-600">
+                        Categoría:{' '}
+                        <span className="line-through text-red-500">
+                          {r.nombre_categoria_anterior || 'N/A'}
+                        </span>
+                        {' → '}
+                        <span className="text-green-600">
+                          {r.nombre_categoria_nuevo || 'N/A'}
                         </span>
                       </p>
                     </div>
@@ -1046,6 +2032,22 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 </>
               )}
             </div>
+            {/* Para semestres actualizados, mostrar sección de Información con todos los atributos */}
+            {type === 'semestre-actualizado' && (
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">Información</p>
+                <p className="text-sm text-gray-600">Nombre: {nameFieldNuevo}</p>
+                {r.fecha_inicio_nuevo && (
+                  <p className="text-sm text-gray-600">Fecha inicio: {formatOnlyDate(r.fecha_inicio_nuevo)}</p>
+                )}
+                {r.fecha_fin_nuevo && (
+                  <p className="text-sm text-gray-600">Fecha fin: {formatOnlyDate(r.fecha_fin_nuevo)}</p>
+                )}
+                {r.habilitado_nuevo !== null && (
+                  <p className="text-sm text-gray-600">Habilitado: {r.habilitado_nuevo ? 'Sí' : 'No'}</p>
+                )}
+              </div>
+            )}
             <div>
               <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
               <p className="text-sm text-gray-600">
@@ -1071,14 +2073,20 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
     switch (type) {
       case 'soporte':
         return (record as SoporteAuditRecord).fecha_eliminacion;
+      case 'soporte-creado':
+        return (record as SoporteCreadoAuditRecord).fecha_creacion;
       case 'cita-eliminada':
         return (record as CitaEliminadaAuditRecord).fecha_eliminacion;
+      case 'cita-creada':
+        return (record as CitaCreadaAuditRecord).fecha_creacion;
       case 'cita-actualizada':
         return (record as CitaActualizadaAuditRecord).fecha_actualizacion;
       case 'usuario-eliminado':
         return (record as UsuarioEliminadoAuditRecord).fecha;
       case 'usuario-actualizado-campos':
         return (record as UsuarioActualizadoCamposAuditRecord).fecha_actualizacion;
+      case 'usuario-creado':
+        return (record as UsuarioCreadoAuditRecord).fecha_creacion;
       // Catálogos eliminados
       case 'estado-eliminado':
       case 'materia-eliminada':
@@ -1095,6 +2103,22 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
       case 'ambito-legal-eliminado':
       case 'caracteristica-eliminada':
         return (record as any).fecha_eliminacion;
+      // Catálogos insertados
+      case 'estado-insertado':
+      case 'materia-insertada':
+      case 'nivel-educativo-insertado':
+      case 'nucleo-insertado':
+      case 'condicion-trabajo-insertada':
+      case 'condicion-actividad-insertada':
+      case 'tipo-caracteristica-insertado':
+      case 'semestre-insertado':
+      case 'municipio-insertado':
+      case 'parroquia-insertada':
+      case 'categoria-insertada':
+      case 'subcategoria-insertada':
+      case 'ambito-legal-insertado':
+      case 'caracteristica-insertada':
+        return (record as any).fecha_creacion;
       // Catálogos actualizados
       case 'estado-actualizado':
       case 'materia-actualizada':

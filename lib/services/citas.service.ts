@@ -115,6 +115,9 @@ export const citasService = {
 
       // Usar transacción para crear cita y registros en atienden de forma atómica
       return await withTransaction(async (client) => {
+        // Establecer la variable de sesión para el trigger de auditoría
+        await client.query("SELECT set_config('app.usuario_crea_cita', $1, true)", [params.idUsuarioRegistro]);
+        
         // 1. Crear la cita
         const createQuery = loadSQL('citas/create.sql');
         const citaResult = await client.query(createQuery, [

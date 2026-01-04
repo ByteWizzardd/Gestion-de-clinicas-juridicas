@@ -16,21 +16,37 @@ export async function getMunicipios() {
 }
 
 export async function createMunicipio(data: { id_estado: string; nombre_municipio: string }) {
+    const client = await pool.connect();
     try {
-        const maxResult = await pool.query(
+        await client.query('BEGIN');
+
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'No autorizado' };
+        }
+
+        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+
+        const maxResult = await client.query(
             'SELECT COALESCE(MAX(num_municipio), 0) + 1 as next_num FROM municipios WHERE id_estado = $1',
             [parseInt(data.id_estado)]
         );
         const nextNum = maxResult.rows[0].next_num;
-        const result = await pool.query(
+        const result = await client.query(
             'INSERT INTO municipios (id_estado, num_municipio, nombre_municipio) VALUES ($1, $2, $3) RETURNING *',
             [parseInt(data.id_estado), nextNum, data.nombre_municipio]
         );
+
+        await client.query('COMMIT');
         revalidatePath('/dashboard/catalogs/municipios');
         return { success: true, data: result.rows[0] };
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Error creating municipio:', error);
         return { success: false, error: 'Error al crear municipio' };
+    } finally {
+        client.release();
     }
 }
 
@@ -117,7 +133,7 @@ export async function deleteMunicipio(id_estado: number, num_municipio: number, 
             `SELECT EXISTS (
                 SELECT 1 FROM parroquias WHERE id_estado = $1 AND num_municipio = $2
                 UNION
-                SELECT 1 FROM clientes WHERE id_estado = $1 AND num_municipio = $2
+                SELECT 1 FROM solicitantes WHERE id_estado = $1 AND num_municipio = $2
             ) AS has_associations`,
             [id_estado, num_municipio]
         );
@@ -126,7 +142,7 @@ export async function deleteMunicipio(id_estado: number, num_municipio: number, 
             return {
                 success: false,
                 error: 'HAS_ASSOCIATIONS',
-                message: 'No se puede eliminar porque tiene parroquias o clientes asociados.'
+                message: 'No se puede eliminar porque tiene parroquias o solicitantes asociados.'
             };
         }
 

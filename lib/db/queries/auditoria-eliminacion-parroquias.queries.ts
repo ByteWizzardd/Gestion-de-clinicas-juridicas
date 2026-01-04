@@ -30,6 +30,8 @@ export const auditoriaEliminacionParroquiasQueries = {
     num_municipio: number;
     num_parroquia: number;
     nombre_parroquia: string;
+    nombre_estado: string | null;
+    nombre_municipio: string | null;
     habilitado: boolean | null;
     fecha_eliminacion: string;
     id_usuario_elimino: string;

@@ -14,11 +14,11 @@ export default async function EstadosAuditPage() {
         defaultTab="estados-eliminados"
         operations={[
           {
-            label: 'Eliminados',
-            auditType: 'estados-eliminados',
-            title: 'Estados Eliminados',
-            description: 'Registro completo de todos los estados eliminados del sistema',
-            emptyMessage: 'No se encontraron estados eliminados'
+            label: 'Creados',
+            auditType: 'estados-insertados',
+            title: 'Estados Creados',
+            description: 'Registro completo de todos los estados creados en el sistema',
+            emptyMessage: 'No se encontraron estados creados'
           },
           {
             label: 'Actualizados',
@@ -26,6 +26,13 @@ export default async function EstadosAuditPage() {
             title: 'Estados Actualizados',
             description: 'Registro completo de todos los cambios realizados en los estados',
             emptyMessage: 'No se encontraron estados actualizados'
+          },
+          {
+            label: 'Eliminados',
+            auditType: 'estados-eliminados',
+            title: 'Estados Eliminados',
+            description: 'Registro completo de todos los estados eliminados del sistema',
+            emptyMessage: 'No se encontraron estados eliminados'
           }
         ]}
       />

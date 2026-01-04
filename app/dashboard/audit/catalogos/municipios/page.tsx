@@ -3,7 +3,7 @@ import AuditEntityDetailClient from '@/components/audit/AuditEntityDetailClient'
 
 export const dynamic = 'force-dynamic';
 
-export default async function MunicipiosAuditPage() {
+export default async function MunicipioAuditPage() {
   await authorizeRole(['coordinator']);
 
   return (
@@ -11,14 +11,14 @@ export default async function MunicipiosAuditPage() {
       <AuditEntityDetailClient
         entityTitle="Municipios"
         entityDescription="Registro completo de todas las acciones realizadas sobre los municipios del sistema"
-        defaultTab="municipios-eliminados"
+        defaultTab="municipios-insertados"
         operations={[
           {
-            label: 'Eliminados',
-            auditType: 'municipios-eliminados',
-            title: 'Municipios Eliminados',
-            description: 'Registro completo de todos los municipios eliminados del sistema',
-            emptyMessage: 'No se encontraron municipios eliminados'
+            label: 'Creados',
+            auditType: 'municipios-insertados',
+            title: 'Municipios Creados',
+            description: 'Registro completo de todos los municipios creados en el sistema',
+            emptyMessage: 'No se encontraron municipios creados'
           },
           {
             label: 'Actualizados',
@@ -26,6 +26,13 @@ export default async function MunicipiosAuditPage() {
             title: 'Municipios Actualizados',
             description: 'Registro completo de todos los cambios realizados en los municipios',
             emptyMessage: 'No se encontraron municipios actualizados'
+          },
+          {
+            label: 'Eliminados',
+            auditType: 'municipios-eliminados',
+            title: 'Municipios Eliminados',
+            description: 'Registro completo de todos los municipios eliminados del sistema',
+            emptyMessage: 'No se encontraron municipios eliminados'
           }
         ]}
       />

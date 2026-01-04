@@ -2,7 +2,8 @@
 SELECT 
     a.id,
     a.term,
-    a.term,
+    a.fecha_inicio,
+    a.fecha_fin,
     a.habilitado,
     
     a.fecha_eliminacion,

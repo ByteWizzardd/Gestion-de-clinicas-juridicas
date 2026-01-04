@@ -36,6 +36,36 @@ export interface SoporteAuditRecord {
   motivo: string | null;
 }
 
+// Auditoría de soportes creados
+export interface SoporteCreadoAuditRecord {
+  id: number;
+  num_soporte: number;
+  id_caso: number;
+  nombre_archivo: string;
+  tipo_mime: string;
+  descripcion: string | null;
+  fecha_consignacion: string;
+  tamano_bytes: number | null;
+  fecha_creacion: string;
+  fecha: string; // Alias para fecha_creacion
+  usuario_accion: string; // Alias para id_usuario_subio
+  nombre_completo_usuario_accion?: string; // Alias para nombre_completo_usuario_subio
+  id_usuario_subio: string | null;
+  nombres_usuario_subio: string | null;
+  apellidos_usuario_subio: string | null;
+  nombre_completo_usuario_subio: string | null;
+  foto_perfil_usuario_subio: string | null;
+}
+
+// Usuario que atendió una cita
+export interface UsuarioAtendio {
+  id_usuario: string;
+  nombres: string | null;
+  apellidos: string | null;
+  nombre_completo: string | null;
+  fecha_registro: string;
+}
+
 // Auditoría de citas eliminadas
 export interface CitaEliminadaAuditRecord {
   id: number;
@@ -58,6 +88,7 @@ export interface CitaEliminadaAuditRecord {
   nombre_completo_usuario_elimino: string | null;
   foto_perfil_usuario_elimino: string | null;
   motivo: string | null;
+  usuarios_atendieron?: UsuarioAtendio[];
 }
 
 // Auditoría de citas actualizadas
@@ -83,6 +114,27 @@ export interface CitaActualizadaAuditRecord {
   foto_perfil_usuario_actualizo: string | null;
   fecha_actualizacion: string;
   fecha: string; // Alias para fecha_actualizacion
+  usuarios_atendieron?: UsuarioAtendio[];
+}
+
+// Auditoría de citas creadas
+export interface CitaCreadaAuditRecord {
+  id: number;
+  num_cita: number;
+  id_caso: number;
+  fecha_encuentro: string;
+  fecha_proxima_cita: string | null;
+  orientacion: string;
+  fecha_creacion: string;
+  fecha: string; // Alias para fecha_creacion
+  usuario_accion: string; // Alias para id_usuario_creo
+  nombre_completo_usuario_accion?: string; // Alias para nombre_completo_usuario_creo
+  id_usuario_creo: string;
+  nombres_usuario_creo: string | null;
+  apellidos_usuario_creo: string | null;
+  nombre_completo_usuario_creo: string | null;
+  foto_perfil_usuario_creo: string | null;
+  usuarios_atendieron?: UsuarioAtendio[];
 }
 
 // Auditoría de usuarios eliminados
@@ -141,6 +193,30 @@ export interface UsuarioActualizadoCamposAuditRecord {
   fecha: string; // Alias para fecha_actualizacion
 }
 
+// Auditoría de usuarios creados
+export interface UsuarioCreadoAuditRecord {
+  id: number;
+  cedula: string;
+  nombres: string;
+  apellidos: string;
+  correo_electronico: string;
+  nombre_usuario: string;
+  telefono_celular: string | null;
+  habilitado_sistema: boolean;
+  tipo_usuario: string;
+  tipo_estudiante: string | null;
+  tipo_profesor: string | null;
+  fecha_creacion: string;
+  fecha: string; // Alias para fecha_creacion
+  usuario_accion: string; // Alias para id_usuario_creo
+  nombre_completo_usuario_accion?: string; // Alias para nombre_completo_usuario_creo
+  id_usuario_creo: string;
+  nombres_usuario_creo: string | null;
+  apellidos_usuario_creo: string | null;
+  nombre_completo_usuario_creo: string | null;
+  foto_perfil_usuario_creo: string | null;
+}
+
 // Filtros para consultas de auditoría
 export interface AuditFilters {
   fechaInicio?: string;
@@ -153,10 +229,13 @@ export interface AuditFilters {
 // Contadores de auditoría
 export interface AuditCounts {
   soportes: number;
+  soportesCreados: number;
   citasEliminadas: number;
   citasActualizadas: number;
+  citasCreadas: number;
   usuariosEliminados: number;
   usuariosActualizadosCampos: number;
+  usuariosCreados: number;
   estadosEliminados?: number;
   estadosActualizados?: number;
   materiasEliminadas?: number;
@@ -185,4 +264,19 @@ export interface AuditCounts {
   ambitosLegalesActualizados?: number;
   caracteristicasEliminadas?: number;
   caracteristicasActualizadas?: number;
+  // Inserciones
+  estadosInsertados?: number;
+  materiasInsertadas?: number;
+  nivelesEducativosInsertados?: number;
+  nucleosInsertados?: number;
+  condicionesTrabajoInsertadas?: number;
+  condicionesActividadInsertadas?: number;
+  tiposCaracteristicasInsertados?: number;
+  semestresInsertados?: number;
+  municipiosInsertados?: number;
+  parroquiasInsertadas?: number;
+  categoriasInsertadas?: number;
+  subcategoriasInsertadas?: number;
+  ambitosLegalesInsertados?: number;
+  caracteristicasInsertadas?: number;
 }

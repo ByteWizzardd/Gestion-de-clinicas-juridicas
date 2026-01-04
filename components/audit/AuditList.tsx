@@ -5,7 +5,21 @@ import { motion } from 'motion/react';
 import { TablePagination } from '@/components/Table/TablePagination';
 import AuditRecordCard from './AuditRecordCard';
 
-type AuditRecordType = 'soporte' | 'cita-eliminada' | 'cita-actualizada' | 'usuario-eliminado' | 'usuario-actualizado-campos';
+type AuditRecordType = 'soporte' | 'cita-eliminada' | 'cita-actualizada' | 'cita-creada' | 'usuario-eliminado' | 'usuario-actualizado-campos'
+  | 'estado-eliminado' | 'estado-actualizado' | 'estado-insertado'
+  | 'materia-eliminada' | 'materia-actualizada' | 'materia-insertada'
+  | 'nivel-educativo-eliminado' | 'nivel-educativo-actualizado' | 'nivel-educativo-insertado'
+  | 'nucleo-eliminado' | 'nucleo-actualizado' | 'nucleo-insertado'
+  | 'condicion-trabajo-eliminada' | 'condicion-trabajo-actualizada' | 'condicion-trabajo-insertada'
+  | 'condicion-actividad-eliminada' | 'condicion-actividad-actualizada' | 'condicion-actividad-insertada'
+  | 'tipo-caracteristica-eliminado' | 'tipo-caracteristica-actualizado' | 'tipo-caracteristica-insertado'
+  | 'semestre-eliminado' | 'semestre-actualizado' | 'semestre-insertado'
+  | 'municipio-eliminado' | 'municipio-actualizado' | 'municipio-insertado'
+  | 'parroquia-eliminada' | 'parroquia-actualizada' | 'parroquia-insertada'
+  | 'categoria-eliminada' | 'categoria-actualizada' | 'categoria-insertada'
+  | 'subcategoria-eliminada' | 'subcategoria-actualizada' | 'subcategoria-insertada'
+  | 'ambito-legal-eliminado' | 'ambito-legal-actualizado' | 'ambito-legal-insertado'
+  | 'caracteristica-eliminada' | 'caracteristica-actualizada' | 'caracteristica-insertada';
 
 interface AuditListProps {
   records: any[];

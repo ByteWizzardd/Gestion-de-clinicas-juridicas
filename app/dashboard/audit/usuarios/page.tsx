@@ -11,14 +11,14 @@ export default async function UsuariosAuditPage() {
       <AuditEntityDetailClient
         entityTitle="Usuarios"
         entityDescription="Registro completo de todas las acciones realizadas sobre los usuarios del sistema"
-        defaultTab="usuarios-eliminados"
+        defaultTab="usuarios-creados"
         operations={[
           {
-            label: 'Eliminados',
-            auditType: 'usuarios-eliminados',
-            title: 'Usuarios Eliminados',
-            description: 'Registro completo de todos los usuarios eliminados del sistema',
-            emptyMessage: 'No se encontraron usuarios eliminados'
+            label: 'Creados',
+            auditType: 'usuarios-creados',
+            title: 'Usuarios Creados',
+            description: 'Registro completo de todos los usuarios creados en el sistema',
+            emptyMessage: 'No se encontraron usuarios creados'
           },
           {
             label: 'Actualizados',
@@ -26,6 +26,13 @@ export default async function UsuariosAuditPage() {
             title: 'Usuarios Actualizados',
             description: 'Registro completo de todos los cambios realizados en los usuarios',
             emptyMessage: 'No se encontraron usuarios actualizados'
+          },
+          {
+            label: 'Eliminados',
+            auditType: 'usuarios-eliminados',
+            title: 'Usuarios Eliminados',
+            description: 'Registro completo de todos los usuarios eliminados del sistema',
+            emptyMessage: 'No se encontraron usuarios eliminados'
           }
         ]}
       />

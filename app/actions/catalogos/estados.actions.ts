@@ -22,18 +22,32 @@ export async function getEstados() {
  * Create a new estado
  */
 export async function createEstado(data: { nombre_estado: string }) {
+    const client = await pool.connect();
     try {
-        console.log('🔵 createEstado called with:', data);
-        const result = await pool.query(
+        await client.query('BEGIN');
+
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'No autorizado' };
+        }
+
+        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+
+        const result = await client.query(
             'INSERT INTO estados (nombre_estado) VALUES ($1) RETURNING *',
             [data.nombre_estado]
         );
-        console.log('✅ Estado created successfully:', result.rows[0]);
+
+        await client.query('COMMIT');
         revalidatePath('/dashboard/catalogs/estados');
         return { success: true, data: result.rows[0] };
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('❌ Error creating estado:', error);
         return { success: false, error: 'Error al crear estado' };
+    } finally {
+        client.release();
     }
 }
 
@@ -139,7 +153,7 @@ export async function deleteEstado(id: number, motivo?: string) {
             `SELECT EXISTS (
                 SELECT 1 FROM municipios WHERE id_estado = $1
                 UNION
-                SELECT 1 FROM clientes WHERE id_estado = $1
+                SELECT 1 FROM solicitantes WHERE id_estado = $1
             ) AS has_associations`,
             [id]
         );
@@ -149,7 +163,7 @@ export async function deleteEstado(id: number, motivo?: string) {
             return {
                 success: false,
                 error: 'HAS_ASSOCIATIONS',
-                message: 'No se puede eliminar este estado porque tiene municipios o clientes asociados. Deshabilítelo en su lugar.'
+                message: 'No se puede eliminar este estado porque tiene municipios o solicitantes asociados. Deshabilítelo en su lugar.'
             };
         }
 

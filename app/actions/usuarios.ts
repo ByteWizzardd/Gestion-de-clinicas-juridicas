@@ -348,6 +348,63 @@ export async function checkEmailExistsUsuarioAction(
   }
 }
 
+export interface CheckUsernameExistsResult {
+  success: boolean;
+  exists: boolean;
+  data?: {
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+    nombre_usuario: string;
+    nombre_completo: string;
+  } | null;
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+export async function checkUsernameExistsUsuarioAction(
+  username: string
+): Promise<CheckUsernameExistsResult> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        exists: false,
+        error: { message: "No autorizado", code: "UNAUTHORIZED" },
+      };
+    }
+
+    if (!username || username.trim().length === 0) {
+      return {
+        success: true,
+        exists: false,
+      };
+    }
+
+    const result = await usuariosQueries.searchByUsername(username.trim());
+    
+    return {
+      success: true,
+      exists: result.length > 0,
+      data: result.length > 0 ? result[0] : null,
+    };
+  } catch (error) {
+    console.error('Error en checkUsernameExistsUsuarioAction:', error);
+    return {
+      success: false,
+      exists: false,
+      error: {
+        message: error instanceof Error ? error.message : "Error al verificar nombre de usuario",
+        code: "UNKNOWN_ERROR",
+      },
+    };
+  }
+}
+
 // Server Action para actualizar un usuario por cédula
 export interface UpdateUsaruiobyCedulaResult {
   success: boolean;

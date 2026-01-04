@@ -37,6 +37,12 @@ export const auditoriaActualizacionNucleosQueries = {
     num_municipio_nuevo: number | null;
     num_parroquia_anterior: number | null;
     num_parroquia_nuevo: number | null;
+    nombre_estado_anterior: string | null;
+    nombre_estado_nuevo: string | null;
+    nombre_municipio_anterior: string | null;
+    nombre_municipio_nuevo: string | null;
+    nombre_parroquia_anterior: string | null;
+    nombre_parroquia_nuevo: string | null;
     fecha_actualizacion: string;
     id_usuario_actualizo: string;
     nombres_usuario_actualizo: string | null;

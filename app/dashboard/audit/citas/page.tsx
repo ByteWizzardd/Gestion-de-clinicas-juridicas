@@ -11,14 +11,14 @@ export default async function CitasAuditPage() {
       <AuditEntityDetailClient
         entityTitle="Citas"
         entityDescription="Registro completo de todas las acciones realizadas sobre las citas del sistema"
-        defaultTab="citas-eliminadas"
+        defaultTab="citas-creadas"
         operations={[
           {
-            label: 'Eliminadas',
-            auditType: 'citas-eliminadas',
-            title: 'Citas Eliminadas',
-            description: 'Registro completo de todas las citas eliminadas del sistema',
-            emptyMessage: 'No se encontraron citas eliminadas'
+            label: 'Creadas',
+            auditType: 'citas-creadas',
+            title: 'Citas Creadas',
+            description: 'Registro completo de todas las citas creadas en el sistema',
+            emptyMessage: 'No se encontraron citas creadas'
           },
           {
             label: 'Actualizadas',
@@ -26,6 +26,13 @@ export default async function CitasAuditPage() {
             title: 'Citas Actualizadas',
             description: 'Registro completo de todos los cambios realizados en las citas',
             emptyMessage: 'No se encontraron citas actualizadas'
+          },
+          {
+            label: 'Eliminadas',
+            auditType: 'citas-eliminadas',
+            title: 'Citas Eliminadas',
+            description: 'Registro completo de todas las citas eliminadas del sistema',
+            emptyMessage: 'No se encontraron citas eliminadas'
           }
         ]}
       />

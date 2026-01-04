@@ -99,7 +99,12 @@ export default function NucleosPage() {
         if (!editingItem) return;
         const result = await updateNucleo(
             editingItem.id_nucleo,
-            { nombre_nucleo: data.nombre_nucleo }
+            { 
+                nombre_nucleo: data.nombre_nucleo,
+                id_estado: data.id_estado,
+                id_municipio: data.id_municipio,
+                id_parroquia: data.id_parroquia
+            }
         );
         if (result.success) {
             handleCloseModal();

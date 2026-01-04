@@ -71,11 +71,26 @@ export default function SubcategoriasPage() {
 
     const handleUpdate = async (data: Record<string, string>) => {
         if (!editingItem) return;
+        
+        // Parse the composite key "id_materia|num_categoria" if category was changed
+        let new_id_materia: number | undefined;
+        let new_num_categoria: number | undefined;
+        
+        if (data.id_categoria) {
+            const [materia, categoria] = data.id_categoria.split('|');
+            new_id_materia = parseInt(materia);
+            new_num_categoria = parseInt(categoria);
+        }
+        
         const result = await updateSubcategoria(
             editingItem.id_materia,
             editingItem.num_categoria,
             editingItem.num_subcategoria,
-            { nombre_subcategoria: data.nombre_subcategoria }
+            { 
+                nombre_subcategoria: data.nombre_subcategoria,
+                new_id_materia,
+                new_num_categoria
+            }
         );
         if (result.success) {
             handleCloseModal();
@@ -112,7 +127,7 @@ export default function SubcategoriasPage() {
             <p className="mb-6 ml-3">Subcategorías dentro de cada categoría</p>
             <CatalogDetailClient
                 data={subcategorias}
-                columns={["ID Materia", "ID Categoría", "ID Subcategoría", "Subcategoría", "Categoría", "Materia", "Habilitado"]}
+                columns={["ID Materia", "ID Categoría", "ID Subcategoría", "Subcategoría", "Materia", "Categoría", "Habilitado"]}
                 addLabel="Añadir Subcategoría"
                 onAddClick={() => setIsModalOpen(true)}
                 filterField="nombre_materia"
@@ -144,7 +159,7 @@ export default function SubcategoriasPage() {
                         label: 'Materia',
                         type: 'select',
                         options: materias.map(m => ({ value: m.id_materia.toString(), label: m.nombre_materia })),
-                        required: !isEditMode,
+                        required: true,
                         defaultValue: isEditMode ? editingItem?.id_materia?.toString() : undefined
                     },
                     {
@@ -152,7 +167,7 @@ export default function SubcategoriasPage() {
                         label: 'Categoría',
                         type: 'select',
                         options: filteredCategorias.map(c => ({ value: `${c.id_materia}|${c.num_categoria}`, label: c.nombre_categoria })),
-                        required: !isEditMode,
+                        required: true,
                         defaultValue: isEditMode ? `${editingItem?.id_materia}|${editingItem?.num_categoria}` : undefined
                     },
                     {
