@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react";
 import Modal from "../ui/feedback/Modal";
 import Select from "../forms/Select";
+import MultiSelect from "../forms/MultiSelect";
 import DatePicker from "../forms/DatePicker";
 import { getCaseIdsAction } from "@/app/actions/casos";
 import { getUsuariosAction } from "@/app/actions/usuarios";
+import { createCitaAction } from "@/app/actions/citas";
 import Button from "../ui/Button";
 import { X } from "lucide-react";
 
@@ -78,20 +80,8 @@ export function AppointmentScheduleModal({
       const dateObj = new Date(date);
       if (isNaN(dateObj.getTime())) {
         newErrors.date = 'Fecha inválida';
-      } else {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        dateObj.setHours(0, 0, 0, 0);
-        if (dateObj <= today) {
-          newErrors.date = 'La fecha de encuentro debe ser una fecha futura';
-        } else {
-          const oneYearFromNow = new Date();
-          oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
-          if (dateObj > oneYearFromNow) {
-            newErrors.date = 'La fecha no puede ser más de un año en el futuro';
-          }
-        }
       }
+      // Se permiten fechas pasadas, presentes y futuras sin restricciones
     }
 
     if (usuariosInvitados.length === 0) {
@@ -156,18 +146,32 @@ export function AppointmentScheduleModal({
     setSuccess(false);
     setLoading(true);
 
-    // Simular creación de cita programada
-    // Aquí iría la lógica real para crear la cita programada
-    setTimeout(() => {
+    try {
+      // Crear cita programada con orientación por defecto
+      const result = await createCitaAction({
+        caseId: parseInt(selectedCaseID),
+        date: date!.toISOString().split('T')[0], // Formato YYYY-MM-DD
+        orientacion: "Cita programada", // Orientación por defecto para citas agendadas
+        usuariosAtienden: usuariosInvitados
+      });
+
+      if (result.success) {
+        setSuccess(true);
+        setDate(initialDate || null);
+        setSelectedCaseID("");
+        setUsuariosInvitados([]);
+        setErrors({});
+        onSave();
+        if (onClose) onClose();
+      } else {
+        setError(result.error?.message || "Error al programar la cita");
+      }
+    } catch (error) {
+      console.error("Error creating scheduled appointment:", error);
+      setError("Error inesperado al programar la cita");
+    } finally {
       setLoading(false);
-      setSuccess(true);
-      setDate(initialDate || null);
-      setSelectedCaseID("");
-      setUsuariosInvitados([]);
-      setErrors({});
-      onSave();
-      if (onClose) onClose();
-    }, 1000);
+    }
   };
 
   return (
@@ -232,12 +236,16 @@ export function AppointmentScheduleModal({
           </div>
 
           <div className="col-span-3">
-            <label className="text-base font-normal text-foreground mb-1 block">
-              Usuarios Invitados <span className="text-danger">*</span>
-            </label>
-            <p className="text-sm text-gray-600 mb-2">
-              Esta funcionalidad está en desarrollo
-            </p>
+            <MultiSelect
+              label="Estudiantes que atenderán la cita *"
+              options={usuarioOptions}
+              value={usuariosInvitados}
+              onChange={(values) => updateField('usuariosInvitados', values)}
+              error={errors.usuariosInvitados}
+              placeholder="Selecciona estudiantes..."
+              required
+              className="w-full"
+            />
           </div>
 
           {error && (

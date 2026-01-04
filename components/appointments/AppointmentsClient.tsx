@@ -183,6 +183,15 @@ export default function AppointmentsClient({
     return filtered;
   }, [appointments, searchValue, nucleoFilter, usuarioFilter, dateRangeFilter, customDateStart, customDateEnd]);
 
+  // Filtrar citas agendadas (citas programadas)
+  const scheduledAppointments = useMemo(() => {
+    return appointments.filter((apt) => {
+      // Solo mostrar citas que están explícitamente programadas
+      const orientation = apt.orientation?.trim() || '';
+      return orientation === 'Cita programada';
+    });
+  }, [appointments]);
+
   // Preparar datos para el calendario (solo fechas)
   const calendarAppointments = useMemo(() => {
     return appointments.map((apt) => ({
@@ -330,6 +339,26 @@ export default function AppointmentsClient({
   const handleCancelDelete = () => {
     setShowDeleteConfirmModal(false);
     setAppointmentToDelete(null);
+  };
+
+  // Manejar cuando se marca una cita programada como completada
+  const handleAppointmentCompleted = (appointment: Appointment) => {
+    // Abrir el modal de registro de cita para ingresar la orientación
+    setEditingAppointment(appointment);
+    setModalDate(appointment.date);
+    setShowModal(true);
+  };
+
+  // Manejar cuando se marca una cita programada como no realizada
+  const handleAppointmentCancelled = (appointment: Appointment) => {
+    // Por ahora, simplemente mostrar confirmación y eliminar la cita programada
+    const confirmCancel = window.confirm(
+      `¿Está seguro de que la cita programada para el ${formatDate(appointment.date)} no se realizó? Se eliminará del sistema.`
+    );
+
+    if (confirmCancel) {
+      handleDeleteAppointment(appointment);
+    }
   };
 
   const formatDate = (date: Date) => {
@@ -487,6 +516,89 @@ export default function AppointmentsClient({
                   onEdit={handleEditAppointment}
                   onDelete={handleDeleteAppointment}
                   onView={handleAppointmentClick}
+                />
+              </motion.div>
+            ),
+          },
+          {
+            id: 'scheduled',
+            label: 'Agendadas',
+            content: (
+              <motion.div
+                key="scheduled-view"
+                initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.3 }}
+              >
+                {/* Barra de búsqueda y filtro para citas agendadas */}
+                <motion.div
+                  initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
+                  className="mb-4"
+                >
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+                    {/* Buscador */}
+                    <div className="flex-1 min-w-0">
+                      <search className="flex items-center">
+                        <form
+                          className="flex items-center h-10 border border-primary rounded-full bg-transparent w-full"
+                          onSubmit={(e) => e.preventDefault()}
+                        >
+                          <label className="flex items-center w-full">
+                            <input
+                              id="search-scheduled-appointments-input"
+                              type="search"
+                              name="q"
+                              autoComplete="off"
+                              placeholder="Buscar cita agendada..."
+                              value={searchValue}
+                              onChange={(e) => setSearchValue(e.target.value)}
+                              className="flex-1 px-4 py-2.5 h-full focus:outline-none bg-transparent text-base text-foreground placeholder:text-gray-500"
+                            />
+                            <SearchIcon className="w-[18px] h-[18px] text-[#414040] mr-3 flex-shrink-0" />
+                          </label>
+                        </form>
+                      </search>
+                    </div>
+
+                    {/* Filtro y Botón Nueva Cita */}
+                    <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+                      {/* Filtro */}
+                      <AppointmentsToolbar
+                        viewMode="list"
+                        onViewModeChange={setViewMode}
+                        nucleoFilter={nucleoFilter}
+                        usuarioFilter={usuarioFilter}
+                        dateRangeFilter={dateRangeFilter}
+                        customDateStart={customDateStart}
+                        customDateEnd={customDateEnd}
+                        onNucleoFilterChange={setNucleoFilter}
+                        onUsuarioFilterChange={setUsuarioFilter}
+                        onDateRangeFilterChange={setDateRangeFilter}
+                        onCustomDateStartChange={setCustomDateStart}
+                        onCustomDateEndChange={setCustomDateEnd}
+                        filterOptions={initialFilterOptions}
+                      />
+
+                       {/* Botón Nueva Cita con Dropdown */}
+                       <NewAppointmentButton
+                         onRegister={handleAddAppointment}
+                         onSchedule={handleScheduleAppointment}
+                       />
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Lista de cards de citas agendadas filtradas */}
+                <AppointmentCardList
+                  appointments={scheduledAppointments}
+                  onEdit={handleEditAppointment}
+                  onDelete={handleDeleteAppointment}
+                  onView={handleAppointmentClick}
+                  onAppointmentCompleted={handleAppointmentCompleted}
+                  onAppointmentCancelled={handleAppointmentCancelled}
                 />
               </motion.div>
             ),

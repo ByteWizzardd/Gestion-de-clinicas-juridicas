@@ -168,7 +168,7 @@ export const citasService = {
     endDate?: string | null;
     orientacion?: string;
     usuariosAtienden?: string[];
-  }): Promise<{ num_cita: number; id_caso: number }> {
+  }): Promise<{ num_cita: number; id_caso: number; fecha: string }> {
     try {
       // Parsear el ID del appointment para obtener num_cita e id_caso
       // Formato: "cita-{num_cita}-{id_caso}-{timestamp}"
@@ -374,7 +374,18 @@ export const citasService = {
           }
         }
 
-        return { num_cita, id_caso };
+        // Obtener la fecha final de la cita (usar la actualizada o la existente)
+        let finalDate = params.date;
+        if (!finalDate) {
+          // Si no se actualizó la fecha, obtener la fecha actual de la BD
+          const getDateQuery = 'SELECT fecha_encuentro FROM citas WHERE num_cita = $1 AND id_caso = $2';
+          const dateResult = await client.query(getDateQuery, [num_cita, id_caso]);
+          if (dateResult.rows.length > 0) {
+            finalDate = dateResult.rows[0].fecha_encuentro.toISOString().split('T')[0];
+          }
+        }
+
+        return { num_cita, id_caso, fecha: finalDate || new Date().toISOString().split('T')[0] };
       });
     } catch (error) {
       // eslint-disable-next-line no-console

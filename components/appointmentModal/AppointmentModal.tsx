@@ -227,6 +227,44 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
     }
   };
 
+  const handleCreateActionForCompletedAppointment = async (citaData: any) => {
+    try {
+      // Extraer información de la cita actualizada
+      const { id_caso, fecha, num_cita } = citaData;
+
+      // Crear detalle de la acción (igual que una cita normal)
+      const detalleAccion = `Cita realizada el ${formatDate(fecha)}`;
+
+      // Crear ejecutores (usuarios que atendieron la cita)
+      const ejecutores = usuariosAtienden.length > 0
+        ? usuariosAtienden.map((cedula: string) => ({
+            idUsuario: cedula,
+            fechaEjecucion: fecha, // YYYY-MM-DD
+          }))
+        : undefined;
+
+      // Comentario: usar la nueva orientación
+      const comentario = orientacion.trim() || undefined;
+
+      // Crear la acción
+      const result = await createAccionAction(
+        id_caso,
+        detalleAccion,
+        comentario,
+        ejecutores,
+        undefined // fechaRegistro: usa fecha actual automáticamente
+      );
+
+      if (!result.success) {
+        console.error('Error al crear acción para cita completada:', result.error);
+        // No lanzamos error para no interrumpir el flujo principal
+      }
+    } catch (error) {
+      console.error('Error al crear acción para cita completada:', error);
+      // No lanzamos error para no interrumpir el flujo principal
+    }
+  };
+
   const handleClose = () => {
     // Iniciar animación de salida
     setIsOpen(false);
@@ -312,7 +350,16 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
         setSuccess(true);
 
         if (isEditing) {
-          // Modo edición: cerrar modal y recargar datos normalmente
+          // Modo edición: verificar si era una cita programada que se completó
+          const wasScheduledAppointment = appointment?.orientation === 'Cita programada';
+
+          if (wasScheduledAppointment && orientacion && orientacion.trim()) {
+            // Era una cita programada y ahora se completó con orientación específica
+            // Crear la acción correspondiente
+            await handleCreateActionForCompletedAppointment(result.data);
+          }
+
+          // Cerrar modal y recargar datos normalmente
           setDate(initialDate || null);
           setEndDate(null);
           setSelectedCaseID("");
