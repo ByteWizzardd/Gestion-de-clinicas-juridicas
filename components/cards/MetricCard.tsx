@@ -16,7 +16,7 @@ export default function MetricCard({
     icon: Icon
 }: MetricCardProps) {
     return (
-        <div className="bg-white rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] relative overflow-hidden p-4 md:p-6 min-h-40 md:min-h-48">
+        <div className="bg-white rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] relative overflow-hidden px-6 md:px-8 py-4 md:py-6 min-h-48 md:min-h-52 min-w-[280px] md:min-w-[360px]">
             {/* Icono de fondo decorativo */}
             {Icon && (
                 <div className="absolute top-2 w-full h-full flex items-center justify-center right-15">
@@ -39,8 +39,8 @@ export default function MetricCard({
                 </div>
             </div>
 
-            {/* Línea separadora naranja en la parte inferior, con márgenes laterales */}
-            <div className="absolute bottom-3 md:bottom-4 left-4 md:left-6 right-4 md:right-6 h-0.5 bg-secondary z-10"></div>
+            {/* Línea separadora naranja en el lado izquierdo */}
+            <div className="absolute top-6 md:top-8 bottom-6 md:bottom-8 left-2 md:left-3 w-0.5 md:w-1 bg-secondary rounded-full z-10"></div>
         </div>
     );
 }

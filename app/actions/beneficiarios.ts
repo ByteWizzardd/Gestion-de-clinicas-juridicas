@@ -1,9 +1,10 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/utils/security';
 import { beneficiariosQueries } from '@/lib/db/queries/beneficiarios.queries';
 import { AppError } from '@/lib/utils/errors';
+import { revalidatePath } from 'next/cache';
+import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 
 export interface SearchBeneficiariosResult {
   success: boolean;
@@ -12,7 +13,7 @@ export interface SearchBeneficiariosResult {
     nombres: string;
     apellidos: string;
     fecha_nacimiento: string | null;
-    sexo: string;
+    sexo: string | null;
     nombre_completo: string;
   }>;
   error?: {
@@ -28,7 +29,7 @@ export interface GetBeneficiarioByCedulaResult {
     nombres: string;
     apellidos: string;
     fecha_nacimiento: string | null;
-    sexo: string;
+    sexo: string | null;
     nombre_completo: string;
   } | null;
   error?: {
@@ -43,28 +44,11 @@ export interface GetBeneficiarioByCedulaResult {
 export async function searchBeneficiariosByCedulaAction(cedula: string): Promise<SearchBeneficiariosResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -75,24 +59,7 @@ export async function searchBeneficiariosByCedulaAction(cedula: string): Promise
       data: beneficiarios,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'BENEFICIARIO_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en searchBeneficiariosByCedulaAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al buscar beneficiarios',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'searchBeneficiariosByCedulaAction', 'BENEFICIARIO_ERROR');
   }
 }
 
@@ -102,28 +69,11 @@ export async function searchBeneficiariosByCedulaAction(cedula: string): Promise
 export async function getBeneficiarioByCedulaAction(cedula: string): Promise<GetBeneficiarioByCedulaResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -134,24 +84,59 @@ export async function getBeneficiarioByCedulaAction(cedula: string): Promise<Get
       data: beneficiario,
     };
   } catch (error) {
-    if (error instanceof AppError) {
+    return handleServerActionError(error, 'getBeneficiarioByCedulaAction', 'BENEFICIARIO_ERROR');
+  }
+}
+
+/**
+ * Server Action para crear un nuevo beneficiario asociado a un caso
+ */
+export async function createBeneficiarioAction(data: {
+  id_caso: number;
+  cedula?: string | null;
+  nombres: string;
+  apellidos: string;
+  fecha_nac: string;
+  sexo: string;
+  tipo_beneficiario: string;
+  parentesco: string;
+}): Promise<{ success: boolean; data?: any; error?: { message: string; code?: string } }> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'BENEFICIARIO_ERROR',
-        },
+        error: authResult.error!,
       };
     }
 
-    console.error('Error en getBeneficiarioByCedulaAction:', error);
+    // Verificar si ya existe en este caso por cédula
+    if (data.cedula) {
+      const beneficiariosActuales = await beneficiariosQueries.getByCaso(data.id_caso);
+      const yaExiste = beneficiariosActuales.some(b => b.cedula === data.cedula);
+      if (yaExiste) {
+        return {
+          success: false,
+          error: {
+            message: 'Este beneficiario ya está registrado en este caso',
+            code: 'DUPLICATE_BENEFICIARY',
+          },
+        };
+      }
+    }
+
+    const beneficiario = await beneficiariosQueries.create(data);
+
+    // Revalidar el detalle del caso para que se vea el nuevo beneficiario
+    revalidatePath(`/dashboard/cases/${data.id_caso}`);
+
     return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al obtener beneficiario',
-        code: 'UNKNOWN_ERROR',
-      },
+      success: true,
+      data: beneficiario,
     };
+  } catch (error) {
+    return handleServerActionError(error, 'createBeneficiarioAction', 'BENEFICIARIO_CREATE_ERROR');
   }
 }
 

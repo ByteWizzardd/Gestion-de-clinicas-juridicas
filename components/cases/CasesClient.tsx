@@ -8,8 +8,9 @@ import Table from '@/components/Table/Table';
 import CaseFormModal from '@/components/forms/CaseFormModal';
 import Spinner from '@/components/ui/feedback/Spinner';
 import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
-import { getCasosAction } from '@/app/actions/casos';
+import { getCasosAction, getCasosByUsuarioAction } from '@/app/actions/casos';
 import { createCasoAction, uploadSoportesAction } from '@/app/actions/casos';
+import { getMateriasAction } from '@/app/actions/materias';
 
 interface Caso {
   id_caso: number;
@@ -52,12 +53,17 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [casos, setCasos] = useState<Caso[]>(initialCasos);
+  const [allCasos, setAllCasos] = useState<Caso[]>(initialCasos); // Cache para todos los casos
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
-  const [estatusFilter, setEstatusFilter] = useState('');
+  const [nucleoFilter, setNucleoFilter] = useState('');
   const [tramiteFilter, setTramiteFilter] = useState('');
+  const [estatusFilter, setEstatusFilter] = useState('');
+  const [casosAsignadosFilter, setCasosAsignadosFilter] = useState(false);
+  const [materias, setMaterias] = useState<{ id_materia: number; nombre_materia: string }[]>([]);
+  const [materiaFilter, setMateriaFilter] = useState('');
   const [initialCedula, setInitialCedula] = useState<string>('');
   const [initialCedulaTipo, setInitialCedulaTipo] = useState<string>('V');
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -65,11 +71,25 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setPrefersReducedMotion(mediaQuery.matches);
-    
+
     const handleChange = (e: MediaQueryListEvent) => {
       setPrefersReducedMotion(e.matches);
     };
-    
+
+    // Cargar materias
+    const fetchMaterias = async () => {
+      try {
+        const result = await getMateriasAction();
+        if (result.success && result.data) {
+          setMaterias(result.data);
+        }
+      } catch (error) {
+        console.error('Error cargando materias:', error);
+      }
+    };
+
+    fetchMaterias();
+
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
@@ -98,11 +118,40 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       }
       if (result.data) {
         setCasos(result.data);
+        setAllCasos(result.data); // Actualizar cache de todos los casos
       } else {
         setCasos([]);
+        setAllCasos([]);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCasosAsignadosChange = async (checked: boolean) => {
+    setCasosAsignadosFilter(checked);
+    setLoading(true);
+    try {
+      if (checked) {
+        // Cargar casos asignados al usuario
+        const result = await getCasosByUsuarioAction();
+        if (result.success && result.data) {
+          setCasos(result.data);
+        } else {
+          // Si falla o no hay datos, mostrar lista vacía o manejar error
+          console.error('Error cargando casos asignados:', result.error);
+          setCasos([]);
+        }
+      } else {
+        // Restaurar todos los casos (usando cache local para velocidad)
+        setCasos(allCasos);
+        // Opcional: refrescar en background si se desea frescura total
+        // fetchCasos(); 
+      }
+    } catch (error) {
+      console.error('Error al cambiar filtro de asignación:', error);
     } finally {
       setLoading(false);
     }
@@ -112,7 +161,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   useEffect(() => {
     const cedula = searchParams.get('cedula');
     const cedulaTipo = searchParams.get('cedulaTipo');
-    
+
     if (cedula && cedulaTipo) {
       // Extraer solo los números, eliminando guiones y cualquier otro carácter
       let cedulaNumero = cedula.startsWith(cedulaTipo) ? cedula.substring(cedulaTipo.length) : cedula;
@@ -132,16 +181,16 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   };
 
   const filteredCasos = useMemo(() => {
-    if (!searchValue && !estatusFilter && !tramiteFilter) {
+    if (!searchValue && !nucleoFilter && !tramiteFilter && !estatusFilter && !casosAsignadosFilter && !materiaFilter) {
       return casos;
     }
 
     return casos.filter((caso) => {
       const normalizedSearch = normalizeText(searchValue);
-      
+
       // Buscar en todos los campos visibles en la tabla
       const responsableDisplay = caso.nombre_responsable || 'Sin asignar';
-      const matchesSearch = 
+      const matchesSearch =
         !searchValue ||
         // Código (id_caso)
         caso.id_caso.toString().includes(searchValue) ||
@@ -162,12 +211,14 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
         // Núcleo
         normalizeText(caso.nombre_nucleo || '').includes(normalizedSearch);
 
-      const matchesEstatus = !estatusFilter || caso.estatus === estatusFilter;
+      const matchesNucleo = !nucleoFilter || caso.id_nucleo.toString() === nucleoFilter;
       const matchesTramite = !tramiteFilter || caso.tramite === tramiteFilter;
+      const matchesEstatus = !estatusFilter || caso.estatus === estatusFilter;
+      const matchesMateria = !materiaFilter || (caso.id_materia && String(caso.id_materia) === materiaFilter);
 
-      return matchesSearch && matchesEstatus && matchesTramite;
+      return matchesSearch && matchesNucleo && matchesTramite && matchesEstatus && matchesMateria;
     });
-  }, [casos, searchValue, estatusFilter, tramiteFilter]);
+  }, [casos, searchValue, nucleoFilter, tramiteFilter, estatusFilter, casosAsignadosFilter, materiaFilter]);
 
   const handleView = (data: Record<string, unknown>) => {
     const caso = data as TableRow;
@@ -196,7 +247,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
     try {
       const caseData = data as any;
       const archivos = Array.isArray(caseData.archivos) ? caseData.archivos : [];
-      
+
       const casoDataSinArchivos = {
         fecha_solicitud: caseData.fecha_solicitud,
         fecha_inicio_caso: caseData.fecha_inicio_caso,
@@ -210,14 +261,14 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
         id_nucleo: caseData.id_nucleo,
         observaciones: caseData.observaciones,
       };
-      
+
       const result = await createCasoAction(casoDataSinArchivos);
 
       if (!result.success) {
         const errorMessage = result.error?.message || 'Error al crear el caso';
         const errorCode = result.error?.code || 'UNKNOWN_ERROR';
         const errorFields = result.error?.fields;
-        
+
         if (errorFields) {
           const fieldErrors = Object.entries(errorFields)
             .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
@@ -231,14 +282,14 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
       if (archivos.length > 0 && result.success && result.data) {
         const idCaso = result.data.id_caso || (result.data as any).id_caso;
-        
+
         if (!idCaso || isNaN(Number(idCaso))) {
           alert('Caso creado exitosamente, pero no se pudo obtener el ID del caso para subir los archivos');
           setIsModalOpen(false);
           fetchCasos();
           return;
         }
-        
+
         const formData = new FormData();
         archivos.forEach((archivo: File) => {
           formData.append('archivos', archivo);
@@ -246,7 +297,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
         try {
           const uploadResult = await uploadSoportesAction(Number(idCaso), formData);
-          
+
           if (!uploadResult.success) {
             alert(`Caso creado exitosamente, pero hubo un error al subir los archivos: ${uploadResult.error?.message || 'Error desconocido'}`);
           }
@@ -266,7 +317,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
   return (
     <>
-      <motion.div 
+      <motion.div
         className="mb-4 md:mb-6 mt-4"
         initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -280,17 +331,25 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
       >
-        <CaseTools 
-          addLabel="Añadir Caso" 
+        <CaseTools
+          addLabel="Añadir Caso"
           onAddClick={handleAddCase}
           searchValue={searchValue}
           onSearchChange={setSearchValue}
-          estatusFilter={estatusFilter}
-          onEstatusChange={setEstatusFilter}
-          estatusOptions={estatusOptions}
+          nucleoFilter={nucleoFilter}
+          onNucleoChange={setNucleoFilter}
+          materiaFilter={materiaFilter}
+          onMateriaChange={setMateriaFilter}
+          materias={materias}
           tramiteFilter={tramiteFilter}
           onTramiteChange={setTramiteFilter}
           tramiteOptions={tramiteOptions}
+          estatusFilter={estatusFilter}
+          onEstatusChange={setEstatusFilter}
+          estatusOptions={estatusOptions}
+          casosAsignadosFilter={casosAsignadosFilter}
+          onCasosAsignadosChange={handleCasosAsignadosChange}
+          showCasosAsignados={true}
         />
       </motion.div>
       <div className="mt-10"></div>
@@ -318,7 +377,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
             data={filteredCasos.map((caso) => ({
               codigo: caso.id_caso.toString(),
               solicitante: caso.nombre_completo_solicitante || caso.cedula,
-              materia: caso.nombre_materia || caso.tramite || 'N/A',
+              materia: (caso.nombre_materia || caso.tramite || 'Sin materia').replace(/^Materia\s+/i, ''),
               estatus: caso.estatus || 'N/A',
               responsable: caso.nombre_responsable || 'Sin asignar',
             }))}

@@ -39,11 +39,11 @@ export default function ApplicantsClient({
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setPrefersReducedMotion(mediaQuery.matches);
-    
+
     const handleChange = (e: MediaQueryListEvent) => {
       setPrefersReducedMotion(e.matches);
     };
-    
+
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
@@ -84,7 +84,7 @@ export default function ApplicantsClient({
     return solicitantes.filter((solicitante) => {
       const normalizedSearch = normalizeText(searchValue);
       const nucleoDisplay = solicitante.nucleo || 'Sin núcleo';
-      const matchesSearch = 
+      const matchesSearch =
         !searchValue ||
         solicitante.cedula.includes(searchValue) ||
         normalizeText(solicitante.nombre_completo || '').includes(normalizedSearch) ||
@@ -126,7 +126,7 @@ export default function ApplicantsClient({
 
   return (
     <>
-      <motion.div 
+      <motion.div
         className="mb-4 md:mb-6 mt-4"
         initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -140,17 +140,14 @@ export default function ApplicantsClient({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
       >
-        <CaseTools 
-          addLabel="Añadir Solicitante" 
+        <CaseTools
+          addLabel="Añadir Solicitante"
           onAddClick={() => setIsModalOpen(true)}
           searchValue={searchValue}
           onSearchChange={setSearchValue}
-          estatusFilter={nucleoFilter}
-          onEstatusChange={setNucleoFilter}
-          estatusOptions={nucleoOptions}
-          tramiteFilter=""
-          onTramiteChange={() => {}}
-          tramiteOptions={[]}
+          nucleoFilter={nucleoFilter}
+          onNucleoChange={setNucleoFilter}
+          nucleoOptions={nucleoOptions}
         />
       </motion.div>
       <div className="mt-10"></div>
@@ -191,17 +188,17 @@ export default function ApplicantsClient({
             // Extraer solo los números, eliminando guiones y cualquier otro carácter
             const numero = cedulaCompleta.substring(1).replace(/[^0-9]/g, '');
             setRegisteredCedula({ tipo, numero });
-            setRegisteredNombre(solicitante.nombres && solicitante.apellidos 
-              ? `${solicitante.nombres} ${solicitante.apellidos}` 
+            setRegisteredNombre(solicitante.nombres && solicitante.apellidos
+              ? `${solicitante.nombres} ${solicitante.apellidos}`
               : '');
           }
-          
+
           await handleRefresh();
           setIsModalOpen(false);
           setShowConfirmModal(true);
         }}
       />
-      
+
       <ConfirmModal
         isOpen={showConfirmModal}
         onClose={() => {

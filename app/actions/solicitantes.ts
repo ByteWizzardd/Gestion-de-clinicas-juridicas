@@ -1,12 +1,12 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/utils/security';
 import { solicitantesService } from '@/lib/services/solicitantes.service';
 import { solicitantesQueries } from '@/lib/db/queries/solicitantes.queries';
 import { SolicitantesService } from '@/lib/services/solicitantes.service';
 import { AppError, UnauthorizedError } from '@/lib/utils/errors';
 import { revalidatePath } from 'next/cache';
+import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 
 export interface CreateSolicitanteResult {
   success: boolean;
@@ -53,29 +53,11 @@ export interface SearchSolicitantesResult {
 export async function createSolicitanteAction(data: any): Promise<CreateSolicitanteResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    // Verificar token (opcional, pero recomendado para validar sesión)
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -89,25 +71,7 @@ export async function createSolicitanteAction(data: any): Promise<CreateSolicita
       data: result,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'SOLICITANTE_ERROR',
-          fields: (error as any).fields,
-        },
-      };
-    }
-
-    console.error('Error en createSolicitanteAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al crear solicitante',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'createSolicitanteAction', 'SOLICITANTE_ERROR');
   }
 }
 
@@ -117,28 +81,11 @@ export async function createSolicitanteAction(data: any): Promise<CreateSolicita
 export async function getSolicitantesAction(): Promise<GetSolicitantesResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -176,28 +123,11 @@ export async function getSolicitantesAction(): Promise<GetSolicitantesResult> {
 export async function getSolicitanteByIdAction(cedula: string): Promise<GetSolicitanteByIdResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -228,24 +158,7 @@ export async function getSolicitanteByIdAction(cedula: string): Promise<GetSolic
       data: solicitante,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'SOLICITANTE_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en getSolicitanteByIdAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al obtener solicitante',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'getSolicitanteByIdAction', 'SOLICITANTE_ERROR');
   }
 }
 
@@ -259,28 +172,11 @@ export async function searchUsuariosAction(
 ): Promise<SearchSolicitantesResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -303,24 +199,7 @@ export async function searchUsuariosAction(
       data: resultados,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'SOLICITANTE_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en searchUsuariosAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al buscar usuarios',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'searchUsuariosAction', 'SOLICITANTE_ERROR');
   }
 }
 
@@ -335,28 +214,11 @@ export async function searchSolicitantesAction(
 ): Promise<SearchSolicitantesResult> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -381,24 +243,7 @@ export async function searchSolicitantesAction(
       data: resultados,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'SOLICITANTE_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en searchSolicitantesAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al buscar solicitantes',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'searchSolicitantesAction', 'SOLICITANTE_ERROR');
   }
 }
 
@@ -410,19 +255,8 @@ export async function checkEmailExistsAction(
 ): Promise<{ success: boolean; exists: boolean; data?: { cedula: string; nombres: string; apellidos: string } }> {
   try {
     // Verificar autenticación
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
-      return {
-        success: false,
-        exists: false,
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch (error) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
         exists: false,

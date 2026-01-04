@@ -1,7 +1,10 @@
 'use client';
 
-import { Calendar, Clock, Users, FileText } from 'lucide-react';
+import { useState } from 'react';
+import { Calendar, Clock, Users, FileText, Trash2, Pencil } from 'lucide-react';
 import { formatDate } from '@/lib/utils/date-formatter';
+import { deleteCitaAction } from '@/app/actions/citas';
+import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 
 interface AppointmentsTabProps {
   citas?: Array<{
@@ -18,10 +21,113 @@ interface AppointmentsTabProps {
       fecha_registro: string;
     }>;
   }>;
+  onRefresh?: () => void;
+  onEditAppointment?: (cita: {
+    num_cita: number;
+    id_caso: number;
+    fecha_encuentro: string;
+    fecha_proxima_cita: string | null;
+    orientacion: string;
+    atenciones: Array<{
+      id_usuario: string;
+      nombres: string;
+      apellidos: string;
+      nombre_completo: string;
+      fecha_registro: string;
+    }>;
+  }) => void;
 }
 
-export default function AppointmentsTab({ citas }: AppointmentsTabProps) {
-  if (!citas || citas.length === 0) {
+export default function AppointmentsTab({ citas, onRefresh, onEditAppointment }: AppointmentsTabProps) {
+  const [citaToDelete, setCitaToDelete] = useState<{ num_cita: number; id_caso: number; fecha_encuentro: string } | null>(null);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleEditAppointment = (cita: {
+    num_cita: number;
+    id_caso: number;
+    fecha_encuentro: string;
+    fecha_proxima_cita: string | null;
+    orientacion: string;
+    atenciones: Array<{
+      id_usuario: string;
+      nombres: string;
+      apellidos: string;
+      nombre_completo: string;
+      fecha_registro: string;
+    }>;
+  }) => {
+    console.log('DEBUG AppointmentsTab - handleEditAppointment called with:', cita);
+    onEditAppointment?.(cita);
+  };
+
+  const handleDeleteAppointment = (cita: {
+    num_cita: number;
+    id_caso: number;
+    fecha_encuentro: string;
+  }) => {
+    setCitaToDelete({
+      num_cita: cita.num_cita,
+      id_caso: cita.id_caso,
+      fecha_encuentro: cita.fecha_encuentro
+    });
+    setShowDeleteConfirmModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!citaToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const result = await deleteCitaAction({
+        appointmentId: `cita-${citaToDelete.num_cita}-${citaToDelete.id_caso}-${new Date(citaToDelete.fecha_encuentro).getTime()}`
+      });
+
+      if (result.success) {
+        // Cerrar modal y limpiar estado
+        setShowDeleteConfirmModal(false);
+        setCitaToDelete(null);
+
+        // Recargar los datos del caso
+        if (onRefresh) {
+          onRefresh();
+        } else {
+          // Fallback: recargar la página
+          window.location.reload();
+        }
+      } else {
+        console.error('Error deleting appointment:', result.error);
+        alert(result.error?.message || 'Error al eliminar la cita');
+      }
+    } catch (error) {
+      console.error('Error deleting appointment:', error);
+      alert('Error inesperado al eliminar la cita');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirmModal(false);
+    setCitaToDelete(null);
+  };
+
+  // Ordenar citas por fecha de registro (descendente - más recientes primero)
+  const citasOrdenadas = citas ? [...citas].sort((a, b) => {
+    const fechaA = new Date(a.fecha_encuentro);
+    const fechaB = new Date(b.fecha_encuentro);
+    return fechaB.getTime() - fechaA.getTime(); // Más recientes primero
+  }).map(cita => ({
+    ...cita,
+    // Ordenar atenciones por fecha de registro (descendente)
+    atenciones: cita.atenciones ? [...cita.atenciones].sort((a, b) => {
+      const fechaA = new Date(a.fecha_registro);
+      const fechaB = new Date(b.fecha_registro);
+      return fechaB.getTime() - fechaA.getTime();
+    }) : []
+  })) : [];
+
+  if (!citasOrdenadas || citasOrdenadas.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
         <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -32,23 +138,37 @@ export default function AppointmentsTab({ citas }: AppointmentsTabProps) {
 
   return (
     <div className="space-y-4">
-      {citas.map((cita) => (
+      {citasOrdenadas.map((cita) => (
         <div key={`${cita.num_cita}-${cita.id_caso}`} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
           <div className="flex items-start justify-between mb-4">
             <div>
               <h4 className="text-base sm:text-lg font-semibold text-gray-900">Cita #{cita.num_cita}</h4>
-              <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
+              <p className="text-sm text-gray-500 mt-1">
                 Fecha de encuentro: {formatDate(cita.fecha_encuentro)}
               </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleEditAppointment(cita)}
+                className="text-gray-500 hover:text-gray-700 p-1 rounded transition-colors"
+                title="Editar cita"
+              >
+                <Pencil className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => handleDeleteAppointment(cita)}
+                className="text-gray-500 hover:text-gray-700 p-1 rounded transition-colors"
+                title="Eliminar cita"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
             </div>
           </div>
 
           <div className="space-y-4">
             {cita.fecha_proxima_cita && (
               <div>
-                <label className="text-sm font-medium text-gray-500 flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
+                <label className="text-sm font-medium text-gray-500">
                   Próxima Cita
                 </label>
                 <p className="text-base text-gray-900 mt-1">{formatDate(cita.fecha_proxima_cita)}</p>
@@ -56,8 +176,7 @@ export default function AppointmentsTab({ citas }: AppointmentsTabProps) {
             )}
 
             <div>
-              <label className="text-sm font-medium text-gray-500 flex items-center gap-2 mb-2">
-                <FileText className="w-4 h-4" />
+              <label className="text-sm font-medium text-gray-500 mb-2">
                 Orientación
               </label>
               <p className="text-base text-gray-900 mt-1 whitespace-pre-wrap bg-gray-50 rounded-lg p-3 border border-gray-200">
@@ -67,8 +186,7 @@ export default function AppointmentsTab({ citas }: AppointmentsTabProps) {
 
             {cita.atenciones && cita.atenciones.length > 0 && (
               <div>
-                <label className="text-sm font-medium text-gray-500 flex items-center gap-2 mb-2">
-                  <Users className="w-4 h-4" />
+                <label className="text-sm font-medium text-gray-500 mb-2">
                   Atendido por ({cita.atenciones.length})
                 </label>
                 <div className="space-y-2">
@@ -86,6 +204,35 @@ export default function AppointmentsTab({ citas }: AppointmentsTabProps) {
           </div>
         </div>
       ))}
+
+      {/* Modal de confirmación para eliminar cita */}
+      <ConfirmModal
+        isOpen={showDeleteConfirmModal}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Eliminar cita"
+        message={
+          citaToDelete ? (
+            <div>
+              <p className="mb-2">
+                ¿Está seguro de que desea eliminar la cita{' '}
+                <strong>#{citaToDelete.num_cita}</strong>?
+              </p>
+              <p className="mb-2">
+                <strong>Fecha de encuentro:</strong> {formatDate(citaToDelete.fecha_encuentro)}
+              </p>
+              <p className="text-sm text-gray-600">
+                Esta acción no se puede deshacer y también eliminará la acción correspondiente si existe.
+              </p>
+            </div>
+          ) : (
+            '¿Está seguro de que desea eliminar esta cita?'
+          )
+        }
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        disabled={isDeleting}
+      />
     </div>
   );
 }

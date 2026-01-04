@@ -20,8 +20,8 @@ SELECT
 FROM casos c
 LEFT JOIN ultimo_estatus_por_caso ue ON c.id_caso = ue.id_caso
 WHERE 
-    ($1::DATE IS NULL OR c.fecha_solicitud >= $1)
-    AND ($2::DATE IS NULL OR c.fecha_solicitud <= $2)
+    ($1::DATE IS NULL OR c.fecha_inicio_caso >= $1)
+    AND ($2::DATE IS NULL OR c.fecha_inicio_caso <= $2)
 GROUP BY COALESCE(ue.nuevo_estatus, 'En proceso')
 ORDER BY cantidad_casos DESC, nombre_estatus;
 

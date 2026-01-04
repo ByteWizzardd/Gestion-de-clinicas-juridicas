@@ -2,7 +2,7 @@
 
 import { motion } from 'motion/react';
 import Link from 'next/link';
-import { Briefcase, Calendar, User, FileText } from 'lucide-react';
+import { Briefcase, Calendar, User, MapPin } from 'lucide-react';
 
 interface Caso {
   id_caso: number;
@@ -14,6 +14,7 @@ interface Caso {
   nombre_nucleo: string;
   nombre_materia: string;
   nombre_categoria: string;
+  nombre_subcategoria: string;
   rol_usuario: string;
 }
 
@@ -138,7 +139,24 @@ export default function CasosList({ casos, loading, error }: CasosListProps) {
                     {caso.tramite || 'Sin trámite'}
                   </h4>
                   <p className="text-sm text-gray-600 mb-2">
-                    {caso.nombre_materia || 'Sin materia'} - {caso.nombre_categoria || 'Sin categoría'}
+                    {(() => {
+                      const materia = caso.nombre_materia || 'Sin materia';
+                      const categoria = caso.nombre_categoria?.trim() || '';
+                      const subcategoria = caso.nombre_subcategoria?.trim() || '';
+
+                      const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría' && categoria.toLowerCase() !== 'n/a';
+                      const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría' && subcategoria.toLowerCase() !== 'n/a';
+
+                      let text = materia;
+                      if (hasCategoria && hasSubcategoria) {
+                        text += ` - ${categoria} ${subcategoria}`;
+                      } else if (hasCategoria) {
+                        text += ` - ${categoria}`;
+                      } else if (hasSubcategoria) {
+                        text += ` - ${subcategoria}`;
+                      }
+                      return text;
+                    })()}
                   </p>
                 </div>
                 {caso.estatus && (
@@ -157,7 +175,7 @@ export default function CasosList({ casos, loading, error }: CasosListProps) {
                 )}
                 {caso.nombre_nucleo && (
                   <div className="flex items-center gap-1">
-                    <FileText className="w-4 h-4" />
+                    <MapPin className="w-4 h-4" />
                     <span>{caso.nombre_nucleo}</span>
                   </div>
                 )}

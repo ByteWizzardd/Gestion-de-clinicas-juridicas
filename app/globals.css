@@ -57,8 +57,13 @@
 }
 
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   box-sizing: border-box;
+  overflow-x: hidden;
 }

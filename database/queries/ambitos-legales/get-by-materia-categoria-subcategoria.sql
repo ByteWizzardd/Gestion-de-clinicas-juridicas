@@ -7,5 +7,6 @@ FROM ambitos_legales
 WHERE id_materia = $1 
   AND num_categoria = $2 
   AND num_subcategoria = $3
+  AND habilitado = true
 ORDER BY num_ambito_legal;
 

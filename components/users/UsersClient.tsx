@@ -2,22 +2,28 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'motion/react';
+import { useRouter } from 'next/navigation';
+import { UserPlus, Users } from 'lucide-react';
+import ConfirmModal from '../ui/feedback/ConfirmModal';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import BulkUploadModal from './BulkUploadModal';
-import { getUsuariosAction } from '@/app/actions/usuarios';
+import { getUsuariosAction, deleteUsuarioFisicoAction, getUsuarioInfoByCedulaAction, toggleHabilitadoUsuarioAction } from '@/app/actions/usuarios';
+import EditUserModal from './EditUserModal';
+import CreateUserModal from './CreateUserModal';
+import DropdownMenu from '@/components/ui/navigation/DropdownMenu';
+
+// Simulación: obtener tipo de usuario actual (debería venir de contexto/auth real)
+
 
 interface Usuario extends Record<string, unknown> {
   cedula: string;
-  nombre_completo: string;
-  correo_electronico: string;
+  nombres?: string;
+  apellidos?: string;
   nombre_usuario: string;
-  telefono_celular: string | null;
-  habilitado_sistema: boolean;
+  habilitado_sistema?: boolean;
   tipo_usuario: string;
-  info_estudiante: string | null;
-  info_profesor: string | null;
-  info_coordinador: string | null;
+  correo_electronico?: string;
 }
 
 interface UsersClientProps {
@@ -25,12 +31,82 @@ interface UsersClientProps {
 }
 
 export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) {
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [usuarioToEdit, setUsuarioToEdit] = useState<Usuario | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<Usuario | null>(null);
+  const [deleteMotivo, setDeleteMotivo] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [disableLoading, setDisableLoading] = useState(false);
+
   const [usuarios, setUsuarios] = useState<Usuario[]>(initialUsuarios);
   const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
+  const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [tipoFilter, setTipoFilter] = useState('');
   const [loading, setLoading] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const router = useRouter();
+
+  // Cerrar el dropdown cuando se detecta que un modal se ha abierto
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+
+    // Escuchar cambios en el DOM para detectar modales
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (node.nodeType === 1) {
+            const element = node as HTMLElement;
+            // Verificar si el elemento o sus hijos son modales
+            if (
+              element.getAttribute('role') === 'dialog' ||
+              element.getAttribute('aria-modal') === 'true' ||
+              (element.classList.contains('fixed') && element.classList.contains('z-50')) ||
+              element.querySelector('[role="dialog"]') ||
+              element.querySelector('[aria-modal="true"]')
+            ) {
+              setIsDropdownOpen(false);
+              return;
+            }
+          }
+        }
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'role', 'aria-modal']
+    });
+
+    // También verificar cuando el body se bloquea (indicador de modal)
+    const checkBodyOverflow = () => {
+      if (document.body.style.overflow === 'hidden') {
+        const modal = document.querySelector('[role="dialog"]') || 
+                      document.querySelector('[aria-modal="true"]');
+        if (modal) {
+          setIsDropdownOpen(false);
+        }
+      }
+    };
+
+    const styleObserver = new MutationObserver(checkBodyOverflow);
+    styleObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['style']
+    });
+
+    // Verificar inmediatamente
+    checkBodyOverflow();
+
+    return () => {
+      observer.disconnect();
+      styleObserver.disconnect();
+    };
+  }, [isDropdownOpen]);
 
   // Detectar preferencia de movimiento reducido
   useEffect(() => {
@@ -50,7 +126,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
     if (initialUsuarios.length === 0) {
       loadUsuarios();
     }
-  }, []);
+  }, [initialUsuarios.length]);
 
   const loadUsuarios = async () => {
     setLoading(true);
@@ -65,6 +141,14 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
       setLoading(false);
     }
   };
+  
+  // Permite seleccionar el usuario a eliminar y mostrar el modal de confirmación
+  const handleDelete = (data: Record<string, unknown>) => {
+    const usuario = data as Usuario;
+    setItemToDelete(usuario);
+    setShowConfirm(true);
+  };
+
 
   // Preparar opciones de tipo de usuario
   const tipoOptions = useMemo(() => {
@@ -99,10 +183,8 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
       const matchesSearch = 
         !searchValue ||
         usuario.cedula.includes(searchValue) ||
-        normalizeText(usuario.nombre_completo || '').includes(normalizedSearch) ||
-        normalizeText(usuario.correo_electronico || '').includes(normalizedSearch) ||
-        normalizeText(usuario.nombre_usuario || '').includes(normalizedSearch) ||
-        (usuario.telefono_celular && normalizeText(usuario.telefono_celular).includes(normalizedSearch));
+        normalizeText((usuario.nombres || '') + ' ' + (usuario.apellidos || '')).includes(normalizedSearch) ||
+        normalizeText(usuario.nombre_usuario || '').includes(normalizedSearch);
 
       const matchesTipo = !tipoFilter || usuario.tipo_usuario === tipoFilter;
 
@@ -112,41 +194,108 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
 
   const handleView = (data: Record<string, unknown>) => {
     const usuario = data as Usuario;
-    alert(`Ver detalles de: ${usuario.nombre_completo}`);
+    router.push(`/dashboard/users/${usuario.cedula}`);
   };
 
-  const handleEdit = (data: Record<string, unknown>) => {
-    const usuario = data as Usuario;
-    alert(`Editar usuario: ${usuario.nombre_completo}`);
+
+
+  const handleSaveEdit = (usuarioEditado: Usuario) => {
+    // Aquí deberías llamar a la acción de actualización real
+    setUsuarios((prev) => prev.map(u => u.cedula === usuarioEditado.cedula ? { ...u, ...usuarioEditado } : u));
+    setShowEditModal(false);
+    setUsuarioToEdit(null);
   };
 
-  const handleDelete = (data: Record<string, unknown>) => {
+
+  const handleDisable = async (data: Record<string, unknown>) => {
     const usuario = data as Usuario;
-    const confirmDelete = window.confirm(
-      `¿Está seguro de que desea eliminar al usuario ${usuario.nombre_completo}?`
-    );
-    if (confirmDelete) {
-      alert(`Eliminar usuario: ${usuario.nombre_completo}`);
+    setDisableLoading(true);
+    const result = await toggleHabilitadoUsuarioAction(usuario.cedula);
+    setDisableLoading(false);
+    if (!result.success) {
+      alert(result.error?.message || 'Error al cambiar el estado del usuario');
+      return;
     }
+    // Actualizar la lista de usuarios localmente
+    setUsuarios((prev) =>
+      prev.map((u) =>
+        u.cedula === usuario.cedula
+          ? { ...u, habilitado_sistema: !u.habilitado_sistema }
+          : u
+      )
+    );
+  };
+
+
+  const handleEdit = async (data: Record<string, unknown>) => {
+    const usuario = data as Usuario;
+    // Buscar usuario completo con info extendida (incluyendo TERM)
+    const result = await getUsuarioInfoByCedulaAction(usuario.cedula);
+    if (result.success && result.data) {
+      setUsuarioToEdit({
+        ...usuario,
+        correo_electronico: result.data.correo_electronico,
+        telefono: result.data.telefono_celular,
+        term:
+          result.data.estudiante?.term ||
+          result.data.profesor?.term ||
+          result.data.coordinador?.term || '',
+        tipo_estudiante: result.data.estudiante?.tipo_estudiante || '',
+        tipo_profesor: result.data.profesor?.tipo_profesor || '',
+        nrc: result.data.estudiante?.nrc || '',
+        nombres: result.data.nombres || usuario.nombres || '',
+        apellidos: result.data.apellidos || usuario.apellidos || '',
+      });
+    } else {
+      setUsuarioToEdit(usuario); // fallback
+    }
+    setShowEditModal(true);
+  };
+
+  // Función para eliminar usuario (debes implementar la lógica real de eliminación)
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+    setDeleteLoading(true);
+
+    const result = await deleteUsuarioFisicoAction(
+      itemToDelete.cedula,
+      deleteMotivo
+    );
+
+    setDeleteLoading(false);
+
+    if (!result.success) {
+      alert(result.error?.message || 'Error al eliminar usuario');
+      return;
+    }
+
+    // Actualiza la lista de usuarios o recarga
+    setUsuarios((prev) => prev.filter(u => u.cedula !== itemToDelete.cedula));
+    setShowConfirm(false);
+    setItemToDelete(null);
+    setDeleteMotivo('');
   };
 
   const handleBulkUploadSuccess = () => {
     loadUsuarios();
   };
 
-  // Formatear información adicional para mostrar en la tabla
-  const formatInfo = (usuario: Usuario): string => {
-    if (usuario.tipo_usuario === 'Estudiante' && usuario.info_estudiante) {
-      return usuario.info_estudiante;
-    }
-    if (usuario.tipo_usuario === 'Profesor' && usuario.info_profesor) {
-      return usuario.info_profesor;
-    }
-    if (usuario.tipo_usuario === 'Coordinador' && usuario.info_coordinador) {
-      return usuario.info_coordinador;
-    }
-    return '-';
+  const handleCreateUserSuccess = () => {
+    loadUsuarios();
   };
+  
+  // Validación de motivo
+  const isMotivoValido = deleteMotivo.trim().length > 0;
+
+  // Obtener la cédula del usuario autenticado (simulación: localStorage)
+  const getCurrentUserCedula = (): string => {
+    if (typeof window !== 'undefined') {
+      return window.localStorage.getItem('cedula') || '';
+    }
+    return '';
+  };
+
+  const currentUserCedula = getCurrentUserCedula();
 
   return (
     <>
@@ -156,7 +305,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: "easeOut" }}
       >
-        <h1 className="text-4xl m-3 font-semibold font-primary">Gestión de Usuarios</h1>
+        <h1 className="text-4xl m-3 font-semibold font-primary">Usuarios</h1>
         <p className="mb-6 ml-3">
           Administración de usuarios del sistema: estudiantes, profesores y coordinadores
         </p>
@@ -167,18 +316,88 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
       >
-        <CaseTools 
-          addLabel="Cargar Estudiantes por Lotes" 
-          onAddClick={() => setIsBulkUploadModalOpen(true)}
-          searchValue={searchValue}
-          onSearchChange={setSearchValue}
-          estatusFilter={tipoFilter}
-          onEstatusChange={setTipoFilter}
-          estatusOptions={tipoOptions}
-          tramiteFilter=""
-          onTramiteChange={() => {}}
-          tramiteOptions={[]}
-        />
+        <div className="flex flex-nowrap gap-3 sm:gap-4 items-center w-full px-3">
+          <div className="flex-1 min-w-0">
+            <CaseTools 
+              searchValue={searchValue}
+              onSearchChange={setSearchValue}
+              searchPlaceholder="Buscar usuario..."
+              estatusFilter={tipoFilter}
+              onEstatusChange={setTipoFilter}
+              estatusOptions={tipoOptions}
+              tramiteFilter=""
+              onTramiteChange={() => {}}
+              tramiteOptions={[]}
+            />
+          </div>
+          <div className="flex gap-3 sm:gap-4 items-center shrink-0">
+            <DropdownMenu
+              trigger={(isOpen) => (
+                <motion.button
+                  type="button"
+                  className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-primary text-white rounded-full hover:bg-primary-dark transition-colors font-medium whitespace-nowrap"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>Registrar Usuario</span>
+                  <svg 
+                    className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2.5" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </motion.button>
+              )}
+              onOpenChange={setIsDropdownOpen}
+              align="left"
+              className="relative"
+              menuClassName="bg-white border border-gray-300 rounded-2xl shadow-xl min-w-[220px] overflow-hidden py-2"
+            >
+              <div onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    // Cerrar inmediatamente
+                    setIsDropdownOpen(false);
+                    // Usar un microtask para asegurar que el estado se actualice primero
+                    Promise.resolve().then(() => {
+                      setIsCreateUserModalOpen(true);
+                    });
+                  }}
+                  className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 cursor-pointer"
+                >
+                  <UserPlus className="w-5 h-5 text-primary" />
+                  <span>Registrar usuario</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    // Cerrar inmediatamente
+                    setIsDropdownOpen(false);
+                    // Usar un microtask para asegurar que el estado se actualice primero
+                    Promise.resolve().then(() => {
+                      setIsBulkUploadModalOpen(true);
+                    });
+                  }}
+                  className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 cursor-pointer"
+                >
+                  <Users className="w-5 h-5 text-primary" />
+                  <span>Registrar usuarios por lotes</span>
+                </button>
+              </div>
+            </DropdownMenu>
+          </div>
+        </div>
       </motion.div>
       
       <div className="mt-10"></div>
@@ -196,26 +415,135 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
           <Table
             data={filteredUsuarios.map((u) => ({
               cedula: u.cedula,
-              nombre_completo: u.nombre_completo,
-              correo_electronico: u.correo_electronico,
+              nombre_completo: `${u.nombres || ''} ${u.apellidos || ''}`.trim(),
               nombre_usuario: u.nombre_usuario,
-              telefono_celular: u.telefono_celular || 'N/A',
               tipo_usuario: u.tipo_usuario,
               estado: u.habilitado_sistema ? 'Habilitado' : 'Deshabilitado',
-              informacion: formatInfo(u),
             }))}
-            columns={["Cédula", "Nombre Completo", "Correo", "Usuario", "Teléfono", "Tipo", "Estado", "Información"]}
+            columns={["Cédula", "Nombre Completo", "Usuario", "Tipo", "Estado"]}
             onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            actions={[
+              {
+                label: (row) => {
+                  // Ocultar acción si es el usuario actual
+                  if (row.cedula === currentUserCedula) return '';
+                  const isHabilitado = row.estado === 'Habilitado';
+                  return (
+                    <span className="flex items-center gap-2">
+                      {isHabilitado ? (
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-4 h-4 text-yellow-600"
+                        >
+                          <rect x="3" y="11" width="18" height="10" rx="2" />
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                          <circle cx="12" cy="16" r="1" />
+                        </svg>
+                      ) : (
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-4 h-4 text-yellow-600"
+                        >
+                          <rect x="3" y="11" width="18" height="10" rx="2" />
+                          <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+                          <circle cx="12" cy="16" r="1" />
+                        </svg>
+                      )}
+                      {isHabilitado ? 'Deshabilitar' : 'Habilitar'}
+                    </span>
+                  );
+                },
+                onClick: (row) => {
+                  if (row.cedula !== currentUserCedula) handleDisable(row);
+                },
+              },
+            ]}
+            hideEdit={(row: { cedula: string }) => row.cedula === currentUserCedula}
+            hideDelete={(row: { cedula: string }) => row.cedula === currentUserCedula}
           />
         </motion.div>
       )}
+
 
       <BulkUploadModal
         isOpen={isBulkUploadModalOpen}
         onClose={() => setIsBulkUploadModalOpen(false)}
         onSuccess={handleBulkUploadSuccess}
+      />
+
+      <CreateUserModal
+        isOpen={isCreateUserModalOpen}
+        onClose={() => setIsCreateUserModalOpen(false)}
+        onSuccess={handleCreateUserSuccess}
+      />
+
+      <EditUserModal
+        isOpen={showEditModal}
+        onClose={() => { setShowEditModal(false); setUsuarioToEdit(null); }}
+        usuario={usuarioToEdit}
+        onSave={handleSaveEdit}
+      />
+
+      <ConfirmModal
+        isOpen={showConfirm}
+        onClose={() => {
+          setShowConfirm(false);
+          setDeleteMotivo('');
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Eliminar usuario permanentemente"
+        message={
+          <div>
+            <p className="mb-4 text-base text-foreground">
+              ¿Estás seguro de que deseas eliminar al usuario <strong>{itemToDelete ? `${itemToDelete.nombres || ''} ${itemToDelete.apellidos || ''}` : ''}</strong>?
+            </p>
+            <p className="mb-6 text-red-600 font-semibold text-base">
+              Esta acción es irreversible y solo puede realizarla un coordinador.
+            </p>
+            <div className="flex flex-col gap-1">
+              <label className="text-base font-normal text-foreground mb-1">
+                Motivo de la eliminación
+              </label>
+              <textarea
+                className={`
+                  w-full p-4 rounded-lg border bg-[#E5E7EB] border-transparent
+                  focus:outline-none focus:ring-1 focus:ring-primary
+                  text-base placeholder:text-[#717171] resize-none
+                  ${deleteLoading ? 'opacity-50 cursor-not-allowed' : ''}
+                `}
+                rows={4}
+                maxLength={250}
+                value={deleteMotivo}
+                onChange={e => setDeleteMotivo(e.target.value)}
+                placeholder="Describe el motivo de la eliminación..."
+                disabled={deleteLoading}
+              />
+              <div className="text-right text-xs text-gray-500 mt-1">
+                {deleteMotivo.length} / 250 caracteres
+              </div>
+            </div>
+          </div>
+        }
+        confirmLabel={deleteLoading ? 'Eliminando...' : 'Eliminar'}
+        cancelLabel="Cancelar"
+        disabled={deleteLoading || !isMotivoValido}
+        confirmVariant="danger"
       />
     </>
   );

@@ -28,23 +28,23 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setPrefersReducedMotion(mediaQuery.matches);
-    
+
     const handleChange = (e: MediaQueryListEvent) => {
       setPrefersReducedMotion(e.matches);
     };
-    
+
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
   return (
-    <div className="flex h-screen bg-background relative">
+    <div className="flex h-screen bg-background relative overflow-x-hidden">
       <div className="flex-shrink-0">
         <Sidebar role={userRole} userName={userName} />
       </div>
 
-      <div className="flex-1 flex flex-col w-full">
-        <motion.div 
+      <div className="flex-1 flex flex-col w-full min-w-0 overflow-x-hidden">
+        <motion.div
           initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: prefersReducedMotion ? 0 : 0.4, delay: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
@@ -54,7 +54,7 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
           <DateTime />
         </motion.div>
 
-        <main className="flex-1 overflow-y-auto p-6 bg-background">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-6 bg-background">
           {children}
         </main>
       </div>

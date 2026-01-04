@@ -7,17 +7,22 @@ export interface CitaCreada {
   id_caso: number;
 }
 
+export interface Atencion {
+  id_usuario: string;
+  nombres: string;
+  apellidos: string;
+  nombre_completo: string;
+  fecha_registro: string;
+}
+
 export interface CitaCompleta {
   num_cita: number;
   id_caso: number;
   fecha_encuentro: string;
   fecha_proxima_cita: string | null;
   orientacion: string;
-  fecha_registro?: string;
-  id_usuario_atencion?: string;
-  nombres_usuario_atencion?: string;
-  apellidos_usuario_atencion?: string;
-  nombre_completo_usuario_atencion?: string;
+  // Array de usuarios que atendieron (ahora incluye TODOS)
+  atenciones: Atencion[];
   tramite: string;
   estatus: string;
   cedula: string;
@@ -42,12 +47,18 @@ export interface CitaCompleta {
 export const citasQueries = {
   /**
    * Obtiene todas las citas con información relacionada
-   * Incluye: caso, solicitante, núcleo, ámbito legal
+   * Incluye: caso, solicitante, núcleo, ámbito legal, y TODOS los usuarios que atendieron
    */
   getAll: async (): Promise<CitaCompleta[]> => {
     const query = loadSQL('citas/get-all.sql');
     const result: QueryResult = await pool.query(query);
-    return result.rows as CitaCompleta[];
+    // Parsear el JSON de atenciones (similar a getByCaso)
+    return result.rows.map(row => ({
+      ...row,
+      atenciones: typeof row.atenciones === 'string' 
+        ? JSON.parse(row.atenciones) 
+        : row.atenciones || []
+    })) as CitaCompleta[];
   },
 
   /**
@@ -59,13 +70,7 @@ export const citasQueries = {
     fecha_encuentro: string;
     fecha_proxima_cita: string | null;
     orientacion: string;
-    atenciones: Array<{
-      id_usuario: string;
-      nombres: string;
-      apellidos: string;
-      nombre_completo: string;
-      fecha_registro: string;
-    }>;
+    atenciones: Atencion[];
   }>> => {
     const query = loadSQL('citas/get-by-caso.sql');
     const result: QueryResult = await pool.query(query, [idCaso]);
@@ -89,6 +94,50 @@ export const citasQueries = {
   ): Promise<QueryResult<CitaCreada>> => {
     const query = loadSQL('citas/create.sql');
     return await pool.query(query, [caseId, date, endDate, orientacion]);
+  },
+
+  /**
+   * Elimina una cita específica (registra auditoría antes de eliminar)
+   * @param numCita Número de la cita
+   * @param idCaso ID del caso
+   * @param idUsuarioElimino Cedula del usuario que elimina la cita
+   * @param motivo Motivo de la eliminación
+   */
+  delete: async (
+    numCita: number,
+    idCaso: number,
+    idUsuarioElimino: string,
+    motivo: string
+  ): Promise<{
+    num_cita: number;
+    id_caso: number;
+  } | null> => {
+    // Usar transacción para establecer las variables de sesión y ejecutar el DELETE
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      
+      // Establecer las variables de sesión para el trigger usando set_config
+      // El tercer parámetro 'true' hace que sea local a la transacción
+      await client.query("SELECT set_config('app.usuario_elimina_cita', $1, true)", [idUsuarioElimino]);
+      await client.query("SELECT set_config('app.motivo_eliminacion_cita', $1, true)", [motivo || '']);
+      
+      // Ejecutar el DELETE (el trigger capturará la auditoría usando OLD)
+      const query = loadSQL('citas/delete.sql');
+      const result: QueryResult = await client.query(query, [numCita, idCaso]);
+      
+      await client.query('COMMIT');
+      
+      if (result.rows.length === 0) {
+        return null;
+      }
+      return result.rows[0];
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   },
 };
 

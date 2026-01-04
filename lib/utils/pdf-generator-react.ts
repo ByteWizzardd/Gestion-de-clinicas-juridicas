@@ -3,10 +3,7 @@
 import React from 'react';
 import { pdf } from '@react-pdf/renderer/lib/react-pdf.browser';
 import { TiposCasosPDF } from '@/components/reports/TiposCasosPDF';
-import { EstatusCasosPDF, EstatusGroupedData } from '@/components/reports/EstatusCasosPDF';
-import { InformeResumenPDF, InformeResumenData } from '@/components/reports/InformeResumenPDF';
 import { CasosGroupedData } from '@/app/actions/reports';
-import { generateBarChartImage } from './bar-chart-generator';
 
 // Colores exactos del diseño de Figma
 const CHART_COLORS = [
@@ -23,9 +20,6 @@ const CHART_COLORS = [
   '#55c4ae', // Color adicional
   '#6186cc', // Color adicional
 ];
-
-// Helper para ceder el control al hilo principal con un respiro real para que el Spinner no se congele
-const yieldToUI = (ms = 30) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * Agrupa los datos por materia y subcategoría
@@ -65,97 +59,6 @@ function groupDataByMateriaSubcategoria(
 }
 
 /**
- * Agrupa beneficiarios por materia y subcategoría (igual que tipos de caso)
- */
-function groupBeneficiariosByMateriaSubcategoria(
-  data: Array<{
-    tipo_beneficiario: string;
-    id_materia: number;
-    num_categoria: number;
-    num_subcategoria: number;
-    nombre_materia: string;
-    nombre_categoria: string;
-    nombre_subcategoria: string;
-    cantidad_beneficiarios: number;
-  }>
-): Record<string, typeof data> {
-  const grouped: Record<string, typeof data> = {};
-
-  for (const item of data) {
-    const categoria = item.nombre_categoria?.trim() || '';
-    const subcategoria = item.nombre_subcategoria?.trim() || '';
-    
-    const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría';
-    const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría';
-    
-    let key = item.nombre_materia;
-    if (hasCategoria && hasSubcategoria) {
-      key += ` - ${categoria} ${subcategoria}`;
-    } else if (hasCategoria) {
-      key += ` - ${categoria}`;
-    } else if (hasSubcategoria) {
-      key += ` - ${subcategoria}`;
-    }
-
-    if (!grouped[key]) {
-      grouped[key] = [];
-    }
-    grouped[key].push(item);
-  }
-
-  return grouped;
-}
-
-/**
- * Agrupa casos por materia y subcategoría (igual que beneficiarios)
- */
-function groupCasosByMateriaSubcategoria(
-  data: Array<{
-    id_materia: number;
-    num_categoria: number;
-    num_subcategoria: number;
-    nombre_materia: string;
-    nombre_categoria: string;
-    nombre_subcategoria: string;
-    cantidad_casos: number;
-  }>
-): Record<string, typeof data> {
-  const grouped: Record<string, typeof data> = {};
-
-  for (const item of data) {
-    const categoria = item.nombre_categoria?.trim() || '';
-    const subcategoria = item.nombre_subcategoria?.trim() || '';
-    
-    const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría';
-    const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría';
-    
-    let key = item.nombre_materia;
-    if (hasCategoria && hasSubcategoria) {
-      key += ` - ${categoria} ${subcategoria}`;
-    } else if (hasCategoria) {
-      key += ` - ${categoria}`;
-    } else if (hasSubcategoria) {
-      key += ` - ${subcategoria}`;
-    }
-
-    if (!grouped[key]) {
-      grouped[key] = [];
-    }
-    grouped[key].push(item);
-  }
-
-  return grouped;
-}
-
-// Colores fijos para los estatus
-const ESTATUS_COLORS: Record<string, string> = {
-  'En proceso': '#4A90E2', // Azul
-  'Archivado': '#7B68EE',   // Morado
-  'Entregado': '#50C878',   // Verde
-  'Asesoría': '#D2691E',    // Naranja/Marrón
-};
-
-/**
  * Genera una imagen base64 de un gráfico donut estilo iChart de Figma
  * Alta calidad con devicePixelRatio y renderizado optimizado
  */
@@ -165,8 +68,8 @@ function generatePieChartImage(
   colors: string[],
   total: number
 ): string {
-  // Resolución optimizada (1.5x es el punto dulce entre calidad y fluidez de la UI)
-  const pixelRatio = 2; 
+  // Usar alta resolución para mejor calidad del texto
+  const pixelRatio = 4; // 4x para máxima calidad en PDF, especialmente para texto
   // Aumentar el tamaño del canvas para que quepan todos los callouts
   const baseWidth = 750;
   const baseHeight = 500;
@@ -419,9 +322,6 @@ export async function generateTiposCasosPDFReact(
     // Generar imágenes de gráficas para cada grupo
     const chartImages: Record<string, string> = {};
     for (const [key, groupData] of Object.entries(groupedData)) {
-      // Ceder control a la UI
-      await yieldToUI();
-
       // Asegurar que los valores sean números
       const values = groupData.map(item => Number(item.cantidad_casos) || 0);
       const pieData = {
@@ -434,8 +334,6 @@ export async function generateTiposCasosPDFReact(
       chartImages[key] = generatePieChartImage(pieData.labels, pieData.values, pieData.colors, total);
     }
     
-    await new Promise(resolve => setTimeout(resolve, 0));
-
     // Generar el documento PDF
     const doc = React.createElement(TiposCasosPDF, { data, fechaInicio, fechaFin, chartImages, logoBase64 });
     
@@ -454,293 +352,6 @@ export async function generateTiposCasosPDFReact(
     URL.revokeObjectURL(url);
   } catch (error) {
     console.error('Error al generar PDF:', error);
-    throw error;
-  }
-}
-
-/**
- * Genera y descarga un PDF con gráfica donut 3D de estatus de casos
- * Usa el mismo estilo de pie chart que el reporte de tipos de casos
- */
-export async function generateEstatusCasosPDFReact(
-  data: EstatusGroupedData[],
-  fechaInicio?: string,
-  fechaFin?: string
-): Promise<void> {
-  try {
-    // Cargar el logo como base64 para preservar la transparencia
-    const logoBase64 = await imageToBase64('/logo clinica juridica.png');
-    
-    // Preparar datos para el gráfico de pie chart 3D
-    const values = data.map(item => Number(item.cantidad_casos) || 0);
-    const total = values.reduce((sum, val) => sum + val, 0);
-    const pieData = {
-      labels: data.map(item => item.nombre_estatus),
-      values: values,
-      colors: data.map(item => ESTATUS_COLORS[item.nombre_estatus] || '#9E9E9E'),
-    };
-    
-    // Generar imagen del pie chart 3D (mismo estilo que tipos de casos)
-    const chartImage = generatePieChartImage(pieData.labels, pieData.values, pieData.colors, total);
-    
-    await yieldToUI();
-
-    // Generar el documento PDF
-    const doc = React.createElement(EstatusCasosPDF, { 
-      data, 
-      fechaInicio, 
-      fechaFin, 
-      chartImage, 
-      logoBase64 
-    });
-    
-    // Crear el blob del PDF
-    // @ts-ignore - React PDF types issue with React 19
-    const blob = await pdf(doc).toBlob();
-    
-    // Crear URL y descargar
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Estatus_de_Casos_${fechaInicio || 'historico'}_${fechaFin || 'historico'}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  } catch (error) {
-    console.error('Error al generar PDF de estatus:', error);
-    throw error;
-  }
-}
-
-/**
- * Genera y descarga un PDF con el informe resumen completo
- */
-export async function generateInformeResumenPDFReact(
-  data: InformeResumenData,
-  fechaInicio?: string,
-  fechaFin?: string
-): Promise<void> {
-  try {
-    // Cargar el logo como base64
-    const logoBase64 = await imageToBase64('/logo clinica juridica.png');
-    
-    // Colores para gráficos
-    const BAR_COLORS = [
-      '#8979ff', '#ff928a', '#3cc3df', '#ffae4c', '#537ff1',
-      '#6fd195', '#8c63da', '#2bb7dc', '#1f94ff', '#f4cf3b',
-      '#55c4ae', '#6186cc',
-    ];
-
-    const chartImages: {
-      casosPorMateria?: string;
-      solicitantesPorGenero?: string;
-      solicitantesPorParroquia?: string;
-      casosPorAmbitoLegal?: string;
-      estudiantesPorMateria?: Record<string, string>;
-      profesoresPorMateria?: Record<string, string>;
-      tiposDeCaso?: Record<string, string>;
-      beneficiariosDirectos?: string;
-      beneficiariosIndirectos?: string;
-      beneficiariosPorParentesco?: string;
-    } = {};
-
-    // 1. PRIMERO: Tipos de Caso (pie charts agrupados, igual que el reporte de tipos de caso)
-    if (data.tiposDeCaso && data.tiposDeCaso.length > 0) {
-      // Usar la misma función groupDataByMateriaSubcategoria que usa generateTiposCasosPDFReact
-      const groupedData = groupDataByMateriaSubcategoria(data.tiposDeCaso);
-      
-      // Generar imágenes de gráficas para cada grupo (igual que generateTiposCasosPDFReact)
-      chartImages.tiposDeCaso = {};
-      for (const [key, groupData] of Object.entries(groupedData)) {
-        // Ceder control a la UI
-        await yieldToUI();
-
-        const values = groupData.map(item => Number(item.cantidad_casos) || 0);
-        const pieData = {
-          labels: groupData.map(item => item.nombre_ambito_legal),
-          values: values,
-          colors: CHART_COLORS.slice(0, groupData.length),
-        };
-        const total = values.reduce((sum, val) => sum + Number(val), 0);
-        chartImages.tiposDeCaso[key] = generatePieChartImage(pieData.labels, pieData.values, pieData.colors, total);
-      }
-    }
-
-    // 2. Casos por Materia (barras agrupadas por materia, categoría y subcategoría)
-    if (data.casosPorMateria && data.casosPorMateria.length > 0) {
-      await yieldToUI();
-
-      // Agrupar por materia, categoría y subcategoría (igual que beneficiarios)
-      const groupedCasos = groupCasosByMateriaSubcategoria(data.casosPorMateria);
-      const labels: string[] = [];
-      const values: number[] = [];
-      
-      for (const [key, groupData] of Object.entries(groupedCasos)) {
-        // El key ya tiene el formato "Materia - Categoría Subcategoría"
-        labels.push(key);
-        // Sumar todas las cantidades del grupo
-        const total = groupData.reduce((sum, item) => sum + Number(item.cantidad_casos || 0), 0);
-        values.push(total);
-      }
-      
-      const colors = BAR_COLORS.slice(0, labels.length);
-      chartImages.casosPorMateria = generateBarChartImage(labels, values, colors);
-    }
-
-    // 3. Solicitantes por Género (barras)
-    if (data.solicitantesPorGenero && data.solicitantesPorGenero.length > 0) {
-      await yieldToUI();
-
-      const labels = data.solicitantesPorGenero.map(item => item.genero === 'M' ? 'Masculino' : 'Femenino');
-      const values = data.solicitantesPorGenero.map(item => item.cantidad_solicitantes);
-      const colors = BAR_COLORS.slice(0, labels.length);
-      chartImages.solicitantesPorGenero = generateBarChartImage(labels, values, colors);
-    }
-
-    // 4. Solicitantes por Parroquia (barras)
-    if (data.solicitantesPorParroquia && data.solicitantesPorParroquia.length > 0) {
-      await yieldToUI();
-
-      const labels = data.solicitantesPorParroquia.map(item => item.nombre_parroquia);
-      const values = data.solicitantesPorParroquia.map(item => item.cantidad_solicitantes);
-      const colors = BAR_COLORS.slice(0, labels.length);
-      chartImages.solicitantesPorParroquia = generateBarChartImage(labels, values, colors);
-    }
-
-    // 5. Estudiantes por Materia (un solo diagrama de barras con todas las materias)
-    if (data.estudiantesPorMateria && data.estudiantesPorMateria.length > 0) {
-      await yieldToUI();
-
-      // Agrupar solo por materia (sumando todos los estudiantes de cada materia)
-      const groupedByMateria: Record<string, number> = {};
-      for (const item of data.estudiantesPorMateria) {
-        const materia = item.nombre_materia;
-        if (!groupedByMateria[materia]) {
-          groupedByMateria[materia] = 0;
-        }
-        groupedByMateria[materia] += item.cantidad_estudiantes;
-      }
-
-      // Crear un solo diagrama de barras con todas las materias
-      const labels = Object.keys(groupedByMateria);
-      const values = Object.values(groupedByMateria).map(v => Number(v));
-      const colors = BAR_COLORS.slice(0, labels.length);
-      chartImages.estudiantesPorMateria = {
-        total: generateBarChartImage(labels, values, colors)
-      };
-    }
-
-    // 6. Profesores por Materia (un solo diagrama de barras con todas las materias)
-    if (data.profesoresPorMateria && data.profesoresPorMateria.length > 0) {
-      await yieldToUI();
-
-      // Agrupar solo por materia (sumando todos los profesores de cada materia)
-      const groupedByMateria: Record<string, number> = {};
-      for (const item of data.profesoresPorMateria) {
-        const materia = item.nombre_materia;
-        if (!groupedByMateria[materia]) {
-          groupedByMateria[materia] = 0;
-        }
-        groupedByMateria[materia] += item.cantidad_profesores;
-      }
-
-      // Crear un solo diagrama de barras con todas las materias
-      const labels = Object.keys(groupedByMateria);
-      const values = Object.values(groupedByMateria).map(v => Number(v));
-      const colors = BAR_COLORS.slice(0, labels.length);
-      chartImages.profesoresPorMateria = {
-        total: generateBarChartImage(labels, values, colors)
-      };
-    }
-
-    // 7. Beneficiarios Directos (un solo diagrama de barras con todas las combinaciones materia-categoría-subcategoría)
-    if (data.beneficiariosPorTipo && data.beneficiariosPorTipo.length > 0) {
-      await yieldToUI();
-
-      const directos = data.beneficiariosPorTipo.filter(item => item.tipo_beneficiario === 'Directo');
-      if (directos.length > 0) {
-        // Agrupar por materia, categoría y subcategoría y sumar cantidades
-        const groupedDirectos = groupBeneficiariosByMateriaSubcategoria(directos);
-        const labels: string[] = [];
-        const values: number[] = [];
-        
-        for (const [key, groupData] of Object.entries(groupedDirectos)) {
-          // El key ya tiene el formato "Materia - Categoría Subcategoría"
-          labels.push(key);
-          // Sumar todas las cantidades del grupo
-          const total = groupData.reduce((sum, item) => sum + Number(item.cantidad_beneficiarios || 0), 0);
-          values.push(total);
-        }
-        
-        const colors = BAR_COLORS.slice(0, labels.length);
-        chartImages.beneficiariosDirectos = generateBarChartImage(labels, values, colors);
-      }
-    }
-
-    // 8. Beneficiarios Indirectos (un solo diagrama de barras con todas las combinaciones materia-categoría-subcategoría)
-    if (data.beneficiariosPorTipo && data.beneficiariosPorTipo.length > 0) {
-      await yieldToUI();
-
-      const indirectos = data.beneficiariosPorTipo.filter(item => item.tipo_beneficiario === 'Indirecto');
-      if (indirectos.length > 0) {
-        // Agrupar por materia, categoría y subcategoría y sumar cantidades
-        const groupedIndirectos = groupBeneficiariosByMateriaSubcategoria(indirectos);
-        const labels: string[] = [];
-        const values: number[] = [];
-        
-        for (const [key, groupData] of Object.entries(groupedIndirectos)) {
-          // El key ya tiene el formato "Materia - Categoría Subcategoría"
-          labels.push(key);
-          // Sumar todas las cantidades del grupo
-          const total = groupData.reduce((sum, item) => sum + Number(item.cantidad_beneficiarios || 0), 0);
-          values.push(total);
-        }
-        
-        const colors = BAR_COLORS.slice(0, labels.length);
-        chartImages.beneficiariosIndirectos = generateBarChartImage(labels, values, colors);
-      }
-    }
-
-    // 9. Beneficiarios por Parentesco
-    if (data.beneficiariosPorParentesco && data.beneficiariosPorParentesco.length > 0) {
-      await yieldToUI();
-
-      const labels = data.beneficiariosPorParentesco.map(item => item.parentesco);
-      const values = data.beneficiariosPorParentesco.map(item => Number(item.cantidad_beneficiarios));
-      const colors = BAR_COLORS.slice(0, labels.length);
-      chartImages.beneficiariosPorParentesco = generateBarChartImage(labels, values, colors);
-    }
-
-    await yieldToUI(100);
-
-    // Generar el documento PDF
-    const doc = React.createElement(InformeResumenPDF, { 
-      data, 
-      fechaInicio, 
-      fechaFin, 
-      chartImages, 
-      logoBase64 
-    });
-    
-    // Un respiro final antes del paso más pesado (maquetación del PDF)
-    await yieldToUI(100);
-
-    // Crear el blob del PDF
-    // @ts-ignore - React PDF types issue with React 19
-    const blob = await pdf(doc).toBlob();
-    
-    // Crear URL y descargar
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Informe_Resumen_${fechaInicio || 'historico'}_${fechaFin || 'historico'}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  } catch (error) {
-    console.error('Error al generar PDF del informe resumen:', error);
     throw error;
   }
 }

@@ -66,18 +66,20 @@ export default function CaseFormModal({
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
-  const [nucleos, setNucleos] = useState<Array<{ id_nucleo: number; nombre_nucleo: string }>>([]);
-  const [materias, setMaterias] = useState<Array<{ id_materia: number; nombre_materia: string }>>([]);
-  const [categorias, setCategorias] = useState<Array<{ num_categoria: number; nombre_categoria: string }>>([]);
-  const [subcategorias, setSubcategorias] = useState<Array<{ num_subcategoria: number; nombre_subcategoria: string }>>([]);
+  const [nucleos, setNucleos] = useState<Array<{ id_nucleo: number; nombre_nucleo: string; habilitado?: boolean }>>([]);
+  const [materias, setMaterias] = useState<Array<{ id_materia: number; nombre_materia: string; habilitado?: boolean }>>([]);
+  const [categorias, setCategorias] = useState<Array<{ num_categoria: number; nombre_categoria: string; habilitado?: boolean }>>([]);
+  const [subcategorias, setSubcategorias] = useState<Array<{ num_subcategoria: number; nombre_subcategoria: string; habilitado?: boolean }>>([]);
   const [ambitosLegales, setAmbitosLegales] = useState<Array<{ 
     num_ambito_legal: number; 
     nombre_ambito_legal: string;
+    habilitado?: boolean;
   }>>([]);
   const [loadingCatalogos, setLoadingCatalogos] = useState(false);
   const [loadingCaseNumber, setLoadingCaseNumber] = useState(false);
   const [archivos, setArchivos] = useState<File[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   // Cargar catálogos y siguiente número de caso al abrir el modal
   // También actualizar la fecha actual (misma lógica que DateTime)
@@ -316,9 +318,24 @@ export default function CaseFormModal({
     onClose();
   };
 
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB en bytes
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
+      setFileError(null);
+      
+      // Validar tamaño de cada archivo
+      const invalidFiles = newFiles.filter(file => file.size > MAX_FILE_SIZE);
+      if (invalidFiles.length > 0) {
+        const fileNames = invalidFiles.map(f => f.name).join(', ');
+        setFileError(`Los siguientes archivos exceden el límite de 10MB: ${fileNames}`);
+        // Solo añadir archivos válidos
+        const validFiles = newFiles.filter(file => file.size <= MAX_FILE_SIZE);
+        setArchivos((prev) => [...prev, ...validFiles]);
+        return;
+      }
+      
       setArchivos((prev) => [...prev, ...newFiles]);
     }
   };
@@ -465,10 +482,12 @@ export default function CaseFormModal({
               label="Núcleo *"
               value={formData.nucleo}
               onChange={(e) => updateField('nucleo', e.target.value)}
-              options={nucleos.map((nucleo) => ({
-                value: nucleo.id_nucleo.toString(),
-                label: nucleo.nombre_nucleo,
-              }))}
+              options={nucleos
+                .filter((nucleo) => nucleo.habilitado !== false)
+                .map((nucleo) => ({
+                  value: nucleo.id_nucleo.toString(),
+                  label: nucleo.nombre_nucleo,
+                }))}
               placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar núcleo"}
               error={errors.nucleo}
               required
@@ -498,10 +517,12 @@ export default function CaseFormModal({
                   label="Categoría *"
                   value={formData.categoria}
                   onChange={(e) => updateField('categoria', e.target.value)}
-                  options={categorias.map((cat) => ({
-                    value: cat.num_categoria.toString(),
-                    label: cat.nombre_categoria,
-                  }))}
+                  options={categorias
+                    .filter((cat) => cat.habilitado !== false)
+                    .map((cat) => ({
+                      value: cat.num_categoria.toString(),
+                      label: cat.nombre_categoria,
+                    }))}
                   placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar categoría"}
                   error={errors.categoria}
                   required
@@ -512,10 +533,12 @@ export default function CaseFormModal({
                   label="Subcategoría *"
                   value={formData.subcategoria}
                   onChange={(e) => updateField('subcategoria', e.target.value)}
-                  options={subcategorias.map((sub) => ({
-                    value: sub.num_subcategoria.toString(),
-                    label: sub.nombre_subcategoria,
-                  }))}
+                  options={subcategorias
+                    .filter((sub) => sub.habilitado !== false)
+                    .map((sub) => ({
+                      value: sub.num_subcategoria.toString(),
+                      label: sub.nombre_subcategoria,
+                    }))}
                   placeholder={formData.categoria ? "Seleccionar subcategoría" : "Primero seleccione categoría"}
                   error={errors.subcategoria}
                   required
@@ -527,10 +550,12 @@ export default function CaseFormModal({
                   label="Ámbito Legal *"
                   value={formData.ambitoLegal}
                   onChange={(e) => updateField('ambitoLegal', e.target.value)}
-                  options={ambitosLegales.map((ambito) => ({
-                    value: ambito.num_ambito_legal.toString(),
-                    label: ambito.nombre_ambito_legal,
-                  }))}
+                  options={ambitosLegales
+                    .filter((ambito) => ambito.habilitado !== false)
+                    .map((ambito) => ({
+                      value: ambito.num_ambito_legal.toString(),
+                      label: ambito.nombre_ambito_legal,
+                    }))}
                   placeholder={formData.subcategoria ? "Seleccionar ámbito legal" : "Primero seleccione subcategoría"}
                   error={errors.ambitoLegal}
                   required
@@ -547,10 +572,12 @@ export default function CaseFormModal({
                 label="Ámbito Legal *"
                 value={formData.ambitoLegal}
                 onChange={(e) => updateField('ambitoLegal', e.target.value)}
-                options={ambitosLegales.map((ambito) => ({
-                  value: ambito.num_ambito_legal.toString(),
-                  label: ambito.nombre_ambito_legal,
-                }))}
+                options={ambitosLegales
+                  .filter((ambito) => ambito.habilitado !== false)
+                  .map((ambito) => ({
+                    value: ambito.num_ambito_legal.toString(),
+                    label: ambito.nombre_ambito_legal,
+                  }))}
                 placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar ámbito legal"}
                 error={errors.ambitoLegal}
                 required
@@ -608,8 +635,8 @@ export default function CaseFormModal({
                         <span className="text-sm text-foreground truncate" title={archivo.name}>
                           {archivo.name}
                         </span>
-                        <span className="text-xs text-gray-500 flex-shrink-0">
-                          ({(archivo.size / 1024).toFixed(1)} KB)
+                        <span className={`text-xs flex-shrink-0 ${archivo.size > MAX_FILE_SIZE ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
+                          ({(archivo.size / 1024 / 1024).toFixed(2)} MB)
                         </span>
                       </div>
                       <button
@@ -624,6 +651,12 @@ export default function CaseFormModal({
                   ))}
                 </div>
               )}
+              {fileError && (
+                <p className="text-xs text-danger mt-1">{fileError}</p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Tamaño máximo por archivo: 10MB
+              </p>
             </div>
           </div>
         </div>

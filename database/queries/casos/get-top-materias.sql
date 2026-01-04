@@ -7,18 +7,9 @@ SELECT
 FROM materias m
 INNER JOIN casos c ON m.id_materia = c.id_materia
 WHERE 
-    ($1::DATE IS NULL OR c.fecha_solicitud >= $1)
-    AND ($2::DATE IS NULL OR c.fecha_solicitud <= $2)
+    ($1::DATE IS NULL OR c.fecha_inicio_caso >= $1)
+    AND ($2::DATE IS NULL OR c.fecha_inicio_caso <= $2)
     AND ($3::INTEGER IS NULL OR c.id_nucleo = $3)
-    AND (
-        $4::VARCHAR IS NULL 
-        OR EXISTS (
-            SELECT 1 
-            FROM se_le_asigna sla 
-            WHERE sla.id_caso = c.id_caso 
-            AND sla.term = $4
-        )
-    )
 GROUP BY m.id_materia, m.nombre_materia
 ORDER BY cantidad DESC
 LIMIT 5;

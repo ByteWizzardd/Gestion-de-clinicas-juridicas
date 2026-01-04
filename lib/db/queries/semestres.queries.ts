@@ -19,5 +19,32 @@ export const semestresQueries = {
     const result: QueryResult = await pool.query(query);
     return result.rows;
   },
+
+  /**
+   * Obtiene un semestre por su term
+   */
+  getByTerm: async (term: string): Promise<{
+    term: string;
+    fecha_inicio: Date;
+    fecha_fin: Date;
+  } | null> => {
+    const query = loadSQL('semestres/get-by-term.sql');
+    const result: QueryResult = await pool.query(query, [term]);
+    return result.rows[0] || null;
+  },
+
+  /**
+   * Obtiene el semestre actual basado en la fecha actual
+   * Retorna el semestre donde la fecha actual está entre fecha_inicio y fecha_fin
+   */
+  getCurrent: async (): Promise<{
+    term: string;
+    fecha_inicio: Date;
+    fecha_fin: Date;
+  } | null> => {
+    const query = loadSQL('semestres/get-current.sql');
+    const result: QueryResult = await pool.query(query);
+    return result.rows[0] || null;
+  },
 };
 

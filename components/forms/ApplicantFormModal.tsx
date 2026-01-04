@@ -6,10 +6,12 @@ import Modal from '../ui/feedback/Modal';
 import Stepper from './Stepper';
 import Input from './Input';
 import InputGroup from './InputGroup';
+import PhoneInput from './PhoneInput';
 import Select from './Select';
 import Button from '../ui/Button';
 import { ArrowRight, ArrowLeft, Calendar } from 'lucide-react';
 import DatePicker from './DatePicker';
+import { validateEmailFormat } from '@/lib/utils/email-validation';
 
 interface ApplicantFormModalProps {
   isOpen: boolean;
@@ -26,8 +28,7 @@ interface FormData {
   fechaNacimiento: string;
   sexo: string;
   telefonoLocal: string;
-  codigoPaisCelular: string; // Código de país para teléfono celular
-  telefonoCelular: string;
+  telefonoCelular: string; // Almacenará el número completo: +58412...
   correoElectronico: string;
   estadoCivil: string;
   concubinato: string;
@@ -154,8 +155,7 @@ const getInitialFormData = (): FormData => ({
   fechaNacimiento: '',
   sexo: '',
   telefonoLocal: '',
-  codigoPaisCelular: '+58', // Código por defecto: Venezuela
-  telefonoCelular: '',
+  telefonoCelular: '+58', // Valor inicial con código de país
   correoElectronico: '',
   estadoCivil: '',
   concubinato: '',
@@ -299,20 +299,20 @@ export default function ApplicantFormModal({
   const [lockedFields, setLockedFields] = useState<Set<keyof FormData>>(new Set());
 
   // Estados para catálogos
-  const [condicionesTrabajo, setCondicionesTrabajo] = useState<Array<{ id_trabajo: number; nombre_trabajo: string }>>([]);
-  const [condicionesActividad, setCondicionesActividad] = useState<Array<{ id_actividad: number; nombre_actividad: string }>>([]);
-  const [tiposVivienda, setTiposVivienda] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
-  const [materialesPiso, setMaterialesPiso] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
-  const [materialesParedes, setMaterialesParedes] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
-  const [materialesTecho, setMaterialesTecho] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
-  const [aguaPotable, setAguaPotable] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
-  const [aseo, setAseo] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
-  const [eliminacionAguasN, setEliminacionAguasN] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
-  const [artefactosDomesticos, setArtefactosDomesticos] = useState<Array<{ num_caracteristica: number; descripcion: string }>>([]);
-  const [nivelesEducativos, setNivelesEducativos] = useState<Array<{ id_nivel_educativo: number; descripcion: string }>>([]);
-  const [estados, setEstados] = useState<Array<{ id_estado: number; nombre_estado: string }>>([]);
-  const [municipios, setMunicipios] = useState<Array<{ id_estado: number; num_municipio: number; nombre_municipio: string }>>([]);
-  const [parroquias, setParroquias] = useState<Array<{ id_estado: number; num_municipio: number; num_parroquia: number; nombre_parroquia: string }>>([]);
+  const [condicionesTrabajo, setCondicionesTrabajo] = useState<Array<{ id_trabajo: number; nombre_trabajo: string; habilitado?: boolean }>>([]);
+  const [condicionesActividad, setCondicionesActividad] = useState<Array<{ id_actividad: number; nombre_actividad: string; habilitado?: boolean }>>([]);
+  const [tiposVivienda, setTiposVivienda] = useState<Array<{ num_caracteristica: number; descripcion: string; habilitado?: boolean }>>([]);
+  const [materialesPiso, setMaterialesPiso] = useState<Array<{ num_caracteristica: number; descripcion: string; habilitado?: boolean }>>([]);
+  const [materialesParedes, setMaterialesParedes] = useState<Array<{ num_caracteristica: number; descripcion: string; habilitado?: boolean }>>([]);
+  const [materialesTecho, setMaterialesTecho] = useState<Array<{ num_caracteristica: number; descripcion: string; habilitado?: boolean }>>([]);
+  const [aguaPotable, setAguaPotable] = useState<Array<{ num_caracteristica: number; descripcion: string; habilitado?: boolean }>>([]);
+  const [aseo, setAseo] = useState<Array<{ num_caracteristica: number; descripcion: string; habilitado?: boolean }>>([]);
+  const [eliminacionAguasN, setEliminacionAguasN] = useState<Array<{ num_caracteristica: number; descripcion: string; habilitado?: boolean }>>([]);
+  const [artefactosDomesticos, setArtefactosDomesticos] = useState<Array<{ num_caracteristica: number; descripcion: string; habilitado?: boolean }>>([]);
+  const [nivelesEducativos, setNivelesEducativos] = useState<Array<{ id_nivel_educativo: number; descripcion: string; habilitado?: boolean }>>([]);
+  const [estados, setEstados] = useState<Array<{ id_estado: number; nombre_estado: string; habilitado?: boolean }>>([]);
+  const [municipios, setMunicipios] = useState<Array<{ id_estado: number; num_municipio: number; nombre_municipio: string; habilitado?: boolean }>>([]);
+  const [parroquias, setParroquias] = useState<Array<{ id_estado: number; num_municipio: number; num_parroquia: number; nombre_parroquia: string; habilitado?: boolean }>>([]);
   const [loadingCatalogos, setLoadingCatalogos] = useState(false);
 
   // Helper para limpiar errores de campos específicos
@@ -468,25 +468,23 @@ export default function ApplicantFormModal({
     }
     
     // Validar teléfono celular
-    if (!formData.telefonoCelular.trim()) {
+    // Nota: el valor esperado es "<codigoPais><numero>", ej: "+584143714004".
+    const phoneValue = (formData.telefonoCelular || '').trim();
+    const codeMatch = phoneValue.match(/^(\+\d{1,4})/);
+    const code = codeMatch ? codeMatch[1] : '';
+    const number = phoneValue.slice(code.length).replace(/\D/g, '');
+
+    if (!phoneValue || !code || number.trim() === '') {
       newErrors.telefonoCelular = 'Este campo es requerido';
-    } else if (!/^[0-9]+$/.test(formData.telefonoCelular.trim())) {
-      newErrors.telefonoCelular = 'Solo se permiten números';
+    } else if (code === '+58') {
+      // Para números venezolanos (+58), el número debe tener 10 dígitos y empezar con 4.
+      if (number.length !== 10 || !number.startsWith('4')) {
+        newErrors.telefonoCelular = 'Número venezolano inválido. Debe tener 10 dígitos y empezar con 4 (ej: 412...).';
+      }
     } else {
-      const telefonoCelular = formData.telefonoCelular.trim();
-      const telefonoCelularLength = telefonoCelular.length;
-      
-      // Para números venezolanos (+58), el número debe tener 10 dígitos (sin el cero inicial)
-      // Ejemplo: 4122727981 (sin el 0 inicial, se guarda como +584122727981)
-      if (formData.codigoPaisCelular === '+58') {
-        if (telefonoCelular.startsWith('0') || telefonoCelularLength !== 10 || !/^[4][0-9]{9}$/.test(telefonoCelular)) {
-          newErrors.telefonoCelular = 'Número de teléfono inválido';
-        }
-      } else {
-        // Para otros países, validar longitud mínima y máxima
-        if (telefonoCelularLength < 7 || telefonoCelularLength > 15) {
-          newErrors.telefonoCelular = 'Número de teléfono inválido';
-        }
+      // Para otros países, validar longitud mínima y máxima
+      if (number.length < 7 || number.length > 15) {
+        newErrors.telefonoCelular = 'Número de teléfono inválido';
       }
     }
     
@@ -508,7 +506,7 @@ export default function ApplicantFormModal({
     // Validar correo electrónico
     if (!formData.correoElectronico.trim()) {
       newErrors.correoElectronico = 'Este campo es requerido';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.correoElectronico)) {
+    } else if (!validateEmailFormat(formData.correoElectronico)) {
       newErrors.correoElectronico = 'Correo electrónico inválido';
     }
     
@@ -1212,8 +1210,7 @@ export default function ApplicantFormModal({
         apellidos: '',
         fechaNacimiento: '',
         sexo: '',
-        telefonoCelular: '',
-        codigoPaisCelular: '+58',
+        telefonoCelular: '+58',
         correoElectronico: '',
         nacionalidad: '',
         [field]: value, // Actualizar el campo que se está modificando
@@ -1279,10 +1276,14 @@ export default function ApplicantFormModal({
     let filteredValue = value;
     if (field === 'nombres' || field === 'apellidos') {
       filteredValue = filterOnlyLetters(value);
-    } else if (field === 'telefonoLocal' || field === 'telefonoCelular') {
+    } else if (field === 'telefonoLocal') {
       filteredValue = filterOnlyNumbers(value);
-    } else if (field === 'codigoPaisCelular') {
-      filteredValue = filterCountryCode(value);
+    } else if (field === 'telefonoCelular') {
+      // Siempre asegurar que el código de país esté presente y empiece con '+'
+      const codeMatch = value.match(/^(\+\d{1,4})/);
+      const code = codeMatch ? codeMatch[1] : '+58'; // Por defecto Venezuela si no hay código
+      const number = value.replace(code, '').replace(/\D/g, '');
+      filteredValue = `${code}${number}`;
     }
     
     setFormData((prev) => ({ ...prev, [field]: filteredValue }));
@@ -1351,7 +1352,10 @@ export default function ApplicantFormModal({
         const beneficiarioResult = await getBeneficiarioByCedulaAction(cedula);
         
         if (beneficiarioResult.success && beneficiarioResult.data) {
-          autocompleteFromBeneficiario(beneficiarioResult.data);
+          autocompleteFromBeneficiario({
+            ...beneficiarioResult.data,
+            sexo: beneficiarioResult.data.sexo ?? undefined,
+          });
           return;
         }
       }
@@ -1443,7 +1447,10 @@ export default function ApplicantFormModal({
                   autocompleteFromUsuario(usuarioResult.data);
                 }
               } else if (exactMatch.source === 'beneficiario') {
-                autocompleteFromBeneficiario(exactMatch);
+                autocompleteFromBeneficiario({
+                  ...exactMatch,
+                  sexo: exactMatch.sexo ?? undefined,
+                });
               }
             }
           } catch (error) {
@@ -1482,7 +1489,7 @@ export default function ApplicantFormModal({
     }
 
     // Validar formato de email básico antes de verificar
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!validateEmailFormat(email)) {
       // No verificar si el formato es inválido, la validación de formato se hará en validateStep1
       return;
     }
@@ -1527,11 +1534,13 @@ export default function ApplicantFormModal({
     cedula: string;
     nombres: string;
     apellidos: string;
-    fecha_nacimiento: string;
-    telefono_celular: string;
-    correo_electronico: string;
-    sexo: string;
-    nacionalidad: string;
+    fecha_nacimiento?: string | null;
+    telefono_celular?: string | null;
+    correo_electronico?: string;
+    sexo?: string;
+    nacionalidad?: string;
+    nombre_completo?: string;
+    source?: 'usuario' | 'beneficiario';
   }) => {
     // Extraer tipo y número de cédula
     // La cédula viene como "V-12345678" (con guión)
@@ -1550,18 +1559,7 @@ export default function ApplicantFormModal({
     }
 
     // Extraer código de país y número de teléfono celular
-    let codigoPaisCelular = '+58';
-    let telefonoCelular = solicitante.telefono_celular || '';
-    if (telefonoCelular.startsWith('+58')) {
-      codigoPaisCelular = '+58';
-      telefonoCelular = telefonoCelular.substring(3);
-    } else if (telefonoCelular.startsWith('+')) {
-      const match = telefonoCelular.match(/^(\+\d{1,3})(.+)$/);
-      if (match) {
-        codigoPaisCelular = match[1];
-        telefonoCelular = match[2];
-      }
-    }
+    const telefonoCompleto = solicitante.telefono_celular || '';
 
     // Asignar nacionalidad según el tipo de cédula
     let nacionalidadAsignada = '';
@@ -1570,8 +1568,7 @@ export default function ApplicantFormModal({
     } else if (cedulaTipo === 'E') {
       nacionalidadAsignada = 'E'; // Extranjero (el schema usa 'E')
     } else if (cedulaTipo === 'P') {
-      // Si es pasaporte, usar la nacionalidad del solicitante o dejar vacío
-      nacionalidadAsignada = solicitante.nacionalidad || '';
+      nacionalidadAsignada = ''; // Si es pasaporte, usar la nacionalidad del solicitante o dejar vacío
     }
 
     // Actualizar el formulario con los datos del solicitante
@@ -1583,8 +1580,7 @@ export default function ApplicantFormModal({
       apellidos: solicitante.apellidos || prev.apellidos,
       fechaNacimiento: solicitante.fecha_nacimiento || prev.fechaNacimiento,
       sexo: solicitante.sexo || prev.sexo,
-      telefonoCelular: telefonoCelular || prev.telefonoCelular,
-      codigoPaisCelular: telefonoCelular ? codigoPaisCelular : prev.codigoPaisCelular,
+      telefonoCelular: telefonoCompleto || prev.telefonoCelular,
       correoElectronico: solicitante.correo_electronico || prev.correoElectronico,
       nacionalidad: nacionalidadAsignada || prev.nacionalidad,
     }));
@@ -1595,9 +1591,8 @@ export default function ApplicantFormModal({
     if (solicitante.apellidos) camposBloqueados.add('apellidos');
     if (solicitante.fecha_nacimiento) camposBloqueados.add('fechaNacimiento');
     if (solicitante.sexo) camposBloqueados.add('sexo');
-    if (telefonoCelular) {
+    if (telefonoCompleto) {
       camposBloqueados.add('telefonoCelular');
-      camposBloqueados.add('codigoPaisCelular');
     }
     if (solicitante.correo_electronico) camposBloqueados.add('correoElectronico');
     if (nacionalidadAsignada) camposBloqueados.add('nacionalidad');
@@ -1612,9 +1607,8 @@ export default function ApplicantFormModal({
       if (solicitante.apellidos) delete newErrors.apellidos;
       if (solicitante.fecha_nacimiento) delete newErrors.fechaNacimiento;
       if (solicitante.sexo) delete newErrors.sexo;
-      if (telefonoCelular) {
+      if (telefonoCompleto) {
         delete newErrors.telefonoCelular;
-        delete newErrors.codigoPaisCelular;
       }
       if (solicitante.correo_electronico) delete newErrors.correoElectronico;
       if (nacionalidadAsignada) delete newErrors.nacionalidad;
@@ -1648,18 +1642,7 @@ export default function ApplicantFormModal({
     }
 
     // Extraer código de país y número de teléfono celular
-    let codigoPaisCelular = '+58';
-    let telefonoCelular = usuario.telefono_celular || '';
-    if (telefonoCelular.startsWith('+58')) {
-      codigoPaisCelular = '+58';
-      telefonoCelular = telefonoCelular.substring(3);
-    } else if (telefonoCelular.startsWith('+')) {
-      const match = telefonoCelular.match(/^(\+\d{1,3})(.+)$/);
-      if (match) {
-        codigoPaisCelular = match[1];
-        telefonoCelular = match[2];
-      }
-    }
+    const telefonoCompleto = usuario.telefono_celular || '';
 
     // Asignar nacionalidad según el tipo de cédula
     let nacionalidadAsignada = '';
@@ -1678,8 +1661,7 @@ export default function ApplicantFormModal({
       cedulaNumero,
       nombres: usuario.nombres || prev.nombres,
       apellidos: usuario.apellidos || prev.apellidos,
-      telefonoCelular: telefonoCelular || prev.telefonoCelular,
-      codigoPaisCelular: telefonoCelular ? codigoPaisCelular : prev.codigoPaisCelular,
+      telefonoCelular: telefonoCompleto || prev.telefonoCelular,
       correoElectronico: usuario.correo_electronico || prev.correoElectronico,
       nacionalidad: nacionalidadAsignada || prev.nacionalidad,
     }));
@@ -1688,9 +1670,8 @@ export default function ApplicantFormModal({
     const camposBloqueados = new Set<keyof FormData>();
     if (usuario.nombres) camposBloqueados.add('nombres');
     if (usuario.apellidos) camposBloqueados.add('apellidos');
-    if (telefonoCelular) {
+    if (telefonoCompleto) {
       camposBloqueados.add('telefonoCelular');
-      camposBloqueados.add('codigoPaisCelular');
     }
     if (usuario.correo_electronico) camposBloqueados.add('correoElectronico');
     if (nacionalidadAsignada) camposBloqueados.add('nacionalidad');
@@ -1703,9 +1684,8 @@ export default function ApplicantFormModal({
       delete newErrors.cedulaNumero;
       if (usuario.nombres) delete newErrors.nombres;
       if (usuario.apellidos) delete newErrors.apellidos;
-      if (telefonoCelular) {
+      if (telefonoCompleto) {
         delete newErrors.telefonoCelular;
-        delete newErrors.codigoPaisCelular;
       }
       if (usuario.correo_electronico) delete newErrors.correoElectronico;
       if (nacionalidadAsignada) delete newErrors.nacionalidad;
@@ -1748,7 +1728,7 @@ export default function ApplicantFormModal({
       nacionalidadAsignada = '';
     }
 
-    // Actualizar el formulario con los datos del beneficiario
+    // Actualizar el formulario with los datos del beneficiario
     setFormData((prev) => ({
       ...prev,
       cedulaTipo,
@@ -1773,7 +1753,7 @@ export default function ApplicantFormModal({
     // Limpiar errores de todos los campos que se autocompletaron
     setErrors((prev) => {
       const newErrors = { ...prev };
-      delete newErrors.cedulaNumero;
+           delete newErrors.cedulaNumero;
       if (beneficiario.nombres) delete newErrors.nombres;
       if (beneficiario.apellidos) delete newErrors.apellidos;
       if (beneficiario.fecha_nacimiento) delete newErrors.fechaNacimiento;
@@ -1864,10 +1844,13 @@ export default function ApplicantFormModal({
                         autocompleteFromUsuario(usuarioResult.data);
                       }
                     } else if (item.source === 'beneficiario') {
-                      autocompleteFromBeneficiario(item);
+                      autocompleteFromBeneficiario({
+                        ...item,
+                        sexo: item.sexo ?? undefined,
+                      });
                     } else {
                       // Fallback para compatibilidad con sugerencias antiguas
-                      autocompleteFromSolicitante(item as any);
+                      autocompleteFromSolicitante(item);
                     }
                   }}
                   initial={{ opacity: 0, x: -10 }}
@@ -1959,18 +1942,15 @@ export default function ApplicantFormModal({
 
       {/* Fila 3: Teléfono Celular, Correo Electrónico, Estado Civil */}
       <div className="col-span-1">
-        <InputGroup
-          label="Teléfono Celular *"
-          selectValue={formData.codigoPaisCelular}
-          selectOptions={CODIGOS_PAIS}
-          onSelectChange={(value) => updateField('codigoPaisCelular', value)}
-          inputValue={formData.telefonoCelular}
-          onInputChange={(value) => updateField('telefonoCelular', value)}
-          inputPlaceholder="Ingrese teléfono celular"
+        <PhoneInput
+          label="Teléfono Celular"
+          name="telefonoCelular"
+          value={formData.telefonoCelular}
+          onChange={(e) => updateField('telefonoCelular', e.target.value)}
+          placeholder="Ingrese teléfono celular"
           error={errors.telefonoCelular}
-          selectWidth="w-20"
-          editableCode={true}
-          disabled={lockedFields.has('telefonoCelular') || lockedFields.has('codigoPaisCelular')}
+          required
+          disabled={lockedFields.has('telefonoCelular')}
         />
       </div>
       <div className="col-span-1">
@@ -2103,10 +2083,12 @@ export default function ApplicantFormModal({
             label="Estado *"
             value={formData.idEstado}
             onChange={(e) => handleEstadoChange(e.target.value)}
-            options={estados.map(estado => ({
-              value: estado.id_estado.toString(),
-              label: estado.nombre_estado,
-            }))}
+            options={estados
+              .filter((estado) => estado.habilitado !== false)
+              .map(estado => ({
+                value: estado.id_estado.toString(),
+                label: estado.nombre_estado,
+              }))}
             placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar estado"}
             error={errors.idEstado}
             required
@@ -2118,10 +2100,12 @@ export default function ApplicantFormModal({
             label="Municipio *"
             value={formData.numMunicipio}
             onChange={(e) => handleMunicipioChange(e.target.value)}
-            options={municipios.map(municipio => ({
-              value: municipio.num_municipio.toString(),
-              label: municipio.nombre_municipio,
-            }))}
+            options={municipios
+              .filter((municipio) => municipio.habilitado !== false)
+              .map(municipio => ({
+                value: municipio.num_municipio.toString(),
+                label: municipio.nombre_municipio,
+              }))}
             placeholder={formData.idEstado ? (loadingCatalogos ? "Cargando..." : "Seleccionar municipio") : "Primero seleccione un estado"}
             error={errors.numMunicipio}
             required
@@ -2133,10 +2117,12 @@ export default function ApplicantFormModal({
             label="Parroquia *"
             value={formData.numParroquia}
             onChange={(e) => updateField('numParroquia', e.target.value)}
-            options={parroquias.map(parroquia => ({
-              value: parroquia.num_parroquia.toString(),
-              label: parroquia.nombre_parroquia,
-            }))}
+            options={parroquias
+              .filter((parroquia) => parroquia.habilitado !== false)
+              .map(parroquia => ({
+                value: parroquia.num_parroquia.toString(),
+                label: parroquia.nombre_parroquia,
+              }))}
             placeholder={formData.numMunicipio ? (loadingCatalogos ? "Cargando..." : "Seleccionar parroquia") : "Primero seleccione un municipio"}
             error={errors.numParroquia}
             required
@@ -2198,10 +2184,12 @@ export default function ApplicantFormModal({
           label="Material del Piso *"
           value={formData.materialPiso}
           onChange={(e) => updateField('materialPiso', e.target.value)}
-          options={materialesPiso.map(mp => ({
-            value: mp.descripcion,
-            label: mp.descripcion,
-          }))}
+          options={materialesPiso
+            .filter((mp) => mp.habilitado !== false)
+            .map(mp => ({
+              value: mp.descripcion,
+              label: mp.descripcion,
+            }))}
           placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar material"}
           error={errors.materialPiso}
           required
@@ -2228,10 +2216,12 @@ export default function ApplicantFormModal({
           label="Material de Techo *"
           value={formData.materialTecho}
           onChange={(e) => updateField('materialTecho', e.target.value)}
-          options={materialesTecho.map(mt => ({
-            value: mt.descripcion,
-            label: mt.descripcion,
-          }))}
+          options={materialesTecho
+            .filter((mt) => mt.habilitado !== false)
+            .map(mt => ({
+              value: mt.descripcion,
+              label: mt.descripcion,
+            }))}
           placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar material"}
           error={errors.materialTecho}
           required
@@ -2260,10 +2250,12 @@ export default function ApplicantFormModal({
           label="Eliminación de Aguas Negras *"
           value={formData.eliminacionAguasN}
           onChange={(e) => updateField('eliminacionAguasN', e.target.value)}
-          options={eliminacionAguasN.map(ean => ({
-            value: ean.descripcion,
-            label: ean.descripcion,
-          }))}
+          options={eliminacionAguasN
+            .filter((ean) => ean.habilitado !== false)
+            .map(ean => ({
+              value: ean.descripcion,
+              label: ean.descripcion,
+            }))}
           placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar opción"}
           error={errors.eliminacionAguasN}
           required
@@ -2275,10 +2267,12 @@ export default function ApplicantFormModal({
           label="Aseo *"
           value={formData.aseo}
           onChange={(e) => updateField('aseo', e.target.value)}
-          options={aseo.map(a => ({
-            value: a.descripcion,
-            label: a.descripcion,
-          }))}
+          options={aseo
+            .filter((a) => a.habilitado !== false)
+            .map(a => ({
+              value: a.descripcion,
+              label: a.descripcion,
+            }))}
           placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar opción"}
           error={errors.aseo}
           required
@@ -2293,7 +2287,9 @@ export default function ApplicantFormModal({
             Artefactos Domésticos
           </label>
           <div className="grid grid-cols-4 gap-x-4 gap-y-1">
-            {artefactosDomesticos.map((artefacto) => {
+            {artefactosDomesticos
+              .filter((artefacto) => artefacto.habilitado !== false)
+              .map((artefacto) => {
               const isChecked = formData.artefactosDomesticos.includes(artefacto.descripcion);
               return (
                 <label
@@ -2462,10 +2458,12 @@ export default function ApplicantFormModal({
                 }));
                 clearErrors(['tipoEducativo', 'numeroEducativo', 'tipoTiempoEstudioJefe', 'tiempoEstudioJefe']);
               }}
-              options={nivelesEducativos.map((nivel) => ({
-                value: nivel.descripcion,
-                label: nivel.descripcion,
-              }))}
+              options={nivelesEducativos
+                .filter((nivel) => nivel.habilitado !== false)
+                .map((nivel) => ({
+                  value: nivel.descripcion,
+                  label: nivel.descripcion,
+                }))}
               placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar nivel educativo"}
               error={errors.nivelEducativo}
               required
@@ -2537,10 +2535,12 @@ export default function ApplicantFormModal({
             }));
             clearErrors(['tipoEducativoSolicitante', 'numeroEducativoSolicitante', 'tipoTiempoEstudioSolicitante', 'tiempoEstudioSolicitante']);
           }}
-          options={nivelesEducativos.map((nivel) => ({
-            value: nivel.descripcion,
-            label: nivel.descripcion,
-          }))}
+          options={nivelesEducativos
+            .filter((nivel) => nivel.habilitado !== false)
+            .map((nivel) => ({
+              value: nivel.descripcion,
+              label: nivel.descripcion,
+            }))}
           placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar nivel educativo"}
           error={errors.nivelEducativoSolicitante}
           required
@@ -2688,7 +2688,7 @@ export default function ApplicantFormModal({
             value={formData.condicionActividad}
             onChange={(e) => updateField('condicionActividad', e.target.value)}
             options={condicionesActividad
-              .filter(ca => ca.id_actividad !== 0) // Excluir "buscando trabajo"
+              .filter(ca => ca.id_actividad !== 0 && ca.habilitado !== false) // Excluir "buscando trabajo" y deshabilitados
               .map(ca => ({
                 value: ca.nombre_actividad,
                 label: ca.nombre_actividad,

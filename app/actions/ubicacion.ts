@@ -1,15 +1,15 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/utils/security';
 import { estadosQueries } from '@/lib/db/queries/estados.queries';
 import { municipiosQueries } from '@/lib/db/queries/municipios.queries';
 import { parroquiasQueries } from '@/lib/db/queries/parroquias.queries';
 import { AppError } from '@/lib/utils/errors';
+import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 
 export interface GetEstadosResult {
   success: boolean;
-  data?: Array<{ id_estado: number; nombre_estado: string }>;
+  data?: Array<{ id_estado: number; nombre_estado: string; habilitado?: boolean }>;
   error?: {
     message: string;
     code?: string;
@@ -18,7 +18,7 @@ export interface GetEstadosResult {
 
 export interface GetMunicipiosResult {
   success: boolean;
-  data?: Array<{ id_estado: number; num_municipio: number; nombre_municipio: string }>;
+  data?: Array<{ id_estado: number; num_municipio: number; nombre_municipio: string; habilitado?: boolean }>;
   error?: {
     message: string;
     code?: string;
@@ -27,7 +27,7 @@ export interface GetMunicipiosResult {
 
 export interface GetParroquiasResult {
   success: boolean;
-  data?: Array<{ id_estado: number; num_municipio: number; num_parroquia: number; nombre_parroquia: string }>;
+  data?: Array<{ id_estado: number; num_municipio: number; num_parroquia: number; nombre_parroquia: string; habilitado?: boolean }>;
   error?: {
     message: string;
     code?: string;
@@ -36,28 +36,11 @@ export interface GetParroquiasResult {
 
 export async function getEstadosAction(): Promise<GetEstadosResult> {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -68,51 +51,17 @@ export async function getEstadosAction(): Promise<GetEstadosResult> {
       data: estados,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'ESTADOS_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en getEstadosAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al obtener estados',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'getEstadosAction', 'ESTADOS_ERROR');
   }
 }
 
 export async function getMunicipiosAction(idEstado: number): Promise<GetMunicipiosResult> {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -123,51 +72,17 @@ export async function getMunicipiosAction(idEstado: number): Promise<GetMunicipi
       data: municipios,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'MUNICIPIOS_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en getMunicipiosAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al obtener municipios',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'getMunicipiosAction', 'MUNICIPIOS_ERROR');
   }
 }
 
 export async function getParroquiasAction(idEstado: number, numMunicipio: number): Promise<GetParroquiasResult> {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (!token) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
       return {
         success: false,
-        error: {
-          message: 'No autorizado',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
-
-    try {
-      await verifyToken(token);
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Sesión expirada. Por favor, inicia sesión nuevamente.',
-          code: 'UNAUTHORIZED',
-        },
+        error: authResult.error!,
       };
     }
 
@@ -178,24 +93,7 @@ export async function getParroquiasAction(idEstado: number, numMunicipio: number
       data: parroquias,
     };
   } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code || 'PARROQUIAS_ERROR',
-        },
-      };
-    }
-
-    console.error('Error en getParroquiasAction:', error);
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : 'Error al obtener parroquias',
-        code: 'UNKNOWN_ERROR',
-      },
-    };
+    return handleServerActionError(error, 'getParroquiasAction', 'PARROQUIAS_ERROR');
   }
 }
 

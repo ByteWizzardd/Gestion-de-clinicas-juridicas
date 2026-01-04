@@ -5,31 +5,36 @@
 -- 1) ESTADOS
 CREATE TABLE estados (
     id_estado SERIAL PRIMARY KEY,
-    nombre_estado VARCHAR(100) NOT NULL
+    nombre_estado VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 -- 2) NIVELES EDUCATIVOS
 CREATE TABLE niveles_educativos (
     id_nivel_educativo SERIAL PRIMARY KEY,
-    descripcion VARCHAR(100) NOT NULL
+    descripcion VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 -- 3) CONDICIÓN TRABAJO
 CREATE TABLE condicion_trabajo (
     id_trabajo SERIAL PRIMARY KEY,
-    nombre_trabajo VARCHAR(100) NOT NULL
+    nombre_trabajo VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 -- 4) CONDICIÓN ACTIVIDAD
 CREATE TABLE condicion_actividad (
     id_actividad SERIAL PRIMARY KEY,
-    nombre_actividad VARCHAR(100) NOT NULL
+    nombre_actividad VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 -- 5) TIPO CARACTERÍSTICAS
 CREATE TABLE tipo_caracteristicas (
     id_tipo SERIAL PRIMARY KEY,
-    nombre_tipo_caracteristica VARCHAR(100) NOT NULL
+    nombre_tipo_caracteristica VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE
 );
 -- Tipos: tipo_vivienda, material_piso, material_paredes, material_techo, 
 --        agua_potable, aseo, eliminacion_aguas_n, artefactos_domesticos
@@ -37,7 +42,8 @@ CREATE TABLE tipo_caracteristicas (
 -- 6) MATERIAS
 CREATE TABLE materias (
     id_materia SERIAL PRIMARY KEY,
-    nombre_materia VARCHAR(100) NOT NULL
+    nombre_materia VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 -- 7) SEMESTRES
@@ -45,6 +51,7 @@ CREATE TABLE semestres (
     term VARCHAR(20) PRIMARY KEY,
     fecha_inicio DATE NOT NULL,
     fecha_fin DATE NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     CONSTRAINT chk_fechas CHECK (fecha_fin >= fecha_inicio)
 );
 
@@ -70,6 +77,7 @@ CREATE TABLE municipios (
     id_estado INTEGER NOT NULL,
     num_municipio INTEGER NOT NULL, 
     nombre_municipio VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     
     PRIMARY KEY (id_estado, num_municipio),
     FOREIGN KEY (id_estado) REFERENCES estados(id_estado)
@@ -81,6 +89,7 @@ CREATE TABLE parroquias (
     num_municipio INTEGER NOT NULL,
     num_parroquia INTEGER NOT NULL,
     nombre_parroquia VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     
     PRIMARY KEY (id_estado, num_municipio, num_parroquia),
     FOREIGN KEY (id_estado, num_municipio) REFERENCES municipios(id_estado, num_municipio)
@@ -90,6 +99,7 @@ CREATE TABLE parroquias (
 CREATE TABLE nucleos (
     id_nucleo SERIAL PRIMARY KEY,
     nombre_nucleo VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     
     id_estado INTEGER NOT NULL,
     num_municipio INTEGER NOT NULL,
@@ -190,6 +200,7 @@ CREATE TABLE categorias (
     id_materia INTEGER NOT NULL,
     num_categoria INTEGER NOT NULL,
     nombre_categoria VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (id_materia, num_categoria),
     FOREIGN KEY (id_materia) REFERENCES materias(id_materia)
 );
@@ -200,6 +211,7 @@ CREATE TABLE subcategorias (
     num_categoria INTEGER NOT NULL,
     num_subcategoria INTEGER NOT NULL,
     nombre_subcategoria VARCHAR(100) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (id_materia, num_categoria, num_subcategoria),
     FOREIGN KEY (id_materia, num_categoria) REFERENCES categorias(id_materia, num_categoria)
 );
@@ -211,6 +223,7 @@ CREATE TABLE ambitos_legales (
     num_subcategoria INTEGER NOT NULL,
     num_ambito_legal INTEGER NOT NULL,
     nombre_ambito_legal VARCHAR(200) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (id_materia, num_categoria, num_subcategoria, num_ambito_legal),
     FOREIGN KEY (id_materia, num_categoria, num_subcategoria) 
     REFERENCES subcategorias(id_materia, num_categoria, num_subcategoria)
@@ -279,6 +292,7 @@ CREATE TABLE citas (
     fecha_proxima_cita DATE,
     fecha_encuentro DATE NOT NULL,
     orientacion TEXT NOT NULL,
+    id_usuario_registro VARCHAR(20) REFERENCES usuarios(cedula), -- Usuario que registró la cita
     PRIMARY KEY (num_cita, id_caso)
 );
 
@@ -339,7 +353,106 @@ CREATE TABLE soportes (
     descripcion TEXT,
     
     fecha_consignacion DATE NOT NULL DEFAULT CURRENT_DATE,
+    
+    -- Campos de auditoría: quién subió el archivo
+    id_usuario_subio VARCHAR(20) REFERENCES usuarios(cedula),
+    
     PRIMARY KEY (num_soporte, id_caso)
+);
+
+-- 26.1) AUDITORÍA DE ELIMINACIÓN DE SOPORTES
+-- Tabla para registrar metadatos de soportes eliminados (sin guardar el archivo completo)
+CREATE TABLE auditoria_eliminacion_soportes (
+    id SERIAL PRIMARY KEY,
+    num_soporte INTEGER NOT NULL,
+    id_caso INTEGER NOT NULL,
+    nombre_archivo VARCHAR(150) NOT NULL,
+    tipo_mime VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    fecha_consignacion DATE NOT NULL,
+    tamano_bytes INTEGER, -- Tamaño del archivo en bytes (sin guardar el archivo)
+    id_usuario_subio VARCHAR(20) REFERENCES usuarios(cedula),
+    id_usuario_elimino VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    motivo TEXT, -- Motivo de la eliminación
+    fecha_eliminacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+);
+
+-- 26.2) AUDITORÍA DE ELIMINACIÓN DE CITAS
+-- Tabla para registrar información de citas eliminadas
+-- Solo guarda metadatos de la cita, no información adicional del caso
+CREATE TABLE auditoria_eliminacion_citas (
+    id SERIAL PRIMARY KEY,
+    num_cita INTEGER NOT NULL,
+    id_caso INTEGER NOT NULL,
+    fecha_encuentro DATE NOT NULL,
+    fecha_proxima_cita DATE,
+    orientacion TEXT NOT NULL,
+    id_usuario_registro VARCHAR(20) REFERENCES usuarios(cedula), -- Usuario que registró la cita originalmente
+    id_usuario_elimino VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    motivo TEXT, -- Motivo de la eliminación
+    fecha_eliminacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+);
+
+-- 26.3) AUDITORÍA DE ACTUALIZACIÓN DE CITAS
+-- Tabla para registrar todas las actualizaciones de citas
+-- Guarda el historial completo de cambios (valores anteriores y nuevos)
+CREATE TABLE auditoria_actualizacion_citas (
+    id SERIAL PRIMARY KEY,
+    num_cita INTEGER NOT NULL,
+    id_caso INTEGER NOT NULL,
+    -- Valores anteriores (antes de la actualización)
+    fecha_encuentro_anterior DATE,
+    fecha_proxima_cita_anterior DATE,
+    orientacion_anterior TEXT,
+    -- Valores nuevos (después de la actualización)
+    fecha_encuentro_nueva DATE,
+    fecha_proxima_cita_nueva DATE,
+    orientacion_nueva TEXT,
+    -- Información de auditoría
+    id_usuario_actualizo VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    fecha_actualizacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+);
+
+-- 26.4) AUDITORÍA DE ELIMINACIÓN DE USUARIOS
+-- Tabla para registrar la eliminación física de usuarios
+CREATE TABLE auditoria_eliminacion_usuario (
+    id SERIAL PRIMARY KEY,
+    usuario_eliminado VARCHAR(20) NOT NULL, -- Cédula del usuario eliminado
+    nombres_usuario_eliminado VARCHAR(100), -- Nombre del usuario eliminado (guardado antes de eliminar)
+    apellidos_usuario_eliminado VARCHAR(100), -- Apellido del usuario eliminado (guardado antes de eliminar)
+    eliminado_por VARCHAR(20) NOT NULL, -- Cédula del usuario que realizó la eliminación
+    motivo TEXT NOT NULL, -- Motivo de la eliminación
+    fecha TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+);
+
+-- 26.5) AUDITORÍA DE ACTUALIZACIÓN DE USUARIOS
+-- Tabla para registrar todas las actualizaciones de usuarios (campos, tipo de usuario, tipo_estudiante, tipo_profesor)
+CREATE TABLE auditoria_actualizacion_usuarios (
+    id SERIAL PRIMARY KEY,
+    ci_usuario VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    -- Valores anteriores (antes de la actualización)
+    nombres_anterior VARCHAR(100),
+    apellidos_anterior VARCHAR(100),
+    correo_electronico_anterior VARCHAR(100),
+    nombre_usuario_anterior VARCHAR(50),
+    telefono_celular_anterior VARCHAR(20),
+    habilitado_sistema_anterior BOOLEAN,
+    tipo_usuario_anterior VARCHAR(20),
+    tipo_estudiante_anterior VARCHAR(50),
+    tipo_profesor_anterior VARCHAR(20),
+    -- Valores nuevos (después de la actualización)
+    nombres_nuevo VARCHAR(100),
+    apellidos_nuevo VARCHAR(100),
+    correo_electronico_nuevo VARCHAR(100),
+    nombre_usuario_nuevo VARCHAR(50),
+    telefono_celular_nuevo VARCHAR(20),
+    habilitado_sistema_nuevo BOOLEAN,
+    tipo_usuario_nuevo VARCHAR(20),
+    tipo_estudiante_nuevo VARCHAR(50),
+    tipo_profesor_nuevo VARCHAR(20),
+    -- Información de auditoría
+    id_usuario_actualizo VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    fecha_actualizacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
 );
 
 -- 27) BENEFICIARIOS (PARENTESCO LIBRE)
@@ -397,3 +510,16 @@ CREATE TABLE password_reset_tokens (
 CREATE INDEX idx_password_reset_cedula ON password_reset_tokens(cedula_usuario);
 CREATE INDEX idx_password_reset_code ON password_reset_tokens(codigo_verificacion);
 CREATE INDEX idx_password_reset_expired ON password_reset_tokens(fecha_expiracion, usado);
+
+-- 34) NOTIFICACIONES
+CREATE TABLE notificaciones (
+    id_notificacion INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    cedula_receptor VARCHAR(20) NOT NULL,
+    cedula_emisor VARCHAR(20) NOT NULL,
+    titulo VARCHAR(100) NOT NULL,
+    mensaje TEXT NOT NULL,
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    leida BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (cedula_receptor) REFERENCES usuarios(cedula) ON DELETE CASCADE,
+    FOREIGN KEY (cedula_emisor) REFERENCES usuarios(cedula) ON DELETE CASCADE
+);

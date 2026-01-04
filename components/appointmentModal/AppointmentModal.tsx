@@ -5,31 +5,60 @@ import { useState, useEffect } from "react";
 import Modal from "../ui/feedback/Modal";
 import Select from "../forms/Select";
 import MultiSelect from "../forms/MultiSelect";
-import { createCitaAction } from "@/app/actions/citas";
-import { getCaseIdsAction } from "@/app/actions/casos";
+import { createCitaAction, updateCitaAction } from "@/app/actions/citas";
+import { getCaseIdsAction, createAccionAction } from "@/app/actions/casos";
 import { getUsuariosAction } from "@/app/actions/usuarios";
 import TextArea from "../forms/TextArea";
 import Button from "../ui/Button";
+import ConfirmModal from "../ui/feedback/ConfirmModal";
 import { X, Calendar } from "lucide-react";
+import { formatDate } from "@/lib/utils/date-formatter";
+import type { Appointment } from "@/types/appointment";
+import { useRouter } from "next/navigation";
 interface AppointmentModalProps {
   onClose: () => void;
   onSave: () => void;
   initialDate?: Date;
+  appointment?: Appointment | null; // Cita a editar (opcional)
 }
 
 interface FormData {
   selectedCaseID: string;
   date: string;
+  endDate?: string;
   orientacion: string;
   usuariosAtienden: string[];
 }
 
-export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentModalProps) {
-  const [date, setDate] = useState<Date | null>(initialDate || null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
-  const [selectedCaseID, setSelectedCaseID] = useState<string>("");
-  const [orientacion, setOrientacion] = useState<string>("");
-  const [usuariosAtienden, setUsuariosAtienden] = useState<string[]>([]);
+export function AppointmentModal({ onClose, onSave, initialDate, appointment }: AppointmentModalProps) {
+  const isEditing = !!appointment;
+  const router = useRouter();
+
+  // Extraer el ID del caso del caseDetail si estamos editando
+  const extractCaseId = (caseDetail: string): string => {
+    const match = caseDetail.match(/C-(\d+)/);
+    return match ? match[1] : "";
+  };
+
+  const [date, setDate] = useState<Date | null>(
+    appointment ? appointment.date : (initialDate || null)
+  );
+  const [endDate, setEndDate] = useState<Date | null>(
+    appointment && appointment.nextAppointmentDate
+      ? new Date(appointment.nextAppointmentDate.split('/').reverse().join('-'))
+      : null
+  );
+  const [selectedCaseID, setSelectedCaseID] = useState<string>(
+    appointment ? extractCaseId(appointment.caseDetail) : ""
+  );
+  const [orientacion, setOrientacion] = useState<string>(
+    appointment ? appointment.orientation : ""
+  );
+  const [usuariosAtienden, setUsuariosAtienden] = useState<string[]>(
+    appointment && appointment.attendingUsersList
+      ? appointment.attendingUsersList.map(u => u.id_usuario)
+      : []
+  );
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
@@ -37,6 +66,17 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
   const [isOpen, setIsOpen] = useState(true);
   const [caseOptions, setCaseOptions] = useState<{ value: string; label: string }[]>([]);
   const [usuarioOptions, setUsuarioOptions] = useState<{ value: string; label: string }[]>([]);
+
+  // Estados para el modal de confirmación de acción
+  const [showActionConfirmModal, setShowActionConfirmModal] = useState(false);
+  const [creatingAction, setCreatingAction] = useState(false);
+  const [citaCreada, setCitaCreada] = useState<{
+    id_caso: number;
+    fecha: string;
+    orientacion: string;
+    usuariosAtienden: string[];
+  } | null>(null);
+  const [actionRegistered, setActionRegistered] = useState(false);
 
   useEffect(() => {
     async function fetchCaseIds() {
@@ -75,17 +115,93 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
 
-    if (!selectedCaseID) {
-      newErrors.selectedCaseID = 'Este campo es requerido';
+    // Validación de Caso (selectedCaseID) - Solo requerido al crear, no al editar
+    if (!isEditing) {
+      if (!selectedCaseID) {
+        newErrors.selectedCaseID = 'Este campo es requerido';
+      } else {
+        const caseIdNumber = Number(selectedCaseID);
+        if (isNaN(caseIdNumber) || caseIdNumber <= 0 || !Number.isInteger(caseIdNumber)) {
+          newErrors.selectedCaseID = 'El ID del caso debe ser un número válido';
+        } else {
+          const caseExists = caseOptions.some(opt => opt.value === selectedCaseID);
+          if (!caseExists) {
+            newErrors.selectedCaseID = 'El caso seleccionado no es válido';
+          }
+        }
+      }
     }
-    if (!date) {
+
+    // Validación de Fecha de Encuentro (date) - Solo requerida al crear
+    if (!isEditing && !date) {
       newErrors.date = 'Este campo es requerido';
+    } else if (date) {
+      const dateString = date.toISOString().slice(0, 10);
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(dateString)) {
+        newErrors.date = 'Formato de fecha inválido';
+      } else {
+        const dateObj = new Date(dateString);
+        if (isNaN(dateObj.getTime())) {
+          newErrors.date = 'Fecha inválida';
+        }
+      }
     }
-    if (!orientacion.trim()) {
-      newErrors.orientacion = 'Este campo es requerido';
+
+    // Validación de Fecha de Próxima Cita (endDate) - OPCIONAL
+    if (endDate) {
+      const endDateString = endDate.toISOString().slice(0, 10);
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(endDateString)) {
+        newErrors.endDate = 'Formato de fecha inválido';
+      } else {
+        const endDateObj = new Date(endDateString);
+        if (isNaN(endDateObj.getTime())) {
+          newErrors.endDate = 'Fecha inválida';
+        } else if (date) {
+          const dateObj = new Date(date.toISOString().slice(0, 10));
+          if (endDateObj <= dateObj) {
+            newErrors.endDate = 'La fecha de la próxima cita debe ser posterior a la fecha de encuentro';
+          }
+        }
+      }
     }
-    if (usuariosAtienden.length === 0) {
-      newErrors.usuariosAtienden = 'Este campo es requerido';
+
+    // Validación de Usuarios que Atendieron (usuariosAtienden)
+    // Al editar, si no se proporciona usuariosAtienden, no se valida (se mantienen los existentes)
+    if (!isEditing && usuariosAtienden.length === 0) {
+      newErrors.usuariosAtienden = 'Debe seleccionar al menos un usuario';
+    } else if (usuariosAtienden.length > 0) {
+      // Validar duplicados
+      const uniqueCedulas = new Set(usuariosAtienden);
+      if (uniqueCedulas.size !== usuariosAtienden.length) {
+        newErrors.usuariosAtienden = 'No puede seleccionar usuarios duplicados';
+      } else {
+        // Validar que todos existan en las opciones
+        const invalidCedulas = usuariosAtienden.filter(
+          cedula => !usuarioOptions.some(opt => opt.value === cedula)
+        );
+        if (invalidCedulas.length > 0) {
+          newErrors.usuariosAtienden = 'Algunos usuarios seleccionados no son válidos';
+        } else if (usuariosAtienden.length > 10) {
+          newErrors.usuariosAtienden = 'No puede seleccionar más de 10 usuarios';
+        }
+      }
+    }
+
+    // Validación de Orientación (orientacion) - Solo requerida al crear
+    if (!isEditing) {
+      const orientacionTrimmed = orientacion.trim();
+      if (!orientacionTrimmed) {
+        newErrors.orientacion = 'Este campo es requerido';
+      } else if (orientacionTrimmed.length < 10) {
+        newErrors.orientacion = 'La orientación debe tener al menos 10 caracteres';
+      } else if (!/\w/.test(orientacionTrimmed)) {
+        newErrors.orientacion = 'La orientación debe contener texto válido';
+      }
+    } else if (orientacion.trim().length > 0 && orientacion.trim().length < 10) {
+      // Al editar, si se proporciona orientación, debe cumplir el mínimo
+      newErrors.orientacion = 'La orientación debe tener al menos 10 caracteres';
     }
 
     setErrors(newErrors);
@@ -100,7 +216,7 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
     } else if (field === 'usuariosAtienden') {
       setUsuariosAtienden(value as string[]);
     }
-    
+
     // Limpiar error del campo cuando se modifica
     if (errors[field]) {
       setErrors((prev) => {
@@ -131,7 +247,7 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -140,29 +256,181 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
     setSuccess(false);
     setLoading(true);
 
-    const result = await createCitaAction({
-      caseId: Number(selectedCaseID),
-      date: date ? date.toISOString().slice(0, 10) : "",
-      endDate: endDate ? endDate.toISOString().slice(0, 10) : undefined,
-      orientacion,
-      usuariosAtienden: usuariosAtienden,
-    });
+    try {
+      let result;
 
-    setLoading(false);
-    if (result.success && result.data) {
-      setSuccess(true);
-      // Limpiar el formulario tras éxito
-      setDate(initialDate || null);
-      setEndDate(null);
-      setSelectedCaseID("");
-      setOrientacion("");
-      setUsuariosAtienden([]);
-      setErrors({});
-      onSave();
-      if (onClose) onClose();
-    } else {
-      setError(result.error?.message || "Error al crear la cita");
+      if (isEditing && appointment) {
+        // Modo edición
+        // Construir objeto de actualización con los campos modificados
+        const updateParams: {
+          appointmentId: string;
+          date?: string;
+          endDate?: string | null;
+          orientacion?: string;
+          usuariosAtienden?: string[];
+        } = {
+          appointmentId: appointment.id,
+        };
+
+        // Incluir fecha si está presente (siempre se envía si hay fecha)
+        if (date) {
+          updateParams.date = date.toISOString().slice(0, 10);
+        }
+
+        // Manejar fecha de próxima cita
+        // Si endDate es null, significa que el usuario quiere eliminar la fecha
+        // Si endDate es undefined, no se envía (no se modifica)
+        if (endDate !== undefined) {
+          updateParams.endDate = endDate ? endDate.toISOString().slice(0, 10) : null;
+        }
+
+        // Incluir orientación si está presente y no está vacía
+        if (orientacion && orientacion.trim()) {
+          updateParams.orientacion = orientacion.trim();
+        }
+
+        // Incluir usuarios si hay seleccionados
+        if (usuariosAtienden.length > 0) {
+          updateParams.usuariosAtienden = usuariosAtienden;
+        }
+
+        result = await updateCitaAction(updateParams);
+      } else {
+        // Modo creación
+        result = await createCitaAction({
+          caseId: Number(selectedCaseID),
+          date: date ? date.toISOString().slice(0, 10) : "",
+          endDate: endDate ? endDate.toISOString().slice(0, 10) : undefined,
+          orientacion,
+          usuariosAtienden: usuariosAtienden,
+        });
+      }
+
+      setLoading(false);
+
+      if (result.success && result.data) {
+        setSuccess(true);
+
+        if (isEditing) {
+          // Modo edición: cerrar modal y recargar datos normalmente
+          setDate(initialDate || null);
+          setEndDate(null);
+          setSelectedCaseID("");
+          setOrientacion("");
+          setUsuariosAtienden([]);
+          setErrors({});
+          onSave();
+          if (onClose) onClose();
+        } else {
+          // Modo creación: guardar datos de la cita y mostrar modal de confirmación
+          const citaData = {
+            id_caso: Number(selectedCaseID),
+            fecha: date ? date.toISOString().slice(0, 10) : "",
+            orientacion: orientacion.trim(),
+            usuariosAtienden: usuariosAtienden,
+          };
+          setCitaCreada(citaData);
+          setShowActionConfirmModal(true);
+          // NO cerrar el modal todavía, esperar respuesta del usuario
+        }
+      } else {
+        setError(result.error?.message || (isEditing ? "Error al actualizar la cita" : "Error al crear la cita"));
+      }
+    } catch (error) {
+      console.error('Error al guardar cita:', error);
+      setLoading(false);
+      setError('Error al guardar la cita. Por favor, inténtelo de nuevo.');
+      setSuccess(false);
     }
+  };
+
+  const handleCreateAction = async () => {
+    if (!citaCreada) return;
+
+    setCreatingAction(true);
+    setError(null);
+
+    try {
+      // Construir detalle de la acción
+      const detalleAccion = `Cita realizada el ${formatDate(citaCreada.fecha)}`;
+
+      // Construir ejecutores
+      const ejecutores = citaCreada.usuariosAtienden.length > 0
+        ? citaCreada.usuariosAtienden.map(cedula => ({
+          idUsuario: cedula,
+          fechaEjecucion: citaCreada.fecha, // YYYY-MM-DD
+        }))
+        : undefined;
+
+      // Comentario: usar orientación si no está vacía
+      const comentario = citaCreada.orientacion.trim() || undefined;
+
+      // Crear la acción
+      const result = await createAccionAction(
+        citaCreada.id_caso,
+        detalleAccion,
+        comentario,
+        ejecutores,
+        undefined // fechaRegistro: usa fecha actual automáticamente
+      );
+
+      setCreatingAction(false);
+
+      if (result.success) {
+        // Guardar el id_caso antes de limpiar el estado
+        const idCasoParaRedireccion = citaCreada.id_caso;
+        
+        // Cerrar modal de confirmación
+        setShowActionConfirmModal(false);
+        // Marcar acción como registrada
+        setActionRegistered(true);
+        setError(null);
+        // Limpiar formulario y cerrar modal inmediatamente
+        setDate(initialDate || null);
+        setEndDate(null);
+        setSelectedCaseID("");
+        setOrientacion("");
+        setUsuariosAtienden([]);
+        setErrors({});
+        setIsOpen(false);
+        setCitaCreada(null);
+        if (onClose) onClose();
+        
+        // Después de crear la acción exitosamente, redirigir al detalle del caso
+        setTimeout(() => {
+          router.push(`/dashboard/cases/${idCasoParaRedireccion}?tab=acciones`);
+        }, 500);
+      } else {
+        // Error al crear la acción (pero la cita ya está guardada)
+        setError(result.error?.message || "Error al crear la acción. La cita fue guardada correctamente.");
+        // Permitir cerrar el modal de confirmación para continuar
+        setShowActionConfirmModal(false);
+      }
+    } catch (error) {
+      setCreatingAction(false);
+      setError(error instanceof Error ? error.message : "Error al crear la acción. La cita fue guardada correctamente.");
+      setShowActionConfirmModal(false);
+    }
+  };
+
+  const handleCancelAction = () => {
+    // Cerrar modal de confirmación
+    setShowActionConfirmModal(false);
+    // Limpiar formulario
+    setDate(initialDate || null);
+    setEndDate(null);
+    setSelectedCaseID("");
+    setOrientacion("");
+    setUsuariosAtienden([]);
+    setErrors({});
+    setCitaCreada(null);
+    // Cerrar modal de cita
+    setIsOpen(false);
+    setTimeout(() => {
+      if (onClose) onClose();
+    }, 200);
+    // Recargar datos
+    onSave();
   };
 
   return (
@@ -184,19 +452,22 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
         </button>
 
         {/* Título */}
-        <h2 className="text-2xl font-normal text-foreground mb-6">Registrar nueva cita</h2>
+        <h2 className="text-2xl font-normal text-foreground mb-6">
+          {isEditing ? 'Modificar cita' : 'Registrar nueva cita'}
+        </h2>
 
         {/* Grid de formulario */}
         <form onSubmit={handleSubmit} noValidate className="grid grid-cols-3 gap-x-6 gap-y-4 mb-6">
           {/* Fila 1: Caso, Fecha de Encuentro, Fecha de Próxima cita */}
           <div className="col-span-1">
             <Select
-              label="Caso *"
+              label={isEditing ? "Caso" : "Caso *"}
               options={caseOptions}
               value={selectedCaseID}
               onChange={(e) => updateField('selectedCaseID', e.target.value)}
               error={errors.selectedCaseID}
-              required
+              required={!isEditing}
+              disabled={isEditing}
               className="w-full"
             />
           </div>
@@ -223,6 +494,9 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
                   required
                 />
               </div>
+              {errors.date && (
+                <p className="text-xs text-danger mt-1">{errors.date}</p>
+              )}
             </div>
           </div>
           <div className="col-span-1">
@@ -233,9 +507,23 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
               <div className="relative">
                 <DatePicker
                   value={endDate ? endDate.toISOString().slice(0, 10) : ""}
-                  onChange={(value: string) => setEndDate(value ? new Date(value) : null)}
+                  onChange={(value: string) => {
+                    setEndDate(value ? new Date(value) : null);
+                    // Limpiar error del campo cuando se modifica
+                    if (errors.endDate) {
+                      setErrors((prev) => {
+                        const newErrors = { ...prev };
+                        delete newErrors.endDate;
+                        return newErrors;
+                      });
+                    }
+                  }}
+                  error={errors.endDate}
                 />
               </div>
+              {errors.endDate && (
+                <p className="text-xs text-danger mt-1">{errors.endDate}</p>
+              )}
             </div>
           </div>
 
@@ -259,16 +547,14 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
                 Orientación <span className="text-danger">*</span>
               </label>
               <textarea
-                className={`w-full p-4 rounded-lg border bg-[#E5E7EB] ${
-                  errors.orientacion ? 'border-danger' : 'border-transparent'
-                } focus:outline-none focus:ring-1 ${
-                  errors.orientacion ? 'focus:ring-danger' : 'focus:ring-primary'
-                } text-base placeholder:text-[#717171] resize-none`}
+                className={`w-full px-4 py-3 rounded-lg border bg-[#E5E7EB] ${errors.orientacion ? 'border-danger' : 'border-transparent'
+                  } focus:outline-none focus:ring-1 ${errors.orientacion ? 'focus:ring-danger' : 'focus:ring-primary'
+                  } text-base placeholder:text-[#717171] resize-none`}
                 placeholder="Escribe aquí la orientación..."
                 maxLength={500}
                 value={orientacion}
                 onChange={(e) => updateField('orientacion', e.target.value)}
-                rows={4}
+                rows={5}
               />
               {errors.orientacion && (
                 <p className="text-xs text-danger mt-1">{errors.orientacion}</p>
@@ -284,7 +570,9 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
             <div className="col-span-3 text-danger mb-2">{error}</div>
           )}
           {success && (
-            <div className="col-span-3 text-success mb-2">¡Cita creada exitosamente!</div>
+            <div className="col-span-3 text-success mb-2">
+              {isEditing ? '¡Cita actualizada exitosamente!' : '¡Cita registrada exitosamente!'}
+            </div>
           )}
         </form>
 
@@ -295,14 +583,28 @@ export function AppointmentModal({ onClose, onSave, initialDate }: AppointmentMo
             <span className="text-danger font-medium text-sm">*</span>
             <span className="text-sm text-gray-600">Campo obligatorio</span>
           </div>
-          
+
           <div className="flex justify-end">
             <Button variant="primary" size="xl" onClick={handleSubmit} disabled={loading}>
-              {loading ? 'Registrando...' : 'Registrar Cita'}
+              {loading
+                ? (isEditing ? 'Actualizando...' : 'Registrando...')
+                : (isEditing ? 'Actualizar Cita' : 'Registrar Cita')}
             </Button>
           </div>
         </div>
       </div>
+
+      {/* Modal de confirmación para registrar como acción */}
+      <ConfirmModal
+        isOpen={showActionConfirmModal}
+        onClose={handleCancelAction}
+        onConfirm={handleCreateAction}
+        title="Confirmación"
+        message="Se ha registrado la cita. ¿Desea agregarla también al historial de acciones del caso?"
+        confirmLabel="Sí, agregar"
+        cancelLabel="No, solo cita"
+        disabled={creatingAction}
+      />
     </Modal>
   );
 }

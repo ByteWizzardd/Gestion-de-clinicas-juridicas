@@ -4,9 +4,10 @@ import type { Appointment } from '@/types/appointment';
 
 interface AppointmentCardProps {
   appointment: Appointment;
+  onClick?: () => void;
 }
 
-export default function AppointmentCard({ appointment }: AppointmentCardProps) {
+export default function AppointmentCard({ appointment, onClick }: AppointmentCardProps) {
   const formatDate = (date: Date) => {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -14,29 +15,19 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
     return `${day}/${month}/${year}`;
   };
 
-  const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours, 10);
-    const ampm = hour >= 12 ? 'pm' : 'am';
-    const hour12 = hour % 12 || 12;
-    return `${hour12}:${minutes} ${ampm}`;
-  };
 
   return (
-    <div className="relative">
-      {/* Primera línea: Título - Fecha (izquierda) y Hora (derecha) */}
-      <div className="flex items-start justify-between mb-1">
+    <div className="relative cursor-pointer hover:bg-gray-100 rounded-lg p-2 -m-2 transition-colors" onClick={onClick}>
+      {/* Primera línea: Caso y Fecha */}
+      <div className="mb-1">
         <p className="text-base text-black font-normal">
-          {appointment.title} - {formatDate(appointment.date)}
-        </p>
-        <p className="text-base text-primary font-normal whitespace-nowrap">
-          {formatTime(appointment.time)}
+          {appointment.caseDetail.split('(')[0].trim()} ({appointment.client}) {formatDate(appointment.date)}
         </p>
       </div>
 
-      {/* Segunda línea: Detalle del Caso */}
+      {/* Segunda línea: Materia */}
       <p className="text-base text-gray-600 font-normal">
-        Caso: {appointment.caseDetail}
+        {appointment.title}
       </p>
     </div>
   );

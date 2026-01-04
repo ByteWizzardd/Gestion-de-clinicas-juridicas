@@ -49,6 +49,7 @@ interface TiposCasosPDFProps {
   fechaFin?: string;
   chartImages?: Record<string, string>;
   logoBase64?: string; // Logo en base64 para preservar transparencia
+  term?: string;
 }
 
 // Colores exactos del diseño de Figma (debe coincidir con pdf-generator-react.ts)
@@ -197,10 +198,10 @@ function groupDataByMateriaSubcategoria(
   for (const item of data) {
     const categoria = item.nombre_categoria?.trim() || '';
     const subcategoria = item.nombre_subcategoria?.trim() || '';
-    
+
     const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría';
     const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría';
-    
+
     let key = item.nombre_materia;
     if (hasCategoria && hasSubcategoria) {
       // Si hay ambas: "Materia - Categoría Subcategoría" (sin guión entre categoría y subcategoría)
@@ -227,13 +228,13 @@ function groupDataByMateriaSubcategoria(
  */
 function formatGroupTitle(item: CasosGroupedData): string {
   let title = item.nombre_materia;
-  
+
   const categoria = item.nombre_categoria?.trim();
   const subcategoria = item.nombre_subcategoria?.trim();
-  
+
   const hasCategoria = categoria && categoria.toLowerCase() !== 'sin categoría';
   const hasSubcategoria = subcategoria && subcategoria.toLowerCase() !== 'sin subcategoría';
-  
+
   if (hasCategoria && hasSubcategoria) {
     // Si hay ambas: "Materia - Categoría Subcategoría" (sin guión entre categoría y subcategoría)
     title += ` - ${categoria} ${subcategoria}`;
@@ -259,12 +260,13 @@ function formatDate(dateStr: string): string {
   return `${day}/${month}/${year}`;
 }
 
-export const TiposCasosPDF: React.FC<TiposCasosPDFProps> = ({ 
-  data, 
-  fechaInicio, 
-  fechaFin, 
+export const TiposCasosPDF: React.FC<TiposCasosPDFProps> = ({
+  data,
+  fechaInicio,
+  fechaFin,
   chartImages = {},
-  logoBase64
+  logoBase64,
+  term
 }) => {
   const groupedData = groupDataByMateriaSubcategoria(data);
 
@@ -283,24 +285,24 @@ export const TiposCasosPDF: React.FC<TiposCasosPDFProps> = ({
         return (
           // @ts-ignore - React PDF types issue
           <Page key={key} size="A4" orientation="landscape" style={styles.page}>
+            {/* Header con logo - EN TODAS LAS PÁGINAS */}
+            {/* @ts-ignore */}
+            <View style={styles.header}>
+              {/* @ts-ignore */}
+              <Image
+                src={logoBase64 || "/logo clinica juridica.png"}
+                style={styles.logo}
+              />
+            </View>
+
             {isFirstPage ? (
               <>
-                {/* Header con logo - Solo en la primera página */}
-                {/* @ts-ignore */}
-                <View style={styles.header}>
-                  {/* @ts-ignore */}
-                  <Image
-                    src={logoBase64 || "/logo clinica juridica.png"}
-                    style={styles.logo}
-                  />
-                </View>
-
                 {/* Banner rojo con título y fechas - Solo en la primera página */}
                 {/* @ts-ignore */}
                 <View style={styles.titleBanner}>
                   {/* @ts-ignore */}
                   <Text style={styles.titleText}>
-                    Tipos de Caso{fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : ''}
+                    Tipos de Caso{term ? ` Semestre ${term}` : (fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : '')}
                   </Text>
                 </View>
 
@@ -348,45 +350,45 @@ export const TiposCasosPDF: React.FC<TiposCasosPDFProps> = ({
                 {/* Contenido centrado verticalmente para páginas sin encabezado */}
                 {/* @ts-ignore */}
                 <View style={styles.centeredContent}>
-                {/* Subtítulo (Materia - Categoría - Subcategoría) */}
-                {/* @ts-ignore */}
-                <Text style={styles.sectionTitleCentered}>
-                  {formatGroupTitle(groupData[0])}
-                </Text>
-
-                {/* Gráfico */}
-                {/* @ts-ignore */}
-                <View style={styles.chartContainerCentered}>
+                  {/* Subtítulo (Materia - Categoría - Subcategoría) */}
                   {/* @ts-ignore */}
-                  <View style={styles.chartWrapper}>
-                    {chartImage && (
-                      // @ts-ignore
-                      <Image src={chartImage} style={styles.chartImage} />
-                    )}
-                  </View>
+                  <Text style={styles.sectionTitleCentered}>
+                    {formatGroupTitle(groupData[0])}
+                  </Text>
 
-                  {/* Leyenda inferior */}
+                  {/* Gráfico */}
                   {/* @ts-ignore */}
-                  <View style={styles.legendContainer}>
-                    {groupData.map((item, index) => (
-                      // @ts-ignore
-                      <View key={index} style={styles.legendItem}>
-                        {/* @ts-ignore */}
-                        <View
-                          style={[
-                            styles.legendDot,
-                            { backgroundColor: pieData.colors[index] },
-                          ]}
-                        />
-                        {/* @ts-ignore */}
-                        <Text style={styles.legendText}>
-                          {item.nombre_ambito_legal}
-                        </Text>
-                      </View>
-                    ))}
+                  <View style={styles.chartContainerCentered}>
+                    {/* @ts-ignore */}
+                    <View style={styles.chartWrapper}>
+                      {chartImage && (
+                        // @ts-ignore
+                        <Image src={chartImage} style={styles.chartImage} />
+                      )}
+                    </View>
+
+                    {/* Leyenda inferior */}
+                    {/* @ts-ignore */}
+                    <View style={styles.legendContainer}>
+                      {groupData.map((item, index) => (
+                        // @ts-ignore
+                        <View key={index} style={styles.legendItem}>
+                          {/* @ts-ignore */}
+                          <View
+                            style={[
+                              styles.legendDot,
+                              { backgroundColor: pieData.colors[index] },
+                            ]}
+                          />
+                          {/* @ts-ignore */}
+                          <Text style={styles.legendText}>
+                            {item.nombre_ambito_legal}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
                   </View>
                 </View>
-              </View>
               </>
             )}
           </Page>

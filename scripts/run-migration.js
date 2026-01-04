@@ -1,6 +1,6 @@
-const { pool } = require('../lib/db/pool');
-const { readFileSync } = require('fs');
-const { join } = require('path');
+import { pool } from '../lib/db/pool';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 async function runMigration() {
   try {

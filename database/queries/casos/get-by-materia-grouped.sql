@@ -16,8 +16,8 @@ LEFT JOIN subcategorias sub ON c.id_materia = sub.id_materia
     AND c.num_categoria = sub.num_categoria 
     AND c.num_subcategoria = sub.num_subcategoria
 WHERE 
-    ($1::DATE IS NULL OR c.fecha_solicitud >= $1)
-    AND ($2::DATE IS NULL OR c.fecha_solicitud <= $2)
+    ($1::DATE IS NULL OR c.fecha_inicio_caso >= $1)
+    AND ($2::DATE IS NULL OR c.fecha_inicio_caso <= $2)
 GROUP BY 
     c.id_materia,
     c.num_categoria,

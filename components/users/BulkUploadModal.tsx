@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Modal from '../ui/feedback/Modal';
 import Button from '../ui/Button';
 import Select from '../forms/Select';
-import { Upload, File, X, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Upload, File, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { bulkCreateEstudiantesAction, getSemestresAction } from '@/app/actions/estudiantes';
 import { BulkUploadResult } from '@/lib/services/estudiantes.service';
 
@@ -54,7 +54,7 @@ export default function BulkUploadModal({
       } else {
         setError('Error al cargar semestres');
       }
-    } catch (err) {
+    } catch {
       setError('Error al cargar semestres');
     } finally {
       setLoadingSemestres(false);
@@ -219,7 +219,7 @@ export default function BulkUploadModal({
         {/* Mensaje de error */}
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-            <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
             <p className="text-sm text-red-700">{error}</p>
           </div>
         )}

@@ -49,6 +49,7 @@ interface EstatusCasosPDFProps {
   fechaFin?: string;
   chartImage?: string;
   logoBase64?: string;
+  term?: string;
 }
 
 // Colores para los estatus (debe coincidir con pdf-generator-react.ts)
@@ -174,12 +175,13 @@ function formatDate(dateStr: string): string {
   return `${day}/${month}/${year}`;
 }
 
-export const EstatusCasosPDF: React.FC<EstatusCasosPDFProps> = ({ 
-  data, 
-  fechaInicio, 
-  fechaFin, 
+export const EstatusCasosPDF: React.FC<EstatusCasosPDFProps> = ({
+  data,
+  fechaInicio,
+  fechaFin,
   chartImage,
-  logoBase64
+  logoBase64,
+  term
 }) => {
   // Obtener colores para cada estatus
   const pieData = {
@@ -193,7 +195,7 @@ export const EstatusCasosPDF: React.FC<EstatusCasosPDFProps> = ({
     <Document>
       {/* @ts-ignore */}
       <Page size="A4" orientation="landscape" style={styles.page}>
-        {/* Header con logo - Solo en la primera página */}
+        {/* Header con logo */}
         {/* @ts-ignore */}
         <View style={styles.header}>
           {/* @ts-ignore */}
@@ -208,7 +210,7 @@ export const EstatusCasosPDF: React.FC<EstatusCasosPDFProps> = ({
         <View style={styles.titleBanner}>
           {/* @ts-ignore */}
           <Text style={styles.titleText}>
-            Consulta de Casos por Estatus{fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : ''}
+            Estatus de Casos{term ? ` Semestre ${term}` : (fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : '')}
           </Text>
         </View>
 

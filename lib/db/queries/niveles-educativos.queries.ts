@@ -5,6 +5,7 @@ import { QueryResult } from 'pg';
 export interface NivelEducativo {
   id_nivel_educativo: number;
   descripcion: string;
+  habilitado?: boolean;
 }
 
 /**
@@ -29,7 +30,7 @@ export const nivelesEducativosQueries = {
     anosCursados: number;
     semestresCursados: number;
     trimestresCursados: number;
-  }): Promise<any> => {
+  }): Promise<unknown> => {
     const query = loadSQL('niveles-educativos/create.sql');
     const result: QueryResult = await pool.query(query, [
       data.nivel,
