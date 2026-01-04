@@ -1,11 +1,12 @@
 'use client';
 
-import { 
-  Filter as FilterIcon, 
+import {
+  Filter as FilterIcon,
   ChevronLeft,
   Layers,
   UserCheck,
-  Calendar
+  Calendar,
+  FileText
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import DropdownMenu from '@/components/ui/navigation/DropdownMenu';
@@ -17,6 +18,7 @@ import { createPortal } from 'react-dom';
 interface AppointmentFilterOptions {
   nucleos: Array<{ id_nucleo: number; nombre_nucleo: string }>;
   usuarios: Array<{ cedula: string; nombres: string; apellidos: string; nombre_completo: string }>;
+  casos: Array<{ id_caso: number; tramite: string }>;
 }
 
 interface AppointmentsToolbarProps {
@@ -24,11 +26,13 @@ interface AppointmentsToolbarProps {
   onViewModeChange: (view: AppointmentViewMode) => void;
   nucleoFilter: string;
   usuarioFilter: string[];
+  caseFilter: string[];
   dateRangeFilter: string;
   customDateStart: string;
   customDateEnd: string;
   onNucleoFilterChange: (value: string) => void;
   onUsuarioFilterChange: (value: string[]) => void;
+  onCaseFilterChange: (value: string[]) => void;
   onDateRangeFilterChange: (value: string) => void;
   onCustomDateStartChange: (value: string) => void;
   onCustomDateEndChange: (value: string) => void;
@@ -43,19 +47,20 @@ interface FilterMenuItemProps {
   hasActiveFilter?: boolean;
   showArrow?: boolean;
   submenuContent?: React.ReactNode;
-  itemRef?: React.RefObject<HTMLButtonElement | null>;
+  triggerRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
-function FilterMenuItem({ 
-  title, 
-  icon, 
-  isOpen, 
-  onToggle, 
+function FilterMenuItem({
+  title,
+  icon,
+  isOpen,
+  onToggle,
   hasActiveFilter = false,
   showArrow = true,
   submenuContent,
-  itemRef
-}: FilterMenuItemProps) {
+  triggerRef,
+  ...props
+}: FilterMenuItemProps & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, height: 0 });
   const [mounted, setMounted] = useState(false);
   const submenuRef = useRef<HTMLDivElement>(null);
@@ -69,9 +74,9 @@ function FilterMenuItem({
       if (
         isOpen &&
         submenuRef.current &&
-        itemRef?.current &&
+        triggerRef?.current &&
         !submenuRef.current.contains(event.target as Node) &&
-        !itemRef.current.contains(event.target as Node)
+        !triggerRef.current.contains(event.target as Node)
       ) {
         // Verificar que el click no sea en el menú principal
         const mainMenu = document.querySelector('[data-filter-main-menu]');
@@ -87,23 +92,23 @@ function FilterMenuItem({
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
-  }, [isOpen, itemRef, onToggle]);
+  }, [isOpen, triggerRef, onToggle]);
 
   useEffect(() => {
-    if (isOpen && itemRef?.current) {
+    if (isOpen && triggerRef?.current) {
       const updatePosition = () => {
-        if (itemRef.current) {
-          const rect = itemRef.current.getBoundingClientRect();
+        if (triggerRef.current) {
+          const rect = triggerRef.current.getBoundingClientRect();
           const submenuWidth = 320; // Ancho estimado del submenú
           const submenuMaxHeight = window.innerHeight * 0.8; // 80vh
           const spaceOnRight = window.innerWidth - rect.right;
           const spaceOnLeft = rect.left;
           const spaceBelow = window.innerHeight - rect.bottom;
           const spaceAbove = rect.top;
-          
+
           // Si no hay espacio a la derecha, mostrar a la izquierda
           const shouldShowOnLeft = spaceOnRight < submenuWidth && spaceOnLeft > submenuWidth;
-          
+
           // Calcular posición vertical para que no se corte
           let topPosition = rect.top + window.scrollY;
           if (spaceBelow < submenuMaxHeight && spaceAbove > spaceBelow) {
@@ -114,10 +119,10 @@ function FilterMenuItem({
             const maxTop = window.innerHeight + window.scrollY - submenuMaxHeight - 8;
             topPosition = Math.min(topPosition, maxTop);
           }
-          
+
           setCoords({
             top: topPosition,
-            left: shouldShowOnLeft 
+            left: shouldShowOnLeft
               ? rect.left + window.scrollX - submenuWidth + 8
               : rect.left + window.scrollX + rect.width - 8,
             width: rect.width,
@@ -135,12 +140,13 @@ function FilterMenuItem({
         window.removeEventListener('resize', updatePosition);
       };
     }
-  }, [isOpen, itemRef]);
+  }, [isOpen, triggerRef]);
 
   return (
     <>
       <button
-        ref={itemRef}
+        ref={triggerRef}
+        {...props}
         type="button"
         onClick={(e) => {
           e.stopPropagation();
@@ -160,7 +166,7 @@ function FilterMenuItem({
           {icon}
         </div>
       </button>
-      
+
       {/* Submenú lateral */}
       {mounted && isOpen && submenuContent && createPortal(
         <AnimatePresence>
@@ -201,11 +207,13 @@ export default function AppointmentsToolbar({
   onViewModeChange,
   nucleoFilter,
   usuarioFilter,
+  caseFilter,
   dateRangeFilter,
   customDateStart,
   customDateEnd,
   onNucleoFilterChange,
   onUsuarioFilterChange,
+  onCaseFilterChange,
   onDateRangeFilterChange,
   onCustomDateStartChange,
   onCustomDateEndChange,
@@ -216,25 +224,33 @@ export default function AppointmentsToolbar({
     fecha: false,
     nucleo: false,
     usuario: false,
+    caso: false,
   });
-  
+
   const fechaItemRef = useRef<HTMLButtonElement>(null);
   const nucleoItemRef = useRef<HTMLButtonElement>(null);
   const usuarioItemRef = useRef<HTMLButtonElement>(null);
+  const casoItemRef = useRef<HTMLButtonElement>(null);
 
   // Cerrar todos los submenús cuando se cierra el filtro principal
   useEffect(() => {
     if (!isFilterOpen) {
-      setOpenSections({ fecha: false, nucleo: false, usuario: false });
+      setOpenSections({ fecha: false, nucleo: false, usuario: false, caso: false });
     }
   }, [isFilterOpen]);
-  
-  const hasActiveFilter = nucleoFilter !== '' || usuarioFilter.length > 0 || dateRangeFilter !== 'all';
+
+  // Solo mostrar el filtro en vista de lista o agendadas
+  if (viewMode !== 'list' && viewMode !== 'scheduled') {
+    return null;
+  }
+
+  const hasActiveFilter = nucleoFilter !== '' || usuarioFilter.length > 0 || caseFilter.length > 0 || dateRangeFilter !== 'all';
 
   const getActiveFilterCount = () => {
     let count = 0;
     if (nucleoFilter !== '') count++;
     if (usuarioFilter.length > 0) count++;
+    if (caseFilter.length > 0) count++;
     if (dateRangeFilter !== 'all') count++;
     return count;
   };
@@ -256,11 +272,12 @@ export default function AppointmentsToolbar({
   const handleClearFilters = () => {
     onNucleoFilterChange('');
     onUsuarioFilterChange([]);
+    onCaseFilterChange([]);
     onDateRangeFilterChange('all');
     onCustomDateStartChange('');
     onCustomDateEndChange('');
     setIsFilterOpen(false);
-    setOpenSections({ fecha: false, nucleo: false, usuario: false });
+    setOpenSections({ fecha: false, nucleo: false, usuario: false, caso: false });
   };
 
   // Preparar opciones de núcleos
@@ -274,6 +291,18 @@ export default function AppointmentsToolbar({
     value: u.cedula,
     label: u.nombre_completo,
   }));
+
+  // Preparar opciones de casos
+  const casoOptions = filterOptions.casos.map((c) => ({
+    value: c.id_caso.toString(),
+    label: `C-${c.id_caso} - ${c.tramite}`,
+  }));
+
+  // Agregar opción para citas sin caso asignado (por si acaso)
+  casoOptions.unshift({
+    value: 'no-case',
+    label: 'Sin caso asignado',
+  });
 
   const triggerButton = (isOpenState: boolean) => (
     <button
@@ -293,11 +322,6 @@ export default function AppointmentsToolbar({
     </button>
   );
 
-  // Solo mostrar el filtro en vista de lista
-  if (viewMode !== 'list') {
-    return null;
-  }
-
   return (
     <div className="relative">
       <DropdownMenu
@@ -315,7 +339,8 @@ export default function AppointmentsToolbar({
             isOpen={openSections.fecha}
             onToggle={() => toggleSection('fecha')}
             hasActiveFilter={dateRangeFilter !== 'all'}
-            itemRef={fechaItemRef}
+            triggerRef={fechaItemRef}
+            data-keep-open
             submenuContent={
               <div className="p-3 space-y-1.5 overflow-y-auto flex-1 min-h-0" style={{ maxHeight: 'calc(80vh - 24px)' }}>
                 <button
@@ -325,11 +350,10 @@ export default function AppointmentsToolbar({
                     onDateRangeFilterChange('all');
                     setOpenSections(prev => ({ ...prev, fecha: false }));
                   }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${
-                    dateRangeFilter === 'all'
-                      ? 'bg-primary-light text-primary font-medium shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                  }`}
+                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${dateRangeFilter === 'all'
+                    ? 'bg-primary-light text-primary font-medium shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+                    }`}
                 >
                   Todas las fechas
                 </button>
@@ -340,11 +364,10 @@ export default function AppointmentsToolbar({
                     onDateRangeFilterChange('today');
                     setOpenSections(prev => ({ ...prev, fecha: false }));
                   }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${
-                    dateRangeFilter === 'today'
-                      ? 'bg-primary-light text-primary font-medium shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                  }`}
+                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${dateRangeFilter === 'today'
+                    ? 'bg-primary-light text-primary font-medium shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+                    }`}
                 >
                   Hoy
                 </button>
@@ -355,11 +378,10 @@ export default function AppointmentsToolbar({
                     onDateRangeFilterChange('week');
                     setOpenSections(prev => ({ ...prev, fecha: false }));
                   }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${
-                    dateRangeFilter === 'week'
-                      ? 'bg-primary-light text-primary font-medium shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                  }`}
+                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${dateRangeFilter === 'week'
+                    ? 'bg-primary-light text-primary font-medium shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+                    }`}
                 >
                   Última semana
                 </button>
@@ -370,11 +392,10 @@ export default function AppointmentsToolbar({
                     onDateRangeFilterChange('month');
                     setOpenSections(prev => ({ ...prev, fecha: false }));
                   }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${
-                    dateRangeFilter === 'month'
-                      ? 'bg-primary-light text-primary font-medium shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                  }`}
+                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${dateRangeFilter === 'month'
+                    ? 'bg-primary-light text-primary font-medium shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+                    }`}
                 >
                   Último mes
                 </button>
@@ -384,15 +405,14 @@ export default function AppointmentsToolbar({
                     e.stopPropagation();
                     onDateRangeFilterChange('custom');
                   }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${
-                    dateRangeFilter === 'custom'
-                      ? 'bg-primary-light text-primary font-medium shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                  }`}
+                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${dateRangeFilter === 'custom'
+                    ? 'bg-primary-light text-primary font-medium shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+                    }`}
                 >
                   Rango personalizado
                 </button>
-                
+
                 {/* Campos de fecha personalizada */}
                 {dateRangeFilter === 'custom' && (
                   <div className="mt-3 space-y-2 pl-2 border-l-2 border-primary-light">
@@ -423,7 +443,7 @@ export default function AppointmentsToolbar({
             isOpen={openSections.nucleo}
             onToggle={() => toggleSection('nucleo')}
             hasActiveFilter={nucleoFilter !== ''}
-            itemRef={nucleoItemRef}
+            triggerRef={nucleoItemRef}
             submenuContent={
               <div className="p-3 space-y-1 overflow-y-auto flex-1 min-h-0" style={{ maxHeight: 'calc(80vh - 24px)' }}>
                 <button
@@ -433,11 +453,10 @@ export default function AppointmentsToolbar({
                     onNucleoFilterChange('');
                     setOpenSections(prev => ({ ...prev, nucleo: false }));
                   }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${
-                    nucleoFilter === ''
-                      ? 'bg-primary-light text-primary font-medium shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                  }`}
+                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${nucleoFilter === ''
+                    ? 'bg-primary-light text-primary font-medium shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+                    }`}
                 >
                   Todos los núcleos
                 </button>
@@ -450,11 +469,10 @@ export default function AppointmentsToolbar({
                       onNucleoFilterChange(option.value);
                       setOpenSections(prev => ({ ...prev, nucleo: false }));
                     }}
-                    className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${
-                      nucleoFilter === option.value
-                        ? 'bg-primary-light text-primary font-medium shadow-sm'
-                        : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                    }`}
+                    className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${nucleoFilter === option.value
+                      ? 'bg-primary-light text-primary font-medium shadow-sm'
+                      : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+                      }`}
                   >
                     {option.label}
                   </button>
@@ -470,7 +488,7 @@ export default function AppointmentsToolbar({
             isOpen={openSections.usuario}
             onToggle={() => toggleSection('usuario')}
             hasActiveFilter={usuarioFilter.length > 0}
-            itemRef={usuarioItemRef}
+            triggerRef={usuarioItemRef}
             submenuContent={
               <div className="p-3 space-y-1 overflow-y-auto flex-1 min-h-0" style={{ maxHeight: 'calc(80vh - 24px)' }}>
                 <button
@@ -479,16 +497,15 @@ export default function AppointmentsToolbar({
                     e.stopPropagation();
                     onUsuarioFilterChange([]);
                   }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 flex items-center gap-2 ${
-                    usuarioFilter.length === 0
-                      ? 'bg-primary-light text-primary font-medium shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                  }`}
+                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 flex items-center gap-2 ${usuarioFilter.length === 0
+                    ? 'bg-primary-light text-primary font-medium shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+                    }`}
                 >
                   <input
                     type="checkbox"
                     checked={usuarioFilter.length === 0}
-                    onChange={() => {}}
+                    onChange={() => { }}
                     className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -513,16 +530,15 @@ export default function AppointmentsToolbar({
                           onUsuarioFilterChange([...usuarioFilter, option.value]);
                         }
                       }}
-                      className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 flex items-center gap-2 ${
-                        isSelected
-                          ? 'bg-primary-light text-primary font-medium shadow-sm'
-                          : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                      }`}
+                      className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 flex items-center gap-2 ${isSelected
+                        ? 'bg-primary-light text-primary font-medium shadow-sm'
+                        : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+                        }`}
                     >
                       <input
                         type="checkbox"
                         checked={isSelected}
-                        onChange={() => {}}
+                        onChange={() => { }}
                         className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -534,6 +550,83 @@ export default function AppointmentsToolbar({
                         }}
                       />
                       <span>{option.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            }
+          />
+
+          {/* Item: Caso */}
+          <FilterMenuItem
+            title="Caso"
+            icon={<FileText className="w-5 h-5" />}
+            isOpen={openSections.caso}
+            onToggle={() => toggleSection('caso')}
+            hasActiveFilter={caseFilter.length > 0}
+            triggerRef={casoItemRef}
+            data-keep-open
+            submenuContent={
+              <div className="p-3 space-y-1 overflow-y-auto flex-1 min-h-0" style={{ maxHeight: 'calc(80vh - 24px)' }}>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCaseFilterChange([]);
+                  }}
+                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 flex items-center gap-2 ${caseFilter.length === 0
+                    ? 'bg-primary-light text-primary font-medium shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+                    }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={caseFilter.length === 0}
+                    onChange={() => { }}
+                    className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCaseFilterChange([]);
+                    }}
+                  />
+                  <span>Todos los casos</span>
+                </button>
+                {casoOptions.map((option) => {
+                  const isSelected = caseFilter.includes(option.value);
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isSelected) {
+                          // Deseleccionar
+                          onCaseFilterChange(caseFilter.filter(v => v !== option.value));
+                        } else {
+                          // Seleccionar
+                          onCaseFilterChange([...caseFilter, option.value]);
+                        }
+                      }}
+                      className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 flex items-center gap-2 ${isSelected
+                        ? 'bg-primary-light text-primary font-medium shadow-sm'
+                        : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+                        }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => { }}
+                        className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isSelected) {
+                            onCaseFilterChange(caseFilter.filter(v => v !== option.value));
+                          } else {
+                            onCaseFilterChange([...caseFilter, option.value]);
+                          }
+                        }}
+                      />
+                      <span className="truncate">{option.label}</span>
                     </button>
                   );
                 })}

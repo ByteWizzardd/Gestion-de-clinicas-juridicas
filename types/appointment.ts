@@ -11,6 +11,7 @@ export interface Appointment {
   title: string;
   date: Date;
   time: string; // Formato HH:mm
+  caseId: number; // ID numérico del caso para filtrado preciso
   caseDetail: string;
   client: string;
   location: string;

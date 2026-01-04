@@ -17,6 +17,7 @@ export const citasService = {
       title: string;
       date: Date;
       time: string;
+      caseId: number;
       caseDetail: string;
       client: string;
       location: string;
@@ -43,9 +44,8 @@ export const citasService = {
         const time = `${horas}:${minutos}`;
         const client =
           cita.nombre_completo_solicitante ||
-          `${cita.nombres_solicitante || ""} ${
-            cita.apellidos_solicitante || ""
-          }`.trim() ||
+          `${cita.nombres_solicitante || ""} ${cita.apellidos_solicitante || ""
+            }`.trim() ||
           cita.cedula;
 
         // Detalle del caso: C-{id_caso} (Nombre Solicitante) - Nombre Núcleo
@@ -64,12 +64,12 @@ export const citasService = {
         // Fecha de próxima cita formateada
         const nextAppointmentDate = cita.fecha_proxima_cita
           ? (() => {
-              const nextDate = new Date(cita.fecha_proxima_cita);
-              const day = String(nextDate.getDate()).padStart(2, '0');
-              const month = String(nextDate.getMonth() + 1).padStart(2, '0');
-              const year = nextDate.getFullYear();
-              return `${day}/${month}/${year}`;
-            })()
+            const nextDate = new Date(cita.fecha_proxima_cita);
+            const day = String(nextDate.getDate()).padStart(2, '0');
+            const month = String(nextDate.getMonth() + 1).padStart(2, '0');
+            const year = nextDate.getFullYear();
+            return `${day}/${month}/${year}`;
+          })()
           : null;
 
         return {
@@ -77,6 +77,7 @@ export const citasService = {
           title,
           date: fechaCita,
           time,
+          caseId: cita.id_caso,
           caseDetail,
           client,
           location: cita.nombre_nucleo,
@@ -132,7 +133,7 @@ export const citasService = {
         // 2. Crear registros en atienden si hay usuarios seleccionados
         if (params.usuariosAtienden && params.usuariosAtienden.length > 0) {
           const atiendenQuery = loadSQL('atienden/create.sql');
-          
+
           for (const usuarioCedula of params.usuariosAtienden) {
             await client.query(atiendenQuery, [
               usuarioCedula,
@@ -189,7 +190,7 @@ export const citasService = {
         // 1. Actualizar la cita si hay cambios
         if (params.date || params.endDate !== undefined || params.orientacion) {
           const updateQuery = loadSQL('citas/update.sql');
-          
+
           // Manejar fecha_proxima_cita: si es null explícitamente, enviar 'NULL' como string
           // Si es undefined, enviar null para no actualizar
           let endDateParam: string | null;
@@ -200,7 +201,7 @@ export const citasService = {
           } else {
             endDateParam = null; // No actualizar
           }
-          
+
           const citaResult = await client.query(updateQuery, [
             num_cita,
             id_caso,
