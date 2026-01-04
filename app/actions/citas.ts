@@ -84,6 +84,7 @@ export async function createCitaAction(
       idCasoNotificar = null;
     }
 
+
     // Notificar a los usuarios asignados a la cita sobre la creación
     const usuariosAtienden = params.usuariosAtienden || [];
     if (idCasoNotificar && usuariosAtienden.length > 0) {
@@ -92,6 +93,8 @@ export async function createCitaAction(
         titulo: "Nueva cita asignada",
         mensaje: `Se te ha asignado una nueva cita #${newCita.num_cita} para el caso #${idCasoNotificar} en la fecha ${params.date}. Haz clic para ver la cita.`,
       });
+      // Revalidar la caché de notificaciones para que se actualicen en el frontend
+      revalidatePath("/dashboard/notificaciones");
     }
 
     // Revalidar la caché de citas
@@ -330,6 +333,9 @@ export async function updateCitaAction(params: UpdateCitaParams): Promise<GetCit
         titulo: 'Cita actualizada',
         mensaje: `La cita #${params.appointmentId} del caso #${id_caso} para la fecha ${params.date || 'actualizada'} ha sido modificada. Haz clic para ver la cita.`,
       });
+      // Revalidar la caché de notificaciones y casos
+      revalidatePath('/dashboard/notificaciones');
+      revalidatePath('/dashboard/casos');
     }
 
     return {
@@ -427,8 +433,10 @@ export async function deleteCitaAction(params: DeleteCitaParams): Promise<GetCit
         titulo: 'Cita eliminada',
         mensaje: `La cita que atendías del caso #${idCasoParaNotificar} ha sido eliminada. Haz clic para ver el caso.`,
       });
+      // Revalidar la caché de notificaciones y casos
+      revalidatePath('/dashboard/notificaciones');
+      revalidatePath('/dashboard/casos');
     }
-    
 
     const result = {
       success: true,

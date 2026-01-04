@@ -124,6 +124,7 @@ export async function createCasoAction(data: unknown): Promise<CreateCasoResult>
 
     // Revalidar cache de la página de casos
     revalidatePath('/dashboard/cases');
+    revalidatePath('/dashboard/notificaciones');
 
     return {
       success: true,
