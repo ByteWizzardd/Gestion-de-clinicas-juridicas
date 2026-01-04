@@ -4,7 +4,7 @@ import { Bell } from 'lucide-react';
 import DropdownMenu from '../navigation/DropdownMenu';
 import { AnimatePresence, motion } from 'motion/react';
 import { useNotifications } from '../../../lib/hook/useNotifications';
-import { useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface NotificationProps {
   count?: number;
@@ -15,26 +15,22 @@ interface NotificationProps {
 
 const Notification: React.FC<NotificationProps> = () => {
   const { notifications, loading, error, markAsRead, remove } = useNotifications();
+  const router = useRouter();
   const unreadCount = notifications.filter(n => !n.read).length;
-  const hasMarkedAsReadRef = useRef(false);
 
-  // Función para marcar todas las notificaciones no leídas como leídas
-  const markAllUnreadAsRead = () => {
-    const unreadNotifications = notifications.filter(n => !n.read);
-    unreadNotifications.forEach(notification => {
-      markAsRead(notification.id);
-    });
+  const extractCasoId = (text: string): number | null => {
+    // Soporta formatos comunes: "caso #123", "Caso 123", "caso: 123"
+    const match = text.match(/\bcaso\b\s*(?:#|:)?\s*(\d+)\b/i);
+    if (!match) return null;
+    const value = Number(match[1]);
+    return Number.isFinite(value) ? value : null;
   };
 
-  // Resetear el flag cuando el dropdown se cierra
-  const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen) {
-      hasMarkedAsReadRef.current = false;
-    } else if (!hasMarkedAsReadRef.current) {
-      // Marcar todas las no leídas como leídas cuando se abre el dropdown
-      hasMarkedAsReadRef.current = true;
-      markAllUnreadAsRead();
-    }
+  const getCasoHref = (notification: { title: string; message: string }): string | null => {
+    const idFromTitle = extractCasoId(notification.title);
+    const idFromMessage = extractCasoId(notification.message);
+    const casoId = idFromTitle ?? idFromMessage;
+    return casoId ? `/dashboard/cases/${casoId}` : null;
   };
 
   const triggerButton = (
@@ -56,7 +52,6 @@ const Notification: React.FC<NotificationProps> = () => {
       trigger={triggerButton}
       align="right"
       menuClassName="w-[90vw] max-w-lg sm:w-[32rem] md:w-[36rem] lg:w-[40rem] left-1/2 -translate-x-[60%]"
-      onOpenChange={handleOpenChange}
     >
       <AnimatePresence>
         <motion.div
@@ -82,6 +77,23 @@ const Notification: React.FC<NotificationProps> = () => {
                     w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0
                     ${!notification.read ? 'bg-primary-light/10' : ''}
                   `}
+                  role={getCasoHref(notification) ? 'link' : undefined}
+                  tabIndex={getCasoHref(notification) ? 0 : undefined}
+                  onClick={() => {
+                    const href = getCasoHref(notification);
+                    if (!href) return;
+                    markAsRead(notification.id);
+                    router.push(href);
+                  }}
+                  onKeyDown={(e) => {
+                    const href = getCasoHref(notification);
+                    if (!href) return;
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      markAsRead(notification.id);
+                      router.push(href);
+                    }
+                  }}
                 >
                   <div className="flex items-start gap-3">
                     {!notification.read && (
