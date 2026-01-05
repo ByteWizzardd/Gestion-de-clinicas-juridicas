@@ -3,6 +3,8 @@ import { pool } from '@/lib/db/pool';
 import { hashPassword } from '@/lib/utils/security';
 import { ValidationError } from '@/lib/utils/errors';
 
+import { validateEmailDomain as validateEmailDomainUtil } from '@/lib/utils/email-validation';
+
 export interface EstudianteRow {
   cedula: string;
   nombres: string;
@@ -91,9 +93,10 @@ function normalizeEmail(email: string): string {
 
 /**
  * Valida que el correo tenga dominio UCAB válido
+ * @deprecated Usar validateEmailDomainUtil de @/lib/utils/email-validation en su lugar
  */
 function validateEmailDomain(email: string): boolean {
-  return email.endsWith('@est.ucab.edu.ve') || email.endsWith('@ucab.edu.ve');
+  return validateEmailDomainUtil(email);
 }
 
 /**

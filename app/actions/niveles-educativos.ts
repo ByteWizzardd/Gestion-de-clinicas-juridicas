@@ -10,6 +10,7 @@ export interface GetNivelesEducativosResult {
   data?: Array<{
     id_nivel_educativo: number;
     descripcion: string;
+    habilitado?: boolean;
   }>;
   error?: {
     message: string;

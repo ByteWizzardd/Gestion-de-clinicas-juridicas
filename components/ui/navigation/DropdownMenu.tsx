@@ -27,7 +27,7 @@ export default function DropdownMenu({
   const [openUpward, setOpenUpward] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
   const [mounted, setMounted] = useState(false);
-  const [hasModal, setHasModal] = useState(false);
+  const [, setHasModal] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
 
@@ -226,8 +226,14 @@ export default function DropdownMenu({
             style={{
               position: 'fixed',
               top: openUpward ? coords.top - 4 : coords.top + 4,
-              left: coords.left,
-              width: coords.width,
+              // Alinear el menú según el parámetro align
+              left: align === 'right' 
+                ? coords.left + coords.width 
+                : align === 'center'
+                ? coords.left + coords.width / 2
+                : coords.left, // 'left' por defecto - alineado al borde izquierdo
+              // Solo setear width si menuClassName NO define un ancho (w-*)
+              ...(menuClassName && /w-\[?\d/.test(menuClassName) ? {} : { width: coords.width }),
               zIndex: isInsideModal ? 99999 : 9999,
               transform: openUpward ? 'translateY(-100%)' : undefined
             }}

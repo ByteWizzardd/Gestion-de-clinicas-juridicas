@@ -97,14 +97,47 @@ export const citasQueries = {
   },
 
   /**
-   * Elimina una cita específica
+   * Elimina una cita específica (registra auditoría antes de eliminar)
+   * @param numCita Número de la cita
+   * @param idCaso ID del caso
+   * @param idUsuarioElimino Cedula del usuario que elimina la cita
+   * @param motivo Motivo de la eliminación
    */
   delete: async (
     numCita: number,
-    idCaso: number
-  ): Promise<QueryResult<CitaCreada>> => {
-    const query = loadSQL('citas/delete.sql');
-    return await pool.query(query, [numCita, idCaso]);
+    idCaso: number,
+    idUsuarioElimino: string,
+    motivo: string
+  ): Promise<{
+    num_cita: number;
+    id_caso: number;
+  } | null> => {
+    // Usar transacción para establecer las variables de sesión y ejecutar el DELETE
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      
+      // Establecer las variables de sesión para el trigger usando set_config
+      // El tercer parámetro 'true' hace que sea local a la transacción
+      await client.query("SELECT set_config('app.usuario_elimina_cita', $1, true)", [idUsuarioElimino]);
+      await client.query("SELECT set_config('app.motivo_eliminacion_cita', $1, true)", [motivo || '']);
+      
+      // Ejecutar el DELETE (el trigger capturará la auditoría usando OLD)
+      const query = loadSQL('citas/delete.sql');
+      const result: QueryResult = await client.query(query, [numCita, idCaso]);
+      
+      await client.query('COMMIT');
+      
+      if (result.rows.length === 0) {
+        return null;
+      }
+      return result.rows[0];
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   },
 };
 

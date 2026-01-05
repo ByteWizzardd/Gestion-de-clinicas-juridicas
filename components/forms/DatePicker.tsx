@@ -23,16 +23,26 @@ export default function DatePicker({ value, onChange, error, required, disabled 
   
   const [currentMonth, setCurrentMonth] = useState(() => {
     if (value) {
-      const parts = value.split('-');
-      if (parts.length === 3) {
-        const year = parseInt(parts[0], 10);
-        const month = parseInt(parts[1], 10) - 1;
-        const day = parseInt(parts[2], 10);
-        const date = new Date(year, month, day);
-        return new Date(date.getFullYear(), date.getMonth(), 1);
+      // Si ya es un objeto Date
+      if (value instanceof Date) {
+        return new Date(value.getFullYear(), value.getMonth(), 1);
       }
-      const date = new Date(value);
-      return new Date(date.getFullYear(), date.getMonth(), 1);
+      
+      // Si es un string
+      if (typeof value === 'string') {
+        const parts = value.split('-');
+        if (parts.length === 3) {
+          const year = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10) - 1;
+          const day = parseInt(parts[2], 10);
+          const date = new Date(year, month, day);
+          return new Date(date.getFullYear(), date.getMonth(), 1);
+        }
+        const date = new Date(value);
+        if (!isNaN(date.getTime())) {
+          return new Date(date.getFullYear(), date.getMonth(), 1);
+        }
+      }
     }
     return new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   });
@@ -133,16 +143,26 @@ export default function DatePicker({ value, onChange, error, required, disabled 
 
   const isSelected = (day: number, isCurrentMonth: boolean) => {
     if (!value || !isCurrentMonth) return false;
-    const parts = value.split('-');
+    
     let selectedDate: Date;
-    if (parts.length === 3) {
-      const year = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1;
-      const dayValue = parseInt(parts[2], 10);
-      selectedDate = new Date(year, month, dayValue);
-    } else {
+    if (value instanceof Date) {
       selectedDate = new Date(value);
+    } else if (typeof value === 'string') {
+      const parts = value.split('-');
+      if (parts.length === 3) {
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const dayValue = parseInt(parts[2], 10);
+        selectedDate = new Date(year, month, dayValue);
+      } else {
+        selectedDate = new Date(value);
+      }
+    } else {
+      return false;
     }
+
+    if (isNaN(selectedDate.getTime())) return false;
+    
     selectedDate.setHours(0, 0, 0, 0);
     const date = new Date(
       currentMonth.getFullYear(),
@@ -203,12 +223,18 @@ export default function DatePicker({ value, onChange, error, required, disabled 
       setViewMode('year');
       let yearToUse: number;
       if (value) {
-        const parts = value.split('-');
-        if (parts.length === 3) {
-          yearToUse = parseInt(parts[0], 10);
+        if (value instanceof Date) {
+          yearToUse = value.getFullYear();
+        } else if (typeof value === 'string') {
+          const parts = value.split('-');
+          if (parts.length === 3) {
+            yearToUse = parseInt(parts[0], 10);
+          } else {
+            const date = new Date(value);
+            yearToUse = isNaN(date.getTime()) ? new Date().getFullYear() : date.getFullYear();
+          }
         } else {
-          const date = new Date(value);
-          yearToUse = date.getFullYear();
+          yearToUse = new Date().getFullYear();
         }
       } else {
         yearToUse = new Date().getFullYear();
@@ -258,40 +284,61 @@ export default function DatePicker({ value, onChange, error, required, disabled 
 
   useEffect(() => {
     if (value) {
-      const parts = value.split('-');
-      if (parts.length === 3) {
-        const year = parseInt(parts[0], 10);
-        const month = parseInt(parts[1], 10) - 1;
-        const day = parseInt(parts[2], 10);
-        const date = new Date(year, month, day);
-        setCurrentMonth(new Date(date.getFullYear(), date.getMonth(), 1));
-      } else {
-        const date = new Date(value);
-        setCurrentMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+      if (value instanceof Date) {
+        setCurrentMonth(new Date(value.getFullYear(), value.getMonth(), 1));
+      } else if (typeof value === 'string') {
+        const parts = value.split('-');
+        if (parts.length === 3) {
+          const year = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10) - 1;
+          const day = parseInt(parts[2], 10);
+          const date = new Date(year, month, day);
+          setCurrentMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+        } else {
+          const date = new Date(value);
+          if (!isNaN(date.getTime())) {
+            setCurrentMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+          }
+        }
       }
     }
   }, [value]);
 
-  const formatDisplayDate = (dateString: string) => {
-    if (!dateString) return 'dd/mm/aaaa';
-    const parts = dateString.split('-');
-    if (parts.length === 3) {
-      const year = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1;
-      const day = parseInt(parts[2], 10);
-      const date = new Date(year, month, day);
-      const dayStr = String(date.getDate()).padStart(2, '0');
-      const monthStr = String(date.getMonth() + 1).padStart(2, '0');
-      return `${dayStr}/${monthStr}/${date.getFullYear()}`;
+  const formatDisplayDate = (dateVal: any) => {
+    if (!dateVal) return 'dd/mm/aaaa';
+    
+    let date: Date;
+    
+    if (dateVal instanceof Date) {
+      date = dateVal;
+    } else if (typeof dateVal === 'string') {
+      const parts = dateVal.split('-');
+      if (parts.length === 3) {
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        date = new Date(year, month, day);
+      } else {
+        date = new Date(dateVal);
+      }
+    } else {
+      return 'dd/mm/aaaa';
     }
-    const date = new Date(dateString);
-    return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+
+    if (isNaN(date.getTime())) return 'dd/mm/aaaa';
+
+    const dayStr = String(date.getDate()).padStart(2, '0');
+    const monthStr = String(date.getMonth() + 1).padStart(2, '0');
+    return `${dayStr}/${monthStr}/${date.getFullYear()}`;
   };
 
   return (
     <div className="relative" ref={dropdownRef}>
       <div
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!disabled) setIsOpen(!isOpen);
+        }}
         className={`
           w-full h-[40px] pl-12 pr-4 rounded-full border flex items-center relative
           ${error ? 'border-danger' : 'border-gray-300'}

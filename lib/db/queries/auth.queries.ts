@@ -18,6 +18,26 @@ export const authQueries = {
       const result: QueryResult = await pool.query(query, [nombreUsuario]);
       return result.rows[0] || null;
     } catch (error: unknown) {
+      // Detectar errores de conexión
+      if (error instanceof Error) {
+        const errorMessage = error.message.toLowerCase();
+        if (errorMessage.includes('connection terminated') || 
+            errorMessage.includes('connection timeout') ||
+            errorMessage.includes('connection refused') ||
+            errorMessage.includes('econnrefused')) {
+          logger.error('Error de conexión a la base de datos. Verifica que:', {
+            message: '1. La base de datos esté corriendo y accesible',
+            message2: '2. DATABASE_URL esté correctamente configurada en .env',
+            message3: '3. Si usas Neon, la base de datos puede estar "dormida" - espera unos segundos y reintenta',
+            error: error.message
+          });
+          throw new DatabaseError(
+            'No se pudo conectar a la base de datos. Verifica tu configuración de DATABASE_URL y que la base de datos esté accesible.',
+            error
+          );
+        }
+      }
+
       // Detectar si el error es porque falta la columna password_hash o nombre_usuario
       if (typeof error === 'object' && error !== null && 'code' in error && error.code === '42703') {
         if (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string' && error.message.includes('password_hash')) {

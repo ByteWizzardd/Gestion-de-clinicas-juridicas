@@ -40,7 +40,7 @@ export const casosService = {
     getAllCasos: async () => {
         try {
             // Usar la query optimizada que incluye el profesor responsable en un JOIN
-            const casos = await casosQueries.getAllWithProfesor();
+            const casos = await casosQueries.getAllWithProfesor() as any[];
 
             // El nombre_responsable ya viene del JOIN, solo asegurar que sea null si está vacío
             return casos.map(caso => ({
@@ -162,9 +162,114 @@ export const casosService = {
     },
 
     /**
-     * Obtiene un caso por ID con toda su información relacionada
-     * Incluye: caso, solicitante, beneficiarios, equipo, acciones, citas, cambios de estatus, soportes
+     * Actualiza un caso existente
+     * @param idCaso ID del caso a actualizar
+     * @param data Datos a actualizar
+     * @param cedulaUsuario Cédula del usuario que realiza la actualización
      */
+    updateCaso: async (idCaso: number, data: unknown, cedulaUsuario: string) => {
+        try {
+            const { UpdateCasoSchema } = await import('@/lib/validations/casos.schema');
+            const validatedData = UpdateCasoSchema.parse({ ...(data as any), id_caso: idCaso });
+
+            // Verificar que el caso existe
+            const existingCaso = await casosQueries.getById(idCaso);
+            if (!existingCaso) {
+                throw new NotFoundError(`Caso con ID ${idCaso} no encontrado`);
+            }
+
+            // Validar existencia de relaciones si se están actualizando
+            if (validatedData.id_nucleo) {
+                const nucleoExists = await nucleosQueries.checkExists(validatedData.id_nucleo);
+                if (!nucleoExists) {
+                    throw new NotFoundError(`Núcleo con ID ${validatedData.id_nucleo} no encontrado`);
+                }
+            }
+
+            // Validar ámbito legal si se actualiza alguno de sus componentes
+            if (validatedData.id_materia || validatedData.num_ambito_legal) {
+                // Obtener valores actuales o nuevos
+                const idMateria = validatedData.id_materia || (existingCaso as any).id_materia;
+                const numCategoria = validatedData.num_categoria ?? (existingCaso as any).num_categoria ?? 0;
+                const numSubcategoria = validatedData.num_subcategoria ?? (existingCaso as any).num_subcategoria ?? 0;
+                const numAmbitoLegal = validatedData.num_ambito_legal || (existingCaso as any).num_ambito_legal;
+
+                const ambitoExists = await ambitosLegalesQueries.checkExists(
+                    idMateria,
+                    numCategoria,
+                    numSubcategoria,
+                    numAmbitoLegal
+                );
+
+                if (!ambitoExists) {
+                    throw new NotFoundError(`Ámbito legal no encontrado para Materia ${idMateria}, Categ ${numCategoria}, Subcateg ${numSubcategoria}, Ambito ${numAmbitoLegal}`);
+                }
+            }
+
+            // Preparar datos para actualización
+            const updateData = {
+                tramite: validatedData.tramite,
+                observaciones: validatedData.observaciones || undefined,
+                fecha_fin_caso: validatedData.fecha_fin_caso || undefined,
+                id_nucleo: validatedData.id_nucleo,
+                id_materia: validatedData.id_materia,
+                num_categoria: validatedData.num_categoria,
+                num_subcategoria: validatedData.num_subcategoria,
+                num_ambito_legal: validatedData.num_ambito_legal,
+                fecha_solicitud: validatedData.fecha_solicitud,
+            };
+
+            // Realizar actualización
+            return await withTransaction(async (client) => {
+                // Establecer variable de sesión para auditoría
+                // Validar cédula
+                if (!/^[A-Za-z0-9.\-]+$/.test(cedulaUsuario)) {
+                    throw new Error('Formato de cédula inválido');
+                }
+                const cedulaEscapada = cedulaUsuario.replace(/'/g, "''");
+
+                // Ejecutar SET LOCAL y UPDATE en la misma transacción y cliente
+                await client.query(`SET LOCAL app.usuario_actualiza_caso = '${cedulaEscapada}'`);
+
+                // (Opcional/Debug) Verificar que se estableció correctamente
+                // const check = await client.query("SELECT current_setting('app.usuario_actualiza_caso', true)");
+                // console.log('DEBUG: app.usuario_actualiza_caso establecido a:', check.rows[0].current_setting);
+
+                const updateQuery = loadSQL('casos/update.sql');
+                const result = await client.query(updateQuery, [
+                    idCaso,
+                    updateData.tramite || (existingCaso as any).tramite,
+                    updateData.observaciones !== undefined ? updateData.observaciones : (existingCaso as any).observaciones,
+                    updateData.fecha_fin_caso !== undefined ? updateData.fecha_fin_caso : (existingCaso as any).fecha_fin_caso,
+                    updateData.id_nucleo || (existingCaso as any).id_nucleo,
+                    updateData.id_materia || (existingCaso as any).id_materia,
+                    updateData.num_categoria ?? (existingCaso as any).num_categoria,
+                    updateData.num_subcategoria ?? (existingCaso as any).num_subcategoria,
+                    updateData.num_ambito_legal || (existingCaso as any).num_ambito_legal,
+                    updateData.fecha_solicitud ? (typeof updateData.fecha_solicitud === 'string' ? updateData.fecha_solicitud : updateData.fecha_solicitud) : (existingCaso as any).fecha_solicitud,
+                ]);
+
+                return result.rows[0];
+            });
+
+        } catch (error) {
+            if (error instanceof ValidationError || error instanceof NotFoundError) {
+                throw error;
+            }
+            // Si es un error de Zod
+            if (error && typeof error === 'object' && 'issues' in error) {
+                // ... transformar error de zod ...
+                // (Simplificado para brevedad, idealmente usar helper)
+                throw new ValidationError('Error de validación', {});
+            }
+
+            throw new AppError(
+                'Error al actualizar el caso',
+                500,
+                error instanceof Error ? error.message : 'Error desconocido'
+            );
+        }
+    },
     getCasoByIdCompleto: async (idCaso: number) => {
         try {
             // Obtener el caso base
@@ -250,8 +355,8 @@ export const casosService = {
      * Elimina una acción específica y todos sus ejecutores asociados
      */
     deleteAccion: async (params: {
-      numAccion: number;
-      idCaso: number;
+        numAccion: number;
+        idCaso: number;
     }): Promise<{ num_accion: number; id_caso: number }> => {
         try {
             // Asegurar que los parámetros sean números
@@ -411,11 +516,11 @@ export const casosService = {
             // Verificar que la acción existe antes de actualizar
             const checkQuery = 'SELECT num_accion, detalle_accion, comentario FROM acciones WHERE num_accion = $1 AND id_caso = $2';
             const existingAction = await client.query(checkQuery, [params.numAccion, params.idCaso]);
-            
+
             if (existingAction.rows.length === 0) {
                 throw new NotFoundError('La acción no existe');
             }
-            
+
             console.log('DEBUG updateAccion - Existing action before update:', existingAction.rows[0]);
 
             // Actualizar la acción usando client de la transacción
@@ -426,7 +531,7 @@ export const casosService = {
             // Si se proporcionan ejecutores, actualizarlos
             if (params.ejecutores !== undefined) {
                 console.log('DEBUG updateAccion - Updating ejecutores:', params.ejecutores);
-                
+
                 // Eliminar ejecutores existentes usando client
                 const deleteEjecutanQuery = loadSQL('ejecutan/delete-by-accion.sql');
                 await client.query(deleteEjecutanQuery, [params.numAccion, params.idCaso]);

@@ -11,12 +11,30 @@ import CedulaInput from './CedulaInput';
 import { X, Calendar, Upload, File, XCircle } from 'lucide-react';
 import { TRAMITES, ESTATUS_CASO } from '@/lib/constants/status';
 
+interface CaseData {
+  id_caso: number;
+  fecha_solicitud: string | Date;
+  tramite: string;
+  observaciones: string;
+  id_nucleo: number;
+  id_materia: number;
+  num_categoria: number;
+  num_subcategoria: number;
+  num_ambito_legal: number;
+  cedula: string;
+  nombre_completo_solicitante?: string;
+  nombres_solicitante?: string;
+  apellidos_solicitante?: string;
+}
+
 interface CaseFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: unknown) => void;
   initialCedula?: string;
   initialCedulaTipo?: string;
+  isEditing?: boolean;
+  initialData?: CaseData | null;
 }
 
 interface FormData {
@@ -39,9 +57,10 @@ export default function CaseFormModal({
   onSubmit,
   initialCedula = '',
   initialCedulaTipo = 'V',
+  isEditing = false,
+  initialData = null,
 }: CaseFormModalProps) {
   // Función para obtener la fecha actual en formato YYYY-MM-DD
-  // Usa la misma lógica que el componente DateTime
   const getCurrentDate = (): string => {
     const now = new Date();
     const year = now.getFullYear();
@@ -52,8 +71,8 @@ export default function CaseFormModal({
 
   // Inicializar con fecha vacía, se establecerá cuando se abra el modal
   const [formData, setFormData] = useState<FormData>({
-    fechaCaso: '', // Se establecerá cuando se abra el modal para evitar problemas de zona horaria
-    casoNumero: '', // Se cargará automáticamente al abrir el modal
+    fechaCaso: '',
+    casoNumero: '',
     cedulaSolicitanteTipo: 'V',
     cedulaSolicitante: '',
     materia: '',
@@ -65,70 +84,36 @@ export default function CaseFormModal({
     observaciones: '',
   });
 
+  const [originalFormData, setOriginalFormData] = useState<FormData | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
-  const [nucleos, setNucleos] = useState<Array<{ id_nucleo: number; nombre_nucleo: string }>>([]);
-  const [materias, setMaterias] = useState<Array<{ id_materia: number; nombre_materia: string }>>([]);
-  const [categorias, setCategorias] = useState<Array<{ num_categoria: number; nombre_categoria: string }>>([]);
-  const [subcategorias, setSubcategorias] = useState<Array<{ num_subcategoria: number; nombre_subcategoria: string }>>([]);
-  const [ambitosLegales, setAmbitosLegales] = useState<Array<{ 
-    num_ambito_legal: number; 
+  const [nucleos, setNucleos] = useState<Array<{ id_nucleo: number; nombre_nucleo: string; habilitado?: boolean }>>([]);
+  const [materias, setMaterias] = useState<Array<{ id_materia: number; nombre_materia: string; habilitado?: boolean }>>([]);
+  const [categorias, setCategorias] = useState<Array<{ num_categoria: number; nombre_categoria: string; habilitado?: boolean }>>([]);
+  const [subcategorias, setSubcategorias] = useState<Array<{ num_subcategoria: number; nombre_subcategoria: string; habilitado?: boolean }>>([]);
+  const [ambitosLegales, setAmbitosLegales] = useState<Array<{
+    num_ambito_legal: number;
     nombre_ambito_legal: string;
+    habilitado?: boolean;
   }>>([]);
   const [loadingCatalogos, setLoadingCatalogos] = useState(false);
   const [loadingCaseNumber, setLoadingCaseNumber] = useState(false);
   const [archivos, setArchivos] = useState<File[]>([]);
-  const [uploadingFiles, setUploadingFiles] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
-
-  // Cargar catálogos y siguiente número de caso al abrir el modal
-  // También actualizar la fecha actual (misma lógica que DateTime)
-  useEffect(() => {
-    if (isOpen) {
-      // Limpiar el formulario cuando se abre el modal
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const currentDate = `${year}-${month}-${day}`;
-      
-      setFormData({
-        fechaCaso: currentDate,
-        casoNumero: '',
-        cedulaSolicitanteTipo: initialCedulaTipo || 'V',
-        cedulaSolicitante: initialCedula || '',
-        materia: '',
-        categoria: '',
-        subcategoria: '',
-        ambitoLegal: '',
-        tramite: '',
-        nucleo: '',
-        observaciones: '',
-      });
-      setErrors({});
-      setArchivos([]);
-      setCategorias([]);
-      setSubcategorias([]);
-      setAmbitosLegales([]);
-      
-      loadCatalogos();
-      loadNextCaseNumber();
-    }
-  }, [isOpen, initialCedula, initialCedulaTipo]);
 
   const loadNextCaseNumber = async () => {
     try {
       setLoadingCaseNumber(true);
       const { getNextCaseNumberAction } = await import('@/app/actions/casos');
       const result = await getNextCaseNumberAction();
-      
+
       if (result.success && result.data?.nextNumber) {
         setFormData((prev) => ({
           ...prev,
-          casoNumero: result.data!.nextNumber, // Solo el número
+          casoNumero: result.data!.nextNumber,
         }));
       }
     } catch (error) {
-      // Error al cargar siguiente número de caso
+      console.error("Error loading next case number", error);
     } finally {
       setLoadingCaseNumber(false);
     }
@@ -136,7 +121,7 @@ export default function CaseFormModal({
 
   const loadCatalogos = async () => {
     try {
-      setLoadingCatalogos(true);
+      // setLoadingCatalogos(true); // Ya se maneja afuera
       const { getNucleosAction } = await import('@/app/actions/nucleos');
       const { getMateriasAction } = await import('@/app/actions/materias');
       const [nucleosResult, materiasResult] = await Promise.all([
@@ -152,16 +137,12 @@ export default function CaseFormModal({
         setMaterias(materiasResult.data);
       }
     } catch (error) {
-      // Error al cargar catálogos
-    } finally {
-      setLoadingCatalogos(false);
+      console.error("Error loading catalogs", error);
     }
   };
 
-  // Cargar categorías cuando se selecciona una materia (solo para Civil)
   const loadCategorias = async (idMateria: number) => {
     if (idMateria !== 1) {
-      // Para materias no-Civil, no hay categorías (solo "Sin Categoría")
       setCategorias([]);
       setSubcategorias([]);
       setAmbitosLegales([]);
@@ -171,16 +152,15 @@ export default function CaseFormModal({
     try {
       const { getCategoriasByMateriaAction } = await import('@/app/actions/categorias');
       const result = await getCategoriasByMateriaAction(idMateria);
-      
+
       if (result.success && result.data) {
         setCategorias(result.data);
       }
     } catch (error) {
-      // Error al cargar categorías
+      console.error("Error loading categories", error);
     }
   };
 
-  // Cargar subcategorías cuando se selecciona una categoría (solo para Civil)
   const loadSubcategorias = async (idMateria: number, numCategoria: number) => {
     if (idMateria !== 1) {
       setSubcategorias([]);
@@ -191,16 +171,15 @@ export default function CaseFormModal({
     try {
       const { getSubcategoriasByMateriaCategoriaAction } = await import('@/app/actions/subcategorias');
       const result = await getSubcategoriasByMateriaCategoriaAction(idMateria, numCategoria);
-      
+
       if (result.success && result.data) {
         setSubcategorias(result.data);
       }
     } catch (error) {
-      // Error al cargar subcategorías
+      console.error("Error loading subcategories", error);
     }
   };
 
-  // Cargar ámbitos legales según la materia seleccionada
   const loadAmbitosLegales = async (
     idMateria: number,
     numCategoria: number = 0,
@@ -213,7 +192,7 @@ export default function CaseFormModal({
         numCategoria,
         numSubcategoria
       );
-      
+
       if (result.success && result.data) {
         setAmbitosLegales(result.data);
       } else {
@@ -224,6 +203,109 @@ export default function CaseFormModal({
     }
   };
 
+  useEffect(() => {
+    if (isOpen) {
+      setErrors({});
+      setArchivos([]);
+      setFileError(null);
+
+      const initializeForm = async () => {
+        setLoadingCatalogos(true);
+        // 1. Cargar catálogos base (Nucleos y Materias)
+        await loadCatalogos();
+
+        if (isEditing && initialData) {
+          // MODO EDICIÓN
+
+          // Separar cédula
+          // initialData.cedula viene como 'V-12345678'
+          const cedulaParts = initialData.cedula.split('-');
+          let tipo = 'V';
+          let cel = initialData.cedula;
+          if (cedulaParts.length > 1) {
+            tipo = cedulaParts[0];
+            cel = cedulaParts[1];
+          }
+
+          // Cargar catálogos dependientes
+          if (initialData.id_materia === 1) { // Civil
+            await loadCategorias(initialData.id_materia);
+            if (initialData.num_categoria !== undefined) {
+              await loadSubcategorias(initialData.id_materia, initialData.num_categoria);
+              if (initialData.num_subcategoria !== undefined) {
+                await loadAmbitosLegales(initialData.id_materia, initialData.num_categoria, initialData.num_subcategoria);
+              }
+            }
+          } else if (initialData.id_materia) {
+            await loadAmbitosLegales(initialData.id_materia, 0, 0);
+          }
+
+          const formatDate = (dateVal: string | Date | undefined | null): string => {
+            if (!dateVal) return getCurrentDate();
+            if (dateVal instanceof Date) {
+              const year = dateVal.getFullYear();
+              const month = String(dateVal.getMonth() + 1).padStart(2, '0');
+              const day = String(dateVal.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            }
+            if (typeof dateVal === 'string') {
+              return dateVal.split('T')[0];
+            }
+            return getCurrentDate();
+          };
+
+          const initialFormState: FormData = {
+            fechaCaso: formatDate(initialData.fecha_solicitud),
+            casoNumero: initialData.id_caso,
+            cedulaSolicitanteTipo: tipo,
+            cedulaSolicitante: cel,
+            materia: initialData.id_materia.toString(),
+            categoria: initialData.num_categoria?.toString() || '',
+            subcategoria: initialData.num_subcategoria?.toString() || '',
+            ambitoLegal: initialData.num_ambito_legal?.toString() || '',
+            tramite: initialData.tramite,
+            nucleo: initialData.id_nucleo.toString(),
+            observaciones: initialData.observaciones || '',
+          };
+
+          setFormData(initialFormState);
+          setOriginalFormData(initialFormState);
+
+        } else {
+          // MODO CREACIÓN
+          setOriginalFormData(null);
+          const now = new Date();
+          const year = now.getFullYear();
+          const month = String(now.getMonth() + 1).padStart(2, '0');
+          const day = String(now.getDate()).padStart(2, '0');
+          const currentDate = `${year}-${month}-${day}`;
+
+          setFormData({
+            fechaCaso: currentDate,
+            casoNumero: '',
+            cedulaSolicitanteTipo: initialCedulaTipo || 'V',
+            cedulaSolicitante: initialCedula || '',
+            materia: '',
+            categoria: '',
+            subcategoria: '',
+            ambitoLegal: '',
+            tramite: '',
+            nucleo: '',
+            observaciones: '',
+          });
+          setCategorias([]);
+          setSubcategorias([]);
+          setAmbitosLegales([]);
+
+          loadNextCaseNumber();
+        }
+        setLoadingCatalogos(false);
+      };
+
+      initializeForm();
+    }
+  }, [isOpen]); // Reduced dependencies to avoid loops, explicit re-init when opened.
+
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
 
@@ -233,7 +315,6 @@ export default function CaseFormModal({
     if (!formData.cedulaSolicitante.trim()) {
       newErrors.cedulaSolicitante = 'Este campo es requerido';
     }
-    // Nota: cedulaSolicitanteTipo siempre tiene un valor por defecto 'V'
     if (!formData.materia) {
       newErrors.materia = 'Este campo es requerido';
     }
@@ -261,34 +342,47 @@ export default function CaseFormModal({
 
   const handleSubmit = async () => {
     if (validateForm()) {
-      // Mapear los datos del formulario a la estructura de la BD
-      // Nota: Se asocia un SOLICITANTE al caso (no un usuario)
-      // El solicitante es la persona que solicita el servicio legal
-      // Combinar tipo y número de cédula del solicitante con formato V-XXXX (con guión)
+      // Verificar cambios en modo edición
+      if (isEditing && originalFormData && archivos.length === 0) {
+        const hasChanges =
+          formData.fechaCaso !== originalFormData.fechaCaso ||
+          formData.tramite !== originalFormData.tramite ||
+          formData.nucleo !== originalFormData.nucleo ||
+          formData.materia !== originalFormData.materia ||
+          formData.categoria !== originalFormData.categoria ||
+          formData.subcategoria !== originalFormData.subcategoria ||
+          formData.ambitoLegal !== originalFormData.ambitoLegal ||
+          formData.observaciones !== originalFormData.observaciones;
+
+        if (!hasChanges) {
+          alert('No se han detectado cambios para guardar.');
+          return;
+        }
+      }
+
       const cedulaCompletaSolicitante = `${formData.cedulaSolicitanteTipo}-${formData.cedulaSolicitante}`;
-      
-      // Para materias no-Civil, usar valores por defecto (0 para categoría y subcategoría)
-      // Si no hay categoría o subcategoría, usar 0 en lugar de null/NaN
-      const numCategoria = formData.materia === '1' && formData.categoria 
-        ? (parseInt(formData.categoria) || 0) 
+
+      const numCategoria = formData.materia === '1' && formData.categoria
+        ? (parseInt(formData.categoria) || 0)
         : 0;
-      const numSubcategoria = formData.materia === '1' && formData.subcategoria 
-        ? (parseInt(formData.subcategoria) || 0) 
+      const numSubcategoria = formData.materia === '1' && formData.subcategoria
+        ? (parseInt(formData.subcategoria) || 0)
         : 0;
-      
+
       const apiData = {
-        fecha_solicitud: formData.fechaCaso || getCurrentDate(), // Requerido, usa la fecha del formulario o la actual por defecto
-        fecha_inicio_caso: formData.fechaCaso || getCurrentDate(), // Fecha de inicio del caso
+        fecha_solicitud: formData.fechaCaso || getCurrentDate(),
+        fecha_inicio_caso: formData.fechaCaso || getCurrentDate(),
         cedula: cedulaCompletaSolicitante,
         id_materia: parseInt(formData.materia),
         num_categoria: numCategoria,
         num_subcategoria: numSubcategoria,
         num_ambito_legal: parseInt(formData.ambitoLegal),
         tramite: formData.tramite,
-        estatus: ESTATUS_CASO.ASESORIA, // Siempre 'Asesoría' para casos nuevos
+        estatus: isEditing ? undefined : ESTATUS_CASO.ASESORIA,
         id_nucleo: parseInt(formData.nucleo),
         observaciones: formData.observaciones,
-        archivos: archivos, // Incluir archivos en los datos
+        archivos: archivos,
+        id_caso: isEditing ? ((initialData?.id_caso) as number) : undefined,
       };
 
       onSubmit(apiData);
@@ -296,9 +390,11 @@ export default function CaseFormModal({
   };
 
   const handleClose = () => {
+    // Reset form only on close if not persisting? Or rely on useEffect to init on open?
+    // Doing standard reset here.
     setFormData({
-      fechaCaso: getCurrentDate(), // Resetear a fecha actual
-      casoNumero: '', // Se recargará al abrir el modal nuevamente
+      fechaCaso: getCurrentDate(),
+      casoNumero: '',
       cedulaSolicitanteTipo: 'V',
       cedulaSolicitante: '',
       materia: '',
@@ -323,18 +419,16 @@ export default function CaseFormModal({
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
       setFileError(null);
-      
-      // Validar tamaño de cada archivo
+
       const invalidFiles = newFiles.filter(file => file.size > MAX_FILE_SIZE);
       if (invalidFiles.length > 0) {
         const fileNames = invalidFiles.map(f => f.name).join(', ');
         setFileError(`Los siguientes archivos exceden el límite de 10MB: ${fileNames}`);
-        // Solo añadir archivos válidos
         const validFiles = newFiles.filter(file => file.size <= MAX_FILE_SIZE);
         setArchivos((prev) => [...prev, ...validFiles]);
         return;
       }
-      
+
       setArchivos((prev) => [...prev, ...newFiles]);
     }
   };
@@ -346,8 +440,7 @@ export default function CaseFormModal({
   const updateField = (field: keyof FormData, value: string) => {
     setFormData((prev) => {
       const newData = { ...prev, [field]: value };
-      
-      // Si cambia la materia, limpiar categoría, subcategoría y ámbito legal
+
       if (field === 'materia') {
         newData.categoria = '';
         newData.subcategoria = '';
@@ -355,42 +448,37 @@ export default function CaseFormModal({
         setCategorias([]);
         setSubcategorias([]);
         setAmbitosLegales([]);
-        
-        // Cargar categorías si es Civil
+
         if (value === '1') {
           loadCategorias(parseInt(value));
         } else if (value) {
-          // Para otras materias, cargar directamente los ámbitos legales (categoría 0, subcategoría 0)
           loadAmbitosLegales(parseInt(value), 0, 0);
         }
       }
-      
-      // Si cambia la categoría (solo para Civil), limpiar subcategoría y ámbito legal
+
       if (field === 'categoria' && prev.materia === '1') {
         newData.subcategoria = '';
         newData.ambitoLegal = '';
         setSubcategorias([]);
         setAmbitosLegales([]);
-        
+
         if (value) {
           loadSubcategorias(parseInt(prev.materia), parseInt(value));
         }
       }
-      
-      // Si cambia la subcategoría (solo para Civil), limpiar ámbito legal
+
       if (field === 'subcategoria' && prev.materia === '1') {
         newData.ambitoLegal = '';
         setAmbitosLegales([]);
-        
+
         if (value && prev.categoria) {
           loadAmbitosLegales(parseInt(prev.materia), parseInt(prev.categoria), parseInt(value));
         }
       }
-      
+
       return newData;
     });
-    
-    // Limpiar error del campo cuando se modifica
+
     if (errors[field]) {
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -408,22 +496,18 @@ export default function CaseFormModal({
       className="rounded-[50px] max-w-[1200px] mx-auto"
       showCloseButton={false}
     >
-      <div className="p-12 relative">
-        {/* Botón de cerrar */}
+      <div className="p-6 relative">
         <button
           onClick={handleClose}
-          className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
+          className="absolute top-3 right-3 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
           aria-label="Cerrar modal"
         >
           <X className="w-6 h-6" />
         </button>
-        
-        {/* Título */}
-        <h2 className="text-2xl font-normal text-foreground mb-6">Registro de Caso</h2>
 
-        {/* Grid de formulario */}
-        <div className="grid grid-cols-3 gap-x-6 gap-y-4 mb-6">
-          {/* Fila 1: Fecha del Caso, Caso N°, Cédula de Solicitante */}
+        <h2 className="text-2xl font-normal text-foreground mb-3">{isEditing ? 'Editar Caso' : 'Registro de Caso'}</h2>
+
+        <div className="grid grid-cols-3 gap-x-6 gap-y-2.5 mb-3">
           <div className="col-span-1">
             <div className="flex flex-col gap-1">
               <label className="text-base font-normal text-foreground mb-1">Fecha del Caso <span className="text-danger">*</span></label>
@@ -450,16 +534,16 @@ export default function CaseFormModal({
             <CedulaInput
               label="Cédula de Solicitante *"
               tipoValue={formData.cedulaSolicitanteTipo}
-              onTipoChange={(value) => updateField('cedulaSolicitanteTipo', value)}
+              onTipoChange={(value) => !isEditing && updateField('cedulaSolicitanteTipo', value)}
               value={formData.cedulaSolicitante}
-              onChange={(e) => updateField('cedulaSolicitante', e.target.value)}
+              onChange={(e) => !isEditing && updateField('cedulaSolicitante', e.target.value)}
               placeholder="Ingrese cédula de solicitante"
               error={errors.cedulaSolicitante}
               required
+              disabled={isEditing}
             />
           </div>
 
-          {/* Fila 2: Trámite, Núcleo, Materia (Materia siempre después de Núcleo) */}
           <div className="col-span-1">
             <Select
               label="Trámite *"
@@ -481,10 +565,12 @@ export default function CaseFormModal({
               label="Núcleo *"
               value={formData.nucleo}
               onChange={(e) => updateField('nucleo', e.target.value)}
-              options={nucleos.map((nucleo) => ({
-                value: nucleo.id_nucleo.toString(),
-                label: nucleo.nombre_nucleo,
-              }))}
+              options={nucleos
+                .filter((nucleo) => nucleo.habilitado !== false)
+                .map((nucleo) => ({
+                  value: nucleo.id_nucleo.toString(),
+                  label: nucleo.nombre_nucleo,
+                }))}
               placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar núcleo"}
               error={errors.nucleo}
               required
@@ -505,8 +591,6 @@ export default function CaseFormModal({
             />
           </div>
 
-          {/* Fila 3: Campos condicionales según materia */}
-          {/* Para Civil: Categoría, Subcategoría, Ámbito Legal */}
           {formData.materia === '1' && (
             <>
               <div className="col-span-1">
@@ -514,10 +598,12 @@ export default function CaseFormModal({
                   label="Categoría *"
                   value={formData.categoria}
                   onChange={(e) => updateField('categoria', e.target.value)}
-                  options={categorias.map((cat) => ({
-                    value: cat.num_categoria.toString(),
-                    label: cat.nombre_categoria,
-                  }))}
+                  options={categorias
+                    .filter((cat) => cat.habilitado !== false)
+                    .map((cat) => ({
+                      value: cat.num_categoria.toString(),
+                      label: cat.nombre_categoria,
+                    }))}
                   placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar categoría"}
                   error={errors.categoria}
                   required
@@ -528,10 +614,12 @@ export default function CaseFormModal({
                   label="Subcategoría *"
                   value={formData.subcategoria}
                   onChange={(e) => updateField('subcategoria', e.target.value)}
-                  options={subcategorias.map((sub) => ({
-                    value: sub.num_subcategoria.toString(),
-                    label: sub.nombre_subcategoria,
-                  }))}
+                  options={subcategorias
+                    .filter((sub) => sub.habilitado !== false)
+                    .map((sub) => ({
+                      value: sub.num_subcategoria.toString(),
+                      label: sub.nombre_subcategoria,
+                    }))}
                   placeholder={formData.categoria ? "Seleccionar subcategoría" : "Primero seleccione categoría"}
                   error={errors.subcategoria}
                   required
@@ -543,10 +631,12 @@ export default function CaseFormModal({
                   label="Ámbito Legal *"
                   value={formData.ambitoLegal}
                   onChange={(e) => updateField('ambitoLegal', e.target.value)}
-                  options={ambitosLegales.map((ambito) => ({
-                    value: ambito.num_ambito_legal.toString(),
-                    label: ambito.nombre_ambito_legal,
-                  }))}
+                  options={ambitosLegales
+                    .filter((ambito) => ambito.habilitado !== false)
+                    .map((ambito) => ({
+                      value: ambito.num_ambito_legal.toString(),
+                      label: ambito.nombre_ambito_legal,
+                    }))}
                   placeholder={formData.subcategoria ? "Seleccionar ámbito legal" : "Primero seleccione subcategoría"}
                   error={errors.ambitoLegal}
                   required
@@ -556,17 +646,18 @@ export default function CaseFormModal({
             </>
           )}
 
-          {/* Para otras materias: Solo Ámbito Legal */}
           {formData.materia && formData.materia !== '1' && (
             <div className="col-span-1">
               <Select
                 label="Ámbito Legal *"
                 value={formData.ambitoLegal}
                 onChange={(e) => updateField('ambitoLegal', e.target.value)}
-                options={ambitosLegales.map((ambito) => ({
-                  value: ambito.num_ambito_legal.toString(),
-                  label: ambito.nombre_ambito_legal,
-                }))}
+                options={ambitosLegales
+                  .filter((ambito) => ambito.habilitado !== false)
+                  .map((ambito) => ({
+                    value: ambito.num_ambito_legal.toString(),
+                    label: ambito.nombre_ambito_legal,
+                  }))}
                 placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar ámbito legal"}
                 error={errors.ambitoLegal}
                 required
@@ -574,7 +665,6 @@ export default function CaseFormModal({
             </div>
           )}
 
-          {/* Fila 4: Observaciones (ocupa todo el ancho) */}
           <div className="col-span-3">
             <TextArea
               label="Observaciones"
@@ -585,14 +675,12 @@ export default function CaseFormModal({
             />
           </div>
 
-          {/* Fila 5: Soportes/Documentos (ocupa todo el ancho) */}
           <div className="col-span-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-base font-normal text-foreground mb-1">
+            <div className="flex flex-col gap-0.5">
+              <label className="text-base font-normal text-foreground mb-0.5">
                 Soportes/Documentos
               </label>
-              
-              {/* Input de carga de archivos */}
+
               <div className="relative">
                 <input
                   type="file"
@@ -604,16 +692,15 @@ export default function CaseFormModal({
                 />
                 <label
                   htmlFor="file-upload"
-                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 bg-[#E5E7EB] cursor-pointer hover:bg-gray-200 transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-300 bg-[#E5E7EB] cursor-pointer hover:bg-gray-200 transition-colors"
                 >
                   <Upload className="w-5 h-5 text-gray-600" />
                   <span className="text-base text-foreground">Seleccionar archivos</span>
                 </label>
               </div>
 
-              {/* Lista de archivos seleccionados */}
               {archivos.length > 0 && (
-                <div className="mt-2 space-y-2">
+                <div className="mt-1 space-y-1 max-h-24 overflow-y-auto">
                   {archivos.map((archivo, index) => (
                     <div
                       key={index}
@@ -641,26 +728,24 @@ export default function CaseFormModal({
                 </div>
               )}
               {fileError && (
-                <p className="text-xs text-danger mt-1">{fileError}</p>
+                <p className="text-xs text-danger mt-0.5">{fileError}</p>
               )}
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 mt-0.5">
                 Tamaño máximo por archivo: 10MB
               </p>
             </div>
           </div>
         </div>
 
-        {/* Footer con botón */}
-        <div className="flex flex-col border-t border-gray-200">
-          {/* Nota sobre campos obligatorios */}
-          <div className="flex items-center gap-1 pt-2 pb-2">
+        <div className="flex flex-col border-t border-gray-200 mt-3 pt-3">
+          <div className="flex items-center gap-1 pb-1.5">
             <span className="text-danger font-medium text-sm">*</span>
             <span className="text-sm text-gray-600">Campo obligatorio</span>
           </div>
-          
+
           <div className="flex justify-end">
             <Button variant="primary" size="xl" onClick={handleSubmit}>
-              Registrar Caso
+              {isEditing ? 'Guardar Cambios' : 'Registrar Caso'}
             </Button>
           </div>
         </div>
@@ -668,4 +753,3 @@ export default function CaseFormModal({
     </Modal>
   );
 }
-

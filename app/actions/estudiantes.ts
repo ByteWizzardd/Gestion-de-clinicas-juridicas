@@ -97,6 +97,47 @@ export async function getSemestresAction(): Promise<GetSemestresResult> {
 }
 
 /**
+ * Server Action para obtener el semestre actual
+ */
+export interface GetCurrentTermResult {
+  success: boolean;
+  data?: { term: string };
+  error?: { message: string; code?: string };
+}
+
+export async function getCurrentTermAction(): Promise<GetCurrentTermResult> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      } as GetCurrentTermResult;
+    }
+
+    const currentSemestre = await semestresQueries.getCurrent();
+
+    if (!currentSemestre) {
+      return {
+        success: false,
+        error: {
+          message: 'No hay un semestre actual activo',
+          code: 'NO_CURRENT_TERM',
+        },
+      };
+    }
+
+    return {
+      success: true,
+      data: { term: currentSemestre.term },
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'getCurrentTermAction', 'TERM_ERROR') as GetCurrentTermResult;
+  }
+}
+
+/**
  * Server Action para cargar estudiantes por lotes desde CSV/Excel
  */
 export async function bulkCreateEstudiantesAction(

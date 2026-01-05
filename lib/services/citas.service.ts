@@ -106,6 +106,7 @@ export const citasService = {
     endDate?: string;
     orientacion: string;
     usuariosAtienden?: string[];
+    idUsuarioRegistro: string; // Cedula del usuario que registra la cita
   }): Promise<{ num_cita: number; id_caso: number }> {
     try {
       const caseIdNumber = typeof params.caseId === 'string' ? parseInt(params.caseId, 10) : params.caseId;
@@ -115,13 +116,17 @@ export const citasService = {
 
       // Usar transacción para crear cita y registros en atienden de forma atómica
       return await withTransaction(async (client) => {
+        // Establecer la variable de sesión para el trigger de auditoría
+        await client.query("SELECT set_config('app.usuario_crea_cita', $1, true)", [params.idUsuarioRegistro]);
+        
         // 1. Crear la cita
         const createQuery = loadSQL('citas/create.sql');
         const citaResult = await client.query(createQuery, [
           caseIdNumber,
           params.date,
           params.endDate || null,
-          params.orientacion
+          params.orientacion,
+          params.idUsuarioRegistro
         ]);
 
         if (!citaResult.rows || citaResult.rows.length === 0) {
@@ -169,6 +174,7 @@ export const citasService = {
     endDate?: string | null;
     orientacion?: string;
     usuariosAtienden?: string[];
+    idUsuarioActualizo: string; // Cedula del usuario que actualiza la cita
   }): Promise<{ num_cita: number; id_caso: number; fecha: string }> {
     try {
       // Parsear el ID del appointment para obtener num_cita e id_caso
@@ -189,6 +195,9 @@ export const citasService = {
       return await withTransaction(async (client) => {
         // 1. Actualizar la cita si hay cambios
         if (params.date || params.endDate !== undefined || params.orientacion) {
+          // Establecer la variable de sesión para el trigger de auditoría
+          await client.query("SELECT set_config('app.usuario_actualiza_cita', $1, true)", [params.idUsuarioActualizo]);
+          
           const updateQuery = loadSQL('citas/update.sql');
 
           // Manejar fecha_proxima_cita: si es null explícitamente, enviar 'NULL' como string
@@ -202,6 +211,7 @@ export const citasService = {
             endDateParam = null; // No actualizar
           }
 
+          // La query update.sql ya no necesita el parámetro de usuario porque se establece antes
           const citaResult = await client.query(updateQuery, [
             num_cita,
             id_caso,
@@ -419,10 +429,12 @@ export const citasService = {
   },
 
   /**
-   * Elimina una cita existente y todos sus registros relacionados
+   * Elimina una cita existente y todos sus registros relacionados (registra auditoría antes de eliminar)
    */
   async deleteAppointment(params: {
     appointmentId: string; // Formato: "cita-{num_cita}-{id_caso}-{timestamp}"
+    idUsuarioElimino: string; // Cedula del usuario que elimina la cita
+    motivo: string; // Motivo de la eliminación
   }): Promise<{ num_cita: number; id_caso: number }> {
     try {
       // Parsear el ID del appointment para obtener num_cita e id_caso
@@ -576,7 +588,11 @@ export const citasService = {
         const deleteAtiendenQuery = loadSQL('atienden/delete-by-cita.sql');
         await client.query(deleteAtiendenQuery, [num_cita, id_caso]);
 
-        // 5. Eliminar la cita
+        // 5. Eliminar la cita (el trigger capturará la auditoría usando OLD)
+        // Establecer las variables de sesión para el trigger
+        await client.query("SELECT set_config('app.usuario_elimina_cita', $1, true)", [params.idUsuarioElimino]);
+        await client.query("SELECT set_config('app.motivo_eliminacion_cita', $1, true)", [params.motivo || '']);
+        
         const deleteCitaQuery = loadSQL('citas/delete.sql');
         const citaResult = await client.query(deleteCitaQuery, [num_cita, id_caso]);
 

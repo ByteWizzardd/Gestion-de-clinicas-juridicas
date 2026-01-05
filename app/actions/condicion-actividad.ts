@@ -7,7 +7,7 @@ import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 
 export interface GetCondicionActividadResult {
   success: boolean;
-  data?: Array<{ id_actividad: number; nombre_actividad: string }>;
+  data?: Array<{ id_actividad: number; nombre_actividad: string; habilitado?: boolean }>;
   error?: {
     message: string;
     code?: string;

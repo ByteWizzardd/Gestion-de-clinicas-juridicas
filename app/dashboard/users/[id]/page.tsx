@@ -109,14 +109,25 @@ export default function UserDetailPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <Breadcrumbs
-        items={[
-          { label: "Usuarios", href: "/dashboard/users" },
-          { label: usuario.nombre_completo },
-        ]}
-      />
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <Breadcrumbs
+          items={[
+            { label: "Usuarios", href: "/dashboard/users" },
+            { label: usuario.nombre_completo },
+          ]}
+        />
+      </motion.div>
 
-      <div className="mb-6 sm:mb-8 relative">
+      <motion.div
+        className="mb-6 sm:mb-8 relative"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
         <div className="flex items-center gap-4 mb-4">
           <EditableAvatar
             fotoPerfil={usuario.fotoPerfil || null}
@@ -140,12 +151,12 @@ export default function UserDetailPage() {
             onSuccess={setShowSuccess}
           />
           <div>
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-2" style={{ fontFamily: 'var(--font-league-spartan)' }}>
-          {usuario.nombre_completo}
-        </h1>
-        <p className="text-sm sm:text-base text-gray-500">
-          Cédula: {usuario.cedula}
-        </p>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-2" style={{ fontFamily: 'var(--font-league-spartan)' }}>
+              {usuario.nombre_completo}
+            </h1>
+            <p className="text-sm sm:text-base text-gray-500">
+              Cédula: {usuario.cedula}
+            </p>
           </div>
         </div>
         
@@ -164,9 +175,15 @@ export default function UserDetailPage() {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </motion.div>
 
-      <Tabs tabs={tabs} defaultTab="general" />
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+      >
+        <Tabs tabs={tabs} defaultTab="general" />
+      </motion.div>
     </div>
   );
 }

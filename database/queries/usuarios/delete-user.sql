@@ -17,16 +17,18 @@ CREATE OR REPLACE FUNCTION eliminar_usuario_fisico(
 DECLARE
     casos_count INTEGER;
     acciones_count INTEGER;
+    v_nombres_usuario VARCHAR(100);
+    v_apellidos_usuario VARCHAR(100);
 BEGIN
     -- Validar motivo
     IF p_motivo IS NULL OR TRIM(p_motivo) = '' THEN
         RAISE EXCEPTION 'El motivo es obligatorio para eliminaciones físicas de usuarios';
     END IF;
 
-    -- Verificar existencia del usuario
-    IF NOT EXISTS (SELECT 1 FROM usuarios WHERE cedula = p_cedula_usuario) THEN
-        RAISE EXCEPTION 'Usuario con cédula % no encontrado', p_cedula_usuario;
-    END IF;
+    -- Verificar existencia del usuario y obtener sus datos
+    SELECT nombres, apellidos INTO STRICT v_nombres_usuario, v_apellidos_usuario
+    FROM usuarios 
+    WHERE cedula = p_cedula_usuario;
 
     -- Se podría mandar esto para que el usuario conozca las implicaciones
     -- Contar casos y acciones asociadas (solo informativo)
@@ -43,7 +45,7 @@ BEGIN
     END IF;
 
     BEGIN
-        -- Eliminar referencias
+        -- Eliminar referencias operativas (no de auditoría)
         DELETE FROM password_reset_tokens WHERE cedula_usuario = p_cedula_usuario;
         DELETE FROM atienden WHERE id_usuario = p_cedula_usuario;
         DELETE FROM ejecutan WHERE id_usuario_ejecuta = p_cedula_usuario;
@@ -54,23 +56,44 @@ BEGIN
         DELETE FROM coordinadores WHERE id_coordinador = p_cedula_usuario;
         DELETE FROM estudiantes WHERE cedula_estudiante = p_cedula_usuario;
         DELETE FROM profesores WHERE cedula_profesor = p_cedula_usuario;
+        
+        -- Actualizar referencias en notificaciones
+        UPDATE notificaciones SET cedula_emisor = NULL WHERE cedula_emisor = p_cedula_usuario;
+        UPDATE notificaciones SET cedula_receptor = NULL WHERE cedula_receptor = p_cedula_usuario;
+        
+        -- Actualizar referencias en citas
+        UPDATE citas SET id_usuario_registro = NULL WHERE id_usuario_registro = p_cedula_usuario;
+        UPDATE citas SET id_usuario_actualizo = NULL WHERE id_usuario_actualizo = p_cedula_usuario;
+        
+        -- Actualizar referencias en soportes
+        UPDATE soportes SET id_usuario_subio = NULL WHERE id_usuario_subio = p_cedula_usuario;
+        UPDATE soportes SET id_usuario_elimino = NULL WHERE id_usuario_elimino = p_cedula_usuario;
 
-        -- Eliminar de usuarios
-        DELETE FROM usuarios WHERE cedula = p_cedula_usuario;
-
-        -- Auditoría de eliminación
+        -- Auditoría de eliminación (guardar antes de eliminar)
         INSERT INTO auditoria_eliminacion_usuario (
-            usuario_eliminado, eliminado_por, motivo, fecha
+            usuario_eliminado, 
+            nombres_usuario_eliminado,
+            apellidos_usuario_eliminado,
+            eliminado_por, 
+            motivo, 
+            fecha
         ) VALUES (
             p_cedula_usuario,
+            v_nombres_usuario,
+            v_apellidos_usuario,
             p_cedula_actor,
             p_motivo,
-            CURRENT_TIMESTAMP
+            (NOW() AT TIME ZONE 'America/Caracas')
         );
+
+        -- Eliminar de usuarios (después de guardar la auditoría)
+        -- Las foreign keys de auditoría deben permitir la eliminación (ON DELETE SET NULL)
+        DELETE FROM usuarios WHERE cedula = p_cedula_usuario;
 
     EXCEPTION
         WHEN foreign_key_violation THEN
-            RAISE EXCEPTION 'No se puede eliminar el usuario porque aún tiene referencias activas. Use disable.sql (Soft Delete) en su lugar.';
+            -- Obtener más detalles sobre qué foreign key está causando el problema
+            RAISE EXCEPTION 'No se puede eliminar el usuario porque aún tiene referencias activas en tablas operativas. Detalle: %. Use disable.sql (Soft Delete) en su lugar.', SQLERRM;
         WHEN OTHERS THEN
             RAISE EXCEPTION 'Error al eliminar usuario: %', SQLERRM;
     END;

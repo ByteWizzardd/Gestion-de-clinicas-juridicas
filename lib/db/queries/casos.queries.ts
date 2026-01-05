@@ -10,7 +10,7 @@ export const casosQueries = {
   /**
    * Obtiene todos los casos con información del solicitante
    */
-  getAll: async (): Promise<any[]> => {
+  getAll: async (): Promise<unknown[]> => {
     const query = loadSQL('casos/get-all.sql');
     const result: QueryResult = await pool.query(query);
     return result.rows;
@@ -20,7 +20,7 @@ export const casosQueries = {
    * Obtiene todos los casos con información del solicitante y profesor responsable (optimizado)
    * Usa un JOIN LATERAL para evitar N+1 queries
    */
-  getAllWithProfesor: async (): Promise<any[]> => {
+  getAllWithProfesor: async (): Promise<unknown[]> => {
     const query = loadSQL('casos/get-all-with-profesor.sql');
     const result: QueryResult = await pool.query(query);
     return result.rows;
@@ -29,7 +29,7 @@ export const casosQueries = {
   /**
    * Obtiene un caso por su ID con información completa
    */
-  getById: async (id: number): Promise<any | null> => {
+  getById: async (id: number): Promise<unknown | null> => {
     const query = loadSQL('casos/get-by-id.sql');
     const result: QueryResult = await pool.query(query, [id]);
     return result.rows[0] || null;
@@ -39,7 +39,7 @@ export const casosQueries = {
    * Obtiene todos los casos de un solicitante específico
    * @param cedulaSolicitante - Cédula del solicitante
    */
-  getBySolicitante: async (cedulaSolicitante: string): Promise<any[]> => {
+  getBySolicitante: async (cedulaSolicitante: string): Promise<unknown[]> => {
     const query = loadSQL('casos/get-by-solicitante.sql');
     const result: QueryResult = await pool.query(query, [cedulaSolicitante]);
     return result.rows;
@@ -50,7 +50,7 @@ export const casosQueries = {
    * Incluye casos donde está asignado, ejecuta acciones, atiende citas o supervisa
    * @param cedulaUsuario - Cédula del usuario
    */
-  getByUsuario: async (cedulaUsuario: string): Promise<any[]> => {
+  getByUsuario: async (cedulaUsuario: string): Promise<unknown[]> => {
     const query = loadSQL('casos/get-by-usuario.sql');
     const result: QueryResult = await pool.query(query, [cedulaUsuario]);
     return result.rows;
@@ -73,7 +73,7 @@ export const casosQueries = {
     fecha_solicitud?: string | Date;
     fecha_inicio_caso: string | Date;
     cedulaUsuarioRegistra?: string;
-  }): Promise<any> => {
+  }): Promise<unknown> => {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -155,7 +155,7 @@ export const casosQueries = {
       num_ambito_legal?: number;
       fecha_solicitud?: string | Date;
     }
-  ): Promise<any> => {
+  ): Promise<unknown> => {
     const query = loadSQL('casos/update.sql');
     const result: QueryResult = await pool.query(query, [
       id,
@@ -213,9 +213,7 @@ export const casosQueries = {
   getDistributionByNucleo: async (
     fechaInicio?: string | Date,
     fechaFin?: string | Date,
-    idNucleo?: number,
-    term?: string
-  ): Promise<Array<{ nombre_nucleo: string; cantidad: number }>> => {
+    idNucleo?: number  ): Promise<Array<{ nombre_nucleo: string; cantidad: number }>> => {
     const query = loadSQL('casos/get-distribution-by-nucleo.sql');
     const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
@@ -242,9 +240,7 @@ export const casosQueries = {
   getTopMaterias: async (
     fechaInicio?: string | Date,
     fechaFin?: string | Date,
-    idNucleo?: number,
-    term?: string
-  ): Promise<Array<{ nombre_materia: string; cantidad: number }>> => {
+    idNucleo?: number  ): Promise<Array<{ nombre_materia: string; cantidad: number }>> => {
     const query = loadSQL('casos/get-top-materias.sql');
     const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
@@ -298,9 +294,7 @@ export const casosQueries = {
   getKPIStats: async (
     fechaInicio?: string | Date,
     fechaFin?: string | Date,
-    idNucleo?: number,
-    term?: string
-  ): Promise<{
+    idNucleo?: number  ): Promise<{
     total_casos: number;
     casos_en_riesgo: number;
     total_acciones: number;
@@ -343,9 +337,7 @@ export const casosQueries = {
   getDistributionByStatus: async (
     fechaInicio?: string | Date,
     fechaFin?: string | Date,
-    idNucleo?: number,
-    term?: string
-  ): Promise<Array<{ nombre_estatus: string; cantidad: number }>> => {
+    idNucleo?: number  ): Promise<Array<{ nombre_estatus: string; cantidad: number }>> => {
     const query = loadSQL('casos/get-distribution-by-status.sql');
     const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
@@ -372,9 +364,7 @@ export const casosQueries = {
   getCaseLoadTrend: async (
     fechaInicio?: string | Date,
     fechaFin?: string | Date,
-    idNucleo?: number,
-    term?: string
-  ): Promise<Array<{ mes: string; estatus: string; cantidad: number }>> => {
+    idNucleo?: number  ): Promise<Array<{ mes: string; estatus: string; cantidad: number }>> => {
     const query = loadSQL('casos/get-case-load-trend.sql');
     const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
@@ -497,6 +487,25 @@ export const casosQueries = {
       idNucleo || null,
     ]);
     return result.rows;
+  },
+
+  /**
+   * Elimina físicamente un caso y todas sus referencias asociadas
+   * @param idCaso - ID del caso a eliminar
+   * @param cedulaActor - Cédula del usuario que realiza la eliminación
+   * @param motivo - Motivo de la eliminación (obligatorio)
+   */
+  deleteFisico: async (
+    idCaso: number,
+    cedulaActor: string,
+    motivo: string
+  ): Promise<void> => {
+    // Llama a la función que ya realiza la auditoría internamente
+    await pool.query("SELECT eliminar_caso_fisico($1, $2, $3)", [
+      idCaso,
+      cedulaActor,
+      motivo,
+    ]);
   },
 };
 

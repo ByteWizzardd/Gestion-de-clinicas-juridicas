@@ -8,7 +8,6 @@ SELECT
     a.tipo_mime,
     a.descripcion,
     a.fecha_consignacion,
-    a.fecha_subida,
     a.fecha_eliminacion,
     -- Tamaño del documento (guardado al momento de eliminación)
     a.tamano_bytes,

@@ -55,7 +55,6 @@ export const soportesQueries = {
     nombres_usuario_subio: string | null;
     apellidos_usuario_subio: string | null;
     nombre_completo_usuario_subio: string | null;
-    fecha_subida: string | null;
   }>> => {
     const query = loadSQL('soportes/get-by-caso.sql');
     const result: QueryResult = await pool.query(query, [idCaso]);

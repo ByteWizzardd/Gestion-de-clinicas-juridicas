@@ -30,7 +30,6 @@ BEGIN
             tipo_mime,
             descripcion,
             fecha_consignacion,
-            fecha_subida,
             tamano_bytes,
             id_usuario_subio,
             id_usuario_elimino,
@@ -42,7 +41,6 @@ BEGIN
             OLD.tipo_mime,
             OLD.descripcion,
             OLD.fecha_consignacion,
-            OLD.fecha_subida,
             LENGTH(OLD.documento_data), -- Solo guardamos el tamaño, no el archivo
             OLD.id_usuario_subio,
             cedula_usuario,

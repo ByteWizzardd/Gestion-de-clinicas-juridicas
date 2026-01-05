@@ -9,7 +9,7 @@ import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 
 export interface GetEstadosResult {
   success: boolean;
-  data?: Array<{ id_estado: number; nombre_estado: string }>;
+  data?: Array<{ id_estado: number; nombre_estado: string; habilitado?: boolean }>;
   error?: {
     message: string;
     code?: string;
@@ -18,7 +18,7 @@ export interface GetEstadosResult {
 
 export interface GetMunicipiosResult {
   success: boolean;
-  data?: Array<{ id_estado: number; num_municipio: number; nombre_municipio: string }>;
+  data?: Array<{ id_estado: number; num_municipio: number; nombre_municipio: string; habilitado?: boolean }>;
   error?: {
     message: string;
     code?: string;
@@ -27,7 +27,7 @@ export interface GetMunicipiosResult {
 
 export interface GetParroquiasResult {
   success: boolean;
-  data?: Array<{ id_estado: number; num_municipio: number; num_parroquia: number; nombre_parroquia: string }>;
+  data?: Array<{ id_estado: number; num_municipio: number; num_parroquia: number; nombre_parroquia: string; habilitado?: boolean }>;
   error?: {
     message: string;
     code?: string;

@@ -1,9 +1,10 @@
 'use client';
-import { Filter as FilterIcon, ChevronLeft, Building2, FileText, UserCheck, X, Activity, BookOpen } from 'lucide-react';
+import { Filter as FilterIcon, ChevronLeft, Building2, FileText, UserCheck, X, Activity, BookOpen, Calendar } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { createPortal } from 'react-dom';
 import { getNucleosAction } from '@/app/actions/nucleos';
+import DatePicker from '@/components/forms/DatePicker';
 
 interface FilterProps {
   nucleoFilter?: string;
@@ -20,7 +21,14 @@ interface FilterProps {
   showCasosAsignados?: boolean;
   materiaFilter?: string;
   onMateriaChange?: (value: string) => void;
-  materias?: { id_materia: number; nombre_materia: string }[];
+  materias?: { id_materia: number; nombre_materia: string; habilitado?: boolean }[];
+  nucleoLabel?: string;
+  nucleoAllLabel?: string;
+  fechaInicio?: string;
+  fechaFin?: string;
+  onFechaInicioChange?: (value: string) => void;
+  onFechaFinChange?: (value: string) => void;
+  showDateRange?: boolean;
 }
 
 function Filter({
@@ -38,11 +46,18 @@ function Filter({
   showCasosAsignados = false,
   materiaFilter,
   onMateriaChange,
-  materias = []
+  materias = [],
+  nucleoLabel = 'Núcleo',
+  nucleoAllLabel = 'Todos los núcleos',
+  fechaInicio,
+  fechaFin,
+  onFechaInicioChange,
+  onFechaFinChange,
+  showDateRange = false
 }: FilterProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeSubmenu, setActiveSubmenu] = useState<'nucleo' | 'materia' | 'tramite' | 'estatus' | null>(null);
-  const [nucleos, setNucleos] = useState<Array<{ id_nucleo: number; nombre_nucleo: string }>>([]);
+  const [activeSubmenu, setActiveSubmenu] = useState<'nucleo' | 'materia' | 'tramite' | 'estatus' | 'fechas' | null>(null);
+  const [nucleos, setNucleos] = useState<Array<{ id_nucleo: number; nombre_nucleo: string; habilitado?: boolean }>>([]);
   const [mounted, setMounted] = useState(false);
   const [submenuPosition, setSubmenuPosition] = useState({ top: 0, right: 0 });
 
@@ -67,7 +82,7 @@ function Filter({
   }, []);
 
   // Eliminar useEffect de posicionamiento automático y usar el evento de click
-  const handleSubmenuToggle = (type: 'nucleo' | 'materia' | 'tramite' | 'estatus', e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleSubmenuToggle = (type: 'nucleo' | 'materia' | 'tramite' | 'estatus' | 'fechas', e: React.MouseEvent<HTMLButtonElement>) => {
     if (activeSubmenu === type) {
       setActiveSubmenu(null);
     } else {
@@ -90,7 +105,16 @@ function Filter({
       const isInsideSubmenu = submenuRef.current?.contains(target);
       const isInsideTrigger = triggerRef.current?.contains(target);
 
-      if (!isInsideMenu && !isInsideSubmenu && !isInsideTrigger) {
+      // Verificar si el clic está dentro del calendario del DatePicker (que usa createPortal)
+      const isInsideDatePicker = (target as Element).closest?.('.datepicker-portal') !== null;
+
+      // Si el submenú de fechas está activo, no cerrar el menú principal al hacer clic dentro del submenú
+      // Esto permite que los DatePicker funcionen correctamente
+      if (activeSubmenu === 'fechas' && isInsideSubmenu) {
+        return; // No cerrar si estamos dentro del submenú de fechas
+      }
+
+      if (!isInsideMenu && !isInsideSubmenu && !isInsideTrigger && !isInsideDatePicker) {
         setIsOpen(false);
         setActiveSubmenu(null);
       }
@@ -102,14 +126,16 @@ function Filter({
       // window.addEventListener('scroll', () => setActiveSubmenu(null)); 
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
+  }, [isOpen, activeSubmenu]);
 
   const activeFilterCount =
     (nucleoFilter ? 1 : 0) +
     (tramiteFilter ? 1 : 0) +
     (estatusFilter ? 1 : 0) +
     (casosAsignadosFilter ? 1 : 0) +
-    (materiaFilter ? 1 : 0);
+    (materiaFilter ? 1 : 0) +
+    (fechaInicio ? 1 : 0) +
+    (fechaFin ? 1 : 0);
 
   const hasActiveFilter = activeFilterCount > 0;
 
@@ -119,6 +145,8 @@ function Filter({
     if (onEstatusChange) onEstatusChange('');
     if (onMateriaChange) onMateriaChange('');
     if (onCasosAsignadosChange) onCasosAsignadosChange(false);
+    if (onFechaInicioChange) onFechaInicioChange('');
+    if (onFechaFinChange) onFechaFinChange('');
     setActiveSubmenu(null);
   };
 
@@ -142,10 +170,12 @@ function Filter({
           if (nucleoOptions && nucleoOptions.length > 0) {
             options = nucleoOptions;
           } else {
-            options = nucleos.map(n => ({ value: n.id_nucleo.toString(), label: n.nombre_nucleo }));
+            options = nucleos
+              .filter((n) => n.habilitado !== false)
+              .map(n => ({ value: n.id_nucleo.toString(), label: n.nombre_nucleo }));
           }
           onChangeHandler = onNucleoChange || (() => { });
-          allLabel = 'Todos los núcleos';
+          allLabel = nucleoAllLabel;
           break;
         case 'tramite':
           options = tramiteOptions;
@@ -153,7 +183,9 @@ function Filter({
           allLabel = 'Todos los trámites';
           break;
         case 'materia':
-          options = materias.map(m => ({ value: m.id_materia.toString(), label: m.nombre_materia }));
+          options = materias
+            .filter((m) => m.habilitado !== false)
+            .map(m => ({ value: m.id_materia.toString(), label: m.nombre_materia }));
           onChangeHandler = onMateriaChange || (() => { });
           allLabel = 'Todas las materias';
           break;
@@ -191,7 +223,7 @@ function Filter({
             options = nucleos.map(n => ({ value: n.id_nucleo.toString(), label: n.nombre_nucleo }));
           }
           handler = onNucleoChange || (() => { });
-          allLabel = 'Todos los núcleos';
+          allLabel = nucleoAllLabel;
           break;
         case 'tramite':
           options = tramiteOptions;
@@ -199,7 +231,9 @@ function Filter({
           allLabel = 'Todos los trámites';
           break;
         case 'materia':
-          options = materias.map(m => ({ value: m.id_materia.toString(), label: m.nombre_materia }));
+          options = materias
+            .filter((m) => m.habilitado !== false)
+            .map(m => ({ value: m.id_materia.toString(), label: m.nombre_materia }));
           handler = onMateriaChange || (() => { });
           allLabel = 'Todas las materias';
           break;
@@ -223,9 +257,63 @@ function Filter({
       case 'estatus': filterValue = estatusFilter || ''; break;
     }
 
-    return createPortal(
-      // ... (contenido intermedio sin cambios grandes, pero para el contexto del replace pongo hasta donde falla si puedo, o mejor hago chunks)
+    // Si es el submenú de fechas, renderizar DatePickers
+    if (activeSubmenu === 'fechas') {
+      return createPortal(
+        <AnimatePresence>
+          {activeSubmenu === 'fechas' && (
+            <motion.div
+              key="fechas-submenu"
+              ref={submenuRef}
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              transition={{ duration: 0.15 }}
+              style={{
+                position: 'fixed',
+                top: submenuPosition.top,
+                right: submenuPosition.right,
+                zIndex: 10000,
+              }}
+              className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[280px] p-4"
+            >
+              <div className="space-y-3">
+                <DatePicker
+                  label="Fecha inicio"
+                  value={fechaInicio || ''}
+                  onChange={(value) => {
+                    if (onFechaInicioChange) onFechaInicioChange(value || '');
+                  }}
+                />
+                <DatePicker
+                  label="Fecha fin"
+                  value={fechaFin || ''}
+                  onChange={(value) => {
+                    if (onFechaFinChange) onFechaFinChange(value || '');
+                  }}
+                />
+                {(fechaInicio || fechaFin) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onFechaInicioChange) onFechaInicioChange('');
+                      if (onFechaFinChange) onFechaFinChange('');
+                    }}
+                    className="w-full px-3 py-2 text-sm text-center text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <X className="w-4 h-4" />
+                    Limpiar fechas
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      );
+    }
 
+    return createPortal(
       <AnimatePresence>
         {activeSubmenu && (
           <motion.div
@@ -326,26 +414,29 @@ function Filter({
               className="bg-white border border-gray-300 rounded-2xl shadow-lg w-auto p-2"
             >
               {/* Opción: Núcleo */}
-              <motion.button
-                ref={activeSubmenu === 'nucleo' ? activeButtonRef : undefined}
-                type="button"
-                whileTap={{ scale: 0.95 }}
-                whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
-                onClick={(e) => handleSubmenuToggle('nucleo', e)}
-                className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'nucleo'
-                  ? 'bg-primary-light text-primary'
-                  : nucleoFilter
-                    ? 'text-primary hover:bg-gray-100'
-                    : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-              >
-                <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'nucleo' ? '-rotate-90' : ''}`} />
-                <div className="flex-1" /> {/* Spacer agregado nuevamente para asegurar alineación derecha */}
-                <span>Núcleo</span>
-                <Building2 className="w-4 h-4" />
-              </motion.button>
-
-              <div className="border-t border-gray-200 my-2"></div>
+              {onNucleoChange && (
+                <>
+                  <motion.button
+                    ref={activeSubmenu === 'nucleo' ? activeButtonRef : undefined}
+                    type="button"
+                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                    onClick={(e) => handleSubmenuToggle('nucleo', e)}
+                    className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'nucleo'
+                      ? 'bg-primary-light text-primary'
+                      : nucleoFilter
+                        ? 'text-primary hover:bg-gray-100'
+                        : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                  >
+                    <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'nucleo' ? '-rotate-90' : ''}`} />
+                    <div className="flex-1" /> {/* Spacer agregado nuevamente para asegurar alineación derecha */}
+                    <span>{nucleoLabel}</span>
+                    <Building2 className="w-4 h-4" />
+                  </motion.button>
+                  <div className="border-t border-gray-200 my-2"></div>
+                </>
+              )}
 
               {/* Opción: Materia */}
               {onMateriaChange && (
@@ -438,6 +529,31 @@ function Filter({
                     <div className="flex-1" />
                     <span>Mis casos</span>
                     <UserCheck className={`w-4 h-4 ${casosAsignadosFilter ? 'text-red-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
+                  </motion.button>
+                  <div className="border-t border-gray-200 my-2"></div>
+                </>
+              )}
+
+              {/* Opción: Rango de Fechas */}
+              {showDateRange && (onFechaInicioChange || onFechaFinChange) && (
+                <>
+                  <motion.button
+                    ref={activeSubmenu === 'fechas' ? activeButtonRef : undefined}
+                    type="button"
+                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                    onClick={(e) => handleSubmenuToggle('fechas', e)}
+                    className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'fechas'
+                      ? 'bg-primary-light text-primary'
+                      : (fechaInicio || fechaFin)
+                        ? 'text-primary hover:bg-gray-100'
+                        : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                  >
+                    <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'fechas' ? '-rotate-90' : ''}`} />
+                    <div className="flex-1" />
+                    <span>Rango de fechas</span>
+                    <Calendar className="w-4 h-4" />
                   </motion.button>
                   <div className="border-t border-gray-200 my-2"></div>
                 </>

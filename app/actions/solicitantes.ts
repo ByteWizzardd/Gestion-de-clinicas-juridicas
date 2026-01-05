@@ -61,7 +61,7 @@ export async function createSolicitanteAction(data: any): Promise<CreateSolicita
       };
     }
 
-    const result = await solicitantesService.create(data);
+    const result = await solicitantesService.create(data, authResult.user.cedula);
 
     // Revalidar cache de la página de solicitantes
     revalidatePath('/dashboard/applicants');
@@ -286,3 +286,65 @@ export async function checkEmailExistsAction(
   }
 }
 
+/**
+ * Server Action para actualizar un solicitante existente
+ */
+export async function updateSolicitanteAction(cedulaOriginal: string, data: any): Promise<CreateSolicitanteResult> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    if (!cedulaOriginal) {
+      return {
+        success: false,
+        error: {
+          message: 'La cédula original es requerida para actualizar',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    const result = await solicitantesService.update(cedulaOriginal, data, authResult.user.cedula);
+
+    // Revalidar cache calculando rutas
+    revalidatePath('/dashboard/applicants');
+    revalidatePath(`/dashboard/applicants/${cedulaOriginal}`);
+
+    return {
+      success: true,
+      data: result,
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'updateSolicitanteAction', 'SOLICITANTE_ERROR');
+  }
+}
+
+
+/**
+ * Server Action para eliminar un solicitante
+ */
+export async function deleteSolicitanteAction(cedula: string, motivo: string): Promise<{ success: boolean; error?: any }> {
+  try {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return { success: false, error: authResult.error };
+    }
+
+    if (!cedula) {
+      return { success: false, error: { message: 'Cédula requerida' } };
+    }
+
+    await solicitantesService.delete(cedula, authResult.user.cedula, motivo);
+
+    revalidatePath('/dashboard/applicants');
+    return { success: true };
+  } catch (error) {
+    return handleServerActionError(error, 'deleteSolicitanteAction', 'SOLICITANTE_ERROR');
+  }
+}

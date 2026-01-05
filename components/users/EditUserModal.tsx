@@ -7,6 +7,7 @@ import { updateUsuarioByCedulaAction } from '@/app/actions/usuarios';
 import { UpdateUserSchema } from '@/lib/validations/user.schema';
 import { getSemestresAction } from '@/app/actions/estudiantes';
 import PhoneInput from '../forms/PhoneInput';
+import { validateEmailFormat, validateEmailDomain } from '@/lib/utils/email-validation';
 
 interface Usuario {
   cedula: string;
@@ -30,6 +31,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
   const [form, setForm] = useState<Usuario | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Partial<Record<keyof Usuario, string>>>({});
 
   // Sincronizar el estado local solo cuando cambia el usuario y el modal se abre
   useEffect(() => {
@@ -42,7 +44,8 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
         initialFormState.telefono = '+58';
       }
       setForm(initialFormState);
-      setError(null); 
+      setError(null);
+      setErrors({});
     }
   }, [isOpen, usuario]);
 
@@ -65,7 +68,77 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
   ) => {
     if (form) {
       setForm({ ...form, [e.target.name]: e.target.value });
+      // Limpiar error del campo cuando se modifica
+      if (errors[e.target.name as keyof Usuario]) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[e.target.name as keyof Usuario];
+          return newErrors;
+        });
+      }
     }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Partial<Record<keyof Usuario, string>> = {};
+    
+    if (!form) return false;
+
+    // Validar correo electrónico
+    if (form.correo_electronico && form.correo_electronico.trim()) {
+      if (!validateEmailFormat(form.correo_electronico)) {
+        newErrors.correo_electronico = 'Correo electrónico inválido';
+      } else if (!validateEmailDomain(form.correo_electronico)) {
+        newErrors.correo_electronico = 'El correo debe tener dominio @est.ucab.edu.ve o @ucab.edu.ve';
+      }
+    }
+
+    // Validar teléfono (si está presente)
+    if (form.telefono && form.telefono.trim() && form.telefono.trim() !== '+58') {
+      const telefonoTrimmed = form.telefono.trim();
+      const codeMatch = telefonoTrimmed.match(/^(\+\d{1,3})/);
+      const code = codeMatch ? codeMatch[1] : '';
+      const number = telefonoTrimmed.replace(code, '').trim();
+
+      // Si solo tiene el código sin número, es válido (se enviará como null)
+      if (number !== '') {
+        // Para números venezolanos (+58), el número debe tener 10 dígitos y empezar con 4
+        if (code === '+58') {
+          if (number.length !== 10 || !number.startsWith('4')) {
+            newErrors.telefono = 'Número venezolano inválido. Debe tener 10 dígitos y empezar con 4 (ej: 412...).';
+          }
+        } else {
+          // Para otros países, validar longitud mínima y máxima
+          if (number.length < 7 || number.length > 15) {
+            newErrors.telefono = 'Número de teléfono inválido';
+          }
+        }
+      }
+    }
+
+    // Validar campos específicos según tipo de usuario
+    if (form.tipo_usuario === 'Estudiante') {
+      if (!form.tipo_estudiante || (typeof form.tipo_estudiante === 'string' && form.tipo_estudiante.trim() === '')) {
+        newErrors.tipo_estudiante = 'Este campo es requerido';
+      }
+      if (!form.term || (typeof form.term === 'string' && form.term.trim() === '')) {
+        newErrors.term = 'Este campo es requerido';
+      }
+    } else if (form.tipo_usuario === 'Profesor') {
+      if (!form.tipo_profesor || (typeof form.tipo_profesor === 'string' && form.tipo_profesor.trim() === '')) {
+        newErrors.tipo_profesor = 'Este campo es requerido';
+      }
+      if (!form.term || (typeof form.term === 'string' && form.term.trim() === '')) {
+        newErrors.term = 'Este campo es requerido';
+      }
+    } else if (form.tipo_usuario === 'Coordinador') {
+      if (!form.term || (typeof form.term === 'string' && form.term.trim() === '')) {
+        newErrors.term = 'Este campo es requerido';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,24 +146,45 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
     setError(null);
     if (!form) return;
 
+    // Validar formulario
+    if (!validateForm()) {
+      return;
+    }
+
     // Validar con Zod antes de enviar
     const validation = UpdateUserSchema.safeParse(form);
     if (!validation.success) {
-      // Mostrar el primer error encontrado
-      const firstError = validation.error.errors[0];
-      setError(firstError?.message || 'Datos inválidos');
+      // Mapear errores de Zod a errores por campo
+      const zodErrors: Partial<Record<keyof Usuario, string>> = {};
+      validation.error.errors.forEach((err) => {
+        const path = err.path[0] as keyof Usuario;
+        if (path) {
+          zodErrors[path] = err.message;
+        }
+      });
+      setErrors(zodErrors);
       return;
     }
 
     setLoading(true);
     try {
+      // Si el teléfono está vacío o es solo el prefijo (+58), enviarlo como undefined
+      let telefonoFinal: string | undefined = form.telefono || undefined;
+      if (telefonoFinal) {
+        const trimmed = telefonoFinal.trim();
+        // Si solo tiene el código de país sin número, enviar como undefined
+        if (trimmed === '+58' || trimmed.replace(/\+\d+/, '').trim() === '') {
+          telefonoFinal = undefined;
+        }
+      }
+      
       const result = await updateUsuarioByCedulaAction(form.cedula, {
         correo_electronico: form.correo_electronico,
         nombre: form.nombres,
         apellidos: form.apellidos,
         nombre_usuario: form.nombre_usuario,
         tipo_usuario: form.tipo_usuario,
-        telefono: form.telefono,
+        telefono: telefonoFinal,
         estudiante: form.tipo_usuario === 'Estudiante' ? {
           tipo_estudiante: form.tipo_estudiante as
             | 'Voluntario'
@@ -156,24 +250,28 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
                 name="correo_electronico"
                 value={typeof form.correo_electronico === 'string' ? form.correo_electronico : ''}
                 onChange={handleChange}
+                error={errors.correo_electronico}
               />
               <Input
                 label="Nombre(s)"
                 name="nombres"
                 value={typeof form.nombres === 'string' ? form.nombres : ''}
                 onChange={handleChange}
+                error={errors.nombres}
               />
               <Input
                 label="Apellido(s)"
                 name="apellidos"
                 value={typeof form.apellidos === 'string' ? form.apellidos : ''}
                 onChange={handleChange}
+                error={errors.apellidos}
               />
               <Input
                 label="Nombre de usuario"
                 name="nombre_usuario"
                 value={form.nombre_usuario as string}
                 onChange={handleChange}
+                error={errors.nombre_usuario}
               />
               <PhoneInput
                 label="Teléfono"
@@ -181,18 +279,37 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
                 value={typeof form.telefono === 'string' ? form.telefono : ''}
                 onChange={handleChange}
                 placeholder="4121234567"
+                error={errors.telefono}
               />
               <Select
                 label="Tipo de usuario"
                 value={form.tipo_usuario}
-                onChange={(e) =>
-                  setForm({ ...form, tipo_usuario: e.target.value })
-                }
+                onChange={(e) => {
+                  const nuevoTipoUsuario = e.target.value;
+                  // Limpiar solo tipo_estudiante y tipo_profesor cuando cambia el tipo de usuario
+                  // para evitar falsos registros (term y nrc se mantienen)
+                  setForm({ 
+                    ...form, 
+                    tipo_usuario: nuevoTipoUsuario,
+                    tipo_estudiante: undefined,
+                    tipo_profesor: undefined,
+                  });
+                  // Limpiar errores de campos relacionados cuando cambia el tipo de usuario
+                  setErrors((prev) => {
+                    const newErrors = { ...prev };
+                    delete newErrors.tipo_usuario;
+                    delete newErrors.tipo_estudiante;
+                    delete newErrors.tipo_profesor;
+                    delete newErrors.term;
+                    return newErrors;
+                  });
+                }}
                 options={[
                   { value: 'Coordinador', label: 'Coordinador' },
                   { value: 'Profesor', label: 'Profesor' },
                   { value: 'Estudiante', label: 'Estudiante' },
                 ]}
+                error={errors.tipo_usuario}
               />
               {form.rol !== undefined && (
                 <Input
@@ -215,13 +332,24 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
                   <Select
                     label="Tipo de Estudiante"
                     value={typeof form.tipo_estudiante === 'string' ? form.tipo_estudiante : ''}
-                    onChange={(e) => setForm({ ...form, tipo_estudiante: e.target.value })}
+                    onChange={(e) => {
+                      setForm({ ...form, tipo_estudiante: e.target.value });
+                      // Limpiar error del campo cuando se modifica
+                      if (errors.tipo_estudiante) {
+                        setErrors((prev) => {
+                          const newErrors = { ...prev };
+                          delete newErrors.tipo_estudiante;
+                          return newErrors;
+                        });
+                      }
+                    }}
                     options={[
                       { value: 'Voluntario', label: 'Voluntario' },
                       { value: 'Inscrito', label: 'Inscrito' },
                       { value: 'Egresado', label: 'Egresado' },
                       { value: 'Servicio Comunitario', label: 'Servicio Comunitario' },
                     ]}
+                    error={errors.tipo_estudiante}
                   />
                 </>
               )}
@@ -230,11 +358,22 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
                   <Select
                     label="Tipo de Profesor"
                     value={typeof form.tipo_profesor === 'string' ? form.tipo_profesor : ''}
-                    onChange={(e) => setForm({ ...form, tipo_profesor: e.target.value })}
+                    onChange={(e) => {
+                      setForm({ ...form, tipo_profesor: e.target.value });
+                      // Limpiar error del campo cuando se modifica
+                      if (errors.tipo_profesor) {
+                        setErrors((prev) => {
+                          const newErrors = { ...prev };
+                          delete newErrors.tipo_profesor;
+                          return newErrors;
+                        });
+                      }
+                    }}
                     options={[
                       { value: 'Voluntario', label: 'Voluntario' },
                       { value: 'Asesor', label: 'Asesor' },
                     ]}
+                    error={errors.tipo_profesor}
                   />
                 </>
               )}

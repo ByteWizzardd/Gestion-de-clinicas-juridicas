@@ -5,6 +5,7 @@ import { QueryResult } from 'pg';
 export interface NivelEducativo {
   id_nivel_educativo: number;
   descripcion: string;
+  habilitado?: boolean;
 }
 
 /**

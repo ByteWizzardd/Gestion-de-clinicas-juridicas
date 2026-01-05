@@ -3,7 +3,8 @@
 
 SELECT 
     id_nivel_educativo,
-    descripcion
+    descripcion,
+    habilitado
 FROM niveles_educativos
 ORDER BY id_nivel_educativo;
 

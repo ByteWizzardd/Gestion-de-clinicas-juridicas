@@ -1,6 +1,8 @@
 import { loadSQL } from '../sql-loader';
 import { pool } from '../pool';
 import { QueryResult } from 'pg';
+import { estudiantesQueries } from './estudiantes.queries';
+import { profesoresQueries } from './profesores.queries';
 
 /**
  * Queries para la entidad Usuarios
@@ -66,6 +68,25 @@ export const usuariosQueries = {
   },
 
   /**
+   * Busca usuarios por nombre_usuario (búsqueda exacta)
+   */
+  searchByUsername: async (
+    username: string
+  ): Promise<
+    Array<{
+      cedula: string;
+      nombres: string;
+      apellidos: string;
+      nombre_usuario: string;
+      nombre_completo: string;
+    }>
+  > => {
+    const query = loadSQL("usuarios/search-by-username.sql");
+    const result: QueryResult = await pool.query(query, [username]);
+    return result.rows;
+  },
+
+  /**
    * Obtiene un usuario completo por cédula con todos los campos necesarios para autocompletar
    */
   getCompleteByCedula: async (
@@ -109,6 +130,131 @@ export const usuariosQueries = {
   },
 
   /**
+   * Crea un nuevo usuario completo
+   */
+  createUser: async (data: {
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+    correo_electronico: string;
+    nombre_usuario: string;
+    contrasena: string;
+    telefono_celular?: string | null;
+    tipo_usuario: string;
+    estudiante?: {
+      nrc?: string | null;
+      term?: string | null;
+      tipo_estudiante?: string | null;
+    };
+    profesor?: {
+      term?: string | null;
+      tipo_profesor?: string | null;
+    };
+    coordinador?: {
+      term?: string | null;
+    };
+    cedula_actor?: string;
+  }): Promise<void> => {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Verificar que el usuario no exista
+      const existingUser = await client.query(
+        'SELECT 1 FROM usuarios WHERE cedula = $1',
+        [data.cedula]
+      );
+      if (existingUser.rows.length > 0) {
+        await client.query('ROLLBACK');
+        throw new Error(`El usuario con cédula ${data.cedula} ya existe`);
+      }
+
+      // Verificar que el correo no esté en uso
+      const existingEmail = await client.query(
+        'SELECT 1 FROM usuarios WHERE correo_electronico = $1',
+        [data.correo_electronico]
+      );
+      if (existingEmail.rows.length > 0) {
+        await client.query('ROLLBACK');
+        throw new Error(`El correo electrónico ${data.correo_electronico} ya está en uso`);
+      }
+
+      // Verificar que el nombre_usuario no esté en uso
+      const existingUsername = await client.query(
+        'SELECT 1 FROM usuarios WHERE nombre_usuario = $1',
+        [data.nombre_usuario]
+      );
+      if (existingUsername.rows.length > 0) {
+        await client.query('ROLLBACK');
+        throw new Error(`El nombre de usuario ${data.nombre_usuario} ya está en uso`);
+      }
+
+      // Establecer variable de sesión para el trigger de auditoría
+      if (data.cedula_actor) {
+        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [data.cedula_actor]);
+      }
+
+      // Insertar en tabla usuarios (el trigger capturará la auditoría automáticamente)
+      const insertQuery = loadSQL('usuarios/create.sql');
+      await client.query(insertQuery, [
+        data.cedula,
+        data.nombres,
+        data.apellidos,
+        data.correo_electronico,
+        data.nombre_usuario,
+        data.contrasena,
+        data.telefono_celular || null,
+        data.tipo_usuario,
+      ]);
+
+      // Insertar en la tabla correspondiente según el tipo
+      if (data.tipo_usuario === 'Estudiante') {
+        if (!data.estudiante?.term || !data.estudiante?.tipo_estudiante || !data.estudiante?.nrc) {
+          await client.query('ROLLBACK');
+          throw new Error('Para crear un estudiante se requiere term, tipo_estudiante y nrc');
+        }
+        // Usar el client de la transacción en lugar de pool.query
+        const insertEstudianteQuery = loadSQL('estudiantes/create-or-update.sql');
+        await client.query(insertEstudianteQuery, [
+          data.estudiante.term,
+          data.cedula,
+          data.estudiante.tipo_estudiante,
+          data.estudiante.nrc,
+        ]);
+      } else if (data.tipo_usuario === 'Profesor') {
+        if (!data.profesor?.term || !data.profesor?.tipo_profesor) {
+          await client.query('ROLLBACK');
+          throw new Error('Para crear un profesor se requiere term y tipo_profesor');
+        }
+        // Usar el client de la transacción en lugar de pool.query
+        const insertProfesorQuery = loadSQL('profesores/create.sql');
+        await client.query(insertProfesorQuery, [
+          data.cedula,
+          data.profesor.term,
+          data.profesor.tipo_profesor,
+        ]);
+      } else if (data.tipo_usuario === 'Coordinador') {
+        if (!data.coordinador?.term) {
+          await client.query('ROLLBACK');
+          throw new Error('Para crear un coordinador se requiere term');
+        }
+        const insertCoordinadorQuery = loadSQL('coordinadores/create.sql');
+        await client.query(insertCoordinadorQuery, [
+          data.cedula,
+          data.coordinador.term,
+        ]);
+      }
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  },
+
+  /**
    * Obtiene todos los usuarios con información adicional
    */
   getAll: async (): Promise<
@@ -148,13 +294,14 @@ export const usuariosQueries = {
    * Elimina un usuario y guarda su cédula
    */
   toggleHabilitado: async (
-    cedula: string
+    cedula: string,
+    cedula_actor: string
   ): Promise<{
     success: boolean;
     error?: { message: string; code?: string };
   }> => {
     try {
-      await pool.query("SELECT toggle_habilitado_usuario($1)", [cedula]);
+      await pool.query("SELECT toggle_habilitado_usuario($1, $2)", [cedula, cedula_actor]);
       return { success: true };
     } catch (error: unknown) {
       return {
@@ -293,6 +440,19 @@ export const usuariosQueries = {
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
+        
+        // Obtener el tipo_usuario actual del usuario para determinar qué valores pasar
+        const tipoUsuarioResult = await client.query(
+          'SELECT tipo_usuario FROM usuarios WHERE cedula = $1',
+          [data.cedula]
+        );
+        const tipoUsuarioActual = tipoUsuarioResult.rows[0]?.tipo_usuario || null;
+        
+        // Usar el tipo_usuario que se está pasando, o el actual si no se pasa
+        const tipoUsuarioParaValores = (data.tipo_usuario && data.tipo_usuario.trim() !== '') 
+          ? data.tipo_usuario 
+          : tipoUsuarioActual;
+        
         await client.query(
           `CALL update_all_by_cedula(
             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
@@ -304,16 +464,16 @@ export const usuariosQueries = {
             data.correo_electronico ?? null,
             data.nombre_usuario ?? null,
             data.telefono_celular ?? null,
-            data.tipo_usuario ?? null,
-            // Estudiante
-            data.tipo_usuario === "Estudiante" ? data.nrc ?? null : null,
-            data.tipo_usuario === "Estudiante" ? data.term ?? null : null,
-            data.tipo_usuario === "Estudiante" ? data.tipo_estudiante ?? null : null,
+            data.tipo_usuario && data.tipo_usuario.trim() !== '' ? data.tipo_usuario : null,
+            // Estudiante - usar tipoUsuarioParaValores para determinar si pasar valores
+            tipoUsuarioParaValores === "Estudiante" ? data.nrc ?? null : null,
+            tipoUsuarioParaValores === "Estudiante" ? data.term ?? null : null,
+            tipoUsuarioParaValores === "Estudiante" ? data.tipo_estudiante ?? null : null,
             // Profesor
-            data.tipo_usuario === "Profesor" ? data.term ?? null : null,
-            data.tipo_usuario === "Profesor" ? data.tipo_profesor ?? null : null,
+            tipoUsuarioParaValores === "Profesor" ? data.term ?? null : null,
+            tipoUsuarioParaValores === "Profesor" ? data.tipo_profesor ?? null : null,
             // Coordinador
-            data.tipo_usuario === "Coordinador" ? data.term ?? null : null,
+            tipoUsuarioParaValores === "Coordinador" ? data.term ?? null : null,
             //Cedula actor (Usuario que realiza la acción)
             data.cedula_actor
           ]

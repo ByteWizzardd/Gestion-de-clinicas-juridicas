@@ -140,7 +140,8 @@ export async function toggleHabilitadoUsuarioAction(
         },
       };
     }
-    return await usuariosQueries.toggleHabilitado(cedula);
+    const cedula_actor = userResult.data.cedula;
+    return await usuariosQueries.toggleHabilitado(cedula, cedula_actor);
   } catch (error: unknown) {
     return {
       success: false,
@@ -288,6 +289,122 @@ export async function getUsuarioInfoByCedulaAction(
     };
   }
 }
+/**
+ * Server Action para verificar si un correo electrónico ya existe en usuarios
+ */
+export interface CheckEmailExistsResult {
+  success: boolean;
+  exists: boolean;
+  data?: {
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+    correo_electronico: string;
+  } | null;
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+export async function checkEmailExistsUsuarioAction(
+  email: string
+): Promise<CheckEmailExistsResult> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        exists: false,
+        error: { message: "No autorizado", code: "UNAUTHORIZED" },
+      };
+    }
+
+    if (!email || email.trim().length === 0) {
+      return {
+        success: true,
+        exists: false,
+      };
+    }
+
+    const result = await usuariosQueries.searchByEmail(email.trim());
+    
+    return {
+      success: true,
+      exists: result.length > 0,
+      data: result.length > 0 ? result[0] : null,
+    };
+  } catch (error) {
+    console.error('Error en checkEmailExistsUsuarioAction:', error);
+    return {
+      success: false,
+      exists: false,
+      error: {
+        message: error instanceof Error ? error.message : "Error al verificar correo",
+        code: "UNKNOWN_ERROR",
+      },
+    };
+  }
+}
+
+export interface CheckUsernameExistsResult {
+  success: boolean;
+  exists: boolean;
+  data?: {
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+    nombre_usuario: string;
+    nombre_completo: string;
+  } | null;
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+export async function checkUsernameExistsUsuarioAction(
+  username: string
+): Promise<CheckUsernameExistsResult> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        exists: false,
+        error: { message: "No autorizado", code: "UNAUTHORIZED" },
+      };
+    }
+
+    if (!username || username.trim().length === 0) {
+      return {
+        success: true,
+        exists: false,
+      };
+    }
+
+    const result = await usuariosQueries.searchByUsername(username.trim());
+    
+    return {
+      success: true,
+      exists: result.length > 0,
+      data: result.length > 0 ? result[0] : null,
+    };
+  } catch (error) {
+    console.error('Error en checkUsernameExistsUsuarioAction:', error);
+    return {
+      success: false,
+      exists: false,
+      error: {
+        message: error instanceof Error ? error.message : "Error al verificar nombre de usuario",
+        code: "UNKNOWN_ERROR",
+      },
+    };
+  }
+}
+
 // Server Action para actualizar un usuario por cédula
 export interface UpdateUsaruiobyCedulaResult {
   success: boolean;
@@ -346,6 +463,16 @@ export async function updateUsuarioByCedulaAction(
       };
     }
     const cedula_actor = userResult.data.cedula;
+    
+    // Obtener el tipo_usuario actual del usuario para determinar qué valores pasar
+    const usuarioActual = await usuariosQueries.getInfoByCedula(cedula);
+    const tipoUsuarioActual = usuarioActual?.tipo_usuario || null;
+    
+    // Usar el tipo_usuario que se está pasando, o el actual si no se pasa
+    const tipoUsuarioParaValores = (updates.tipo_usuario && updates.tipo_usuario.trim() !== '') 
+      ? updates.tipo_usuario 
+      : tipoUsuarioActual;
+    
     await usuariosQueries.updateUsuarioByCedulaAction({
       cedula,
       nombres: updates.nombre ?? "",
@@ -353,18 +480,18 @@ export async function updateUsuarioByCedulaAction(
       correo_electronico: updates.correo_electronico ?? "",
       nombre_usuario: updates.nombre_usuario ?? "",
       telefono_celular: updates.telefono ?? null,
-      tipo_usuario: updates.tipo_usuario ?? "",
-      nrc: updates.estudiante?.nrc ?? null,
+      tipo_usuario: (updates.tipo_usuario && updates.tipo_usuario.trim() !== '') ? updates.tipo_usuario : (tipoUsuarioActual || ""),
+      nrc: tipoUsuarioParaValores === "Estudiante" ? updates.estudiante?.nrc ?? null : null,
       term:
-        updates.tipo_usuario === "Estudiante"
+        tipoUsuarioParaValores === "Estudiante"
           ? updates.estudiante?.term ?? null
-          : updates.tipo_usuario === "Profesor"
+          : tipoUsuarioParaValores === "Profesor"
           ? updates.profesor?.term ?? null
-          : updates.tipo_usuario === "Coordinador"
+          : tipoUsuarioParaValores === "Coordinador"
           ? updates.coordinador?.term ?? null
           : null,
-      tipo_estudiante: updates.estudiante?.tipo_estudiante ?? null,
-      tipo_profesor: updates.profesor?.tipo_profesor ?? null,
+      tipo_estudiante: tipoUsuarioParaValores === "Estudiante" ? (updates.estudiante?.tipo_estudiante ?? null) : null,
+      tipo_profesor: tipoUsuarioParaValores === "Profesor" ? (updates.profesor?.tipo_profesor ?? null) : null,
       cedula_actor,
     });
     return { success: true };
@@ -388,6 +515,106 @@ export async function updateUsuarioByCedulaAction(
           error instanceof Error
             ? error.message
             : "Error al actualizar usuario",
+        code: "UNKNOWN_ERROR",
+      },
+    };
+  }
+}
+
+export interface CreateUsuarioResult {
+  success: boolean;
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+/**
+ * Server Action para crear un nuevo usuario
+ */
+export async function createUsuarioAction(
+  data: {
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+    correo_electronico: string;
+    nombre_usuario: string;
+    contrasena: string;
+    telefono?: string | null;
+    tipo_usuario: string;
+    estudiante?: {
+      nrc?: string | null;
+      term?: string | null;
+      tipo_estudiante?: string | null;
+    };
+    profesor?: {
+      term?: string | null;
+      tipo_profesor?: string | null;
+    };
+    coordinador?: {
+      term?: string | null;
+    };
+  }
+): Promise<CreateUsuarioResult> {
+  try {
+    // 1. Obtener usuario actor y validar rol
+    const userResult = await getCurrentUserAction();
+    if (!userResult.success || !userResult.data) {
+      return {
+        success: false,
+        error: { message: "No autorizado", code: "UNAUTHORIZED" },
+      };
+    }
+    if (userResult.data.rol !== "Coordinador") {
+      return {
+        success: false,
+        error: {
+          message: "Acceso denegado. Solo los coordinadores pueden crear usuarios.",
+          code: "FORBIDDEN",
+        },
+      };
+    }
+    const cedula_actor = userResult.data.cedula;
+
+    // 2. Hash de la contraseña
+    const { hashPassword } = await import('@/lib/utils/security');
+    const passwordHash = await hashPassword(data.contrasena);
+
+    // 3. Crear el usuario
+    await usuariosQueries.createUser({
+      cedula: data.cedula,
+      nombres: data.nombres,
+      apellidos: data.apellidos,
+      correo_electronico: data.correo_electronico,
+      nombre_usuario: data.nombre_usuario,
+      contrasena: passwordHash,
+      telefono_celular: data.telefono,
+      tipo_usuario: data.tipo_usuario,
+      estudiante: data.estudiante,
+      profesor: data.profesor,
+      coordinador: data.coordinador,
+      cedula_actor,
+    });
+
+    return { success: true };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code || "USUARIO_ERROR",
+        },
+      };
+    }
+    console.error("Error en createUsuarioAction:", error);
+    return {
+      success: false,
+      error: {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Error al crear usuario",
         code: "UNKNOWN_ERROR",
       },
     };
