@@ -367,6 +367,7 @@ async function getExistingCedulas(): Promise<Set<string>> {
 export async function bulkCreateEstudiantes(
   file: File,
   term: string,
+  cedulaActor: string,
   tipoEstudiante: string = 'Inscrito'
 ): Promise<BulkUploadResult> {
   // Validar que el semestre existe
@@ -417,6 +418,9 @@ export async function bulkCreateEstudiantes(
   try {
     await client.query('BEGIN');
     
+    // Establecer el usuario que realiza la acción para la auditoría
+    await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [cedulaActor]);
+    
     // Cargar queries SQL
     const { loadSQL } = await import('@/lib/db/sql-loader');
     const usuarioQuery = loadSQL('usuarios/create-or-update.sql');
@@ -430,6 +434,34 @@ export async function bulkCreateEstudiantes(
       try {
         const { cedula, nombres, apellidos, correo_electronico, nombre_usuario, nrc } = processedRow.data;
         
+        // Si el usuario ya existe, verificar si está deshabilitado para registrar la reactivación
+        if (processedRow.isDuplicate) {
+          const userStatus = await client.query(
+            'SELECT habilitado_sistema, nombres, apellidos FROM usuarios WHERE cedula = $1',
+            [cedula]
+          );
+          
+          if (userStatus.rows.length > 0 && userStatus.rows[0].habilitado_sistema === false) {
+            // Registrar en auditoría de habilitación
+            await client.query(`
+              INSERT INTO auditoria_habilitacion_usuario (
+                usuario_habilitado,
+                nombres_usuario_habilitado,
+                apellidos_usuario_habilitado,
+                habilitado_por,
+                motivo,
+                fecha
+              ) VALUES ($1, $2, $3, $4, $5, (NOW() AT TIME ZONE 'America/Caracas'))
+            `, [
+              cedula,
+              userStatus.rows[0].nombres,
+              userStatus.rows[0].apellidos,
+              cedulaActor,
+              'Reactivación automática por registro de lote'
+            ]);
+          }
+        }
+
         // Crear o actualizar usuario usando el cliente de la transacción
         await client.query(usuarioQuery, [
           cedula,

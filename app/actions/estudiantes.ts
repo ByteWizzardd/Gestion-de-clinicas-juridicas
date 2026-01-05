@@ -179,7 +179,7 @@ export async function bulkCreateEstudiantesAction(
     }
 
     // Procesar archivo
-    const result = await bulkCreateEstudiantes(file, term.trim(), tipoEstudiante);
+    const result = await bulkCreateEstudiantes(file, term.trim(), authResult.user.cedula, tipoEstudiante);
 
     // Revalidar cache de la página de usuarios
     revalidatePath('/dashboard/users');
