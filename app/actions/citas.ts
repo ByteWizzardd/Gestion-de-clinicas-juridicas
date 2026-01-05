@@ -103,10 +103,10 @@ export async function getAppointmentFilterOptionsAction(): Promise<GetAppointmen
     const { nucleosQueries } = await import('@/lib/db/queries/nucleos.queries');
     const { usuariosQueries } = await import('@/lib/db/queries/usuarios.queries');
 
-    // Obtener núcleos y usuarios en paralelo
+    // Obtener núcleos y usuarios en paralelo (solo habilitados)
     const [nucleos, usuarios] = await Promise.all([
       nucleosQueries.getAll(),
-      usuariosQueries.getAll(),
+      usuariosQueries.getAll(true),
     ]);
 
     // Formatear usuarios con nombre completo

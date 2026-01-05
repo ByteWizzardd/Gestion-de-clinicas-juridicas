@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { FileText, Calendar, Users, User, MapPin, BookOpen, FolderTree, Building2, Home, Building, Briefcase, Activity, GraduationCap, Tag, Tags, Scale, Calendar as CalendarIcon } from 'lucide-react';
+import { FileText, Calendar, Users, User, MapPin, BookOpen, FolderTree, Building2, Home, Building, Briefcase, Activity, GraduationCap, Tag, Tags, Scale, Calendar as CalendarIcon, LucideIcon } from 'lucide-react';
 import AuditEntityCard from './AuditEntityCard';
 import { getAuditCountsAction } from '@/app/actions/audit';
 import type { AuditCounts } from '@/types/audit';
@@ -18,7 +18,7 @@ interface AuditOperation {
 interface AuditEntity {
   title: string;
   description: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: LucideIcon;
   operations: AuditOperation[];
   totalCount: number;
   href: string; // URL de la página de detalle de la entidad
@@ -94,7 +94,7 @@ export default function AuditClient() {
         title: "Usuarios",
         description: "Registro de usuarios del sistema",
         icon: Users,
-        totalCount: counts.usuariosEliminados + counts.usuariosActualizadosCampos + (counts.usuariosCreados || 0),
+        totalCount: counts.usuariosEliminados + counts.usuariosHabilitados + counts.usuariosActualizadosCampos + (counts.usuariosCreados || 0),
         href: "/dashboard/audit/usuarios",
         operations: [
           {
@@ -108,9 +108,14 @@ export default function AuditClient() {
             href: "/dashboard/audit/usuarios?tab=usuarios-actualizados-campos"
           },
           {
-            label: "Eliminados",
+            label: "Deshabilitados",
             count: counts.usuariosEliminados,
             href: "/dashboard/audit/usuarios?tab=usuarios-eliminados"
+          },
+          {
+            label: "Reactivados",
+            count: counts.usuariosHabilitados,
+            href: "/dashboard/audit/usuarios?tab=usuarios-habilitados"
           }
         ]
       },
@@ -448,7 +453,7 @@ export default function AuditClient() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <Spinner size="lg" />
+        <Spinner />
       </div>
     );
   }

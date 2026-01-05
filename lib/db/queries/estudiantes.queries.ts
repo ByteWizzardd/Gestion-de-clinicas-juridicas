@@ -9,14 +9,21 @@ import { QueryResult } from 'pg';
 export const estudiantesQueries = {
   /**
    * Busca estudiantes por cédula (búsqueda parcial)
+   * @param habilitadosOnly Si es true, solo devuelve estudiantes habilitados
    */
-  searchByCedula: async (cedula: string): Promise<Array<{
+  searchByCedula: async (cedula: string, habilitadosOnly: boolean = false): Promise<Array<{
     cedula: string;
     nombres: string;
     apellidos: string;
     nombre_completo: string;
   }>> => {
-    const query = loadSQL('estudiantes/search-by-cedula.sql');
+    let query = loadSQL('estudiantes/search-by-cedula.sql');
+    if (habilitadosOnly) {
+      const parts = query.split('ORDER BY');
+      if (parts.length > 1) {
+        query = parts[0] + 'AND u.habilitado_sistema = true ORDER BY' + parts[1];
+      }
+    }
     const result: QueryResult = await pool.query(query, [cedula]);
     return result.rows;
   },

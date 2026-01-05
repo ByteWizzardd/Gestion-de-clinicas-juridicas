@@ -484,7 +484,7 @@ ORDER BY
 1. Soportes Eliminados
 2. Citas Eliminadas
 3. Citas Actualizadas
-4. Usuarios Eliminados
+4. Usuarios Deshabilitados
 5. Usuarios Actualizados (Campos)
 
 ---
@@ -498,7 +498,7 @@ Cada tipo de auditoría tiene su propia página de detalle:
 | `/dashboard/audit/soportes` | `AuditDetailClient` | Lista de soportes eliminados |
 | `/dashboard/audit/citas-eliminadas` | `AuditDetailClient` | Lista de citas eliminadas |
 | `/dashboard/audit/citas-actualizadas` | `AuditDetailClient` | Lista de citas actualizadas |
-| `/dashboard/audit/usuarios-eliminados` | `AuditDetailClient` | Lista de usuarios eliminados |
+| `/dashboard/audit/usuarios-eliminados` | `AuditDetailClient` | Lista de usuarios deshabilitados |
 | `/dashboard/audit/usuarios-actualizados-campos` | `AuditDetailClient` | Lista de usuarios actualizados |
 
 **Componente común:** `components/audit/detail/AuditDetailClient.tsx`

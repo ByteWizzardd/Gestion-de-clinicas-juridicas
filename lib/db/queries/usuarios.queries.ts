@@ -12,9 +12,11 @@ export const usuariosQueries = {
   /**
    * Busca usuarios por cédula (búsqueda parcial)
    * Busca en la tabla usuarios (estudiantes, profesores, coordinadores)
+   * @param habilitadosOnly Si es true, solo devuelve usuarios habilitados
    */
   searchByCedula: async (
-    cedula: string
+    cedula: string,
+    habilitadosOnly: boolean = false
   ): Promise<
     Array<{
       cedula: string;
@@ -23,7 +25,14 @@ export const usuariosQueries = {
       nombre_completo: string;
     }>
   > => {
-    const query = loadSQL("usuarios/search-by-cedula.sql");
+    let query = loadSQL("usuarios/search-by-cedula.sql");
+    if (habilitadosOnly) {
+      // search-by-cedula.sql has a WHERE clause, so we append AND
+      const parts = query.split('ORDER BY');
+      if (parts.length > 1) {
+        query = parts[0] + 'AND u.habilitado_sistema = true ORDER BY' + parts[1];
+      }
+    }
     const result: QueryResult = await pool.query(query, [cedula]);
     return result.rows;
   },
@@ -254,10 +263,7 @@ export const usuariosQueries = {
     }
   },
 
-  /**
-   * Obtiene todos los usuarios con información adicional
-   */
-  getAll: async (): Promise<
+  getAll: async (habilitadosOnly: boolean = false): Promise<
     Array<{
       cedula: string;
       nombres: string;
@@ -273,7 +279,14 @@ export const usuariosQueries = {
       info_coordinador: string | null;
     }>
   > => {
-    const query = loadSQL("usuarios/get-all.sql");
+    let query = loadSQL("usuarios/get-all.sql");
+    if (habilitadosOnly) {
+      // Buscamos el último ORDER BY de la consulta principal para insertar el WHERE antes
+      const parts = query.split('ORDER BY u.tipo_usuario');
+      if (parts.length > 1) {
+        query = parts[0] + 'WHERE u.habilitado_sistema = true ORDER BY u.tipo_usuario' + parts[1];
+      }
+    }
     const result: QueryResult = await pool.query(query);
     return result.rows;
   },
@@ -510,6 +523,92 @@ export const usuariosQueries = {
   deleteFotoPerfil: async (cedula: string): Promise<void> => {
     const query = loadSQL('usuarios/delete-foto-perfil.sql');
     await pool.query(query, [cedula]);
+  },
+
+  /**
+   * Deshabilita múltiples usuarios de forma masiva y registra en auditoría
+   */
+  disableLote: async (cedulas: string[], cedula_actor: string): Promise<void> => {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      
+      // 1. Registrar en auditoría de eliminación (ahora deshabilitación) antes de actualizar
+      const auditQuery = `
+        INSERT INTO auditoria_eliminacion_usuario (
+          usuario_eliminado, 
+          nombres_usuario_eliminado, 
+          apellidos_usuario_eliminado, 
+          eliminado_por, 
+          motivo, 
+          fecha
+        )
+        SELECT 
+          cedula, 
+          nombres, 
+          apellidos, 
+          $1, 
+          'Deshabilitación masiva por lote', 
+          (NOW() AT TIME ZONE 'America/Caracas')
+        FROM usuarios
+        WHERE cedula = ANY($2)
+      `;
+      await client.query(auditQuery, [cedula_actor, cedulas]);
+
+      // 2. Actualizar el estado en la tabla de usuarios
+      const updateQuery = 'UPDATE usuarios SET habilitado_sistema = false WHERE cedula = ANY($1)';
+      await client.query(updateQuery, [cedulas]);
+      
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  },
+
+  /**
+   * Habilita múltiples usuarios de forma masiva y registra en auditoría
+   */
+  enableLote: async (cedulas: string[], cedula_actor: string): Promise<void> => {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      
+      // 1. Registrar en auditoría de habilitación
+      const auditQuery = `
+        INSERT INTO auditoria_habilitacion_usuario (
+          usuario_habilitado, 
+          nombres_usuario_habilitado, 
+          apellidos_usuario_habilitado, 
+          habilitado_por, 
+          motivo, 
+          fecha
+        )
+        SELECT 
+          cedula, 
+          nombres, 
+          apellidos, 
+          $1, 
+          'Reactivación masiva por lote', 
+          (NOW() AT TIME ZONE 'America/Caracas')
+        FROM usuarios
+        WHERE cedula = ANY($2)
+      `;
+      await client.query(auditQuery, [cedula_actor, cedulas]);
+
+      // 2. Actualizar el estado en la tabla de usuarios
+      const updateQuery = 'UPDATE usuarios SET habilitado_sistema = true WHERE cedula = ANY($1)';
+      await client.query(updateQuery, [cedulas]);
+      
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   },
 };
 

@@ -28,11 +28,18 @@ export default async function UsuariosAuditPage() {
             emptyMessage: 'No se encontraron usuarios actualizados'
           },
           {
-            label: 'Eliminados',
+            label: 'Deshabilitados',
             auditType: 'usuarios-eliminados',
-            title: 'Usuarios Eliminados',
-            description: 'Registro completo de todos los usuarios eliminados del sistema',
-            emptyMessage: 'No se encontraron usuarios eliminados'
+            title: 'Usuarios Deshabilitados',
+            description: 'Registro completo de todos los usuarios deshabilitados del sistema',
+            emptyMessage: 'No se encontraron usuarios deshabilitados'
+          },
+          {
+            label: 'Reactivados',
+            auditType: 'usuarios-habilitados',
+            title: 'Usuarios Reactivados',
+            description: 'Registro completo de todos los usuarios reactivados (habilitados) en el sistema',
+            emptyMessage: 'No se encontraron usuarios reactivados'
           }
         ]}
       />

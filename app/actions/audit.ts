@@ -8,6 +8,7 @@ import { auditoriaEliminacionCitasQueries } from '@/lib/db/queries/auditoria-eli
 import { auditoriaActualizacionCitasQueries } from '@/lib/db/queries/auditoria-actualizacion-citas.queries';
 import { auditoriaInsercionCitasQueries } from '@/lib/db/queries/auditoria-insercion-citas.queries';
 import { auditoriaEliminacionUsuarioQueries } from '@/lib/db/queries/auditoria-eliminacion-usuario.queries';
+import { auditoriaHabilitacionUsuarioQueries } from '@/lib/db/queries/auditoria-habilitacion-usuario.queries';
 import { auditoriaActualizacionUsuariosQueries } from '@/lib/db/queries/auditoria-actualizacion-usuarios.queries';
 import { auditoriaInsercionUsuariosQueries } from '@/lib/db/queries/auditoria-insercion-usuarios.queries';
 import { auditoriaEliminacionEstadosQueries } from '@/lib/db/queries/auditoria-eliminacion-estados.queries';
@@ -78,7 +79,8 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
 
   try {
     const [
-      soportesEliminados, soportesCreados, citasEliminadas, citasActualizadas, citasCreadas, usuariosEliminados, usuariosActualizadosCampos, usuariosCreados,
+      soportesEliminados, soportesCreados, citasEliminadas, citasActualizadas, citasCreadas, 
+      usuariosEliminados, usuariosHabilitados, usuariosActualizadosCampos, usuariosCreados,
       estadosEliminados, estadosActualizados,
       materiasEliminadas, materiasActualizadas,
       nivelesEducativosEliminados, nivelesEducativosActualizados,
@@ -109,6 +111,7 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       auditoriaActualizacionCitasQueries.getCount(),
       auditoriaInsercionCitasQueries.getCount().catch(() => 0),
       auditoriaEliminacionUsuarioQueries.getCount(),
+      auditoriaHabilitacionUsuarioQueries.getCount().catch(() => 0),
       auditoriaActualizacionUsuariosQueries.getCount(),
       auditoriaInsercionUsuariosQueries.getCount().catch(() => 0),
       // Catálogos - manejar errores si las tablas aún no existen
@@ -172,6 +175,7 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       citasActualizadas,
       citasCreadas: citasCreadas || 0,
       usuariosEliminados,
+      usuariosHabilitados: usuariosHabilitados || 0,
       usuariosActualizadosCampos,
       usuariosCreados: usuariosCreados || 0,
       estadosEliminados: estadosEliminados || 0,
@@ -406,6 +410,35 @@ export async function getUsuariosEliminadosAuditAction(filters?: AuditFilters) {
   } catch (error) {
     console.error('Error obteniendo auditoría de usuarios eliminados:', error);
     throw new Error('Error al obtener auditoría de usuarios eliminados');
+  }
+}
+
+/**
+ * Obtiene usuarios habilitados (reactivados) con filtros
+ */
+export async function getUsuariosHabilitadosAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+  
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+
+  try {
+    const records = await auditoriaHabilitacionUsuarioQueries.getAll(filters);
+    // Mapear campos para compatibilidad con tipos si es necesario
+    return records.map(r => ({
+      ...r,
+      usuario_accion: r.habilitado_por,
+      nombre_completo_usuario_accion: r.nombre_completo_habilitado_por || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de usuarios habilitados:', error);
+    throw new Error('Error al obtener auditoría de usuarios habilitados');
   }
 }
 

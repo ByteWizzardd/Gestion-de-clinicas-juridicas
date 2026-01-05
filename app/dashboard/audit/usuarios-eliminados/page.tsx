@@ -9,10 +9,10 @@ export default async function UsuariosEliminadosAuditPage() {
   return (
     <div className="m-3">
       <AuditDetailClient
-        title="Usuarios Eliminados"
-        description="Registro completo de todos los usuarios eliminados del sistema"
+        title="Usuarios Deshabilitados"
+        description="Registro completo de todos los usuarios deshabilitados del sistema"
         auditType="usuarios-eliminados"
-        emptyMessage="No se encontraron usuarios eliminados"
+        emptyMessage="No se encontraron usuarios deshabilitados"
       />
     </div>
   );

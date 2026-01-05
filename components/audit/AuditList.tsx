@@ -5,7 +5,8 @@ import { motion } from 'motion/react';
 import { TablePagination } from '@/components/Table/TablePagination';
 import AuditRecordCard from './AuditRecordCard';
 
-type AuditRecordType = 'soporte' | 'cita-eliminada' | 'cita-actualizada' | 'cita-creada' | 'usuario-eliminado' | 'usuario-actualizado-campos'
+type AuditRecordType = 'soporte' | 'soporte-creado' | 'cita-eliminada' | 'cita-actualizada' | 'cita-creada' | 'usuario-eliminado' | 'usuario-habilitado' | 'usuario-actualizado-campos' | 'usuario-creado'
+  | 'solicitante-eliminado' | 'solicitante-actualizado' | 'solicitante-creado'
   | 'estado-eliminado' | 'estado-actualizado' | 'estado-insertado'
   | 'materia-eliminada' | 'materia-actualizada' | 'materia-insertada'
   | 'nivel-educativo-eliminado' | 'nivel-educativo-actualizado' | 'nivel-educativo-insertado'

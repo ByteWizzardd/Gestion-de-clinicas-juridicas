@@ -83,7 +83,7 @@ export const solicitantesQueries = {
         apellidos: string;
         nombre_completo: string;
     }>> => {
-        return await usuariosQueries.searchByCedula(cedula);
+        return await usuariosQueries.searchByCedula(cedula, true);
     },
 
     /**

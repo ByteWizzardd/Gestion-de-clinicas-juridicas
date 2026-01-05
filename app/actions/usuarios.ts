@@ -82,9 +82,10 @@ export interface GetUsuariosResult {
 
 /**
 * Server Action para obtener todos los usuarios
+* @param soloHabilitados Si es true, solo devuelve usuarios habilitados para el sistema
 */
 
-export async function getUsuariosAction(): Promise<GetUsuariosResult> {
+export async function getUsuariosAction(soloHabilitados: boolean = false): Promise<GetUsuariosResult> {
   try {
     // Verificar autenticación
     const authResult = await requireAuthInServerActionWithCode();
@@ -95,7 +96,7 @@ export async function getUsuariosAction(): Promise<GetUsuariosResult> {
       };
     }
 
-    const usuarios = await usuariosQueries.getAll();
+    const usuarios = await usuariosQueries.getAll(soloHabilitados);
     return {
       success: true,
       data: usuarios,
@@ -868,5 +869,82 @@ export async function deleteFotoPerfilUsuarioAction(
     };
   } catch (error) {
     return handleServerActionError(error, 'deleteFotoPerfilUsuarioAction', 'DELETE_ERROR');
+  }
+}
+
+/**
+ * Server Action para deshabilitar usuarios por lote (solo coordinador)
+ */
+export async function disableUsuariosLoteAction(
+  cedulas: string[]
+): Promise<{ success: boolean; error?: { message: string } }> {
+  try {
+    if (!cedulas || cedulas.length === 0) {
+      return { success: false, error: { message: "No se seleccionaron usuarios" } };
+    }
+
+    // 1. Validar sesión y rol
+    const userResult = await getCurrentUserAction();
+    if (!userResult.success || !userResult.data || userResult.data.rol !== "Coordinador") {
+      return {
+        success: false,
+        error: { message: "Solo los coordinadores pueden realizar esta acción." },
+      };
+    }
+
+    // 2. No permitir que el coordinador se deshabilite a sí mismo
+    const cedulasFiltradas = cedulas.filter(c => c !== userResult.data?.cedula);
+
+    if (cedulasFiltradas.length === 0) {
+      return { success: false, error: { message: "No puedes deshabilitarte a ti mismo" } };
+    }
+
+    // 3. Ejecutar actualización con registro en auditoría
+    await usuariosQueries.disableLote(cedulasFiltradas, userResult.data.cedula);
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Error en disableUsuariosLoteAction:", error);
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : "Error al deshabilitar usuarios",
+      },
+    };
+  }
+}
+
+/**
+ * Server Action para habilitar (reactivar) usuarios por lote (solo coordinador)
+ */
+export async function enableUsuariosLoteAction(
+  cedulas: string[]
+): Promise<{ success: boolean; error?: { message: string } }> {
+  try {
+    if (!cedulas || cedulas.length === 0) {
+      return { success: false, error: { message: "No se seleccionaron usuarios" } };
+    }
+
+    // 1. Validar sesión y rol
+    const userResult = await getCurrentUserAction();
+    if (!userResult.success || !userResult.data || userResult.data.rol !== "Coordinador") {
+      return {
+        success: false,
+        error: { message: "Solo los coordinadores pueden realizar esta acción." },
+      };
+    }
+
+    // 2. Ejecutar actualización con registro en auditoría de habilitación
+    await usuariosQueries.enableLote(cedulas, userResult.data.cedula);
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Error en enableUsuariosLoteAction:", error);
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : "Error al habilitar usuarios",
+      },
+    };
   }
 }

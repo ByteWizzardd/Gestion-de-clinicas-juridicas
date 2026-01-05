@@ -52,7 +52,7 @@ export function AppointmentScheduleModal({
 
   useEffect(() => {
     async function fetchUsuarios() {
-      const result = await getUsuariosAction();
+      const result = await getUsuariosAction(true);
       if (result.success && result.data) {
         setUsuarioOptions(
           result.data.map((usuario) => ({

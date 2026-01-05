@@ -26,6 +26,7 @@ SET nombres = EXCLUDED.nombres,
     correo_electronico = EXCLUDED.correo_electronico,
     nombre_usuario = EXCLUDED.nombre_usuario,
     contrasena = EXCLUDED.contrasena,
-    telefono_celular = EXCLUDED.telefono_celular
+    telefono_celular = EXCLUDED.telefono_celular,
+    habilitado_sistema = TRUE
 RETURNING *;
 

@@ -35,7 +35,7 @@ export async function searchProfesoresAction(query: string): Promise<SearchProfe
       };
     }
 
-    const profesores = await profesoresQueries.searchByCedula(query.trim());
+    const profesores = await profesoresQueries.searchByCedula(query.trim(), true);
 
     return {
       success: true,

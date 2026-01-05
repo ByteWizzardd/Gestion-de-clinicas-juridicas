@@ -37,51 +37,40 @@ BEGIN
     -- Obtener el nuevo valor
     SELECT habilitado_sistema INTO v_habilitado_nuevo FROM usuarios WHERE cedula = p_cedula_usuario;
 
-    -- Registrar auditoría si hay cambio y hay actor
-    IF v_habilitado_anterior IS DISTINCT FROM v_habilitado_nuevo AND p_cedula_actor IS NOT NULL AND p_cedula_actor != '' THEN
-        INSERT INTO auditoria_actualizacion_usuarios (
-            ci_usuario,
-            nombres_anterior,
-            apellidos_anterior,
-            correo_electronico_anterior,
-            nombre_usuario_anterior,
-            telefono_celular_anterior,
-            habilitado_sistema_anterior,
-            tipo_usuario_anterior,
-            tipo_estudiante_anterior,
-            tipo_profesor_anterior,
-            nombres_nuevo,
-            apellidos_nuevo,
-            correo_electronico_nuevo,
-            nombre_usuario_nuevo,
-            telefono_celular_nuevo,
-            habilitado_sistema_nuevo,
-            tipo_usuario_nuevo,
-            tipo_estudiante_nuevo,
-            tipo_profesor_nuevo,
-            id_usuario_actualizo,
-            fecha_actualizacion
+    -- SI SE ESTÁ DESHABILITANDO, TAMBIÉN REGISTRAR EN LA TABLA DE ELIMINADOS (AHORA DESHABILITADOS)
+    IF v_habilitado_nuevo = FALSE AND p_cedula_actor IS NOT NULL AND p_cedula_actor != '' THEN
+        INSERT INTO auditoria_eliminacion_usuario (
+            usuario_eliminado,
+            nombres_usuario_eliminado,
+            apellidos_usuario_eliminado,
+            eliminado_por,
+            motivo,
+            fecha
         ) VALUES (
             p_cedula_usuario,
             v_nombres_anterior,
             v_apellidos_anterior,
-            v_correo_electronico_anterior,
-            v_nombre_usuario_anterior,
-            v_telefono_celular_anterior,
-            v_habilitado_anterior,
-            v_tipo_usuario_anterior,
-            v_tipo_estudiante_anterior,
-            v_tipo_profesor_anterior,
-            v_nombres_anterior, -- Los demás campos no cambian
-            v_apellidos_anterior,
-            v_correo_electronico_anterior,
-            v_nombre_usuario_anterior,
-            v_telefono_celular_anterior,
-            v_habilitado_nuevo, -- Solo este cambia
-            v_tipo_usuario_anterior,
-            v_tipo_estudiante_anterior,
-            v_tipo_profesor_anterior,
             p_cedula_actor,
+            'Deshabilitación individual del sistema',
+            (NOW() AT TIME ZONE 'America/Caracas')
+        );
+    END IF;
+
+    -- SI SE ESTÁ HABILITANDO NUEVAMENTE, REGISTRAR EN LA TABLA DE HABILITACIÓN
+    IF v_habilitado_nuevo = TRUE AND v_habilitado_anterior = FALSE AND p_cedula_actor IS NOT NULL AND p_cedula_actor != '' THEN
+        INSERT INTO auditoria_habilitacion_usuario (
+            usuario_habilitado,
+            nombres_usuario_habilitado,
+            apellidos_usuario_habilitado,
+            habilitado_por,
+            motivo,
+            fecha
+        ) VALUES (
+            p_cedula_usuario,
+            v_nombres_anterior,
+            v_apellidos_anterior,
+            p_cedula_actor,
+            'Reactivación individual del sistema',
             (NOW() AT TIME ZONE 'America/Caracas')
         );
     END IF;

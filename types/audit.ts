@@ -137,7 +137,7 @@ export interface CitaCreadaAuditRecord {
   usuarios_atendieron?: UsuarioAtendio[];
 }
 
-// Auditoría de usuarios eliminados
+// Auditoría de usuarios eliminados (ahora deshabilitados)
 export interface UsuarioEliminadoAuditRecord {
   id: number;
   usuario_eliminado: string;
@@ -149,6 +149,22 @@ export interface UsuarioEliminadoAuditRecord {
   apellidos_eliminado_por: string | null;
   nombre_completo_eliminado_por: string | null;
   foto_perfil_eliminado_por: string | null;
+  motivo: string;
+  fecha: string;
+}
+
+// Auditoría de usuarios habilitados (reactivados)
+export interface UsuarioHabilitadoAuditRecord {
+  id: number;
+  usuario_habilitado: string;
+  nombres_usuario_habilitado: string | null;
+  apellidos_usuario_habilitado: string | null;
+  nombre_completo_usuario_habilitado: string | null;
+  habilitado_por: string;
+  nombres_habilitado_por: string | null;
+  apellidos_habilitado_por: string | null;
+  nombre_completo_habilitado_por: string | null;
+  foto_perfil_habilitado_por: string | null;
   motivo: string;
   fecha: string;
 }
@@ -531,6 +547,7 @@ export interface AuditCounts {
   citasActualizadas: number;
   citasCreadas: number;
   usuariosEliminados: number;
+  usuariosHabilitados: number;
   usuariosActualizadosCampos: number;
   usuariosCreados: number;
   estadosEliminados?: number;
