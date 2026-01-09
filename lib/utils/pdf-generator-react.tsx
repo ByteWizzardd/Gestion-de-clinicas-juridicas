@@ -2,12 +2,46 @@
 
 import React from 'react';
 import { pdf } from '@react-pdf/renderer/lib/react-pdf.browser';
-import { TiposCasosPDF } from '@/components/reports/TiposCasosPDF';
-import { EstatusCasosPDF, EstatusGroupedData } from '@/components/reports/EstatusCasosPDF';
-import { InformeResumenPDF, InformeResumenData } from '@/components/reports/InformeResumenPDF';
-import { CasosGroupedData, SocioeconomicoData } from '@/app/actions/reports';
-import InformeSocioeconomicoPDF from '@/components/reports/InformeSocioeconomicoPDF';
+import { TiposCasosPDF } from '../../components/reports/TiposCasosPDF';
+import { EstatusCasosPDF, EstatusGroupedData } from '../../components/reports/EstatusCasosPDF';
+import { InformeResumenPDF, InformeResumenData } from '../../components/reports/InformeResumenPDF';
+import { CasosGroupedData, SocioeconomicoData } from '../../app/actions/reports';
+import InformeSocioeconomicoPDF from '../../components/reports/InformeSocioeconomicoPDF';
 import { generateBarChartImage } from './bar-chart-generator';
+import { SolicitanteFichaPDF as SolicitanteFichaDocument } from '../../components/applicants/SolicitanteFichaPDF';
+import { CasoHistorialPDF as CasoHistorialDocument } from '../../components/cases/CasoHistorialPDF';
+
+// Interfaces para los datos de los reportes
+// Definimos las interfaces aquí para evitar dependencias circulares o problemas de importación
+export interface Solicitante {
+  cedula: string;
+  nombres?: string;
+  apellidos?: string;
+  [key: string]: any;
+}
+
+export interface Caso {
+  id_caso: number;
+  tramite?: string;
+  fecha_inicio_caso?: Date | string;
+  [key: string]: any;
+}
+
+export interface SolicitanteFichaData {
+  solicitante: Solicitante;
+  casos?: Caso[];
+  beneficiarios?: any[];
+}
+
+export interface CasoHistorialData {
+  caso: Caso;
+  acciones?: any[];
+  citas?: any[];
+  soportes?: any[];
+  beneficiarios?: any[];
+  equipo?: any[];
+  cambiosEstatus?: any[];
+}
 
 // Colores exactos del diseño de Figma
 export const CHART_COLORS = [
@@ -177,6 +211,7 @@ export function formatGroupTitle(item: {
 
   return title;
 }
+
 
 /**
  * Genera una imagen de una página completa del reporte de Tipos de Caso
@@ -1147,4 +1182,84 @@ export async function generateInformeSocioeconomicoPDF(
   }
 }
 
+/**
+ * Genera y descarga un PDF con la ficha completa de un solicitante (versión simple)
+ */
+export async function generateSolicitanteFichaPDF(data: SolicitanteFichaData): Promise<void> {
+  try {
+    // Cargar el logo como base64 para preservar la transparencia
+    const logoBase64 = await imageToBase64('/logo clinica juridica.png');
 
+    // Generar el documento PDF
+    const doc = React.createElement(SolicitanteFichaDocument, {
+      data: {
+        ...data,
+        casos: data.casos || [],
+        beneficiarios: data.beneficiarios || []
+      },
+      logoBase64
+    });
+
+    // Crear el blob del PDF
+    // @ts-ignore - React PDF types issue with React 19
+    const blob = await pdf(doc).toBlob();
+
+    // Crear URL y descargar
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Ficha_Solicitante_${data.solicitante?.cedula || 'N/A'}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+  } catch (error) {
+    console.error('Error al generar PDF de ficha de solicitante:', error);
+    alert('Error al generar el PDF');
+    throw error;
+  }
+}
+
+/**
+ * Genera y descarga un PDF con el historial completo de un caso (versión simple)
+ */
+export async function generateCasoHistorialPDF(data: CasoHistorialData): Promise<void> {
+  try {
+    // Cargar el logo como base64 para preservar la transparencia
+    const logoBase64 = await imageToBase64('/logo clinica juridica.png');
+
+    // Generar el documento PDF
+    const doc = React.createElement(CasoHistorialDocument, {
+      data: {
+        ...data,
+        acciones: data.acciones || [],
+        citas: data.citas || [],
+        soportes: data.soportes || [],
+        beneficiarios: data.beneficiarios || [],
+        equipo: data.equipo || [],
+        cambiosEstatus: data.cambiosEstatus || []
+      },
+      logoBase64
+    });
+
+    // Crear el blob del PDF
+    // @ts-ignore - React PDF types issue with React 19
+    const blob = await pdf(doc).toBlob();
+
+    // Crear URL y descargar
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Historial_Caso_${data.caso?.id_caso || 'N/A'}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+  } catch (error) {
+    console.error('Error al generar PDF de historial de caso:', error);
+    alert('Error al generar el PDF');
+    throw error;
+  }
+}

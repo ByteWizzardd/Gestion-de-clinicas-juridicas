@@ -152,17 +152,16 @@ function FilterMenuItem({
           e.stopPropagation();
           onToggle();
         }}
-        className={`relative w-full flex items-center gap-3 px-4 py-3.5 text-left cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-all duration-150 border-b border-gray-200 last:border-b-0 ${
-          hasActiveFilter ? 'bg-primary-light/10 border-l-4 border-l-primary' : ''
-        }`}
+        className={`relative w-full flex items-center gap-3 px-4 py-3.5 text-left cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-all duration-150 border-b border-gray-200 last:border-b-0 ${hasActiveFilter ? 'bg-primary-light/10 border-l-4 border-l-primary' : ''
+          }`}
       >
         {showArrow && (
-          <ChevronLeft className={`w-4 h-4 text-gray-500 transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-90' : ''}`} />
+          <ChevronLeft className={`w-4 h-4 text-gray-500 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-90' : ''}`} />
         )}
         <span className={`flex-1 text-sm font-medium ${hasActiveFilter ? 'text-primary' : 'text-gray-700'}`}>
           {title}
         </span>
-        <div className="text-gray-400 flex-shrink-0">
+        <div className="text-gray-400 shrink-0">
           {icon}
         </div>
       </button>
@@ -308,9 +307,8 @@ export default function AppointmentsToolbar({
     <button
       type="button"
       onClick={() => setIsFilterOpen(!isOpenState)}
-      className={`h-10 px-4 cursor-pointer rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors ${
-        hasActiveFilter ? 'bg-primary-light border-primary-dark' : ''
-      }`}
+      className={`h-10 px-4 cursor-pointer rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors ${hasActiveFilter ? 'bg-primary-light border-primary-dark' : ''
+        }`}
     >
       <FilterIcon className="w-[18px] h-[18px] text-[#414040]" />
       <span className="text-base text-center">Filtro</span>

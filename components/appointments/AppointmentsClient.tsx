@@ -540,7 +540,7 @@ export default function AppointmentsClient({
                               onChange={(e) => setSearchValue(e.target.value)}
                               className="flex-1 px-4 py-2.5 h-full focus:outline-none bg-transparent text-base text-foreground placeholder:text-gray-500"
                             />
-                            <SearchIcon className="w-[18px] h-[18px] text-[#414040] mr-3 flex-shrink-0" />
+                            <SearchIcon className="w-[18px] h-[18px] text-[#414040] mr-3 shrink-0" />
                           </label>
                         </form>
                       </search>
