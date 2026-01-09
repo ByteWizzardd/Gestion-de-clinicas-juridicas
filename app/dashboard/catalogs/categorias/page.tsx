@@ -81,11 +81,10 @@ export default function CategoriasPage() {
         else alert(result.error);
     };
 
-    const handleDelete = async (item: any) => {
-        if (!confirm(`¿Eliminar "${item.nombre_categoria}"?`)) return;
-        const result = await deleteCategoria(item.id_materia, item.num_categoria);
+    const handleDelete = async (item: any, motivo?: string) => {
+        const result = await deleteCategoria(item.id_materia, item.num_categoria, motivo);
         if (result.success) await loadData();
-        else alert(result.error === 'HAS_ASSOCIATIONS' ? result.message : result.error);
+        else alert(result.error === 'HAS_IN_USE' ? result.message : result.error);
     };
 
     const handleCloseModal = () => {
@@ -112,7 +111,7 @@ export default function CategoriasPage() {
                         onView={() => handleView(item)}
                         onEdit={() => handleEdit(item)}
                         onToggleHabilitado={() => handleToggle(item)}
-                        onDelete={() => handleDelete(item)}
+                        onDelete={(motivo) => handleDelete(item, motivo)}
                     />
                 )}
             />

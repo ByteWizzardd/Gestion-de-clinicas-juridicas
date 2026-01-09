@@ -71,22 +71,22 @@ export default function SubcategoriasPage() {
 
     const handleUpdate = async (data: Record<string, string>) => {
         if (!editingItem) return;
-        
+
         // Parse the composite key "id_materia|num_categoria" if category was changed
         let new_id_materia: number | undefined;
         let new_num_categoria: number | undefined;
-        
+
         if (data.id_categoria) {
             const [materia, categoria] = data.id_categoria.split('|');
             new_id_materia = parseInt(materia);
             new_num_categoria = parseInt(categoria);
         }
-        
+
         const result = await updateSubcategoria(
             editingItem.id_materia,
             editingItem.num_categoria,
             editingItem.num_subcategoria,
-            { 
+            {
                 nombre_subcategoria: data.nombre_subcategoria,
                 new_id_materia,
                 new_num_categoria
@@ -106,9 +106,8 @@ export default function SubcategoriasPage() {
         else alert(result.error);
     };
 
-    const handleDelete = async (item: any) => {
-        if (!confirm(`¿Eliminar "${item.nombre_subcategoria}"?`)) return;
-        const result = await deleteSubcategoria(item.id_materia, item.num_categoria, item.num_subcategoria);
+    const handleDelete = async (item: any, motivo?: string) => {
+        const result = await deleteSubcategoria(item.id_materia, item.num_categoria, item.num_subcategoria, motivo);
         if (result.success) await loadData();
         else alert(result.error === 'HAS_ASSOCIATIONS' ? result.message : result.error);
     };
@@ -139,7 +138,7 @@ export default function SubcategoriasPage() {
                         onView={() => handleView(item)}
                         onEdit={() => handleEdit(item)}
                         onToggleHabilitado={() => handleToggle(item)}
-                        onDelete={() => handleDelete(item)}
+                        onDelete={(motivo) => handleDelete(item, motivo)}
                     />
                 )}
             />
@@ -151,7 +150,19 @@ export default function SubcategoriasPage() {
                 onFieldChange={(fieldName, value) => {
                     if (fieldName === 'id_materia_temp') {
                         handleMateriaChange(value);
+
+                        const updates: Record<string, string> = { id_categoria: '' };
+
+                        // Auto-select "Sin Categoría" if it's the only option
+                        const relevantCategories = categorias.filter(c => c.id_materia.toString() === value);
+                        if (relevantCategories.length === 1 && relevantCategories[0].nombre_categoria === 'Sin Categoría') {
+                            const autoCat = relevantCategories[0];
+                            updates.id_categoria = `${autoCat.id_materia}|${autoCat.num_categoria}`;
+                        }
+
+                        return updates;
                     }
+                    return undefined;
                 }}
                 fields={[
                     {

@@ -74,9 +74,8 @@ export default function CaracteristicasPage() {
     else alert(result.error);
   };
 
-  const handleDelete = async (item: any) => {
-    if (!confirm(`¿Eliminar "${item.descripcion}"?`)) return;
-    const result = await deleteCaracteristica(item.id_tipo_caracteristica, item.num_caracteristica);
+  const handleDelete = async (item: any, motivo?: string) => {
+    const result = await deleteCaracteristica(item.id_tipo_caracteristica, item.num_caracteristica, motivo);
     if (result.success) await loadData();
     else alert(result.error === 'HAS_ASSOCIATIONS' ? result.message : result.error);
   };
@@ -102,7 +101,7 @@ export default function CaracteristicasPage() {
             onView={() => handleView(item)}
             onEdit={() => handleEdit(item)}
             onToggleHabilitado={() => handleToggle(item)}
-            onDelete={() => handleDelete(item)}
+            onDelete={(motivo) => handleDelete(item, motivo)}
           />
         )}
       />

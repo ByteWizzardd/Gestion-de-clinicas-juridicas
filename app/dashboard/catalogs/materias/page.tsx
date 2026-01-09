@@ -77,20 +77,14 @@ export default function MateriasPage() {
         }
     };
 
-    const handleDelete = async (item: any) => {
-        const confirmMessage = `¿Estás seguro de que deseas eliminar la materia "${item.nombre_materia}"?`;
-
-        if (!confirm(confirmMessage)) {
-            return;
-        }
-
-        const result = await deleteMateria(item.id_materia);
+    const handleDelete = async (item: any, motivo?: string) => {
+        const result = await deleteMateria(item.id_materia, motivo);
 
         if (result.success) {
             await loadMaterias();
         } else {
             if (result.error === 'HAS_ASSOCIATIONS') {
-                alert(result.message || 'No se puede eliminar esta materia porque tiene asociaciones. Deshabilítela en su lugar.');
+                alert(result.message || 'No se puede eliminar esta materia porque tiene categorías o casos asociados. Deshabilítela en su lugar.');
             } else {
                 alert(result.error || 'Error al eliminar materia');
             }
@@ -119,7 +113,7 @@ export default function MateriasPage() {
                         onView={() => handleView(item)}
                         onEdit={() => handleEdit(item)}
                         onToggleHabilitado={() => handleToggleHabilitado(item)}
-                        onDelete={() => handleDelete(item)}
+                        onDelete={(motivo) => handleDelete(item, motivo)}
                     />
                 )}
             />

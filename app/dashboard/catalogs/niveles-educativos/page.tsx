@@ -72,9 +72,8 @@ export default function NivelesEducativosPage() {
         }
     };
 
-    const handleDelete = async (item: any) => {
-        if (!confirm(`¿Estás seguro de que deseas eliminar el nivel educativo "${item.descripcion}"?`)) return;
-        const result = await deleteNivelEducativo(item.id_nivel_educativo);
+    const handleDelete = async (item: any, motivo?: string) => {
+        const result = await deleteNivelEducativo(item.id_nivel_educativo, motivo);
         if (result.success) {
             await loadNivelesEducativos();
         } else {
@@ -107,7 +106,7 @@ export default function NivelesEducativosPage() {
                         onView={() => handleView(item)}
                         onEdit={() => handleEdit(item)}
                         onToggleHabilitado={() => handleToggleHabilitado(item)}
-                        onDelete={() => handleDelete(item)}
+                        onDelete={(motivo) => handleDelete(item, motivo)}
                     />
                 )}
             />

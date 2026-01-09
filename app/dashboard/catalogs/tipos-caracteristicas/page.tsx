@@ -50,11 +50,10 @@ export default function TiposCaracteristicasPage() {
     else alert(result.error);
   };
 
-  const handleDelete = async (item: any) => {
-    if (!confirm(`¿Eliminar "${item.nombre_tipo_caracteristica}"?`)) return;
-    const result = await deleteTipoCaracteristica(item.id_tipo);
+  const handleDelete = async (item: any, motivo?: string) => {
+    const result = await deleteTipoCaracteristica(item.id_tipo, motivo);
     if (result.success) await loadTipos();
-    else alert(result.error === 'HAS_ASSOCIATIONS' ? result.message : result.error);
+    else alert(result.error);
   };
 
   return (
@@ -67,7 +66,7 @@ export default function TiposCaracteristicasPage() {
         addLabel="Añadir Tipo"
         onAddClick={() => setIsModalOpen(true)}
         renderActions={(item: any) => (
-          <CatalogActionsMenu item={item} onView={() => handleView(item)} onEdit={() => handleEdit(item)} onToggleHabilitado={() => handleToggle(item)} onDelete={() => handleDelete(item)} />
+          <CatalogActionsMenu item={item} onView={() => handleView(item)} onEdit={() => handleEdit(item)} onToggleHabilitado={() => handleToggle(item)} onDelete={(motivo) => handleDelete(item, motivo)} />
         )}
       />
       <CatalogFormModal

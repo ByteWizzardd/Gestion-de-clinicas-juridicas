@@ -50,7 +50,7 @@ export async function createMunicipio(data: { id_estado: string; nombre_municipi
     }
 }
 
-export async function updateMunicipio(id_estado: number, num_municipio: number, data: { nombre_municipio: string }) {
+export async function updateMunicipio(id_estado: number, num_municipio: number, data: { nombre_municipio: string, id_estado?: number }) {
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
@@ -63,10 +63,27 @@ export async function updateMunicipio(id_estado: number, num_municipio: number, 
 
         await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
 
-        const result = await client.query(
-            'UPDATE municipios SET nombre_municipio = $3 WHERE id_estado = $1 AND num_municipio = $2 RETURNING *',
-            [id_estado, num_municipio, data.nombre_municipio]
-        );
+        let result;
+        // Check if we are moving the municipality to a different state
+        if (data.id_estado && data.id_estado !== id_estado) {
+            const maxResult = await client.query(
+                'SELECT COALESCE(MAX(num_municipio), 0) + 1 as next_num FROM municipios WHERE id_estado = $1',
+                [data.id_estado]
+            );
+            const nextNum = maxResult.rows[0].next_num;
+
+            result = await client.query(
+                'UPDATE municipios SET nombre_municipio = $3, id_estado = $4, num_municipio = $5 WHERE id_estado = $1 AND num_municipio = $2 RETURNING *',
+                [id_estado, num_municipio, data.nombre_municipio, data.id_estado, nextNum]
+            );
+        } else {
+            // Standard update (just name)
+            result = await client.query(
+                'UPDATE municipios SET nombre_municipio = $3 WHERE id_estado = $1 AND num_municipio = $2 RETURNING *',
+                [id_estado, num_municipio, data.nombre_municipio]
+            );
+        }
+
         if (result.rows.length === 0) {
             await client.query('ROLLBACK');
             return { success: false, error: 'Municipio no encontrado' };
@@ -75,10 +92,14 @@ export async function updateMunicipio(id_estado: number, num_municipio: number, 
         await client.query('COMMIT');
         revalidatePath('/dashboard/catalogs/municipios');
         return { success: true, data: result.rows[0] };
-    } catch (error) {
+    } catch (error: any) {
         await client.query('ROLLBACK');
         console.error('Error updating municipio:', error);
-        return { success: false, error: 'Error al actualizar municipio' };
+        // Handle FK violations gracefully if possible, or just return the error
+        if (error.code === '23503') { // ForeignKeyViolation
+            return { success: false, error: 'No se puede mover el municipio porque tiene registros asociados y la base de datos no soporta actualización en cascada.' };
+        }
+        return { success: false, error: 'Error al actualizar municipio: ' + error.message };
     } finally {
         client.release();
     }

@@ -37,6 +37,12 @@ export default function ApplicantsClient({
   const [nucleoFilter, setNucleoFilter] = useState('');
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
+  // Deletion state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<Solicitante | null>(null);
+  const [deleteMotivo, setDeleteMotivo] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setPrefersReducedMotion(mediaQuery.matches);
@@ -121,26 +127,34 @@ export default function ApplicantsClient({
     }
   };
 
-  const handleDelete = async (data: Record<string, unknown>) => {
+  const handleDelete = (data: Record<string, unknown>) => {
     const solicitante = data as Solicitante;
-    const confirmDelete = window.confirm(
-      `¿Está seguro de que desea eliminar al solicitante ${solicitante.nombre_completo}?`
-    );
-    if (confirmDelete) {
-      try {
-        const { deleteSolicitanteAction } = await import('@/app/actions/solicitantes');
-        const result = await deleteSolicitanteAction(solicitante.cedula, 'Eliminado desde la interfaz de administración');
+    setItemToDelete(solicitante);
+    setDeleteMotivo('');
+    setShowDeleteConfirm(true);
+  };
 
-        if (result.success) {
-          alert('Solicitante eliminado exitosamente');
-          await handleRefresh();
-        } else {
-          alert(`Error al eliminar: ${result.error?.message || 'Error desconocido'}`);
-        }
-      } catch (e) {
-        console.error(e);
-        alert('Ocurrió un error al intentar eliminar el solicitante');
+  const handleConfirmDelete = async (motivo?: string) => {
+    if (!itemToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const { deleteSolicitanteAction } = await import('@/app/actions/solicitantes');
+      const result = await deleteSolicitanteAction(itemToDelete.cedula, motivo || 'Sin motivo especificado');
+
+      if (result.success) {
+        setShowDeleteConfirm(false);
+        setItemToDelete(null);
+        setDeleteMotivo('');
+        await handleRefresh();
+      } else {
+        alert(`Error al eliminar: ${result.error?.message || 'Error desconocido'}`);
       }
+    } catch (e) {
+      console.error(e);
+      alert('Ocurrió un error al intentar eliminar el solicitante');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -257,6 +271,35 @@ export default function ApplicantsClient({
         message={`¿Deseas asociar un caso a ${registeredNombre}?`}
         confirmLabel="Sí, asociar caso"
         cancelLabel="No, cerrar"
+      />
+
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setItemToDelete(null);
+          setDeleteMotivo('');
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Eliminar solicitante"
+        message={
+          <div className="space-y-4">
+            <p>
+              ¿Estás seguro de que deseas eliminar al solicitante <strong>{itemToDelete?.nombre_completo}</strong>?
+            </p>
+            <p className="text-red-600 font-semibold">
+              Esta acción eliminará todos los datos asociados al solicitante y es irreversible.
+            </p>
+          </div>
+        }
+        confirmLabel={isDeleting ? 'Eliminando...' : 'Eliminar'}
+        cancelLabel="Cancelar"
+        confirmVariant="danger"
+        showMotive={true}
+        motiveValue={deleteMotivo}
+        onMotiveChange={setDeleteMotivo}
+        motivePlaceholder="Indique el motivo de la eliminación (ej. Error en registro, duplicado...)"
+        disabled={isDeleting}
       />
     </>
   );

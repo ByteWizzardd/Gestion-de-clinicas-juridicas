@@ -49,9 +49,8 @@ export default function CondicionesActividadPage() {
     else alert(result.error);
   };
 
-  const handleDelete = async (item: any) => {
-    if (!confirm(`¿Eliminar "${item.nombre_actividad}"?`)) return;
-    const result = await deleteCondicionActividad(item.id_actividad);
+  const handleDelete = async (item: any, motivo?: string) => {
+    const result = await deleteCondicionActividad(item.id_actividad, motivo);
     if (result.success) await loadCondiciones();
     else alert(result.error === 'HAS_ASSOCIATIONS' ? result.message : result.error);
   };
@@ -71,7 +70,7 @@ export default function CondicionesActividadPage() {
             onView={() => handleView(item)}
             onEdit={() => handleEdit(item)}
             onToggleHabilitado={() => handleToggle(item)}
-            onDelete={() => handleDelete(item)}
+            onDelete={(motivo) => handleDelete(item, motivo)}
           />
         )}
       />

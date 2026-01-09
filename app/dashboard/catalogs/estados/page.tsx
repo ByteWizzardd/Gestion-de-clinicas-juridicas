@@ -72,9 +72,8 @@ export default function EstadosPage() {
         }
     };
 
-    const handleDelete = async (item: any) => {
-        if (!confirm(`¿Estás seguro de que deseas eliminar el estado "${item.nombre_estado}"?`)) return;
-        const result = await deleteEstado(item.id_estado);
+    const handleDelete = async (item: any, motivo?: string) => {
+        const result = await deleteEstado(item.id_estado, motivo);
         if (result.success) {
             await loadEstados();
         } else {
@@ -107,7 +106,7 @@ export default function EstadosPage() {
                         onView={() => handleView(item)}
                         onEdit={() => handleEdit(item)}
                         onToggleHabilitado={() => handleToggleHabilitado(item)}
-                        onDelete={() => handleDelete(item)}
+                        onDelete={(motivo) => handleDelete(item, motivo)}
                     />
                 )}
             />

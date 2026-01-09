@@ -67,9 +67,8 @@ export default function SemestresPage() {
     else alert(result.error || 'Error al cambiar estado');
   };
 
-  const handleDelete = async (item: any) => {
-    if (!confirm(`¿Estás seguro de que deseas eliminar el semestre "${item.term}"?`)) return;
-    const result = await deleteSemestre(item.term);
+  const handleDelete = async (item: any, motivo?: string) => {
+    const result = await deleteSemestre(item.term, motivo);
     if (result.success) {
       await loadSemestres();
     } else {
@@ -102,7 +101,7 @@ export default function SemestresPage() {
             onView={() => handleView(item)}
             onEdit={() => handleEdit(item)}
             onToggleHabilitado={() => handleToggleHabilitado(item)}
-            onDelete={() => handleDelete(item)}
+            onDelete={(motivo) => handleDelete(item, motivo)}
           />
         )}
       />

@@ -65,7 +65,7 @@ import type { AuditFilters, AuditCounts } from '@/types/audit';
  */
 export async function getAuditCountsAction(): Promise<AuditCounts> {
   const authResult = await requireAuthInServerActionWithCode();
-  
+
   // Solo coordinadores pueden ver auditorías
   if (!authResult.success || !authResult.user) {
     throw new Error('No autorizado');
@@ -106,10 +106,10 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       auditoriaEliminacionSoportesQueries.getCount(),
       auditoriaInsercionSoportesQueries.getCount().catch(() => 0),
       auditoriaEliminacionCitasQueries.getCount(),
-      auditoriaActualizacionCitasQueries.getCount(),
+      auditoriaActualizacionCitasQueries.getCount().catch(() => 0),
       auditoriaInsercionCitasQueries.getCount().catch(() => 0),
       auditoriaEliminacionUsuarioQueries.getCount(),
-      auditoriaActualizacionUsuariosQueries.getCount(),
+      auditoriaActualizacionUsuariosQueries.getCount().catch(() => 0),
       auditoriaInsercionUsuariosQueries.getCount().catch(() => 0),
       // Catálogos - manejar errores si las tablas aún no existen
       auditoriaEliminacionEstadosQueries.getCount().catch(() => 0),
@@ -241,7 +241,7 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
  */
 export async function getSoportesAuditAction(filters?: AuditFilters) {
   const authResult = await requireAuthInServerActionWithCode();
-  
+
   if (!authResult.success || !authResult.user) {
     throw new Error('No autorizado');
   }
@@ -271,7 +271,7 @@ export async function getSoportesAuditAction(filters?: AuditFilters) {
  */
 export async function getSoportesCreadosAuditAction(filters?: AuditFilters) {
   const authResult = await requireAuthInServerActionWithCode();
-  
+
   if (!authResult.success || !authResult.user) {
     throw new Error('No autorizado');
   }
@@ -301,7 +301,7 @@ export async function getSoportesCreadosAuditAction(filters?: AuditFilters) {
  */
 export async function getCitasEliminadasAuditAction(filters?: AuditFilters) {
   const authResult = await requireAuthInServerActionWithCode();
-  
+
   if (!authResult.success || !authResult.user) {
     throw new Error('No autorizado');
   }
@@ -331,7 +331,7 @@ export async function getCitasEliminadasAuditAction(filters?: AuditFilters) {
  */
 export async function getCitasActualizadasAuditAction(filters?: AuditFilters) {
   const authResult = await requireAuthInServerActionWithCode();
-  
+
   if (!authResult.success || !authResult.user) {
     throw new Error('No autorizado');
   }
@@ -361,7 +361,7 @@ export async function getCitasActualizadasAuditAction(filters?: AuditFilters) {
  */
 export async function getCitasCreadasAuditAction(filters?: AuditFilters) {
   const authResult = await requireAuthInServerActionWithCode();
-  
+
   if (!authResult.success || !authResult.user) {
     throw new Error('No autorizado');
   }
@@ -391,7 +391,7 @@ export async function getCitasCreadasAuditAction(filters?: AuditFilters) {
  */
 export async function getUsuariosEliminadosAuditAction(filters?: AuditFilters) {
   const authResult = await requireAuthInServerActionWithCode();
-  
+
   if (!authResult.success || !authResult.user) {
     throw new Error('No autorizado');
   }
@@ -414,7 +414,7 @@ export async function getUsuariosEliminadosAuditAction(filters?: AuditFilters) {
  */
 export async function getUsuariosActualizadosCamposAuditAction(filters?: AuditFilters) {
   const authResult = await requireAuthInServerActionWithCode();
-  
+
   if (!authResult.success || !authResult.user) {
     throw new Error('No autorizado');
   }
@@ -477,7 +477,7 @@ export async function getUsuariosCreadosAuditAction(filters?: AuditFilters) {
  */
 export async function getCasosEliminadosAuditAction(filters?: AuditFilters) {
   const authResult = await requireAuthInServerActionWithCode();
-  
+
   if (!authResult.success || !authResult.user) {
     throw new Error('No autorizado');
   }
@@ -506,7 +506,7 @@ export async function getCasosEliminadosAuditAction(filters?: AuditFilters) {
  */
 export async function getCasosActualizadosAuditAction(filters?: AuditFilters) {
   const authResult = await requireAuthInServerActionWithCode();
-  
+
   if (!authResult.success || !authResult.user) {
     throw new Error('No autorizado');
   }
@@ -535,7 +535,7 @@ export async function getCasosActualizadosAuditAction(filters?: AuditFilters) {
  */
 export async function getCasosCreadosAuditAction(filters?: AuditFilters) {
   const authResult = await requireAuthInServerActionWithCode();
-  
+
   if (!authResult.success || !authResult.user) {
     throw new Error('No autorizado');
   }
@@ -568,7 +568,7 @@ export async function getCasosCreadosAuditAction(filters?: AuditFilters) {
  */
 export async function getSolicitantesEliminadosAuditAction(filters?: AuditFilters) {
   const authResult = await requireAuthInServerActionWithCode();
-  
+
   if (!authResult.success || !authResult.user) {
     throw new Error('No autorizado');
   }
@@ -597,7 +597,7 @@ export async function getSolicitantesEliminadosAuditAction(filters?: AuditFilter
  */
 export async function getSolicitantesActualizadosAuditAction(filters?: AuditFilters) {
   const authResult = await requireAuthInServerActionWithCode();
-  
+
   if (!authResult.success || !authResult.user) {
     throw new Error('No autorizado');
   }
@@ -626,7 +626,7 @@ export async function getSolicitantesActualizadosAuditAction(filters?: AuditFilt
  */
 export async function getSolicitantesCreadosAuditAction(filters?: AuditFilters) {
   const authResult = await requireAuthInServerActionWithCode();
-  
+
   if (!authResult.success || !authResult.user) {
     throw new Error('No autorizado');
   }
@@ -655,7 +655,7 @@ export async function getSolicitantesCreadosAuditAction(filters?: AuditFilters) 
  */
 export async function getEstadosEliminadosAuditAction(filters?: AuditFilters) {
   const authResult = await requireAuthInServerActionWithCode();
-  
+
   if (!authResult.success || !authResult.user) {
     throw new Error('No autorizado');
   }
@@ -684,7 +684,7 @@ export async function getEstadosEliminadosAuditAction(filters?: AuditFilters) {
  */
 export async function getEstadosActualizadosAuditAction(filters?: AuditFilters) {
   const authResult = await requireAuthInServerActionWithCode();
-  
+
   if (!authResult.success || !authResult.user) {
     throw new Error('No autorizado');
   }

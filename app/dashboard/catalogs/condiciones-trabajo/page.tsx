@@ -49,9 +49,8 @@ export default function CondicionesTrabajoPage() {
     else alert(result.error);
   };
 
-  const handleDelete = async (item: any) => {
-    if (!confirm(`¿Eliminar "${item.nombre_trabajo}"?`)) return;
-    const result = await deleteCondicionTrabajo(item.id_trabajo);
+  const handleDelete = async (item: any, motivo?: string) => {
+    const result = await deleteCondicionTrabajo(item.id_trabajo, motivo);
     if (result.success) await loadCondiciones();
     else alert(result.error === 'HAS_ASSOCIATIONS' ? result.message : result.error);
   };
@@ -71,7 +70,7 @@ export default function CondicionesTrabajoPage() {
             onView={() => handleView(item)}
             onEdit={() => handleEdit(item)}
             onToggleHabilitado={() => handleToggle(item)}
-            onDelete={() => handleDelete(item)}
+            onDelete={(motivo) => handleDelete(item, motivo)}
           />
         )}
       />

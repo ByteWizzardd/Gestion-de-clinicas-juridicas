@@ -42,7 +42,14 @@ export default function MunicipiosPage() {
 
   const handleUpdate = async (data: Record<string, string>) => {
     if (!editingItem) return;
-    const result = await updateMunicipio(editingItem.id_estado, editingItem.num_municipio, { nombre_municipio: data.nombre_municipio });
+    const result = await updateMunicipio(
+      editingItem.id_estado,
+      editingItem.num_municipio,
+      {
+        nombre_municipio: data.nombre_municipio,
+        id_estado: data.id_estado ? parseInt(data.id_estado) : undefined
+      }
+    );
     if (result.success) { setIsModalOpen(false); setIsEditMode(false); setEditingItem(null); await loadData(); }
     else alert(result.error || 'Error al actualizar');
   };
@@ -53,9 +60,8 @@ export default function MunicipiosPage() {
     else alert(result.error);
   };
 
-  const handleDelete = async (item: any) => {
-    if (!confirm(`¿Eliminar "${item.nombre_municipio}"?`)) return;
-    const result = await deleteMunicipio(item.id_estado, item.num_municipio);
+  const handleDelete = async (item: any, motivo?: string) => {
+    const result = await deleteMunicipio(item.id_estado, item.num_municipio, motivo);
     if (result.success) await loadData();
     else alert(result.error === 'HAS_ASSOCIATIONS' ? result.message : result.error);
   };
@@ -75,7 +81,7 @@ export default function MunicipiosPage() {
             onView={() => handleView(item)}
             onEdit={() => handleEdit(item)}
             onToggleHabilitado={() => handleToggle(item)}
-            onDelete={() => handleDelete(item)}
+            onDelete={(motivo) => handleDelete(item, motivo)}
           />
         )}
       />
@@ -90,7 +96,7 @@ export default function MunicipiosPage() {
             label: 'Estado',
             type: 'select',
             options: estados.map(e => ({ value: e.id_estado.toString(), label: e.nombre_estado })),
-            required: !isEditMode,
+            required: true,
             defaultValue: isEditMode ? editingItem?.id_estado?.toString() : undefined
           },
           { name: 'nombre_municipio', label: 'Nombre del Municipio', required: true, defaultValue: isEditMode ? editingItem?.nombre_municipio : undefined }

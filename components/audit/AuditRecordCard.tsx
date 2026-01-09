@@ -5,10 +5,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ChevronDown, ChevronUp, FileText, Calendar, User, X, Check, BookOpen, GraduationCap, Building, Briefcase, Activity, Tag, Tags, Scale, MapPin, Building2, Home, FolderTree, FolderOpen, UserCircle } from 'lucide-react';
 import Link from 'next/link';
 import UserAvatar from '@/components/ui/UserAvatar';
-import type { 
-  SoporteAuditRecord, 
+import type {
+  SoporteAuditRecord,
   SoporteCreadoAuditRecord,
-  CitaEliminadaAuditRecord, 
+  CitaEliminadaAuditRecord,
   CitaActualizadaAuditRecord,
   CitaCreadaAuditRecord,
   UsuarioEliminadoAuditRecord,
@@ -55,7 +55,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
     if (!dateInput) {
       return 'Fecha no disponible';
     }
-    
+
     // Si ya es un objeto Date, usarlo directamente
     let date: Date;
     if (dateInput instanceof Date) {
@@ -88,12 +88,12 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
     } else {
       return 'Fecha no disponible';
     }
-    
+
     // Validar que la fecha sea válida
     if (isNaN(date.getTime())) {
       return 'Fecha inválida';
     }
-    
+
     return date.toLocaleDateString('es-VE', {
       year: 'numeric',
       month: 'long',
@@ -469,7 +469,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         if (!nombreCompleto) {
           nombreCompleto = 'Usuario desconocido';
         }
-        
+
         return (
           <div className="flex items-center gap-3">
             <UserAvatar fotoPerfil={r.foto_perfil_usuario} size={25} />
@@ -515,7 +515,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 <span className="text-gray-600">
                   {r.cedula_solicitante ? (
                     <Link
-                      href={`/dashboard/users/${r.cedula_solicitante}`}
+                      href={`/dashboard/applicants/${r.cedula_solicitante}`}
                       className="text-primary hover:underline font-medium transition-colors"
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -555,7 +555,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 <span className="text-gray-600">
                   {r.cedula_solicitante ? (
                     <Link
-                      href={`/dashboard/users/${r.cedula_solicitante}`}
+                      href={`/dashboard/applicants/${r.cedula_solicitante}`}
                       className="text-primary hover:underline font-medium transition-colors"
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -641,7 +641,13 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
             <User className="w-5 h-5 text-gray-600" />
             <div className="flex-1">
               <p className="font-semibold text-gray-900">
-                {nombreCompleto}
+                <Link
+                  href={`/dashboard/applicants/${r.cedula}`}
+                  className="text-primary hover:underline transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {nombreCompleto}
+                </Link>
                 {r.cedula && (
                   <span className="text-gray-600 font-normal"> (Cédula: {r.cedula})</span>
                 )}
@@ -669,7 +675,13 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
             <Check className="w-5 h-5 text-gray-600" />
             <div className="flex-1">
               <p className="font-semibold text-gray-900">
-                {nombreCompleto}
+                <Link
+                  href={`/dashboard/applicants/${r.cedula_solicitante}`}
+                  className="text-primary hover:underline transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {nombreCompleto}
+                </Link>
                 {r.cedula_solicitante && (
                   <span className="text-gray-600 font-normal"> (Cédula: {r.cedula_solicitante})</span>
                 )}
@@ -1101,10 +1113,10 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 </p>
               </div>
             </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Motivo de eliminación</p>
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Motivo de eliminación</p>
               <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
-              </div>
+            </div>
             <div className="pt-2" onClick={(e) => e.stopPropagation()}>
               <Link
                 href={`/dashboard/cases/${r.id_caso}`}
@@ -1154,7 +1166,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
               </p>
             </div>
             <div className="pt-2" onClick={(e) => e.stopPropagation()}>
-              <Link 
+              <Link
                 href={`/dashboard/cases/${r.id_caso}`}
                 className="text-sm text-primary hover:underline"
               >
@@ -1220,10 +1232,10 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 <p className="text-sm text-gray-600">Fecha eliminación: {formatDate(r.fecha_eliminacion)}</p>
               </div>
             </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Motivo de eliminación</p>
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Motivo de eliminación</p>
               <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
-              </div>
+            </div>
             <div className="pt-2" onClick={(e) => e.stopPropagation()}>
               <Link
                 href={`/dashboard/cases/${r.id_caso}`}
@@ -1281,7 +1293,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
               </div>
             </div>
             <div className="pt-2" onClick={(e) => e.stopPropagation()}>
-              <Link 
+              <Link
                 href={`/dashboard/cases/${r.id_caso}`}
                 className="text-sm text-primary hover:underline"
               >
@@ -1371,7 +1383,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
               </div>
             </div>
             <div className="pt-2" onClick={(e) => e.stopPropagation()}>
-              <Link 
+              <Link
                 href={`/dashboard/cases/${r.id_caso}`}
                 className="text-sm text-primary hover:underline"
               >
@@ -1391,7 +1403,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         if (!nombreCompletoEliminado) {
           nombreCompletoEliminado = 'Usuario desconocido';
         }
-        
+
         // Construir nombre completo del usuario que eliminó
         let nombreCompletoEliminoPor = r.nombre_completo_eliminado_por;
         if (!nombreCompletoEliminoPor && (r.nombres_eliminado_por || r.apellidos_eliminado_por)) {
@@ -1400,7 +1412,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         if (!nombreCompletoEliminoPor) {
           nombreCompletoEliminoPor = 'Usuario desconocido';
         }
-        
+
         return (
           <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
             <div>
@@ -1425,10 +1437,10 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
               </p>
               <p className="text-sm text-gray-600">Fecha: {formatDate(r.fecha)}</p>
             </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Motivo</p>
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Motivo</p>
               <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
-              </div>
+            </div>
           </div>
         );
       }
@@ -1509,7 +1521,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         if (!nombreCompleto) {
           nombreCompleto = 'Usuario desconocido';
         }
-        
+
         return (
           <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
             <div>
@@ -1523,7 +1535,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                   r.ci_usuario
                 )}
               </p>
-              
+
               {/* Mostrar solo los campos que cambiaron */}
               {(r.nombres_anterior !== r.nombres_nuevo) && (
                 <div className="mb-2">
@@ -1539,7 +1551,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                   </p>
                 </div>
               )}
-              
+
               {(r.apellidos_anterior !== r.apellidos_nuevo) && (
                 <div className="mb-2">
                   <p className="text-sm text-gray-600">
@@ -1554,7 +1566,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                   </p>
                 </div>
               )}
-              
+
               {(r.correo_electronico_anterior !== r.correo_electronico_nuevo) && (
                 <div className="mb-2">
                   <p className="text-sm text-gray-600">
@@ -1569,7 +1581,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                   </p>
                 </div>
               )}
-              
+
               {(r.nombre_usuario_anterior !== r.nombre_usuario_nuevo) && (
                 <div className="mb-2">
                   <p className="text-sm text-gray-600">
@@ -1584,7 +1596,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                   </p>
                 </div>
               )}
-              
+
               {(r.telefono_celular_anterior !== r.telefono_celular_nuevo) && (
                 <div className="mb-2">
                   <p className="text-sm text-gray-600">
@@ -1599,7 +1611,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                   </p>
                 </div>
               )}
-              
+
               {(r.habilitado_sistema_anterior !== r.habilitado_sistema_nuevo) && (
                 <div className="mb-2">
                   <p className="text-sm text-gray-600">
@@ -1614,7 +1626,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                   </p>
                 </div>
               )}
-              
+
               {(r.tipo_usuario_anterior !== r.tipo_usuario_nuevo) && (
                 <div className="mb-2">
                   <p className="text-sm text-gray-600">
@@ -1629,7 +1641,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                   </p>
                 </div>
               )}
-              
+
               {/* Solo mostrar cambios de tipo_estudiante si el tipo_usuario NO cambió */}
               {(r.tipo_usuario_anterior === r.tipo_usuario_nuevo && r.tipo_estudiante_anterior !== r.tipo_estudiante_nuevo) && (
                 <div className="mb-2">
@@ -1645,7 +1657,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                   </p>
                 </div>
               )}
-              
+
               {/* Solo mostrar cambios de tipo_profesor si el tipo_usuario NO cambió */}
               {(r.tipo_usuario_anterior === r.tipo_usuario_nuevo && r.tipo_profesor_anterior !== r.tipo_profesor_nuevo) && (
                 <div className="mb-2">
@@ -3132,7 +3144,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
-      <div 
+      <div
         className="flex items-start justify-between gap-4 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >

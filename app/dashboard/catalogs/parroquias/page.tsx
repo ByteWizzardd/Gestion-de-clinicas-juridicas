@@ -70,7 +70,7 @@ export default function ParroquiasPage() {
             editingItem.id_estado,
             editingItem.num_municipio,
             editingItem.num_parroquia,
-            { 
+            {
                 nombre_parroquia: data.nombre_parroquia,
                 id_estado: data.id_estado,
                 id_municipio: data.id_municipio
@@ -90,11 +90,10 @@ export default function ParroquiasPage() {
         else alert(result.error);
     };
 
-    const handleDelete = async (item: any) => {
-        if (!confirm(`¿Eliminar "${item.nombre_parroquia}"?`)) return;
-        const result = await deleteParroquia(item.id_estado, item.num_municipio, item.num_parroquia);
+    const handleDelete = async (item: any, motivo?: string) => {
+        const result = await deleteParroquia(item.id_estado, item.num_municipio, item.num_parroquia, motivo);
         if (result.success) await loadData();
-        else alert(result.error === 'HAS_ASSOCIATIONS' ? result.message : result.error);
+        else alert(result.error);
     };
 
     const handleCloseModal = () => {
@@ -119,7 +118,7 @@ export default function ParroquiasPage() {
                         onView={() => handleView(item)}
                         onEdit={() => handleEdit(item)}
                         onToggleHabilitado={() => handleToggle(item)}
-                        onDelete={() => handleDelete(item)}
+                        onDelete={(motivo) => handleDelete(item, motivo)}
                     />
                 )}
             />

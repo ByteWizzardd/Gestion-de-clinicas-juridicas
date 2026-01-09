@@ -99,7 +99,7 @@ export default function NucleosPage() {
         if (!editingItem) return;
         const result = await updateNucleo(
             editingItem.id_nucleo,
-            { 
+            {
                 nombre_nucleo: data.nombre_nucleo,
                 id_estado: data.id_estado,
                 id_municipio: data.id_municipio,
@@ -120,9 +120,8 @@ export default function NucleosPage() {
         else alert(result.error);
     };
 
-    const handleDelete = async (item: any) => {
-        if (!confirm(`¿Eliminar "${item.nombre_nucleo}"?`)) return;
-        const result = await deleteNucleo(item.id_nucleo);
+    const handleDelete = async (item: any, motivo?: string) => {
+        const result = await deleteNucleo(item.id_nucleo, motivo);
         if (result.success) await loadData();
         else alert(result.error === 'HAS_ASSOCIATIONS' ? result.message : result.error);
     };
@@ -150,7 +149,7 @@ export default function NucleosPage() {
                         onView={() => handleView(item)}
                         onEdit={() => handleEdit(item)}
                         onToggleHabilitado={() => handleToggle(item)}
-                        onDelete={() => handleDelete(item)}
+                        onDelete={(motivo) => handleDelete(item, motivo)}
                     />
                 )}
             />

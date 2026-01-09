@@ -126,9 +126,8 @@ export default function AmbitosLegalesPage() {
         else alert(result.error);
     };
 
-    const handleDelete = async (item: any) => {
-        if (!confirm(`¿Eliminar "${item.nombre_ambito_legal}"?`)) return;
-        const result = await deleteAmbitoLegal(item.id_materia, item.num_categoria, item.num_subcategoria, item.num_ambito_legal);
+    const handleDelete = async (item: any, motivo?: string) => {
+        const result = await deleteAmbitoLegal(item.id_materia, item.num_categoria, item.num_subcategoria, item.num_ambito_legal, motivo);
         if (result.success) await loadData();
         else alert(result.error === 'HAS_ASSOCIATIONS' ? result.message : result.error);
     };
@@ -159,7 +158,7 @@ export default function AmbitosLegalesPage() {
                         onView={() => handleView(item)}
                         onEdit={() => handleEdit(item)}
                         onToggleHabilitado={() => handleToggle(item)}
-                        onDelete={() => handleDelete(item)}
+                        onDelete={(motivo) => handleDelete(item, motivo)}
                     />
                 )}
             />
@@ -171,13 +170,46 @@ export default function AmbitosLegalesPage() {
                 onFieldChange={(name, value) => {
                     if (name === 'id_materia_temp') {
                         handleMateriaChange(value);
-                        // Clear downstream fields to force re-selection
+                        // Default updates
                         const updates: Record<string, string> = { id_categoria_temp: '', id_subcategoria: '' };
+
+                        // Auto-select "Sin Categoría" if it's the only option
+                        const relevantCategories = categorias.filter(c => c.id_materia.toString() === value);
+                        if (relevantCategories.length === 1 && relevantCategories[0].nombre_categoria === 'Sin Categoría') {
+                            const autoCat = relevantCategories[0];
+                            const autoCatValue = `${autoCat.id_materia}|${autoCat.num_categoria}`;
+                            updates.id_categoria_temp = autoCatValue;
+                            handleCategoriaChange(autoCatValue);
+
+                            // Auto-select "Sin Subcategoría" if it's the only option for this new category
+                            const relevantSubcategories = subcategorias.filter(s =>
+                                s.id_materia.toString() === autoCat.id_materia.toString() &&
+                                s.num_categoria.toString() === autoCat.num_categoria.toString()
+                            );
+
+                            if (relevantSubcategories.length === 1 && relevantSubcategories[0].nombre_subcategoria === 'Sin Subcategoría') {
+                                const autoSubValue = `${relevantSubcategories[0].id_materia}|${relevantSubcategories[0].num_categoria}|${relevantSubcategories[0].num_subcategoria}`;
+                                updates.id_subcategoria = autoSubValue;
+                            }
+                        }
+
                         return updates;
                     } else if (name === 'id_categoria_temp') {
                         handleCategoriaChange(value);
-                        // Clear subcategory to force re-selection
                         const updates: Record<string, string> = { id_subcategoria: '' };
+
+                        // Auto-select "Sin Subcategoría"
+                        const [idMateria, numCategoria] = value.split('|');
+                        const relevantSubcategories = subcategorias.filter(s =>
+                            s.id_materia.toString() === idMateria &&
+                            s.num_categoria.toString() === numCategoria
+                        );
+
+                        if (relevantSubcategories.length === 1 && relevantSubcategories[0].nombre_subcategoria === 'Sin Subcategoría') {
+                            const autoSubValue = `${relevantSubcategories[0].id_materia}|${relevantSubcategories[0].num_categoria}|${relevantSubcategories[0].num_subcategoria}`;
+                            updates.id_subcategoria = autoSubValue;
+                        }
+
                         return updates;
                     }
                     return undefined;
@@ -195,10 +227,10 @@ export default function AmbitosLegalesPage() {
                         name: 'id_categoria_temp',
                         label: 'Categoría',
                         type: 'select',
-                        options: filteredCategorias.map(c => ({
+                        options: filteredCategorias.length > 0 ? filteredCategorias.map(c => ({
                             value: `${c.id_materia}|${c.num_categoria}`,
                             label: c.nombre_categoria
-                        })),
+                        })) : [{ value: "", label: "Cargando..." }], // Should update on re-render
                         required: true,
                         defaultValue: isEditMode ? `${editingItem?.id_materia}|${editingItem?.num_categoria}` : undefined
                     },

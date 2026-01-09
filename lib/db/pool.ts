@@ -3,15 +3,17 @@ import { logger } from '@/lib/utils/logger';
 
 // Conección y gestion de archivos SQL
 
+const rawConnectionString = process.env.DATABASE_URL?.trim();
+
 /**
  * Configuración del pool de conexiones PostgreSQL
  */
-if (!process.env.DATABASE_URL) {
+if (!rawConnectionString) {
   logger.error('DATABASE_URL no está configurada en las variables de entorno');
 }
 
 const config: PoolConfig = {
-  connectionString: process.env.DATABASE_URL,
+  connectionString: rawConnectionString,
   max: 20, // Máximo de conexiones en el pool
   idleTimeoutMillis: 30000, // Tiempo de espera antes de cerrar conexiones inactivas
   connectionTimeoutMillis: 60000, // Timeout para establecer conexión (60s - necesario para Neon que puede estar "dormido")

@@ -60,8 +60,12 @@ export default function CatalogFormModal({
         const newErrors: Record<string, string> = {};
 
         // Validate required fields
+        // Validate required fields
         fields.forEach(field => {
-            if (field.required && !formData[field.name]?.trim()) {
+            const value = formData[field.name];
+            const isEmpty = value === null || value === undefined || (typeof value === 'string' && !value.trim()) || (value === '');
+
+            if (field.required && isEmpty) {
                 newErrors[field.name] = 'Este campo es requerido';
             }
         });
