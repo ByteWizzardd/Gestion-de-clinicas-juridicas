@@ -385,11 +385,17 @@ export function CasoHistorialPDF({ data, logoBase64 }: CasoHistorialPDFProps) {
                 // @ts-ignore
                 <View key={index} style={styles.tableRow}>
                   {/* @ts-ignore */}
-                  <Text style={[styles.tableCell, { flex: 1 }]}>{formatDate(acc.fecha_accion)}</Text>
+                  <Text style={[styles.tableCell, { flex: 1 }]}>
+                    {formatDate(acc.fecha_registro || acc.fecha_accion)}
+                  </Text>
                   {/* @ts-ignore */}
-                  <Text style={[styles.tableCell, { flex: 1.5 }]}>{acc.nombre_responsable || 'Sistema'}</Text>
+                  <Text style={[styles.tableCell, { flex: 1.5 }]}>
+                    {acc.nombre_completo_usuario_registra || acc.nombre_responsable || 'Sistema'}
+                  </Text>
                   {/* @ts-ignore */}
-                  <Text style={[styles.tableCell, { flex: 3 }]}>{acc.descripcion}</Text>
+                  <Text style={[styles.tableCell, { flex: 3 }]}>
+                    {acc.detalle_accion || acc.descripcion}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -414,30 +420,33 @@ export function CasoHistorialPDF({ data, logoBase64 }: CasoHistorialPDFProps) {
                 {/* @ts-ignore */}
                 <Text style={[styles.tableHeadCell, { flex: 1 }]}>Hora</Text>
                 {/* @ts-ignore */}
-                <Text style={[styles.tableHeadCell, { flex: 1.5 }]}>Tipo</Text>
-                {/* @ts-ignore */}
-                <Text style={[styles.tableHeadCell, { flex: 2 }]}>Motivo</Text>
+                <Text style={[styles.tableHeadCell, { flex: 2.5 }]}>Tipo / Orientación</Text>
                 {/* @ts-ignore */}
                 <Text style={[styles.tableHeadCell, { flex: 1 }]}>Estatus</Text>
               </View>
               {citas.map((cita, index) => {
+                const fecha = cita.fecha_encuentro || cita.fecha_cita;
                 let hora = 'N/A';
-                if (cita.fecha_cita) {
-                  hora = new Date(cita.fecha_cita).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
+                if (fecha) {
+                  hora = new Date(fecha).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
                 }
+                // Inferir estatus si no existe: Si la fecha ya pasó -> Realizada, sino Pendiente
+                let status = cita.estatus;
+                if (!status && fecha) {
+                  status = new Date(fecha) < new Date() ? 'Realizada' : 'Pendiente';
+                }
+
                 return (
                   // @ts-ignore
                   <View key={index} style={styles.tableRow}>
                     {/* @ts-ignore */}
-                    <Text style={[styles.tableCell, { flex: 1 }]}>{formatDate(cita.fecha_cita)}</Text>
+                    <Text style={[styles.tableCell, { flex: 1 }]}>{formatDate(fecha)}</Text>
                     {/* @ts-ignore */}
                     <Text style={[styles.tableCell, { flex: 1 }]}>{hora}</Text>
                     {/* @ts-ignore */}
-                    <Text style={[styles.tableCell, { flex: 1.5 }]}>{cita.tipo_cita || 'Cita'}</Text>
+                    <Text style={[styles.tableCell, { flex: 2.5 }]}>{cita.orientacion || cita.tipo_cita || 'Cita'}</Text>
                     {/* @ts-ignore */}
-                    <Text style={[styles.tableCell, { flex: 2 }]}>{cita.motivo || 'N/A'}</Text>
-                    {/* @ts-ignore */}
-                    <Text style={[styles.tableCell, { flex: 1, textTransform: 'capitalize' }]}>{cita.estatus}</Text>
+                    <Text style={[styles.tableCell, { flex: 1, textTransform: 'capitalize' }]}>{status || 'N/A'}</Text>
                   </View>
                 );
               })}
