@@ -14,7 +14,7 @@ import { getCasosAction, getCasosByUsuarioAction, deleteCasoAction } from '@/app
 import { createCasoAction, updateCasoAction, uploadSoportesAction } from '@/app/actions/casos';
 import { getMateriasAction } from '@/app/actions/materias';
 import { descargarHistorialCasoAction } from '@/app/actions/reports';
-import { generateCasoHistorialPDF } from '@/lib/utils/pdf-generator-react';
+import { generateCasoHistorialZip } from '@/lib/utils/pdf-generator-react';
 
 interface Caso {
   id_caso: number;
@@ -417,7 +417,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       const result = await descargarHistorialCasoAction(idCaso);
 
       if (result.success && result.data) {
-        await generateCasoHistorialPDF(result.data);
+        await generateCasoHistorialZip(result.data);
       } else {
         alert(`Error al descargar el historial: ${result.error || 'Error desconocido'}`);
       }

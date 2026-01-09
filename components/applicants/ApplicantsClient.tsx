@@ -10,7 +10,7 @@ import ApplicantFormModal from '@/components/forms/ApplicantFormModal';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 import { getSolicitantesAction } from '@/app/actions/solicitantes';
 import { descargarFichaSolicitanteAction } from '@/app/actions/reports';
-import { generateSolicitanteFichaPDF } from '@/lib/utils/pdf-generator-react';
+import { generateSolicitanteFichaZip } from '@/lib/utils/pdf-generator-react';
 
 interface Solicitante extends Record<string, unknown> {
   cedula: string;
@@ -160,7 +160,7 @@ export default function ApplicantsClient({
       const result = await descargarFichaSolicitanteAction(solicitante.cedula);
 
       if (result.success && result.data) {
-        await generateSolicitanteFichaPDF(result.data);
+        await generateSolicitanteFichaZip(result.data);
       } else {
         alert(`Error al descargar la ficha: ${result.error || 'Error desconocido'}`);
       }

@@ -10,6 +10,8 @@ import InformeSocioeconomicoPDF from '../../components/reports/InformeSocioecono
 import { generateBarChartImage } from './bar-chart-generator';
 import { SolicitanteFichaPDF as SolicitanteFichaDocument } from '../../components/applicants/SolicitanteFichaPDF';
 import { CasoHistorialPDF as CasoHistorialDocument } from '../../components/cases/CasoHistorialPDF';
+import JSZip from 'jszip';
+import { generateCasoHistorialExcel, generateSolicitanteFichaExcel } from './excel-generator';
 
 // Interfaces para los datos de los reportes
 // Definimos las interfaces aquí para evitar dependencias circulares o problemas de importación
@@ -1212,11 +1214,69 @@ export async function generateSolicitanteFichaPDF(data: SolicitanteFichaData): P
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
     URL.revokeObjectURL(url);
 
   } catch (error) {
     console.error('Error al generar PDF de ficha de solicitante:', error);
     alert('Error al generar el PDF');
+    throw error;
+  }
+}
+
+/**
+ * Genera y descarga un archivo ZIP con la ficha del solicitante (PDF + Excel)
+ */
+export async function generateSolicitanteFichaZip(data: SolicitanteFichaData): Promise<void> {
+  try {
+    const zip = new JSZip();
+    const cedula = data.solicitante?.cedula || 'N_A';
+
+    // 1. Generar PDF
+    // Cargar el logo como base64 para preservar la transparencia
+    const logoBase64 = await imageToBase64('/logo clinica juridica.png');
+
+    // Generar el documento PDF
+    const doc = React.createElement(SolicitanteFichaDocument, {
+      data: {
+        ...data,
+        casos: data.casos || [],
+        beneficiarios: data.beneficiarios || []
+      },
+      logoBase64
+    });
+
+    // Crear el blob del PDF
+    // @ts-ignore - React PDF types issue with React 19
+    const pdfBlob = await pdf(doc).toBlob();
+
+    // Agregar PDF al ZIP
+    zip.file(`Ficha_Solicitante_${cedula}.pdf`, pdfBlob);
+
+    // 2. Generar Excel
+    try {
+      const excelBuffer = await generateSolicitanteFichaExcel(data);
+      zip.file(`Ficha_Solicitante_${cedula}.xlsx`, excelBuffer);
+    } catch (excelError) {
+      console.error('Error generando Excel para ZIP:', excelError);
+    }
+
+    // 3. Generar archivo ZIP
+    const zipContent = await zip.generateAsync({ type: 'blob' });
+
+    // 4. Descargar
+    const url = URL.createObjectURL(zipContent);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Expediente_Solicitante_${cedula}.zip`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+  } catch (error) {
+    console.error('Error al generar ZIP de solicitante:', error);
+    alert('Error al generar el Expediente (ZIP)');
     throw error;
   }
 }
@@ -1260,6 +1320,70 @@ export async function generateCasoHistorialPDF(data: CasoHistorialData): Promise
   } catch (error) {
     console.error('Error al generar PDF de historial de caso:', error);
     alert('Error al generar el PDF');
+    throw error;
+  }
+}
+
+/**
+ * Genera y descarga un archivo ZIP con el historial del caso (PDF + Excel)
+ */
+export async function generateCasoHistorialZip(data: CasoHistorialData): Promise<void> {
+  try {
+    const zip = new JSZip();
+    const idCaso = data.caso?.id_caso || 'N_A';
+
+    // 1. Generar PDF
+    // Cargar el logo como base64 para preservar la transparencia
+    const logoBase64 = await imageToBase64('/logo clinica juridica.png');
+
+    // Generar el documento PDF
+    const doc = React.createElement(CasoHistorialDocument, {
+      data: {
+        ...data,
+        acciones: data.acciones || [],
+        citas: data.citas || [],
+        soportes: data.soportes || [],
+        beneficiarios: data.beneficiarios || [],
+        equipo: data.equipo || [],
+        cambiosEstatus: data.cambiosEstatus || []
+      },
+      logoBase64
+    });
+
+    // Crear el blob del PDF
+    // @ts-ignore - React PDF types issue with React 19
+    const pdfBlob = await pdf(doc).toBlob();
+
+    // Agregar PDF al ZIP
+    zip.file(`Historial_Caso_${idCaso}.pdf`, pdfBlob);
+
+    // 2. Generar Excel
+    try {
+      const excelBuffer = await generateCasoHistorialExcel(data);
+      zip.file(`Historial_Caso_${idCaso}.xlsx`, excelBuffer);
+    } catch (excelError) {
+      console.error('Error generando Excel para ZIP:', excelError);
+      // Continuamos aunque falle el excel, para al menos entregar el PDF? 
+      // O alertamos? Mejor alertar levemente o continuar. 
+      // En este caso, si falla el excel, el zip solo tendrá el PDF.
+    }
+
+    // 3. Generar archivo ZIP
+    const zipContent = await zip.generateAsync({ type: 'blob' });
+
+    // 4. Descargar
+    const url = URL.createObjectURL(zipContent);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Expediente_Caso_${idCaso}.zip`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+  } catch (error) {
+    console.error('Error al generar ZIP de expediente:', error);
+    alert('Error al generar el Expediente (ZIP)');
     throw error;
   }
 }
