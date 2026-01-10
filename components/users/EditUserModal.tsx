@@ -81,7 +81,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof Usuario, string>> = {};
-    
+
     if (!form) return false;
 
     // Validar correo electrónico
@@ -168,16 +168,20 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
 
     setLoading(true);
     try {
-      // Si el teléfono está vacío o es solo el prefijo (+58), enviarlo como undefined
+      // Si el teléfono está vacío o es solo el prefijo (+58), enviarlo como string vacío
       let telefonoFinal: string | undefined = form.telefono || undefined;
       if (telefonoFinal) {
         const trimmed = telefonoFinal.trim();
-        // Si solo tiene el código de país sin número, enviar como undefined
-        if (trimmed === '+58' || trimmed.replace(/\+\d+/, '').trim() === '') {
-          telefonoFinal = undefined;
+        // Si el string coincide estrictamente con un formato de solo código (ej: +58, +1, +584) sin número real adicional
+        // Asumimos que si tiene menos de 5-6 dígitos en total, no es un número válido y es solo basura o código
+        if (/^\+\d{1,4}$/.test(trimmed)) {
+          telefonoFinal = ''; // Enviar cadena vacía para indicar "borrar"
         }
+      } else {
+        // Si es null/undefined en el form, también enviar cadena vacía si queremos borrar
+        telefonoFinal = '';
       }
-      
+
       const result = await updateUsuarioByCedulaAction(form.cedula, {
         correo_electronico: form.correo_electronico,
         nombre: form.nombres,
@@ -210,7 +214,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
       } else {
         setError(result?.error?.message || 'Error al actualizar usuario');
       }
-    } catch  {
+    } catch {
       setError('Error inesperado al actualizar usuario');
     } finally {
       setLoading(false);
@@ -233,7 +237,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
             className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
             aria-label="Cerrar modal"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6L6 18" /><path d="M6 6l12 12" /></svg>
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M18 6L6 18" /><path d="M6 6l12 12" /></svg>
           </button>
 
           {/* Título */}
@@ -288,8 +292,8 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
                   const nuevoTipoUsuario = e.target.value;
                   // Limpiar solo tipo_estudiante y tipo_profesor cuando cambia el tipo de usuario
                   // para evitar falsos registros (term y nrc se mantienen)
-                  setForm({ 
-                    ...form, 
+                  setForm({
+                    ...form,
                     tipo_usuario: nuevoTipoUsuario,
                     tipo_estudiante: undefined,
                     tipo_profesor: undefined,
