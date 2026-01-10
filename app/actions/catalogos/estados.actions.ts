@@ -40,7 +40,7 @@ export async function createEstado(data: { nombre_estado: string }) {
         );
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/estados');
+        revalidatePath('/dashboard/administration/estados');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -80,7 +80,7 @@ export async function updateEstado(id: number, data: { nombre_estado: string }) 
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/estados');
+        revalidatePath('/dashboard/administration/estados');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -121,7 +121,7 @@ export async function toggleEstadoHabilitado(id: number) {
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/estados');
+        revalidatePath('/dashboard/administration/estados');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -183,7 +183,7 @@ export async function deleteEstado(id: number, motivo?: string) {
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/estados');
+        revalidatePath('/dashboard/administration/estados');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');

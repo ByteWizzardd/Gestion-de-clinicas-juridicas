@@ -40,7 +40,7 @@ export async function createMateria(data: { nombre_materia: string }) {
         );
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/materias');
+        revalidatePath('/dashboard/administration/materias');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -79,7 +79,7 @@ export async function updateMateria(id: number, data: { nombre_materia: string }
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/materias');
+        revalidatePath('/dashboard/administration/materias');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -118,7 +118,7 @@ export async function toggleMateriaHabilitado(id: number) {
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/materias');
+        revalidatePath('/dashboard/administration/materias');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -178,7 +178,7 @@ export async function deleteMateria(id: number, motivo?: string) {
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/materias');
+        revalidatePath('/dashboard/administration/materias');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');

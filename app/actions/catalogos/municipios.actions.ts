@@ -39,7 +39,7 @@ export async function createMunicipio(data: { id_estado: string; nombre_municipi
         );
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/municipios');
+        revalidatePath('/dashboard/administration/municipios');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -90,7 +90,7 @@ export async function updateMunicipio(id_estado: number, num_municipio: number, 
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/municipios');
+        revalidatePath('/dashboard/administration/municipios');
         return { success: true, data: result.rows[0] };
     } catch (error: any) {
         await client.query('ROLLBACK');
@@ -128,7 +128,7 @@ export async function toggleMunicipioHabilitado(id_estado: number, num_municipio
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/municipios');
+        revalidatePath('/dashboard/administration/municipios');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -180,7 +180,7 @@ export async function deleteMunicipio(id_estado: number, num_municipio: number, 
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/municipios');
+        revalidatePath('/dashboard/administration/municipios');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');

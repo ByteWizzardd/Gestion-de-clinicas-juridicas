@@ -44,7 +44,7 @@ export async function createAmbitoLegal(data: { id_materia: string; num_categori
         );
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/ambitos-legales');
+        revalidatePath('/dashboard/administration/ambitos-legales');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -99,7 +99,7 @@ export async function updateAmbitoLegal(
                 );
                 await client.query('COMMIT');
                 if (result.rows.length === 0) return { success: false, error: 'Ámbito legal no encontrado' };
-                revalidatePath('/dashboard/catalogs/ambitos-legales');
+                revalidatePath('/dashboard/administration/ambitos-legales');
                 return { success: true, data: result.rows[0] };
             } else {
                 // Move operation
@@ -142,7 +142,7 @@ export async function updateAmbitoLegal(
                 );
 
                 await client.query('COMMIT');
-                revalidatePath('/dashboard/catalogs/ambitos-legales');
+                revalidatePath('/dashboard/administration/ambitos-legales');
                 return { success: true, data: newRecord };
             }
         } catch (e) {
@@ -180,7 +180,7 @@ export async function toggleAmbitoLegalHabilitado(id_materia: number, num_catego
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/ambitos-legales');
+        revalidatePath('/dashboard/administration/ambitos-legales');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -230,7 +230,7 @@ export async function deleteAmbitoLegal(id_materia: number, num_categoria: numbe
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/ambitos-legales');
+        revalidatePath('/dashboard/administration/ambitos-legales');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');

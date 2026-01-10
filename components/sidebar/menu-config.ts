@@ -63,8 +63,8 @@ export const fullMenu: MenuItem[] = [
     roles: ['professor'],
   },
   {
-    label: 'Catálogos',
-    href: '/dashboard/catalogs',
+    label: 'Administración',
+    href: '/dashboard/administration',
     icon: Table,
     roles: ['coordinator'],
   },

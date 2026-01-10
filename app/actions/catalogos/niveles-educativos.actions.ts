@@ -46,7 +46,7 @@ export async function createNivelEducativo(data: { descripcion: string }) {
         const result = await client.query(query, [data.descripcion]);
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/niveles-educativos');
+        revalidatePath('/dashboard/administration/niveles-educativos');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -82,7 +82,7 @@ export async function updateNivelEducativo(id: number, data: { descripcion: stri
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/niveles-educativos');
+        revalidatePath('/dashboard/administration/niveles-educativos');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -119,7 +119,7 @@ export async function toggleNivelEducativoHabilitado(id: number) {
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/niveles-educativos');
+        revalidatePath('/dashboard/administration/niveles-educativos');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -171,7 +171,7 @@ export async function deleteNivelEducativo(id: number, motivo?: string) {
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/niveles-educativos');
+        revalidatePath('/dashboard/administration/niveles-educativos');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');

@@ -34,7 +34,7 @@ export async function createCondicionActividad(data: { nombre_actividad: string 
         );
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/condiciones-actividad');
+        revalidatePath('/dashboard/administration/condiciones-actividad');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -68,7 +68,7 @@ export async function updateCondicionActividad(id: number, data: { nombre_activi
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/condiciones-actividad');
+        revalidatePath('/dashboard/administration/condiciones-actividad');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -102,7 +102,7 @@ export async function toggleCondicionActividadHabilitado(id: number) {
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/condiciones-actividad');
+        revalidatePath('/dashboard/administration/condiciones-actividad');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -147,7 +147,7 @@ export async function deleteCondicionActividad(id: number, motivo?: string) {
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/condiciones-actividad');
+        revalidatePath('/dashboard/administration/condiciones-actividad');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');

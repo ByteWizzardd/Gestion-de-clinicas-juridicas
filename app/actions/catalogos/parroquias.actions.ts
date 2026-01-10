@@ -43,7 +43,7 @@ export async function createParroquia(data: { id_estado: string; id_municipio: s
         );
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/parroquias');
+        revalidatePath('/dashboard/administration/parroquias');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -105,7 +105,7 @@ export async function updateParroquia(id_estado: number, num_municipio: number, 
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/parroquias');
+        revalidatePath('/dashboard/administration/parroquias');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -139,7 +139,7 @@ export async function toggleParroquiaHabilitado(id_estado: number, num_municipio
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/parroquias');
+        revalidatePath('/dashboard/administration/parroquias');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -191,7 +191,7 @@ export async function deleteParroquia(id_estado: number, num_municipio: number, 
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/parroquias');
+        revalidatePath('/dashboard/administration/parroquias');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');

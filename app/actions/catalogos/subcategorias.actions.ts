@@ -43,7 +43,7 @@ export async function createSubcategoria(data: { id_materia: string; num_categor
         );
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/subcategorias');
+        revalidatePath('/dashboard/administration/subcategorias');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -115,7 +115,7 @@ export async function updateSubcategoria(
             }
 
             await client.query('COMMIT');
-            revalidatePath('/dashboard/catalogs/subcategorias');
+            revalidatePath('/dashboard/administration/subcategorias');
             return { success: true, data: result.rows[0] };
         } else {
             // Solo actualizar el nombre
@@ -129,7 +129,7 @@ export async function updateSubcategoria(
             }
 
             await client.query('COMMIT');
-            revalidatePath('/dashboard/catalogs/subcategorias');
+            revalidatePath('/dashboard/administration/subcategorias');
             return { success: true, data: result.rows[0] };
         }
     } catch (error) {
@@ -164,7 +164,7 @@ export async function toggleSubcategoriaHabilitado(id_materia: number, num_categ
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/subcategorias');
+        revalidatePath('/dashboard/administration/subcategorias');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -214,7 +214,7 @@ export async function deleteSubcategoria(id_materia: number, num_categoria: numb
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/subcategorias');
+        revalidatePath('/dashboard/administration/subcategorias');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');

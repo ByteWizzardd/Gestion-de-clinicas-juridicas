@@ -38,7 +38,7 @@ export async function createNucleo(data: { id_estado: string; id_municipio: stri
         );
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/nucleos');
+        revalidatePath('/dashboard/administration/nucleos');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -104,7 +104,7 @@ export async function updateNucleo(id_nucleo: number, data: {
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/nucleos');
+        revalidatePath('/dashboard/administration/nucleos');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -138,7 +138,7 @@ export async function toggleNucleoHabilitado(id_nucleo: number) {
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/nucleos');
+        revalidatePath('/dashboard/administration/nucleos');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -188,7 +188,7 @@ export async function deleteNucleo(id_nucleo: number, motivo?: string) {
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/nucleos');
+        revalidatePath('/dashboard/administration/nucleos');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');

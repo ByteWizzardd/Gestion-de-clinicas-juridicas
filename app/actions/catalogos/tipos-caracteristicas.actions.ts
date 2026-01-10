@@ -38,7 +38,7 @@ export async function createTipoCaracteristica(data: { nombre_tipo_caracteristic
         );
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/tipos-caracteristicas');
+        revalidatePath('/dashboard/administration/tipos-caracteristicas');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -72,7 +72,7 @@ export async function updateTipoCaracteristica(id: number, data: { nombre_tipo_c
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/tipos-caracteristicas');
+        revalidatePath('/dashboard/administration/tipos-caracteristicas');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -106,7 +106,7 @@ export async function toggleTipoCaracteristicaHabilitado(id: number) {
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/tipos-caracteristicas');
+        revalidatePath('/dashboard/administration/tipos-caracteristicas');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -151,7 +151,7 @@ export async function deleteTipoCaracteristica(id: number, motivo?: string) {
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/tipos-caracteristicas');
+        revalidatePath('/dashboard/administration/tipos-caracteristicas');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');

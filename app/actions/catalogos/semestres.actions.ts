@@ -34,7 +34,7 @@ export async function createSemestre(data: { term: string; fecha_inicio: string;
         );
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/semestres');
+        revalidatePath('/dashboard/administration/semestres');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -69,7 +69,7 @@ export async function updateSemestre(term: string, data: { fecha_inicio: string;
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/semestres');
+        revalidatePath('/dashboard/administration/semestres');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -103,7 +103,7 @@ export async function toggleSemestreHabilitado(term: string) {
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/semestres');
+        revalidatePath('/dashboard/administration/semestres');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -154,7 +154,7 @@ export async function deleteSemestre(term: string, motivo?: string) {
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/semestres');
+        revalidatePath('/dashboard/administration/semestres');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');

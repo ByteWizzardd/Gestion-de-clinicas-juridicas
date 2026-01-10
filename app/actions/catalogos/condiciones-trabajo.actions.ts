@@ -34,7 +34,7 @@ export async function createCondicionTrabajo(data: { nombre_trabajo: string }) {
         );
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/condiciones-trabajo');
+        revalidatePath('/dashboard/administration/condiciones-trabajo');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -68,7 +68,7 @@ export async function updateCondicionTrabajo(id: number, data: { nombre_trabajo:
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/condiciones-trabajo');
+        revalidatePath('/dashboard/administration/condiciones-trabajo');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -102,7 +102,7 @@ export async function toggleCondicionTrabajoHabilitado(id: number) {
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/condiciones-trabajo');
+        revalidatePath('/dashboard/administration/condiciones-trabajo');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -147,7 +147,7 @@ export async function deleteCondicionTrabajo(id: number, motivo?: string) {
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/condiciones-trabajo');
+        revalidatePath('/dashboard/administration/condiciones-trabajo');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');

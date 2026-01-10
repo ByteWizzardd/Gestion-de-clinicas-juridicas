@@ -40,7 +40,7 @@ export async function createCategoria(data: { id_materia: string; nombre_categor
         );
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/categorias');
+        revalidatePath('/dashboard/administration/categorias');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -155,7 +155,7 @@ export async function updateCategoria(
                 );
 
                 await client.query('COMMIT');
-                revalidatePath('/dashboard/catalogs/categorias');
+                revalidatePath('/dashboard/administration/categorias');
                 return { success: true, data: newCategory };
             } else {
                 // Simple update (Name only)
@@ -173,7 +173,7 @@ export async function updateCategoria(
                 );
                 await client.query('COMMIT');
                 if (result.rows.length === 0) return { success: false, error: 'Categoría no encontrada' };
-                revalidatePath('/dashboard/catalogs/categorias');
+                revalidatePath('/dashboard/administration/categorias');
                 return { success: true, data: result.rows[0] };
             }
         } catch (e) {
@@ -211,7 +211,7 @@ export async function toggleCategoriaHabilitado(id_materia: number, num_categori
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/categorias');
+        revalidatePath('/dashboard/administration/categorias');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -278,7 +278,7 @@ export async function deleteCategoria(id_materia: number, num_categoria: number,
 
             await client.query('COMMIT');
             if (result.rows.length === 0) return { success: false, error: 'Categoría no encontrada' };
-            revalidatePath('/dashboard/catalogs/categorias');
+            revalidatePath('/dashboard/administration/categorias');
             return { success: true, data: result.rows[0] };
 
         } catch (e) {

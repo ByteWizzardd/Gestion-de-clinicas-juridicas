@@ -40,7 +40,7 @@ export async function createCaracteristica(data: { id_tipo_caracteristica: strin
         );
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/caracteristicas');
+        revalidatePath('/dashboard/administration/caracteristicas');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -77,7 +77,7 @@ export async function updateCaracteristica(id_tipo_caracteristica: number, num_c
                 }
 
                 await client.query('COMMIT');
-                revalidatePath('/dashboard/catalogs/caracteristicas');
+                revalidatePath('/dashboard/administration/caracteristicas');
                 return { success: true, data: result.rows[0] };
             } catch (error) {
                 await client.query('ROLLBACK');
@@ -152,7 +152,7 @@ export async function updateCaracteristica(id_tipo_caracteristica: number, num_c
             );
 
             await client.query('COMMIT');
-            revalidatePath('/dashboard/catalogs/caracteristicas');
+            revalidatePath('/dashboard/administration/caracteristicas');
             return { success: true, data: insertResult.rows[0] };
 
         } catch (e) {
@@ -191,7 +191,7 @@ export async function toggleCaracteristicaHabilitado(id_tipo_caracteristica: num
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/caracteristicas');
+        revalidatePath('/dashboard/administration/caracteristicas');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -241,7 +241,7 @@ export async function deleteCaracteristica(id_tipo_caracteristica: number, num_c
         }
 
         await client.query('COMMIT');
-        revalidatePath('/dashboard/catalogs/caracteristicas');
+        revalidatePath('/dashboard/administration/caracteristicas');
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
