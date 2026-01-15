@@ -10,7 +10,7 @@ import ApplicantFormModal from '@/components/forms/ApplicantFormModal';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 import { getSolicitantesAction } from '@/app/actions/solicitantes';
 import { descargarFichaSolicitanteAction } from '@/app/actions/reports';
-import { generateSolicitanteFichaZip } from '@/lib/utils/pdf-generator-react';
+import { generateSolicitanteFichaZip } from '@/lib/utils/applicant-file-pdf-generator';
 
 interface Solicitante extends Record<string, unknown> {
   cedula: string;

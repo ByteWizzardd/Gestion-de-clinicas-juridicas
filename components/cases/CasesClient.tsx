@@ -14,7 +14,7 @@ import { getCasosAction, getCasosByUsuarioAction, deleteCasoAction } from '@/app
 import { createCasoAction, updateCasoAction, uploadSoportesAction } from '@/app/actions/casos';
 import { getMateriasAction } from '@/app/actions/materias';
 import { descargarHistorialCasoAction } from '@/app/actions/reports';
-import { generateCasoHistorialZip } from '@/lib/utils/pdf-generator-react';
+import { generateCasoHistorialZip } from '@/lib/utils/case-history-pdf-generator';
 
 interface Caso {
   id_caso: number;
