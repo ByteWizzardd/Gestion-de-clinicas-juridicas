@@ -60,11 +60,6 @@ export async function generateSolicitanteFichaExcel(data: SolicitanteFichaData):
         { header: 'Ocupación', key: 'ocupacion', width: 25 },
     ];
 
-    // El objeto solicitante a veces trae beneficiarios (carga familiar) como 'beneficiarios' o 'carga_familiar'
-    // Pero en data.beneficiarios vienen los beneficiarios de los CASOS.
-    // Para la ficha del solicitante, generalmente nos interesa su carga familiar directa si existe en el objeto solicitante
-    // O los beneficiarios de sus casos. Vamos a mostrar los que vengan en data.beneficiarios que es lo que tenemos normalizado.
-
     (data.beneficiarios || []).forEach(ben => {
         sheetBeneficiarios.addRow({
             nombre: ben.nombre_completo,

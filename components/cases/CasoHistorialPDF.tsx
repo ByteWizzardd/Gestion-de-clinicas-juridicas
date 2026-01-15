@@ -1,12 +1,10 @@
 'use client';
 
-import React from 'react';
-// @ts-ignore - React PDF types issue with React 19
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import { formatDate } from '@/lib/utils/date-formatter';
 
 /**
- * PDF Generator that replicates the "Formato UCAB" Excel design
+ * PDF Generator Excel "Historial de Caso"
  */
 
 interface CasoHistorialPDFProps {
@@ -22,9 +20,6 @@ interface CasoHistorialPDFProps {
   logoBase64: string;
 }
 
-// Register fonts if needed, but we'll stick to Helvetica for simplicity/reliability
-// Font.register({ family: 'Arial', src: '/fonts/Arial.ttf' }); 
-
 const styles = StyleSheet.create({
   page: {
     padding: 30,
@@ -33,7 +28,6 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   header: {
-    // Default flexDirection is column
     marginBottom: 20,
     marginTop: 10,
   },
@@ -41,15 +35,15 @@ const styles = StyleSheet.create({
     width: 200,
     height: 60,
     objectFit: 'contain',
-    marginBottom: 10, // Add space below logo
-    alignSelf: 'flex-start', // Logo to the left
+    marginBottom: 10,
+    alignSelf: 'flex-start',
   },
   mainTitle: {
     fontSize: 14,
     fontWeight: 'bold',
     textAlign: 'center',
     marginTop: 0,
-    width: '100%', // Ensure it takes full width to center text
+    width: '100%',
   },
   sectionTitleMain: {
     fontSize: 12,
@@ -112,12 +106,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#000',
     padding: 5,
-    minHeight: 60, // 5 lines approx
+    minHeight: 60,
     marginTop: 2,
     marginBottom: 10,
   },
 
-  // Section II Tables
   table: {
     width: '100%',
     marginBottom: 10,
@@ -130,7 +123,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 10,
     padding: 2,
-    width: '30%', // Default
+    width: '30%',
   },
   tableCellValue: {
     fontSize: 10,
@@ -155,60 +148,41 @@ export function CasoHistorialPDF({ data, logoBase64 }: CasoHistorialPDFProps) {
   const d3 = idStr[idStr.length - 1] || '0';
 
   return (
-    // @ts-ignore
     <Document>
-      {/* @ts-ignore */}
       <Page size="A4" style={styles.page}>
 
         {/* HEADER */}
-        {/* @ts-ignore */}
         <View style={styles.header}>
           {logoBase64 ? (
-            // @ts-ignore
             <Image style={styles.logo} src={logoBase64} />
           ) : (
-            // @ts-ignore
             <Text style={{ fontWeight: 'bold', fontSize: 16 }}>UCAB</Text>
           )}
-          {/* @ts-ignore */}
           <Text style={styles.mainTitle}>HISTORIAL DE CASOS</Text>
         </View>
 
         {/* SECTION I */}
-        {/* @ts-ignore */}
         <Text style={styles.sectionTitleMain}>I. HISTORIA DEL CASO</Text>
 
         {/* ROW 1: CI, Caso N, Materia */}
-        {/* @ts-ignore */}
         <View style={styles.formRow}>
           {/* 1. C.I. */}
-          {/* @ts-ignore */}
           <Text style={styles.label}>1. C.I. N°:</Text>
-          {/* @ts-ignore */}
           <View style={[styles.underlinedField, { width: 80, flexGrow: 0, marginRight: 20 }]}>
-            {/* @ts-ignore */}
             <Text style={[styles.valueText, { textAlign: 'center' }]}>{casoData.cedula}</Text>
           </View>
 
           {/* 2. Caso N */}
-          {/* @ts-ignore */}
           <Text style={styles.label}>2. Caso N°:</Text>
-          {/* @ts-ignore */}
           <View style={{ flexDirection: 'row', marginRight: 20 }}>
-            {/* @ts-ignore */}
             <View style={styles.smallBox}><Text>{d1}</Text></View>
-            {/* @ts-ignore */}
             <View style={styles.smallBox}><Text>{d2}</Text></View>
-            {/* @ts-ignore */}
             <View style={styles.smallBox}><Text>{d3}</Text></View>
           </View>
 
           {/* 3. Caso (Materia) */}
-          {/* @ts-ignore */}
           <Text style={styles.label}>3. Caso (Materia):</Text>
-          {/* @ts-ignore */}
           <View style={[styles.boxField, { flex: 1 }]}>
-            {/* @ts-ignore */}
             <Text style={styles.valueText}>
               {`${casoData.nombre_materia || ''} ${casoData.nombre_categoria || ''}`}
             </Text>
@@ -216,37 +190,26 @@ export function CasoHistorialPDF({ data, logoBase64 }: CasoHistorialPDFProps) {
         </View>
 
         {/* ROW 2: Sintesis */}
-        {/* @ts-ignore */}
         <Text style={[styles.label, { marginTop: 5 }]}>4. Síntesis del problema:</Text>
-        {/* @ts-ignore */}
         <View style={styles.largeTextBox}>
-          {/* @ts-ignore */}
           <Text style={styles.valueText}>{casoData.observaciones || casoData.asunto || ''}</Text>
         </View>
 
         {/* ROW 3: Direccion */}
-        {/* @ts-ignore */}
         <View style={[styles.formRow, { marginTop: 5 }]}>
-          {/* @ts-ignore */}
           <Text style={styles.label}>5. Dirección habitación:</Text>
-          {/* @ts-ignore */}
           <View style={styles.underlinedField}>
-            {/* @ts-ignore */}
             <Text style={styles.valueText}>{casoData.direccion_habitacion || ''}</Text>
           </View>
         </View>
 
         {/* ROW 4: Citas */}
-        {/* @ts-ignore */}
         <View style={[styles.formRow, { marginTop: 5, justifyContent: 'space-between' }]}>
-          {/* @ts-ignore */}
           <Text style={[styles.label, { marginRight: 10 }]}>6. Próximas citas:</Text>
 
           {/* Render 4 boxes evenly */}
           {[0, 1, 2, 3].map(i => (
-            // @ts-ignore
             <View key={i} style={[styles.boxField, { width: '20%', alignItems: 'center' }]}>
-              {/* @ts-ignore */}
               <Text style={{ fontSize: 9 }}>
                 {sortedCitas[i] ? formatDate(sortedCitas[i].fecha_encuentro || sortedCitas[i].fecha_cita) : ''}
               </Text>
@@ -255,75 +218,54 @@ export function CasoHistorialPDF({ data, logoBase64 }: CasoHistorialPDFProps) {
         </View>
 
         {/* ROW 5: Recaudos */}
-        {/* @ts-ignore */}
         <Text style={[styles.label, { marginTop: 10 }]}>7. Recaudos consignados:</Text>
-        {/* @ts-ignore */}
         <View style={[styles.largeTextBox, { minHeight: 45 }]}>
-          {/* @ts-ignore */}
           <Text style={styles.valueText}>
             {soportes.map(s => s.nombre_archivo).join(', ')}
           </Text>
         </View>
 
         {/* ROW 6: Orientacion */}
-        {/* @ts-ignore */}
         <Text style={[styles.label, { marginTop: 5 }]}>8. Orientación dada por el alumno responsable:</Text>
-        {/* @ts-ignore */}
         <View style={[styles.largeTextBox, { minHeight: 60 }]}>
-          {/* @ts-ignore */}
           <Text style={styles.valueText}>
             {acciones.map(a => `${formatDate(a.fecha_registro)}: ${a.detalle_accion}`).join('. ')}
           </Text>
         </View>
 
         {/* ROW 7: Firma */}
-        {/* @ts-ignore */}
         <View style={[styles.formRow, { marginTop: 15 }]}>
-          {/* @ts-ignore */}
           <Text style={styles.label}>9. Firma:</Text>
-          {/* @ts-ignore */}
           <View style={[styles.underlinedField, { maxWidth: 200 }]} />
         </View>
 
 
         {/* SECTION II */}
-        {/* @ts-ignore */}
         <Text style={styles.sectionTitleSec}>II. INFORMACIÓN ADICIONAL</Text>
 
         {/* Equipo */}
-        {/* @ts-ignore */}
         <View style={{ marginLeft: 10, marginBottom: 15 }}>
-          {/* @ts-ignore */}
           <Text style={[styles.label, { marginBottom: 2 }]}>Equipo:</Text>
           {equipo.map((m, i) => (
-            // @ts-ignore
             <Text key={i} style={{ fontSize: 10, paddingLeft: 10 }}>• {m.nombre_completo} - {m.rol}</Text>
           ))}
         </View>
 
         {/* Beneficiarios */}
-        {/* @ts-ignore */}
         <View style={{ marginLeft: 10, marginBottom: 15 }}>
-          {/* @ts-ignore */}
           <Text style={[styles.label, { marginBottom: 2 }]}>Beneficiarios:</Text>
           {beneficiarios.map((b, i) => (
-            // @ts-ignore
             <Text key={i} style={{ fontSize: 10, paddingLeft: 10 }}>• {b.nombre_completo} ({b.parentesco})</Text>
           ))}
         </View>
 
         {/* Historial Estatus */}
-        {/* @ts-ignore */}
         <View style={{ marginLeft: 10 }}>
-          {/* @ts-ignore */}
           <Text style={[styles.label, { marginBottom: 2 }]}>Historial de Estatus:</Text>
           {cambiosEstatus.map((c, i) => (
-            // @ts-ignore
             <Text key={i} style={{ fontSize: 10, paddingLeft: 10 }}>• {formatDate(c.fecha)}: {c.nuevo_estatus} - {c.motivo}</Text>
           ))}
         </View>
-
-
       </Page>
     </Document>
   );

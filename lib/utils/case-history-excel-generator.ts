@@ -178,8 +178,7 @@ export async function generateCasoHistorialExcel(data: CasoHistorialData): Promi
 }
 
 /**
- * Genera un archivo Excel con formato de formulario académico UCAB para el historial del caso
- * Replica fielmente el diseño del formulario "Historial de Casos" usando una cuadrícula fina
+ * Genera un archivo Excel con formato UCAB para el historial del caso
  */
 export async function generateCasoHistorialExcelFormatoUCAB(data: CasoHistorialData): Promise<ArrayBuffer> {
     const workbook = new ExcelJS.Workbook();
@@ -193,8 +192,6 @@ export async function generateCasoHistorialExcelFormatoUCAB(data: CasoHistorialD
     });
 
     // === DEFINICIÓN DE COLUMNAS (Fine Grid System) ===
-    // Usamos 40 columnas estrechas para tener control fino del diseño (Merging)
-    // Ancho ~3 chars aprox
     const totalCols = 40;
     const columns = [];
     for (let i = 0; i < totalCols; i++) {

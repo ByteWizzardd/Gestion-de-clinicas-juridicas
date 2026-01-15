@@ -52,7 +52,7 @@ export async function generateCasoHistorialPDF(data: CasoHistorialData): Promise
 }
 
 /**
- * Genera y descarga un Excel con formato académico UCAB para el historial del caso
+ * Genera y descarga un Excel con formato UCAB para el historial del caso
  */
 export async function generateCasoHistorialExcelUCAB(data: CasoHistorialData): Promise<void> {
     try {
