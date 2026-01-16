@@ -852,6 +852,37 @@ SET habilitado = EXCLUDED.habilitado;
 COMMIT;
 
 -- ==========================================================
+-- EXTRA: AGREGAR NUEVO PROFESOR Y SUPERVISIÓN A CASO ARCHIVADO
+-- ==========================================================
+-- 1. Insertar usuario profesor (si no existe)
+INSERT INTO usuarios (
+    cedula, nombres, apellidos, correo_electronico, nombre_usuario, 
+    contrasena, telefono_celular, habilitado_sistema, tipo_usuario
+) VALUES (
+    'V-88888888', 'Nuevo', 'Profesor', 'nuevo.profesor@ucab.edu.ve', 'nuevo.profesor',
+    '$2b$10$sV6rtquZ.uUT2RKkp.Gw/uNIj7qoYjPUwfYdek1tuvbNcBQ3ByYn2', '0412-8888888', TRUE, 'Profesor'
+) ON CONFLICT (cedula) DO UPDATE
+SET nombres = EXCLUDED.nombres,
+    apellidos = EXCLUDED.apellidos,
+    correo_electronico = EXCLUDED.correo_electronico,
+    nombre_usuario = EXCLUDED.nombre_usuario,
+    contrasena = EXCLUDED.contrasena;
+
+-- 2. Insertar en profesores (si no existe)
+INSERT INTO profesores (term, cedula_profesor, tipo_profesor) VALUES
+('2025-1', 'V-88888888', 'Voluntario')
+ON CONFLICT (term, cedula_profesor) DO UPDATE
+SET tipo_profesor = EXCLUDED.tipo_profesor;
+
+-- 3. Asignar supervisión al caso archivado (Rectificación de Actas)
+INSERT INTO supervisa (term, cedula_profesor, id_caso, habilitado)
+SELECT '2025-1', 'V-88888888', c.id_caso, TRUE
+FROM casos c
+WHERE c.cedula = 'V-12345678' AND c.fecha_inicio_caso = '2023-12-01' AND c.fecha_fin_caso = '2024-01-30'
+LIMIT 1
+ON CONFLICT (term, cedula_profesor, id_caso) DO UPDATE
+SET habilitado = EXCLUDED.habilitado;
+-- ==========================================================
 -- FIN DEL SCRIPT
 -- ==========================================================
 -- Si llegaste aquí, todos los datos se insertaron correctamente.
