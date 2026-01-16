@@ -10,6 +10,29 @@ export interface AuditRecord {
   nombre_completo_usuario_accion?: string;
 }
 
+// Tipo unificado para registros de auditoría
+export type AuditRecordType =
+  | 'soporte' | 'soporte-creado'
+  | 'cita-eliminada' | 'cita-actualizada' | 'cita-creada'
+  | 'usuario-eliminado' | 'usuario-actualizado-campos' | 'usuario-creado'
+  | 'solicitante-eliminado' | 'solicitante-actualizado' | 'solicitante-creado'
+  | 'estudiante-inscrito' | 'profesor-asignado'
+  | 'estado-eliminado' | 'estado-actualizado' | 'estado-insertado'
+  | 'materia-eliminada' | 'materia-actualizada' | 'materia-insertada'
+  | 'nivel-educativo-eliminado' | 'nivel-educativo-actualizado' | 'nivel-educativo-insertado'
+  | 'nucleo-eliminado' | 'nucleo-actualizado' | 'nucleo-insertado'
+  | 'condicion-trabajo-eliminada' | 'condicion-trabajo-actualizada' | 'condicion-trabajo-insertada'
+  | 'condicion-actividad-eliminada' | 'condicion-actividad-actualizada' | 'condicion-actividad-insertada'
+  | 'tipo-caracteristica-eliminado' | 'tipo-caracteristica-actualizado' | 'tipo-caracteristica-insertado'
+  | 'semestre-eliminado' | 'semestre-actualizado' | 'semestre-insertado'
+  | 'municipio-eliminado' | 'municipio-actualizado' | 'municipio-insertado'
+  | 'parroquia-eliminada' | 'parroquia-actualizada' | 'parroquia-insertada'
+  | 'categoria-eliminada' | 'categoria-actualizada' | 'categoria-insertada'
+  | 'subcategoria-eliminada' | 'subcategoria-actualizada' | 'subcategoria-insertada'
+  | 'ambito-legal-eliminado' | 'ambito-legal-actualizado' | 'ambito-legal-insertado'
+  | 'caracteristica-eliminada' | 'caracteristica-actualizada' | 'caracteristica-insertada'
+  | 'caso-eliminado' | 'caso-actualizado' | 'caso-creado';
+
 // Auditoría de soportes eliminados
 export interface SoporteAuditRecord {
   id: number;
@@ -205,6 +228,51 @@ export interface UsuarioCreadoAuditRecord {
   habilitado_sistema: boolean;
   tipo_usuario: string;
   tipo_estudiante: string | null;
+  term: string | null;
+  tipo_profesor: string | null;
+  fecha_creacion: string;
+  fecha: string; // Alias para fecha_creacion
+  usuario_accion: string; // Alias para id_usuario_creo
+  nombre_completo_usuario_accion?: string; // Alias para nombre_completo_usuario_creo
+  id_usuario_creo: string;
+  nombres_usuario_creo: string | null;
+  apellidos_usuario_creo: string | null;
+  nombre_completo_usuario_creo: string | null;
+  foto_perfil_usuario_creo: string | null;
+}
+
+// Auditoría de Inserción de Estudiantes
+export interface EstudianteInscritoAuditRecord extends AuditRecord {
+  cedula: string;
+  nombres: string;
+  apellidos: string;
+  correo_electronico: string;
+  nombre_usuario: string;
+  telefono_celular: string | null;
+  tipo_usuario: string;
+  tipo_estudiante: string;
+  term: string;
+  nrc: string;
+  fecha_creacion: string;
+  fecha: string; // Alias para fecha_creacion
+  usuario_accion: string; // Alias para id_usuario_creo
+  nombre_completo_usuario_accion?: string; // Alias para nombre_completo_usuario_creo
+  id_usuario_creo: string;
+  nombres_usuario_creo: string | null;
+  apellidos_usuario_creo: string | null;
+  nombre_completo_usuario_creo: string | null;
+  foto_perfil_usuario_creo: string | null;
+}
+
+// Auditoría de Inserción de Profesores
+export interface ProfesorCreadoAuditRecord extends AuditRecord {
+  cedula: string;
+  nombres: string;
+  apellidos: string;
+  correo_electronico: string;
+  nombre_usuario: string;
+  telefono_celular: string | null;
+  tipo_usuario: string;
   tipo_profesor: string | null;
   fecha_creacion: string;
   fecha: string; // Alias para fecha_creacion

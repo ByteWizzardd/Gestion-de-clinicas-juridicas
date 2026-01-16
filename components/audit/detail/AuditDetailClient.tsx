@@ -8,10 +8,11 @@ import Filter from '@/components/CaseTools/Filter';
 import AuditList from '../AuditList';
 import AuditRecordCard from '../AuditRecordCard';
 import Spinner from '@/components/ui/feedback/Spinner';
-import type { AuditFilters } from '@/types/audit';
+import type { AuditFilters, AuditRecordType } from '@/types/audit';
 
 type AuditType = 'soportes' | 'soportes-creados' | 'citas-eliminadas' | 'citas-actualizadas' | 'citas-creadas' | 'usuarios-eliminados' | 'usuarios-actualizados-campos' | 'usuarios-creados'
   | 'solicitantes-eliminados' | 'solicitantes-actualizados' | 'solicitantes-creados'
+  | 'estudiantes-inscritos' | 'profesores-asignados'
   | 'estados-eliminados' | 'estados-actualizados' | 'estados-insertados'
   | 'materias-eliminadas' | 'materias-actualizadas' | 'materias-insertadas'
   | 'niveles-educativos-eliminados' | 'niveles-educativos-actualizados' | 'niveles-educativos-insertados'
@@ -27,24 +28,6 @@ type AuditType = 'soportes' | 'soportes-creados' | 'citas-eliminadas' | 'citas-a
   | 'ambitos-legales-eliminados' | 'ambitos-legales-actualizados' | 'ambitos-legales-insertados'
   | 'caracteristicas-eliminadas' | 'caracteristicas-actualizadas' | 'caracteristicas-insertadas'
   | 'casos-eliminados' | 'casos-actualizados' | 'casos-creados';
-
-type AuditRecordType = 'soporte' | 'soporte-creado' | 'cita-eliminada' | 'cita-actualizada' | 'cita-creada' | 'usuario-eliminado' | 'usuario-actualizado-campos' | 'usuario-creado'
-  | 'solicitante-eliminado' | 'solicitante-actualizado' | 'solicitante-creado'
-  | 'estado-eliminado' | 'estado-actualizado' | 'estado-insertado'
-  | 'materia-eliminada' | 'materia-actualizada' | 'materia-insertada'
-  | 'nivel-educativo-eliminado' | 'nivel-educativo-actualizado' | 'nivel-educativo-insertado'
-  | 'nucleo-eliminado' | 'nucleo-actualizado' | 'nucleo-insertado'
-  | 'condicion-trabajo-eliminada' | 'condicion-trabajo-actualizada' | 'condicion-trabajo-insertada'
-  | 'condicion-actividad-eliminada' | 'condicion-actividad-actualizada' | 'condicion-actividad-insertada'
-  | 'tipo-caracteristica-eliminado' | 'tipo-caracteristica-actualizado' | 'tipo-caracteristica-insertado'
-  | 'semestre-eliminado' | 'semestre-actualizado' | 'semestre-insertado'
-  | 'municipio-eliminado' | 'municipio-actualizado' | 'municipio-insertado'
-  | 'parroquia-eliminada' | 'parroquia-actualizada' | 'parroquia-insertada'
-  | 'categoria-eliminada' | 'categoria-actualizada' | 'categoria-insertada'
-  | 'subcategoria-eliminada' | 'subcategoria-actualizada' | 'subcategoria-insertada'
-  | 'ambito-legal-eliminado' | 'ambito-legal-actualizado' | 'ambito-legal-insertado'
-  | 'caracteristica-eliminada' | 'caracteristica-actualizada' | 'caracteristica-insertada'
-  | 'caso-eliminado' | 'caso-actualizado' | 'caso-creado';
 
 interface AuditDetailClientProps {
   title: string;
@@ -80,6 +63,8 @@ export default function AuditDetailClient({
     'solicitantes-eliminados': 'solicitante-eliminado',
     'solicitantes-actualizados': 'solicitante-actualizado',
     'solicitantes-creados': 'solicitante-creado',
+    'estudiantes-inscritos': 'estudiante-inscrito',
+    'profesores-asignados': 'profesor-asignado',
     'estados-eliminados': 'estado-eliminado',
     'estados-actualizados': 'estado-actualizado',
     'materias-eliminadas': 'materia-eliminada',
@@ -243,6 +228,9 @@ export default function AuditDetailClient({
             break;
           case 'usuarios-creados':
             data = await getUsuariosCreadosAuditAction(filters);
+            // Asegurar que el tipo de registro se pase correctamente al componente
+            // El backend ahora devuelve 'estudiante-inscrito' y 'profesor-asignado' también
+            // No necesitamos hacer nada aquí si los tipos coinciden, pero es bueno recordarlo
             break;
           case 'solicitantes-eliminados':
             data = await getSolicitantesEliminadosAuditAction(filters);
@@ -252,6 +240,14 @@ export default function AuditDetailClient({
             break;
           case 'solicitantes-creados':
             data = await getSolicitantesCreadosAuditAction(filters);
+            break;
+          case 'estudiantes-inscritos':
+            const { getEstudiantesInscritosAuditAction } = await import('@/app/actions/audit');
+            data = await getEstudiantesInscritosAuditAction(filters);
+            break;
+          case 'profesores-asignados':
+            const { getProfesoresInscritosAuditAction } = await import('@/app/actions/audit');
+            data = await getProfesoresInscritosAuditAction(filters);
             break;
           case 'estados-eliminados':
             data = await getEstadosEliminadosAuditAction(filters);

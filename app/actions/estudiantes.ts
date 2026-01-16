@@ -157,6 +157,7 @@ export async function bulkCreateEstudiantesAction(
     const file = formData.get('file') as File;
     const term = formData.get('term') as string;
     const tipoEstudiante = (formData.get('tipoEstudiante') as string) || 'Inscrito';
+    const isPreview = formData.get('isPreview') === 'true';
 
     if (!file) {
       return {
@@ -179,7 +180,13 @@ export async function bulkCreateEstudiantesAction(
     }
 
     // Procesar archivo
-    const result = await bulkCreateEstudiantes(file, term.trim(), tipoEstudiante);
+    const result = await bulkCreateEstudiantes(
+      file,
+      term.trim(),
+      tipoEstudiante,
+      authResult.user.cedula,
+      isPreview
+    );
 
     // Revalidar cache de la página de usuarios
     revalidatePath('/dashboard/users');

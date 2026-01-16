@@ -58,6 +58,8 @@ import { auditoriaInsercionCasosQueries } from '@/lib/db/queries/auditoria-inser
 import { auditoriaEliminacionSolicitantesQueries } from '@/lib/db/queries/auditoria-eliminacion-solicitantes.queries';
 import { auditoriaActualizacionSolicitantesQueries } from '@/lib/db/queries/auditoria-actualizacion-solicitantes.queries';
 import { auditoriaInsercionSolicitantesQueries } from '@/lib/db/queries/auditoria-insercion-solicitantes.queries';
+import { auditoriaInsercionEstudiantesQueries } from '@/lib/db/queries/auditoria-insercion-estudiantes.queries';
+import { auditoriaInsercionProfesoresQueries } from '@/lib/db/queries/auditoria-insercion-profesores.queries';
 import type { AuditFilters, AuditCounts } from '@/types/audit';
 
 /**
@@ -455,7 +457,40 @@ export async function getUsuariosCreadosAuditAction(filters?: AuditFilters) {
   }
 
   try {
-    const records = await auditoriaInsercionUsuariosQueries.getAll(filters);
+    // Usar la consulta combinada que incluye usuarios creados, estudiantes inscritos y profesores asignados
+    const records = await auditoriaInsercionUsuariosQueries.getCombined(filters);
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_creacion,
+      usuario_accion: r.id_usuario_creo,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
+      // Mapear tipos de registro de BD a tipos de frontend si es necesario
+      // Si el backend devuelve 'usuario-creado', 'estudiante-inscrito', 'profesor-asignado'
+      // y coinciden con los del frontend, todo bien.
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de usuarios creados:', error);
+    throw new Error('Error al obtener auditoría de usuarios creados');
+  }
+}
+
+/**
+ * Obtiene estudiantes inscritos (auditoría de inserción en estudiantes) con filtros
+ */
+export async function getEstudiantesInscritosAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+
+  try {
+    const records = await auditoriaInsercionEstudiantesQueries.getAll(filters);
     return records.map((r) => ({
       ...r,
       fecha: r.fecha_creacion,
@@ -463,8 +498,37 @@ export async function getUsuariosCreadosAuditAction(filters?: AuditFilters) {
       nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de usuarios creados:', error);
-    throw new Error('Error al obtener auditoría de usuarios creados');
+    console.error('Error obteniendo auditoría de estudiantes inscritos:', error);
+    throw new Error('Error al obtener auditoría de estudiantes inscritos');
+  }
+}
+
+/**
+ * Obtiene profesores inscritos (auditoría de inserción en profesores) con filtros
+ */
+export async function getProfesoresInscritosAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+
+  try {
+    const records = await auditoriaInsercionProfesoresQueries.getAll(filters);
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_creacion,
+      usuario_accion: r.id_usuario_creo,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de profesores inscritos:', error);
+    throw new Error('Error al obtener auditoría de profesores inscritos');
   }
 }
 

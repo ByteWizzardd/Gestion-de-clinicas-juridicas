@@ -16,6 +16,7 @@ SELECT
     a.habilitado_sistema,
     a.tipo_usuario,
     e.tipo_estudiante,
+    e.term,
     p.tipo_profesor,
     a.fecha_creacion,
     a.id_usuario_creo,

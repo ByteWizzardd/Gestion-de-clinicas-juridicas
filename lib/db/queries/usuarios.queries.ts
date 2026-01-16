@@ -346,15 +346,26 @@ export const usuariosQueries = {
     habilitado_sistema: boolean;
     tipo_usuario: string;
     fotoPerfil?: string | null;
+    estudiantes?: Array<{
+      term: string;
+      nrc: string | null;
+      tipo_estudiante: "Voluntario" | "Inscrito" | "Egresado" | "Servicio Comunitario" | null;
+      habilitado: boolean;
+    }>;
+    profesores?: Array<{
+      term: string;
+      tipo_profesor: string | null;
+      habilitado: boolean;
+    }>;
+    coordinadores?: Array<{
+      term: string;
+      habilitado: boolean;
+    }>;
+    // Mantener compatibilidad con el formato anterior (primer registro)
     estudiante?: {
       nrc: string | null;
       term: string | null;
-      tipo_estudiante:
-        | "Voluntario"
-        | "Inscrito"
-        | "Egresado"
-        | "Servicio Comunitario"
-        | null;
+      tipo_estudiante: "Voluntario" | "Inscrito" | "Egresado" | "Servicio Comunitario" | null;
     };
     profesor?: {
       term: string | null;
@@ -372,10 +383,20 @@ export const usuariosQueries = {
     // Obtener foto de perfil
     const fotoBuffer = await usuariosQueries.getFotoPerfil(cedula);
     let fotoPerfilBase64: string | null = null;
-    
+
     if (fotoBuffer) {
       fotoPerfilBase64 = `data:image/jpeg;base64,${fotoBuffer.toString('base64')}`;
     }
+
+    // Parsear arrays de JSON
+    const estudiantes = row.estudiantes || null;
+    const profesores = row.profesores || null;
+    const coordinadores = row.coordinadores || null;
+
+    // Obtener el primer registro de cada tipo para mantener compatibilidad
+    const primerEstudiante = estudiantes?.[0] || null;
+    const primerProfesor = profesores?.[0] || null;
+    const primerCoordinador = coordinadores?.[0] || null;
 
     return {
       cedula: row.cedula,
@@ -388,25 +409,28 @@ export const usuariosQueries = {
       habilitado_sistema: row.habilitado_sistema,
       tipo_usuario: row.tipo_usuario,
       fotoPerfil: fotoPerfilBase64,
-      estudiante:
-        row.estudiante_nrc || row.estudiante_term || row.estudiante_tipo
-          ? {
-              nrc: row.estudiante_nrc,
-              term: row.estudiante_term,
-              tipo_estudiante: row.estudiante_tipo,
-            }
-          : undefined,
-      profesor:
-        row.profesor_term || row.profesor_tipo
-          ? {
-              term: row.profesor_term,
-              tipo_profesor: row.profesor_tipo,
-            }
-          : undefined,
-      coordinador: row.coordinador_term
+      // Nuevos campos con todos los semestres
+      estudiantes: estudiantes,
+      profesores: profesores,
+      coordinadores: coordinadores,
+      // Mantener compatibilidad con el formato anterior
+      estudiante: primerEstudiante
         ? {
-            term: row.coordinador_term,
-          }
+          nrc: primerEstudiante.nrc,
+          term: primerEstudiante.term,
+          tipo_estudiante: primerEstudiante.tipo_estudiante,
+        }
+        : undefined,
+      profesor: primerProfesor
+        ? {
+          term: primerProfesor.term,
+          tipo_profesor: primerProfesor.tipo_profesor,
+        }
+        : undefined,
+      coordinador: primerCoordinador
+        ? {
+          term: primerCoordinador.term,
+        }
         : undefined,
     };
   },
@@ -425,66 +449,66 @@ export const usuariosQueries = {
     nrc?: string | null;
     term?: string | null;
     tipo_estudiante?:
-      | "Voluntario"
-      | "Inscrito"
-      | "Egresado"
-      | "Servicio Comunitario"
-      | null;
+    | "Voluntario"
+    | "Inscrito"
+    | "Egresado"
+    | "Servicio Comunitario"
+    | null;
     tipo_profesor?: string | null;
-    cedula_actor?: string; 
+    cedula_actor?: string;
   }): Promise<void> => {
-      // Se espera que la cédula del usuario autenticado llegue como data.cedula_actor
-      if (!data.cedula_actor) {
-        throw new Error('No se recibió la cédula del usuario autenticado');
-      }
-      const client = await pool.connect();
-      try {
-        await client.query('BEGIN');
-        
-        // Obtener el tipo_usuario actual del usuario para determinar qué valores pasar
-        const tipoUsuarioResult = await client.query(
-          'SELECT tipo_usuario FROM usuarios WHERE cedula = $1',
-          [data.cedula]
-        );
-        const tipoUsuarioActual = tipoUsuarioResult.rows[0]?.tipo_usuario || null;
-        
-        // Usar el tipo_usuario que se está pasando, o el actual si no se pasa
-        const tipoUsuarioParaValores = (data.tipo_usuario && data.tipo_usuario.trim() !== '') 
-          ? data.tipo_usuario 
-          : tipoUsuarioActual;
-        
-        await client.query(
-          `CALL update_all_by_cedula(
+    // Se espera que la cédula del usuario autenticado llegue como data.cedula_actor
+    if (!data.cedula_actor) {
+      throw new Error('No se recibió la cédula del usuario autenticado');
+    }
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Obtener el tipo_usuario actual del usuario para determinar qué valores pasar
+      const tipoUsuarioResult = await client.query(
+        'SELECT tipo_usuario FROM usuarios WHERE cedula = $1',
+        [data.cedula]
+      );
+      const tipoUsuarioActual = tipoUsuarioResult.rows[0]?.tipo_usuario || null;
+
+      // Usar el tipo_usuario que se está pasando, o el actual si no se pasa
+      const tipoUsuarioParaValores = (data.tipo_usuario && data.tipo_usuario.trim() !== '')
+        ? data.tipo_usuario
+        : tipoUsuarioActual;
+
+      await client.query(
+        `CALL update_all_by_cedula(
             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
           )`,
-          [
-            data.cedula,
-            data.nombres ?? null,
-            data.apellidos ?? null,
-            data.correo_electronico ?? null,
-            data.nombre_usuario ?? null,
-            data.telefono_celular ?? null,
-            data.tipo_usuario && data.tipo_usuario.trim() !== '' ? data.tipo_usuario : null,
-            // Estudiante - usar tipoUsuarioParaValores para determinar si pasar valores
-            tipoUsuarioParaValores === "Estudiante" ? data.nrc ?? null : null,
-            tipoUsuarioParaValores === "Estudiante" ? data.term ?? null : null,
-            tipoUsuarioParaValores === "Estudiante" ? data.tipo_estudiante ?? null : null,
-            // Profesor
-            tipoUsuarioParaValores === "Profesor" ? data.term ?? null : null,
-            tipoUsuarioParaValores === "Profesor" ? data.tipo_profesor ?? null : null,
-            // Coordinador
-            tipoUsuarioParaValores === "Coordinador" ? data.term ?? null : null,
-            //Cedula actor (Usuario que realiza la acción)
-            data.cedula_actor
-          ]
-        );
-        await client.query('COMMIT');
-      } catch (err) {
-        await client.query('ROLLBACK');
-        throw err;
-      } finally {
-        client.release();
-      }
+        [
+          data.cedula,
+          data.nombres ?? null,
+          data.apellidos ?? null,
+          data.correo_electronico ?? null,
+          data.nombre_usuario ?? null,
+          data.telefono_celular ?? null,
+          data.tipo_usuario && data.tipo_usuario.trim() !== '' ? data.tipo_usuario : null,
+          // Estudiante - usar tipoUsuarioParaValores para determinar si pasar valores
+          tipoUsuarioParaValores === "Estudiante" ? data.nrc ?? null : null,
+          tipoUsuarioParaValores === "Estudiante" ? data.term ?? null : null,
+          tipoUsuarioParaValores === "Estudiante" ? data.tipo_estudiante ?? null : null,
+          // Profesor
+          tipoUsuarioParaValores === "Profesor" ? data.term ?? null : null,
+          tipoUsuarioParaValores === "Profesor" ? data.tipo_profesor ?? null : null,
+          // Coordinador
+          tipoUsuarioParaValores === "Coordinador" ? data.term ?? null : null,
+          //Cedula actor (Usuario que realiza la acción)
+          data.cedula_actor
+        ]
+      );
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
   },
 
   /**

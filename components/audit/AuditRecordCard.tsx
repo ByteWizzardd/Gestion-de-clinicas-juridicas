@@ -19,28 +19,13 @@ import type {
   CasoCreadoAuditRecord,
   SolicitanteEliminadoAuditRecord,
   SolicitanteActualizadoAuditRecord,
-  SolicitanteCreadoAuditRecord
+  SolicitanteCreadoAuditRecord,
+  EstudianteInscritoAuditRecord
 } from '@/types/audit';
 
-type AuditRecord = SoporteAuditRecord | SoporteCreadoAuditRecord | CitaEliminadaAuditRecord | CitaActualizadaAuditRecord | CitaCreadaAuditRecord | UsuarioEliminadoAuditRecord | UsuarioActualizadoCamposAuditRecord | UsuarioCreadoAuditRecord | CasoEliminadoAuditRecord | CasoActualizadoAuditRecord | CasoCreadoAuditRecord | SolicitanteEliminadoAuditRecord | SolicitanteActualizadoAuditRecord | SolicitanteCreadoAuditRecord | any;
+type AuditRecord = SoporteAuditRecord | SoporteCreadoAuditRecord | CitaEliminadaAuditRecord | CitaActualizadaAuditRecord | CitaCreadaAuditRecord | UsuarioEliminadoAuditRecord | UsuarioActualizadoCamposAuditRecord | UsuarioCreadoAuditRecord | CasoEliminadoAuditRecord | CasoActualizadoAuditRecord | CasoCreadoAuditRecord | SolicitanteEliminadoAuditRecord | SolicitanteActualizadoAuditRecord | SolicitanteCreadoAuditRecord | EstudianteInscritoAuditRecord | any;
 
-type AuditRecordType = 'soporte' | 'soporte-creado' | 'cita-eliminada' | 'cita-actualizada' | 'cita-creada' | 'usuario-eliminado' | 'usuario-actualizado-campos' | 'usuario-creado'
-  | 'solicitante-eliminado' | 'solicitante-actualizado' | 'solicitante-creado'
-  | 'estado-eliminado' | 'estado-actualizado' | 'estado-insertado'
-  | 'materia-eliminada' | 'materia-actualizada' | 'materia-insertada'
-  | 'nivel-educativo-eliminado' | 'nivel-educativo-actualizado' | 'nivel-educativo-insertado'
-  | 'nucleo-eliminado' | 'nucleo-actualizado' | 'nucleo-insertado'
-  | 'condicion-trabajo-eliminada' | 'condicion-trabajo-actualizada' | 'condicion-trabajo-insertada'
-  | 'condicion-actividad-eliminada' | 'condicion-actividad-actualizada' | 'condicion-actividad-insertada'
-  | 'tipo-caracteristica-eliminado' | 'tipo-caracteristica-actualizado' | 'tipo-caracteristica-insertado'
-  | 'semestre-eliminado' | 'semestre-actualizado' | 'semestre-insertado'
-  | 'municipio-eliminado' | 'municipio-actualizado' | 'municipio-insertado'
-  | 'parroquia-eliminada' | 'parroquia-actualizada' | 'parroquia-insertada'
-  | 'categoria-eliminada' | 'categoria-actualizada' | 'categoria-insertada'
-  | 'subcategoria-eliminada' | 'subcategoria-actualizada' | 'subcategoria-insertada'
-  | 'ambito-legal-eliminado' | 'ambito-legal-actualizado' | 'ambito-legal-insertado'
-  | 'caracteristica-eliminada' | 'caracteristica-actualizada' | 'caracteristica-insertada'
-  | 'caso-eliminado' | 'caso-actualizado' | 'caso-creado';
+import type { AuditRecordType } from '@/types/audit';
 
 interface AuditRecordCardProps {
   record: AuditRecord;
@@ -61,13 +46,13 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
     if (dateInput instanceof Date) {
       date = dateInput;
     } else if (typeof dateInput === 'string') {
-      // Si el string incluye 'T' o es un timestamp, parsearlo correctamente
-      // PostgreSQL devuelve timestamps en formato ISO, que JavaScript interpreta como UTC
-      // Necesitamos extraer los componentes de fecha/hora localmente
-      if (dateInput.includes('T')) {
-        // Es un timestamp ISO (ej: "2026-01-02T05:24:00.000Z")
-        // Extraer los componentes de fecha y hora sin interpretar como UTC
-        const isoMatch = dateInput.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
+      // Si el string incluye 'T' o espacio (PostgreSQL), parsearlo correctamente
+      // PostgreSQL devuelve timestamps en formato "YYYY-MM-DD HH:MM:SS" o "YYYY-MM-DDTHH:MM:SS"
+      if (dateInput.includes('T') || dateInput.includes(' ')) {
+        // Es un timestamp (con T o espacio)
+        // Normalizar: reemplazar espacio por T para parsear consistentemente
+        const normalizedInput = dateInput.replace(' ', 'T');
+        const isoMatch = normalizedInput.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
         if (isoMatch) {
           const [, year, month, day, hour, minute] = isoMatch.map(Number);
           // Crear fecha usando componentes locales (no UTC)
@@ -112,12 +97,24 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
     if (dateInput instanceof Date) {
       date = dateInput;
     } else if (typeof dateInput === 'string') {
-      const parts = dateInput.split('-');
-      if (parts.length === 3) {
-        const [year, month, day] = parts.map(Number);
-        date = new Date(year, month - 1, day);
+      // Manejar timestamps de PostgreSQL con espacio o T
+      if (dateInput.includes('T') || dateInput.includes(' ')) {
+        const normalizedInput = dateInput.replace(' ', 'T');
+        const isoMatch = normalizedInput.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
+        if (isoMatch) {
+          const [, year, month, day] = isoMatch.map(Number);
+          date = new Date(year, month - 1, day);
+        } else {
+          date = new Date(dateInput);
+        }
       } else {
-        date = new Date(dateInput);
+        const parts = dateInput.split('-');
+        if (parts.length === 3) {
+          const [year, month, day] = parts.map(Number);
+          date = new Date(year, month - 1, day);
+        } else {
+          date = new Date(dateInput);
+        }
       }
     } else {
       return 'Fecha no disponible';
@@ -566,6 +563,70 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
               </p>
               <p className="text-sm text-gray-600">
                 Creado por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_creo,
+                  r.nombres_usuario_creo,
+                  r.apellidos_usuario_creo,
+                  r.id_usuario_creo
+                )}
+              </p>
+            </div>
+          </div>
+        );
+      }
+      case 'estudiante-inscrito': {
+        const r = record as EstudianteInscritoAuditRecord;
+        const nombreCompleto = r.nombres && r.apellidos
+          ? `${r.nombres} ${r.apellidos}`.trim()
+          : (r.nombres || r.apellidos || 'Estudiante desconocido');
+
+        return (
+          <div className="flex items-center gap-3">
+            <UserCircle className="w-5 h-5 text-gray-600" />
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">
+                <Link
+                  href={`/dashboard/users/${r.cedula}`}
+                  className="text-primary hover:underline transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {nombreCompleto}
+                </Link>
+              </p>
+              <p className="text-sm text-gray-600">
+                Cédula: {r.cedula} • Inscrito por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_creo,
+                  r.nombres_usuario_creo,
+                  r.apellidos_usuario_creo,
+                  r.id_usuario_creo
+                )}
+              </p>
+            </div>
+          </div>
+        );
+      }
+      case 'profesor-asignado': {
+        const r = record as any;
+        const nombreCompleto = r.nombres && r.apellidos
+          ? `${r.nombres} ${r.apellidos}`.trim()
+          : (r.nombres || r.apellidos || 'Profesor desconocido');
+
+        return (
+          <div className="flex items-center gap-3">
+            <UserCircle className="w-5 h-5 text-gray-600" />
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">
+                <Link
+                  href={`/dashboard/users/${r.cedula}`}
+                  className="text-primary hover:underline transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {nombreCompleto}
+                </Link>
+              </p>
+              <p className="text-sm text-gray-600">
+                Cédula: {r.cedula} • Asignado por:{' '}
                 {renderUserLink(
                   r.nombre_completo_usuario_creo,
                   r.nombres_usuario_creo,
@@ -1480,6 +1541,9 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
               {r.tipo_estudiante && (
                 <p className="text-sm text-gray-600">Tipo estudiante: {r.tipo_estudiante}</p>
               )}
+              {r.term && (
+                <p className="text-sm text-gray-600">Semestre: {r.term}</p>
+              )}
               {r.tipo_profesor && (
                 <p className="text-sm text-gray-600">Tipo profesor: {r.tipo_profesor}</p>
               )}
@@ -1498,16 +1562,65 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 )}
               </p>
             </div>
-            {r.cedula && (
-              <div className="pt-2" onClick={(e) => e.stopPropagation()}>
-                <Link
-                  href={`/dashboard/users/${r.cedula}`}
-                  className="text-sm text-primary hover:underline"
-                >
-                  Ver usuario →
-                </Link>
-              </div>
-            )}
+
+          </div>
+        );
+      }
+      case 'estudiante-inscrito': {
+        const r = record as EstudianteInscritoAuditRecord;
+        // Construir nombre completo del estudiante
+        let nombreCompleto = r.nombres && r.apellidos
+          ? `${r.nombres} ${r.apellidos}`.trim()
+          : (r.nombres || r.apellidos || 'Estudiante desconocido');
+
+        return (
+          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Información del Estudiante</p>
+              <p className="text-sm text-gray-600">
+                Nombre:{' '}
+                {r.cedula ? (
+                  <Link
+                    href={`/dashboard/users/${r.cedula}`}
+                    className="text-primary hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {nombreCompleto}
+                  </Link>
+                ) : (
+                  nombreCompleto
+                )}
+              </p>
+              {r.cedula && <p className="text-sm text-gray-600">Cédula: {r.cedula}</p>}
+              <p className="text-sm text-gray-600">Correo: {r.correo_electronico || 'N/A'}</p>
+              <p className="text-sm text-gray-600">Usuario: {r.nombre_usuario || 'N/A'}</p>
+              {r.telefono_celular && (
+                <p className="text-sm text-gray-600">Teléfono: {r.telefono_celular}</p>
+              )}
+              <p className="text-sm text-gray-600">Tipo: {r.tipo_usuario || 'N/A'}</p>
+              {r.tipo_estudiante && (
+                <p className="text-sm text-gray-600">Tipo estudiante: {r.tipo_estudiante}</p>
+              )}
+              {r.term && (
+                <p className="text-sm text-gray-600">Semestre: {r.term}</p>
+              )}
+              {r.nrc && (
+                <p className="text-sm text-gray-600">NRC: {r.nrc}</p>
+              )}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
+              <p className="text-sm text-gray-600">Fecha inscripción: {formatOnlyDate(r.fecha_creacion)}</p>
+              <p className="text-sm text-gray-600">
+                Inscrito por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_creo,
+                  r.nombres_usuario_creo,
+                  r.apellidos_usuario_creo,
+                  r.id_usuario_creo
+                )}
+              </p>
+            </div>
           </div>
         );
       }
@@ -3091,6 +3204,10 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         return (record as CasoActualizadoAuditRecord).fecha_actualizacion;
       case 'caso-creado':
         return (record as CasoCreadoAuditRecord).fecha_creacion;
+      case 'estudiante-inscrito':
+        return (record as EstudianteInscritoAuditRecord).fecha_creacion;
+      case 'profesor-asignado':
+        return (record as any).fecha_creacion;
       // Catálogos eliminados
       case 'estado-eliminado':
       case 'materia-eliminada':
@@ -3150,7 +3267,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
       >
         <div className="flex-1">
           {renderSummary()}
-          <p className="text-xs text-gray-500 mt-2">{formatDate(getDate())}</p>
+          <p className="text-xs text-gray-500 mt-2">{formatOnlyDate(getDate())}</p>
         </div>
         <div className="flex-shrink-0 p-2 hover:bg-gray-100 rounded-full transition-colors">
           {expanded ? (

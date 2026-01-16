@@ -95,12 +95,13 @@ export default function BulkUploadModal({
       formData.append('file', file);
       formData.append('term', term);
       formData.append('tipoEstudiante', 'Inscrito');
+      formData.append('isPreview', 'true'); // Flag para solo simular/previsualizar
 
       const result = await bulkCreateEstudiantesAction(formData);
 
       if (result.success && result.data) {
         setPreview(result.data);
-        setUploadResult(result.data);
+        // NO setUploadResult(result.data) aquí, porque solo es preview
       } else {
         setError(result.error?.message || 'Error al procesar el archivo');
       }
@@ -184,9 +185,8 @@ export default function BulkUploadModal({
             />
             <label
               htmlFor="file-upload"
-              className={`flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-gray-300 cursor-pointer hover:border-primary transition-colors ${
-                loading ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
+              className={`flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-gray-300 cursor-pointer hover:border-primary transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
             >
               <Upload className="w-5 h-5 text-gray-500" />
               <span className="text-sm text-gray-700">
