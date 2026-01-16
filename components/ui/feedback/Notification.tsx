@@ -18,19 +18,32 @@ const Notification: React.FC<NotificationProps> = () => {
   const router = useRouter();
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  // Extrae el ID de caso (número) o cita (string tipo cita-123) de un texto
   const extractCasoId = (text: string): number | null => {
-    // Soporta formatos comunes: "caso #123", "Caso 123", "caso: 123"
     const match = text.match(/\bcaso\b\s*(?:#|:)?\s*(\d+)\b/i);
-    if (!match) return null;
+    if (!match) {
+      return null;
+    }
     const value = Number(match[1]);
     return Number.isFinite(value) ? value : null;
   };
 
-  const getCasoHref = (notification: { title: string; message: string }): string | null => {
-    const idFromTitle = extractCasoId(notification.title);
-    const idFromMessage = extractCasoId(notification.message);
-    const casoId = idFromTitle ?? idFromMessage;
-    return casoId ? `/dashboard/cases/${casoId}` : null;
+  const extractCitaId = (text: string): string | null => {
+    // Soporta formatos: "cita #cita-123", "cita: cita-123"
+    const match = text.match(/\bcita\b\s*(?:#|:)?\s*(cita-\d+)\b/i);
+    return match ? match[1] : null;
+  };
+
+  const getNotificationHref = (notification: { title: string; message: string }): string | null => {
+    const citaId = extractCitaId(notification.title) || extractCitaId(notification.message);
+    if (citaId){ 
+      return `/dashboard/appointments/${citaId}`;
+    }
+    const casoId = extractCasoId(notification.title) ?? extractCasoId(notification.message);
+    if (casoId) {
+      return `/dashboard/cases/${casoId}`;
+    }
+    return null;
   };
 
   const triggerButton = (
@@ -77,16 +90,16 @@ const Notification: React.FC<NotificationProps> = () => {
                     w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0
                     ${!notification.read ? 'bg-primary-light/10' : ''}
                   `}
-                  role={getCasoHref(notification) ? 'link' : undefined}
-                  tabIndex={getCasoHref(notification) ? 0 : undefined}
+                  role={getNotificationHref(notification) ? 'link' : undefined}
+                  tabIndex={getNotificationHref(notification) ? 0 : undefined}
                   onClick={() => {
-                    const href = getCasoHref(notification);
+                    const href = getNotificationHref(notification);
                     if (!href) return;
                     markAsRead(notification.id);
                     router.push(href);
                   }}
                   onKeyDown={(e) => {
-                    const href = getCasoHref(notification);
+                    const href = getNotificationHref(notification);
                     if (!href) return;
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();

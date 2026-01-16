@@ -1,7 +1,6 @@
 'use server';
 
 import { caracteristicasQueries } from '@/lib/db/queries/caracteristicas.queries';
-import { AppError } from '@/lib/utils/errors';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 

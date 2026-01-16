@@ -63,4 +63,15 @@ export const notificacionesQueries = {
         const result: QueryResult = await pool.query(query, [idNotificacion, cedulaReceptor]);
         return (result.rows[0] as { id_notificacion: number } | undefined) ?? null;
     },
+
+    /**
+     * Elimina notificaciones más antiguas que un intervalo (TTL)
+     * @param interval Intervalo PostgreSQL como texto (ej: '30 days')
+     * @returns cantidad de filas eliminadas
+     */
+    deleteOlderThan: async (interval: string): Promise<number> => {
+        const query = loadSQL('notificaciones/delete-older-than.sql');
+        const result: QueryResult = await pool.query(query, [interval]);
+        return result.rowCount ?? 0;
+    },
 };
