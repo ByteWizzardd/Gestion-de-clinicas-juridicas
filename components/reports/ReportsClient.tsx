@@ -412,7 +412,7 @@ export default function ReportsPage() {
 
             {/* Report Generation Cards */}
             <motion.div
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-[10rem] gap-4 mb-6 w-full min-w-0"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 auto-rows-[10rem] gap-4 mb-6 w-full min-w-0"
                 initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
@@ -441,21 +441,7 @@ export default function ReportsPage() {
                     buttonColor="red"
                 />
 
-                {/* 4. Historial de Casos (Bottom Row) */}
-                <ReportCard
-                    title="Historial de Casos del Solicitante"
-                    icon={<History className="w-full h-full" strokeWidth={1.5} />}
-                    onGenerate={() => handleGenerateReport('Historial de Casos del Solicitante')}
-                    buttonColor="orange"
-                />
 
-                {/* 5. Ficha Resumen (Bottom Row) */}
-                <ReportCard
-                    title="Ficha Resumen del Solicitante"
-                    icon={<User className="w-full h-full" strokeWidth={1.5} />}
-                    onGenerate={() => handleGenerateReport('Ficha Resumen del Solicitante')}
-                    buttonColor="red"
-                />
 
                 {/* 6. Reporte Socioeconómico (Bottom Row) */}
                 <ReportCard
