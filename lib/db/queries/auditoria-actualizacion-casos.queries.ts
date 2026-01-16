@@ -5,10 +5,12 @@ import { QueryResult } from 'pg';
 /**
  * Queries para la entidad AuditoriaActualizacionCasos
  * Todas las queries SQL están en database/queries/auditoria-actualizacion-casos/
+ * Ahora incluye también los cambios de estatus de la tabla cambio_estatus
  */
 export const auditoriaActualizacionCasosQueries = {
   /**
    * Obtiene todas las actualizaciones de casos con filtros opcionales
+   * Incluye tanto cambios de campos como cambios de estatus
    */
   getAll: async (filters?: {
     fechaInicio?: string;
@@ -19,6 +21,7 @@ export const auditoriaActualizacionCasosQueries = {
   }): Promise<Array<{
     id: number;
     id_caso: number | null;
+    tipo_cambio: 'actualizacion_campos' | 'cambio_estatus';
     fecha_solicitud_anterior: string | null;
     fecha_solicitud_nuevo: string | null;
     fecha_inicio_caso_anterior: string | null;
@@ -51,6 +54,9 @@ export const auditoriaActualizacionCasosQueries = {
     num_ambito_legal_nuevo: number | null;
     nombre_ambito_legal_anterior: string | null;
     nombre_ambito_legal_nuevo: string | null;
+    // Campos de cambio de estatus
+    estatus_anterior: string | null;
+    estatus_nuevo: string | null;
     fecha_actualizacion: string;
     id_usuario_actualizo: string | null;
     nombres_usuario_actualizo: string | null;
@@ -69,7 +75,7 @@ export const auditoriaActualizacionCasosQueries = {
     // Convertir foto_perfil de Buffer a base64
     return result.rows.map(row => ({
       ...row,
-      foto_perfil_usuario_actualizo: row.foto_perfil_usuario_actualizo 
+      foto_perfil_usuario_actualizo: row.foto_perfil_usuario_actualizo
         ? `data:image/jpeg;base64,${(row.foto_perfil_usuario_actualizo as Buffer).toString('base64')}`
         : null,
     }));
@@ -77,10 +83,12 @@ export const auditoriaActualizacionCasosQueries = {
 
   /**
    * Obtiene todas las actualizaciones de un caso específico
+   * Incluye tanto cambios de campos como cambios de estatus
    */
   getByCaso: async (idCaso: number): Promise<Array<{
     id: number;
     id_caso: number | null;
+    tipo_cambio: 'actualizacion_campos' | 'cambio_estatus';
     fecha_solicitud_anterior: string | null;
     fecha_solicitud_nuevo: string | null;
     fecha_inicio_caso_anterior: string | null;
@@ -113,6 +121,9 @@ export const auditoriaActualizacionCasosQueries = {
     num_ambito_legal_nuevo: number | null;
     nombre_ambito_legal_anterior: string | null;
     nombre_ambito_legal_nuevo: string | null;
+    // Campos de cambio de estatus
+    estatus_anterior: string | null;
+    estatus_nuevo: string | null;
     fecha_actualizacion: string;
     id_usuario_actualizo: string | null;
     nombres_usuario_actualizo: string | null;
@@ -125,7 +136,7 @@ export const auditoriaActualizacionCasosQueries = {
     // Convertir foto_perfil de Buffer a base64
     return result.rows.map(row => ({
       ...row,
-      foto_perfil_usuario_actualizo: row.foto_perfil_usuario_actualizo 
+      foto_perfil_usuario_actualizo: row.foto_perfil_usuario_actualizo
         ? `data:image/jpeg;base64,${(row.foto_perfil_usuario_actualizo as Buffer).toString('base64')}`
         : null,
     }));
@@ -133,6 +144,7 @@ export const auditoriaActualizacionCasosQueries = {
 
   /**
    * Obtiene el conteo total de actualizaciones de casos
+   * Incluye tanto cambios de campos como cambios de estatus
    */
   getCount: async (): Promise<number> => {
     const query = loadSQL('auditoria-actualizacion-casos/get-count.sql');
@@ -140,3 +152,4 @@ export const auditoriaActualizacionCasosQueries = {
     return parseInt(result.rows[0].total, 10);
   },
 };
+

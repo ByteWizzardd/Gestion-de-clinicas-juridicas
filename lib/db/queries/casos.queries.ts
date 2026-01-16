@@ -213,7 +213,7 @@ export const casosQueries = {
   getDistributionByNucleo: async (
     fechaInicio?: string | Date,
     fechaFin?: string | Date,
-    idNucleo?: number  ): Promise<Array<{ nombre_nucleo: string; cantidad: number }>> => {
+    idNucleo?: number): Promise<Array<{ nombre_nucleo: string; cantidad: number }>> => {
     const query = loadSQL('casos/get-distribution-by-nucleo.sql');
     const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
@@ -240,7 +240,7 @@ export const casosQueries = {
   getTopMaterias: async (
     fechaInicio?: string | Date,
     fechaFin?: string | Date,
-    idNucleo?: number  ): Promise<Array<{ nombre_materia: string; cantidad: number }>> => {
+    idNucleo?: number): Promise<Array<{ nombre_materia: string; cantidad: number }>> => {
     const query = loadSQL('casos/get-top-materias.sql');
     const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
@@ -294,15 +294,15 @@ export const casosQueries = {
   getKPIStats: async (
     fechaInicio?: string | Date,
     fechaFin?: string | Date,
-    idNucleo?: number  ): Promise<{
-    total_casos: number;
-    casos_en_riesgo: number;
-    total_acciones: number;
-    casos_archivados: number;
-    materia_mas_comun: string;
-    cantidad_materia_comun: number;
-    tasa_cierre_porcentaje: number;
-  }> => {
+    idNucleo?: number): Promise<{
+      total_casos: number;
+      casos_en_riesgo: number;
+      total_acciones: number;
+      casos_archivados: number;
+      materia_mas_comun: string;
+      cantidad_materia_comun: number;
+      tasa_cierre_porcentaje: number;
+    }> => {
     const query = loadSQL('casos/get-kpi-stats.sql');
     const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
@@ -337,7 +337,7 @@ export const casosQueries = {
   getDistributionByStatus: async (
     fechaInicio?: string | Date,
     fechaFin?: string | Date,
-    idNucleo?: number  ): Promise<Array<{ nombre_estatus: string; cantidad: number }>> => {
+    idNucleo?: number): Promise<Array<{ nombre_estatus: string; cantidad: number }>> => {
     const query = loadSQL('casos/get-distribution-by-status.sql');
     const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
@@ -364,7 +364,7 @@ export const casosQueries = {
   getCaseLoadTrend: async (
     fechaInicio?: string | Date,
     fechaFin?: string | Date,
-    idNucleo?: number  ): Promise<Array<{ mes: string; estatus: string; cantidad: number }>> => {
+    idNucleo?: number): Promise<Array<{ mes: string; estatus: string; cantidad: number }>> => {
     const query = loadSQL('casos/get-case-load-trend.sql');
     const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
@@ -506,6 +506,90 @@ export const casosQueries = {
       cedulaActor,
       motivo,
     ]);
+  },
+
+  /**
+   * Obtiene casos inactivos candidatos a archivar
+   * Un caso es inactivo si no ha tenido actividad en N meses (por defecto 12 = 2 semestres)
+   * @param mesesInactividad - Número de meses de inactividad (por defecto 12)
+   */
+  getInactiveCases: async (mesesInactividad: number = 12): Promise<Array<{
+    id_caso: number;
+    fecha_inicio_caso: string;
+    fecha_fin_caso: string | null;
+    fecha_solicitud: string;
+    tramite: string;
+    estatus: string;
+    cant_beneficiarios: number;
+    observaciones: string;
+    id_nucleo: number;
+    id_materia: number;
+    num_categoria: number;
+    num_subcategoria: number;
+    num_ambito_legal: number;
+    cedula: string;
+    nombres_solicitante: string;
+    apellidos_solicitante: string;
+    nombre_completo_solicitante: string;
+    nombre_nucleo: string;
+    nombre_materia: string;
+    nombre_categoria: string;
+    nombre_subcategoria: string;
+    fecha_ultima_actividad: string;
+    meses_inactividad: number;
+  }>> => {
+    const query = loadSQL('casos/get-inactive-cases.sql');
+    const result: QueryResult = await pool.query(query, [mesesInactividad]);
+    return result.rows;
+  },
+
+  /**
+   * Archiva un caso (cambia su estatus a 'Archivado')
+   * @param idCaso - ID del caso a archivar
+   * @param idUsuarioCambia - Cédula del usuario que realiza el cambio
+   * @param motivo - Motivo del archivo (opcional, por defecto se genera uno automático)
+   */
+  archiveCase: async (
+    idCaso: number,
+    idUsuarioCambia: string,
+    motivo?: string
+  ): Promise<unknown> => {
+    const query = loadSQL('casos/archive-case.sql');
+    const motivoFinal = motivo || 'Caso archivado por inactividad prolongada';
+    const result: QueryResult = await pool.query(query, [idCaso, idUsuarioCambia, motivoFinal]);
+    return result.rows[0];
+  },
+
+  /**
+   * Archiva múltiples casos
+   * @param idsCasos - Array de IDs de casos a archivar
+   * @param idUsuarioCambia - Cédula del usuario que realiza el cambio
+   * @param motivo - Motivo del archivo (opcional)
+   * @returns Número de casos archivados exitosamente
+   */
+  archiveCases: async (
+    idsCasos: number[],
+    idUsuarioCambia: string,
+    motivo?: string
+  ): Promise<{ archived: number; errors: Array<{ id_caso: number; error: string }> }> => {
+    const motivoFinal = motivo || 'Caso archivado por inactividad prolongada (2+ semestres sin actividad)';
+    let archived = 0;
+    const errors: Array<{ id_caso: number; error: string }> = [];
+
+    for (const idCaso of idsCasos) {
+      try {
+        const query = loadSQL('casos/archive-case.sql');
+        await pool.query(query, [idCaso, idUsuarioCambia, motivoFinal]);
+        archived++;
+      } catch (error) {
+        errors.push({
+          id_caso: idCaso,
+          error: error instanceof Error ? error.message : 'Error desconocido',
+        });
+      }
+    }
+
+    return { archived, errors };
   },
 };
 

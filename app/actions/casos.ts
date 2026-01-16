@@ -1304,3 +1304,159 @@ export async function deleteCasoAction(
     return handleServerActionError(error, 'deleteCasoAction', 'DELETE_ERROR');
   }
 }
+
+// ============================================================================
+// ARCHIVO DE CASOS INACTIVOS
+// ============================================================================
+
+export interface InactiveCase {
+  id_caso: number;
+  fecha_inicio_caso: string;
+  fecha_fin_caso: string | null;
+  fecha_solicitud: string;
+  tramite: string;
+  estatus: string;
+  cant_beneficiarios: number;
+  observaciones: string;
+  id_nucleo: number;
+  id_materia: number;
+  num_categoria: number;
+  num_subcategoria: number;
+  num_ambito_legal: number;
+  cedula: string;
+  nombres_solicitante: string;
+  apellidos_solicitante: string;
+  nombre_completo_solicitante: string;
+  nombre_nucleo: string;
+  nombre_materia: string;
+  nombre_categoria: string;
+  nombre_subcategoria: string;
+  fecha_ultima_actividad: string;
+  meses_inactividad: number;
+}
+
+export interface GetInactiveCasesResult {
+  success: boolean;
+  data?: InactiveCase[];
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+/**
+ * Server Action para obtener casos inactivos candidatos a archivar
+ * Un caso es inactivo si no ha tenido actividad en N meses (por defecto 12 = 2 semestres)
+ * @param mesesInactividad - Número de meses de inactividad (por defecto 12)
+ */
+export async function getInactiveCasesAction(
+  mesesInactividad: number = 12
+): Promise<GetInactiveCasesResult> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    // Solo coordinadores pueden ver y archivar casos inactivos
+    if (authResult.user.rol !== 'Coordinador') {
+      return {
+        success: false,
+        error: {
+          message: 'Solo los coordinadores pueden gestionar el archivo de casos inactivos',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    const casosInactivos = await casosQueries.getInactiveCases(mesesInactividad);
+
+    return {
+      success: true,
+      data: casosInactivos,
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'getInactiveCasesAction', 'CASO_ERROR');
+  }
+}
+
+export interface ArchiveCasesResult {
+  success: boolean;
+  data?: {
+    archived: number;
+    errors: Array<{ id_caso: number; error: string }>;
+    mensaje: string;
+  };
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+/**
+ * Server Action para archivar múltiples casos inactivos
+ * @param idsCasos - Array de IDs de casos a archivar
+ * @param motivo - Motivo del archivo (opcional, se genera automáticamente)
+ */
+export async function archiveInactiveCasesAction(
+  idsCasos: number[],
+  motivo?: string
+): Promise<ArchiveCasesResult> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    // Solo coordinadores pueden archivar casos
+    if (authResult.user.rol !== 'Coordinador') {
+      return {
+        success: false,
+        error: {
+          message: 'Solo los coordinadores pueden archivar casos',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    if (!idsCasos || idsCasos.length === 0) {
+      return {
+        success: false,
+        error: {
+          message: 'No se proporcionaron casos para archivar',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    const result = await casosQueries.archiveCases(
+      idsCasos,
+      authResult.user.cedula,
+      motivo
+    );
+
+    // Revalidar cache de las páginas relacionadas
+    revalidatePath('/dashboard/cases');
+    for (const id of idsCasos) {
+      revalidatePath(`/dashboard/cases/${id}`);
+    }
+
+    return {
+      success: true,
+      data: {
+        ...result,
+        mensaje: `${result.archived} caso(s) archivado(s) correctamente${result.errors.length > 0 ? `. ${result.errors.length} error(es).` : ''}`,
+      },
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'archiveInactiveCasesAction', 'ARCHIVE_ERROR');
+  }
+}

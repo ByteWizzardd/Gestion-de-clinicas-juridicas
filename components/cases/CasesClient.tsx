@@ -3,11 +3,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'motion/react';
+import { Archive } from 'lucide-react';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import CaseFormModal from '@/components/forms/CaseFormModal';
 import Spinner from '@/components/ui/feedback/Spinner';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
+import ArchiveInactiveCasesModal from '@/components/cases/modals/ArchiveInactiveCasesModal';
 import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
 import { getCasosAction, getCasosByUsuarioAction, deleteCasoAction } from '@/app/actions/casos';
 import { createCasoAction, updateCasoAction, uploadSoportesAction } from '@/app/actions/casos';
@@ -72,6 +74,9 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   const [casoToDelete, setCasoToDelete] = useState<{ id_caso: number; codigo: string; solicitante: string } | null>(null);
   const [deleteMotivo, setDeleteMotivo] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // State for archiving inactive cases
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
 
   // State for editing
   const [editingCase, setEditingCase] = useState<Caso | null>(null);
@@ -415,9 +420,12 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: "easeOut" }}
       >
-        <h1 className="text-4xl m-3 font-semibold font-primary">Casos</h1>
-        <p className="mb-6 ml-3">Listado y gestión de todos los casos registrados.</p>
+        <div>
+          <h1 className="text-4xl m-3 font-semibold font-primary">Casos</h1>
+          <p className="mb-6 ml-3">Listado y gestión de todos los casos registrados.</p>
+        </div>
       </motion.div>
+
       <motion.div
         initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -535,6 +543,13 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
         cancelLabel="Cancelar"
         disabled={deleteLoading || !deleteMotivo.trim()}
         confirmVariant="danger"
+      />
+
+      {/* Modal para archivar casos inactivos */}
+      <ArchiveInactiveCasesModal
+        isOpen={showArchiveModal}
+        onClose={() => setShowArchiveModal(false)}
+        onArchiveComplete={fetchCasos}
       />
     </>
   );

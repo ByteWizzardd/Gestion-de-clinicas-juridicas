@@ -325,6 +325,8 @@ export interface CasoEliminadoAuditRecord {
 export interface CasoActualizadoAuditRecord {
   id: number;
   id_caso: number | null;
+  // Tipo de cambio: actualizacion_campos o cambio_estatus
+  tipo_cambio?: 'actualizacion_campos' | 'cambio_estatus';
   fecha_solicitud_anterior: string | null;
   fecha_solicitud_nuevo: string | null;
   fecha_inicio_caso_anterior: string | null;
@@ -357,6 +359,9 @@ export interface CasoActualizadoAuditRecord {
   num_ambito_legal_nuevo: number | null;
   nombre_ambito_legal_anterior: string | null;
   nombre_ambito_legal_nuevo: string | null;
+  // Campos de cambio de estatus
+  estatus_anterior: string | null;
+  estatus_nuevo: string | null;
   id_usuario_actualizo: string | null;
   nombres_usuario_actualizo: string | null;
   apellidos_usuario_actualizo: string | null;

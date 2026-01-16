@@ -591,6 +591,7 @@ export async function getCasosActualizadosAuditAction(filters?: AuditFilters) {
 
   try {
     const records = await auditoriaActualizacionCasosQueries.getAll(filters);
+
     return records.map((r) => ({
       ...r,
       fecha: r.fecha_actualizacion,

@@ -642,35 +642,8 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           </div>
         );
       }
-      case 'caso-actualizado': {
-        const r = record as CasoActualizadoAuditRecord;
-        return (
-          <div className="flex items-center gap-3">
-            <Scale className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                <Link
-                  href={`/dashboard/cases/${r.id_caso}`}
-                  className="text-primary hover:underline transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Caso #{r.id_caso}
-                </Link>
-              </p>
-              <p className="text-sm text-gray-600">
-                Actualizado por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_actualizo,
-                  r.nombres_usuario_actualizo,
-                  r.apellidos_usuario_actualizo,
-                  r.id_usuario_actualizo
-                )}
-              </p>
-            </div>
-          </div>
-        );
-      }
       // Solicitantes
+
       case 'solicitante-eliminado': {
         const r = record as SolicitanteEliminadoAuditRecord;
         return (
@@ -1107,6 +1080,35 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           </div>
         );
       }
+      case 'caso-actualizado': {
+        const r = record as CasoActualizadoAuditRecord;
+        return (
+          <div className="flex items-center gap-3">
+            <Scale className="w-5 h-5 text-gray-600" />
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">
+                <Link
+                  href={`/dashboard/cases/${r.id_caso}`}
+                  className="text-primary hover:underline font-medium transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Caso #{r.id_caso}
+                </Link>
+              </p>
+              <p className="text-sm text-gray-600">
+                Actualizado por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_actualizo,
+                  r.nombres_usuario_actualizo,
+                  r.apellidos_usuario_actualizo,
+                  r.id_usuario_actualizo
+                )}
+              </p>
+            </div>
+          </div>
+        );
+      }
+
       default:
         console.warn('Tipo de auditoría no reconocido en renderSummary:', type);
         return (
@@ -1125,6 +1127,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         );
     }
   };
+
 
   const renderDetails = () => {
     switch (type) {
@@ -2699,6 +2702,9 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
       }
       case 'caso-actualizado': {
         const r = record as CasoActualizadoAuditRecord;
+        const isCambioEstatus = r.tipo_cambio === 'cambio_estatus';
+
+        // Detectar cambios en campos
         const hasFechaSolicitudChange = !areDatesEqual(r.fecha_solicitud_anterior, r.fecha_solicitud_nuevo);
         const hasFechaInicioCasoChange = !areDatesEqual(r.fecha_inicio_caso_anterior, r.fecha_inicio_caso_nuevo);
         const hasFechaFinCasoChange = !areDatesEqual(r.fecha_fin_caso_anterior, r.fecha_fin_caso_nuevo);
@@ -2716,126 +2722,143 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
             <div>
               <p className="text-sm font-semibold text-gray-700 mb-1">Cambios Realizados</p>
 
-              {hasFechaSolicitudChange && (
-                <div className="mb-2">
+              {/* Cambio de estatus */}
+              {isCambioEstatus && (
+                <div className="mb-2 bg-gray-50 p-3 rounded">
                   <p className="text-sm text-gray-600">
-                    Fecha Solicitud:{' '}
-                    <span className="line-through text-red-500">{r.fecha_solicitud_anterior ? formatOnlyDate(r.fecha_solicitud_anterior) : 'N/A'}</span>
+                    Estatus:{' '}
+                    <span className="line-through text-red-500">{r.estatus_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.fecha_solicitud_nuevo ? formatOnlyDate(r.fecha_solicitud_nuevo) : 'N/A'}</span>
+                    <span className="text-green-600 font-medium">{r.estatus_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
 
-              {hasFechaInicioCasoChange && (
-                <div className="mb-2">
-                  <p className="text-sm text-gray-600">
-                    Fecha Inicio Caso:{' '}
-                    <span className="line-through text-red-500">{r.fecha_inicio_caso_anterior ? formatOnlyDate(r.fecha_inicio_caso_anterior) : 'N/A'}</span>
-                    {' → '}
-                    <span className="text-green-600">{r.fecha_inicio_caso_nuevo ? formatOnlyDate(r.fecha_inicio_caso_nuevo) : 'N/A'}</span>
-                  </p>
-                </div>
-              )}
+              {/* Cambios en campos (solo si no es cambio de estatus) */}
+              {!isCambioEstatus && (
+                <>
+                  {hasFechaSolicitudChange && (
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-600">
+                        Fecha Solicitud:{' '}
+                        <span className="line-through text-red-500">{r.fecha_solicitud_anterior ? formatOnlyDate(r.fecha_solicitud_anterior) : 'N/A'}</span>
+                        {' → '}
+                        <span className="text-green-600">{r.fecha_solicitud_nuevo ? formatOnlyDate(r.fecha_solicitud_nuevo) : 'N/A'}</span>
+                      </p>
+                    </div>
+                  )}
 
-              {hasFechaFinCasoChange && (
-                <div className="mb-2">
-                  <p className="text-sm text-gray-600">
-                    Fecha Fin Caso:{' '}
-                    <span className="line-through text-red-500">{r.fecha_fin_caso_anterior ? formatOnlyDate(r.fecha_fin_caso_anterior) : 'N/A'}</span>
-                    {' → '}
-                    <span className="text-green-600">{r.fecha_fin_caso_nuevo ? formatOnlyDate(r.fecha_fin_caso_nuevo) : 'N/A'}</span>
-                  </p>
-                </div>
-              )}
+                  {hasFechaInicioCasoChange && (
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-600">
+                        Fecha Inicio Caso:{' '}
+                        <span className="line-through text-red-500">{r.fecha_inicio_caso_anterior ? formatOnlyDate(r.fecha_inicio_caso_anterior) : 'N/A'}</span>
+                        {' → '}
+                        <span className="text-green-600">{r.fecha_inicio_caso_nuevo ? formatOnlyDate(r.fecha_inicio_caso_nuevo) : 'N/A'}</span>
+                      </p>
+                    </div>
+                  )}
 
-              {hasTramiteChange && (
-                <div className="mb-2">
-                  <p className="text-sm text-gray-600">
-                    Trámite:{' '}
-                    <span className="line-through text-red-500">{r.tramite_anterior || 'N/A'}</span>
-                    {' → '}
-                    <span className="text-green-600">{r.tramite_nuevo || 'N/A'}</span>
-                  </p>
-                </div>
-              )}
+                  {hasFechaFinCasoChange && (
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-600">
+                        Fecha Fin Caso:{' '}
+                        <span className="line-through text-red-500">{r.fecha_fin_caso_anterior ? formatOnlyDate(r.fecha_fin_caso_anterior) : 'N/A'}</span>
+                        {' → '}
+                        <span className="text-green-600">{r.fecha_fin_caso_nuevo ? formatOnlyDate(r.fecha_fin_caso_nuevo) : 'N/A'}</span>
+                      </p>
+                    </div>
+                  )}
 
-              {hasSolicitanteChange && (
-                <div className="mb-2">
-                  <p className="text-sm text-gray-600">
-                    Cédula Solicitante:{' '}
-                    <span className="line-through text-red-500">{r.cedula_solicitante_anterior || 'N/A'}</span>
-                    {' → '}
-                    <span className="text-green-600">{r.cedula_solicitante_nuevo || 'N/A'}</span>
-                  </p>
-                </div>
-              )}
+                  {hasTramiteChange && (
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-600">
+                        Trámite:{' '}
+                        <span className="line-through text-red-500">{r.tramite_anterior || 'N/A'}</span>
+                        {' → '}
+                        <span className="text-green-600">{r.tramite_nuevo || 'N/A'}</span>
+                      </p>
+                    </div>
+                  )}
 
-              {hasNucleoChange && (
-                <div className="mb-2">
-                  <p className="text-sm text-gray-600">
-                    Núcleo:{' '}
-                    <span className="line-through text-red-500">{r.nombre_nucleo_anterior || r.id_nucleo_anterior || 'N/A'}</span>
-                    {' → '}
-                    <span className="text-green-600">{r.nombre_nucleo_nuevo || r.id_nucleo_nuevo || 'N/A'}</span>
-                  </p>
-                </div>
-              )}
+                  {hasSolicitanteChange && (
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-600">
+                        Cédula Solicitante:{' '}
+                        <span className="line-through text-red-500">{r.cedula_solicitante_anterior || 'N/A'}</span>
+                        {' → '}
+                        <span className="text-green-600">{r.cedula_solicitante_nuevo || 'N/A'}</span>
+                      </p>
+                    </div>
+                  )}
 
-              {hasMateriaChange && (
-                <div className="mb-2">
-                  <p className="text-sm text-gray-600">
-                    Materia:{' '}
-                    <span className="line-through text-red-500">{r.nombre_materia_anterior || r.id_materia_anterior || 'N/A'}</span>
-                    {' → '}
-                    <span className="text-green-600">{r.nombre_materia_nuevo || r.id_materia_nuevo || 'N/A'}</span>
-                  </p>
-                </div>
-              )}
+                  {hasNucleoChange && (
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-600">
+                        Núcleo:{' '}
+                        <span className="line-through text-red-500">{r.nombre_nucleo_anterior || r.id_nucleo_anterior || 'N/A'}</span>
+                        {' → '}
+                        <span className="text-green-600">{r.nombre_nucleo_nuevo || r.id_nucleo_nuevo || 'N/A'}</span>
+                      </p>
+                    </div>
+                  )}
 
-              {hasCategoriaChange && (
-                <div className="mb-2">
-                  <p className="text-sm text-gray-600">
-                    Categoría:{' '}
-                    <span className="line-through text-red-500">{r.nombre_categoria_anterior || (r.num_categoria_anterior !== null ? `#${r.num_categoria_anterior}` : 'N/A')}</span>
-                    {' → '}
-                    <span className="text-green-600">{r.nombre_categoria_nuevo || (r.num_categoria_nuevo !== null ? `#${r.num_categoria_nuevo}` : 'N/A')}</span>
-                  </p>
-                </div>
-              )}
+                  {hasMateriaChange && (
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-600">
+                        Materia:{' '}
+                        <span className="line-through text-red-500">{r.nombre_materia_anterior || r.id_materia_anterior || 'N/A'}</span>
+                        {' → '}
+                        <span className="text-green-600">{r.nombre_materia_nuevo || r.id_materia_nuevo || 'N/A'}</span>
+                      </p>
+                    </div>
+                  )}
 
-              {hasSubcategoriaChange && (
-                <div className="mb-2">
-                  <p className="text-sm text-gray-600">
-                    Subcategoría:{' '}
-                    <span className="line-through text-red-500">{r.nombre_subcategoria_anterior || (r.num_subcategoria_anterior !== null ? `#${r.num_subcategoria_anterior}` : 'N/A')}</span>
-                    {' → '}
-                    <span className="text-green-600">{r.nombre_subcategoria_nuevo || (r.num_subcategoria_nuevo !== null ? `#${r.num_subcategoria_nuevo}` : 'N/A')}</span>
-                  </p>
-                </div>
-              )}
+                  {hasCategoriaChange && (
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-600">
+                        Categoría:{' '}
+                        <span className="line-through text-red-500">{r.nombre_categoria_anterior || (r.num_categoria_anterior !== null ? `#${r.num_categoria_anterior}` : 'N/A')}</span>
+                        {' → '}
+                        <span className="text-green-600">{r.nombre_categoria_nuevo || (r.num_categoria_nuevo !== null ? `#${r.num_categoria_nuevo}` : 'N/A')}</span>
+                      </p>
+                    </div>
+                  )}
 
-              {hasAmbitoLegalChange && (
-                <div className="mb-2">
-                  <p className="text-sm text-gray-600">
-                    Ámbito Legal:{' '}
-                    <span className="line-through text-red-500">{r.nombre_ambito_legal_anterior || (r.num_ambito_legal_anterior !== null ? `#${r.num_ambito_legal_anterior}` : 'N/A')}</span>
-                    {' → '}
-                    <span className="text-green-600">{r.nombre_ambito_legal_nuevo || (r.num_ambito_legal_nuevo !== null ? `#${r.num_ambito_legal_nuevo}` : 'N/A')}</span>
-                  </p>
-                </div>
-              )}
+                  {hasSubcategoriaChange && (
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-600">
+                        Subcategoría:{' '}
+                        <span className="line-through text-red-500">{r.nombre_subcategoria_anterior || (r.num_subcategoria_anterior !== null ? `#${r.num_subcategoria_anterior}` : 'N/A')}</span>
+                        {' → '}
+                        <span className="text-green-600">{r.nombre_subcategoria_nuevo || (r.num_subcategoria_nuevo !== null ? `#${r.num_subcategoria_nuevo}` : 'N/A')}</span>
+                      </p>
+                    </div>
+                  )}
 
-              {hasObservacionesChange && (
-                <div className="mb-2">
-                  <p className="text-sm text-gray-600 mb-1">Observaciones:</p>
-                  <p className="text-sm line-through text-red-500 bg-red-50 p-2 rounded mb-1">
-                    {r.observaciones_anterior || 'Sin observaciones'}
-                  </p>
-                  <p className="text-sm text-green-600 bg-green-50 p-2 rounded">
-                    {r.observaciones_nuevo || 'Sin observaciones'}
-                  </p>
-                </div>
+                  {hasAmbitoLegalChange && (
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-600">
+                        Ámbito Legal:{' '}
+                        <span className="line-through text-red-500">{r.nombre_ambito_legal_anterior || (r.num_ambito_legal_anterior !== null ? `#${r.num_ambito_legal_anterior}` : 'N/A')}</span>
+                        {' → '}
+                        <span className="text-green-600">{r.nombre_ambito_legal_nuevo || (r.num_ambito_legal_nuevo !== null ? `#${r.num_ambito_legal_nuevo}` : 'N/A')}</span>
+                      </p>
+                    </div>
+                  )}
+
+                  {hasObservacionesChange && (
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-600 mb-1">Observaciones:</p>
+                      <p className="text-sm line-through text-red-500 bg-red-50 p-2 rounded mb-1">
+                        {r.observaciones_anterior || 'Sin observaciones'}
+                      </p>
+                      <p className="text-sm text-green-600 bg-green-50 p-2 rounded">
+                        {r.observaciones_nuevo || 'Sin observaciones'}
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
 
             </div>
@@ -2857,6 +2880,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         );
       }
       // Catálogos - casos genéricos para actualizados
+
       case 'estado-actualizado':
       case 'materia-actualizada':
       case 'nivel-educativo-actualizado':
@@ -3178,7 +3202,9 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
     }
   };
 
+
   const getDate = () => {
+
     switch (type) {
       case 'soporte':
         return (record as SoporteAuditRecord).fecha_eliminacion;
