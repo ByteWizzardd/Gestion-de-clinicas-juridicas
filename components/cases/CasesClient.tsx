@@ -130,8 +130,8 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
         throw new Error(result.error?.message || 'Error al cargar los casos');
       }
       if (result.data) {
-        setCasos(result.data);
-        setAllCasos(result.data); // Actualizar cache de todos los casos
+        setCasos(result.data as Caso[]);
+        setAllCasos(result.data as Caso[]); // Actualizar cache de todos los casos
       } else {
         setCasos([]);
         setAllCasos([]);
@@ -151,7 +151,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
         // Cargar casos asignados al usuario
         const result = await getCasosByUsuarioAction();
         if (result.success && result.data) {
-          setCasos(result.data);
+          setCasos(result.data as Caso[]);
         } else {
           // Si falla o no hay datos, mostrar lista vacía o manejar error
           console.error('Error cargando casos asignados:', result.error);
@@ -378,7 +378,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       }
 
       if (archivos.length > 0 && result.success && result.data) {
-        const idCaso = result.data.id_caso || (result.data as any).id_caso;
+        const idCaso = (result.data as Caso).id_caso;
 
         if (!idCaso || isNaN(Number(idCaso))) {
           alert('Caso creado exitosamente, pero no se pudo obtener el ID del caso para subir los archivos');
