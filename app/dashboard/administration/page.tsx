@@ -13,11 +13,7 @@ export default async function CatalogsPage() {
 
   return (
     <>
-      <h1 className="text-4xl m-3 font-semibold font-primary">Administración</h1>
-      <p className="mb-6 ml-3">Mantenimiento de las tablas maestras del sistema</p>
-      <div className="mt-10">
-        <CatalogsClient counts={counts} />
-      </div>
+      <CatalogsClient counts={counts} />
     </>
   );
 }
