@@ -13,6 +13,7 @@ SELECT
         FROM nucleos n 
         WHERE n.id_nucleo = (
             SELECT ca.id_nucleo FROM casos ca WHERE ca.cedula = s.cedula 
+            ORDER BY ca.fecha_solicitud DESC, ca.id_caso DESC
             LIMIT 1
         )
         LIMIT 1

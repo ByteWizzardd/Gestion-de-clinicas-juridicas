@@ -22,6 +22,14 @@ SELECT
     -- Información del núcleo (obtenido del caso más reciente)
     n.id_nucleo,
     n.nombre_nucleo,
+    -- Dirección del núcleo (desde la tabla nucleos)
+    n_parr.id_estado AS nucleo_id_estado,
+    n_parr.num_municipio AS nucleo_num_municipio,
+    n_parr.num_parroquia AS nucleo_num_parroquia,
+    n_parr.nombre_parroquia AS nucleo_nombre_parroquia,
+    n_mun.nombre_municipio AS nucleo_nombre_municipio,
+    n_est.nombre_estado AS nucleo_nombre_estado,
+    -- Dirección del solicitante
     p.id_estado,
     p.num_municipio,
     p.num_parroquia,
@@ -132,6 +140,13 @@ LEFT JOIN LATERAL (
     LIMIT 1
 ) caso_reciente ON true
 LEFT JOIN nucleos n ON caso_reciente.id_nucleo = n.id_nucleo
+-- Dirección del núcleo
+LEFT JOIN parroquias n_parr ON n.id_estado = n_parr.id_estado 
+    AND n.num_municipio = n_parr.num_municipio 
+    AND n.num_parroquia = n_parr.num_parroquia
+LEFT JOIN municipios n_mun ON n_parr.id_estado = n_mun.id_estado AND n_parr.num_municipio = n_mun.num_municipio
+LEFT JOIN estados n_est ON n_mun.id_estado = n_est.id_estado
+-- Dirección del solicitante
 LEFT JOIN parroquias p ON vs.id_estado = p.id_estado 
     AND vs.num_municipio = p.num_municipio 
     AND vs.num_parroquia = p.num_parroquia

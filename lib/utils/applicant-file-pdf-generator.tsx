@@ -14,7 +14,7 @@ import { imageToBase64 } from './pdf-generator-react';
 export async function generateSolicitanteFichaPDF(data: SolicitanteFichaData): Promise<void> {
     try {
         // Cargar el logo como base64 para preservar la transparencia
-        const logoBase64 = await imageToBase64('/logo clinica juridica.png');
+        const logoBase64 = await imageToBase64('/logo escuela derecho.png');
 
         // Generar el documento PDF
         const doc = React.createElement(SolicitanteFichaDocument, {
@@ -58,7 +58,7 @@ export async function generateSolicitanteFichaZip(data: SolicitanteFichaData): P
 
         // 1. Generar PDF
         // Cargar el logo como base64 para preservar la transparencia
-        const logoBase64 = await imageToBase64('/logo clinica juridica.png');
+        const logoBase64 = await imageToBase64('/logo escuela derecho.png');
 
         // Generar el documento PDF
         const doc = React.createElement(SolicitanteFichaDocument, {

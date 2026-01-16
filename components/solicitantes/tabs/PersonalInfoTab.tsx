@@ -15,6 +15,11 @@ interface PersonalInfoTabProps {
     estado_civil?: string | null;
     concubinato?: boolean | null;
     nombre_nucleo?: string | null;
+    // Dirección del núcleo
+    nucleo_nombre_parroquia?: string | null;
+    nucleo_nombre_municipio?: string | null;
+    nucleo_nombre_estado?: string | null;
+    // Dirección del solicitante (para otros usos)
     nombre_parroquia?: string | null;
     nombre_municipio?: string | null;
     nombre_estado?: string | null;
@@ -121,25 +126,25 @@ export default function PersonalInfoTab({ solicitante }: PersonalInfoTabProps) {
               <label className="text-sm font-medium text-gray-500">Núcleo</label>
               <p className="text-base text-gray-900 mt-1">{solicitante.nombre_nucleo}</p>
             </div>
-            {solicitante.nombre_parroquia && (
+            {(solicitante.nucleo_nombre_parroquia || solicitante.nombre_parroquia) && (
               <div>
                 <label className="text-sm font-medium text-gray-500">Parroquia</label>
                 <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-gray-400" />
-                  {solicitante.nombre_parroquia}
+                  {solicitante.nucleo_nombre_parroquia || solicitante.nombre_parroquia}
                 </p>
               </div>
             )}
-            {solicitante.nombre_municipio && (
+            {(solicitante.nucleo_nombre_municipio || solicitante.nombre_municipio) && (
               <div>
                 <label className="text-sm font-medium text-gray-500">Municipio</label>
-                <p className="text-base text-gray-900 mt-1">{solicitante.nombre_municipio}</p>
+                <p className="text-base text-gray-900 mt-1">{solicitante.nucleo_nombre_municipio || solicitante.nombre_municipio}</p>
               </div>
             )}
-            {solicitante.nombre_estado && (
+            {(solicitante.nucleo_nombre_estado || solicitante.nombre_estado) && (
               <div>
                 <label className="text-sm font-medium text-gray-500">Estado</label>
-                <p className="text-base text-gray-900 mt-1">{solicitante.nombre_estado}</p>
+                <p className="text-base text-gray-900 mt-1">{solicitante.nucleo_nombre_estado || solicitante.nombre_estado}</p>
               </div>
             )}
           </div>
