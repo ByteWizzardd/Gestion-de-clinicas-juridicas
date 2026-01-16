@@ -27,7 +27,9 @@ type AuditType = 'soportes' | 'soportes-creados' | 'citas-eliminadas' | 'citas-a
   | 'subcategorias-eliminadas' | 'subcategorias-actualizadas' | 'subcategorias-insertadas'
   | 'ambitos-legales-eliminados' | 'ambitos-legales-actualizados' | 'ambitos-legales-insertados'
   | 'caracteristicas-eliminadas' | 'caracteristicas-actualizadas' | 'caracteristicas-insertadas'
-  | 'casos-eliminados' | 'casos-actualizados' | 'casos-creados';
+  | 'caracteristicas-eliminadas' | 'caracteristicas-actualizadas' | 'caracteristicas-insertadas'
+  | 'casos-eliminados' | 'casos-actualizados' | 'casos-creados'
+  | 'beneficiarios-eliminados' | 'beneficiarios-actualizados' | 'beneficiarios-creados';
 
 interface AuditDetailClientProps {
   title: string;
@@ -109,9 +111,14 @@ export default function AuditDetailClient({
     'ambitos-legales-insertados': 'ambito-legal-insertado',
     'caracteristicas-insertadas': 'caracteristica-insertada',
     // Casos
+    // Casos
     'casos-eliminados': 'caso-eliminado',
     'casos-actualizados': 'caso-actualizado',
     'casos-creados': 'caso-creado',
+    // Beneficiarios
+    'beneficiarios-eliminados': 'beneficiario-eliminado',
+    'beneficiarios-actualizados': 'beneficiario-actualizado',
+    'beneficiarios-creados': 'beneficiario-creado',
   };
 
   // Cargar opciones de usuarios
@@ -200,7 +207,11 @@ export default function AuditDetailClient({
           // Casos
           getCasosEliminadosAuditAction,
           getCasosActualizadosAuditAction,
-          getCasosCreadosAuditAction
+          getCasosCreadosAuditAction,
+          // Beneficiarios
+          getBeneficiariosEliminadosAuditAction,
+          getBeneficiariosActualizadosAuditAction,
+          getBeneficiariosInscritosAuditAction
         } = await import('@/app/actions/audit');
 
         let data: any[];
@@ -385,6 +396,16 @@ export default function AuditDetailClient({
             break;
           case 'casos-creados':
             data = await getCasosCreadosAuditAction(filters);
+            break;
+          // Beneficiarios
+          case 'beneficiarios-eliminados':
+            data = await getBeneficiariosEliminadosAuditAction(filters);
+            break;
+          case 'beneficiarios-actualizados':
+            data = await getBeneficiariosActualizadosAuditAction(filters);
+            break;
+          case 'beneficiarios-creados':
+            data = await getBeneficiariosInscritosAuditAction(filters);
             break;
           default:
             throw new Error('Tipo de auditoría no válido');

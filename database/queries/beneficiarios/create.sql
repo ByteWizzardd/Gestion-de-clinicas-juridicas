@@ -8,6 +8,7 @@
 -- $6: sexo
 -- $7: tipo_beneficiario
 -- $8: parentesco
+-- $9: id_usuario_registro
 
 INSERT INTO beneficiarios (
     num_beneficiario,
@@ -18,7 +19,8 @@ INSERT INTO beneficiarios (
     fecha_nac,
     sexo,
     tipo_beneficiario,
-    parentesco
+    parentesco,
+    id_usuario_registro
 )
 VALUES (
     COALESCE((SELECT MAX(num_beneficiario) FROM beneficiarios WHERE id_caso = $1), 0) + 1,
@@ -29,7 +31,8 @@ VALUES (
     $5,
     $6,
     $7,
-    $8
+    $8,
+    $9
 )
 RETURNING *;
 

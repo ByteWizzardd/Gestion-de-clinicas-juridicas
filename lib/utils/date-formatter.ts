@@ -45,6 +45,32 @@ export function formatDate(date: string | Date | null | undefined): string {
 }
 
 /**
+ * Formatea una fecha a formato detallado con hora (ej. 16 de enero de 2026, 07:39 a. m.)
+ * @param date - Fecha en formato string o Date
+ * @returns Fecha y hora formateada o 'N/A'
+ */
+export function formatDateTime(date: string | Date | null | undefined): string {
+  if (!date) return 'N/A';
+
+  try {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(d.getTime())) return 'N/A';
+
+    return d.toLocaleString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  } catch (error) {
+    console.error('Error formatting date time:', error);
+    return 'N/A';
+  }
+}
+
+/**
  * Calcula la edad a partir de una fecha de nacimiento
  * @param fechaNacimiento - Fecha de nacimiento en formato string (YYYY-MM-DD) o Date
  * @returns Edad en años o null si no se puede calcular

@@ -126,7 +126,10 @@ export async function createBeneficiarioAction(data: {
       }
     }
 
-    const beneficiario = await beneficiariosQueries.create(data);
+    const beneficiario = await beneficiariosQueries.create({
+      ...data,
+      id_usuario_registro: authResult.user.cedula
+    });
 
     // Revalidar el detalle del caso para que se vea el nuevo beneficiario
     revalidatePath(`/dashboard/cases/${data.id_caso}`);
@@ -137,6 +140,96 @@ export async function createBeneficiarioAction(data: {
     };
   } catch (error) {
     return handleServerActionError(error, 'createBeneficiarioAction', 'BENEFICIARIO_CREATE_ERROR');
+  }
+}
+
+/**
+ * Server Action para actualizar un beneficiario existente
+ */
+export async function updateBeneficiarioAction(data: {
+  id_caso: number;
+  num_beneficiario: number;
+  cedula?: string | null;
+  nombres: string;
+  apellidos: string;
+  fecha_nac: string;
+  sexo: string;
+  tipo_beneficiario: string;
+  parentesco: string;
+}): Promise<{ success: boolean; data?: any; error?: { message: string; code?: string } }> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    // Verificar si ya existe en este caso por cédula (si se proporcionó cédula)
+    if (data.cedula) {
+      const beneficiariosActuales = await beneficiariosQueries.getByCaso(data.id_caso);
+      const yaExiste = beneficiariosActuales.some(b =>
+        b.cedula === data.cedula && b.num_beneficiario !== data.num_beneficiario
+      );
+      if (yaExiste) {
+        return {
+          success: false,
+          error: {
+            message: 'Ya existe otro beneficiario con esta cédula en este caso',
+            code: 'DUPLICATE_BENEFICIARY',
+          },
+        };
+      }
+    }
+
+
+    const beneficiario = await beneficiariosQueries.update({
+      ...data,
+      id_usuario_actualizo: authResult.user.cedula
+    });
+
+    // Revalidar el detalle del caso para que se vean los cambios
+    revalidatePath(`/dashboard/cases/${data.id_caso}`);
+
+    return {
+      success: true,
+      data: beneficiario,
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'updateBeneficiarioAction', 'BENEFICIARIO_UPDATE_ERROR');
+  }
+}
+
+/**
+ * Server Action para eliminar un beneficiario
+ */
+export async function deleteBeneficiarioAction(data: {
+  id_caso: number;
+  num_beneficiario: number;
+}): Promise<{ success: boolean; data?: any; error?: { message: string; code?: string } }> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    const result = await beneficiariosQueries.delete(data.id_caso, data.num_beneficiario, authResult.user.cedula);
+
+    // Revalidar el detalle del caso para que se vean los cambios
+    revalidatePath(`/dashboard/cases/${data.id_caso}`);
+
+    return {
+      success: true,
+      data: result,
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'deleteBeneficiarioAction', 'BENEFICIARIO_DELETE_ERROR');
   }
 }
 

@@ -31,7 +31,8 @@ export type AuditRecordType =
   | 'subcategoria-eliminada' | 'subcategoria-actualizada' | 'subcategoria-insertada'
   | 'ambito-legal-eliminado' | 'ambito-legal-actualizado' | 'ambito-legal-insertado'
   | 'caracteristica-eliminada' | 'caracteristica-actualizada' | 'caracteristica-insertada'
-  | 'caso-eliminado' | 'caso-actualizado' | 'caso-creado';
+  | 'caso-eliminado' | 'caso-actualizado' | 'caso-creado'
+  | 'beneficiario-eliminado' | 'beneficiario-actualizado' | 'beneficiario-creado';
 
 // Auditoría de soportes eliminados
 export interface SoporteAuditRecord {
@@ -371,6 +372,8 @@ export interface CasoActualizadoAuditRecord {
   fecha: string; // Alias para fecha_actualizacion
   usuario_accion: string; // Alias para id_usuario_actualizo
   nombre_completo_usuario_accion?: string; // Alias para nombre_completo_usuario_actualizo
+  motivo?: string | null;
+
 }
 
 // Auditoría de casos creados
@@ -664,4 +667,75 @@ export interface AuditCounts {
   // Inscripciones y Asignaciones
   estudiantesInscritos?: number;
   profesoresAsignados?: number;
+  // Beneficiarios
+  beneficiariosCreados?: number;
+  beneficiariosActualizados?: number;
+  beneficiariosEliminados?: number;
+}
+
+// Auditoría de Beneficiarios
+export interface BeneficiarioInscritoAuditRecord extends AuditRecord {
+  num_beneficiario: number;
+  id_caso: number;
+  numero_expediente?: string;
+  cedula: string | null;
+  nombres: string;
+  apellidos: string;
+  fecha_nacimiento: string;
+  sexo: string;
+  tipo_beneficiario: string;
+  parentesco: string;
+  fecha_creacion: string;
+  id_usuario_registro: string | null;
+  usuario_nombre_completo?: string;
+  fecha_registro: string;
+  comunidad?: string | null;
+}
+
+export interface BeneficiarioActualizadoAuditRecord extends AuditRecord {
+  num_beneficiario: number;
+  id_caso: number;
+  numero_expediente?: string;
+
+  cedula_anterior: string | null;
+  nombres_anterior: string;
+  apellidos_anterior: string;
+  fecha_nacimiento_anterior: string;
+  sexo_anterior: string;
+  tipo_beneficiario_anterior: string;
+  parentesco_anterior: string;
+
+  cedula_nuevo: string | null;
+  nombres_nuevo: string;
+  apellidos_nuevo: string;
+  fecha_nacimiento_nuevo: string;
+  sexo_nuevo: string;
+  tipo_beneficiario_nuevo: string;
+  parentesco_nuevo: string;
+
+  fecha_actualizacion: string;
+  nombres?: string;
+  id_usuario_actualizo: string | null;
+  usuario_nombre_completo?: string;
+  cedula?: string | null;
+  ingresos_anterior?: number | null;
+  ingresos_nuevo?: number | null;
+  edad_mental_anterior?: number | null;
+  edad_mental_nuevo?: number | null;
+}
+
+export interface BeneficiarioEliminadoAuditRecord extends AuditRecord {
+  num_beneficiario: number;
+  id_caso: number | null;
+  numero_expediente?: string;
+  cedula: string | null;
+  nombres: string;
+  apellidos: string;
+  fecha_eliminacion: string;
+  fecha_nacimiento: string;
+  sexo: string;
+  tipo_beneficiario: string;
+  parentesco: string;
+  id_usuario_elimino: string | null;
+  usuario_nombre_completo?: string;
 }

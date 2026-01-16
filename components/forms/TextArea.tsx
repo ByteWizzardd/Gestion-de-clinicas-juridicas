@@ -6,7 +6,20 @@ interface TextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
 export default function TextArea({ label, error, ...props }: TextAreaProps) {
   return (
     <div className="flex flex-col gap-1">
-      {label && <label className="text-base font-normal text-foreground mb-1">{label}</label>}
+      {label && (
+        <label className="text-base font-normal text-foreground mb-1">
+          {label.split(' *').map((part, index, array) =>
+            index < array.length - 1 ? (
+              <span key={index}>
+                {part} <span className="text-danger">*</span>
+              </span>
+            ) : (
+              <span key={index}>{part}</span>
+            )
+          )}
+        </label>
+      )}
+
       <textarea
         className={`
           w-full p-4 rounded-lg border bg-[#E5E7EB]

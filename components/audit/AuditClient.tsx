@@ -162,6 +162,30 @@ export default function AuditClient() {
           }
         ]
       },
+      {
+        title: "Beneficiarios",
+        description: "Registro de beneficiarios de casos",
+        icon: Users,
+        totalCount: (counts.beneficiariosEliminados || 0) + (counts.beneficiariosActualizados || 0) + (counts.beneficiariosCreados || 0),
+        href: "/dashboard/audit/beneficiarios",
+        operations: [
+          {
+            label: "Creados",
+            count: counts.beneficiariosCreados || 0,
+            href: "/dashboard/audit/beneficiarios?tab=beneficiarios-creados"
+          },
+          {
+            label: "Actualizados",
+            count: counts.beneficiariosActualizados || 0,
+            href: "/dashboard/audit/beneficiarios?tab=beneficiarios-actualizados"
+          },
+          {
+            label: "Eliminados",
+            count: counts.beneficiariosEliminados || 0,
+            href: "/dashboard/audit/beneficiarios?tab=beneficiarios-eliminados"
+          }
+        ]
+      },
       // Catálogos
       ...(counts.estadosEliminados !== undefined || counts.estadosActualizados !== undefined || counts.estadosInsertados !== undefined ? [{
         title: "Estados",

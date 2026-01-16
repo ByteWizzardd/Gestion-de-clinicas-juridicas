@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, ChevronUp, FileText, Calendar, User, X, Check, BookOpen, GraduationCap, Building, Briefcase, Activity, Tag, Tags, Scale, MapPin, Building2, Home, FolderTree, FolderOpen, UserCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, FileText, Calendar, User, X, Check, BookOpen, GraduationCap, Building, Briefcase, Activity, Tag, Tags, Scale, MapPin, Building2, Home, FolderTree, FolderOpen, UserCircle, Users } from 'lucide-react';
 import Link from 'next/link';
 import UserAvatar from '@/components/ui/UserAvatar';
+import { formatDateTime } from '@/lib/utils/date-formatter';
 import type {
   SoporteAuditRecord,
   SoporteCreadoAuditRecord,
@@ -20,10 +21,13 @@ import type {
   SolicitanteEliminadoAuditRecord,
   SolicitanteActualizadoAuditRecord,
   SolicitanteCreadoAuditRecord,
-  EstudianteInscritoAuditRecord
+  EstudianteInscritoAuditRecord,
+  BeneficiarioEliminadoAuditRecord,
+  BeneficiarioActualizadoAuditRecord,
+  BeneficiarioInscritoAuditRecord
 } from '@/types/audit';
 
-type AuditRecord = SoporteAuditRecord | SoporteCreadoAuditRecord | CitaEliminadaAuditRecord | CitaActualizadaAuditRecord | CitaCreadaAuditRecord | UsuarioEliminadoAuditRecord | UsuarioActualizadoCamposAuditRecord | UsuarioCreadoAuditRecord | CasoEliminadoAuditRecord | CasoActualizadoAuditRecord | CasoCreadoAuditRecord | SolicitanteEliminadoAuditRecord | SolicitanteActualizadoAuditRecord | SolicitanteCreadoAuditRecord | EstudianteInscritoAuditRecord | any;
+type AuditRecord = SoporteAuditRecord | SoporteCreadoAuditRecord | CitaEliminadaAuditRecord | CitaActualizadaAuditRecord | CitaCreadaAuditRecord | UsuarioEliminadoAuditRecord | UsuarioActualizadoCamposAuditRecord | UsuarioCreadoAuditRecord | CasoEliminadoAuditRecord | CasoActualizadoAuditRecord | CasoCreadoAuditRecord | SolicitanteEliminadoAuditRecord | SolicitanteActualizadoAuditRecord | SolicitanteCreadoAuditRecord | EstudianteInscritoAuditRecord | BeneficiarioEliminadoAuditRecord | BeneficiarioActualizadoAuditRecord | BeneficiarioInscritoAuditRecord | any;
 
 import type { AuditRecordType } from '@/types/audit';
 
@@ -642,6 +646,35 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           </div>
         );
       }
+      case 'beneficiario-actualizado': {
+        const r = record as BeneficiarioActualizadoAuditRecord;
+        // Usar nombres nuevos si existen, si no, anteriores.
+        // Esto previene "Beneficiario desconocido" si solo cambian algunos campos y los nuevos vienen null (aunque no deberian por trigger)
+        const nombres = r.nombres_nuevo || r.nombres_anterior || '';
+        const apellidos = r.apellidos_nuevo || r.apellidos_anterior || '';
+        const nombreCompleto = `${nombres} ${apellidos}`.trim() || 'Beneficiario desconocido';
+
+        return (
+          <div className="flex items-center gap-3">
+            <Check className="w-5 h-5 text-gray-600" />
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">
+                {nombreCompleto}
+              </p>
+              <p className="text-sm text-gray-600">
+                Caso #{r.id_caso} • Actualizado por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_accion || r.usuario_nombre_completo,
+                  null,
+                  null,
+                  r.id_usuario_actualizo
+                )}
+              </p>
+            </div>
+          </div>
+        );
+      }
+
       // Solicitantes
 
       case 'solicitante-eliminado': {
@@ -1109,6 +1142,85 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         );
       }
 
+      // Beneficiarios
+      case 'beneficiario-creado': {
+        const r = record as BeneficiarioInscritoAuditRecord;
+        const nombreCompleto = r.nombres && r.apellidos
+          ? `${r.nombres} ${r.apellidos}`.trim()
+          : (r.nombres || r.apellidos || 'Beneficiario desconocido');
+
+        return (
+          <div className="flex items-start gap-3">
+            <Users className="w-5 h-5 text-gray-600" />
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">
+                {nombreCompleto}
+                {r.cedula && <span className="text-gray-600 font-normal"> (Cédula: {r.cedula})</span>}
+              </p>
+              <p className="text-sm text-gray-600">
+                Caso #{r.id_caso} • Inscrito por:{' '}
+                {renderUserLink(
+                  r.usuario_nombre_completo || null,
+                  null,
+                  null,
+                  r.id_usuario_registro
+                )}
+              </p>
+            </div>
+          </div>
+        );
+      }
+      case 'beneficiario-actualizado': {
+        const r = record as BeneficiarioActualizadoAuditRecord;
+        const nombreCompleto = r.nombres || 'Beneficiario desconocido';
+
+        return (
+          <div className="flex items-start gap-3">
+            <Check className="w-5 h-5 text-gray-600" />
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">
+                {nombreCompleto}
+                {r.cedula_anterior && <span className="text-gray-600 font-normal"> (Cédula: {r.cedula_anterior})</span>}
+              </p>
+              <p className="text-sm text-gray-600">
+                Caso #{r.id_caso} • Actualizado por:{' '}
+                {renderUserLink(
+                  r.usuario_nombre_completo || null,
+                  null,
+                  null,
+                  r.id_usuario_actualizo
+                )}
+              </p>
+            </div>
+          </div>
+        );
+      }
+      case 'beneficiario-eliminado': {
+        const r = record as BeneficiarioEliminadoAuditRecord;
+        const nombreCompleto = r.nombres || 'Beneficiario desconocido';
+
+        return (
+          <div className="flex items-start gap-3">
+            <Users className="w-5 h-5 text-gray-600" />
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">
+                {nombreCompleto}
+                {r.cedula && <span className="text-gray-600 font-normal"> (Cédula: {r.cedula})</span>}
+              </p>
+              <p className="text-sm text-gray-600">
+                Caso #{r.id_caso} • Eliminado por:{' '}
+                {renderUserLink(
+                  r.usuario_nombre_completo || null,
+                  null,
+                  null,
+                  r.id_usuario_elimino
+                )}
+              </p>
+            </div>
+          </div>
+        );
+      }
+
       default:
         console.warn('Tipo de auditoría no reconocido en renderSummary:', type);
         return (
@@ -1230,6 +1342,203 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                   )
                 ) : (
                   <span className="text-gray-600">N/A</span>
+                )}
+              </p>
+            </div>
+            <div className="pt-2" onClick={(e) => e.stopPropagation()}>
+              <Link
+                href={`/dashboard/cases/${r.id_caso}`}
+                className="text-sm text-primary hover:underline"
+              >
+                Ver caso #{r.id_caso} →
+              </Link>
+            </div>
+          </div>
+        );
+      }
+      // Beneficiarios
+      case 'beneficiario-creado': {
+        const r = record as BeneficiarioInscritoAuditRecord;
+        const nombreCompleto = r.nombres && r.apellidos
+          ? `${r.nombres} ${r.apellidos}`.trim()
+          : (r.nombres || r.apellidos || 'Beneficiario desconocido');
+
+        return (
+          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Información del Beneficiario</p>
+              {r.cedula && <p className="text-sm text-gray-600">Cédula: {r.cedula}</p>}
+              <p className="text-sm text-gray-600">Nombres: {r.nombres}</p>
+              <p className="text-sm text-gray-600">Apellidos: {r.apellidos}</p>
+              <p className="text-sm text-gray-600">Fecha Nacimiento: {formatOnlyDate(r.fecha_nacimiento)}</p>
+              <p className="text-sm text-gray-600">Sexo: {r.sexo}</p>
+              <p className="text-sm text-gray-600">Tipo: {r.tipo_beneficiario}</p>
+              <p className="text-sm text-gray-600">Parentesco: {r.parentesco}</p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
+              <p className="text-sm text-gray-600">Fecha: {formatDateTime(r.fecha_registro)}</p>
+              <p className="text-sm text-gray-600">
+                Inscrito por:{' '}
+                {renderUserLink(
+                  r.usuario_nombre_completo || null,
+                  null,
+                  null,
+                  r.id_usuario_registro
+                )}
+              </p>
+            </div>
+            <div className="pt-2" onClick={(e) => e.stopPropagation()}>
+              <Link
+                href={`/dashboard/cases/${r.id_caso}`}
+                className="text-sm text-primary hover:underline"
+              >
+                Ver caso #{r.id_caso} →
+              </Link>
+            </div>
+          </div>
+        );
+      }
+      case 'beneficiario-actualizado': {
+        const r = record as BeneficiarioActualizadoAuditRecord;
+        return (
+          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Cambios Realizados</p>
+
+              {r.cedula_anterior !== r.cedula_nuevo && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Cédula: <span className="line-through text-red-500">{r.cedula_anterior || 'N/A'}</span>
+                    {' → '}
+                    <span className="text-green-600">{r.cedula_nuevo || 'N/A'}</span>
+                  </p>
+                </div>
+              )}
+              {r.nombres_anterior !== r.nombres_nuevo && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Nombres: <span className="line-through text-red-500">{r.nombres_anterior || 'N/A'}</span>
+                    {' → '}
+                    <span className="text-green-600">{r.nombres_nuevo || 'N/A'}</span>
+                  </p>
+                </div>
+              )}
+              {r.apellidos_anterior !== r.apellidos_nuevo && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Apellidos: <span className="line-through text-red-500">{r.apellidos_anterior || 'N/A'}</span>
+                    {' → '}
+                    <span className="text-green-600">{r.apellidos_nuevo || 'N/A'}</span>
+                  </p>
+                </div>
+              )}
+              {r.sexo_anterior !== r.sexo_nuevo && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Sexo: <span className="line-through text-red-500">{r.sexo_anterior || 'N/A'}</span>
+                    {' → '}
+                    <span className="text-green-600">{r.sexo_nuevo || 'N/A'}</span>
+                  </p>
+                </div>
+              )}
+              {r.tipo_beneficiario_anterior !== r.tipo_beneficiario_nuevo && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Tipo: <span className="line-through text-red-500">{r.tipo_beneficiario_anterior || 'N/A'}</span>
+                    {' → '}
+                    <span className="text-green-600">{r.tipo_beneficiario_nuevo || 'N/A'}</span>
+                  </p>
+                </div>
+              )}
+              {r.parentesco_anterior !== r.parentesco_nuevo && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Parentesco: <span className="line-through text-red-500">{r.parentesco_anterior || 'N/A'}</span>
+                    {' → '}
+                    <span className="text-green-600">{r.parentesco_nuevo || 'N/A'}</span>
+                  </p>
+                </div>
+              )}
+              {r.edad_mental_anterior !== r.edad_mental_nuevo && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Edad Mental: <span className="line-through text-red-500">{r.edad_mental_anterior || 'N/A'}</span>
+                    {' → '}
+                    <span className="text-green-600">{r.edad_mental_nuevo || 'N/A'}</span>
+                  </p>
+                </div>
+              )}
+              {r.ingresos_anterior !== r.ingresos_nuevo && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Ingresos: <span className="line-through text-red-500">{r.ingresos_anterior || 'N/A'}</span>
+                    {' → '}
+                    <span className="text-green-600">{r.ingresos_nuevo || 'N/A'}</span>
+                  </p>
+                </div>
+              )}
+              {!areDatesEqual(r.fecha_nacimiento_anterior, r.fecha_nacimiento_nuevo) && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Fecha Nacimiento: <span className="line-through text-red-500">{formatOnlyDate(r.fecha_nacimiento_anterior)}</span>
+                    {' → '}
+                    <span className="text-green-600">{formatOnlyDate(r.fecha_nacimiento_nuevo)}</span>
+                  </p>
+                </div>
+              )}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
+              <p className="text-sm text-gray-600">Fecha: {formatDateTime(r.fecha_actualizacion)}</p>
+              <p className="text-sm text-gray-600">
+                Actualizado por:{' '}
+                {renderUserLink(
+                  r.usuario_nombre_completo || null,
+                  null,
+                  null,
+                  r.id_usuario_actualizo
+                )}
+              </p>
+            </div>
+            <div className="pt-2" onClick={(e) => e.stopPropagation()}>
+              <Link
+                href={`/dashboard/cases/${r.id_caso}`}
+                className="text-sm text-primary hover:underline"
+              >
+                Ver caso #{r.id_caso} →
+              </Link>
+            </div>
+          </div>
+        );
+      }
+      case 'beneficiario-eliminado': {
+        const r = record as BeneficiarioEliminadoAuditRecord;
+        const nombreCompleto = r.nombres && r.apellidos
+          ? `${r.nombres} ${r.apellidos}`.trim()
+          : (r.nombres || r.apellidos || 'Beneficiario desconocido');
+
+        return (
+          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Información del Beneficiario</p>
+              <p className="text-sm text-gray-600">Nombre: {nombreCompleto}</p>
+              <p className="text-sm text-gray-600">Cédula: {r.cedula || 'N/A'}</p>
+              <p className="text-sm text-gray-600">Fecha Nacimiento: {formatOnlyDate(r.fecha_nacimiento)}</p>
+              <p className="text-sm text-gray-600">Sexo: {r.sexo || 'N/A'}</p>
+              <p className="text-sm text-gray-600">Tipo: {r.tipo_beneficiario || 'N/A'}</p>
+              <p className="text-sm text-gray-600">Parentesco: {r.parentesco || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
+              <p className="text-sm text-gray-600">Fecha: {formatDateTime(r.fecha_eliminacion)}</p>
+              <p className="text-sm text-gray-600">
+                Eliminado por:{' '}
+                {renderUserLink(
+                  r.usuario_nombre_completo || null,
+                  null,
+                  null,
+                  r.id_usuario_elimino
                 )}
               </p>
             </div>
@@ -2723,9 +3032,10 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
               <p className="text-sm font-semibold text-gray-700 mb-1">Cambios Realizados</p>
 
               {/* Cambio de estatus */}
+              {/* Cambio de estatus */}
               {isCambioEstatus && (
-                <div className="mb-2 bg-gray-50 p-3 rounded">
-                  <p className="text-sm text-gray-600">
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600 mb-2">
                     Estatus:{' '}
                     <span className="line-through text-red-500">{r.estatus_anterior || 'N/A'}</span>
                     {' → '}
@@ -2875,6 +3185,16 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
               </p>
               <p className="text-sm text-gray-600">Fecha actualización: {formatDate(r.fecha_actualizacion)}</p>
             </div>
+
+            {r.motivo && (
+              <div className="mt-3 text-sm">
+                <span className="font-semibold text-gray-700 block mb-1">Motivo:</span>
+                <div className="p-3 bg-gray-50 rounded-lg text-gray-600 border border-gray-100">
+                  <p className="whitespace-pre-wrap">{r.motivo}</p>
+                </div>
+              </div>
+            )}
+
 
           </div>
         );
@@ -3286,6 +3606,12 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
       case 'ambito-legal-actualizado':
       case 'caracteristica-actualizada':
         return (record as any).fecha_actualizacion;
+      case 'beneficiario-creado':
+        return (record as BeneficiarioInscritoAuditRecord).fecha_registro;
+      case 'beneficiario-actualizado':
+        return (record as BeneficiarioActualizadoAuditRecord).fecha_actualizacion;
+      case 'beneficiario-eliminado':
+        return (record as BeneficiarioEliminadoAuditRecord).fecha_eliminacion;
     }
   };
 

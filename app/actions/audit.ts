@@ -60,6 +60,9 @@ import { auditoriaActualizacionSolicitantesQueries } from '@/lib/db/queries/audi
 import { auditoriaInsercionSolicitantesQueries } from '@/lib/db/queries/auditoria-insercion-solicitantes.queries';
 import { auditoriaInsercionEstudiantesQueries } from '@/lib/db/queries/auditoria-insercion-estudiantes.queries';
 import { auditoriaInsercionProfesoresQueries } from '@/lib/db/queries/auditoria-insercion-profesores.queries';
+import { auditoriaInsercionBeneficiariosQueries } from '@/lib/db/queries/auditoria-insercion-beneficiarios.queries';
+import { auditoriaActualizacionBeneficiariosQueries } from '@/lib/db/queries/auditoria-actualizacion-beneficiarios.queries';
+import { auditoriaEliminacionBeneficiariosQueries } from '@/lib/db/queries/auditoria-eliminacion-beneficiarios.queries';
 import type { AuditFilters, AuditCounts } from '@/types/audit';
 
 /**
@@ -105,7 +108,8 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       // Solicitantes
       solicitantesEliminados, solicitantesActualizados, solicitantesCreados,
       // Inscripciones y Asignaciones
-      estudiantesInscritos, profesoresAsignados
+      estudiantesInscritos, profesoresAsignados,
+      beneficiariosEliminados, beneficiariosActualizados, beneficiariosCreados
     ] = await Promise.all([
       auditoriaEliminacionSoportesQueries.getCount(),
       auditoriaInsercionSoportesQueries.getCount().catch(() => 0),
@@ -171,6 +175,10 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       // Inscripciones y Asignaciones
       auditoriaInsercionEstudiantesQueries.getCount().catch(() => 0),
       auditoriaInsercionProfesoresQueries.getCount().catch(() => 0),
+      // Beneficiarios
+      auditoriaEliminacionBeneficiariosQueries.getCount().catch(() => 0),
+      auditoriaActualizacionBeneficiariosQueries.getCount().catch(() => 0),
+      auditoriaInsercionBeneficiariosQueries.getCount().catch(() => 0),
     ]);
 
     return {
@@ -236,6 +244,10 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       // Inscripciones y Asignaciones
       estudiantesInscritos: estudiantesInscritos || 0,
       profesoresAsignados: profesoresAsignados || 0,
+      // Beneficiarios
+      beneficiariosEliminados: beneficiariosEliminados || 0,
+      beneficiariosActualizados: beneficiariosActualizados || 0,
+      beneficiariosCreados: beneficiariosCreados || 0,
     };
   } catch (error) {
     console.error('Error obteniendo contadores de auditoría:', error);
@@ -1827,5 +1839,106 @@ export async function getCaracteristicasInsertadasAuditAction(filters?: AuditFil
   } catch (error) {
     console.error('Error obteniendo auditoría de caracteristicas insertadas:', error);
     throw new Error('Error al obtener auditoría de caracteristicas insertadas');
+  }
+}
+
+// =========================================================
+// ACCIONES DE AUDITORÍA PARA BENEFICIARIOS
+// =========================================================
+
+/**
+ * Obtiene beneficiarios inscritos con filtros
+ */
+export async function getBeneficiariosInscritosAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+
+  try {
+    const records = await auditoriaInsercionBeneficiariosQueries.getAll();
+    // TODO: Implementar filtros en queries si es necesario
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_registro.toISOString(),
+      fecha_creacion: r.fecha_registro.toISOString(),
+      usuario_accion: r.id_usuario_registro || '',
+      nombre_completo_usuario_accion: r.usuario_nombre_completo || undefined,
+      fecha_nacimiento: typeof r.fecha_nacimiento === 'string' ? r.fecha_nacimiento : r.fecha_nacimiento.toISOString().split('T')[0],
+      // Asegurar tipos nulos
+      cedula: r.cedula || null,
+      id_usuario_registro: r.id_usuario_registro || null,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de beneficiarios inscritos:', error);
+    throw new Error('Error al obtener auditoría de beneficiarios inscritos');
+  }
+}
+
+/**
+ * Obtiene beneficiarios actualizados con filtros
+ */
+export async function getBeneficiariosActualizadosAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+
+  try {
+    const records = await auditoriaActualizacionBeneficiariosQueries.getAll();
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_actualizacion.toISOString(),
+      fecha_actualizacion: r.fecha_actualizacion.toISOString(),
+      usuario_accion: r.id_usuario_actualizo || '',
+      nombre_completo_usuario_accion: r.usuario_nombre_completo || undefined,
+      fecha_nacimiento_anterior: typeof r.fecha_nacimiento_anterior === 'string' ? r.fecha_nacimiento_anterior : r.fecha_nacimiento_anterior.toISOString().split('T')[0],
+      fecha_nacimiento_nuevo: typeof r.fecha_nacimiento_nuevo === 'string' ? r.fecha_nacimiento_nuevo : r.fecha_nacimiento_nuevo.toISOString().split('T')[0],
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de beneficiarios actualizados:', error);
+    throw new Error('Error al obtener auditoría de beneficiarios actualizados');
+  }
+}
+
+/**
+ * Obtiene beneficiarios eliminados con filtros
+ */
+export async function getBeneficiariosEliminadosAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+
+  try {
+    const records = await auditoriaEliminacionBeneficiariosQueries.getAll();
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_eliminacion.toISOString(),
+      fecha_eliminacion: r.fecha_eliminacion.toISOString(),
+      usuario_accion: r.id_usuario_elimino || '',
+      nombre_completo_usuario_accion: r.usuario_nombre_completo || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de beneficiarios eliminados:', error);
+    throw new Error('Error al obtener auditoría de beneficiarios eliminados');
   }
 }

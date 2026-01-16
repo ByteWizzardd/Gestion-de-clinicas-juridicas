@@ -20,6 +20,7 @@ import AddDocumentModal from '@/components/cases/modals/AddDocumentModal';
 import AssignTeamModal from '@/components/cases/modals/AssignTeamModal';
 import AddActionModal from '@/components/cases/modals/AddActionModal';
 import AddBeneficiaryModal from '@/components/cases/modals/AddBeneficiaryModal';
+import ChangeStatusModal from '@/components/cases/modals/ChangeStatusModal';
 import { AppointmentModal } from '@/components/appointmentModal/AppointmentModal';
 import { ChevronDown, Plus, Pencil } from 'lucide-react';
 import { getCurrentUserAction } from '@/app/actions/auth';
@@ -38,6 +39,8 @@ export default function CaseDetailClient() {
   const [showAddActionModal, setShowAddActionModal] = useState(false);
   const [showAddBeneficiaryModal, setShowAddBeneficiaryModal] = useState(false);
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [showChangeStatusModal, setShowChangeStatusModal] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const [editingAppointment, setEditingAppointment] = useState<any>(null);
   const [changingStatus, setChangingStatus] = useState(false);
   const [userRol, setUserRol] = useState<string | null>(null);
@@ -46,6 +49,7 @@ export default function CaseDetailClient() {
     const tabParam = searchParams.get('tab');
     return tabParam === 'acciones' ? 'acciones' : 'general';
   });
+
 
   const fetchCaso = useCallback(async () => {
     const idCaso = parseInt(id, 10);
@@ -147,17 +151,27 @@ export default function CaseDetailClient() {
     return colors[estatus] || 'bg-gray-100 text-gray-800';
   };
 
-  const handleStatusChange = async (nuevoEstatus: string) => {
+  // Abre el modal para cambiar estatus
+  const handleOpenStatusModal = () => {
+    if (!caso) return;
+    setShowChangeStatusModal(true);
+  };
+
+  // Confirma el cambio de estatus con el motivo y nuevo estatus
+  const handleConfirmStatusChange = async (motivo: string, nuevoEstatus: string) => {
     if (!caso) return;
 
     setChangingStatus(true);
     try {
-      const result = await changeStatusAction(caso.id_caso, nuevoEstatus);
+      const result = await changeStatusAction(caso.id_caso, nuevoEstatus, motivo);
 
       if (!result.success) {
         alert(result.error?.message || 'Error al cambiar el estatus');
         return;
       }
+
+      // Cerrar modal
+      setShowChangeStatusModal(false);
 
       // Recargar el caso para actualizar el estatus
       await fetchCaso();
@@ -197,7 +211,7 @@ export default function CaseDetailClient() {
     {
       id: 'general',
       label: 'Información General',
-      content: <GeneralInfoTab caso={caso} />,
+      content: <GeneralInfoTab caso={caso} onRefresh={fetchCaso} />,
     },
     {
       id: 'equipo',
@@ -268,7 +282,7 @@ export default function CaseDetailClient() {
             </span>
           )}
         </div>
-        
+
         <div className="flex flex-wrap items-center gap-2">
           {userRol && userRol !== 'Estudiante' && (
             <button
@@ -310,35 +324,12 @@ export default function CaseDetailClient() {
             <span className="text-base text-center">Agregar Beneficiario</span>
           </button>
 
-          <DropdownMenu
-            trigger={
-              <button
-                disabled={changingStatus}
-                className="h-10 cursor-pointer px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="text-base text-center">Cambiar Estatus</span>
-                <ChevronDown className="w-[18px] h-[18px] text-[#414040]" />
-              </button>
-            }
-            align="left"
-            menuClassName="bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[200px]"
+          <button
+            onClick={handleOpenStatusModal}
+            className="h-10 cursor-pointer px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors"
           >
-            {estatusOptions.length > 0 ? (
-              estatusOptions.map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => handleStatusChange(option.value)}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                >
-                  {option.label}
-                </button>
-              ))
-            ) : (
-              <div className="px-4 py-2 text-sm text-gray-500">
-                No hay otros estatus disponibles
-              </div>
-            )}
-          </DropdownMenu>
+            <span className="text-base text-center">Cambiar Estatus</span>
+          </button>
         </div>
       </motion.div>
       <motion.div
@@ -406,6 +397,15 @@ export default function CaseDetailClient() {
           appointment={editingAppointment}
         />
       )}
+
+      <ChangeStatusModal
+        isOpen={showChangeStatusModal}
+        onClose={() => setShowChangeStatusModal(false)}
+        onConfirm={handleConfirmStatusChange}
+        estatusActual={caso.estatus || ''}
+        isSubmitting={changingStatus}
+        estatusOptions={estatusOptions}
+      />
 
       <motion.div
         initial={{ opacity: 0, y: 10 }}

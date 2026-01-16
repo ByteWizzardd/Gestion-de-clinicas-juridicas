@@ -1,8 +1,12 @@
 'use client';
 
-import { Calendar, User, Users, FileText, Building2, Scale } from 'lucide-react';
+import { useState } from 'react';
+import { Calendar, User, Users, FileText, Building2, Scale, Pencil, Trash2 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { formatDate, calculateAge } from '@/lib/utils/date-formatter';
+import EditBeneficiaryModal from '../modals/EditBeneficiaryModal';
+import { deleteBeneficiarioAction } from '@/app/actions/beneficiarios';
 
 interface GeneralInfoTabProps {
   caso: {
@@ -33,12 +37,38 @@ interface GeneralInfoTabProps {
       nombre_completo: string;
     }>;
   };
+  onRefresh?: () => void;
 }
 
-export default function GeneralInfoTab({ caso }: GeneralInfoTabProps) {
+export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps) {
+  const router = useRouter();
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedBeneficiary, setSelectedBeneficiary] = useState<any>(null);
+
   const formatSexo = (sexo: string | null) => {
     if (!sexo) return 'No especificado';
     return sexo === 'M' ? 'Masculino' : 'Femenino';
+  };
+
+  const handleDeleteBeneficiario = async (numBeneficiario: number, nombreCompleto: string) => {
+    if (confirm(`¿Estás seguro de que deseas eliminar al beneficiario ${nombreCompleto}? Esta acción no se puede deshacer.`)) {
+      try {
+        const result = await deleteBeneficiarioAction({
+          id_caso: caso.id_caso,
+          num_beneficiario: numBeneficiario
+        });
+
+        if (result.success) {
+          router.refresh(); // Mantiene estado de server components actualizado
+          if (onRefresh) onRefresh(); // Actualiza el estado local del cliente
+        } else {
+          alert('Error al eliminar: ' + (result.error?.message || 'Error desconocido'));
+        }
+      } catch (error) {
+        console.error('Error al eliminar beneficiario:', error);
+        alert('Error al procesar la solicitud');
+      }
+    }
   };
 
   return (
@@ -167,7 +197,28 @@ export default function GeneralInfoTab({ caso }: GeneralInfoTabProps) {
             {caso.beneficiarios.map((beneficiario) => {
               const edad = beneficiario.fecha_nac ? calculateAge(beneficiario.fecha_nac) : null;
               return (
-                <div key={beneficiario.num_beneficiario} className="border border-gray-200 rounded-lg p-4">
+                <div key={beneficiario.num_beneficiario} className="border border-gray-200 rounded-lg p-4 relative group">
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                    <button
+                      onClick={() => {
+                        setSelectedBeneficiary(beneficiario);
+                        setEditModalOpen(true);
+                      }}
+                      className="p-2 text-gray-500 hover:text-primary hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                      type="button"
+                      title="Editar beneficiario"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteBeneficiario(beneficiario.num_beneficiario, beneficiario.nombre_completo)}
+                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors cursor-pointer"
+                      type="button"
+                      title="Eliminar beneficiario"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium text-gray-500">Nombre Completo</label>
@@ -212,6 +263,20 @@ export default function GeneralInfoTab({ caso }: GeneralInfoTabProps) {
           <p className="text-gray-500 text-lg">No hay beneficiarios registrados para este caso</p>
         </div>
       )}
+      <EditBeneficiaryModal
+        isOpen={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setSelectedBeneficiary(null);
+        }}
+        idCaso={caso.id_caso}
+        beneficiario={selectedBeneficiary}
+        beneficiariosActuales={caso.beneficiarios || []}
+        onSuccess={() => {
+          router.refresh(); // Mantiene estado de server components actualizado
+          if (onRefresh) onRefresh(); // Actualiza el estado local del cliente
+        }}
+      />
     </div>
   );
 }

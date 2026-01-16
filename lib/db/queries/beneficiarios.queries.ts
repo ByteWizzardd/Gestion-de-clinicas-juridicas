@@ -89,6 +89,7 @@ export const beneficiariosQueries = {
     sexo: string;
     tipo_beneficiario: string;
     parentesco: string;
+    id_usuario_registro?: string;
   }): Promise<any> => {
     const query = loadSQL('beneficiarios/create.sql');
     const result = await pool.query(query, [
@@ -99,7 +100,8 @@ export const beneficiariosQueries = {
       data.fecha_nac,
       data.sexo,
       data.tipo_beneficiario,
-      data.parentesco
+      data.parentesco,
+      data.id_usuario_registro || null
     ]);
     return result.rows[0];
   },
@@ -184,6 +186,60 @@ export const beneficiariosQueries = {
       fechaFinStr,
     ]);
     return result.rows;
+  },
+
+  /**
+   * Actualiza un beneficiario existente
+   */
+  update: async (data: {
+    id_caso: number;
+    num_beneficiario: number;
+    cedula?: string | null;
+    nombres: string;
+    apellidos: string;
+    fecha_nac: string;
+    sexo: string;
+    tipo_beneficiario: string;
+    parentesco: string;
+    id_usuario_actualizo?: string;
+  }): Promise<any> => {
+    const query = loadSQL('beneficiarios/update.sql');
+    const result = await pool.query(query, [
+      data.id_caso,
+      data.num_beneficiario,
+      data.cedula || null,
+      data.nombres,
+      data.apellidos,
+      data.fecha_nac,
+      data.sexo,
+      data.tipo_beneficiario,
+      data.parentesco,
+      data.id_usuario_actualizo || null
+    ]);
+    return result.rows[0];
+  },
+
+  /**
+   * Elimina un beneficiario
+   */
+  delete: async (idCaso: number, numBeneficiario: number, userId: string): Promise<any> => {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      // Set session config for audit trigger
+      await client.query(`SELECT set_config('app.current_user_id', $1, true)`, [userId]);
+
+      const query = loadSQL('beneficiarios/delete.sql');
+      const result = await client.query(query, [idCaso, numBeneficiario]);
+
+      await client.query('COMMIT');
+      return result.rows[0];
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
   },
 };
 

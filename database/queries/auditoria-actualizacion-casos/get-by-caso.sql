@@ -25,7 +25,8 @@ WITH actualizaciones_combinadas AS (
         a.num_ambito_legal_anterior, a.num_ambito_legal_nuevo,
         -- Campos de cambio de estatus (NULL para actualizaciones de campos)
         NULL::VARCHAR(50) AS estatus_anterior,
-        NULL::VARCHAR(50) AS estatus_nuevo
+        NULL::VARCHAR(50) AS estatus_nuevo,
+        NULL::TEXT AS motivo
     FROM public.auditoria_actualizacion_casos a
     WHERE a.id_caso = $1
     
@@ -60,7 +61,9 @@ WITH actualizaciones_combinadas AS (
             ORDER BY prev.num_cambio DESC
             LIMIT 1
         ) AS estatus_anterior,
-        ce.nuevo_estatus AS estatus_nuevo
+
+        ce.nuevo_estatus AS estatus_nuevo,
+        ce.motivo
     FROM public.cambio_estatus ce
     WHERE ce.id_caso = $1
       -- Solo incluir cambios que no son el primero
@@ -97,6 +100,7 @@ SELECT
     -- Campos de cambio de estatus
     ac.estatus_anterior,
     ac.estatus_nuevo,
+    ac.motivo,
     -- Usuario que realizó el cambio
     u.nombres AS nombres_usuario_actualizo,
     u.apellidos AS apellidos_usuario_actualizo,
