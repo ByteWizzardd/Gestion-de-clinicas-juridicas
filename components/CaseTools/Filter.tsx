@@ -18,6 +18,7 @@ interface FilterProps {
   nucleoOptions?: { value: string; label: string }[];
   tramiteOptions: { value: string; label: string }[];
   estatusOptions: { value: string; label: string }[];
+  estatusLabel?: string;
   showCasosAsignados?: boolean;
   materiaFilter?: string;
   onMateriaChange?: (value: string) => void;
@@ -43,6 +44,7 @@ function Filter({
   nucleoOptions,
   tramiteOptions,
   estatusOptions,
+  estatusLabel = 'Estatus',
   showCasosAsignados = false,
   materiaFilter,
   onMateriaChange,
@@ -240,7 +242,7 @@ function Filter({
         case 'estatus':
           options = estatusOptions;
           handler = onEstatusChange || (() => { });
-          allLabel = 'Todos los estatus';
+          allLabel = `Todos los ${estatusLabel.toLowerCase()}`;
           break;
       }
     } else if (currentOptions) {
@@ -506,7 +508,7 @@ function Filter({
                   >
                     <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'estatus' ? '-rotate-90' : ''}`} />
                     <div className="flex-1" />
-                    <span>Estatus</span>
+                    <span>{estatusLabel}</span>
                     <Activity className="w-4 h-4" />
                   </motion.button>
                   <div className="border-t border-gray-200 my-2"></div>

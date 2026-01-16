@@ -394,8 +394,12 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
       case 'usuario-eliminado': {
         const r = record as UsuarioEliminadoAuditRecord;
         return (
-          <div className="flex items-center gap-3">
-            <User className="w-5 h-5 text-gray-600" />
+          <div className="flex items-start gap-3">
+            <UserAvatar
+              fotoPerfil={null}
+              nombre={r.nombre_completo_usuario_eliminado || `${r.nombres_usuario_eliminado || ''} ${r.apellidos_usuario_eliminado || ''}`.trim() || 'Usuario Eliminado'}
+              size={25}
+            />
             <div className="flex-1">
               <p className="font-semibold text-gray-900">
                 {renderDeletedUser(
@@ -427,8 +431,8 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         }
 
         return (
-          <div className="flex items-center gap-3">
-            <User className="w-5 h-5 text-gray-600" />
+          <div className="flex items-start gap-3">
+            <UserAvatar fotoPerfil={r.foto_perfil_usuario} nombre={nombreCompleto} size={25} />
             <div className="flex-1">
               <p className="font-semibold text-gray-900">
                 {r.cedula ? (
@@ -468,8 +472,8 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         }
 
         return (
-          <div className="flex items-center gap-3">
-            <UserAvatar fotoPerfil={r.foto_perfil_usuario} size={25} />
+          <div className="flex items-start gap-3">
+            <UserAvatar fotoPerfil={r.foto_perfil_usuario} nombre={nombreCompleto} size={25} />
             <div className="flex-1">
               <p className="font-semibold text-gray-900">
                 {r.ci_usuario ? (
@@ -581,8 +585,8 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           : (r.nombres || r.apellidos || 'Estudiante desconocido');
 
         return (
-          <div className="flex items-center gap-3">
-            <UserCircle className="w-5 h-5 text-gray-600" />
+          <div className="flex items-start gap-3">
+            <UserAvatar fotoPerfil={r.foto_perfil_usuario} nombre={nombreCompleto} size={25} />
             <div className="flex-1">
               <p className="font-semibold text-gray-900">
                 <Link
@@ -613,8 +617,8 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           : (r.nombres || r.apellidos || 'Profesor desconocido');
 
         return (
-          <div className="flex items-center gap-3">
-            <UserCircle className="w-5 h-5 text-gray-600" />
+          <div className="flex items-start gap-3">
+            <UserAvatar fotoPerfil={r.foto_perfil_usuario} nombre={nombreCompleto} size={25} />
             <div className="flex-1">
               <p className="font-semibold text-gray-900">
                 <Link

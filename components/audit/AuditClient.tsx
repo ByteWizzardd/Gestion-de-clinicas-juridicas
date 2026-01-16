@@ -94,12 +94,12 @@ export default function AuditClient() {
         title: "Usuarios",
         description: "Registro de usuarios del sistema",
         icon: Users,
-        totalCount: counts.usuariosEliminados + counts.usuariosActualizadosCampos + (counts.usuariosCreados || 0),
+        totalCount: counts.usuariosEliminados + counts.usuariosActualizadosCampos + (counts.usuariosCreados || 0) + (counts.estudiantesInscritos || 0) + (counts.profesoresAsignados || 0),
         href: "/dashboard/audit/usuarios",
         operations: [
           {
             label: "Creados",
-            count: counts.usuariosCreados || 0,
+            count: (counts.usuariosCreados || 0) + (counts.estudiantesInscritos || 0) + (counts.profesoresAsignados || 0),
             href: "/dashboard/audit/usuarios?tab=usuarios-creados"
           },
           {

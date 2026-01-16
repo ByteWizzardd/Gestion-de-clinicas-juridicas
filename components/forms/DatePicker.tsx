@@ -11,23 +11,24 @@ interface DatePickerProps {
   error?: string;
   required?: boolean;
   disabled?: boolean;
+  label?: string;
 }
 
-export default function DatePicker({ value, onChange, error, required, disabled = false }: DatePickerProps) {
+export default function DatePicker({ value, onChange, error, required, disabled = false, label }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'calendar' | 'year' | 'month'>('year');
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
   const [mounted, setMounted] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
   const [isInsideModal, setIsInsideModal] = useState(false);
-  
+
   const [currentMonth, setCurrentMonth] = useState(() => {
     if (value) {
       // Si ya es un objeto Date
       if (value instanceof Date) {
         return new Date(value.getFullYear(), value.getMonth(), 1);
       }
-      
+
       // Si es un string
       if (typeof value === 'string') {
         const parts = value.split('-');
@@ -59,9 +60,9 @@ export default function DatePicker({ value, onChange, error, required, disabled 
     setMounted(true);
     // Detectar si está dentro de un modal
     if (dropdownRef.current) {
-      const parentModal = dropdownRef.current.closest('[role="dialog"]') || 
-                          dropdownRef.current.closest('[aria-modal="true"]') ||
-                          dropdownRef.current.closest('[data-modal]');
+      const parentModal = dropdownRef.current.closest('[role="dialog"]') ||
+        dropdownRef.current.closest('[aria-modal="true"]') ||
+        dropdownRef.current.closest('[data-modal]');
       setIsInsideModal(!!parentModal);
     }
   }, []);
@@ -143,7 +144,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
 
   const isSelected = (day: number, isCurrentMonth: boolean) => {
     if (!value || !isCurrentMonth) return false;
-    
+
     let selectedDate: Date;
     if (value instanceof Date) {
       selectedDate = new Date(value);
@@ -162,7 +163,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
     }
 
     if (isNaN(selectedDate.getTime())) return false;
-    
+
     selectedDate.setHours(0, 0, 0, 0);
     const date = new Date(
       currentMonth.getFullYear(),
@@ -306,9 +307,9 @@ export default function DatePicker({ value, onChange, error, required, disabled 
 
   const formatDisplayDate = (dateVal: any) => {
     if (!dateVal) return 'dd/mm/aaaa';
-    
+
     let date: Date;
-    
+
     if (dateVal instanceof Date) {
       date = dateVal;
     } else if (typeof dateVal === 'string') {
@@ -334,6 +335,12 @@ export default function DatePicker({ value, onChange, error, required, disabled 
 
   return (
     <div className="relative" ref={dropdownRef}>
+      {label && (
+        <label className="block text-xs font-medium text-gray-700 mb-1">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </label>
+      )}
       <div
         onClick={(e) => {
           e.stopPropagation();

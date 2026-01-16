@@ -20,7 +20,8 @@ SELECT * FROM (
         uc.nombres AS nombres_usuario_creo,
         uc.apellidos AS apellidos_usuario_creo,
         CONCAT(uc.nombres, ' ', uc.apellidos) AS nombre_completo_usuario_creo,
-        uc.foto_perfil AS foto_perfil_usuario_creo
+        uc.foto_perfil AS foto_perfil_usuario_creo,
+        u.foto_perfil AS foto_perfil_usuario
     FROM public.auditoria_insercion_usuarios au
     JOIN public.usuarios u ON au.cedula = u.cedula
     LEFT JOIN public.usuarios uc ON au.id_usuario_creo = uc.cedula
@@ -47,7 +48,8 @@ SELECT * FROM (
         uc.nombres AS nombres_usuario_creo,
         uc.apellidos AS apellidos_usuario_creo,
         CONCAT(uc.nombres, ' ', uc.apellidos) AS nombre_completo_usuario_creo,
-        uc.foto_perfil AS foto_perfil_usuario_creo
+        uc.foto_perfil AS foto_perfil_usuario_creo,
+        u.foto_perfil AS foto_perfil_usuario
     FROM public.auditoria_insercion_estudiantes ae
     JOIN public.usuarios u ON ae.cedula_estudiante = u.cedula
     LEFT JOIN public.usuarios uc ON ae.id_usuario_creo = uc.cedula
@@ -74,7 +76,8 @@ SELECT * FROM (
         uc.nombres AS nombres_usuario_creo,
         uc.apellidos AS apellidos_usuario_creo,
         CONCAT(uc.nombres, ' ', uc.apellidos) AS nombre_completo_usuario_creo,
-        uc.foto_perfil AS foto_perfil_usuario_creo
+        uc.foto_perfil AS foto_perfil_usuario_creo,
+        u.foto_perfil AS foto_perfil_usuario
     FROM public.auditoria_insercion_profesores ap
     JOIN public.usuarios u ON ap.cedula_profesor = u.cedula
     LEFT JOIN public.usuarios uc ON ap.id_usuario_creo = uc.cedula
@@ -90,8 +93,8 @@ WHERE
         OR combined_records.cedula ILIKE '%' || $4 || '%'
         OR combined_records.correo_electronico ILIKE '%' || $4 || '%'
         OR combined_records.nombre_usuario ILIKE '%' || $4 || '%'
-        OR combined_records.tipo_registro ILIKE '%' || $4 || '%'
     )
+    AND ($6::TEXT IS NULL OR combined_records.tipo_registro = $6)
 ORDER BY 
     CASE WHEN ($5::TEXT IS NULL OR $5::TEXT = 'desc') THEN combined_records.fecha_creacion END DESC NULLS LAST,
     CASE WHEN $5::TEXT = 'asc' THEN combined_records.fecha_creacion END ASC NULLS FIRST;

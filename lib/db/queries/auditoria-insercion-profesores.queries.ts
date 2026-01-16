@@ -26,4 +26,10 @@ export const auditoriaInsercionProfesoresQueries = {
                 : null,
         }));
     },
+
+    getCount: async (): Promise<number> => {
+        const query = loadSQL('auditoria-insercion-profesores/get-count.sql');
+        const result: QueryResult = await pool.query(query);
+        return parseInt(result.rows[0].total, 10);
+    },
 };

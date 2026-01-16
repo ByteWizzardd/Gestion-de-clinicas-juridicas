@@ -30,4 +30,10 @@ export const auditoriaInsercionEstudiantesQueries = {
                 : null,
         }));
     },
+
+    getCount: async (): Promise<number> => {
+        const query = loadSQL('auditoria-insercion-estudiantes/get-count.sql');
+        const result: QueryResult = await pool.query(query);
+        return parseInt(result.rows[0].total, 10);
+    },
 };

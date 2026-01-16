@@ -103,7 +103,9 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       // Casos
       casosEliminados, casosActualizados, casosCreados,
       // Solicitantes
-      solicitantesEliminados, solicitantesActualizados, solicitantesCreados
+      solicitantesEliminados, solicitantesActualizados, solicitantesCreados,
+      // Inscripciones y Asignaciones
+      estudiantesInscritos, profesoresAsignados
     ] = await Promise.all([
       auditoriaEliminacionSoportesQueries.getCount(),
       auditoriaInsercionSoportesQueries.getCount().catch(() => 0),
@@ -162,9 +164,13 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       auditoriaActualizacionCasosQueries.getCount().catch(() => 0),
       auditoriaInsercionCasosQueries.getCount().catch(() => 0),
       // Solicitantes
+      // Solicitantes
       auditoriaEliminacionSolicitantesQueries.getCount().catch(() => 0),
       auditoriaActualizacionSolicitantesQueries.getCount().catch(() => 0),
       auditoriaInsercionSolicitantesQueries.getCount().catch(() => 0),
+      // Inscripciones y Asignaciones
+      auditoriaInsercionEstudiantesQueries.getCount().catch(() => 0),
+      auditoriaInsercionProfesoresQueries.getCount().catch(() => 0),
     ]);
 
     return {
@@ -227,6 +233,9 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       solicitantesEliminados: solicitantesEliminados || 0,
       solicitantesActualizados: solicitantesActualizados || 0,
       solicitantesCreados: solicitantesCreados || 0,
+      // Inscripciones y Asignaciones
+      estudiantesInscritos: estudiantesInscritos || 0,
+      profesoresAsignados: profesoresAsignados || 0,
     };
   } catch (error) {
     console.error('Error obteniendo contadores de auditoría:', error);

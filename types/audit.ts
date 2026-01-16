@@ -239,6 +239,7 @@ export interface UsuarioCreadoAuditRecord {
   apellidos_usuario_creo: string | null;
   nombre_completo_usuario_creo: string | null;
   foto_perfil_usuario_creo: string | null;
+  foto_perfil_usuario?: string | null;
 }
 
 // Auditoría de Inserción de Estudiantes
@@ -262,6 +263,7 @@ export interface EstudianteInscritoAuditRecord extends AuditRecord {
   apellidos_usuario_creo: string | null;
   nombre_completo_usuario_creo: string | null;
   foto_perfil_usuario_creo: string | null;
+  foto_perfil_usuario?: string | null;
 }
 
 // Auditoría de Inserción de Profesores
@@ -283,6 +285,7 @@ export interface ProfesorCreadoAuditRecord extends AuditRecord {
   apellidos_usuario_creo: string | null;
   nombre_completo_usuario_creo: string | null;
   foto_perfil_usuario_creo: string | null;
+  foto_perfil_usuario?: string | null;
 }
 
 // Auditoría de casos eliminados
@@ -589,6 +592,7 @@ export interface AuditFilters {
   cedulaSolicitante?: string; // Para casos y solicitantes
   idCaso?: number; // Para casos
   eliminadoPor?: string; // Para eliminaciones
+  tipoRegistro?: string; // Para filtrar por tipo (ej: usuario-creado, estudiante-inscrito)
 }
 
 // Contadores de auditoría
@@ -652,4 +656,7 @@ export interface AuditCounts {
   solicitantesEliminados?: number;
   solicitantesActualizados?: number;
   solicitantesCreados?: number;
+  // Inscripciones y Asignaciones
+  estudiantesInscritos?: number;
+  profesoresAsignados?: number;
 }

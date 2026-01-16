@@ -412,6 +412,10 @@ export default function AuditDetailClient({
     handleFilterChange('idUsuario', value || undefined);
   };
 
+  const handleTipoRegistroChange = (value: string) => {
+    handleFilterChange('tipoRegistro', value || undefined);
+  };
+
   const handleOrdenChange = () => {
     const nuevoOrden = filters.orden === 'desc' ? 'asc' : 'desc';
     handleFilterChange('orden', nuevoOrden);
@@ -462,7 +466,6 @@ export default function AuditDetailClient({
             onNucleoChange={usuarioOptions.length > 0 ? handleUsuarioChange : undefined}
             nucleoOptions={usuarioOptions.length > 0 ? usuarioOptions : []}
             tramiteOptions={[]}
-            estatusOptions={[]}
             nucleoLabel="Usuario"
             nucleoAllLabel="Todos los usuarios"
             fechaInicio={filters.fechaInicio}
@@ -470,6 +473,14 @@ export default function AuditDetailClient({
             onFechaInicioChange={(value) => handleFilterChange('fechaInicio', value || undefined)}
             onFechaFinChange={(value) => handleFilterChange('fechaFin', value || undefined)}
             showDateRange={true}
+            estatusOptions={auditType === 'usuarios-creados' ? [
+              { value: 'usuario-creado', label: 'Usuarios Creados' },
+              { value: 'estudiante-inscrito', label: 'Estudiantes Inscritos' },
+              { value: 'profesor-asignado', label: 'Profesores Asignados' }
+            ] : []}
+            estatusFilter={filters.tipoRegistro}
+            onEstatusChange={handleTipoRegistroChange}
+            estatusLabel={auditType === 'usuarios-creados' ? "Tipo de Registro" : undefined}
           />
         </div>
       </motion.div>
