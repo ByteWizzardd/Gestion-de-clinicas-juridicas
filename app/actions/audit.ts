@@ -1862,7 +1862,7 @@ export async function getBeneficiariosInscritosAuditAction(filters?: AuditFilter
   }
 
   try {
-    const records = await auditoriaInsercionBeneficiariosQueries.getAll();
+    const records = await auditoriaInsercionBeneficiariosQueries.getAll(filters);
     // TODO: Implementar filtros en queries si es necesario
     return records.map((r) => ({
       ...r,
@@ -1897,7 +1897,7 @@ export async function getBeneficiariosActualizadosAuditAction(filters?: AuditFil
   }
 
   try {
-    const records = await auditoriaActualizacionBeneficiariosQueries.getAll();
+    const records = await auditoriaActualizacionBeneficiariosQueries.getAll(filters);
     return records.map((r) => ({
       ...r,
       fecha: r.fecha_actualizacion.toISOString(),
@@ -1929,7 +1929,7 @@ export async function getBeneficiariosEliminadosAuditAction(filters?: AuditFilte
   }
 
   try {
-    const records = await auditoriaEliminacionBeneficiariosQueries.getAll();
+    const records = await auditoriaEliminacionBeneficiariosQueries.getAll(filters);
     return records.map((r) => ({
       ...r,
       fecha: r.fecha_eliminacion.toISOString(),

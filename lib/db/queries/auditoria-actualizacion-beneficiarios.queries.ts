@@ -8,7 +8,13 @@ export const auditoriaActualizacionBeneficiariosQueries = {
         return parseInt(result.rows[0].count, 10);
     },
 
-    getAll: async (): Promise<Array<{
+    getAll: async (filters?: {
+        fechaInicio?: string;
+        fechaFin?: string;
+        idUsuario?: string;
+        busqueda?: string;
+        orden?: 'asc' | 'desc';
+    }): Promise<Array<{
         id: number;
         num_beneficiario: number;
         id_caso: number;
@@ -37,7 +43,13 @@ export const auditoriaActualizacionBeneficiariosQueries = {
         fecha_actualizacion: Date;
     }>> => {
         const query = loadSQL('auditoria-actualizacion-beneficiarios/get-all.sql');
-        const result: QueryResult = await pool.query(query);
+        const result: QueryResult = await pool.query(query, [
+            filters?.fechaInicio || null,
+            filters?.fechaFin || null,
+            filters?.idUsuario || null,
+            filters?.busqueda || null,
+            filters?.orden || 'desc',
+        ]);
         return result.rows.map(row => ({
             ...row,
             fecha_nacimiento_anterior: row.fecha_nacimiento_anterior instanceof Date
@@ -48,4 +60,5 @@ export const auditoriaActualizacionBeneficiariosQueries = {
                 : row.fecha_nacimiento_nuevo
         }));
     },
+
 };

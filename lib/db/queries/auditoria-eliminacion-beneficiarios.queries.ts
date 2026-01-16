@@ -8,7 +8,13 @@ export const auditoriaEliminacionBeneficiariosQueries = {
         return parseInt(result.rows[0].count, 10);
     },
 
-    getAll: async (): Promise<Array<{
+    getAll: async (filters?: {
+        fechaInicio?: string;
+        fechaFin?: string;
+        idUsuario?: string;
+        busqueda?: string;
+        orden?: 'asc' | 'desc';
+    }): Promise<Array<{
         id: number;
         num_beneficiario: number;
         id_caso: number | null;
@@ -23,7 +29,14 @@ export const auditoriaEliminacionBeneficiariosQueries = {
         fecha_eliminacion: Date;
     }>> => {
         const query = loadSQL('auditoria-eliminacion-beneficiarios/get-all.sql');
-        const result: QueryResult = await pool.query(query);
+        const result: QueryResult = await pool.query(query, [
+            filters?.fechaInicio || null,
+            filters?.fechaFin || null,
+            filters?.idUsuario || null,
+            filters?.busqueda || null,
+            filters?.orden || 'desc',
+        ]);
         return result.rows;
     },
+
 };

@@ -204,11 +204,12 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
 
   // Helper para renderizar nombre de usuario como enlace
   const renderUserLink = (
-    nombreCompleto: string | null,
-    nombres: string | null,
-    apellidos: string | null,
+    nombreCompleto: string | null | undefined,
+    nombres: string | null | undefined,
+    apellidos: string | null | undefined,
     cedula: string | null | undefined
   ) => {
+
     // Construir nombre completo
     let nombre = nombreCompleto;
     if (!nombre && (nombres || apellidos)) {
@@ -240,11 +241,12 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
 
   // Helper para renderizar nombre de usuario eliminado como texto (sin enlace)
   const renderDeletedUser = (
-    nombreCompleto: string | null,
-    nombres: string | null,
-    apellidos: string | null,
+    nombreCompleto: string | null | undefined,
+    nombres: string | null | undefined,
+    apellidos: string | null | undefined,
     cedula: string | null | undefined
   ) => {
+
     // Construir nombre completo
     let nombre = nombreCompleto;
     if (!nombre && (nombres || apellidos)) {
