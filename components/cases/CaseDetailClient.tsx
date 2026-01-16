@@ -47,7 +47,8 @@ export default function CaseDetailClient() {
   const [activeTab, setActiveTab] = useState<string>(() => {
     // Si viene el parámetro tab en la URL, usarlo como pestaña inicial
     const tabParam = searchParams.get('tab');
-    return tabParam === 'acciones' ? 'acciones' : 'general';
+    const validTabs = ['general', 'equipo', 'acciones', 'citas', 'estatus', 'documentos'];
+    return tabParam && validTabs.includes(tabParam) ? tabParam : 'general';
   });
 
 

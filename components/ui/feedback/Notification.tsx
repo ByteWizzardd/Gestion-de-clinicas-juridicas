@@ -35,6 +35,11 @@ const Notification: React.FC<NotificationProps> = () => {
   };
 
   const getNotificationHref = (notification: { title: string; message: string }): string | null => {
+    // Buscar link directo en el mensaje (citas de caso)
+    const linkMatch = notification.message.match(/(\/dashboard\/cases\/\d+\?tab=citas)/);
+    if (linkMatch) {
+      return linkMatch[1];
+    }
     const citaId = extractCitaId(notification.title) || extractCitaId(notification.message);
     if (citaId){ 
       return `/dashboard/appointments/${citaId}`;

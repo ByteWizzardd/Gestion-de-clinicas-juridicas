@@ -88,10 +88,11 @@ export async function createCitaAction(
     // Notificar a los usuarios asignados a la cita sobre la creación
     const usuariosAtienden = params.usuariosAtienden || [];
     if (idCasoNotificar && usuariosAtienden.length > 0) {
+      const urlCitas = `/dashboard/cases/${idCasoNotificar}?tab=citas`;
       await notificarVariosUsuariosAction({
         cedulasReceptores: usuariosAtienden,
         titulo: "Nueva cita asignada",
-        mensaje: `Se te ha asignado una nueva cita #${newCita.num_cita} para el caso #${idCasoNotificar} en la fecha ${params.date}. Haz clic para ver la cita.`,
+        mensaje: `Se te ha asignado una nueva cita #${newCita.num_cita} para el caso #${idCasoNotificar} en la fecha ${params.date}. Haz clic aquí para ver la cita: ${urlCitas}`,
       });
       // Revalidar la caché de notificaciones para que se actualicen en el frontend
       revalidatePath("/dashboard/notificaciones");
@@ -328,10 +329,11 @@ export async function updateCitaAction(params: UpdateCitaParams): Promise<GetCit
     const usuariosAtienden = params.usuariosAtienden || [];
     // Notificar a los usuarios asignados a la cita sobre la actualización
     if (id_caso && usuariosAtienden.length > 0) {
+      const urlCitas = `/dashboard/cases/${id_caso}?tab=citas`;
       await notificarVariosUsuariosAction({
         cedulasReceptores: usuariosAtienden,
         titulo: 'Cita actualizada',
-        mensaje: `La cita #${params.appointmentId} del caso #${id_caso} para la fecha ${params.date || 'actualizada'} ha sido modificada. Haz clic para ver la cita.`,
+        mensaje: `La cita #${params.appointmentId} del caso #${id_caso} para la fecha ${params.date || 'actualizada'} ha sido modificada. Haz clic aquí para ver la cita: ${urlCitas}`,
       });
       // Revalidar la caché de notificaciones y casos
       revalidatePath('/dashboard/notificaciones');
