@@ -19,6 +19,7 @@ export interface AuditoriaActualizacionEquipoRecord {
     nombres_usuario_modifico: string | null;
     apellidos_usuario_modifico: string | null;
     nombre_completo_usuario_modifico: string | null;
+    foto_perfil_usuario_modifico: string | null;
     tramite_caso: string | null;
     nombre_nucleo: string | null;
     nombre_completo_solicitante: string | null;
@@ -36,6 +37,7 @@ SELECT
     u.nombres AS nombres_usuario_modifico,
     u.apellidos AS apellidos_usuario_modifico,
     CONCAT(u.nombres, ' ', u.apellidos) AS nombre_completo_usuario_modifico,
+    u.foto_perfil AS foto_perfil_usuario_modifico,
     c.tramite AS tramite_caso,
     n.nombre_nucleo,
     CONCAT(s.nombres, ' ', s.apellidos) AS nombre_completo_solicitante,
@@ -80,15 +82,48 @@ const processRows = (rows: any[]): AuditoriaActualizacionEquipoRecord[] => {
         miembros_nuevos: typeof row.miembros_nuevos === 'string'
             ? JSON.parse(row.miembros_nuevos)
             : row.miembros_nuevos || [],
+        foto_perfil_usuario_modifico: row.foto_perfil_usuario_modifico
+            ? `data:image/jpeg;base64,${(row.foto_perfil_usuario_modifico as Buffer).toString('base64')}`
+            : null,
     }));
 };
 
+import { AuditFilters } from '@/types/audit';
+
 /**
- * Obtiene todos los registros de auditoría de actualización de equipo
+ * Obtiene todos los registros de auditoría de actualización de equipo con filtros opcionales
  */
-export async function getAll(): Promise<AuditoriaActualizacionEquipoRecord[]> {
-    const query = `${baseQuery} ORDER BY ae.fecha_actualizacion DESC`;
-    const result = await pool.query(query);
+export async function getAll(filters?: AuditFilters): Promise<AuditoriaActualizacionEquipoRecord[]> {
+    let query = baseQuery;
+    const values: any[] = [];
+    const conditions: string[] = [];
+
+    if (filters) {
+        if (filters.fechaInicio) {
+            values.push(filters.fechaInicio);
+            conditions.push(`ae.fecha_actualizacion >= $${values.length}`);
+        }
+        if (filters.fechaFin) {
+            values.push(filters.fechaFin);
+            conditions.push(`ae.fecha_actualizacion <= $${values.length}`);
+        }
+        if (filters.idCaso) {
+            values.push(filters.idCaso);
+            conditions.push(`ae.id_caso = $${values.length}`);
+        }
+        if (filters.idUsuario) {
+            values.push(filters.idUsuario);
+            conditions.push(`ae.id_usuario_modifico = $${values.length}`);
+        }
+    }
+
+    if (conditions.length > 0) {
+        query += ` WHERE ${conditions.join(' AND ')}`;
+    }
+
+    query += ` ORDER BY ae.fecha_actualizacion ${filters?.orden === 'asc' ? 'ASC' : 'DESC'}`;
+
+    const result = await pool.query(query, values);
     return processRows(result.rows);
 }
 
