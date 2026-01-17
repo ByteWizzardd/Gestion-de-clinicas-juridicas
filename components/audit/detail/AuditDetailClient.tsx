@@ -475,6 +475,9 @@ export default function AuditDetailClient({
     handleFilterChange('orden', nuevoOrden);
   };
 
+  // El usuario solicitó eliminar el filtro de tipo de registro para usuarios
+  const estatusOptions: { value: string; label: string }[] = [];
+
   return (
     <div className="w-full">
       {/* Encabezado (solo si no está oculto) */}
@@ -527,13 +530,9 @@ export default function AuditDetailClient({
             onFechaInicioChange={(value) => handleFilterChange('fechaInicio', value || undefined)}
             onFechaFinChange={(value) => handleFilterChange('fechaFin', value || undefined)}
             showDateRange={true}
-            estatusOptions={auditType === 'usuarios-creados' ? [
-              { value: 'usuario-creado', label: 'Usuarios Creados' },
-              { value: 'estudiante-inscrito', label: 'Estudiantes Inscritos' },
-              { value: 'profesor-asignado', label: 'Profesores Asignados' }
-            ] : []}
-            estatusFilter={filters.tipoRegistro}
-            onEstatusChange={handleTipoRegistroChange}
+            estatusOptions={estatusOptions}
+            estatusFilter={estatusOptions.length > 0 ? filters.tipoRegistro : undefined}
+            onEstatusChange={estatusOptions.length > 0 ? handleTipoRegistroChange : undefined}
             estatusLabel={auditType === 'usuarios-creados' ? "Tipo de Registro" : undefined}
           />
         </div>
