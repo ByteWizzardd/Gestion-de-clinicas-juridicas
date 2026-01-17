@@ -5,7 +5,7 @@
 -- $3 = apellidos
 -- $4 = correo_electronico
 -- $5 = nombre_usuario
--- $6 = contrasena (hash)
+-- $6 = contrasena (hash) - Solo se usa para usuarios NUEVOS
 -- $7 = telefono_celular (puede ser NULL)
 
 INSERT INTO usuarios (
@@ -25,7 +25,7 @@ SET nombres = EXCLUDED.nombres,
     apellidos = EXCLUDED.apellidos,
     correo_electronico = EXCLUDED.correo_electronico,
     nombre_usuario = EXCLUDED.nombre_usuario,
-    contrasena = EXCLUDED.contrasena,
+    -- contrasena NO se actualiza para preservar contraseñas existentes
     telefono_celular = EXCLUDED.telefono_celular,
     habilitado_sistema = TRUE
 RETURNING *;
