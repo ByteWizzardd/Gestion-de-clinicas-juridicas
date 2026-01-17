@@ -94,7 +94,7 @@ export default function ReportsPage() {
 
     // Cargar solicitantes cuando se abre el modal de este tipo
     useEffect(() => {
-        if (showDateModal && tipoReporteActual === 'Historial de Casos del Solicitante') {
+        if (showDateModal && (tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante')) {
             const loadSolicitantes = async () => {
                 setIsLoadingSolicitantes(true);
                 try {
@@ -211,7 +211,8 @@ export default function ReportsPage() {
             reportType === 'Reporte de Estatus de Casos' ||
             reportType === 'Resumen de Casos' ||
             reportType === 'Reporte Socioeconómico' ||
-            reportType === 'Historial de Casos del Solicitante') { // Added new type
+            reportType === 'Historial de Casos del Solicitante' ||
+            reportType === 'Ficha Resumen del Solicitante') { // Added new type
 
             // Guardar el tipo de reporte actual
             setTipoReporteActual(reportType);
@@ -235,8 +236,8 @@ export default function ReportsPage() {
     };
 
     const handleGenerateTiposCasosReport = async () => {
-        // Validacion especifica para historial solicitante
-        if (tipoReporteActual === 'Historial de Casos del Solicitante') {
+        // Validacion especifica para historial solicitante y ficha resumen
+        if (tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante') {
             if (!selectedSolicitante) {
                 setDateError('Debe seleccionar un solicitante');
                 return;
@@ -245,7 +246,7 @@ export default function ReportsPage() {
 
         // Validar que se haya seleccionado algo si no es histórico (para los otros reportes)
         // Para historial de solicitante, fechas vacías significan "todos los casos históricos"
-        if (tipoReporteActual !== 'Historial de Casos del Solicitante') {
+        if (tipoReporteActual !== 'Historial de Casos del Solicitante' && tipoReporteActual !== 'Ficha Resumen del Solicitante') {
             if (!fechaInicioReporte && !fechaFinReporte && selectedTermReporte === 'all') {
                 // Permitir histórico
             } else if (selectedTermReporte === 'all' && ((fechaInicioReporte && !fechaFinReporte) || (!fechaInicioReporte && fechaFinReporte))) {
@@ -301,6 +302,35 @@ export default function ReportsPage() {
                             alert('Error al obtener el historial: ' + (result.error || 'Error desconocido'));
                         }
                     }
+
+                } else if (tipoReporteActual === 'Ficha Resumen del Solicitante') {
+                    // 1. Obtener datos del Solicitante (Ficha)
+                    const { getSolicitanteFichaData } = await import('@/app/actions/reports');
+                    const fichaResult = await getSolicitanteFichaData(selectedSolicitante.cedula);
+
+                    // 2. Obtener datos del Historial (Casos)
+                    const { getHistorialCasosBySolicitante } = await import('@/app/actions/reports');
+                    // Para ficha resumen, generalmente queremos TODO el historial por defecto, 
+                    // pero respetamos si el usuario filtró fechas.
+                    const historialResult = await getHistorialCasosBySolicitante(
+                        selectedSolicitante.cedula,
+                        fechaInicio,
+                        fechaFin
+                    );
+
+                    if (fichaResult.success && fichaResult.data && historialResult.success && historialResult.data) {
+                        // 3. Generar ZIP Completo
+                        const { generateExpedienteSolicitanteZIP } = await import('@/lib/utils/case-history-pdf-generator');
+                        await generateExpedienteSolicitanteZIP(
+                            fichaResult.data,
+                            historialResult.data,
+                            selectedSolicitante.nombre_completo || `${selectedSolicitante.nombres} ${selectedSolicitante.apellidos}`
+                        );
+                    } else {
+                        const errorMsg = fichaResult.error || historialResult.error || 'Error desconocido al obtener datos';
+                        alert('Error al generar el expediente: ' + errorMsg);
+                    }
+
                 } else if (tipoReporteActual === 'Resumen de Casos') {
                     // Generar reporte resumen de casos
                     const { getInformeResumenData } = await import('@/app/actions/reports');
@@ -655,13 +685,15 @@ export default function ReportsPage() {
                                 ? 'Rango de Fechas - Resumen de Casos'
                                 : tipoReporteActual === 'Historial de Casos del Solicitante'
                                     ? 'Generar Historial del Solicitante'
-                                    : 'Rango de Fechas - Tipos de Caso'}
+                                    : tipoReporteActual === 'Ficha Resumen del Solicitante'
+                                        ? 'Generar Ficha Resumen'
+                                        : 'Rango de Fechas - Tipos de Caso'}
                     </h2>
 
                     {/* Grid de formulario */}
                     <div className="grid grid-cols-1 gap-4 mb-4">
-                        {/* Selector de Solicitante (Solo visible para Historial de Solicitante) */}
-                        {tipoReporteActual === 'Historial de Casos del Solicitante' && (
+                        {/* Selector de Solicitante (Solo visible para Historial de Solicitante y Ficha Resumen) */}
+                        {(tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante') && (
                             <div className="mb-4 relative">
                                 <label className="text-base font-normal text-foreground mb-1 block">
                                     Buscar Solicitante <span className="text-red-500">*</span>
@@ -714,8 +746,8 @@ export default function ReportsPage() {
                             </div>
                         )}
 
-                        {/* Opción por Semestre - Ocultar para historial de solicitante si no es necesario, o mantenerlo */}
-                        {tipoReporteActual !== 'Historial de Casos del Solicitante' && (
+                        {/* Opción por Semestre - Ocultar para historial de solicitante y ficha resumen */}
+                        {tipoReporteActual !== 'Historial de Casos del Solicitante' && tipoReporteActual !== 'Ficha Resumen del Solicitante' && (
                             <div>
                                 <div className="flex flex-col gap-1">
                                     <label className="text-base font-normal text-foreground mb-1">
@@ -738,7 +770,7 @@ export default function ReportsPage() {
                             </div>
                         )}
 
-                        {tipoReporteActual !== 'Historial de Casos del Solicitante' && (
+                        {tipoReporteActual !== 'Historial de Casos del Solicitante' && tipoReporteActual !== 'Ficha Resumen del Solicitante' && (
                             <div className="relative py-2 flex items-center">
                                 <div className="grow border-t border-gray-200"></div>
                                 <span className="shrink mx-4 text-gray-400 text-sm">O por rango de fechas</span>
@@ -746,7 +778,7 @@ export default function ReportsPage() {
                             </div>
                         )}
 
-                        {tipoReporteActual === 'Historial de Casos del Solicitante' && (
+                        {(tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante') && (
                             <div className="text-gray-500 text-sm mb-2 font-medium">Filtrar por fechas (Opcional):</div>
                         )}
 
@@ -789,8 +821,8 @@ export default function ReportsPage() {
                         </div>
                     </div>
 
-                    {/* Selector de Formato - Ocultar para Historial de Solicitante ya que siempre es ZIP */}
-                    {tipoReporteActual !== 'Historial de Casos del Solicitante' && (
+                    {/* Selector de Formato - Ocultar para Historial y Ficha Resumen ya que siempre es ZIP */}
+                    {tipoReporteActual !== 'Historial de Casos del Solicitante' && tipoReporteActual !== 'Ficha Resumen del Solicitante' && (
                         <div className="mb-6">
                             <label className="text-base font-normal text-foreground mb-3 block">
                                 Formato de descarga
@@ -835,8 +867,8 @@ export default function ReportsPage() {
 
                     {/* Mensaje informativo sobre histórico */}
                     <p className="text-sm text-gray-500 mb-4">
-                        {tipoReporteActual === 'Historial de Casos del Solicitante'
-                            ? 'Si no selecciona fechas, se descargará el historial completo de todos los casos del solicitante en formato ZIP (PDF + Excel).'
+                        {tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante'
+                            ? 'Si no selecciona fechas, se descargará el historial completo de todos los casos del solicitante en formato ZIP.'
                             : 'Si no selecciona semestre ni fechas, se generará un reporte histórico con todos los casos.'}
                     </p>
 
@@ -863,7 +895,7 @@ export default function ReportsPage() {
                                 onClick={handleGenerateTiposCasosReport}
                                 variant="primary"
                             >
-                                {tipoReporteActual === 'Historial de Casos del Solicitante' ? 'Descargar Historial' : 'Generar Reporte'}
+                                {tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante' ? 'Descargar Expediente' : 'Generar Reporte'}
                             </Button>
                         </div>
                     </div>
