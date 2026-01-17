@@ -138,3 +138,75 @@ export async function generateCasoHistorialZip(data: CasoHistorialData): Promise
         throw error;
     }
 }
+
+/**
+ * Genera y descarga un archivo ZIP que contiene carpetas para cada caso del solicitante.
+ * Cada carpeta tendrá el PDF y Excel del historial de ese caso.
+ */
+export async function generateHistorialSolicitanteZIP(
+    casos: CasoHistorialData[],
+    nombreSolicitante: string
+): Promise<void> {
+    try {
+        const zip = new JSZip();
+        // Cargar logo una sola vez
+        const logoBase64 = await imageToBase64('/logo escuela derecho.png');
+
+        // Procesar cada caso
+        await Promise.all(casos.map(async (casoData) => {
+            const idCaso = casoData.caso?.id_caso || 'N_A';
+            const folderName = `Caso_${idCaso}`;
+            const caseFolder = zip.folder(folderName);
+
+            if (!caseFolder) return;
+
+            // 1. Generar PDF
+            const doc = React.createElement(CasoHistorialDocument, {
+                data: {
+                    ...casoData,
+                    acciones: casoData.acciones || [],
+                    citas: casoData.citas || [],
+                    soportes: casoData.soportes || [],
+                    beneficiarios: casoData.beneficiarios || [],
+                    equipo: casoData.equipo || [],
+                    cambiosEstatus: casoData.cambiosEstatus || []
+                },
+                logoBase64
+            });
+
+            // @ts-ignore
+            const pdfBlob = await pdf(doc).toBlob();
+            caseFolder.file(`Historial_Caso_${idCaso}.pdf`, pdfBlob);
+
+            // 2. Generar Excel
+            try {
+                const excelBuffer = await generateCasoHistorialExcelFormatoUCAB(casoData);
+                caseFolder.file(`Historial_Caso_${idCaso}.xlsx`, excelBuffer);
+            } catch (excelError) {
+                console.error(`Error generando Excel para caso ${idCaso}:`, excelError);
+            }
+        }));
+
+        // Generar ZIP final
+        const zipContent = await zip.generateAsync({ type: 'blob' });
+
+        // Descargar
+        const url = URL.createObjectURL(zipContent);
+        const link = document.createElement('a');
+        link.href = url;
+        // Nombre del archivo: Historial_Solicitante_[Nombre]_Fecha.zip
+        const dateStr = new Date().toISOString().split('T')[0];
+        const safeName = nombreSolicitante.replace(/[^a-zA-Z0-9]/g, '_');
+        link.download = `Historial_Solicitante_${safeName}_${dateStr}.zip`;
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+    } catch (error) {
+        console.error('Error al generar ZIP de historial de solicitante:', error);
+        alert('Error al generar el archivo ZIP del solicitante');
+        throw error;
+    }
+}

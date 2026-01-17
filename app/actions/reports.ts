@@ -740,3 +740,81 @@ export async function descargarHistorialCasoAction(idCaso: number): Promise<{
     return handleReportError(error, 'descargarHistorialCasoAction');
   }
 }
+
+/**
+ * Obtiene el historial de casos de un solicitante específico en un rango de fechas
+ */
+export async function getHistorialCasosBySolicitante(
+  cedula: string,
+  fechaInicio?: string,
+  fechaFin?: string
+): Promise<{ success: boolean; data?: any[]; error?: string }> {
+  try {
+    const authResult = await requireAuthInServerAction();
+    if (!authResult.success) {
+      return { success: false, error: authResult.error };
+    }
+
+    // Resolver fechas (aunque para este específico podríamos querer usar null si están vacías, le pasamos las fechas tal cual)
+    // El SQL ya maneja NULLs, así que pasamos las fechas directamente si existen
+
+    // 1. Obtener los casos básicos filtrados
+    const casosBasicos = await casosQueries.getHistorialBySolicitante(cedula, fechaInicio, fechaFin);
+
+    if (!casosBasicos || casosBasicos.length === 0) {
+      return { success: true, data: [] };
+    }
+
+    // 2. Obtener la información completa de cada caso (incluyendo citas, acciones, etc.)
+    // Usamos Promise.all para hacerlo en paralelo
+    const casosCompletos = await Promise.all(
+      casosBasicos.map(async (casoBasico) => {
+        try {
+          const casoCompleto = await casosService.getCasoByIdCompleto(casoBasico.id_caso);
+          return casoCompleto;
+        } catch (err) {
+          console.error(`Error obteniendo detalles del caso ${casoBasico.id_caso}:`, err);
+          return null;
+        }
+      })
+    );
+
+    // Filtrar nulos por si alguno falló y mapear a la estructura esperada
+    const data = casosCompletos
+      .filter(c => c !== null)
+      .map(c => {
+        // Desestructurar para separar las listas del objeto del caso
+        const cTyped = c as any;
+        const {
+          acciones,
+          citas,
+          soportes,
+          beneficiarios,
+          equipo,
+          cambiosEstatus,
+          ...casoDetails
+        } = cTyped;
+
+        return {
+          caso: casoDetails,
+          acciones,
+          citas,
+          soportes,
+          beneficiarios,
+          equipo,
+          cambiosEstatus
+        };
+      });
+
+    return {
+      success: true,
+      data
+    };
+  } catch (error) {
+    console.error('Error al obtener historial de casos del solicitante:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    };
+  }
+}
