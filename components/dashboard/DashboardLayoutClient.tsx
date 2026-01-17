@@ -39,7 +39,7 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
 
   return (
     <div className="flex h-screen bg-background relative overflow-x-hidden">
-      <div className="flex-shrink-0">
+      <div className="shrink-0">
         <Sidebar role={userRole} userName={userName} />
       </div>
 
@@ -50,7 +50,7 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
           transition={{ duration: prefersReducedMotion ? 0 : 0.4, delay: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
           className="absolute top-6 right-6 flex items-center gap-4 z-30 text-lg bg-white rounded-3xl shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] px-4 py-2"
         >
-          <Notification count={3} />
+          <Notification />
           <DateTime />
         </motion.div>
 
