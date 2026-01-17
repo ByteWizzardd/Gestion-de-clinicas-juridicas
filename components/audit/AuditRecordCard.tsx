@@ -660,7 +660,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         const r = record as CasoEliminadoAuditRecord;
         return (
           <div className="flex items-center gap-3">
-            <Scale className="w-5 h-5 text-gray-600" />
+            <Briefcase className="w-5 h-5 text-gray-600" />
             <div className="flex-1">
               <p className="font-semibold text-gray-900">
                 Caso #{r.caso_eliminado} -{' '}
@@ -693,7 +693,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         const r = record as CasoCreadoAuditRecord;
         return (
           <div className="flex items-center gap-3">
-            <Scale className="w-5 h-5 text-gray-600" />
+            <Briefcase className="w-5 h-5 text-gray-600" />
             <div className="flex-1">
               <p className="font-semibold text-gray-900">
                 <Link
@@ -1264,7 +1264,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         const r = record as CasoActualizadoAuditRecord;
         return (
           <div className="flex items-center gap-3">
-            <Scale className="w-5 h-5 text-gray-600" />
+            <Briefcase className="w-5 h-5 text-gray-600" />
             <div className="flex-1">
               <p className="font-semibold text-gray-900">
                 <Link
