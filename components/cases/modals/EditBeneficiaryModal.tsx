@@ -400,9 +400,8 @@ export default function EditBeneficiaryModal({
 
                         <div className="col-span-1">
                             <div className="flex flex-col gap-1">
-                                <label className="text-base font-normal text-foreground mb-1 flex items-center gap-2">
-                                    <Calendar className="w-4 h-4" />
-                                    Fecha de Nacimiento *
+                                <label className="text-base font-normal text-foreground mb-1">
+                                    Fecha de Nacimiento <span className="text-danger">*</span>
                                 </label>
                                 <DatePicker
                                     value={formData.fechaNac}

@@ -55,7 +55,7 @@ export default function AddBeneficiaryModal({
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [lockedFields, setLockedFields] = useState<Set<keyof FormData>>(new Set());
-  
+
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -121,7 +121,7 @@ export default function AddBeneficiaryModal({
     }
 
     const cedula = `${tipo}-${numero}`;
-    
+
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
 
     searchTimeout.current = setTimeout(async () => {
@@ -160,7 +160,7 @@ export default function AddBeneficiaryModal({
     // Parsear la cédula si viene en formato T-NUMERO (ej: V-12345678)
     let cedulaTipo = formData.cedulaTipo;
     let cedulaNumero = formData.cedulaNumero;
-    
+
     if (persona.cedula && persona.cedula.includes('-')) {
       const parts = persona.cedula.split('-');
       if (parts.length === 2) {
@@ -200,7 +200,7 @@ export default function AddBeneficiaryModal({
 
     setFormData((prev) => {
       const newData = { ...prev, [field]: filteredValue };
-      
+
       if (field === 'cedulaTipo' || field === 'cedulaNumero') {
         // Si cambia la cédula, resetear bloqueos si existían
         if (lockedFields.size > 0) {
@@ -208,7 +208,7 @@ export default function AddBeneficiaryModal({
         }
         handleSearch(newData.cedulaTipo, newData.cedulaNumero);
       }
-      
+
       return newData;
     });
 
@@ -299,7 +299,7 @@ export default function AddBeneficiaryModal({
                 numbersOnly={formData.cedulaTipo !== 'P'}
                 error={errors.cedulaNumero}
               />
-              
+
               <AnimatePresence>
                 {showSuggestions && (
                   <motion.div
@@ -358,9 +358,8 @@ export default function AddBeneficiaryModal({
 
             <div className="col-span-1">
               <div className="flex flex-col gap-1">
-                <label className="text-base font-normal text-foreground mb-1 flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Fecha de Nacimiento *
+                <label className="text-base font-normal text-foreground mb-1">
+                  Fecha de Nacimiento <span className="text-danger">*</span>
                 </label>
                 <DatePicker
                   value={formData.fechaNac}
@@ -424,20 +423,20 @@ export default function AddBeneficiaryModal({
             <span className="text-danger font-medium text-sm">*</span>
             <span className="text-sm text-gray-600">Campo obligatorio</span>
           </div>
-          
+
           <div className="flex justify-end gap-3">
-            <Button 
-              variant="outline" 
-              size="xl" 
-              onClick={handleClose} 
+            <Button
+              variant="outline"
+              size="xl"
+              onClick={handleClose}
               disabled={isSubmitting}
             >
               Cancelar
             </Button>
-            <Button 
-              variant="primary" 
-              size="xl" 
-              onClick={handleSubmit} 
+            <Button
+              variant="primary"
+              size="xl"
+              onClick={handleSubmit}
               isLoading={isSubmitting}
               disabled={isSubmitting}
             >
