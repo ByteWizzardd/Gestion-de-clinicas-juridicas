@@ -41,7 +41,7 @@ export default function TeamTab({ equipo }: TeamTabProps) {
           </h3>
           <div className="space-y-4">
             {profesores.map((profesor) => (
-              <div key={profesor.cedula} className="border border-gray-200 rounded-lg p-4">
+              <div key={`${profesor.cedula}-${profesor.term}`} className="border border-gray-200 rounded-lg p-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-gray-500">Nombre Completo</label>
@@ -102,7 +102,7 @@ export default function TeamTab({ equipo }: TeamTabProps) {
           </h3>
           <div className="space-y-4">
             {estudiantes.map((estudiante) => (
-              <div key={estudiante.cedula} className="border border-gray-200 rounded-lg p-4">
+              <div key={`${estudiante.cedula}-${estudiante.term}`} className="border border-gray-200 rounded-lg p-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-gray-500">Nombre Completo</label>
@@ -133,6 +133,17 @@ export default function TeamTab({ equipo }: TeamTabProps) {
                   <div>
                     <label className="text-sm font-medium text-gray-500">Rol</label>
                     <p className="text-base text-gray-900 mt-1">{estudiante.rol}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Estado</label>
+                    <p className="text-base text-gray-900 mt-1">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${estudiante.habilitado
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-800'
+                        }`}>
+                        {estudiante.habilitado ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </p>
                   </div>
                 </div>
               </div>
