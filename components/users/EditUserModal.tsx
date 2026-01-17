@@ -7,7 +7,8 @@ import { updateUsuarioByCedulaAction } from '@/app/actions/usuarios';
 import { UpdateUserSchema } from '@/lib/validations/user.schema';
 import { getSemestresAction } from '@/app/actions/estudiantes';
 import PhoneInput from '../forms/PhoneInput';
-import { validateEmailFormat, validateEmailDomain } from '@/lib/utils/email-validation';
+import { validateEmailFormat } from '@/lib/utils/email-validation';
+import { useEmailVerification } from '@/hooks/useEmailVerification';
 
 interface Usuario {
   cedula: string;
@@ -32,6 +33,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof Usuario, string>>>({});
+  const { verifyEmail, isVerifying: isVerifyingEmail } = useEmailVerification();
 
   // Sincronizar el estado local solo cuando cambia el usuario y el modal se abre
   useEffect(() => {
@@ -88,9 +90,8 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
     if (form.correo_electronico && form.correo_electronico.trim()) {
       if (!validateEmailFormat(form.correo_electronico)) {
         newErrors.correo_electronico = 'Correo electrónico inválido';
-      } else if (!validateEmailDomain(form.correo_electronico)) {
-        newErrors.correo_electronico = 'El correo debe tener dominio @est.ucab.edu.ve o @ucab.edu.ve';
       }
+      // La verificación profunda se hará en onBlur o antes del submit
     }
 
     // Validar teléfono (si está presente)
@@ -254,7 +255,20 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
                 name="correo_electronico"
                 value={typeof form.correo_electronico === 'string' ? form.correo_electronico : ''}
                 onChange={handleChange}
+                onBlur={async (e) => {
+                  const email = e.target.value;
+                  if (email && email.trim() && validateEmailFormat(email)) {
+                    const isValid = await verifyEmail(email);
+                    if (!isValid) {
+                      setErrors((prev) => ({
+                        ...prev,
+                        correo_electronico: 'El correo electrónico no es válido o no existe',
+                      }));
+                    }
+                  }
+                }}
                 error={errors.correo_electronico}
+                disabled={isVerifyingEmail}
               />
               <Input
                 label="Nombre(s)"
