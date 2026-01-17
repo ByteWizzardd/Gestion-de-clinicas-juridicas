@@ -15,6 +15,7 @@ interface PersonalInfoTabProps {
     estado_civil?: string | null;
     concubinato?: boolean | null;
     nombre_nucleo?: string | null;
+    direccion_habitacion?: string | null;
     // Dirección del núcleo
     nucleo_nombre_parroquia?: string | null;
     nucleo_nombre_municipio?: string | null;
@@ -113,6 +114,19 @@ export default function PersonalInfoTab({ solicitante }: PersonalInfoTabProps) {
           </div>
         </div>
       </div>
+
+      {/* Dirección de Habitación Card */}
+      {solicitante.direccion_habitacion && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-primary" />
+            Dirección de Habitación
+          </h3>
+          <div>
+            <p className="text-base text-gray-900">{solicitante.direccion_habitacion}</p>
+          </div>
+        </div>
+      )}
 
       {/* Núcleo Asignado Card */}
       {solicitante.nombre_nucleo && (

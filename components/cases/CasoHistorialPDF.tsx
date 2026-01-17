@@ -139,7 +139,7 @@ export function CasoHistorialPDF({ data, logoBase64 }: CasoHistorialPDFProps) {
   const casoData = caso || {};
 
   // Sort citas
-  const sortedCitas = [...citas].sort((a, b) => new Date(a.fecha_encuentro || a.fecha_cita).getTime() - new Date(b.fecha_encuentro || b.fecha_cita).getTime()).slice(0, 4);
+  const sortedCitas = [...citas].sort((a, b) => new Date(a.fecha_encuentro || a.fecha_cita).getTime() - new Date(b.fecha_encuentro || b.fecha_cita).getTime());
 
   // Format ID for boxes
   const idStr = (casoData.id_caso || '').toString().padStart(3, '0');
@@ -204,15 +204,23 @@ export function CasoHistorialPDF({ data, logoBase64 }: CasoHistorialPDFProps) {
         </View>
 
         {/* ROW 4: Citas */}
-        <View style={[styles.formRow, { marginTop: 5, justifyContent: 'space-between' }]}>
-          <Text style={[styles.label, { marginRight: 10 }]}>6. Próximas citas:</Text>
+        <View style={{ marginTop: 5 }}>
+          <Text style={[styles.label, { marginBottom: 5 }]}>6. Próximas citas:</Text>
 
-          {/* Render 4 boxes evenly */}
-          {[0, 1, 2, 3].map(i => (
-            <View key={i} style={[styles.boxField, { width: '20%', alignItems: 'center' }]}>
-              <Text style={{ fontSize: 9 }}>
-                {sortedCitas[i] ? formatDate(sortedCitas[i].fecha_encuentro || sortedCitas[i].fecha_cita) : ''}
-              </Text>
+          {/* Render citas in rows of 4 */}
+          {Array.from({ length: Math.ceil(Math.max(sortedCitas.length, 4) / 4) }).map((_, rowIndex) => (
+            <View key={rowIndex} style={[styles.formRow, { justifyContent: 'flex-start', marginBottom: 3 }]}>
+              {[0, 1, 2, 3].map(colIndex => {
+                const citaIndex = rowIndex * 4 + colIndex;
+                const cita = sortedCitas[citaIndex];
+                return (
+                  <View key={colIndex} style={[styles.boxField, { width: '23%', alignItems: 'center', marginRight: '2%' }]}>
+                    <Text style={{ fontSize: 9 }}>
+                      {cita ? formatDate(cita.fecha_encuentro || cita.fecha_cita) : ''}
+                    </Text>
+                  </View>
+                );
+              })}
             </View>
           ))}
         </View>

@@ -337,8 +337,6 @@ export async function generateCasoHistorialExcelFormatoUCAB(data: CasoHistorialD
     const dirCell = sheet.getCell(r, 13);
     dirCell.value = caso.direccion_habitacion || '';
     dirCell.font = fontValue;
-    dirCell.border = borderBottom;
-
     r += 2;
 
     // === LÍNEA 4: Próximas citas ===
@@ -347,28 +345,35 @@ export async function generateCasoHistorialExcelFormatoUCAB(data: CasoHistorialD
     sheet.getCell(r, 2).value = '6. Próximas citas:';
     sheet.getCell(r, 2).font = fontLabel;
 
-    // 4 Cajas separadas, shifted right
-    const citas = (data.citas || []).sort((a, b) => new Date(a.fecha_encuentro || a.fecha_cita).getTime() - new Date(b.fecha_encuentro || b.fecha_cita).getTime()).slice(0, 4);
+    // Ordenar todas las citas (sin limitar a 4)
+    const citas = (data.citas || []).sort((a, b) => new Date(a.fecha_encuentro || a.fecha_cita).getTime() - new Date(b.fecha_encuentro || b.fecha_cita).getTime());
 
-    const citaBoxes = [
+    // Definir posiciones de las 4 cajas por fila
+    const citaBoxPositions = [
         { s: 11, e: 16 }, // K-P
         { s: 18, e: 23 }, // R-W
         { s: 25, e: 30 }, // Y-AD
         { s: 32, e: 37 }  // AF-AK
     ];
 
-    citaBoxes.forEach((box, idx) => {
-        sheet.mergeCells(r, box.s, r, box.e);
-        const c = sheet.getCell(r, box.s);
-        c.border = borderBox;
-        c.font = { size: 9 };
-        c.alignment = { horizontal: 'center' };
-        if (citas[idx]) {
-            c.value = formatCita(citas[idx]);
-        }
-    });
+    // Renderizar citas en filas de 4
+    const numRows = Math.max(1, Math.ceil(citas.length / 4));
+    for (let rowIdx = 0; rowIdx < numRows; rowIdx++) {
+        const currentRow = r + rowIdx;
+        citaBoxPositions.forEach((box, colIdx) => {
+            const citaIdx = rowIdx * 4 + colIdx;
+            sheet.mergeCells(currentRow, box.s, currentRow, box.e);
+            const c = sheet.getCell(currentRow, box.s);
+            c.border = borderBox;
+            c.font = { size: 9 };
+            c.alignment = { horizontal: 'center' };
+            if (citas[citaIdx]) {
+                c.value = formatCita(citas[citaIdx]);
+            }
+        });
+    }
 
-    r += 2;
+    r += numRows + 1;
 
     // === LÍNEA 5: Recaudos consignados ===
     sheet.mergeCells(r, 2, r, 12); // Increased B:L

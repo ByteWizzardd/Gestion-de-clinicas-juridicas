@@ -18,6 +18,7 @@ SELECT
     vs.concubinato,
     vs.tiempo_estudio,
     vs.tipo_tiempo_estudio,
+    vs.direccion_habitacion,
     
     -- Información del núcleo (obtenido del caso más reciente)
     n.id_nucleo,

@@ -25,6 +25,8 @@ SELECT
     vc.nombre_subcategoria,
     -- Nombre del ámbito legal
     al.nombre_ambito_legal,
+    -- Dirección de habitación del solicitante (para PDF/Excel)
+    s.direccion_habitacion,
     -- Responsable del caso (estudiante asignado)
     COALESCE(
         (SELECT u.nombres || ' ' || u.apellidos
@@ -40,5 +42,6 @@ LEFT JOIN ambitos_legales al ON vc.id_materia = al.id_materia
     AND vc.num_categoria = al.num_categoria
     AND vc.num_subcategoria = al.num_subcategoria
     AND vc.num_ambito_legal = al.num_ambito_legal
+LEFT JOIN solicitantes s ON vc.cedula = s.cedula
 WHERE vc.id_caso = $1;
 
