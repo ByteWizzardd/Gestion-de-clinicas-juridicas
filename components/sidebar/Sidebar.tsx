@@ -150,10 +150,12 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido' }: Si
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              {/* Versión ícono/pequeña del logo */}
-              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary font-bold text-xl">
-                D
-              </div>
+              {/* Versión ícono/pequeña del logo con hover y link */}
+              <Link href="/dashboard">
+                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center font-bold text-xl cursor-pointer transition-colors duration-200 text-primary hover:bg-red-100 hover:text-red-600">
+                  D
+                </div>
+              </Link>
             </motion.div>
           ) : (
             <motion.div
@@ -163,7 +165,9 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido' }: Si
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <Image src="/image.png" alt="DER Logo" width={240} height={87} className="object-contain" />
+              <Link href="/dashboard">
+                <Image src="/image.png" alt="DER Logo" width={240} height={87} className="object-contain cursor-pointer transition-transform duration-300 ease-in-out hover:scale-105" />
+              </Link>
             </motion.div>
           )}
         </AnimatePresence>
@@ -192,7 +196,7 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido' }: Si
                   `}
                   title={isCollapsed ? item.label : undefined}
                 >
-                  <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-foreground'}`} />
+                  <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-white' : 'text-foreground'}`} />
                   {!isCollapsed && (
                     <motion.span
                       initial={{ opacity: 0, width: 0 }}
@@ -231,10 +235,10 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido' }: Si
               <img
                 src={fotoPerfil}
                 alt="Foto de perfil"
-                className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-gray-200"
+                className="w-10 h-10 rounded-full object-cover shrink-0 border-2 border-gray-200"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-gray-200 shrink-0 flex items-center justify-center">
                 <span className="text-gray-500 text-sm font-medium">
                   {displayName.charAt(0).toUpperCase()}
                 </span>
