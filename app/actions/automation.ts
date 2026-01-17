@@ -19,27 +19,11 @@ export async function triggerInactiveCasesCheckAction() {
         return { success: false, message: 'Skipped: User is not coordinator' };
     }
 
-    // Rate Limiting simple usando Cookies
-    // Verificar si ya se corrió hoy para este usuario (browser session)
-    const cookieStore = await cookies();
-    const lastCheck = cookieStore.get('last_inactive_check');
-    const today = new Date().toISOString().split('T')[0];
-
-    if (lastCheck && lastCheck.value === today) {
-        return { success: true, message: 'Already checked today' };
-    }
+    // Rate Limiting removido a petición del usuario para notificar en cada inicio de sesión
+    // La duplicidad de notificaciones se maneja en el servicio (notificaciones no leídas)
 
     // Ejecutar verificación
     const result = await checkAndNotifyInactiveCases();
-
-    // Marcar como chequeado hoy
-    if (result.success) {
-        cookieStore.set('last_inactive_check', today, {
-            maxAge: 60 * 60 * 24, // 24 horas
-            path: '/',
-            httpOnly: true
-        });
-    }
 
     return result;
 }
