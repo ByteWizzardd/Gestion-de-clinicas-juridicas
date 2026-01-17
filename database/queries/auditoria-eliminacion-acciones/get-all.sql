@@ -45,7 +45,13 @@ WHERE
     ($1::TIMESTAMP IS NULL OR aea.fecha >= $1::TIMESTAMP) AND
     ($2::TIMESTAMP IS NULL OR aea.fecha <= $2::TIMESTAMP + INTERVAL '1 day') AND
     ($3::VARCHAR IS NULL OR aea.eliminado_por = $3) AND
-    ($4::INTEGER IS NULL OR aea.id_caso = $4)
+    ($4::INTEGER IS NULL OR aea.id_caso = $4) AND
+    ($5::VARCHAR IS NULL OR 
+        unaccent(aea.detalle_accion) ILIKE '%' || unaccent($5) || '%' OR 
+        unaccent(aea.comentario) ILIKE '%' || unaccent($5) || '%' OR
+        unaccent(aea.motivo) ILIKE '%' || unaccent($5) || '%' OR
+        aea.num_accion::TEXT ILIKE '%' || $5 || '%' OR
+        aea.id_caso::TEXT ILIKE '%' || $5 || '%')
 ORDER BY 
-    CASE WHEN $5 = 'asc' THEN aea.fecha END ASC,
-    CASE WHEN $5 = 'desc' OR $5 IS NULL THEN aea.fecha END DESC;
+    CASE WHEN $6 = 'asc' THEN aea.fecha END ASC,
+    CASE WHEN $6 = 'desc' OR $6 IS NULL THEN aea.fecha END DESC;

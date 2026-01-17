@@ -54,7 +54,14 @@ WHERE
     ($1::TIMESTAMP IS NULL OR aaa.fecha_actualizacion >= $1::TIMESTAMP) AND
     ($2::TIMESTAMP IS NULL OR aaa.fecha_actualizacion <= $2::TIMESTAMP + INTERVAL '1 day') AND
     ($3::VARCHAR IS NULL OR aaa.id_usuario_actualizo = $3) AND
-    ($4::INTEGER IS NULL OR aaa.id_caso = $4)
+    ($4::INTEGER IS NULL OR aaa.id_caso = $4) AND
+    ($5::VARCHAR IS NULL OR 
+        unaccent(aaa.detalle_accion_nuevo) ILIKE '%' || unaccent($5) || '%' OR 
+        unaccent(aaa.comentario_nuevo) ILIKE '%' || unaccent($5) || '%' OR
+        unaccent(aaa.detalle_accion_anterior) ILIKE '%' || unaccent($5) || '%' OR 
+        unaccent(aaa.comentario_anterior) ILIKE '%' || unaccent($5) || '%' OR
+        aaa.num_accion::TEXT ILIKE '%' || $5 || '%' OR
+        aaa.id_caso::TEXT ILIKE '%' || $5 || '%')
 ORDER BY 
-    CASE WHEN $5 = 'asc' THEN aaa.fecha_actualizacion END ASC,
-    CASE WHEN $5 = 'desc' OR $5 IS NULL THEN aaa.fecha_actualizacion END DESC;
+    CASE WHEN $6 = 'asc' THEN aaa.fecha_actualizacion END ASC,
+    CASE WHEN $6 = 'desc' OR $6 IS NULL THEN aaa.fecha_actualizacion END DESC;

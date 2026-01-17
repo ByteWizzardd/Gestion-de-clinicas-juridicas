@@ -14,6 +14,7 @@ export const auditoriaInsercionAccionesQueries = {
         fechaFin?: string;
         idUsuario?: string;
         idCaso?: number;
+        busqueda?: string;
         orden?: 'asc' | 'desc';
     }): Promise<Array<{
         id: number;
@@ -45,6 +46,7 @@ export const auditoriaInsercionAccionesQueries = {
             filters?.fechaFin || null,
             filters?.idUsuario || null,
             filters?.idCaso || null,
+            filters?.busqueda || null,
             filters?.orden || 'desc',
         ]);
         return result.rows.map(row => ({

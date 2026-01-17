@@ -55,7 +55,12 @@ WHERE
     ($1::TIMESTAMP IS NULL OR aia.fecha_creacion >= $1::TIMESTAMP) AND
     ($2::TIMESTAMP IS NULL OR aia.fecha_creacion <= $2::TIMESTAMP + INTERVAL '1 day') AND
     ($3::VARCHAR IS NULL OR aia.id_usuario_creo = $3) AND
-    ($4::INTEGER IS NULL OR aia.id_caso = $4)
+    ($4::INTEGER IS NULL OR aia.id_caso = $4) AND
+    ($5::VARCHAR IS NULL OR 
+        unaccent(aia.detalle_accion) ILIKE '%' || unaccent($5) || '%' OR 
+        unaccent(aia.comentario) ILIKE '%' || unaccent($5) || '%' OR
+        aia.num_accion::TEXT ILIKE '%' || $5 || '%' OR
+        aia.id_caso::TEXT ILIKE '%' || $5 || '%')
 ORDER BY 
-    CASE WHEN $5 = 'asc' THEN aia.fecha_creacion END ASC,
-    CASE WHEN $5 = 'desc' OR $5 IS NULL THEN aia.fecha_creacion END DESC;
+    CASE WHEN $6 = 'asc' THEN aia.fecha_creacion END ASC,
+    CASE WHEN $6 = 'desc' OR $6 IS NULL THEN aia.fecha_creacion END DESC;
