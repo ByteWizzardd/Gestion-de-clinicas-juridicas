@@ -49,10 +49,10 @@ const styles = StyleSheet.create({
   },
   // Sections
   sectionHeader: {
-    backgroundColor: '#D9D9D9',
+    backgroundColor: '#8B1C1C',
     padding: 3,
     borderWidth: 1,
-    borderColor: '#000',
+    borderColor: '#8B1C1C',
     marginBottom: 10,
     marginTop: 10,
   },
@@ -60,6 +60,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
     textAlign: 'center',
+    color: '#FFFFFF',
   },
   // Rows & Grids
   row: {
