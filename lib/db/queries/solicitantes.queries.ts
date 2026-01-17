@@ -469,6 +469,15 @@ export const solicitantesQueries = {
     deleteById: async (cedula: string): Promise<void> => {
         const query = loadSQL('solicitantes/delete-by-id.sql');
         await pool.query(query, [cedula]);
+    },
+
+    /**
+     * Actualiza nombres, apellidos, fecha de nacimiento y sexo de un solicitante
+     */
+    updateBasicInfo: async (cedula: string, nombres: string, apellidos: string, fechaNacimiento: string | Date, sexo: string): Promise<void> => {
+        const query = loadSQL('solicitantes/update-basic-info.sql');
+        const fecha = typeof fechaNacimiento === 'string' ? fechaNacimiento : fechaNacimiento.toISOString().split('T')[0];
+        await pool.query(query, [cedula, nombres, apellidos, fecha, sexo]);
     }
 };
 

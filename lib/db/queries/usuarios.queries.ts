@@ -556,33 +556,65 @@ export const usuariosQueries = {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      
-      // 1. Registrar en auditoría de eliminación (ahora deshabilitación) antes de actualizar
+
+      // 1. Registrar en auditoría de actualización
       const auditQuery = `
-        INSERT INTO auditoria_eliminacion_usuario (
-          usuario_eliminado, 
-          nombres_usuario_eliminado, 
-          apellidos_usuario_eliminado, 
-          eliminado_por, 
-          motivo, 
-          fecha
+        INSERT INTO auditoria_actualizacion_usuarios (
+          ci_usuario,
+          nombres_anterior,
+          apellidos_anterior,
+          correo_electronico_anterior,
+          nombre_usuario_anterior,
+          telefono_celular_anterior,
+          habilitado_sistema_anterior,
+          tipo_usuario_anterior,
+          tipo_estudiante_anterior,
+          tipo_profesor_anterior,
+          nombres_nuevo,
+          apellidos_nuevo,
+          correo_electronico_nuevo,
+          nombre_usuario_nuevo,
+          telefono_celular_nuevo,
+          habilitado_sistema_nuevo,
+          tipo_usuario_nuevo,
+          tipo_estudiante_nuevo,
+          tipo_profesor_nuevo,
+          id_usuario_actualizo,
+          fecha_actualizacion
         )
         SELECT 
-          cedula, 
-          nombres, 
-          apellidos, 
-          $1, 
-          'Deshabilitación masiva por lote', 
+          u.cedula,
+          u.nombres,
+          u.apellidos,
+          u.correo_electronico,
+          u.nombre_usuario,
+          u.telefono_celular,
+          u.habilitado_sistema,
+          u.tipo_usuario,
+          e.tipo_estudiante,
+          p.tipo_profesor,
+          u.nombres,
+          u.apellidos,
+          u.correo_electronico,
+          u.nombre_usuario,
+          u.telefono_celular,
+          false, -- Nuevo estado: deshabilitado
+          u.tipo_usuario,
+          e.tipo_estudiante,
+          p.tipo_profesor,
+          $1,
           (NOW() AT TIME ZONE 'America/Caracas')
-        FROM usuarios
-        WHERE cedula = ANY($2)
+        FROM usuarios u
+        LEFT JOIN estudiantes e ON u.cedula = e.cedula_estudiante AND e.habilitado = true
+        LEFT JOIN profesores p ON u.cedula = p.cedula_profesor AND p.habilitado = true
+        WHERE u.cedula = ANY($2)
       `;
       await client.query(auditQuery, [cedula_actor, cedulas]);
 
       // 2. Actualizar el estado en la tabla de usuarios
       const updateQuery = 'UPDATE usuarios SET habilitado_sistema = false WHERE cedula = ANY($1)';
       await client.query(updateQuery, [cedulas]);
-      
+
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
@@ -599,33 +631,65 @@ export const usuariosQueries = {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      
-      // 1. Registrar en auditoría de habilitación
+
+      // 1. Registrar en auditoría de actualización
       const auditQuery = `
-        INSERT INTO auditoria_habilitacion_usuario (
-          usuario_habilitado, 
-          nombres_usuario_habilitado, 
-          apellidos_usuario_habilitado, 
-          habilitado_por, 
-          motivo, 
-          fecha
+        INSERT INTO auditoria_actualizacion_usuarios (
+          ci_usuario,
+          nombres_anterior,
+          apellidos_anterior,
+          correo_electronico_anterior,
+          nombre_usuario_anterior,
+          telefono_celular_anterior,
+          habilitado_sistema_anterior,
+          tipo_usuario_anterior,
+          tipo_estudiante_anterior,
+          tipo_profesor_anterior,
+          nombres_nuevo,
+          apellidos_nuevo,
+          correo_electronico_nuevo,
+          nombre_usuario_nuevo,
+          telefono_celular_nuevo,
+          habilitado_sistema_nuevo,
+          tipo_usuario_nuevo,
+          tipo_estudiante_nuevo,
+          tipo_profesor_nuevo,
+          id_usuario_actualizo,
+          fecha_actualizacion
         )
         SELECT 
-          cedula, 
-          nombres, 
-          apellidos, 
-          $1, 
-          'Reactivación masiva por lote', 
+          u.cedula,
+          u.nombres,
+          u.apellidos,
+          u.correo_electronico,
+          u.nombre_usuario,
+          u.telefono_celular,
+          u.habilitado_sistema,
+          u.tipo_usuario,
+          e.tipo_estudiante,
+          p.tipo_profesor,
+          u.nombres,
+          u.apellidos,
+          u.correo_electronico,
+          u.nombre_usuario,
+          u.telefono_celular,
+          true, -- Nuevo estado: habilitado
+          u.tipo_usuario,
+          e.tipo_estudiante,
+          p.tipo_profesor,
+          $1,
           (NOW() AT TIME ZONE 'America/Caracas')
-        FROM usuarios
-        WHERE cedula = ANY($2)
+        FROM usuarios u
+        LEFT JOIN estudiantes e ON u.cedula = e.cedula_estudiante AND e.habilitado = true
+        LEFT JOIN profesores p ON u.cedula = p.cedula_profesor AND p.habilitado = true
+        WHERE u.cedula = ANY($2)
       `;
       await client.query(auditQuery, [cedula_actor, cedulas]);
 
       // 2. Actualizar el estado en la tabla de usuarios
       const updateQuery = 'UPDATE usuarios SET habilitado_sistema = true WHERE cedula = ANY($1)';
       await client.query(updateQuery, [cedulas]);
-      
+
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
@@ -633,6 +697,14 @@ export const usuariosQueries = {
     } finally {
       client.release();
     }
+  },
+
+  /**
+   * Actualiza solo nombres y apellidos de un usuario
+   */
+  updateBasicInfo: async (cedula: string, nombres: string, apellidos: string): Promise<void> => {
+    const query = loadSQL('usuarios/update-basic-info.sql');
+    await pool.query(query, [cedula, nombres, apellidos]);
   },
 };
 

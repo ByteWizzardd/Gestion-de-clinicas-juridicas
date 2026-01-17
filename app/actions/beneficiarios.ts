@@ -1,6 +1,8 @@
 'use server';
 
 import { beneficiariosQueries } from '@/lib/db/queries/beneficiarios.queries';
+import { usuariosQueries } from '@/lib/db/queries/usuarios.queries';
+import { solicitantesQueries } from '@/lib/db/queries/solicitantes.queries';
 import { AppError } from '@/lib/utils/errors';
 import { revalidatePath } from 'next/cache';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
@@ -185,10 +187,33 @@ export async function updateBeneficiarioAction(data: {
     }
 
 
+
+
     const beneficiario = await beneficiariosQueries.update({
       ...data,
       id_usuario_actualizo: authResult.user.cedula
     });
+
+    // Actualizar datos en usuarios y solicitantes si existen
+    if (data.cedula) {
+      // La actualización en usuarios y solicitantes no debe detener el flujo si falla
+      // y si el registro no existe, simplemente no actualizará nada (0 rows affected)
+      try {
+        await Promise.all([
+          usuariosQueries.updateBasicInfo(data.cedula, data.nombres, data.apellidos),
+          solicitantesQueries.updateBasicInfo(
+            data.cedula,
+            data.nombres,
+            data.apellidos,
+            data.fecha_nac,
+            data.sexo
+          )
+        ]);
+      } catch (error) {
+        console.error('Error sincronizando datos de beneficiario con usuarios/solicitantes:', error);
+        // No lanzamos error para nodetener la respuesta exitosa de la actualización del beneficiario
+      }
+    }
 
     // Revalidar el detalle del caso para que se vean los cambios
     revalidatePath(`/dashboard/cases/${data.id_caso}`);
