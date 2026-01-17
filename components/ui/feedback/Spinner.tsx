@@ -3,21 +3,21 @@ interface SpinnerProps {
     className?: string;
 }
 
-export function Spinner({ size, className }: SpinnerProps = {}) {
+export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
     const sizeClasses = {
         sm: 'w-4 h-4',
-        md: 'w-8 h-8',
+        md: 'w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12',
         lg: 'w-16 h-16',
         xl: 'w-24 h-24'
     };
 
-    const dimensions = size ? sizeClasses[size] : 'w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-16 lg:h-16';
+    const defaultClasses = `text-primary animate-spin fill-primary/60 ${sizeClasses[size] || sizeClasses.md} ${className}`;
 
     return (
         <div role="status" className={className}>
             <svg
                 aria-hidden="true"
-                className={`${dimensions} text-primary animate-spin fill-primary/60`}
+                className={defaultClasses}
                 viewBox="0 0 100 101"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"

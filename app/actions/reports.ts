@@ -14,6 +14,8 @@ import {
   mapTopCasesData,
 } from '@/lib/utils/reports-data-mapper';
 import { requireAuthInServerAction } from '@/lib/utils/server-auth';
+import { SolicitantesService } from '@/lib/services/solicitantes.service';
+import { casosService } from '@/lib/services/casos.service';
 import { resolveDateRange, handleReportError } from '@/lib/utils/reports-helpers';
 
 export interface CasosGroupedData {
@@ -601,5 +603,218 @@ export async function getInformeSocioeconomicoData(
     };
   } catch (error) {
     return handleReportError(error, 'getInformeSocioeconomicoData');
+  }
+}
+
+/**
+ * Obtiene los datos completos de un solicitante para generar su ficha
+ */
+export async function getSolicitanteFichaData(cedula: string): Promise<{
+  success: boolean;
+  data?: any;
+  error?: string;
+}> {
+  try {
+    const authResult = await requireAuthInServerAction();
+    if (!authResult.success) {
+      return { success: false, error: authResult.error };
+    }
+
+    // Usar el servicio unificado para obtener data consistente con el detalle del frontend
+    const solicitanteCompleto = await SolicitantesService.getSolicitanteCompleto(cedula);
+
+    if (!solicitanteCompleto) {
+      return { success: false, error: 'Solicitante no encontrado' };
+    }
+
+    // El servicio ya devuelve los casos en "casos"
+    const casosData = solicitanteCompleto.casos || [];
+
+    // Obtener beneficiarios de todos los casos (esto es específico del reporte, no del detalle simple)
+    // El servicio getSolicitanteCompleto no trae los beneficiarios anidados por defecto
+    let beneficiariosData: any[] = [];
+    if (casosData.length > 0) {
+      const beneficiariosPromises = casosData.map((caso: any) => beneficiariosQueries.getByCaso(caso.id_caso));
+      const beneficiariosArrays = await Promise.all(beneficiariosPromises);
+      beneficiariosData = beneficiariosArrays.flat();
+    }
+
+    return {
+      success: true,
+      data: {
+        solicitante: solicitanteCompleto,
+        casos: casosData,
+        beneficiarios: beneficiariosData
+      }
+    };
+  } catch (error) {
+    return handleReportError(error, 'getSolicitanteFichaData');
+  }
+}
+
+/**
+ * Obtiene los datos completos de un caso para generar su historial
+ */
+export async function getCasoHistorialData(idCaso: number): Promise<{
+  success: boolean;
+  data?: any;
+  error?: string;
+}> {
+  try {
+    const authResult = await requireAuthInServerAction();
+    if (!authResult.success) {
+      return { success: false, error: authResult.error };
+    }
+
+    // Usar el servicio unificado que ya trae toda la info relacionada (acciones, citas, soportes, beneficiarios)
+    // Esto asegura que el reporte muestre EXACTAMENTE lo mismo que la vista de detalle
+    const casoCompleto = await casosService.getCasoByIdCompleto(idCaso);
+
+    if (!casoCompleto) {
+      return { success: false, error: 'Caso no encontrado' };
+    }
+
+    return {
+      success: true,
+      data: {
+        caso: casoCompleto,
+        acciones: casoCompleto.acciones || [],
+        citas: casoCompleto.citas || [],
+        soportes: casoCompleto.soportes || [],
+        beneficiarios: casoCompleto.beneficiarios || [],
+        equipo: casoCompleto.equipo || [],
+        cambiosEstatus: casoCompleto.cambiosEstatus || []
+      }
+    };
+  } catch (error) {
+    return handleReportError(error, 'getCasoHistorialData');
+  }
+}
+
+/**
+ * Genera y descarga la ficha de un solicitante en PDF
+ */
+export async function descargarFichaSolicitanteAction(cedula: string): Promise<{
+  success: boolean;
+  data?: any;
+  error?: string;
+}> {
+  try {
+    // Obtener datos del solicitante
+    const fichaData = await getSolicitanteFichaData(cedula);
+    if (!fichaData.success || !fichaData.data) {
+      return { success: false, error: fichaData.error || 'Error al obtener datos del solicitante' };
+    }
+
+    // Devolver los datos para que el cliente genere el PDF
+    return {
+      success: true,
+      data: fichaData.data
+    };
+  } catch (error) {
+    return handleReportError(error, 'descargarFichaSolicitanteAction');
+  }
+}
+
+/**
+ * Genera y descarga el historial de un caso en PDF
+ */
+export async function descargarHistorialCasoAction(idCaso: number): Promise<{
+  success: boolean;
+  data?: any;
+  error?: string;
+}> {
+  try {
+    // Obtener datos del caso
+    const historialData = await getCasoHistorialData(idCaso);
+    if (!historialData.success || !historialData.data) {
+      return { success: false, error: historialData.error || 'Error al obtener datos del caso' };
+    }
+
+    // Devolver los datos para que el cliente genere el PDF
+    return {
+      success: true,
+      data: historialData.data
+    };
+  } catch (error) {
+    return handleReportError(error, 'descargarHistorialCasoAction');
+  }
+}
+
+/**
+ * Obtiene el historial de casos de un solicitante específico en un rango de fechas
+ */
+export async function getHistorialCasosBySolicitante(
+  cedula: string,
+  fechaInicio?: string,
+  fechaFin?: string
+): Promise<{ success: boolean; data?: any[]; error?: string }> {
+  try {
+    const authResult = await requireAuthInServerAction();
+    if (!authResult.success) {
+      return { success: false, error: authResult.error };
+    }
+
+    // Resolver fechas (aunque para este específico podríamos querer usar null si están vacías, le pasamos las fechas tal cual)
+    // El SQL ya maneja NULLs, así que pasamos las fechas directamente si existen
+
+    // 1. Obtener los casos básicos filtrados
+    const casosBasicos = await casosQueries.getHistorialBySolicitante(cedula, fechaInicio, fechaFin);
+
+    if (!casosBasicos || casosBasicos.length === 0) {
+      return { success: true, data: [] };
+    }
+
+    // 2. Obtener la información completa de cada caso (incluyendo citas, acciones, etc.)
+    // Usamos Promise.all para hacerlo en paralelo
+    const casosCompletos = await Promise.all(
+      casosBasicos.map(async (casoBasico) => {
+        try {
+          const casoCompleto = await casosService.getCasoByIdCompleto(casoBasico.id_caso);
+          return casoCompleto;
+        } catch (err) {
+          console.error(`Error obteniendo detalles del caso ${casoBasico.id_caso}:`, err);
+          return null;
+        }
+      })
+    );
+
+    // Filtrar nulos por si alguno falló y mapear a la estructura esperada
+    const data = casosCompletos
+      .filter(c => c !== null)
+      .map(c => {
+        // Desestructurar para separar las listas del objeto del caso
+        const cTyped = c as any;
+        const {
+          acciones,
+          citas,
+          soportes,
+          beneficiarios,
+          equipo,
+          cambiosEstatus,
+          ...casoDetails
+        } = cTyped;
+
+        return {
+          caso: casoDetails,
+          acciones,
+          citas,
+          soportes,
+          beneficiarios,
+          equipo,
+          cambiosEstatus
+        };
+      });
+
+    return {
+      success: true,
+      data
+    };
+  } catch (error) {
+    console.error('Error al obtener historial de casos del solicitante:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    };
   }
 }

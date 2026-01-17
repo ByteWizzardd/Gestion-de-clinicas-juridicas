@@ -511,7 +511,7 @@ export default function AuditClient() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <Spinner size="lg" />
+        <Spinner />
       </div>
     );
   }

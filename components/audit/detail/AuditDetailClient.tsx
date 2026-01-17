@@ -10,7 +10,7 @@ import AuditRecordCard from '../AuditRecordCard';
 import Spinner from '@/components/ui/feedback/Spinner';
 import type { AuditFilters, AuditRecordType } from '@/types/audit';
 
-type AuditType = 'soportes' | 'soportes-creados' | 'citas-eliminadas' | 'citas-actualizadas' | 'citas-creadas' | 'usuarios-eliminados' | 'usuarios-actualizados-campos' | 'usuarios-creados'
+type AuditType = 'soportes' | 'soportes-creados' | 'citas-eliminadas' | 'citas-actualizadas' | 'citas-creadas' | 'usuarios-eliminados' | 'usuarios-habilitados' | 'usuarios-actualizados-campos' | 'usuarios-creados'
   | 'solicitantes-eliminados' | 'solicitantes-actualizados' | 'solicitantes-creados'
   | 'estudiantes-inscritos' | 'profesores-asignados'
   | 'estados-eliminados' | 'estados-actualizados' | 'estados-insertados'
@@ -27,9 +27,7 @@ type AuditType = 'soportes' | 'soportes-creados' | 'citas-eliminadas' | 'citas-a
   | 'subcategorias-eliminadas' | 'subcategorias-actualizadas' | 'subcategorias-insertadas'
   | 'ambitos-legales-eliminados' | 'ambitos-legales-actualizados' | 'ambitos-legales-insertados'
   | 'caracteristicas-eliminadas' | 'caracteristicas-actualizadas' | 'caracteristicas-insertadas'
-  | 'caracteristicas-eliminadas' | 'caracteristicas-actualizadas' | 'caracteristicas-insertadas'
   | 'casos-eliminados' | 'casos-actualizados' | 'casos-creados'
-  | 'beneficiarios-eliminados' | 'beneficiarios-actualizados' | 'beneficiarios-creados'
   | 'beneficiarios-eliminados' | 'beneficiarios-actualizados' | 'beneficiarios-creados'
   | 'acciones-creadas' | 'acciones-actualizadas' | 'acciones-eliminadas'
   | 'equipos-actualizados' | 'equipos-creados';
@@ -63,6 +61,7 @@ export default function AuditDetailClient({
     'citas-actualizadas': 'cita-actualizada',
     'citas-creadas': 'cita-creada',
     'usuarios-eliminados': 'usuario-eliminado',
+    'usuarios-habilitados': 'usuario-habilitado',
     'usuarios-actualizados-campos': 'usuario-actualizado-campos',
     'usuarios-creados': 'usuario-creado',
     'solicitantes-eliminados': 'solicitante-eliminado',
@@ -166,6 +165,7 @@ export default function AuditDetailClient({
           getCitasActualizadasAuditAction,
           getCitasCreadasAuditAction,
           getUsuariosEliminadosAuditAction,
+          getUsuariosHabilitadosAuditAction,
           getUsuariosActualizadosCamposAuditAction,
           getUsuariosCreadosAuditAction,
           getSolicitantesEliminadosAuditAction,
@@ -247,6 +247,9 @@ export default function AuditDetailClient({
             break;
           case 'usuarios-eliminados':
             data = await getUsuariosEliminadosAuditAction(filters);
+            break;
+          case 'usuarios-habilitados':
+            data = await getUsuariosHabilitadosAuditAction(filters);
             break;
           case 'usuarios-actualizados-campos':
             data = await getUsuariosActualizadosCamposAuditAction(filters);
@@ -539,7 +542,7 @@ export default function AuditDetailClient({
       {/* Contenido */}
       {loading ? (
         <div className="flex justify-center items-center min-h-[400px]">
-          <Spinner size="lg" />
+          <Spinner />
         </div>
       ) : error ? (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">

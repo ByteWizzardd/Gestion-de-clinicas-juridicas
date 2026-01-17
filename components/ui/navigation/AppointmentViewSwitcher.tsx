@@ -2,7 +2,7 @@
 
 import { Calendar, List } from 'lucide-react';
 
-export type AppointmentViewMode = 'calendar' | 'list';
+export type AppointmentViewMode = 'calendar' | 'list' | 'scheduled';
 
 interface AppointmentViewSwitcherProps {
     activeView: AppointmentViewMode;

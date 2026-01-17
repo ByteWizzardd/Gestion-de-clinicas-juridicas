@@ -1,18 +1,19 @@
 -- Obtener todas las actualizaciones de un usuario específico
+-- IMPORTANTE: Los datos vienen de la tabla de auditoría, NO de usuarios
 -- Parámetros: $1 = ci_usuario
 SELECT 
     a.id,
     a.ci_usuario,
-    -- Información del usuario actualizado
-    u.nombres AS nombres_usuario,
-    u.apellidos AS apellidos_usuario,
+    -- Información del usuario actualizado (desde la tabla de auditoría)
+    a.nombres_nuevo AS nombres_usuario,
+    a.apellidos_nuevo AS apellidos_usuario,
     CASE 
-        WHEN u.nombres IS NOT NULL AND u.apellidos IS NOT NULL 
-        THEN u.nombres || ' ' || u.apellidos
-        WHEN u.nombres IS NOT NULL 
-        THEN u.nombres
-        WHEN u.apellidos IS NOT NULL 
-        THEN u.apellidos
+        WHEN a.nombres_nuevo IS NOT NULL AND a.apellidos_nuevo IS NOT NULL 
+        THEN a.nombres_nuevo || ' ' || a.apellidos_nuevo
+        WHEN a.nombres_nuevo IS NOT NULL 
+        THEN a.nombres_nuevo
+        WHEN a.apellidos_nuevo IS NOT NULL 
+        THEN a.apellidos_nuevo
         ELSE NULL
     END AS nombre_completo_usuario,
     u.foto_perfil AS foto_perfil_usuario,

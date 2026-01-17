@@ -87,8 +87,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
     setLoadingData(true);
     setError(null);
     try {
-      const result = await getUsuariosAction();
-
+      const result = await getUsuariosAction(true);
       if (!result.success) {
         setError(result.error?.message || 'Error al cargar usuarios disponibles');
         return;
@@ -96,7 +95,6 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
 
       if (result.data) {
         const usuariosList = result.data
-          .filter(u => u.habilitado_sistema)
           .map(u => ({
             cedula: u.cedula,
             nombre_completo: u.nombre_completo,

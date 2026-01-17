@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Archive } from 'lucide-react';
+import { Archive, Download } from 'lucide-react';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import CaseFormModal from '@/components/forms/CaseFormModal';
@@ -14,6 +14,8 @@ import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
 import { getCasosAction, getCasosByUsuarioAction, deleteCasoAction } from '@/app/actions/casos';
 import { createCasoAction, updateCasoAction, uploadSoportesAction } from '@/app/actions/casos';
 import { getMateriasAction } from '@/app/actions/materias';
+import { descargarHistorialCasoAction } from '@/app/actions/reports';
+import { generateCasoHistorialZip } from '@/lib/utils/case-history-pdf-generator';
 
 interface Caso {
   id_caso: number;
@@ -378,7 +380,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       }
 
       if (archivos.length > 0 && result.success && result.data) {
-        const idCaso = (result.data as Caso).id_caso;
+        const idCaso = (result.data as any).id_caso;
 
         if (!idCaso || isNaN(Number(idCaso))) {
           alert('Caso creado exitosamente, pero no se pudo obtener el ID del caso para subir los archivos');
@@ -409,6 +411,23 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
       alert(`Error al procesar el caso: ${errorMessage}`);
+    }
+  };
+
+  const handleDownloadHistorial = async (data: Record<string, unknown>) => {
+    const caso = data as TableRow;
+    const idCaso = parseInt(caso.codigo);
+    try {
+      const result = await descargarHistorialCasoAction(idCaso);
+
+      if (result.success && result.data) {
+        await generateCasoHistorialZip(result.data);
+      } else {
+        alert(`Error al descargar el historial: ${result.error || 'Error desconocido'}`);
+      }
+    } catch (error) {
+      console.error('Error al descargar historial:', error);
+      alert(`Ocurrió un error al descargar el historial del caso: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
   };
 
@@ -485,6 +504,17 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
             onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            actions={[
+              {
+                label: (
+                  <>
+                    <Download className="w-4 h-4 text-gray-500 group-hover:text-yellow-600 transition-colors" />
+                    Descargar historial de caso
+                  </>
+                ),
+                onClick: handleDownloadHistorial
+              }
+            ]}
           />
         </motion.div>
       )}

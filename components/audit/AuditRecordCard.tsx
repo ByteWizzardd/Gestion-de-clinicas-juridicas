@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, ChevronUp, FileText, Calendar, User, X, Check, BookOpen, GraduationCap, Building, Briefcase, Activity, Tag, Tags, Scale, MapPin, Building2, Home, FolderTree, FolderOpen, UserCircle, Users, ArrowRight } from 'lucide-react';
+import { ChevronDown, ChevronUp, FileText, Calendar, User, X, Check, BookOpen, GraduationCap, Building, Briefcase, Activity, Tag, Tags, Scale, MapPin, Building2, Home, FolderTree, FolderOpen, UserCircle, Users, ArrowRight, UserX } from 'lucide-react';
 import Link from 'next/link';
 import UserAvatar from '@/components/ui/UserAvatar';
 import { formatDateTime } from '@/lib/utils/date-formatter';
@@ -13,6 +13,7 @@ import type {
   CitaActualizadaAuditRecord,
   CitaCreadaAuditRecord,
   UsuarioEliminadoAuditRecord,
+  UsuarioHabilitadoAuditRecord,
   UsuarioActualizadoCamposAuditRecord,
   UsuarioCreadoAuditRecord,
   CasoEliminadoAuditRecord,
@@ -32,7 +33,7 @@ import type {
   MiembroEquipoAudit
 } from '@/types/audit';
 
-type AuditRecord = SoporteAuditRecord | SoporteCreadoAuditRecord | CitaEliminadaAuditRecord | CitaActualizadaAuditRecord | CitaCreadaAuditRecord | UsuarioEliminadoAuditRecord | UsuarioActualizadoCamposAuditRecord | UsuarioCreadoAuditRecord | CasoEliminadoAuditRecord | CasoActualizadoAuditRecord | CasoCreadoAuditRecord | SolicitanteEliminadoAuditRecord | SolicitanteActualizadoAuditRecord | SolicitanteCreadoAuditRecord | EstudianteInscritoAuditRecord | BeneficiarioEliminadoAuditRecord | BeneficiarioActualizadoAuditRecord | BeneficiarioInscritoAuditRecord | AccionCreadaAuditRecord | AccionActualizadaAuditRecord | AccionEliminadaAuditRecord | EquipoActualizadoAuditRecord | any;
+type AuditRecord = SoporteAuditRecord | SoporteCreadoAuditRecord | CitaEliminadaAuditRecord | CitaActualizadaAuditRecord | CitaCreadaAuditRecord | UsuarioEliminadoAuditRecord | UsuarioHabilitadoAuditRecord | UsuarioActualizadoCamposAuditRecord | UsuarioCreadoAuditRecord | CasoEliminadoAuditRecord | CasoActualizadoAuditRecord | CasoCreadoAuditRecord | SolicitanteEliminadoAuditRecord | SolicitanteActualizadoAuditRecord | SolicitanteCreadoAuditRecord | EstudianteInscritoAuditRecord | BeneficiarioEliminadoAuditRecord | BeneficiarioActualizadoAuditRecord | BeneficiarioInscritoAuditRecord | AccionCreadaAuditRecord | AccionActualizadaAuditRecord | AccionEliminadaAuditRecord | EquipoActualizadoAuditRecord | any;
 
 import type { AuditRecordType } from '@/types/audit';
 
@@ -152,6 +153,21 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
     return date1.getFullYear() === date2.getFullYear() &&
       date1.getMonth() === date2.getMonth() &&
       date1.getDate() === date2.getDate();
+  };
+
+  // Helper para verificar si un valor es efectivamente vacío (null, undefined, o cadena vacía)
+  const isEffectivelyEmpty = (value: any): boolean => {
+    return value === null || value === undefined || value === '';
+  };
+
+  // Helper para comparar valores considerando cadenas vacías como equivalentes a null
+  const areValuesEffectivelyEqual = (v1: any, v2: any): boolean => {
+    // Si ambos son efectivamente vacíos, son iguales
+    if (isEffectivelyEmpty(v1) && isEffectivelyEmpty(v2)) return true;
+    // Si solo uno es vacío, son diferentes
+    if (isEffectivelyEmpty(v1) || isEffectivelyEmpty(v2)) return false;
+    // Comparar valores normales
+    return v1 === v2;
   };
 
   const formatDateOnly = (dateInput: string | Date | null | undefined) => {
@@ -509,16 +525,48 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                   r.nombre_completo_usuario_eliminado,
                   r.nombres_usuario_eliminado,
                   r.apellidos_usuario_eliminado,
-                  r.usuario_eliminado
+                  undefined
                 )}
               </p>
               <p className="text-sm text-gray-600">
-                Eliminado por:{' '}
+                Cédula: {r.usuario_eliminado} • Eliminado por:{' '}
                 {renderUserLink(
                   r.nombre_completo_eliminado_por,
                   r.nombres_eliminado_por,
                   r.apellidos_eliminado_por,
                   r.eliminado_por
+                )}
+              </p>
+            </div>
+          </div>
+        );
+      }
+      case 'usuario-habilitado': {
+        const r = record as UsuarioHabilitadoAuditRecord;
+        return (
+          <div className="flex items-center gap-3">
+            <UserCircle className="w-5 h-5 text-green-600" />
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">
+                {r.usuario_habilitado ? (
+                  <Link
+                    href={`/dashboard/users/${r.usuario_habilitado}`}
+                    className="text-primary hover:underline font-medium transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {r.nombre_completo_usuario_habilitado || `${r.nombres_usuario_habilitado} ${r.apellidos_usuario_habilitado}`}
+                  </Link>
+                ) : (
+                  r.nombre_completo_usuario_habilitado || `${r.nombres_usuario_habilitado} ${r.apellidos_usuario_habilitado}`
+                )}
+              </p>
+              <p className="text-sm text-gray-600">
+                Reactivado por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_habilitado_por,
+                  r.nombres_habilitado_por,
+                  r.apellidos_habilitado_por,
+                  r.habilitado_por
                 )}
               </p>
             </div>
@@ -2272,6 +2320,44 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           </div>
         );
       }
+      case 'usuario-habilitado': {
+        const r = record as UsuarioHabilitadoAuditRecord;
+        return (
+          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Información</p>
+              <p className="text-sm text-gray-600">
+                Usuario reactivado:{' '}
+                {r.usuario_habilitado ? (
+                  <Link
+                    href={`/dashboard/users/${r.usuario_habilitado}`}
+                    className="text-primary hover:underline font-medium"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {r.nombre_completo_usuario_habilitado || `${r.nombres_usuario_habilitado} ${r.apellidos_usuario_habilitado}`} (CI: {r.usuario_habilitado})
+                  </Link>
+                ) : (
+                  r.nombre_completo_usuario_habilitado || `${r.nombres_usuario_habilitado} ${r.apellidos_usuario_habilitado}`
+                )}
+              </p>
+              <p className="text-sm text-gray-600">
+                Reactivado por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_habilitado_por,
+                  r.nombres_habilitado_por,
+                  r.apellidos_habilitado_por,
+                  r.habilitado_por
+                )}
+              </p>
+              <p className="text-sm text-gray-600">Fecha: {formatDate(r.fecha)}</p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Motivo</p>
+              <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
+            </div>
+          </div>
+        );
+      }
       case 'usuario-creado': {
         const r = record as UsuarioCreadoAuditRecord;
         // Construir nombre completo del usuario
@@ -2477,7 +2563,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 </div>
               )}
 
-              {(r.telefono_celular_anterior !== r.telefono_celular_nuevo) && (
+              {!areValuesEffectivelyEqual(r.telefono_celular_anterior, r.telefono_celular_nuevo) && (
                 <div className="mb-2">
                   <p className="text-sm text-gray-600">
                     Teléfono celular:{' '}

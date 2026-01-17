@@ -56,6 +56,14 @@ export default function ReportsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    // Estados para historial de solicitante
+    const [solicitantes, setSolicitantes] = useState<any[]>([]);
+    const [filteredSolicitantes, setFilteredSolicitantes] = useState<any[]>([]);
+    const [selectedSolicitante, setSelectedSolicitante] = useState<any | null>(null);
+    const [solicitanteSearch, setSolicitanteSearch] = useState('');
+    const [isLoadingSolicitantes, setIsLoadingSolicitantes] = useState(false);
+    const [showSolicitanteDropdown, setShowSolicitanteDropdown] = useState(false);
+
     useEffect(() => {
         const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
         setPrefersReducedMotion(mediaQuery.matches);
@@ -73,6 +81,7 @@ export default function ReportsPage() {
                 const result = await getFilterOptions();
                 if (result.success && result.data) {
                     setTermOptions(result.data.termOptions);
+                    // Also load solicitantes proactively if needed, or lazy load on modal open
                 }
             } catch (err) {
                 console.error('Error loading term options:', err);
@@ -82,6 +91,44 @@ export default function ReportsPage() {
 
         return () => mediaQuery.removeEventListener("change", handleChange);
     }, []);
+
+    // Cargar solicitantes cuando se abre el modal de este tipo
+    useEffect(() => {
+        if (showDateModal && (tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante')) {
+            const loadSolicitantes = async () => {
+                setIsLoadingSolicitantes(true);
+                try {
+                    // Usamos import dinámico para evitar cargar todo de una vez
+                    const { getSolicitantesAction } = await import('@/app/actions/solicitantes');
+                    const result = await getSolicitantesAction();
+                    if (result.success && result.data) {
+                        setSolicitantes(result.data);
+                        setFilteredSolicitantes(result.data);
+                    }
+                } catch (error) {
+                    console.error('Error loading solicitantes:', error);
+                } finally {
+                    setIsLoadingSolicitantes(false);
+                }
+            };
+            loadSolicitantes();
+        }
+    }, [showDateModal, tipoReporteActual]);
+
+    // Filtrar solicitantes
+    useEffect(() => {
+        if (!solicitanteSearch) {
+            setFilteredSolicitantes(solicitantes);
+        } else {
+            const lowerSearch = solicitanteSearch.toLowerCase();
+            const filtered = solicitantes.filter(s =>
+                (s.nombre_completo?.toLowerCase() || '').includes(lowerSearch) ||
+                (s.cedula?.toLowerCase() || '').includes(lowerSearch)
+            );
+            setFilteredSolicitantes(filtered);
+        }
+    }, [solicitanteSearch, solicitantes]);
+
 
     // Fetch data when filters change
     useEffect(() => {
@@ -96,7 +143,8 @@ export default function ReportsPage() {
                     getTopCases,
                     getDistributionByStatus,
                     getCaseLoadTrend,
-                    getKPIStats
+                    getKPIStats,
+                    getDistributionByTramite
                 } = await import('@/app/actions/reports');
 
                 // Build parameters
@@ -159,30 +207,58 @@ export default function ReportsPage() {
     }, [filters]);
 
     const handleGenerateReport = async (reportType: string) => {
-        if (reportType === 'Tipos de Caso' || reportType === 'Reporte de Estatus de Casos' || reportType === 'Resumen de Casos' || reportType === 'Reporte Socioeconómico') {
+        if (reportType === 'Tipos de Caso' ||
+            reportType === 'Reporte de Estatus de Casos' ||
+            reportType === 'Resumen de Casos' ||
+            reportType === 'Reporte Socioeconómico' ||
+            reportType === 'Historial de Casos del Solicitante' ||
+            reportType === 'Ficha Resumen del Solicitante') { // Added new type
+
             // Guardar el tipo de reporte actual
             setTipoReporteActual(reportType);
             // Mostrar modal para seleccionar rango de fechas
             setShowDateModal(true);
-            // Sin fechas por defecto - si no se seleccionan, el reporte es histórico
+
+            // Reset states
             setFechaInicioReporte('');
             setFechaFinReporte('');
             setSelectedTermReporte('all');
             setFormatoReporte('pdf');
             setDateError(null);
+
+            // Reset solicitante selection
+            setSelectedSolicitante(null);
+            setSolicitanteSearch('');
+            setShowSolicitanteDropdown(false);
         } else {
             alert(`Generando ${reportType}...`);
         }
     };
 
     const handleGenerateTiposCasosReport = async () => {
-        // Validar que se haya seleccionado algo si no es histórico
-        if (!fechaInicioReporte && !fechaFinReporte && selectedTermReporte === 'all') {
-            // Permitir histórico, pero si intentaron algo y falló, dar error
-            // En este caso el usuario dice "Si no selecciona fechas, se generará histórico"
-        } else if (selectedTermReporte === 'all' && ((fechaInicioReporte && !fechaFinReporte) || (!fechaInicioReporte && fechaFinReporte))) {
-            setDateError('Si selecciona una fecha, debe seleccionar ambas');
-            return;
+        // Validacion especifica para historial solicitante y ficha resumen
+        if (tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante') {
+            if (!selectedSolicitante) {
+                setDateError('Debe seleccionar un solicitante');
+                return;
+            }
+        }
+
+        // Validar que se haya seleccionado algo si no es histórico (para los otros reportes)
+        // Para historial de solicitante, fechas vacías significan "todos los casos históricos"
+        if (tipoReporteActual !== 'Historial de Casos del Solicitante' && tipoReporteActual !== 'Ficha Resumen del Solicitante') {
+            if (!fechaInicioReporte && !fechaFinReporte && selectedTermReporte === 'all') {
+                // Permitir histórico
+            } else if (selectedTermReporte === 'all' && ((fechaInicioReporte && !fechaFinReporte) || (!fechaInicioReporte && fechaFinReporte))) {
+                setDateError('Si selecciona una fecha, debe seleccionar ambas');
+                return;
+            }
+        } else {
+            // Para solicitante, si elige fecha, deben ser ambas
+            if ((fechaInicioReporte && !fechaFinReporte) || (!fechaInicioReporte && fechaFinReporte)) {
+                setDateError('Si selecciona una fecha, debe seleccionar ambas');
+                return;
+            }
         }
 
         // Validar que fecha inicio sea menor o igual a fecha fin (solo si hay fechas)
@@ -192,6 +268,7 @@ export default function ReportsPage() {
         }
 
         setDateError(null);
+        // NO cerrar modal inmediatamente si es historial, para feedback visual, pero mejor cerrarlo y mostrar loading
         setShowDateModal(false);
         setIsGeneratingReport(true);
 
@@ -203,7 +280,58 @@ export default function ReportsPage() {
                 const fechaFin = fechaFinReporte || undefined;
                 const term = selectedTermReporte !== 'all' ? selectedTermReporte : undefined;
 
-                if (tipoReporteActual === 'Resumen de Casos') {
+                if (tipoReporteActual === 'Historial de Casos del Solicitante') {
+                    // 1. Obtener datos
+                    const { getHistorialCasosBySolicitante } = await import('@/app/actions/reports');
+                    const result = await getHistorialCasosBySolicitante(
+                        selectedSolicitante.cedula,
+                        fechaInicio,
+                        fechaFin
+                    );
+
+
+
+                    if (result.success && result.data && result.data.length > 0) {
+                        // 2. Generar ZIP
+                        const { generateHistorialSolicitanteZIP } = await import('@/lib/utils/case-history-pdf-generator');
+                        await generateHistorialSolicitanteZIP(result.data, selectedSolicitante.nombre_completo || `${selectedSolicitante.nombres} ${selectedSolicitante.apellidos}`);
+                    } else {
+                        if (result.success && (!result.data || result.data.length === 0)) {
+                            alert('No se encontraron casos para el solicitante en el rango de fechas seleccionado.');
+                        } else {
+                            alert('Error al obtener el historial: ' + (result.error || 'Error desconocido'));
+                        }
+                    }
+
+                } else if (tipoReporteActual === 'Ficha Resumen del Solicitante') {
+                    // 1. Obtener datos del Solicitante (Ficha)
+                    const { getSolicitanteFichaData } = await import('@/app/actions/reports');
+                    const fichaResult = await getSolicitanteFichaData(selectedSolicitante.cedula);
+
+                    // 2. Obtener datos del Historial (Casos)
+                    const { getHistorialCasosBySolicitante } = await import('@/app/actions/reports');
+                    // Para ficha resumen, generalmente queremos TODO el historial por defecto, 
+                    // pero respetamos si el usuario filtró fechas.
+                    const historialResult = await getHistorialCasosBySolicitante(
+                        selectedSolicitante.cedula,
+                        fechaInicio,
+                        fechaFin
+                    );
+
+                    if (fichaResult.success && fichaResult.data && historialResult.success && historialResult.data) {
+                        // 3. Generar ZIP Completo
+                        const { generateExpedienteSolicitanteZIP } = await import('@/lib/utils/case-history-pdf-generator');
+                        await generateExpedienteSolicitanteZIP(
+                            fichaResult.data,
+                            historialResult.data,
+                            selectedSolicitante.nombre_completo || `${selectedSolicitante.nombres} ${selectedSolicitante.apellidos}`
+                        );
+                    } else {
+                        const errorMsg = fichaResult.error || historialResult.error || 'Error desconocido al obtener datos';
+                        alert('Error al generar el expediente: ' + errorMsg);
+                    }
+
+                } else if (tipoReporteActual === 'Resumen de Casos') {
                     // Generar reporte resumen de casos
                     const { getInformeResumenData } = await import('@/app/actions/reports');
                     const result = await getInformeResumenData(
@@ -541,38 +669,104 @@ export default function ReportsPage() {
                             ? 'Rango de Fechas - Estatus de Casos'
                             : tipoReporteActual === 'Resumen de Casos'
                                 ? 'Rango de Fechas - Resumen de Casos'
-                                : 'Rango de Fechas - Tipos de Caso'}
+                                : tipoReporteActual === 'Historial de Casos del Solicitante'
+                                    ? 'Generar Historial del Solicitante'
+                                    : tipoReporteActual === 'Ficha Resumen del Solicitante'
+                                        ? 'Generar Ficha Resumen'
+                                        : 'Rango de Fechas - Tipos de Caso'}
                     </h2>
 
                     {/* Grid de formulario */}
                     <div className="grid grid-cols-1 gap-4 mb-4">
-                        {/* Opción por Semestre */}
-                        <div>
-                            <div className="flex flex-col gap-1">
-                                <label className="text-base font-normal text-foreground mb-1">
-                                    Por Semestre (Periodo)
+                        {/* Selector de Solicitante (Solo visible para Historial de Solicitante y Ficha Resumen) */}
+                        {(tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante') && (
+                            <div className="mb-4 relative">
+                                <label className="text-base font-normal text-foreground mb-1 block">
+                                    Buscar Solicitante <span className="text-red-500">*</span>
                                 </label>
-                                <Select
-                                    options={termOptions}
-                                    value={selectedTermReporte}
-                                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                                        setSelectedTermReporte(e.target.value);
-                                        if (e.target.value !== 'all') {
-                                            setFechaInicioReporte('');
-                                            setFechaFinReporte('');
-                                        }
-                                        setDateError(null);
-                                    }}
-                                    placeholder="Seleccionar Semestre"
-                                />
-                            </div>
-                        </div>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar por nombre, apellido o cédula..."
+                                        className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent pr-10"
+                                        value={solicitanteSearch}
+                                        onChange={(e) => {
+                                            setSolicitanteSearch(e.target.value);
+                                            setShowSolicitanteDropdown(true);
+                                            if (!e.target.value && selectedSolicitante) {
+                                                setSelectedSolicitante(null);
+                                            }
+                                        }}
+                                        onClick={() => setShowSolicitanteDropdown(true)}
+                                    />
+                                    {isLoadingSolicitantes && (
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                                            <Spinner size="sm" className="w-4 h-4 text-gray-400 border-gray-300" />
+                                        </div>
+                                    )}
+                                </div>
 
-                        <div className="relative py-2 flex items-center">
-                            <div className="flex-grow border-t border-gray-200"></div>
-                            <span className="flex-shrink mx-4 text-gray-400 text-sm">O por rango de fechas</span>
-                            <div className="flex-grow border-t border-gray-200"></div>
-                        </div>
+                                {showSolicitanteDropdown && filteredSolicitantes.length > 0 && (
+                                    <div className="absolute z-100 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                        {filteredSolicitantes.map((solicitante) => (
+                                            <div
+                                                key={solicitante.cedula}
+                                                className="p-2 hover:bg-gray-50 cursor-pointer flex flex-col border-b border-gray-100 last:border-0"
+                                                onClick={() => {
+                                                    setSelectedSolicitante(solicitante);
+                                                    setSolicitanteSearch(`${solicitante.nombre_completo} (${solicitante.cedula})`);
+                                                    setShowSolicitanteDropdown(false);
+                                                }}
+                                            >
+                                                <span className="font-medium text-gray-800">{solicitante.nombre_completo}</span>
+                                                <span className="text-xs text-gray-500">{solicitante.cedula}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                {showSolicitanteDropdown && filteredSolicitantes.length === 0 && !isLoadingSolicitantes && (
+                                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg p-2 text-center text-gray-500 text-sm">
+                                        No se encontraron resultados
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Opción por Semestre - Ocultar para historial de solicitante y ficha resumen */}
+                        {tipoReporteActual !== 'Historial de Casos del Solicitante' && tipoReporteActual !== 'Ficha Resumen del Solicitante' && (
+                            <div>
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-base font-normal text-foreground mb-1">
+                                        Por Semestre (Periodo)
+                                    </label>
+                                    <Select
+                                        options={termOptions}
+                                        value={selectedTermReporte}
+                                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                                            setSelectedTermReporte(e.target.value);
+                                            if (e.target.value !== 'all') {
+                                                setFechaInicioReporte('');
+                                                setFechaFinReporte('');
+                                            }
+                                            setDateError(null);
+                                        }}
+                                        placeholder="Seleccionar Semestre"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {tipoReporteActual !== 'Historial de Casos del Solicitante' && tipoReporteActual !== 'Ficha Resumen del Solicitante' && (
+                            <div className="relative py-2 flex items-center">
+                                <div className="grow border-t border-gray-200"></div>
+                                <span className="shrink mx-4 text-gray-400 text-sm">O por rango de fechas</span>
+                                <div className="grow border-t border-gray-200"></div>
+                            </div>
+                        )}
+
+                        {(tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante') && (
+                            <div className="text-gray-500 text-sm mb-2 font-medium">Filtrar por fechas (Opcional):</div>
+                        )}
 
                         {/* Fecha de Inicio */}
                         <div>
@@ -613,51 +807,55 @@ export default function ReportsPage() {
                         </div>
                     </div>
 
-                    {/* Selector de Formato */}
-                    <div className="mb-6">
-                        <label className="text-base font-normal text-foreground mb-3 block">
-                            Formato de descarga
-                        </label>
-                        <div className="flex gap-6">
-                            <label className="flex items-center gap-2 cursor-pointer group">
-                                <div className="relative flex items-center justify-center">
-                                    <input
-                                        type="radio"
-                                        name="formato"
-                                        value="pdf"
-                                        checked={formatoReporte === 'pdf'}
-                                        onChange={() => setFormatoReporte('pdf')}
-                                        className="appearance-none w-5 h-5 rounded-full border-2 border-gray-300 checked:border-primary transition-all cursor-pointer"
-                                    />
-                                    {formatoReporte === 'pdf' && (
-                                        <div className="absolute w-2.5 h-2.5 rounded-full bg-primary" />
-                                    )}
-                                </div>
-                                <span className={`text-sm ${formatoReporte === 'pdf' ? 'text-primary font-medium' : 'text-gray-600'}`}>PDF (.pdf)</span>
+                    {/* Selector de Formato - Ocultar para Historial y Ficha Resumen ya que siempre es ZIP */}
+                    {tipoReporteActual !== 'Historial de Casos del Solicitante' && tipoReporteActual !== 'Ficha Resumen del Solicitante' && (
+                        <div className="mb-6">
+                            <label className="text-base font-normal text-foreground mb-3 block">
+                                Formato de descarga
                             </label>
+                            <div className="flex gap-6">
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <div className="relative flex items-center justify-center">
+                                        <input
+                                            type="radio"
+                                            name="formato"
+                                            value="pdf"
+                                            checked={formatoReporte === 'pdf'}
+                                            onChange={() => setFormatoReporte('pdf')}
+                                            className="appearance-none w-5 h-5 rounded-full border-2 border-gray-300 checked:border-primary transition-all cursor-pointer"
+                                        />
+                                        {formatoReporte === 'pdf' && (
+                                            <div className="absolute w-2.5 h-2.5 rounded-full bg-primary" />
+                                        )}
+                                    </div>
+                                    <span className={`text-sm ${formatoReporte === 'pdf' ? 'text-primary font-medium' : 'text-gray-600'}`}>PDF (.pdf)</span>
+                                </label>
 
-                            <label className="flex items-center gap-2 cursor-pointer group">
-                                <div className="relative flex items-center justify-center">
-                                    <input
-                                        type="radio"
-                                        name="formato"
-                                        value="word"
-                                        checked={formatoReporte === 'word'}
-                                        onChange={() => setFormatoReporte('word')}
-                                        className="appearance-none w-5 h-5 rounded-full border-2 border-gray-300 checked:border-primary transition-all cursor-pointer"
-                                    />
-                                    {formatoReporte === 'word' && (
-                                        <div className="absolute w-2.5 h-2.5 rounded-full bg-primary" />
-                                    )}
-                                </div>
-                                <span className={`text-sm ${formatoReporte === 'word' ? 'text-primary font-medium' : 'text-gray-600'}`}>Word (.docx)</span>
-                            </label>
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <div className="relative flex items-center justify-center">
+                                        <input
+                                            type="radio"
+                                            name="formato"
+                                            value="word"
+                                            checked={formatoReporte === 'word'}
+                                            onChange={() => setFormatoReporte('word')}
+                                            className="appearance-none w-5 h-5 rounded-full border-2 border-gray-300 checked:border-primary transition-all cursor-pointer"
+                                        />
+                                        {formatoReporte === 'word' && (
+                                            <div className="absolute w-2.5 h-2.5 rounded-full bg-primary" />
+                                        )}
+                                    </div>
+                                    <span className={`text-sm ${formatoReporte === 'word' ? 'text-primary font-medium' : 'text-gray-600'}`}>Word (.docx)</span>
+                                </label>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Mensaje informativo sobre histórico */}
                     <p className="text-sm text-gray-500 mb-4">
-                        Si no selecciona semestre ni fechas, se generará un reporte histórico con todos los casos.
+                        {tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante'
+                            ? 'Si no selecciona fechas, se descargará el historial completo de todos los casos del solicitante en formato ZIP.'
+                            : 'Si no selecciona semestre ni fechas, se generará un reporte histórico con todos los casos.'}
                     </p>
 
                     {/* Mensaje de error */}
@@ -683,7 +881,7 @@ export default function ReportsPage() {
                                 onClick={handleGenerateTiposCasosReport}
                                 variant="primary"
                             >
-                                Generar Reporte
+                                {tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante' ? 'Descargar Expediente' : 'Generar Reporte'}
                             </Button>
                         </div>
                     </div>

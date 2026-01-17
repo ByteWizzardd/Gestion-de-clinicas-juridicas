@@ -57,9 +57,9 @@ BEGIN
         DELETE FROM estudiantes WHERE cedula_estudiante = p_cedula_usuario;
         DELETE FROM profesores WHERE cedula_profesor = p_cedula_usuario;
         
-        -- Actualizar referencias en notificaciones
-        UPDATE notificaciones SET cedula_emisor = NULL WHERE cedula_emisor = p_cedula_usuario;
-        UPDATE notificaciones SET cedula_receptor = NULL WHERE cedula_receptor = p_cedula_usuario;
+        -- Las notificaciones se eliminan automáticamente por ON DELETE CASCADE definido en el esquema
+        -- UPDATE notificaciones SET cedula_emisor = NULL WHERE cedula_emisor = p_cedula_usuario;
+        -- UPDATE notificaciones SET cedula_receptor = NULL WHERE cedula_receptor = p_cedula_usuario;
         
         -- Actualizar referencias en citas
         UPDATE citas SET id_usuario_registro = NULL WHERE id_usuario_registro = p_cedula_usuario;

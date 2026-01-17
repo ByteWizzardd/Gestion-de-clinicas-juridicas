@@ -60,7 +60,7 @@ export async function searchEstudiantesAction(query: string): Promise<SearchEstu
       };
     }
 
-    const estudiantes = await estudiantesQueries.searchByCedula(query.trim());
+    const estudiantes = await estudiantesQueries.searchByCedula(query.trim(), true);
 
     return {
       success: true,
@@ -183,8 +183,8 @@ export async function bulkCreateEstudiantesAction(
     const result = await bulkCreateEstudiantes(
       file,
       term.trim(),
-      tipoEstudiante,
       authResult.user.cedula,
+      tipoEstudiante,
       isPreview
     );
 

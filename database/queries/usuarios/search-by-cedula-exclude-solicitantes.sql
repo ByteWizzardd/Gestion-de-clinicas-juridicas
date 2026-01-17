@@ -10,6 +10,7 @@ SELECT
     u.nombres || ' ' || u.apellidos AS nombre_completo
 FROM usuarios u
 WHERE u.cedula LIKE '%' || $1 || '%'
+  AND u.habilitado_sistema = true
   AND NOT EXISTS (
       SELECT 1 FROM solicitantes s WHERE s.cedula = u.cedula
   )

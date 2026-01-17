@@ -3,18 +3,15 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
-import { UserPlus, Users } from 'lucide-react';
+import { UserPlus, Users, UserX } from 'lucide-react';
 import ConfirmModal from '../ui/feedback/ConfirmModal';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import BulkUploadModal from './BulkUploadModal';
-import { getUsuariosAction, deleteUsuarioFisicoAction, getUsuarioInfoByCedulaAction, toggleHabilitadoUsuarioAction } from '@/app/actions/usuarios';
+import { getUsuariosAction, deleteUsuarioFisicoAction, getUsuarioInfoByCedulaAction, toggleHabilitadoUsuarioAction, disableUsuariosLoteAction, enableUsuariosLoteAction } from '@/app/actions/usuarios';
 import EditUserModal from './EditUserModal';
 import CreateUserModal from './CreateUserModal';
 import DropdownMenu from '@/components/ui/navigation/DropdownMenu';
-
-// Simulación: obtener tipo de usuario actual (debería venir de contexto/auth real)
-
 
 interface Usuario extends Record<string, unknown> {
   cedula: string;
@@ -44,22 +41,30 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
   const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [tipoFilter, setTipoFilter] = useState('');
+  const [estadoFilter, setEstadoFilter] = useState('');
   const [loading, setLoading] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  
+  // Selección por lotes
+  const [selectedCedulas, setSelectedCedulas] = useState<string[]>([]);
+  const [isBatchDisabling, setIsBatchDisabling] = useState(false);
+  const [showBatchConfirm, setShowBatchConfirm] = useState(false);
+  const [isBatchEnabling, setIsBatchEnabling] = useState(false);
+  const [showBatchEnableConfirm, setShowBatchEnableConfirm] = useState(false);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+
   const router = useRouter();
 
   // Cerrar el dropdown cuando se detecta que un modal se ha abierto
   useEffect(() => {
     if (!isDropdownOpen) return;
 
-    // Escuchar cambios en el DOM para detectar modales
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
           if (node.nodeType === 1) {
             const element = node as HTMLElement;
-            // Verificar si el elemento o sus hijos son modales
             if (
               element.getAttribute('role') === 'dialog' ||
               element.getAttribute('aria-modal') === 'true' ||
@@ -82,7 +87,6 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
       attributeFilter: ['class', 'role', 'aria-modal']
     });
 
-    // También verificar cuando el body se bloquea (indicador de modal)
     const checkBodyOverflow = () => {
       if (document.body.style.overflow === 'hidden') {
         const modal = document.querySelector('[role="dialog"]') || 
@@ -99,7 +103,6 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
       attributeFilter: ['style']
     });
 
-    // Verificar inmediatamente
     checkBodyOverflow();
 
     return () => {
@@ -108,7 +111,6 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
     };
   }, [isDropdownOpen]);
 
-  // Detectar preferencia de movimiento reducido
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setPrefersReducedMotion(mediaQuery.matches);
@@ -121,7 +123,6 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
-  // Cargar usuarios al montar el componente si no hay datos iniciales
   useEffect(() => {
     if (initialUsuarios.length === 0) {
       loadUsuarios();
@@ -142,15 +143,12 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
     }
   };
   
-  // Permite seleccionar el usuario a eliminar y mostrar el modal de confirmación
   const handleDelete = (data: Record<string, unknown>) => {
     const usuario = data as Usuario;
     setItemToDelete(usuario);
     setShowConfirm(true);
   };
 
-
-  // Preparar opciones de tipo de usuario
   const tipoOptions = useMemo(() => {
     const tipos = new Set<string>();
     usuarios.forEach(u => {
@@ -164,7 +162,6 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
     }));
   }, [usuarios]);
 
-  // Función para normalizar texto removiendo acentos
   const normalizeText = (text: string): string => {
     return text
       .normalize('NFD')
@@ -172,9 +169,8 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
       .toLowerCase();
   };
 
-  // Filtrar usuarios
   const filteredUsuarios = useMemo(() => {
-    if (!searchValue && !tipoFilter) {
+    if (!searchValue && !tipoFilter && !estadoFilter) {
       return usuarios;
     }
 
@@ -187,25 +183,25 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         normalizeText(usuario.nombre_usuario || '').includes(normalizedSearch);
 
       const matchesTipo = !tipoFilter || usuario.tipo_usuario === tipoFilter;
+      
+      const matchesEstado = !estadoFilter || 
+        (estadoFilter === 'Habilitado' && usuario.habilitado_sistema) ||
+        (estadoFilter === 'Deshabilitado' && !usuario.habilitado_sistema);
 
-      return matchesSearch && matchesTipo;
+      return matchesSearch && matchesTipo && matchesEstado;
     });
-  }, [usuarios, searchValue, tipoFilter]);
+  }, [usuarios, searchValue, tipoFilter, estadoFilter]);
 
   const handleView = (data: Record<string, unknown>) => {
     const usuario = data as Usuario;
     router.push(`/dashboard/users/${usuario.cedula}`);
   };
 
-
-
   const handleSaveEdit = (usuarioEditado: Usuario) => {
-    // Aquí deberías llamar a la acción de actualización real
     setUsuarios((prev) => prev.map(u => u.cedula === usuarioEditado.cedula ? { ...u, ...usuarioEditado } : u));
     setShowEditModal(false);
     setUsuarioToEdit(null);
   };
-
 
   const handleDisable = async (data: Record<string, unknown>) => {
     const usuario = data as Usuario;
@@ -216,7 +212,6 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
       alert(result.error?.message || 'Error al cambiar el estado del usuario');
       return;
     }
-    // Actualizar la lista de usuarios localmente
     setUsuarios((prev) =>
       prev.map((u) =>
         u.cedula === usuario.cedula
@@ -226,10 +221,8 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
     );
   };
 
-
   const handleEdit = async (data: Record<string, unknown>) => {
     const usuario = data as Usuario;
-    // Buscar usuario completo con info extendida (incluyendo TERM)
     const result = await getUsuarioInfoByCedulaAction(usuario.cedula);
     if (result.success && result.data) {
       setUsuarioToEdit({
@@ -247,12 +240,11 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         apellidos: result.data.apellidos || usuario.apellidos || '',
       });
     } else {
-      setUsuarioToEdit(usuario); // fallback
+      setUsuarioToEdit(usuario);
     }
     setShowEditModal(true);
   };
 
-  // Función para eliminar usuario (debes implementar la lógica real de eliminación)
   const handleConfirmDelete = async () => {
     if (!itemToDelete) return;
     setDeleteLoading(true);
@@ -269,11 +261,66 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
       return;
     }
 
-    // Actualiza la lista de usuarios o recarga
     setUsuarios((prev) => prev.filter(u => u.cedula !== itemToDelete.cedula));
     setShowConfirm(false);
     setItemToDelete(null);
     setDeleteMotivo('');
+  };
+
+  const handleBatchDisable = async () => {
+    if (selectedCedulas.length === 0) return;
+    
+    setIsBatchDisabling(true);
+    try {
+      const result = await disableUsuariosLoteAction(selectedCedulas);
+      
+      if (result.success) {
+        // Actualizar lista local
+        setUsuarios(prev => prev.map(u => 
+          selectedCedulas.includes(u.cedula) 
+            ? { ...u, habilitado_sistema: false } 
+            : u
+        ));
+        setSelectedCedulas([]);
+        setIsSelectionMode(false);
+        setShowBatchConfirm(false);
+      } else {
+        alert(result.error?.message || 'Error al deshabilitar usuarios');
+      }
+    } catch (error) {
+      console.error('Error batch disable:', error);
+      alert('Error inesperado al procesar la solicitud');
+    } finally {
+      setIsBatchDisabling(false);
+    }
+  };
+
+  const handleBatchEnable = async () => {
+    if (selectedCedulas.length === 0) return;
+    
+    setIsBatchEnabling(true);
+    try {
+      const result = await enableUsuariosLoteAction(selectedCedulas);
+      
+      if (result.success) {
+        // Actualizar lista local
+        setUsuarios(prev => prev.map(u => 
+          selectedCedulas.includes(u.cedula) 
+            ? { ...u, habilitado_sistema: true } 
+            : u
+        ));
+        setSelectedCedulas([]);
+        setIsSelectionMode(false);
+        setShowBatchEnableConfirm(false);
+      } else {
+        alert(result.error?.message || 'Error al habilitar usuarios');
+      }
+    } catch (error) {
+      console.error('Error batch enable:', error);
+      alert('Error inesperado al procesar la solicitud');
+    } finally {
+      setIsBatchEnabling(false);
+    }
   };
 
   const handleBulkUploadSuccess = () => {
@@ -284,10 +331,8 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
     loadUsuarios();
   };
   
-  // Validación de motivo
   const isMotivoValido = deleteMotivo.trim().length > 0;
 
-  // Obtener la cédula del usuario autenticado (simulación: localStorage)
   const getCurrentUserCedula = (): string => {
     if (typeof window !== 'undefined') {
       return window.localStorage.getItem('cedula') || '';
@@ -316,7 +361,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
       >
-        <div className="flex flex-nowrap gap-3 sm:gap-4 items-center w-full px-3">
+        <div className="flex flex-col md:flex-row md:items-center gap-3 sm:gap-4 w-full px-3">
           <div className="flex-1 min-w-0">
             <CaseTools 
               searchValue={searchValue}
@@ -325,12 +370,73 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
               estatusFilter={tipoFilter}
               onEstatusChange={setTipoFilter}
               estatusOptions={tipoOptions}
-              tramiteFilter=""
-              onTramiteChange={() => {}}
-              tramiteOptions={[]}
+              tramiteFilter={estadoFilter}
+              onTramiteChange={setEstadoFilter}
+              tramiteOptions={[
+                { value: 'Habilitado', label: 'Habilitados' },
+                { value: 'Deshabilitado', label: 'Deshabilitados' }
+              ]}
             />
           </div>
           <div className="flex gap-3 sm:gap-4 items-center shrink-0">
+            {isSelectionMode ? (
+              <div className="flex gap-2 items-center">
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  onClick={() => {
+                    setIsSelectionMode(false);
+                    setSelectedCedulas([]);
+                  }}
+                  className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-gray-100 text-gray-700 border border-gray-200 rounded-full hover:bg-gray-200 transition-colors font-medium whitespace-nowrap"
+                >
+                  <span>Cancelar</span>
+                </motion.button>
+
+                {selectedCedulas.length > 0 && (
+                  <>
+                    {/* Botón de Deshabilitar (solo si hay alguno habilitado) */}
+                    {usuarios.some(u => selectedCedulas.includes(u.cedula) && u.habilitado_sistema) && (
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        onClick={() => setShowBatchConfirm(true)}
+                        className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-red-50 text-red-600 border border-red-200 rounded-full hover:bg-red-100 transition-colors font-medium whitespace-nowrap"
+                      >
+                        <UserX className="w-5 h-5" />
+                        <span>Deshabilitar ({selectedCedulas.filter(id => usuarios.find(u => u.cedula === id)?.habilitado_sistema).length})</span>
+                      </motion.button>
+                    )}
+
+                    {/* Botón de Habilitar (solo si hay alguno deshabilitado) */}
+                    {usuarios.some(u => selectedCedulas.includes(u.cedula) && !u.habilitado_sistema) && (
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        onClick={() => setShowBatchEnableConfirm(true)}
+                        className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-green-50 text-green-600 border border-green-200 rounded-full hover:bg-green-100 transition-colors font-medium whitespace-nowrap"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Habilitar ({selectedCedulas.filter(id => !usuarios.find(u => u.cedula === id)?.habilitado_sistema).length})</span>
+                      </motion.button>
+                    )}
+                  </>
+                )}
+              </div>
+            ) : (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setIsSelectionMode(true)}
+                className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-white text-gray-700 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors font-medium whitespace-nowrap"
+              >
+                <UserX className="w-5 h-5 text-gray-500" />
+                <span>Gestión en lote</span>
+              </motion.button>
+            )}
+
             <DropdownMenu
               trigger={(isOpen) => (
                 <motion.button
@@ -365,9 +471,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
-                    // Cerrar inmediatamente
                     setIsDropdownOpen(false);
-                    // Usar un microtask para asegurar que el estado se actualice primero
                     Promise.resolve().then(() => {
                       setIsCreateUserModalOpen(true);
                     });
@@ -382,9 +486,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
-                    // Cerrar inmediatamente
                     setIsDropdownOpen(false);
-                    // Usar un microtask para asegurar que el estado se actualice primero
                     Promise.resolve().then(() => {
                       setIsBulkUploadModalOpen(true);
                     });
@@ -424,10 +526,13 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
             onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            selectable={isSelectionMode}
+            selectedIds={selectedCedulas}
+            onSelectionChange={setSelectedCedulas}
+            idKey="cedula"
             actions={[
               {
                 label: (row) => {
-                  // Ocultar acción si es el usuario actual
                   if (row.cedula === currentUserCedula) return '';
                   const isHabilitado = row.estado === 'Habilitado';
                   return (
@@ -480,7 +585,6 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         </motion.div>
       )}
 
-
       <BulkUploadModal
         isOpen={isBulkUploadModalOpen}
         onClose={() => setIsBulkUploadModalOpen(false)}
@@ -498,6 +602,50 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         onClose={() => { setShowEditModal(false); setUsuarioToEdit(null); }}
         usuario={usuarioToEdit}
         onSave={handleSaveEdit}
+      />
+
+      {/* Modal de confirmación para deshabilitación masiva */}
+      <ConfirmModal
+        isOpen={showBatchConfirm}
+        onClose={() => setShowBatchConfirm(false)}
+        onConfirm={handleBatchDisable}
+        title="Deshabilitar usuarios por lote"
+        message={
+          <div>
+            <p className="mb-4 text-base text-foreground">
+              ¿Estás seguro de que deseas deshabilitar el acceso a los <strong>{selectedCedulas.filter(id => usuarios.find(u => u.cedula === id)?.habilitado_sistema).length}</strong> usuarios seleccionados?
+            </p>
+            <p className="text-gray-600 text-sm">
+              Estos usuarios ya no podrán ingresar al sistema, pero su información histórica se mantendrá preservada en todos los registros de casos y citas.
+            </p>
+          </div>
+        }
+        confirmLabel={isBatchDisabling ? 'Procesando...' : 'Deshabilitar usuarios'}
+        cancelLabel="Cancelar"
+        disabled={isBatchDisabling}
+        confirmVariant="primary"
+      />
+
+      {/* Modal de confirmación para habilitación masiva */}
+      <ConfirmModal
+        isOpen={showBatchEnableConfirm}
+        onClose={() => setShowBatchEnableConfirm(false)}
+        onConfirm={handleBatchEnable}
+        title="Habilitar usuarios por lote"
+        message={
+          <div>
+            <p className="mb-4 text-base text-foreground">
+              ¿Estás seguro de que deseas reactivar el acceso a los <strong>{selectedCedulas.filter(id => !usuarios.find(u => u.cedula === id)?.habilitado_sistema).length}</strong> usuarios seleccionados?
+            </p>
+            <p className="text-gray-600 text-sm">
+              Estos usuarios podrán ingresar nuevamente al sistema con sus credenciales habituales.
+            </p>
+          </div>
+        }
+        confirmLabel={isBatchEnabling ? 'Procesando...' : 'Habilitar usuarios'}
+        cancelLabel="Cancelar"
+        disabled={isBatchEnabling}
+        confirmVariant="primary"
       />
 
       <ConfirmModal
@@ -548,4 +696,3 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
     </>
   );
 }
-

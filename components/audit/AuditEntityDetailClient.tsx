@@ -8,7 +8,7 @@ import AuditDetailClient from './detail/AuditDetailClient';
 
 interface AuditOperation {
   label: string;
-  auditType: 'soportes' | 'soportes-creados' | 'citas-eliminadas' | 'citas-actualizadas' | 'citas-creadas' | 'usuarios-eliminados' | 'usuarios-actualizados-campos' | 'usuarios-creados'
+    auditType: 'soportes' | 'soportes-creados' | 'citas-eliminadas' | 'citas-actualizadas' | 'citas-creadas' | 'usuarios-eliminados' | 'usuarios-habilitados' | 'usuarios-actualizados-campos' | 'usuarios-creados'
   | 'solicitantes-eliminados' | 'solicitantes-actualizados' | 'solicitantes-creados'
   | 'estudiantes-inscritos' | 'profesores-asignados'
   | 'casos-eliminados' | 'casos-actualizados' | 'casos-creados'

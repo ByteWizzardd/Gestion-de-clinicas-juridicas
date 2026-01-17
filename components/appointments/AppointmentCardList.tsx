@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Calendar, User, FileText, MapPin } from 'lucide-react';
+import { Calendar, User, FileText, MapPin, CheckCircle, XCircle } from 'lucide-react';
 import type { Appointment } from '@/types/appointment';
 import ActionMenu from '@/components/ui/ActionMenu';
+import Button from '@/components/ui/Button';
 import { AppointmentDetailModal } from '../appointmentModal/AppointmentDetailModal';
 
 interface AppointmentCardListProps {
@@ -13,6 +14,8 @@ interface AppointmentCardListProps {
   onEdit?: (appointment: Appointment) => void;
   onDelete?: (appointment: Appointment) => void;
   onView?: (appointment: Appointment) => void;
+  onAppointmentCompleted?: (appointment: Appointment) => void;
+  onAppointmentCancelled?: (appointment: Appointment) => void;
 }
 
 export default function AppointmentCardList({
@@ -21,6 +24,8 @@ export default function AppointmentCardList({
   onEdit,
   onDelete,
   onView,
+  onAppointmentCompleted,
+  onAppointmentCancelled,
 }: AppointmentCardListProps) {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -65,6 +70,18 @@ export default function AppointmentCardList({
   const handleDetailModalClose = () => {
     setShowDetailModal(false);
     setSelectedAppointment(null);
+  };
+
+  const handleAppointmentCompleted = (appointment: Appointment) => {
+    if (onAppointmentCompleted) {
+      onAppointmentCompleted(appointment);
+    }
+  };
+
+  const handleAppointmentCancelled = (appointment: Appointment) => {
+    if (onAppointmentCancelled) {
+      onAppointmentCancelled(appointment);
+    }
   };
 
   return (
@@ -143,6 +160,33 @@ export default function AppointmentCardList({
                         {appointment.isMultiplePeople ? 'Atendido por: ' : 'Atendido por: '}
                         {appointment.attendingUsers}
                       </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Botones para citas programadas */}
+                {appointment.orientation === "Cita programada" && (
+                  <div className="mt-4 pt-3 border-t border-gray-100">
+                    <p className="text-xs text-gray-500 mb-3">¿Se realizó la cita?</p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => handleAppointmentCompleted(appointment)}
+                        className="flex-1 flex items-center justify-center gap-1"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        Sí
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAppointmentCancelled(appointment)}
+                        className="flex-1 flex items-center justify-center gap-1"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        No
+                      </Button>
                     </div>
                   </div>
                 )}

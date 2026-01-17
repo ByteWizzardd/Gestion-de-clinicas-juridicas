@@ -25,7 +25,7 @@ export default function DropdownMenu({
 }: DropdownMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
-  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+  const [coords, setCoords] = useState({ top: 0, left: 0, right: 0, width: 0 });
   const [mounted, setMounted] = useState(false);
   const [, setHasModal] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -43,13 +43,13 @@ export default function DropdownMenu({
 
   // Detectar si el dropdown está dentro de un modal al montarse
   const [isInsideModal, setIsInsideModal] = useState(false);
-  
+
   useEffect(() => {
     // Verificar si el trigger está dentro de un modal
     if (triggerRef.current) {
-      const parentModal = triggerRef.current.closest('[role="dialog"]') || 
-                          triggerRef.current.closest('[aria-modal="true"]') ||
-                          triggerRef.current.closest('[data-modal]');
+      const parentModal = triggerRef.current.closest('[role="dialog"]') ||
+        triggerRef.current.closest('[aria-modal="true"]') ||
+        triggerRef.current.closest('[data-modal]');
       setIsInsideModal(!!parentModal);
     }
   }, []);
@@ -58,7 +58,7 @@ export default function DropdownMenu({
   // Solo cerrar si el dropdown NO está dentro del modal que se detecta
   useEffect(() => {
     if (!isOpen) return;
-    
+
     // Si el dropdown está dentro de un modal, no cerrarlo por detección de modales
     if (isInsideModal) {
       setHasModal(false);
@@ -66,9 +66,9 @@ export default function DropdownMenu({
     }
 
     const checkForNewModal = () => {
-      const modal = document.querySelector('[role="dialog"]') || 
-                    document.querySelector('[aria-modal="true"]');
-      
+      const modal = document.querySelector('[role="dialog"]') ||
+        document.querySelector('[aria-modal="true"]');
+
       if (modal) {
         setHasModal(true);
         setIsOpen(false);
@@ -102,51 +102,14 @@ export default function DropdownMenu({
       const spaceBelow = window.innerHeight - rect.bottom;
       const spaceAbove = rect.top;
       const menuHeight = 300;
-      // Usar el ancho del trigger como referencia, con un mínimo estimado
-      const estimatedMenuWidth = Math.max(rect.width, 200);
 
       const shouldOpenUp = spaceBelow < menuHeight && spaceAbove > spaceBelow;
       setOpenUpward(shouldOpenUp);
 
-      let leftPosition = rect.left;
-      
-      // Calcular posición según el align
-      if (align === 'right') {
-        // Alinear desde el borde derecho del trigger hacia la izquierda
-        leftPosition = rect.right - estimatedMenuWidth;
-        // Asegurar que no se salga por la izquierda
-        if (leftPosition < 8) {
-          leftPosition = 8;
-        }
-        // Si aún se sale por la derecha, ajustar desde la derecha del trigger
-        if (leftPosition + estimatedMenuWidth > window.innerWidth - 8) {
-          leftPosition = Math.max(8, window.innerWidth - estimatedMenuWidth - 8);
-        }
-      } else if (align === 'center') {
-        // Centrar respecto al trigger
-        leftPosition = rect.left + (rect.width / 2) - (estimatedMenuWidth / 2);
-        // Ajustar si se sale por los bordes
-        if (leftPosition < 8) {
-          leftPosition = 8;
-        }
-        if (leftPosition + estimatedMenuWidth > window.innerWidth - 8) {
-          leftPosition = window.innerWidth - estimatedMenuWidth - 8;
-        }
-      } else {
-        // align === 'left' (default)
-        // Alinear desde el borde izquierdo del trigger
-        leftPosition = rect.left;
-        // Asegurar que no se salga por la derecha de la pantalla
-        if (leftPosition + estimatedMenuWidth > window.innerWidth - 8) {
-          leftPosition = window.innerWidth - estimatedMenuWidth - 8;
-        }
-        // Asegurar que no se salga por la izquierda
-        leftPosition = Math.max(8, leftPosition);
-      }
-
       setCoords({
         top: shouldOpenUp ? rect.top : rect.bottom,
-        left: leftPosition,
+        left: rect.left,
+        right: rect.right,
         width: rect.width
       });
     }
@@ -178,7 +141,7 @@ export default function DropdownMenu({
         if (submenu) {
           return;
         }
-        
+
         // Cerrar si el click es en un modal
         const modal = target.closest('[role="dialog"]') || target.closest('.modal') || target.closest('[data-modal]');
         if (modal) {
@@ -186,7 +149,7 @@ export default function DropdownMenu({
           onOpenChange?.(false);
           return;
         }
-        
+
         setIsOpen(false);
       }
     };
@@ -217,8 +180,8 @@ export default function DropdownMenu({
 
       {mounted && isOpen && createPortal(
         <AnimatePresence>
-          <motion.div 
-            ref={menuRef} 
+          <motion.div
+            ref={menuRef}
             initial={{ opacity: 0, y: openUpward ? 10 : -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: openUpward ? 10 : -10, scale: 0.95 }}
@@ -226,16 +189,14 @@ export default function DropdownMenu({
             style={{
               position: 'fixed',
               top: openUpward ? coords.top - 4 : coords.top + 4,
-              // Alinear el menú según el parámetro align
-              left: align === 'right' 
-                ? coords.left + coords.width 
-                : align === 'center'
-                ? coords.left + coords.width / 2
-                : coords.left, // 'left' por defecto - alineado al borde izquierdo
+              left: align === 'right' ? 'auto' : (align === 'center' ? coords.left + coords.width / 2 : coords.left),
+              right: align === 'right' ? window.innerWidth - coords.right : 'auto',
               // Solo setear width si menuClassName NO define un ancho (w-*)
               ...(menuClassName && /w-\[?\d/.test(menuClassName) ? {} : { width: coords.width }),
               zIndex: isInsideModal ? 99999 : 9999,
-              transform: openUpward ? 'translateY(-100%)' : undefined
+              transform: align === 'center'
+                ? (openUpward ? 'translate(-50%, -100%)' : 'translate(-50%, 0)')
+                : (openUpward ? 'translateY(-100%)' : undefined)
             }}
             className={menuClassName}
             onClick={(e) => {

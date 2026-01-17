@@ -58,10 +58,10 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
       // Obtener el término actual primero
       getCurrentTermAction()
         .then((currentTermRes) => {
-          const currentTerm = currentTermRes.success && currentTermRes.data 
-            ? currentTermRes.data.term 
+          const currentTerm = currentTermRes.success && currentTermRes.data
+            ? currentTermRes.data.term
             : '';
-          
+
           setForm({
             cedulaTipo: 'V',
             cedulaNumero: '',
@@ -138,12 +138,12 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
 
     // Construir cédula con formato V-XXXX (con guión)
     const cedula = `${cedulaTipo}-${cedulaNumero}`;
-    
+
     try {
       // Verificar si la cédula ya está registrada como usuario
       const { getUsuarioInfoByCedulaAction } = await import('@/app/actions/usuarios');
       const usuarioResult = await getUsuarioInfoByCedulaAction(cedula);
-      
+
       if (usuarioResult.success && usuarioResult.data) {
         // Si el usuario existe, mostrar error
         setErrors((prev) => ({
@@ -189,12 +189,12 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
       }));
       return;
     }
-    
+
     try {
       // Verificar si el correo ya está registrado como usuario
       const { checkEmailExistsUsuarioAction } = await import('@/app/actions/usuarios');
       const emailResult = await checkEmailExistsUsuarioAction(email);
-      
+
       if (emailResult.success && emailResult.exists) {
         // Si el correo existe, mostrar error
         setErrors((prev) => ({
@@ -225,12 +225,12 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
       });
       return;
     }
-    
+
     try {
       // Verificar si el nombre de usuario ya está registrado como usuario
       const { checkUsernameExistsUsuarioAction } = await import('@/app/actions/usuarios');
       const usernameResult = await checkUsernameExistsUsuarioAction(username);
-      
+
       if (usernameResult.success && usernameResult.exists) {
         // Si el nombre de usuario existe, mostrar error
         setErrors((prev) => ({
@@ -354,7 +354,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof CreateUserForm, string>> = {};
-    
+
     // Validar cédula
     if (!form.cedulaNumero || form.cedulaNumero.trim() === '') {
       newErrors.cedulaNumero = 'La cédula es requerida';
@@ -445,7 +445,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -456,10 +456,10 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
     try {
       // Construir cédula completa
       const cedula = `${form.cedulaTipo}-${form.cedulaNumero}`;
-      
+
       // Procesar teléfono (si solo es +58, enviar null)
-      const telefonoFinal = form.telefono && form.telefono.trim() !== '+58' 
-        ? form.telefono.trim() 
+      const telefonoFinal = form.telefono && form.telefono.trim() !== '+58'
+        ? form.telefono.trim()
         : null;
 
       const result = await createUsuarioAction({
@@ -513,7 +513,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
           className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
           aria-label="Cerrar modal"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6L6 18" /><path d="M6 6l12 12" /></svg>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M18 6L6 18" /><path d="M6 6l12 12" /></svg>
         </button>
 
         {/* Título */}
@@ -596,16 +596,16 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
             <Select
               label="Tipo de usuario *"
               value={form.tipo_usuario}
-                onChange={(e) => {
-                  const nuevoTipoUsuario = e.target.value;
-                  setForm({ 
-                    ...form, 
-                    tipo_usuario: nuevoTipoUsuario,
-                    tipo_estudiante: '',
-                    tipo_profesor: '',
-                    term: currentTerm || form.term, // Mantener el término actual
-                    nrc: '',
-                  });
+              onChange={(e) => {
+                const nuevoTipoUsuario = e.target.value;
+                setForm({
+                  ...form,
+                  tipo_usuario: nuevoTipoUsuario,
+                  tipo_estudiante: '',
+                  tipo_profesor: '',
+                  term: currentTerm || form.term, // Mantener el término actual
+                  nrc: nuevoTipoUsuario === 'Estudiante' ? '15753' : '',
+                });
                 // Limpiar errores de campos relacionados cuando cambia el tipo de usuario
                 setErrors((prev) => {
                   const newErrors = { ...prev };
@@ -629,7 +629,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
                 label="TERM *"
                 name="term"
                 value={form.term || currentTerm || ''}
-                onChange={() => {}} // No permitir cambios
+                onChange={() => { }} // No permitir cambios
                 disabled={true}
                 error={errors.term}
               />

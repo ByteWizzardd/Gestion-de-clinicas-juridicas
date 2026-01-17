@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getCitasAction, deleteCitaAction } from '@/app/actions/citas';
+import { getCasosAction } from '@/app/actions/casos';
 import CalendarWidget from '@/components/ui/calendar/CalendarWidget';
 import AppointmentList from '@/components/cards/AppointmentList';
 import AppointmentCardList from './AppointmentCardList';
@@ -20,6 +21,7 @@ import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 interface AppointmentFilterOptions {
   nucleos: Array<{ id_nucleo: number; nombre_nucleo: string }>;
   usuarios: Array<{ cedula: string; nombres: string; apellidos: string; nombre_completo: string }>;
+  casos: Array<{ id_caso: number; tramite: string }>;
 }
 
 interface AppointmentsClientProps {
@@ -27,9 +29,9 @@ interface AppointmentsClientProps {
   initialFilterOptions?: AppointmentFilterOptions;
 }
 
-export default function AppointmentsClient({ 
+export default function AppointmentsClient({
   initialAppointments,
-  initialFilterOptions = { nucleos: [], usuarios: [] }
+  initialFilterOptions = { nucleos: [], usuarios: [], casos: [] }
 }: AppointmentsClientProps) {
   const [viewMode, setViewMode] = useState<AppointmentViewMode>('calendar');
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -54,10 +56,11 @@ export default function AppointmentsClient({
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteMotivo, setDeleteMotivo] = useState('');
   const [searchValue, setSearchValue] = useState('');
-  
+
   // Filtros
   const [nucleoFilter, setNucleoFilter] = useState<string>('');
   const [usuarioFilter, setUsuarioFilter] = useState<string[]>([]);
+  const [caseFilter, setCaseFilter] = useState<string[]>([]);
   const [dateRangeFilter, setDateRangeFilter] = useState<string>('all'); // 'all', 'today', 'week', 'month', 'custom'
   const [customDateStart, setCustomDateStart] = useState<string>('');
   const [customDateEnd, setCustomDateEnd] = useState<string>('');
@@ -65,7 +68,7 @@ export default function AppointmentsClient({
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setPrefersReducedMotion(mediaQuery.matches);
-    
+
     const handleChange = (e: MediaQueryListEvent) => {
       setPrefersReducedMotion(e.matches);
     };
@@ -73,10 +76,51 @@ export default function AppointmentsClient({
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
+  // Sincronizar estado con props cuando cambian (ej: después de un server action o navegación)
+  useEffect(() => {
+    if (initialAppointments) {
+      setAppointments(initialAppointments.map((apt) => ({ ...apt, date: new Date(apt.date) })));
+    }
+  }, [initialAppointments]);
+
   // Filtrar citas según el modo: por día específico o por mes completo
   const displayedAppointments = useMemo(() => {
     let filtered = appointments;
-    
+
+    // Aplicar filtros de búsqueda (igual que en vista de lista)
+    // Filtro por núcleo
+    if (nucleoFilter) {
+      filtered = filtered.filter((apt) => {
+        // El location contiene el nombre del núcleo
+        return apt.location?.toLowerCase().includes(nucleoFilter.toLowerCase());
+      });
+    }
+
+    // Filtro por usuario que atendió (múltiple) - todos los usuarios seleccionados deben estar en la cita
+    if (usuarioFilter.length > 0) {
+      filtered = filtered.filter((apt) => {
+        if (!apt.attendingUsersList || apt.attendingUsersList.length === 0) {
+          return false;
+        }
+        // Verificar que TODOS los usuarios seleccionados estén en la cita
+        const userIdsInAppointment = apt.attendingUsersList.map(user => user.id_usuario);
+        return usuarioFilter.every(selectedUserId => userIdsInAppointment.includes(selectedUserId));
+      });
+    }
+
+    // Filtro por caso (múltiple) - la cita debe estar en uno de los casos seleccionados
+    if (caseFilter.length > 0) {
+      filtered = filtered.filter((apt) => {
+        // Caso especial: citas sin caso asignado
+        if (!apt.caseId && apt.caseId !== 0) {
+          return caseFilter.includes('no-case');
+        }
+        const caseIdStr = String(apt.caseId);
+        return caseFilter.includes(caseIdStr);
+      });
+    }
+
+    // Aplicar filtros de fecha (igual que antes)
     if (filterByDate) {
       // Filtrar solo las citas del día seleccionado
       filtered = filtered.filter((apt) => {
@@ -96,9 +140,9 @@ export default function AppointmentsClient({
         );
       });
     }
-    
+
     return filtered;
-  }, [appointments, selectedMonth, selectedDate, filterByDate]);
+  }, [appointments, selectedMonth, selectedDate, filterByDate, nucleoFilter, usuarioFilter, caseFilter]);
 
   // Filtrar citas por búsqueda y filtros (solo para vista de lista)
   const filteredAppointmentsForList = useMemo(() => {
@@ -114,7 +158,7 @@ export default function AppointmentsClient({
         const orientationMatch = apt.orientation?.toLowerCase().includes(searchLower);
         const attendingUsersMatch = apt.attendingUsers?.toLowerCase().includes(searchLower);
         const titleMatch = apt.title?.toLowerCase().includes(searchLower);
-        
+
         return clientMatch || caseMatch || locationMatch || orientationMatch || attendingUsersMatch || titleMatch;
       });
     }
@@ -139,16 +183,28 @@ export default function AppointmentsClient({
       });
     }
 
+    // Filtro por caso (múltiple) - la cita debe estar en uno de los casos seleccionados
+    if (caseFilter.length > 0) {
+      filtered = filtered.filter((apt) => {
+        // Caso especial: citas sin caso asignado
+        if (!apt.caseId && apt.caseId !== 0) {
+          return caseFilter.includes('no-case');
+        }
+        const caseIdStr = String(apt.caseId);
+        return caseFilter.includes(caseIdStr);
+      });
+    }
+
     // Filtro por rango de fechas
     if (dateRangeFilter !== 'all') {
       const now = new Date();
       now.setHours(0, 0, 0, 0);
-      
+
       filtered = filtered.filter((apt) => {
         const aptDateOriginal = new Date(apt.date);
         const aptDate = new Date(apt.date);
         aptDate.setHours(0, 0, 0, 0);
-        
+
         switch (dateRangeFilter) {
           case 'today':
             return aptDate.getTime() === now.getTime();
@@ -168,7 +224,7 @@ export default function AppointmentsClient({
               start.setHours(0, 0, 0, 0); // Inicio del día de inicio (00:00:00)
               const end = new Date(customDateEnd);
               end.setHours(23, 59, 59, 999); // Fin del día de fin (23:59:59.999)
-              
+
               // Usar la fecha original de la cita (con hora) para comparar con el rango completo
               // Esto incluye citas del mismo día de inicio y fin
               return aptDateOriginal >= start && aptDateOriginal <= end;
@@ -182,7 +238,17 @@ export default function AppointmentsClient({
     }
 
     return filtered;
-  }, [appointments, searchValue, nucleoFilter, usuarioFilter, dateRangeFilter, customDateStart, customDateEnd]);
+  }, [appointments, searchValue, nucleoFilter, usuarioFilter, caseFilter, dateRangeFilter, customDateStart, customDateEnd]);
+
+  // Filtrar citas agendadas (citas programadas)
+  const scheduledAppointments = useMemo(() => {
+    // Usar filteredAppointmentsForList como base para aprovechar todos los filtros (búsqueda, núcleo, usuario, fechas)
+    return filteredAppointmentsForList.filter((apt) => {
+      // Solo mostrar citas que están explícitamente programadas
+      const orientation = apt.orientation?.trim() || '';
+      return orientation === 'Cita programada';
+    });
+  }, [filteredAppointmentsForList]);
 
   // Preparar datos para el calendario (solo fechas)
   const calendarAppointments = useMemo(() => {
@@ -313,8 +379,7 @@ export default function AppointmentsClient({
         // Cerrar el modal
         setShowDeleteConfirmModal(false);
         setAppointmentToDelete(null);
-        setDeleteMotivo('');
-        
+
         // Recargar citas después de eliminar
         const result = await getCitasAction();
         if (result.success && result.data) {
@@ -338,7 +403,26 @@ export default function AppointmentsClient({
   const handleCancelDelete = () => {
     setShowDeleteConfirmModal(false);
     setAppointmentToDelete(null);
-    setDeleteMotivo('');
+  };
+
+  // Manejar cuando se marca una cita programada como completada
+  const handleAppointmentCompleted = (appointment: Appointment) => {
+    // Abrir el modal de registro de cita para ingresar la orientación
+    setEditingAppointment(appointment);
+    setModalDate(appointment.date);
+    setShowModal(true);
+  };
+
+  // Manejar cuando se marca una cita programada como no realizada
+  const handleAppointmentCancelled = (appointment: Appointment) => {
+    // Por ahora, simplemente mostrar confirmación y eliminar la cita programada
+    const confirmCancel = window.confirm(
+      `¿Está seguro de que la cita programada para el ${formatDate(appointment.date)} no se realizó? Se eliminará del sistema.`
+    );
+
+    if (confirmCancel) {
+      handleDeleteAppointment(appointment);
+    }
   };
 
   const formatDate = (date: Date) => {
@@ -350,7 +434,7 @@ export default function AppointmentsClient({
 
   return (
     <div className="h-full relative ">
-      <motion.div 
+      <motion.div
         className="mb-4 md:mb-6 mt-4"
         initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -383,7 +467,7 @@ export default function AppointmentsClient({
                 transition={{ duration: prefersReducedMotion ? 0 : 0.3 }}
               >
                 <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6 pb-6">
-                  <motion.div 
+                  <motion.div
                     className="h-[calc(100vh-10rem)]"
                     initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -441,7 +525,7 @@ export default function AppointmentsClient({
                     {/* Buscador */}
                     <div className="flex-1 min-w-0">
                       <search className="flex items-center">
-                        <form 
+                        <form
                           className="flex items-center h-10 border border-primary rounded-full bg-transparent w-full"
                           onSubmit={(e) => e.preventDefault()}
                         >
@@ -456,46 +540,133 @@ export default function AppointmentsClient({
                               onChange={(e) => setSearchValue(e.target.value)}
                               className="flex-1 px-4 py-2.5 h-full focus:outline-none bg-transparent text-base text-foreground placeholder:text-gray-500"
                             />
-                            <SearchIcon className="w-[18px] h-[18px] text-[#414040] mr-3 flex-shrink-0" />
+                            <SearchIcon className="w-[18px] h-[18px] text-[#414040] mr-3 shrink-0" />
                           </label>
-                        </form> 
+                        </form>
                       </search>
                     </div>
-                    
+
                     {/* Filtro y Botón Nueva Cita */}
-                    <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+                    <div className="flex items-center gap-3 sm:gap-4 shrink-0">
                       {/* Filtro */}
                       <AppointmentsToolbar
-                        viewMode="list"
+                        viewMode={viewMode}
                         onViewModeChange={setViewMode}
                         nucleoFilter={nucleoFilter}
                         usuarioFilter={usuarioFilter}
+                        caseFilter={caseFilter}
                         dateRangeFilter={dateRangeFilter}
                         customDateStart={customDateStart}
                         customDateEnd={customDateEnd}
                         onNucleoFilterChange={setNucleoFilter}
                         onUsuarioFilterChange={setUsuarioFilter}
+                        onCaseFilterChange={setCaseFilter}
                         onDateRangeFilterChange={setDateRangeFilter}
                         onCustomDateStartChange={setCustomDateStart}
                         onCustomDateEndChange={setCustomDateEnd}
                         filterOptions={initialFilterOptions}
                       />
-                      
-                       {/* Botón Nueva Cita con Dropdown */}
-                       <NewAppointmentButton
-                         onRegister={handleAddAppointment}
-                         onSchedule={handleScheduleAppointment}
-                       />
+
+                      {/* Botón Nueva Cita con Dropdown */}
+                      <NewAppointmentButton
+                        onRegister={handleAddAppointment}
+                        onSchedule={handleScheduleAppointment}
+                      />
                     </div>
                   </div>
                 </motion.div>
-                
+
                 {/* Lista de cards */}
                 <AppointmentCardList
                   appointments={filteredAppointmentsForList}
                   onEdit={handleEditAppointment}
                   onDelete={handleDeleteAppointment}
                   onView={handleAppointmentClick}
+                />
+              </motion.div>
+            ),
+          },
+          {
+            id: 'scheduled',
+            label: 'Agendadas',
+            content: (
+              <motion.div
+                key="scheduled-view"
+                initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.3 }}
+              >
+                {/* Barra de búsqueda y filtro para citas agendadas */}
+                <motion.div
+                  initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
+                  className="mb-4"
+                >
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+                    {/* Buscador */}
+                    <div className="flex-1 min-w-0">
+                      <search className="flex items-center">
+                        <form
+                          className="flex items-center h-10 border border-primary rounded-full bg-transparent w-full"
+                          onSubmit={(e) => e.preventDefault()}
+                        >
+                          <label className="flex items-center w-full">
+                            <input
+                              id="search-scheduled-appointments-input"
+                              type="search"
+                              name="q"
+                              autoComplete="off"
+                              placeholder="Buscar cita agendada..."
+                              value={searchValue}
+                              onChange={(e) => setSearchValue(e.target.value)}
+                              className="flex-1 px-4 py-2.5 h-full focus:outline-none bg-transparent text-base text-foreground placeholder:text-gray-500"
+                            />
+                            <SearchIcon className="w-[18px] h-[18px] text-[#414040] mr-3 shrink-0" />
+                          </label>
+                        </form>
+                      </search>
+                    </div>
+
+                    {/* Filtro y Botón Nueva Cita */}
+                    <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+                      {/* Filtro */}
+                      <AppointmentsToolbar
+                        viewMode={viewMode}
+                        onViewModeChange={setViewMode}
+                        nucleoFilter={nucleoFilter}
+                        usuarioFilter={usuarioFilter}
+                        caseFilter={caseFilter}
+                        dateRangeFilter={dateRangeFilter}
+                        customDateStart={customDateStart}
+                        customDateEnd={customDateEnd}
+                        onNucleoFilterChange={setNucleoFilter}
+                        onUsuarioFilterChange={setUsuarioFilter}
+                        onCaseFilterChange={setCaseFilter}
+                        onDateRangeFilterChange={setDateRangeFilter}
+                        onCustomDateStartChange={setCustomDateStart}
+                        onCustomDateEndChange={setCustomDateEnd}
+                        filterOptions={initialFilterOptions}
+                      />
+
+                      {/* Botón Nueva Cita con Dropdown */}
+                      <NewAppointmentButton
+                        onRegister={handleAddAppointment}
+                        onSchedule={handleScheduleAppointment}
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Lista de cards de citas agendadas filtradas */}
+                <AppointmentCardList
+                  appointments={scheduledAppointments}
+                  onEdit={handleEditAppointment}
+                  onDelete={handleDeleteAppointment}
+                  onView={handleAppointmentClick}
+                  onAppointmentCompleted={handleAppointmentCompleted}
+                  onAppointmentCancelled={handleAppointmentCancelled}
                 />
               </motion.div>
             ),

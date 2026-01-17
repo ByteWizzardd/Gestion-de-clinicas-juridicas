@@ -1,4 +1,5 @@
 -- Obtener todos los usuarios creados con filtros opcionales
+-- IMPORTANTE: Los datos vienen de la tabla de auditoría, NO de usuarios/estudiantes/profesores
 -- Parámetros opcionales:
 -- $1 = fecha_inicio (DATE, opcional)
 -- $2 = fecha_fin (DATE, opcional)
@@ -15,9 +16,8 @@ SELECT
     a.telefono_celular,
     a.habilitado_sistema,
     a.tipo_usuario,
-    e.tipo_estudiante,
-    e.term,
-    p.tipo_profesor,
+    a.tipo_estudiante,
+    a.tipo_profesor,
     a.fecha_creacion,
     a.id_usuario_creo,
     u.nombres AS nombres_usuario_creo,
@@ -26,8 +26,6 @@ SELECT
     u.foto_perfil AS foto_perfil_usuario_creo
 FROM public.auditoria_insercion_usuarios a
 LEFT JOIN public.usuarios u ON a.id_usuario_creo = u.cedula
-LEFT JOIN public.estudiantes e ON a.cedula = e.cedula_estudiante
-LEFT JOIN public.profesores p ON a.cedula = p.cedula_profesor
 WHERE 
     ($1::DATE IS NULL OR a.fecha_creacion::DATE >= $1)
     AND ($2::DATE IS NULL OR a.fecha_creacion::DATE <= $2)

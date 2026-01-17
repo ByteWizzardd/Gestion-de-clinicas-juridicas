@@ -29,6 +29,7 @@ export const citasService = {
       title: string;
       date: Date;
       time: string;
+      caseId: number;
       caseDetail: string;
       client: string;
       location: string;
@@ -55,9 +56,8 @@ export const citasService = {
         const time = `${horas}:${minutos}`;
         const client =
           cita.nombre_completo_solicitante ||
-          `${cita.nombres_solicitante || ""} ${
-            cita.apellidos_solicitante || ""
-          }`.trim() ||
+          `${cita.nombres_solicitante || ""} ${cita.apellidos_solicitante || ""
+            }`.trim() ||
           cita.cedula;
 
         // Detalle del caso: C-{id_caso} (Nombre Solicitante) - Nombre Núcleo
@@ -76,12 +76,12 @@ export const citasService = {
         // Fecha de próxima cita formateada
         const nextAppointmentDate = cita.fecha_proxima_cita
           ? (() => {
-              const nextDate = new Date(cita.fecha_proxima_cita);
-              const day = String(nextDate.getDate()).padStart(2, '0');
-              const month = String(nextDate.getMonth() + 1).padStart(2, '0');
-              const year = nextDate.getFullYear();
-              return `${day}/${month}/${year}`;
-            })()
+            const nextDate = new Date(cita.fecha_proxima_cita);
+            const day = String(nextDate.getDate()).padStart(2, '0');
+            const month = String(nextDate.getMonth() + 1).padStart(2, '0');
+            const year = nextDate.getFullYear();
+            return `${day}/${month}/${year}`;
+          })()
           : null;
 
         return {
@@ -89,6 +89,7 @@ export const citasService = {
           title,
           date: fechaCita,
           time,
+          caseId: cita.id_caso,
           caseDetail,
           client,
           location: cita.nombre_nucleo,
@@ -152,7 +153,7 @@ export const citasService = {
         // 2. Crear registros en atienden si hay usuarios seleccionados
         if (params.usuariosAtienden && params.usuariosAtienden.length > 0) {
           const atiendenQuery = loadSQL('atienden/create.sql');
-          
+
           for (const usuarioCedula of params.usuariosAtienden) {
             await client.query(atiendenQuery, [
               usuarioCedula,
@@ -188,7 +189,7 @@ export const citasService = {
     orientacion?: string;
     usuariosAtienden?: string[];
     idUsuarioActualizo: string; // Cedula del usuario que actualiza la cita
-  }): Promise<{ num_cita: number; id_caso: number }> {
+  }): Promise<{ num_cita: number; id_caso: number; fecha: string }> {
     try {
       // Parsear el ID del appointment para obtener num_cita e id_caso
       // Formato: "cita-{num_cita}-{id_caso}-{timestamp}"
@@ -212,7 +213,7 @@ export const citasService = {
           await client.query("SELECT set_config('app.usuario_actualiza_cita', $1, true)", [params.idUsuarioActualizo]);
           
           const updateQuery = loadSQL('citas/update.sql');
-          
+
           // Manejar fecha_proxima_cita: si es null explícitamente, enviar 'NULL' como string
           // Si es undefined, enviar null para no actualizar
           let endDateParam: string | null;
@@ -223,7 +224,7 @@ export const citasService = {
           } else {
             endDateParam = null; // No actualizar
           }
-          
+
           // La query update.sql ya no necesita el parámetro de usuario porque se establece antes
           const citaResult = await client.query(updateQuery, [
             num_cita,
@@ -398,7 +399,18 @@ export const citasService = {
           }
         }
 
-        return { num_cita, id_caso };
+        // Obtener la fecha final de la cita (usar la actualizada o la existente)
+        let finalDate = params.date;
+        if (!finalDate) {
+          // Si no se actualizó la fecha, obtener la fecha actual de la BD
+          const getDateQuery = 'SELECT fecha_encuentro FROM citas WHERE num_cita = $1 AND id_caso = $2';
+          const dateResult = await client.query(getDateQuery, [num_cita, id_caso]);
+          if (dateResult.rows.length > 0) {
+            finalDate = dateResult.rows[0].fecha_encuentro.toISOString().split('T')[0];
+          }
+        }
+
+        return { num_cita, id_caso, fecha: finalDate || new Date().toISOString().split('T')[0] };
       });
     } catch (error) {
       console.error('Error al actualizar la cita (detalle DB):', error);

@@ -3,11 +3,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
+import { Download } from 'lucide-react';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import ApplicantFormModal from '@/components/forms/ApplicantFormModal';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 import { getSolicitantesAction } from '@/app/actions/solicitantes';
+import { descargarFichaSolicitanteAction } from '@/app/actions/reports';
+import { generateSolicitanteFichaZip } from '@/lib/utils/applicant-file-pdf-generator';
 
 interface Solicitante extends Record<string, unknown> {
   cedula: string;
@@ -165,6 +168,22 @@ export default function ApplicantsClient({
     }
   };
 
+  const handleDownloadFicha = async (data: Record<string, unknown>) => {
+    const solicitante = data as Solicitante;
+    try {
+      const result = await descargarFichaSolicitanteAction(solicitante.cedula);
+
+      if (result.success && result.data) {
+        await generateSolicitanteFichaZip(result.data);
+      } else {
+        alert(`Error al descargar la ficha: ${result.error || 'Error desconocido'}`);
+      }
+    } catch (error) {
+      console.error('Error al descargar ficha:', error);
+      alert('Ocurrió un error al descargar la ficha del solicitante');
+    }
+  };
+
   return (
     <>
       <motion.div
@@ -213,6 +232,17 @@ export default function ApplicantsClient({
           onView={handleView}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          actions={[
+            {
+              label: (
+                <>
+                  <Download className="w-4 h-4 text-gray-500 group-hover:text-yellow-600 transition-colors" />
+                  Descargar ficha de solicitante
+                </>
+              ),
+              onClick: handleDownloadFicha
+            }
+          ]}
         />
       </motion.div>
 

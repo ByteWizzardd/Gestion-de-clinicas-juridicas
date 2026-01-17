@@ -1,34 +1,36 @@
 -- Obtener todos los registros de inserción combinados (usuarios, estudiantes, profesores)
+-- IMPORTANTE: Los datos se toman de las tablas de auditoría, NO de usuarios
 SELECT * FROM (
-    -- 1. Usuarios Creados
+    -- 1. Usuarios Creados (datos de auditoria_insercion_usuarios)
     SELECT 
         au.id::text || '-user' as unique_id,
         au.id,
         'usuario-creado' as tipo_registro,
         au.cedula,
-        u.nombres,
-        u.apellidos,
-        u.correo_electronico,
-        u.nombre_usuario,
-        u.telefono_celular,
-        u.tipo_usuario,
-        NULL as tipo_estudiante,
-        NULL as tipo_profesor,
-        NULL as term,
+        au.nombres,
+        au.apellidos,
+        au.correo_electronico,
+        au.nombre_usuario,
+        au.telefono_celular,
+        au.tipo_usuario,
+        au.tipo_estudiante,
+        au.tipo_profesor,
+        NULL::varchar as term,
+        au.habilitado_sistema,
+        NULL::varchar as nrc,
         au.fecha_creacion,
         au.id_usuario_creo,
         uc.nombres AS nombres_usuario_creo,
         uc.apellidos AS apellidos_usuario_creo,
         CONCAT(uc.nombres, ' ', uc.apellidos) AS nombre_completo_usuario_creo,
         uc.foto_perfil AS foto_perfil_usuario_creo,
-        u.foto_perfil AS foto_perfil_usuario
+        NULL::bytea AS foto_perfil_usuario
     FROM public.auditoria_insercion_usuarios au
-    JOIN public.usuarios u ON au.cedula = u.cedula
     LEFT JOIN public.usuarios uc ON au.id_usuario_creo = uc.cedula
 
     UNION ALL
 
-    -- 2. Estudiantes Inscritos
+    -- 2. Estudiantes Inscritos (datos de auditoria_insercion_estudiantes + usuarios para datos básicos)
     SELECT 
         ae.id::text || '-student' as unique_id,
         ae.id,
@@ -41,8 +43,10 @@ SELECT * FROM (
         u.telefono_celular,
         u.tipo_usuario,
         ae.tipo_estudiante,
-        NULL as tipo_profesor,
+        NULL::varchar as tipo_profesor,
         ae.term,
+        u.habilitado_sistema,
+        ae.nrc,
         ae.fecha_creacion,
         ae.id_usuario_creo,
         uc.nombres AS nombres_usuario_creo,
@@ -51,12 +55,12 @@ SELECT * FROM (
         uc.foto_perfil AS foto_perfil_usuario_creo,
         u.foto_perfil AS foto_perfil_usuario
     FROM public.auditoria_insercion_estudiantes ae
-    JOIN public.usuarios u ON ae.cedula_estudiante = u.cedula
+    LEFT JOIN public.usuarios u ON ae.cedula_estudiante = u.cedula
     LEFT JOIN public.usuarios uc ON ae.id_usuario_creo = uc.cedula
 
     UNION ALL
 
-    -- 3. Profesores Asignados
+    -- 3. Profesores Asignados (datos de auditoria_insercion_profesores + usuarios para datos básicos)
     SELECT 
         ap.id::text || '-prof' as unique_id,
         ap.id,
@@ -68,9 +72,11 @@ SELECT * FROM (
         u.nombre_usuario,
         u.telefono_celular,
         u.tipo_usuario,
-        NULL as tipo_estudiante,
+        NULL::varchar as tipo_estudiante,
         ap.tipo_profesor,
-        NULL as term,
+        NULL::varchar as term,
+        u.habilitado_sistema,
+        NULL::varchar as nrc,
         ap.fecha_creacion,
         ap.id_usuario_creo,
         uc.nombres AS nombres_usuario_creo,
@@ -79,7 +85,7 @@ SELECT * FROM (
         uc.foto_perfil AS foto_perfil_usuario_creo,
         u.foto_perfil AS foto_perfil_usuario
     FROM public.auditoria_insercion_profesores ap
-    JOIN public.usuarios u ON ap.cedula_profesor = u.cedula
+    LEFT JOIN public.usuarios u ON ap.cedula_profesor = u.cedula
     LEFT JOIN public.usuarios uc ON ap.id_usuario_creo = uc.cedula
 ) AS combined_records
 WHERE 

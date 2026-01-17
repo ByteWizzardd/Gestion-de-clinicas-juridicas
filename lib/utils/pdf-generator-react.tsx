@@ -2,12 +2,33 @@
 
 import React from 'react';
 import { pdf } from '@react-pdf/renderer/lib/react-pdf.browser';
-import { TiposCasosPDF } from '@/components/reports/TiposCasosPDF';
-import { EstatusCasosPDF, EstatusGroupedData } from '@/components/reports/EstatusCasosPDF';
-import { InformeResumenPDF, InformeResumenData } from '@/components/reports/InformeResumenPDF';
-import { CasosGroupedData, SocioeconomicoData } from '@/app/actions/reports';
-import InformeSocioeconomicoPDF from '@/components/reports/InformeSocioeconomicoPDF';
+import { TiposCasosPDF } from '../../components/reports/TiposCasosPDF';
+import { EstatusCasosPDF, EstatusGroupedData } from '../../components/reports/EstatusCasosPDF';
+import { InformeResumenPDF, InformeResumenData } from '../../components/reports/InformeResumenPDF';
+import { CasosGroupedData, SocioeconomicoData } from '../../app/actions/reports';
+import InformeSocioeconomicoPDF from '../../components/reports/InformeSocioeconomicoPDF';
 import { generateBarChartImage } from './bar-chart-generator';
+
+
+
+// Interfaces moved to report-types.ts, but keeping re-exports or local aliases if needed by existing code in this file.
+// However, looking at the code, these interfaces were defined here.
+// We should import them from report-types if they are used by OTHER functions in this file.
+// But wait, `generateTiposCasosPDFReact` uses `CasosGroupedData`. 
+// `SolicitanteFichaData` and `CasoHistorialData` were definitions used by the moved functions.
+// If any other function here uses them, we should import them. 
+// It seems only the moved functions used them.
+// Let's check remaining functions.
+// generateTiposCasosPDFReact -> CasosGroupedData (imported from actions)
+// generateEstatusCasosPDFReact -> EstatusGroupedData (imported from components)
+// generateInformeResumenPDFReact -> InformeResumenData (imported from components)
+// generateInformeSocioeconomicoPDF -> SocioeconomicoData (imported from actions)
+
+// So `Solicitante`, `Caso`, `SolicitanteFichaData`, `CasoHistorialData` can be removed from here?
+// `excel-generator` imported them from here. But `excel-generator` is cleared.
+// The new files import them from `report-types`.
+// So we can safely remove these interfaces from here.
+
 
 // Colores exactos del diseño de Figma
 export const CHART_COLORS = [
@@ -177,6 +198,7 @@ export function formatGroupTitle(item: {
 
   return title;
 }
+
 
 /**
  * Genera una imagen de una página completa del reporte de Tipos de Caso

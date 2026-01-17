@@ -7,6 +7,7 @@ interface LocationHousingTabProps {
     nombre_estado?: string | null;
     nombre_municipio?: string | null;
     nombre_parroquia?: string | null;
+    direccion_habitacion?: string | null;
     tipo_vivienda?: string | null;
     cant_habitaciones?: number | null;
     cant_banos?: number | null;
@@ -60,24 +61,30 @@ export default function LocationHousingTab({ solicitante }: LocationHousingTabPr
             Ubicación Geográfica
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {solicitante.nombre_estado && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Estado</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.nombre_estado}</p>
-            </div>
-          )}
-          {solicitante.nombre_municipio && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Municipio</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.nombre_municipio}</p>
-            </div>
-          )}
-          {solicitante.nombre_parroquia && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Parroquia</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.nombre_parroquia}</p>
-            </div>
-          )}
+            {solicitante.nombre_estado && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Estado</label>
+                <p className="text-base text-gray-900 mt-1">{solicitante.nombre_estado}</p>
+              </div>
+            )}
+            {solicitante.nombre_municipio && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Municipio</label>
+                <p className="text-base text-gray-900 mt-1">{solicitante.nombre_municipio}</p>
+              </div>
+            )}
+            {solicitante.nombre_parroquia && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Parroquia</label>
+                <p className="text-base text-gray-900 mt-1">{solicitante.nombre_parroquia}</p>
+              </div>
+            )}
+            {solicitante.direccion_habitacion && (
+              <div className="sm:col-span-2">
+                <label className="text-sm font-medium text-gray-500">Dirección de Habitación</label>
+                <p className="text-base text-gray-900 mt-1">{solicitante.direccion_habitacion}</p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -90,42 +97,42 @@ export default function LocationHousingTab({ solicitante }: LocationHousingTabPr
             Características de la Vivienda
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {solicitante.tipo_vivienda && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Tipo de Vivienda</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.tipo_vivienda}</p>
-            </div>
-          )}
-          {solicitante.cant_habitaciones !== null && solicitante.cant_habitaciones !== undefined && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Habitaciones</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.cant_habitaciones} habitaciones</p>
-            </div>
-          )}
-          {solicitante.cant_banos !== null && solicitante.cant_banos !== undefined && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Baños</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.cant_banos} baños</p>
-            </div>
-          )}
-          {solicitante.material_piso && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Material del Piso</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.material_piso}</p>
-            </div>
-          )}
-          {solicitante.material_paredes && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Material de las Paredes</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.material_paredes}</p>
-            </div>
-          )}
-          {solicitante.material_techo && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Material del Techo</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.material_techo}</p>
-            </div>
-          )}
+            {solicitante.tipo_vivienda && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Tipo de Vivienda</label>
+                <p className="text-base text-gray-900 mt-1">{solicitante.tipo_vivienda}</p>
+              </div>
+            )}
+            {solicitante.cant_habitaciones !== null && solicitante.cant_habitaciones !== undefined && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Habitaciones</label>
+                <p className="text-base text-gray-900 mt-1">{solicitante.cant_habitaciones} habitaciones</p>
+              </div>
+            )}
+            {solicitante.cant_banos !== null && solicitante.cant_banos !== undefined && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Baños</label>
+                <p className="text-base text-gray-900 mt-1">{solicitante.cant_banos} baños</p>
+              </div>
+            )}
+            {solicitante.material_piso && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Material del Piso</label>
+                <p className="text-base text-gray-900 mt-1">{solicitante.material_piso}</p>
+              </div>
+            )}
+            {solicitante.material_paredes && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Material de las Paredes</label>
+                <p className="text-base text-gray-900 mt-1">{solicitante.material_paredes}</p>
+              </div>
+            )}
+            {solicitante.material_techo && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Material del Techo</label>
+                <p className="text-base text-gray-900 mt-1">{solicitante.material_techo}</p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -138,23 +145,23 @@ export default function LocationHousingTab({ solicitante }: LocationHousingTabPr
             Servicios Básicos
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {solicitante.agua_potable && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Agua Potable</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.agua_potable}</p>
-            </div>
-          )}
-          {solicitante.eliminacion_aguas_n && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Eliminación de Aguas Negras</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.eliminacion_aguas_n}</p>
-            </div>
-          )}
-          {solicitante.aseo && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Servicio de Aseo</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.aseo}</p>
-            </div>
+            {solicitante.agua_potable && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Agua Potable</label>
+                <p className="text-base text-gray-900 mt-1">{solicitante.agua_potable}</p>
+              </div>
+            )}
+            {solicitante.eliminacion_aguas_n && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Eliminación de Aguas Negras</label>
+                <p className="text-base text-gray-900 mt-1">{solicitante.eliminacion_aguas_n}</p>
+              </div>
+            )}
+            {solicitante.aseo && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Servicio de Aseo</label>
+                <p className="text-base text-gray-900 mt-1">{solicitante.aseo}</p>
+              </div>
             )}
           </div>
         </div>

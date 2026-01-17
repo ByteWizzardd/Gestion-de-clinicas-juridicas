@@ -46,6 +46,26 @@ export const casosQueries = {
   },
 
   /**
+   * Obtiene casos de un solicitante con filtro de fechas opcional
+   * @param cedula - Cédula del solicitante
+   * @param fechaInicio - Fecha de inicio del rango (opcional)
+   * @param fechaFin - Fecha de fin del rango (opcional)
+   */
+  getHistorialBySolicitante: async (
+    cedula: string,
+    fechaInicio?: string,
+    fechaFin?: string
+  ): Promise<any[]> => {
+    const query = loadSQL('casos/get-casos-by-cedula-fecha.sql');
+    const result: QueryResult = await pool.query(query, [
+      cedula,
+      fechaInicio || null,
+      fechaFin || null
+    ]);
+    return result.rows;
+  },
+
+  /**
    * Obtiene todos los casos donde el usuario participa
    * Incluye casos donde está asignado, ejecuta acciones, atiende citas o supervisa
    * @param cedulaUsuario - Cédula del usuario
