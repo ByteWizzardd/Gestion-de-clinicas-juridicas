@@ -30,7 +30,9 @@ type AuditType = 'soportes' | 'soportes-creados' | 'citas-eliminadas' | 'citas-a
   | 'caracteristicas-eliminadas' | 'caracteristicas-actualizadas' | 'caracteristicas-insertadas'
   | 'casos-eliminados' | 'casos-actualizados' | 'casos-creados'
   | 'beneficiarios-eliminados' | 'beneficiarios-actualizados' | 'beneficiarios-creados'
-  | 'acciones-creadas' | 'acciones-actualizadas' | 'acciones-eliminadas';
+  | 'beneficiarios-eliminados' | 'beneficiarios-actualizados' | 'beneficiarios-creados'
+  | 'acciones-creadas' | 'acciones-actualizadas' | 'acciones-eliminadas'
+  | 'equipos-actualizados' | 'equipos-creados';
 
 interface AuditDetailClientProps {
   title: string;
@@ -124,6 +126,8 @@ export default function AuditDetailClient({
     'acciones-creadas': 'accion-creada',
     'acciones-actualizadas': 'accion-actualizada',
     'acciones-eliminadas': 'accion-eliminada',
+    'equipos-actualizados': 'equipo-actualizado',
+    'equipos-creados': 'equipo-actualizado', // Se reutiliza el tipo ya que la estructura es la misma
   };
 
   // Cargar opciones de usuarios
@@ -219,7 +223,9 @@ export default function AuditDetailClient({
           getBeneficiariosInscritosAuditAction,
           getAccionesCreadasAuditAction,
           getAccionesActualizadasAuditAction,
-          getAccionesEliminadasAuditAction
+          getAccionesEliminadasAuditAction,
+          getEquiposActualizadosAuditAction,
+          getEquiposCreadosAuditAction
         } = await import('@/app/actions/audit');
 
         let data: any[];
@@ -424,6 +430,12 @@ export default function AuditDetailClient({
             break;
           case 'acciones-eliminadas':
             data = await getAccionesEliminadasAuditAction(filters);
+            break;
+          case 'equipos-actualizados':
+            data = await getEquiposActualizadosAuditAction(filters);
+            break;
+          case 'equipos-creados':
+            data = await getEquiposCreadosAuditAction(filters);
             break;
           default:
             throw new Error('Tipo de auditoría no válido');

@@ -33,7 +33,8 @@ export type AuditRecordType =
   | 'caracteristica-eliminada' | 'caracteristica-actualizada' | 'caracteristica-insertada'
   | 'caso-eliminado' | 'caso-actualizado' | 'caso-creado'
   | 'beneficiario-eliminado' | 'beneficiario-actualizado' | 'beneficiario-creado'
-  | 'accion-eliminada' | 'accion-actualizada' | 'accion-creada';
+  | 'accion-eliminada' | 'accion-actualizada' | 'accion-creada'
+  | 'equipo-actualizado';
 
 // Auditoría de soportes eliminados
 export interface SoporteAuditRecord {
@@ -676,6 +677,8 @@ export interface AuditCounts {
   accionesCreadas?: number;
   accionesActualizadas?: number;
   accionesEliminadas?: number;
+  // Equipo de casos
+  equiposActualizados?: number;
 }
 
 // Auditoría de Beneficiarios
@@ -821,4 +824,32 @@ export interface AccionEliminadaAuditRecord extends AuditRecord {
   apellidos_eliminado_por: string | null;
   nombre_completo_eliminado_por: string | null;
   foto_perfil_eliminado_por: string | null;
+}
+
+// Auditoría de Actualización de Equipo
+export interface MiembroEquipoAudit {
+  tipo: 'estudiante' | 'profesor';
+  cedula: string;
+  nombres: string | null;
+  apellidos: string | null;
+  nombre_completo: string | null;
+  term: string | null;
+}
+
+export interface EquipoActualizadoAuditRecord extends AuditRecord {
+  id_caso: number;
+  id_usuario_modifico: string;
+  nombres_usuario_modifico: string | null;
+  apellidos_usuario_modifico: string | null;
+  nombre_completo_usuario_modifico: string | null;
+  foto_perfil_usuario_modifico: string | null;
+
+  // Tablas relacionadas
+  miembros_anteriores: MiembroEquipoAudit[];
+  miembros_nuevos: MiembroEquipoAudit[];
+
+  // Info extra del caso para mostrar contexto
+  tramite_caso: string | null;
+  nombre_nucleo: string | null;
+  nombre_completo_solicitante: string | null;
 }

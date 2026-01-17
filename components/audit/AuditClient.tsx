@@ -211,6 +211,20 @@ export default function AuditClient() {
           }
         ]
       },
+      {
+        title: "Equipo de Casos",
+        description: "Registro de cambios en la asignación de estudiantes y profesores a casos",
+        icon: Users,
+        totalCount: counts.equiposActualizados || 0,
+        href: "/dashboard/audit/equipo",
+        operations: [
+          {
+            label: "Actualizados",
+            count: counts.equiposActualizados || 0,
+            href: "/dashboard/audit/equipo"
+          }
+        ]
+      },
       // Catálogos
       ...(counts.estadosEliminados !== undefined || counts.estadosActualizados !== undefined || counts.estadosInsertados !== undefined ? [{
         title: "Estados",

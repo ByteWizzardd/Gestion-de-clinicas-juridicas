@@ -1092,6 +1092,88 @@ export async function asignarEquipoAction(
         });
       }
 
+      // --- AUDITORÍA DE MODIFICACIÓN DE EQUIPO ---
+      // Registrar solo si hubo cambios reales (miembros agregados o removidos)
+      const huboCambiosProfesores = profesoresNuevos.length > 0 || profesoresActuales.some(p => !profesores.includes(p));
+      const huboCambiosEstudiantes = estudiantesNuevos.length > 0 || estudiantesActuales.some(e => !estudiantes.includes(e));
+
+      if (huboCambiosProfesores || huboCambiosEstudiantes) {
+        // 1. Crear registro principal de auditoría
+        const auditoriaQuery = `
+          INSERT INTO auditoria_actualizacion_equipo (id_caso, id_usuario_modifico)
+          VALUES ($1, $2)
+          RETURNING id
+        `;
+        const auditoriaResult = await client.query(auditoriaQuery, [idCaso, cedulaEmisor]);
+        const auditoriaId = auditoriaResult.rows[0].id;
+
+        // 2. Registrar miembros anteriores (Equipo ANTES del cambio)
+        const insertAnteriorQuery = `
+          INSERT INTO auditoria_actualizacion_equipo_anterior (id_auditoria_actualizacion, tipo, cedula, nombres, apellidos, term)
+          VALUES ($1, $2, $3, $4, $5, $6)
+        `;
+
+        for (const miembro of equipoActual) {
+          // Solo registrar si el miembro estaba habilitado (activo en el equipo)
+          if (miembro.habilitado) {
+            // Separar nombres y apellidos si es necesario, o usarlos tal cual si vienen
+            // Asumimos que getEquipoByCaso retorna nombre_completo, pero necesitamos nombres y apellidos separados idealmente
+            // Para simplificar, usaremos nombre_completo en nombres y '' en apellidos si no están separados,
+            // O consultaremos los detalles si es crítico. 
+            // Revisando asignacionesQueries.getEquipoByCaso, probablemente hace join con usuarios.
+
+            // NOTA: Para no complejizar la query, usaremos los datos disponibles.
+            // Si miembro.nombre_completo es lo único disponible, lo dividiremos burdamente o buscaremos info.
+            // Mejor aún: Buscamos la info detallada de usuarios.
+
+            const tipo = miembro.tipo; // 'profesor' o 'estudiante'
+            // Consultamos info detallada si no está en miembro
+            // Asumimos que getEquipoByCaso devuelve lo necesario. Si no, hacemos query rápida.
+            const usuarioInfoQuery = 'SELECT nombres, apellidos FROM usuarios WHERE cedula = $1';
+            const usuarioInfo = await client.query(usuarioInfoQuery, [miembro.cedula]);
+            const { nombres, apellidos } = usuarioInfo.rows[0];
+
+            await client.query(insertAnteriorQuery, [
+              auditoriaId,
+              tipo,
+              miembro.cedula,
+              nombres,
+              apellidos,
+              miembro.term
+            ]);
+          }
+        }
+
+        // 3. Registrar miembros nuevos (Equipo DESPUÉS del cambio)
+        // Reconstruimos el estado final del equipo
+        const insertNuevoQuery = `
+          INSERT INTO auditoria_actualizacion_equipo_nuevo (id_auditoria_actualizacion, tipo, cedula, nombres, apellidos, term)
+          VALUES ($1, $2, $3, $4, $5, $6)
+        `;
+
+        // Profesores finales
+        for (const cedula of profesores) {
+          const profesorInfo = profesoresAllActiveMap.get(cedula);
+          if (profesorInfo) {
+            const termToUse = profesorInfo.term === currentTerm ? currentTerm : profesorInfo.term;
+            await client.query(insertNuevoQuery, [
+              auditoriaId, 'profesor', cedula, profesorInfo.nombres, profesorInfo.apellidos, termToUse
+            ]);
+          }
+        }
+
+        // Estudiantes finales
+        for (const cedula of estudiantes) {
+          const estudianteInfo = estudiantesAllActiveMap.get(cedula);
+          if (estudianteInfo) {
+            const termToUse = estudianteInfo.term === currentTerm ? currentTerm : estudianteInfo.term;
+            await client.query(insertNuevoQuery, [
+              auditoriaId, 'estudiante', cedula, estudianteInfo.nombres, estudianteInfo.apellidos, termToUse
+            ]);
+          }
+        }
+      }
+
       revalidatePath(`/dashboard/cases/${idCaso}`);
 
       return {

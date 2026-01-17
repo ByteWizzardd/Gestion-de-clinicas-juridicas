@@ -66,6 +66,7 @@ import { auditoriaEliminacionBeneficiariosQueries } from '@/lib/db/queries/audit
 import { auditoriaInsercionAccionesQueries } from '@/lib/db/queries/auditoria-insercion-acciones.queries';
 import { auditoriaActualizacionAccionesQueries } from '@/lib/db/queries/auditoria-actualizacion-acciones.queries';
 import { auditoriaEliminacionAccionesQueries } from '@/lib/db/queries/auditoria-eliminacion-acciones.queries';
+import * as auditoriaActualizacionEquipoQueries from '@/lib/db/queries/auditoria-actualizacion-equipo.queries';
 import type { AuditFilters, AuditCounts } from '@/types/audit';
 
 /**
@@ -114,7 +115,9 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       estudiantesInscritos, profesoresAsignados,
       beneficiariosEliminados, beneficiariosActualizados, beneficiariosCreados,
       // Acciones
-      accionesCreadas, accionesActualizadas, accionesEliminadas
+      accionesCreadas, accionesActualizadas, accionesEliminadas,
+      // Equipo de casos
+      equiposActualizados
     ] = await Promise.all([
       auditoriaEliminacionSoportesQueries.getCount(),
       auditoriaInsercionSoportesQueries.getCount().catch(() => 0),
@@ -188,6 +191,8 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       auditoriaInsercionAccionesQueries.getCount().catch(() => 0),
       auditoriaActualizacionAccionesQueries.getCount().catch(() => 0),
       auditoriaEliminacionAccionesQueries.getCount().catch(() => 0),
+      // Equipo de casos
+      auditoriaActualizacionEquipoQueries.getCount().catch(() => 0),
     ]);
 
     return {
@@ -261,6 +266,8 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       accionesCreadas: accionesCreadas || 0,
       accionesActualizadas: accionesActualizadas || 0,
       accionesEliminadas: accionesEliminadas || 0,
+      // Equipo de casos
+      equiposActualizados: equiposActualizados || 0,
     };
   } catch (error) {
     console.error('Error obteniendo contadores de auditoría:', error);
@@ -2046,3 +2053,78 @@ export async function getAccionesEliminadasAuditAction(filters?: AuditFilters) {
     throw new Error('Error al obtener auditoría de acciones eliminadas');
   }
 }
+
+// =========================================================
+// ACCIONES DE AUDITORÍA PARA EQUIPO DE CASOS
+// =========================================================
+
+/**
+ * Obtiene registros de auditoría de actualización de equipo (asignación de estudiantes y profesores a casos) - SOLO ACTUALIZACIONES
+ */
+export async function getEquiposActualizadosAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+
+  try {
+    // Usar getAllUpdated para solo obtener actualizaciones reales
+    const records = await auditoriaActualizacionEquipoQueries.getAllUpdated();
+
+    // Mapeo inicial
+    let mappedRecords = records.map((r) => ({
+      ...r,
+      fecha: r.fecha,
+      usuario_accion: r.id_usuario_modifico,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_modifico || undefined,
+    }));
+
+    // TODO: Implementar filtrado en memoria si es necesario, ya que las queries no aceptan filtros aún
+
+    return mappedRecords;
+  } catch (error) {
+    console.error('Error obteniendo auditoría de equipos actualizados:', error);
+    throw new Error('Error al obtener auditoría de equipos actualizados');
+  }
+}
+
+/**
+ * Obtiene registros de auditoría de creación de equipo (primera asignación) - SOLO CREACIONES
+ */
+export async function getEquiposCreadosAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+
+  try {
+    // Usar getAllCreated para solo obtener creaciones (sin miembros anteriores)
+    const records = await auditoriaActualizacionEquipoQueries.getAllCreated();
+
+    // Mapeo inicial
+    let mappedRecords = records.map((r) => ({
+      ...r,
+      fecha: r.fecha,
+      usuario_accion: r.id_usuario_modifico,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_modifico || undefined,
+    }));
+
+    return mappedRecords;
+  } catch (error) {
+    console.error('Error obteniendo auditoría de equipos creados:', error);
+    throw new Error('Error al obtener auditoría de equipos creados');
+  }
+}
+

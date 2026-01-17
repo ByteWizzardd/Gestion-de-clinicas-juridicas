@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, ChevronUp, FileText, Calendar, User, X, Check, BookOpen, GraduationCap, Building, Briefcase, Activity, Tag, Tags, Scale, MapPin, Building2, Home, FolderTree, FolderOpen, UserCircle, Users } from 'lucide-react';
+import { ChevronDown, ChevronUp, FileText, Calendar, User, X, Check, BookOpen, GraduationCap, Building, Briefcase, Activity, Tag, Tags, Scale, MapPin, Building2, Home, FolderTree, FolderOpen, UserCircle, Users, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import UserAvatar from '@/components/ui/UserAvatar';
 import { formatDateTime } from '@/lib/utils/date-formatter';
@@ -27,10 +27,12 @@ import type {
   BeneficiarioInscritoAuditRecord,
   AccionCreadaAuditRecord,
   AccionActualizadaAuditRecord,
-  AccionEliminadaAuditRecord
+  AccionEliminadaAuditRecord,
+  EquipoActualizadoAuditRecord,
+  MiembroEquipoAudit
 } from '@/types/audit';
 
-type AuditRecord = SoporteAuditRecord | SoporteCreadoAuditRecord | CitaEliminadaAuditRecord | CitaActualizadaAuditRecord | CitaCreadaAuditRecord | UsuarioEliminadoAuditRecord | UsuarioActualizadoCamposAuditRecord | UsuarioCreadoAuditRecord | CasoEliminadoAuditRecord | CasoActualizadoAuditRecord | CasoCreadoAuditRecord | SolicitanteEliminadoAuditRecord | SolicitanteActualizadoAuditRecord | SolicitanteCreadoAuditRecord | EstudianteInscritoAuditRecord | BeneficiarioEliminadoAuditRecord | BeneficiarioActualizadoAuditRecord | BeneficiarioInscritoAuditRecord | AccionCreadaAuditRecord | AccionActualizadaAuditRecord | AccionEliminadaAuditRecord | any;
+type AuditRecord = SoporteAuditRecord | SoporteCreadoAuditRecord | CitaEliminadaAuditRecord | CitaActualizadaAuditRecord | CitaCreadaAuditRecord | UsuarioEliminadoAuditRecord | UsuarioActualizadoCamposAuditRecord | UsuarioCreadoAuditRecord | CasoEliminadoAuditRecord | CasoActualizadoAuditRecord | CasoCreadoAuditRecord | SolicitanteEliminadoAuditRecord | SolicitanteActualizadoAuditRecord | SolicitanteCreadoAuditRecord | EstudianteInscritoAuditRecord | BeneficiarioEliminadoAuditRecord | BeneficiarioActualizadoAuditRecord | BeneficiarioInscritoAuditRecord | AccionCreadaAuditRecord | AccionActualizadaAuditRecord | AccionEliminadaAuditRecord | EquipoActualizadoAuditRecord | any;
 
 import type { AuditRecordType } from '@/types/audit';
 
@@ -1311,6 +1313,33 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                   null,
                   null,
                   r.id_usuario_elimino
+                )}
+              </p>
+            </div>
+          </div>
+        );
+      }
+      case 'equipo-actualizado': {
+        const r = record as EquipoActualizadoAuditRecord;
+
+        return (
+          <div className="flex items-start gap-3">
+            <Users className="w-5 h-5 text-gray-500" />
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">
+                <Link href={`/dashboard/cases/${r.id_caso}`} className="hover:underline text-primary">
+                  Caso #{r.id_caso}
+                </Link>
+                {' - '}
+                {r.miembros_anteriores.length === 0 ? 'Equipo asignado' : 'Equipo actualizado'}
+              </p>
+              <p className="text-sm text-gray-600">
+                Modificado por: {' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_modifico || null,
+                  r.nombres_usuario_modifico,
+                  r.apellidos_usuario_modifico,
+                  r.id_usuario_modifico
                 )}
               </p>
             </div>
@@ -3941,6 +3970,108 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           </div>
         );
       }
+      case 'equipo-actualizado': {
+        const r = record as EquipoActualizadoAuditRecord;
+        const miembrosAnteriores = r.miembros_anteriores || [];
+        const miembrosNuevos = r.miembros_nuevos || [];
+
+        const estudiantesAnteriores = miembrosAnteriores.filter((m: MiembroEquipoAudit) => m.tipo === 'estudiante');
+        const profesoresAnteriores = miembrosAnteriores.filter((m: MiembroEquipoAudit) => m.tipo === 'profesor');
+        const estudiantesNuevos = miembrosNuevos.filter((m: MiembroEquipoAudit) => m.tipo === 'estudiante');
+        const profesoresNuevos = miembrosNuevos.filter((m: MiembroEquipoAudit) => m.tipo === 'profesor');
+
+        return (
+          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-2">Cambios en el Equipo</p>
+
+              {/* Profesores */}
+              <div className="mb-2">
+                <p className="text-sm text-gray-600">
+                  <span className="font-semibold text-gray-700">Profesores:</span>{' '}
+                  <span className="line-through text-red-500">
+                    {profesoresAnteriores.length > 0 ? (
+                      profesoresAnteriores.map((m: MiembroEquipoAudit, i: number) => (
+                        <span key={i}>
+                          {m.nombre_completo}
+                          {i < profesoresAnteriores.length - 1 && ', '}
+                        </span>
+                      ))
+                    ) : 'Ninguno'}
+                  </span>
+                  {' → '}
+                  <span className="text-green-600">
+                    {profesoresNuevos.length > 0 ? (
+                      profesoresNuevos.map((m: MiembroEquipoAudit, i: number) => (
+                        <span key={i}>
+                          <Link
+                            href={`/dashboard/users/${m.cedula}`}
+                            className="text-green-600 hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {m.nombre_completo}
+                          </Link>
+                          {i < profesoresNuevos.length - 1 && ', '}
+                        </span>
+                      ))
+                    ) : 'Ninguno'}
+                  </span>
+                </p>
+              </div>
+
+              {/* Estudiantes */}
+              <div className="mb-2">
+                <p className="text-sm text-gray-600">
+                  <span className="font-semibold text-gray-700">Estudiantes:</span>{' '}
+                  <span className="line-through text-red-500">
+                    {estudiantesAnteriores.length > 0 ? (
+                      estudiantesAnteriores.map((m: MiembroEquipoAudit, i: number) => (
+                        <span key={i}>
+                          {m.nombre_completo}
+                          {i < estudiantesAnteriores.length - 1 && ', '}
+                        </span>
+                      ))
+                    ) : 'Ninguno'}
+                  </span>
+                  {' → '}
+                  <span className="text-green-600">
+                    {estudiantesNuevos.length > 0 ? (
+                      estudiantesNuevos.map((m: MiembroEquipoAudit, i: number) => (
+                        <span key={i}>
+                          <Link
+                            href={`/dashboard/users/${m.cedula}`}
+                            className="text-green-600 hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {m.nombre_completo}
+                          </Link>
+                          {i < estudiantesNuevos.length - 1 && ', '}
+                        </span>
+                      ))
+                    ) : 'Ninguno'}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-gray-200">
+              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
+              <p className="text-sm text-gray-600">
+                Modificado por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_modifico,
+                  r.nombres_usuario_modifico,
+                  r.apellidos_usuario_modifico,
+                  r.id_usuario_modifico
+                )}
+              </p>
+              <p className="text-sm text-gray-600">
+                Fecha modificación: {formatDate(r.fecha)}
+              </p>
+            </div>
+          </div>
+        );
+      }
     }
   };
 
@@ -4041,6 +4172,9 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         return (record as AccionActualizadaAuditRecord).fecha_actualizacion;
       case 'accion-eliminada':
         return (record as AccionEliminadaAuditRecord).fecha;
+      // Equipo actualizado
+      case 'equipo-actualizado':
+        return (record as EquipoActualizadoAuditRecord).fecha;
     }
   };
 
