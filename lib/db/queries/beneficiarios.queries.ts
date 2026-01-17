@@ -241,5 +241,29 @@ export const beneficiariosQueries = {
       client.release();
     }
   },
+
+  /**
+   * Actualiza información básica por cédula (para sincronización)
+   */
+  updateBasicInfoByCedula: async (cedula: string, nombres: string, apellidos: string, fechaNac: string | Date, sexo: string, cedulaActor: string): Promise<void> => {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      // Establecer variable de sesión para auditoría
+      await client.query(`SELECT set_config('app.current_user_id', $1, true)`, [cedulaActor]);
+      // Actualizar beneficiario
+      const fecha = typeof fechaNac === 'string' ? fechaNac : fechaNac.toISOString().split('T')[0];
+      await client.query(
+        `UPDATE beneficiarios SET nombres = $2, apellidos = $3, fecha_nac = $4, sexo = $5 WHERE cedula = $1`,
+        [cedula, nombres, apellidos, fecha, sexo]
+      );
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
+  },
 };
 

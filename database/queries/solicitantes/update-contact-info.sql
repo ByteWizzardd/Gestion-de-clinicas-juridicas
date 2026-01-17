@@ -2,5 +2,5 @@
 SELECT set_config('app.usuario_actualiza_solicitante', $6, true);
 
 UPDATE solicitantes
-SET nombres = $2, apellidos = $3, fecha_nacimiento = $4, sexo = $5
+SET nombres = $2, apellidos = $3, correo_electronico = $4, telefono_celular = $5
 WHERE cedula = $1;

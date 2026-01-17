@@ -199,14 +199,16 @@ export async function updateBeneficiarioAction(data: {
       // La actualización en usuarios y solicitantes no debe detener el flujo si falla
       // y si el registro no existe, simplemente no actualizará nada (0 rows affected)
       try {
+        const actor = authResult.user.cedula;
         await Promise.all([
-          usuariosQueries.updateBasicInfo(data.cedula, data.nombres, data.apellidos),
+          usuariosQueries.updateBasicInfo(data.cedula, data.nombres, data.apellidos, actor),
           solicitantesQueries.updateBasicInfo(
             data.cedula,
             data.nombres,
             data.apellidos,
             data.fecha_nac,
-            data.sexo
+            data.sexo,
+            actor
           )
         ]);
       } catch (error) {

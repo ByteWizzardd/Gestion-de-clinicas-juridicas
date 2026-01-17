@@ -702,9 +702,17 @@ export const usuariosQueries = {
   /**
    * Actualiza solo nombres y apellidos de un usuario
    */
-  updateBasicInfo: async (cedula: string, nombres: string, apellidos: string): Promise<void> => {
+  updateBasicInfo: async (cedula: string, nombres: string, apellidos: string, cedulaActor: string): Promise<void> => {
     const query = loadSQL('usuarios/update-basic-info.sql');
-    await pool.query(query, [cedula, nombres, apellidos]);
+    await pool.query(query, [cedula, nombres, apellidos, cedulaActor]);
+  },
+
+  /**
+   * Actualiza información de contacto (nombres, apellidos, email, telefono)
+   */
+  updateContactInfo: async (cedula: string, nombres: string, apellidos: string, correo: string, telefono: string, cedulaActor: string): Promise<void> => {
+    const query = loadSQL('usuarios/update-contact-info.sql');
+    await pool.query(query, [cedula, nombres, apellidos, correo, telefono, cedulaActor]);
   },
 };
 

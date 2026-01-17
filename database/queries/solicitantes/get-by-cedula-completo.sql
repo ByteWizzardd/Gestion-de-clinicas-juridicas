@@ -56,6 +56,8 @@ SELECT
     fh.cant_ninos_estudiando,
     fh.jefe_hogar,
     fh.ingresos_mensuales,
+    fh.ingresos_mensuales,
+    fh.tipo_tiempo_estudio_jefe,
     fh.tiempo_estudio_jefe,
     fh.id_nivel_educativo_jefe,
     ne_jefe.descripcion AS nivel_educativo_jefe,

@@ -474,10 +474,44 @@ export const solicitantesQueries = {
     /**
      * Actualiza nombres, apellidos, fecha de nacimiento y sexo de un solicitante
      */
-    updateBasicInfo: async (cedula: string, nombres: string, apellidos: string, fechaNacimiento: string | Date, sexo: string): Promise<void> => {
-        const query = loadSQL('solicitantes/update-basic-info.sql');
-        const fecha = typeof fechaNacimiento === 'string' ? fechaNacimiento : fechaNacimiento.toISOString().split('T')[0];
-        await pool.query(query, [cedula, nombres, apellidos, fecha, sexo]);
+    updateBasicInfo: async (cedula: string, nombres: string, apellidos: string, fechaNacimiento: string | Date, sexo: string, cedulaActor: string): Promise<void> => {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            await client.query(`SELECT set_config('app.usuario_actualiza_solicitante', $1, true)`, [cedulaActor]);
+            const fecha = typeof fechaNacimiento === 'string' ? fechaNacimiento : fechaNacimiento.toISOString().split('T')[0];
+            await client.query(
+                `UPDATE solicitantes SET nombres = $2, apellidos = $3, fecha_nacimiento = $4, sexo = $5 WHERE cedula = $1`,
+                [cedula, nombres, apellidos, fecha, sexo]
+            );
+            await client.query('COMMIT');
+        } catch (e) {
+            await client.query('ROLLBACK');
+            throw e;
+        } finally {
+            client.release();
+        }
+    },
+
+    /**
+     * Actualiza información de contacto (nombres, apellidos, email, telefono)
+     */
+    updateContactInfo: async (cedula: string, nombres: string, apellidos: string, correo: string, telefono: string, cedulaActor: string): Promise<void> => {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            await client.query(`SELECT set_config('app.usuario_actualiza_solicitante', $1, true)`, [cedulaActor]);
+            await client.query(
+                `UPDATE solicitantes SET nombres = $2, apellidos = $3, correo_electronico = $4, telefono_celular = $5 WHERE cedula = $1`,
+                [cedula, nombres, apellidos, correo, telefono]
+            );
+            await client.query('COMMIT');
+        } catch (e) {
+            await client.query('ROLLBACK');
+            throw e;
+        } finally {
+            client.release();
+        }
     }
 };
 

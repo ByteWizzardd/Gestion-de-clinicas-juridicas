@@ -219,11 +219,11 @@ export interface GetUsuarioInfoByCedulaResult {
       nrc: string | null;
       term: string | null;
       tipo_estudiante:
-        | "Voluntario"
-        | "Inscrito"
-        | "Egresado"
-        | "Servicio Comunitario"
-        | null;
+      | "Voluntario"
+      | "Inscrito"
+      | "Egresado"
+      | "Servicio Comunitario"
+      | null;
     };
     profesor?: {
       term: string | null;
@@ -330,7 +330,7 @@ export async function checkEmailExistsUsuarioAction(
     }
 
     const result = await usuariosQueries.searchByEmail(email.trim());
-    
+
     return {
       success: true,
       exists: result.length > 0,
@@ -387,7 +387,7 @@ export async function checkUsernameExistsUsuarioAction(
     }
 
     const result = await usuariosQueries.searchByUsername(username.trim());
-    
+
     return {
       success: true,
       exists: result.length > 0,
@@ -428,11 +428,11 @@ export async function updateUsuarioByCedulaAction(
     telefono?: string;
     estudiante?: {
       tipo_estudiante?:
-        | "Voluntario"
-        | "Inscrito"
-        | "Egresado"
-        | "Servicio Comunitario"
-        | null;
+      | "Voluntario"
+      | "Inscrito"
+      | "Egresado"
+      | "Servicio Comunitario"
+      | null;
       nrc?: string | null;
       term?: string | null;
     };
@@ -464,16 +464,16 @@ export async function updateUsuarioByCedulaAction(
       };
     }
     const cedula_actor = userResult.data.cedula;
-    
+
     // Obtener el tipo_usuario actual del usuario para determinar qué valores pasar
     const usuarioActual = await usuariosQueries.getInfoByCedula(cedula);
     const tipoUsuarioActual = usuarioActual?.tipo_usuario || null;
-    
+
     // Usar el tipo_usuario que se está pasando, o el actual si no se pasa
-    const tipoUsuarioParaValores = (updates.tipo_usuario && updates.tipo_usuario.trim() !== '') 
-      ? updates.tipo_usuario 
+    const tipoUsuarioParaValores = (updates.tipo_usuario && updates.tipo_usuario.trim() !== '')
+      ? updates.tipo_usuario
       : tipoUsuarioActual;
-    
+
     await usuariosQueries.updateUsuarioByCedulaAction({
       cedula,
       nombres: updates.nombre ?? "",
@@ -487,14 +487,66 @@ export async function updateUsuarioByCedulaAction(
         tipoUsuarioParaValores === "Estudiante"
           ? updates.estudiante?.term ?? null
           : tipoUsuarioParaValores === "Profesor"
-          ? updates.profesor?.term ?? null
-          : tipoUsuarioParaValores === "Coordinador"
-          ? updates.coordinador?.term ?? null
-          : null,
+            ? updates.profesor?.term ?? null
+            : tipoUsuarioParaValores === "Coordinador"
+              ? updates.coordinador?.term ?? null
+              : null,
       tipo_estudiante: tipoUsuarioParaValores === "Estudiante" ? (updates.estudiante?.tipo_estudiante ?? null) : null,
       tipo_profesor: tipoUsuarioParaValores === "Profesor" ? (updates.profesor?.tipo_profesor ?? null) : null,
       cedula_actor,
     });
+
+    // Sincronizar cambios con solicitantes y beneficiarios si aplica
+    if (updates.nombre && updates.apellidos) {
+      try {
+        const promises = [];
+
+        // Actualizar solicitantes (si se tienen todos los datos de contacto)
+        // Nota: updates.correo_electronico puede ser undefined si no cambió, igual para telefono.
+        // Deberíamos obtener los datos actuales si no vienen en updates para hacer una actualización completa,
+        // o usar métodos de actualización parcial (que no tenemos aún para contacto completo).
+        // Por simplicidad y seguridad, usaremos updateContactInfo asumiendo que si no vienen, usamos los strings vacíos (lo cual podría ser riesgoso)
+        // MEJOR: Obtener los datos actuales mezclados con los nuevos.
+
+        // Ya tenemos usuarioActual arriba.
+        const nuevosNombres = updates.nombre ?? usuarioActual?.nombres ?? "";
+        const nuevosApellidos = updates.apellidos ?? usuarioActual?.apellidos ?? "";
+        const nuevoCorreo = updates.correo_electronico ?? usuarioActual?.correo_electronico ?? "";
+        const nuevoTelefono = updates.telefono ?? usuarioActual?.telefono_celular ?? "";
+
+        const { solicitantesQueries } = await import('@/lib/db/queries/solicitantes.queries');
+        promises.push(solicitantesQueries.updateContactInfo(cedula, nuevosNombres, nuevosApellidos, nuevoCorreo, nuevoTelefono, cedula_actor));
+
+        // Actualizar beneficiarios (solo nombres y apellidos ya que usuario no tiene fec_nac/sexo editables aqui)
+        // Para beneficiarios, usamos updateBasicInfoByCedula.
+        // Pero updateBasicInfoByCedula requiere fecha y sexo.
+        // Como el usuario no tiene esos datos, NO PODEMOS llamar updateBasicInfoByCedula sin riesgo de sobrescribir/necesitar esos datos.
+        // Necesitamos un método updateNamesByCedula en beneficiariosQueries o obtener el beneficiario para preservar sus datos.
+
+        // Solución rápida: obtener beneficiario, y si existe, actualizarlo preservando fecha/sexo.
+        const { beneficiariosQueries } = await import('@/lib/db/queries/beneficiarios.queries');
+        const beneficiarioExistente = await beneficiariosQueries.getByCedula(cedula);
+
+        if (beneficiarioExistente && beneficiarioExistente.fecha_nacimiento && beneficiarioExistente.sexo) {
+          promises.push(beneficiariosQueries.updateBasicInfoByCedula(
+            cedula,
+            nuevosNombres,
+            nuevosApellidos,
+            beneficiarioExistente.fecha_nacimiento, // ya es string ISO o Date? getByCedula retorna objeto con fecha_nacimiento string | null segun interface pero implementation uses toISOString splitted.
+            beneficiarioExistente.sexo,
+            cedula_actor
+          ));
+        }
+
+        if (promises.length > 0) {
+          await Promise.all(promises);
+        }
+
+      } catch (error) {
+        console.error('Error sincronizando datos de usuario con solicitantes/beneficiarios:', error);
+      }
+    }
+
     return { success: true };
   } catch (error) {
     if (error instanceof AppError) {
@@ -901,7 +953,7 @@ export async function disableUsuariosLoteAction(
 
     // 3. Ejecutar actualización con registro en auditoría
     await usuariosQueries.disableLote(cedulasFiltradas, userResult.data.cedula);
-    
+
     return { success: true };
   } catch (error) {
     console.error("Error en disableUsuariosLoteAction:", error);
@@ -936,7 +988,7 @@ export async function enableUsuariosLoteAction(
 
     // 2. Ejecutar actualización con registro en auditoría de habilitación
     await usuariosQueries.enableLote(cedulas, userResult.data.cedula);
-    
+
     return { success: true };
   } catch (error) {
     console.error("Error en enableUsuariosLoteAction:", error);

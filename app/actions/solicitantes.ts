@@ -312,6 +312,59 @@ export async function updateSolicitanteAction(cedulaOriginal: string, data: any)
 
     const result = await solicitantesService.update(cedulaOriginal, data, authResult.user.cedula);
 
+    // Actualizar datos en usuarios y beneficiarios si existen
+    if (cedulaOriginal) {
+      try {
+        const promises = [];
+
+        // Actualizar usuario (basic info + contact info)
+        if (data.nombres && data.apellidos && data.correoElectronico) {
+          const telefono = data.telefonoCelular || '';
+          const { usuariosQueries } = await import('@/lib/db/queries/usuarios.queries');
+          promises.push(usuariosQueries.updateContactInfo(cedulaOriginal, data.nombres, data.apellidos, data.correoElectronico, telefono, authResult.user.cedula));
+        }
+
+        // Actualizar beneficiario - verificar campos con diferentes posibles nombres
+        const nombres = data.nombres;
+        const apellidos = data.apellidos;
+        const fechaNac = data.fechaNacimiento || data.fecha_nacimiento || data.fechaNac;
+        const sexo = data.sexo;
+
+        console.log('[Sync Beneficiario] Intentando sincronizar con cédula:', cedulaOriginal);
+        console.log('[Sync Beneficiario] Datos disponibles:', { nombres, apellidos, fechaNac, sexo });
+
+        if (nombres && apellidos && fechaNac && sexo) {
+          const { beneficiariosQueries } = await import('@/lib/db/queries/beneficiarios.queries');
+
+          // Verificar si existe algún beneficiario con esta cédula
+          const beneficiarioExistente = await beneficiariosQueries.getByCedula(cedulaOriginal);
+          console.log('[Sync Beneficiario] Beneficiario encontrado:', beneficiarioExistente ? 'Sí' : 'No');
+
+          if (beneficiarioExistente) {
+            promises.push(beneficiariosQueries.updateBasicInfoByCedula(cedulaOriginal, nombres, apellidos, fechaNac, sexo, authResult.user.cedula));
+            console.log('[Sync Beneficiario] Actualización programada para cédula:', cedulaOriginal);
+          } else {
+            console.log('[Sync Beneficiario] No existe beneficiario con cédula:', cedulaOriginal, '- No se actualizará');
+          }
+        } else {
+          console.warn('[Sync Beneficiario] Campos faltantes:', {
+            nombres: !!nombres,
+            apellidos: !!apellidos,
+            fechaNac: !!fechaNac,
+            sexo: !!sexo,
+            dataKeys: Object.keys(data)
+          });
+        }
+
+        if (promises.length > 0) {
+          await Promise.all(promises);
+          console.log('[Sync Beneficiario] Sincronización completada');
+        }
+      } catch (error) {
+        console.error('Error sincronizando datos de solicitante con usuarios/beneficiarios:', error);
+      }
+    }
+
     // Revalidar cache calculando rutas
     revalidatePath('/dashboard/applicants');
     revalidatePath(`/dashboard/applicants/${cedulaOriginal}`);

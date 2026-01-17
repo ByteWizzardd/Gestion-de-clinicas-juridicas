@@ -3,9 +3,9 @@ CALL update_all_by_cedula(
     $1, -- p_cedula
     $2, -- p_nombres
     $3, -- p_apellidos
-    NULL, -- p_correo_electronico
+    $4, -- p_correo_electronico
     NULL, -- p_nombre_usuario
-    NULL, -- p_telefono_celular
+    $5, -- p_telefono_celular
     NULL, -- p_tipo_usuario
     NULL, -- p_estudiante_nrc
     NULL, -- p_estudiante_term
@@ -13,5 +13,5 @@ CALL update_all_by_cedula(
     NULL, -- p_profesor_term
     NULL, -- p_profesor_tipo
     NULL, -- p_coordinador_term
-    $4    -- p_cedula_actor
+    $6    -- p_cedula_actor
 );
