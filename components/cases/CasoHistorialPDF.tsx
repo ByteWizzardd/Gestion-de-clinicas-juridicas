@@ -52,6 +52,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginTop: 10,
     textTransform: 'uppercase',
+    backgroundColor: '#8B1C1C',
+    color: '#FFFFFF',
+    padding: 5,
   },
   sectionTitleSec: {
     fontSize: 12,
@@ -60,6 +63,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginTop: 20,
     textTransform: 'uppercase',
+    backgroundColor: '#8B1C1C',
+    color: '#FFFFFF',
+    padding: 5,
   },
   // Form Rows
   formRow: {
