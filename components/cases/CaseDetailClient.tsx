@@ -25,11 +25,15 @@ import { AppointmentModal } from '@/components/appointmentModal/AppointmentModal
 import { ChevronDown, Plus, Pencil } from 'lucide-react';
 import { getCurrentUserAction } from '@/app/actions/auth';
 
-export default function CaseDetailClient() {
+interface CaseDetailClientProps {
+  id?: string;
+}
+
+export default function CaseDetailClient({ id: propId }: CaseDetailClientProps = {}) {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const id = params.id as string;
+  const id = propId || (params?.id as string);
 
   const [caso, setCaso] = useState<any>(null);
   const [loading, setLoading] = useState(true);

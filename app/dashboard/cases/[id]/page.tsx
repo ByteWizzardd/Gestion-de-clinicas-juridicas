@@ -3,9 +3,12 @@ import CaseDetailClient from '@/components/cases/CaseDetailClient';
 
 export const dynamic = 'force-dynamic';
 
-export default async function CaseDetailPage() {
+export default async function CaseDetailPage({ params }: { params: Promise<{ id: string }> }) {
     // Permitir a todos los roles autenticados
     await authorizeRole(['coordinator', 'professor', 'student']);
 
-    return <CaseDetailClient />;
+    // Await params for Next.js 15 compatibility
+    const { id } = await params;
+
+    return <CaseDetailClient id={id} />;
 }
