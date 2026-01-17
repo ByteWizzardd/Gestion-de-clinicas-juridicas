@@ -74,6 +74,9 @@ SELECT
     vc.nombre_categoria,
     vc.nombre_subcategoria,
     ua.fecha_ultima_actividad,
+    -- Calcular meses de inactividad (diferencia entre hoy y última actividad)
+    (EXTRACT(YEAR FROM age(CURRENT_DATE, ua.fecha_ultima_actividad)) * 12 + 
+     EXTRACT(MONTH FROM age(CURRENT_DATE, ua.fecha_ultima_actividad))) as meses_inactividad,
     -- Info para depuración
     (SELECT fecha_limite FROM fecha_corte_semestres) as fecha_corte_usada
 FROM view_casos_detalle vc

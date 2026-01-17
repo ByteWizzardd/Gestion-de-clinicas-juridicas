@@ -559,7 +559,8 @@ export const casosQueries = {
     meses_inactividad: number;
   }>> => {
     const query = loadSQL('casos/get-inactive-cases.sql');
-    const result: QueryResult = await pool.query(query, [mesesInactividad]);
+    // El SQL define la lógica de inactividad basándose en los semestres y no acepta parámetros
+    const result: QueryResult = await pool.query(query);
     return result.rows;
   },
 

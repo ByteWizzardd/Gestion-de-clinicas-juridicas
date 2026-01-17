@@ -140,7 +140,7 @@ export default function ArchiveInactiveCasesModal({
                         <p className="text-red-700">{error}</p>
                         <button
                             onClick={loadInactiveCases}
-                            className="mt-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                            className="mt-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors cursor-pointer"
                         >
                             Reintentar
                         </button>
@@ -252,7 +252,7 @@ export default function ArchiveInactiveCasesModal({
                 <div className="border-t border-gray-200 p-4 flex justify-end gap-3">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                        className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
                         disabled={archiving}
                     >
                         Cancelar
@@ -264,7 +264,7 @@ export default function ArchiveInactiveCasesModal({
               px-4 py-2 rounded-lg flex items-center gap-2 transition-colors
               ${selectedCases.size === 0 || archiving
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                : 'bg-primary text-white hover:bg-primary/90'
+                                : 'bg-primary text-white hover:bg-primary/90 cursor-pointer'
                             }
             `}
                     >

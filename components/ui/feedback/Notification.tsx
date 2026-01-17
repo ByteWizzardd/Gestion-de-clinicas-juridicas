@@ -40,6 +40,12 @@ const Notification: React.FC<NotificationProps> = () => {
     if (linkMatch) {
       return linkMatch[1];
     }
+
+    // Notificación de Casos Inactivos (Automatización)
+    if (notification.title.toLowerCase().includes('casos inactivos')) {
+      return '/dashboard/cases?archiveInactive=true';
+    }
+
     const citaId = extractCitaId(notification.title) || extractCitaId(notification.message);
     if (citaId) {
       return `/dashboard/appointments/${citaId}`;
@@ -94,6 +100,7 @@ const Notification: React.FC<NotificationProps> = () => {
                   className={`
                     w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0
                     ${!notification.read ? 'bg-primary-light/10' : ''}
+                    ${getNotificationHref(notification) ? 'cursor-pointer' : 'cursor-default'}
                   `}
                   role={getNotificationHref(notification) ? 'link' : undefined}
                   tabIndex={getNotificationHref(notification) ? 0 : undefined}
@@ -125,7 +132,7 @@ const Notification: React.FC<NotificationProps> = () => {
 
                     <button
                       type="button"
-                      className="text-sm text-red-600 hover:text-red-700 font-medium shrink-0"
+                      className="text-sm text-red-600 hover:text-red-700 font-medium shrink-0 cursor-pointer"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();

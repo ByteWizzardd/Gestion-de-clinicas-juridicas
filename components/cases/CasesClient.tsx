@@ -174,8 +174,15 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   useEffect(() => {
     const cedula = searchParams.get('cedula');
     const cedulaTipo = searchParams.get('cedulaTipo');
+    const archiveInactive = searchParams.get('archiveInactive');
 
-    if (cedula && cedulaTipo) {
+    if (archiveInactive === 'true') {
+      setShowArchiveModal(true);
+      // Limpiar URL manteniendo otros parámetros si existieran
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('archiveInactive');
+      router.replace(`/dashboard/cases?${params.toString()}`);
+    } else if (cedula && cedulaTipo) {
       // Extraer solo los números, eliminando guiones y cualquier otro carácter
       let cedulaNumero = cedula.startsWith(cedulaTipo) ? cedula.substring(cedulaTipo.length) : cedula;
       cedulaNumero = cedulaNumero.replace(/[^0-9]/g, '');
@@ -578,7 +585,14 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       {/* Modal para archivar casos inactivos */}
       <ArchiveInactiveCasesModal
         isOpen={showArchiveModal}
-        onClose={() => setShowArchiveModal(false)}
+        onClose={() => {
+          setShowArchiveModal(false);
+          const params = new URLSearchParams(searchParams.toString());
+          if (params.has('archiveInactive')) {
+            params.delete('archiveInactive');
+            router.replace(`/dashboard/cases?${params.toString()}`);
+          }
+        }}
         onArchiveComplete={fetchCasos}
       />
     </>

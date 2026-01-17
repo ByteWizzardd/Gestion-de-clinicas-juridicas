@@ -51,6 +51,8 @@ interface DashboardClientProps {
   initialAcciones?: AccionReciente[];
 }
 
+import { triggerInactiveCasesCheckAction } from '@/app/actions/automation';
+
 export default function DashboardClient({ initialAppointments, initialCasos, initialAcciones = [] }: DashboardClientProps) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -63,6 +65,19 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
   const [casos] = useState<Caso[]>(initialCasos || []);
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+
+  // Trigger automation (inactive cases check)
+  useEffect(() => {
+    const runAutomation = async () => {
+      try {
+        // Fire and forget - logs handled in action/server
+        await triggerInactiveCasesCheckAction();
+      } catch (error) {
+        console.error('Automation background check failed', error);
+      }
+    };
+    runAutomation();
+  }, []);
 
   // Manejadores para el modal de detalles de citas
   const handleAppointmentClick = (appointment: Appointment) => {
@@ -150,6 +165,8 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
     <div className="max-h-screen">
       <div className="max-w-[1920px] mx-auto px-4 md:px-6 lg:px-8">
         <motion.div
+          // ... rest of component stays same
+
           className="mb-4 md:mb-6 mt-4"
           initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
