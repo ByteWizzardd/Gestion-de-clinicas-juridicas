@@ -1,5 +1,5 @@
 -- Obtener el equipo asignado a un caso (profesores y estudiantes)
--- Incluye TODOS los miembros (activos e inactivos) para ver el historial completo
+-- Solo incluye asignaciones activas
 -- Parámetros: $1 = id_caso
 
 -- Profesores supervisores
@@ -18,6 +18,7 @@ FROM supervisa s
 INNER JOIN profesores p ON s.term = p.term AND s.cedula_profesor = p.cedula_profesor
 INNER JOIN usuarios u ON p.cedula_profesor = u.cedula
 WHERE s.id_caso = $1
+  AND s.habilitado = true
 
 UNION ALL
 
@@ -37,5 +38,6 @@ FROM se_le_asigna sla
 INNER JOIN estudiantes e ON sla.term = e.term AND sla.cedula_estudiante = e.cedula_estudiante
 INNER JOIN usuarios u ON sla.cedula_estudiante = u.cedula
 WHERE sla.id_caso = $1
+  AND sla.habilitado = true
 
-ORDER BY tipo, habilitado DESC, nombre_completo;
+ORDER BY tipo, nombre_completo;

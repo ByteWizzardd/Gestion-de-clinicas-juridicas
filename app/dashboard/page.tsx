@@ -16,7 +16,7 @@ export default async function DashboardPage() {
     getCasosByUsuarioAction(),
     getAccionesRecientesAction(10),
   ]);
-  
+
   const appointments = citasResult.success && Array.isArray(citasResult.data) ? citasResult.data : [];
   const casos = casosResult.success && Array.isArray(casosResult.data) ? casosResult.data : [];
   const acciones = accionesResult.success && Array.isArray(accionesResult.data) ? accionesResult.data : [];
@@ -25,7 +25,7 @@ export default async function DashboardPage() {
   if (!casosResult.success && casosResult.error && (casosResult.error as any).code !== 'UNAUTHORIZED') {
     console.error('Error al obtener casos:', JSON.stringify(casosResult.error));
   }
-  
+
   if (!accionesResult.success && accionesResult.error && (accionesResult.error as any).code !== 'UNAUTHORIZED') {
     console.error('Error al obtener acciones:', JSON.stringify(accionesResult.error));
   }

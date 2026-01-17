@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { ClipboardList } from 'lucide-react';
 import ActionHistoryCard from './ActionHistoryCard';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface Action {
   mainText: string;
@@ -25,11 +26,11 @@ export default function ActionHistoryList({
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setPrefersReducedMotion(mediaQuery.matches);
-    
+
     const handleChange = (e: MediaQueryListEvent) => {
       setPrefersReducedMotion(e.matches);
     };
-    
+
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
@@ -37,10 +38,12 @@ export default function ActionHistoryList({
   return (
     <div className="relative h-full flex flex-col">
       {actions.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-gray-500 py-12">
-          <ClipboardList className="w-16 h-16 mb-4 opacity-40 text-gray-400" />
-          <p className="text-lg font-medium text-gray-600">No hay acciones recientes</p>
-          <p className="text-sm mt-2 text-gray-500">Las actividades de tus casos aparecerán aquí</p>
+        <div className="flex-1 flex items-center justify-center">
+          <EmptyState
+            icon={ClipboardList}
+            title="Sin actividad reciente"
+            description="Las acciones realizadas en los casos se mostrarán aquí"
+          />
         </div>
       ) : (
         <div className="space-y-0">
@@ -49,10 +52,10 @@ export default function ActionHistoryList({
               key={index}
               initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ 
-                duration: prefersReducedMotion ? 0 : 0.15, 
+              transition={{
+                duration: prefersReducedMotion ? 0 : 0.15,
                 delay: prefersReducedMotion ? 0 : index * 0.05,
-                ease: "easeOut" 
+                ease: "easeOut"
               }}
             >
               <ActionHistoryCard

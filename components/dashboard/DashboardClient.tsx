@@ -179,7 +179,7 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
                   {casos.length} {casos.length === 1 ? 'caso' : 'casos'}
                 </span>
               </div>
-              <div className="flex-1 pr-2 overflow-y-auto min-h-0 w-full">
+              <div className={`flex-1 pr-2 min-h-0 w-full ${casos.length > 0 ? 'overflow-y-auto' : ''}`}>
                 <CasosList
                   casos={casos}
                   loading={false}
