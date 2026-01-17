@@ -41,7 +41,7 @@ const Notification: React.FC<NotificationProps> = () => {
       return linkMatch[1];
     }
     const citaId = extractCitaId(notification.title) || extractCitaId(notification.message);
-    if (citaId){ 
+    if (citaId) {
       return `/dashboard/appointments/${citaId}`;
     }
     const casoId = extractCasoId(notification.title) ?? extractCasoId(notification.message);
@@ -52,11 +52,11 @@ const Notification: React.FC<NotificationProps> = () => {
   };
 
   const triggerButton = (
-    <button 
-      className="relative flex items-center justify-center p-2 cursor-pointer hover:bg-neutral-100 rounded-lg transition-colors" 
+    <button
+      className="relative flex items-center justify-center p-2 cursor-pointer hover:bg-neutral-100 rounded-lg transition-colors"
       aria-label="Notificaciones"
     >
-      <Bell className="w-6 h-6 text-foreground"/>
+      <Bell className="w-6 h-6 text-foreground" />
       {unreadCount > 0 && (
         <span className="absolute top-0 right-0 flex items-center justify-center w-5 h-5 text-xs font-semibold text-white bg-primary rounded-full">
           {unreadCount > 9 ? '9+' : unreadCount}
@@ -69,7 +69,7 @@ const Notification: React.FC<NotificationProps> = () => {
     <DropdownMenu
       trigger={triggerButton}
       align="right"
-      menuClassName="w-[90vw] max-w-lg sm:w-[32rem] md:w-[36rem] lg:w-[40rem] left-1/2 -translate-x-[60%]"
+      menuClassName="w-[90vw] max-w-lg sm:w-[32rem] md:w-[36rem] lg:w-[40rem]"
     >
       <AnimatePresence>
         <motion.div
