@@ -20,7 +20,7 @@ import { notificarVariosUsuariosAction } from './notificaciones';
 
 export interface CreateCasoResult {
   success: boolean;
-  data?: unknown;
+  data?: any;
   error?: {
     message: string;
     code?: string;
@@ -69,7 +69,7 @@ export interface DeleteSoporteResult {
 
 export interface GetCasosResult {
   success: boolean;
-  data?: unknown[];
+  data?: any[];
   error?: {
     message: string;
     code?: string;
@@ -89,7 +89,7 @@ export interface GetNextCaseNumberResult {
 
 export interface GetCasoByIdResult {
   success: boolean;
-  data?: unknown;
+  data?: any;
   error?: {
     message: string;
     code?: string;
@@ -142,7 +142,7 @@ export async function createCasoAction(data: unknown): Promise<CreateCasoResult>
 export async function updateCasoAction(
   idCaso: number,
   data: unknown
-): Promise<{ success: boolean; data?: unknown; error?: { message: string; code?: string; fields?: Record<string, string[]> } }> {
+): Promise<{ success: boolean; data?: any; error?: { message: string; code?: string; fields?: Record<string, string[]> } }> {
   try {
     // Verificar autenticación
     const authResult = await requireAuthInServerActionWithCode();
@@ -562,7 +562,7 @@ export async function createAccionAction(
   comentario?: string,
   ejecutores?: Array<{ idUsuario: string; fechaEjecucion: string }>,
   fechaRegistro?: string
-): Promise<{ success: boolean; data?: unknown; error?: { message: string; code?: string } }> {
+): Promise<{ success: boolean; data?: any; error?: { message: string; code?: string } }> {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -599,6 +599,10 @@ export async function createAccionAction(
       return `${year}-${month}-${day}`;
     })();
 
+    // Establecer variable de sesión para auditoría
+    const cedulaEscapada = cedulaUsuario.replace(/'/g, "''");
+    await client.query(`SET LOCAL app.usuario_registra = '${cedulaEscapada}'`);
+
     // Crear la acción usando el cliente de la transacción
     const createAccionQuery = loadSQL('acciones/create.sql');
     const accionResult = await client.query(createAccionQuery, [
@@ -625,6 +629,40 @@ export async function createAccionAction(
           idCaso,
           fechaEjecucion,
         ]);
+      }
+
+      // Guardar los ejecutores en la tabla normalizada de auditoría (para que no se pierdan si la acción es eliminada)
+      // Obtener el ID del registro de auditoría más reciente
+      const auditoriaResult = await client.query(`
+        SELECT id FROM auditoria_insercion_acciones 
+        WHERE num_accion = $1 AND id_caso = $2 
+        ORDER BY fecha_creacion DESC LIMIT 1
+      `, [accion.num_accion, idCaso]);
+
+      if (auditoriaResult.rows.length > 0) {
+        const idAuditoria = auditoriaResult.rows[0].id;
+
+        // Obtener los nombres de los ejecutores
+        const ejecutoresIds = ejecutores.map(e => e.idUsuario);
+        const nombresQuery = `SELECT cedula, nombres, apellidos FROM usuarios WHERE cedula = ANY($1)`;
+        const nombresResult = await client.query(nombresQuery, [ejecutoresIds]);
+        const usersMap = new Map(nombresResult.rows.map((u: any) => [u.cedula, { nombres: u.nombres, apellidos: u.apellidos }]));
+
+        // Insertar en tabla normalizada de ejecutores de auditoría
+        for (const ejecutor of ejecutores) {
+          const userData = usersMap.get(ejecutor.idUsuario);
+          await client.query(`
+            INSERT INTO auditoria_insercion_acciones_ejecutores 
+            (id_auditoria_insercion, id_usuario_ejecutor, nombres_ejecutor, apellidos_ejecutor, fecha_ejecucion)
+            VALUES ($1, $2, $3, $4, $5)
+          `, [
+            idAuditoria,
+            ejecutor.idUsuario,
+            userData?.nombres || null,
+            userData?.apellidos || null,
+            ejecutor.fechaEjecucion
+          ]);
+        }
       }
     }
 
@@ -666,7 +704,7 @@ export async function changeStatusAction(
   idCaso: number,
   nuevoEstatus: string,
   motivo?: string
-): Promise<{ success: boolean; data?: unknown; error?: { message: string; code?: string } }> {
+): Promise<{ success: boolean; data?: any; error?: { message: string; code?: string } }> {
   try {
     // Verificar autenticación
     const authResult = await requireAuthInServerActionWithCode();
@@ -1092,6 +1130,7 @@ export async function asignarEquipoAction(
 export interface DeleteAccionParams {
   numAccion: number;
   idCaso: number;
+  motivo?: string;
 }
 
 export interface DeleteAccionResult {
@@ -1149,6 +1188,8 @@ export async function deleteAccionAction(params: DeleteAccionParams): Promise<De
     const result = await casosService.deleteAccion({
       numAccion: params.numAccion,
       idCaso: params.idCaso,
+      idUsuarioElimino: authResult.user.cedula,
+      motivo: params.motivo || 'Sin motivo especificado',
     });
 
     return {
@@ -1207,6 +1248,7 @@ export async function updateAccionAction(params: UpdateAccionParams): Promise<Up
       idCaso: params.idCaso,
       detalleAccion: params.detalleAccion.trim(),
       comentario: params.comentario?.trim() || null,
+      idUsuarioActualizo: authResult.user.cedula,
       ejecutores: params.ejecutores,
     });
 

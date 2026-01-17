@@ -523,3 +523,86 @@ CREATE TABLE notificaciones (
     FOREIGN KEY (cedula_receptor) REFERENCES usuarios(cedula) ON DELETE CASCADE,
     FOREIGN KEY (cedula_emisor) REFERENCES usuarios(cedula) ON DELETE CASCADE
 );
+
+-- =========================================================
+-- BLOQUE 6: TABLAS DE AUDITORÍA DE ACCIONES
+-- =========================================================
+
+-- 35) AUDITORÍA DE INSERCIÓN DE ACCIONES
+CREATE TABLE auditoria_insercion_acciones (
+    id SERIAL PRIMARY KEY,
+    num_accion INTEGER NOT NULL,
+    id_caso INTEGER NOT NULL,
+    detalle_accion TEXT NOT NULL,
+    comentario TEXT,
+    id_usuario_registra VARCHAR(20),
+    fecha_registro DATE,
+    id_usuario_creo VARCHAR(20),
+    fecha_creacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+);
+
+-- 35.1) EJECUTORES DE AUDITORÍA DE INSERCIÓN DE ACCIONES (Normalizado)
+CREATE TABLE auditoria_insercion_acciones_ejecutores (
+    id SERIAL PRIMARY KEY,
+    id_auditoria_insercion INTEGER NOT NULL REFERENCES auditoria_insercion_acciones(id) ON DELETE CASCADE,
+    id_usuario_ejecutor VARCHAR(20) NOT NULL,
+    nombres_ejecutor VARCHAR(100),
+    apellidos_ejecutor VARCHAR(100),
+    fecha_ejecucion DATE
+);
+
+-- 36) AUDITORÍA DE ACTUALIZACIÓN DE ACCIONES
+CREATE TABLE auditoria_actualizacion_acciones (
+    id SERIAL PRIMARY KEY,
+    num_accion INTEGER NOT NULL,
+    id_caso INTEGER NOT NULL,
+    -- Valores anteriores
+    detalle_accion_anterior TEXT,
+    comentario_anterior TEXT,
+    id_usuario_registra_anterior VARCHAR(20),
+    fecha_registro_anterior DATE,
+    -- Valores nuevos
+    detalle_accion_nuevo TEXT,
+    comentario_nuevo TEXT,
+    id_usuario_registra_nuevo VARCHAR(20),
+    fecha_registro_nuevo DATE,
+    -- Información de auditoría
+    id_usuario_actualizo VARCHAR(20),
+    fecha_actualizacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+);
+
+-- 36.1) EJECUTORES ANTERIORES DE AUDITORÍA DE ACTUALIZACIÓN (Normalizado)
+CREATE TABLE auditoria_actualizacion_acciones_ejecutores (
+    id SERIAL PRIMARY KEY,
+    id_auditoria_actualizacion INTEGER NOT NULL REFERENCES auditoria_actualizacion_acciones(id) ON DELETE CASCADE,
+    tipo VARCHAR(10) NOT NULL CHECK (tipo IN ('anterior', 'nuevo')),
+    id_usuario_ejecutor VARCHAR(20) NOT NULL,
+    nombres_ejecutor VARCHAR(100),
+    apellidos_ejecutor VARCHAR(100),
+    fecha_ejecucion DATE
+);
+
+-- 37) AUDITORÍA DE ELIMINACIÓN DE ACCIONES
+CREATE TABLE auditoria_eliminacion_acciones (
+    id SERIAL PRIMARY KEY,
+    num_accion INTEGER NOT NULL,
+    id_caso INTEGER NOT NULL,
+    detalle_accion TEXT,
+    comentario TEXT,
+    id_usuario_registra VARCHAR(20),
+    fecha_registro DATE,
+    eliminado_por VARCHAR(20),
+    motivo TEXT NOT NULL DEFAULT 'Sin motivo especificado',
+    fecha TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+);
+
+-- 37.1) EJECUTORES DE AUDITORÍA DE ELIMINACIÓN DE ACCIONES (Normalizado)
+CREATE TABLE auditoria_eliminacion_acciones_ejecutores (
+    id SERIAL PRIMARY KEY,
+    id_auditoria_eliminacion INTEGER NOT NULL REFERENCES auditoria_eliminacion_acciones(id) ON DELETE CASCADE,
+    id_usuario_ejecutor VARCHAR(20) NOT NULL,
+    nombres_ejecutor VARCHAR(100),
+    apellidos_ejecutor VARCHAR(100),
+    fecha_ejecucion DATE
+);
+

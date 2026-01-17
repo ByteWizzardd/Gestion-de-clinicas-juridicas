@@ -6,7 +6,7 @@ import { motion } from 'motion/react';
 import { createPortal } from 'react-dom';
 
 interface DatePickerProps {
-  value: string;
+  value: string | Date;
   onChange: (value: string) => void;
   error?: string;
   required?: boolean;

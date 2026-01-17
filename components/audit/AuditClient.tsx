@@ -187,6 +187,30 @@ export default function AuditClient() {
           }
         ]
       },
+      {
+        title: "Acciones",
+        description: "Registro de acciones de seguimiento realizadas sobre los casos",
+        icon: Activity,
+        totalCount: (counts.accionesEliminadas || 0) + (counts.accionesActualizadas || 0) + (counts.accionesCreadas || 0),
+        href: "/dashboard/audit/acciones",
+        operations: [
+          {
+            label: "Creadas",
+            count: counts.accionesCreadas || 0,
+            href: "/dashboard/audit/acciones?tab=acciones-creadas"
+          },
+          {
+            label: "Actualizadas",
+            count: counts.accionesActualizadas || 0,
+            href: "/dashboard/audit/acciones?tab=acciones-actualizadas"
+          },
+          {
+            label: "Eliminadas",
+            count: counts.accionesEliminadas || 0,
+            href: "/dashboard/audit/acciones?tab=acciones-eliminadas"
+          }
+        ]
+      },
       // Catálogos
       ...(counts.estadosEliminados !== undefined || counts.estadosActualizados !== undefined || counts.estadosInsertados !== undefined ? [{
         title: "Estados",

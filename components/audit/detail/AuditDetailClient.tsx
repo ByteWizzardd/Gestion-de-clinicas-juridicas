@@ -29,7 +29,8 @@ type AuditType = 'soportes' | 'soportes-creados' | 'citas-eliminadas' | 'citas-a
   | 'caracteristicas-eliminadas' | 'caracteristicas-actualizadas' | 'caracteristicas-insertadas'
   | 'caracteristicas-eliminadas' | 'caracteristicas-actualizadas' | 'caracteristicas-insertadas'
   | 'casos-eliminados' | 'casos-actualizados' | 'casos-creados'
-  | 'beneficiarios-eliminados' | 'beneficiarios-actualizados' | 'beneficiarios-creados';
+  | 'beneficiarios-eliminados' | 'beneficiarios-actualizados' | 'beneficiarios-creados'
+  | 'acciones-creadas' | 'acciones-actualizadas' | 'acciones-eliminadas';
 
 interface AuditDetailClientProps {
   title: string;
@@ -119,6 +120,10 @@ export default function AuditDetailClient({
     'beneficiarios-eliminados': 'beneficiario-eliminado',
     'beneficiarios-actualizados': 'beneficiario-actualizado',
     'beneficiarios-creados': 'beneficiario-creado',
+    // Acciones
+    'acciones-creadas': 'accion-creada',
+    'acciones-actualizadas': 'accion-actualizada',
+    'acciones-eliminadas': 'accion-eliminada',
   };
 
   // Cargar opciones de usuarios
@@ -211,7 +216,10 @@ export default function AuditDetailClient({
           // Beneficiarios
           getBeneficiariosEliminadosAuditAction,
           getBeneficiariosActualizadosAuditAction,
-          getBeneficiariosInscritosAuditAction
+          getBeneficiariosInscritosAuditAction,
+          getAccionesCreadasAuditAction,
+          getAccionesActualizadasAuditAction,
+          getAccionesEliminadasAuditAction
         } = await import('@/app/actions/audit');
 
         let data: any[];
@@ -406,6 +414,16 @@ export default function AuditDetailClient({
             break;
           case 'beneficiarios-creados':
             data = await getBeneficiariosInscritosAuditAction(filters);
+            break;
+          // Acciones
+          case 'acciones-creadas':
+            data = await getAccionesCreadasAuditAction(filters);
+            break;
+          case 'acciones-actualizadas':
+            data = await getAccionesActualizadasAuditAction(filters);
+            break;
+          case 'acciones-eliminadas':
+            data = await getAccionesEliminadasAuditAction(filters);
             break;
           default:
             throw new Error('Tipo de auditoría no válido');

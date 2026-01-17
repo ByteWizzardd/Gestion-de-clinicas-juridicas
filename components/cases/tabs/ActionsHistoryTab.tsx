@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { History, User, Calendar, Users, Trash2, Pencil } from 'lucide-react';
+import Link from 'next/link';
 import { formatDate } from '@/lib/utils/date-formatter';
 import { deleteAccionAction } from '@/app/actions/casos';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
@@ -33,6 +34,7 @@ interface ActionsHistoryTabProps {
 export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistoryTabProps) {
   const [accionToDelete, setAccionToDelete] = useState<{ num_accion: number; id_caso: number; detalle_accion: string } | null>(null);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [deleteMotive, setDeleteMotive] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [accionToEdit, setAccionToEdit] = useState<{
@@ -62,7 +64,7 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
     }>;
   }) => {
     console.log('DEBUG ActionsHistoryTab - handleEditAccion called with:', accion);
-    
+
     // Mapear ejecutores de la estructura de BD a la estructura que espera el modal
     const ejecutoresMapeados = accion.ejecutores?.map(ejecutor => ({
       id_usuario_ejecuta: ejecutor.id_usuario,
@@ -90,6 +92,7 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
       id_caso: accion.id_caso,
       detalle_accion: accion.detalle_accion
     });
+    setDeleteMotive(''); // Limpiar motivo anterior
     setShowDeleteConfirmModal(true);
   };
 
@@ -102,6 +105,7 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
       const result = await deleteAccionAction({
         numAccion: accionToDelete.num_accion,
         idCaso: accionToDelete.id_caso,
+        motivo: deleteMotive.trim() || undefined
       });
 
       if (result.success) {
@@ -140,6 +144,7 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
   const handleCancelDelete = () => {
     setShowDeleteConfirmModal(false);
     setAccionToDelete(null);
+    setDeleteMotive('');
   };
 
   if (!acciones || acciones.length === 0) {
@@ -168,14 +173,14 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleEditAccion(accion)}
-                className="text-gray-500 hover:text-gray-700 p-1 rounded transition-colors"
+                className="text-gray-500 hover:text-gray-700 p-1 rounded transition-colors cursor-pointer"
                 title="Editar acción"
               >
                 <Pencil className="w-5 h-5" />
               </button>
               <button
                 onClick={() => handleDeleteAccion(accion)}
-                className="text-gray-500 hover:text-gray-700 p-1 rounded transition-colors"
+                className="text-gray-500 hover:text-gray-700 p-1 rounded transition-colors cursor-pointer"
                 title="Eliminar acción"
               >
                 <Trash2 className="w-5 h-5" />
@@ -199,7 +204,12 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
             <div>
               <label className="text-sm font-medium text-gray-500">Registrado por</label>
               <p className="text-base text-gray-900 mt-1">
-                {accion.nombre_completo_usuario_registra}
+                <Link
+                  href={`/dashboard/users/${accion.id_usuario_registra}`}
+                  className="text-primary hover:underline font-medium"
+                >
+                  {accion.nombre_completo_usuario_registra}
+                </Link>
               </p>
               <p className="text-sm text-gray-500 mt-1">
                 Fecha de registro: {formatDate(accion.fecha_registro)}
@@ -251,6 +261,10 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
         confirmLabel="Eliminar"
         cancelLabel="Cancelar"
         disabled={isDeleting}
+        showMotive={true}
+        motiveValue={deleteMotive}
+        onMotiveChange={setDeleteMotive}
+        motivePlaceholder="Indique el motivo de la eliminación..."
       />
 
       {/* Modal para editar acción */}

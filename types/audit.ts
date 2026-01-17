@@ -32,7 +32,8 @@ export type AuditRecordType =
   | 'ambito-legal-eliminado' | 'ambito-legal-actualizado' | 'ambito-legal-insertado'
   | 'caracteristica-eliminada' | 'caracteristica-actualizada' | 'caracteristica-insertada'
   | 'caso-eliminado' | 'caso-actualizado' | 'caso-creado'
-  | 'beneficiario-eliminado' | 'beneficiario-actualizado' | 'beneficiario-creado';
+  | 'beneficiario-eliminado' | 'beneficiario-actualizado' | 'beneficiario-creado'
+  | 'accion-eliminada' | 'accion-actualizada' | 'accion-creada';
 
 // Auditoría de soportes eliminados
 export interface SoporteAuditRecord {
@@ -671,6 +672,10 @@ export interface AuditCounts {
   beneficiariosCreados?: number;
   beneficiariosActualizados?: number;
   beneficiariosEliminados?: number;
+  // Acciones en casos
+  accionesCreadas?: number;
+  accionesActualizadas?: number;
+  accionesEliminadas?: number;
 }
 
 // Auditoría de Beneficiarios
@@ -738,4 +743,82 @@ export interface BeneficiarioEliminadoAuditRecord extends AuditRecord {
   parentesco: string;
   id_usuario_elimino: string | null;
   usuario_nombre_completo?: string;
+}
+
+// Auditoría de Acciones en Casos
+export interface AccionCreadaAuditRecord extends AuditRecord {
+  num_accion: number;
+  id_caso: number;
+  detalle_accion: string;
+  comentario: string | null;
+  id_usuario_registra: string | null;
+  fecha_registro: string | null;
+  id_usuario_creo: string | null;
+  fecha_creacion: string;
+  tramite_caso: string | null;
+  nombre_nucleo: string | null;
+  nombres_solicitante: string | null;
+  apellidos_solicitante: string | null;
+  nombre_completo_solicitante: string | null;
+  nombres_usuario_registra: string | null;
+  apellidos_usuario_registra: string | null;
+  nombre_completo_usuario_registra: string | null;
+  nombres_usuario_creo: string | null;
+  apellidos_usuario_creo: string | null;
+  nombre_completo_usuario_creo: string | null;
+  foto_perfil_usuario_creo: string | null;
+  // Ejecutores de la acción (de tabla normalizada o subquery agregada)
+  ejecutores: Array<{ nombre: string; cedula: string; fecha_ejecucion: string }> | string | null;
+}
+
+export interface AccionActualizadaAuditRecord extends AuditRecord {
+  num_accion: number;
+  id_caso: number;
+  detalle_accion_anterior: string | null;
+  comentario_anterior: string | null;
+  id_usuario_registra_anterior: string | null;
+  fecha_registro_anterior: string | null;
+  detalle_accion_nuevo: string | null;
+  comentario_nuevo: string | null;
+  id_usuario_registra_nuevo: string | null;
+  fecha_registro_nuevo: string | null;
+  id_usuario_actualizo: string | null;
+  fecha_actualizacion: string;
+  // Ejecutores (de tabla normalizada)
+  ejecutores_anterior: Array<{ nombre: string; cedula: string; fecha_ejecucion: string }> | string | null;
+  ejecutores_nuevo: Array<{ nombre: string; cedula: string; fecha_ejecucion: string }> | string | null;
+  tramite_caso: string | null;
+  nombre_nucleo: string | null;
+  nombres_solicitante: string | null;
+  apellidos_solicitante: string | null;
+  nombre_completo_solicitante: string | null;
+  nombres_usuario_actualizo: string | null;
+  apellidos_usuario_actualizo: string | null;
+  nombre_completo_usuario_actualizo: string | null;
+  foto_perfil_usuario_actualizo: string | null;
+}
+
+export interface AccionEliminadaAuditRecord extends AuditRecord {
+  num_accion: number;
+  id_caso: number;
+  detalle_accion: string | null;
+  comentario: string | null;
+  id_usuario_registra: string | null;
+  fecha_registro: string | null;
+  eliminado_por: string | null;
+  motivo: string;
+  // Ejecutores de la acción (de tabla normalizada)
+  ejecutores: Array<{ nombre: string; cedula: string; fecha_ejecucion: string }> | string | null;
+  tramite_caso: string | null;
+  nombre_nucleo: string | null;
+  nombres_solicitante: string | null;
+  apellidos_solicitante: string | null;
+  nombre_completo_solicitante: string | null;
+  nombres_usuario_registra: string | null;
+  apellidos_usuario_registra: string | null;
+  nombre_completo_usuario_registra: string | null;
+  nombres_eliminado_por: string | null;
+  apellidos_eliminado_por: string | null;
+  nombre_completo_eliminado_por: string | null;
+  foto_perfil_eliminado_por: string | null;
 }

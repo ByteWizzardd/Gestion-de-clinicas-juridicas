@@ -26,7 +26,8 @@ interface AuditOperation {
   | 'subcategorias-eliminadas' | 'subcategorias-actualizadas' | 'subcategorias-insertadas'
   | 'ambitos-legales-eliminados' | 'ambitos-legales-actualizados' | 'ambitos-legales-insertados'
   | 'caracteristicas-eliminadas' | 'caracteristicas-actualizadas' | 'caracteristicas-insertadas'
-  | 'beneficiarios-eliminados' | 'beneficiarios-actualizados' | 'beneficiarios-creados';
+  | 'beneficiarios-eliminados' | 'beneficiarios-actualizados' | 'beneficiarios-creados'
+  | 'acciones-creadas' | 'acciones-actualizadas' | 'acciones-eliminadas';
   title: string;
   description: string;
   emptyMessage: string;

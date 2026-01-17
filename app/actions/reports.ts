@@ -148,8 +148,7 @@ export async function getCaseLoadTrend(
     const dbData = await casosQueries.getCaseLoadTrend(
       start,
       end,
-      idNucleo,
-      undefined // No filtrar por term en el SQL si ya tenemos las fechas
+      idNucleo
     );
 
     // Mapear datos al formato de la gráfica
@@ -215,8 +214,7 @@ export async function getDistributionByNucleo(
     const dbData = await casosQueries.getDistributionByNucleo(
       start,
       end,
-      idNucleo,
-      undefined
+      idNucleo
     );
 
     // Mapear datos al formato de la gráfica
@@ -317,8 +315,7 @@ export async function getKPIStats(
     const dbData = await casosQueries.getKPIStats(
       start,
       end,
-      idNucleo,
-      undefined
+      idNucleo
     );
 
     // Mapear datos al formato del dashboard
@@ -351,8 +348,7 @@ export async function getDistributionByStatus(
     const dbData = await casosQueries.getDistributionByStatus(
       start,
       end,
-      idNucleo,
-      undefined
+      idNucleo
     );
 
     // Mapear datos al formato de la gráfica
@@ -385,8 +381,7 @@ export async function getTopCases(
     const dbData = await casosQueries.getTopMaterias(
       start,
       end,
-      idNucleo,
-      undefined
+      idNucleo
     );
 
     // Mapear datos al formato de la gráfica

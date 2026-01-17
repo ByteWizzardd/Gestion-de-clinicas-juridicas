@@ -24,10 +24,13 @@ import type {
   EstudianteInscritoAuditRecord,
   BeneficiarioEliminadoAuditRecord,
   BeneficiarioActualizadoAuditRecord,
-  BeneficiarioInscritoAuditRecord
+  BeneficiarioInscritoAuditRecord,
+  AccionCreadaAuditRecord,
+  AccionActualizadaAuditRecord,
+  AccionEliminadaAuditRecord
 } from '@/types/audit';
 
-type AuditRecord = SoporteAuditRecord | SoporteCreadoAuditRecord | CitaEliminadaAuditRecord | CitaActualizadaAuditRecord | CitaCreadaAuditRecord | UsuarioEliminadoAuditRecord | UsuarioActualizadoCamposAuditRecord | UsuarioCreadoAuditRecord | CasoEliminadoAuditRecord | CasoActualizadoAuditRecord | CasoCreadoAuditRecord | SolicitanteEliminadoAuditRecord | SolicitanteActualizadoAuditRecord | SolicitanteCreadoAuditRecord | EstudianteInscritoAuditRecord | BeneficiarioEliminadoAuditRecord | BeneficiarioActualizadoAuditRecord | BeneficiarioInscritoAuditRecord | any;
+type AuditRecord = SoporteAuditRecord | SoporteCreadoAuditRecord | CitaEliminadaAuditRecord | CitaActualizadaAuditRecord | CitaCreadaAuditRecord | UsuarioEliminadoAuditRecord | UsuarioActualizadoCamposAuditRecord | UsuarioCreadoAuditRecord | CasoEliminadoAuditRecord | CasoActualizadoAuditRecord | CasoCreadoAuditRecord | SolicitanteEliminadoAuditRecord | SolicitanteActualizadoAuditRecord | SolicitanteCreadoAuditRecord | EstudianteInscritoAuditRecord | BeneficiarioEliminadoAuditRecord | BeneficiarioActualizadoAuditRecord | BeneficiarioInscritoAuditRecord | AccionCreadaAuditRecord | AccionActualizadaAuditRecord | AccionEliminadaAuditRecord | any;
 
 import type { AuditRecordType } from '@/types/audit';
 
@@ -112,6 +115,10 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           date = new Date(dateInput);
         }
       } else {
+        // Es solo una fecha (ej: "2026-01-02")
+        // En PostgreSQL las fechas DATE a veces vienen como strings simples
+        // Si usamos new Date(str) podría interpretar UTC y cambiar el día
+        // Mejor parsear manualmente año-mes-día
         const parts = dateInput.split('-');
         if (parts.length === 3) {
           const [year, month, day] = parts.map(Number);
@@ -270,6 +277,94 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
 
   const renderSummary = () => {
     switch (type) {
+      // Acciones
+      case 'accion-creada': {
+        const r = record as AccionCreadaAuditRecord;
+        return (
+          <div className="flex items-center gap-3">
+            <Activity className="w-5 h-5 text-gray-600" />
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">
+                Acción #{r.num_accion} -{' '}
+                <Link
+                  href={`/dashboard/cases/${r.id_caso}`}
+                  className="text-primary hover:underline font-medium transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Caso #{r.id_caso}
+                </Link>
+              </p>
+              <p className="text-sm text-gray-600">
+                Creada por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_creo,
+                  r.nombres_usuario_creo,
+                  r.apellidos_usuario_creo,
+                  r.id_usuario_creo
+                )}
+              </p>
+            </div>
+          </div>
+        );
+      }
+      case 'accion-actualizada': {
+        const r = record as AccionActualizadaAuditRecord;
+        return (
+          <div className="flex items-center gap-3">
+            <Check className="w-5 h-5 text-gray-600" />
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">
+                Acción #{r.num_accion} -{' '}
+                <Link
+                  href={`/dashboard/cases/${r.id_caso}`}
+                  className="text-primary hover:underline font-medium transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Caso #{r.id_caso}
+                </Link>
+              </p>
+              <p className="text-sm text-gray-600">
+                Actualizada por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_actualizo,
+                  r.nombres_usuario_actualizo,
+                  r.apellidos_usuario_actualizo,
+                  r.id_usuario_actualizo
+                )}
+              </p>
+            </div>
+          </div>
+        );
+      }
+      case 'accion-eliminada': {
+        const r = record as AccionEliminadaAuditRecord;
+        return (
+          <div className="flex items-center gap-3">
+            <Activity className="w-5 h-5 text-gray-600" />
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">
+                Acción #{r.num_accion} -{' '}
+                <Link
+                  href={`/dashboard/cases/${r.id_caso}`}
+                  className="text-primary hover:underline font-medium transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Caso #{r.id_caso}
+                </Link>
+              </p>
+              <p className="text-sm text-gray-600">
+                Eliminada por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_eliminado_por,
+                  r.nombres_eliminado_por,
+                  r.apellidos_eliminado_por,
+                  r.eliminado_por
+                )}
+              </p>
+            </div>
+          </div>
+        );
+      }
       case 'soporte': {
         const r = record as SoporteAuditRecord;
         return (
@@ -1245,6 +1340,328 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
 
   const renderDetails = () => {
     switch (type) {
+      case 'accion-creada': {
+        const r = record as AccionCreadaAuditRecord;
+        // Parsear ejecutores si vienen como JSON string (depende del driver de PostgreSQL)
+        let ejecutoresArray: Array<{ nombre: string; cedula: string; fecha_ejecucion: string }> | null = null;
+        if (r.ejecutores) {
+          if (typeof r.ejecutores === 'string') {
+            try {
+              ejecutoresArray = JSON.parse(r.ejecutores);
+            } catch {
+              ejecutoresArray = null;
+            }
+          } else if (Array.isArray(r.ejecutores)) {
+            ejecutoresArray = r.ejecutores;
+          }
+        }
+        // Obtener fechas de ejecución únicas de los ejecutores
+        const fechasEjecucion = ejecutoresArray
+          ? [...new Set(ejecutoresArray.map(e => e.fecha_ejecucion).filter(Boolean))]
+          : [];
+        return (
+          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Información de la Acción</p>
+              <p className="text-sm text-gray-600 whitespace-pre-wrap">Detalle: {r.detalle_accion}</p>
+              {r.comentario && <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">Comentario: {r.comentario}</p>}
+              <p className="text-sm text-gray-600 mt-1">
+                Usuarios Ejecutores:{' '}
+                {ejecutoresArray && ejecutoresArray.length > 0 ? (
+                  ejecutoresArray.map((e, idx) => (
+                    <span key={e.cedula}>
+                      <Link
+                        href={`/dashboard/users/${e.cedula}`}
+                        className="text-primary hover:underline"
+                        onClick={(ev) => ev.stopPropagation()}
+                      >
+                        {e.nombre}
+                      </Link>
+                      {idx < ejecutoresArray!.length - 1 && ', '}
+                    </span>
+                  ))
+                ) : (
+                  'Ninguno asignado'
+                )}
+              </p>
+              <p className="text-sm text-gray-600 mt-1">
+                Fecha de Ejecución:{' '}
+                {fechasEjecucion.length > 0
+                  ? fechasEjecucion.map((d: string) => formatOnlyDate(d)).join(', ')
+                  : 'No especificada'}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
+              <p className="text-sm text-gray-600">Fecha creación: {formatDateTime(r.fecha_creacion)}</p>
+              <p className="text-sm text-gray-600">
+                Creada por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_creo,
+                  r.nombres_usuario_creo,
+                  r.apellidos_usuario_creo,
+                  r.id_usuario_creo
+                )}
+              </p>
+            </div>
+            <div className="pt-2" onClick={(e) => e.stopPropagation()}>
+              <Link
+                href={`/dashboard/cases/${r.id_caso}`}
+                className="text-sm text-primary hover:underline"
+              >
+                Ver caso #{r.id_caso} →
+              </Link>
+            </div>
+          </div>
+        );
+      }
+      case 'accion-actualizada': {
+        const r = record as AccionActualizadaAuditRecord;
+
+        // Parsear ejecutores anteriores (pueden venir como JSON string o array)
+        let ejecutoresAnteriorArray: Array<{ nombre: string; cedula: string; fecha_ejecucion: string }> | null = null;
+        if (r.ejecutores_anterior) {
+          if (typeof r.ejecutores_anterior === 'string') {
+            try {
+              ejecutoresAnteriorArray = JSON.parse(r.ejecutores_anterior);
+            } catch {
+              ejecutoresAnteriorArray = null;
+            }
+          } else if (Array.isArray(r.ejecutores_anterior)) {
+            ejecutoresAnteriorArray = r.ejecutores_anterior;
+          }
+        }
+
+        // Parsear ejecutores nuevos
+        let ejecutoresNuevoArray: Array<{ nombre: string; cedula: string; fecha_ejecucion: string }> | null = null;
+        if (r.ejecutores_nuevo) {
+          if (typeof r.ejecutores_nuevo === 'string') {
+            try {
+              ejecutoresNuevoArray = JSON.parse(r.ejecutores_nuevo);
+            } catch {
+              ejecutoresNuevoArray = null;
+            }
+          } else if (Array.isArray(r.ejecutores_nuevo)) {
+            ejecutoresNuevoArray = r.ejecutores_nuevo;
+          }
+        }
+
+        // Obtener fechas de ejecución únicas
+        const fechasAnterior = ejecutoresAnteriorArray
+          ? [...new Set(ejecutoresAnteriorArray.map(e => e.fecha_ejecucion).filter(Boolean))]
+          : [];
+        const fechasNuevo = ejecutoresNuevoArray
+          ? [...new Set(ejecutoresNuevoArray.map(e => e.fecha_ejecucion).filter(Boolean))]
+          : [];
+
+        // Comparar si ejecutores cambiaron (comparando strings de nombres)
+        const ejecutoresAnteriorStr = ejecutoresAnteriorArray
+          ? ejecutoresAnteriorArray.map(e => e.nombre).join(', ')
+          : '';
+        const ejecutoresNuevoStr = ejecutoresNuevoArray
+          ? ejecutoresNuevoArray.map(e => e.nombre).join(', ')
+          : '';
+
+        // Comparar si fechas cambiaron
+        const fechasAnteriorStr = fechasAnterior.join(', ');
+        const fechasNuevoStr = fechasNuevo.join(', ');
+
+        return (
+          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Cambios Realizados</p>
+              {r.detalle_accion_anterior !== r.detalle_accion_nuevo && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Detalle:{' '}
+                    <span className="line-through text-red-500">
+                      {r.detalle_accion_anterior || 'N/A'}
+                    </span>
+                    {' → '}
+                    <span className="text-green-600">
+                      {r.detalle_accion_nuevo || 'N/A'}
+                    </span>
+                  </p>
+                </div>
+              )}
+              {r.comentario_anterior !== r.comentario_nuevo && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Comentario:{' '}
+                    <span className="line-through text-red-500">
+                      {r.comentario_anterior || 'Sin comentario'}
+                    </span>
+                    {' → '}
+                    <span className="text-green-600">
+                      {r.comentario_nuevo || 'Sin comentario'}
+                    </span>
+                  </p>
+                </div>
+              )}
+              {ejecutoresAnteriorStr !== ejecutoresNuevoStr && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Ejecutores:{' '}
+                    <span className="line-through text-red-500">
+                      {ejecutoresAnteriorArray && ejecutoresAnteriorArray.length > 0
+                        ? ejecutoresAnteriorArray.map((e, idx) => (
+                          <span key={e.cedula}>
+                            <Link
+                              href={`/dashboard/users/${e.cedula}`}
+                              className="text-red-500 hover:underline"
+                              onClick={(ev) => ev.stopPropagation()}
+                            >
+                              {e.nombre}
+                            </Link>
+                            {idx < ejecutoresAnteriorArray!.length - 1 && ', '}
+                          </span>
+                        ))
+                        : 'Ninguno'}
+                    </span>
+                    {' → '}
+                    <span className="text-green-600">
+                      {ejecutoresNuevoArray && ejecutoresNuevoArray.length > 0
+                        ? ejecutoresNuevoArray.map((e, idx) => (
+                          <span key={e.cedula}>
+                            <Link
+                              href={`/dashboard/users/${e.cedula}`}
+                              className="text-green-600 hover:underline"
+                              onClick={(ev) => ev.stopPropagation()}
+                            >
+                              {e.nombre}
+                            </Link>
+                            {idx < ejecutoresNuevoArray!.length - 1 && ', '}
+                          </span>
+                        ))
+                        : 'Ninguno'}
+                    </span>
+                  </p>
+                </div>
+              )}
+              {fechasAnteriorStr !== fechasNuevoStr && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Fecha de Ejecución:{' '}
+                    <span className="line-through text-red-500">
+                      {fechasAnterior.length > 0
+                        ? fechasAnterior.map((d: string) => formatOnlyDate(d)).join(', ')
+                        : 'Ninguna'}
+                    </span>
+                    {' → '}
+                    <span className="text-green-600">
+                      {fechasNuevo.length > 0
+                        ? fechasNuevo.map((d: string) => formatOnlyDate(d)).join(', ')
+                        : 'Ninguna'}
+                    </span>
+                  </p>
+                </div>
+              )}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
+              <p className="text-sm text-gray-600">Fecha actualización: {formatDateTime(r.fecha_actualizacion)}</p>
+              <p className="text-sm text-gray-600">
+                Actualizada por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_actualizo,
+                  r.nombres_usuario_actualizo,
+                  r.apellidos_usuario_actualizo,
+                  r.id_usuario_actualizo
+                )}
+              </p>
+            </div>
+            <div className="pt-2" onClick={(e) => e.stopPropagation()}>
+              <Link
+                href={`/dashboard/cases/${r.id_caso}`}
+                className="text-sm text-primary hover:underline"
+              >
+                Ver caso #{r.id_caso} →
+              </Link>
+            </div>
+          </div>
+        );
+      }
+      case 'accion-eliminada': {
+        const r = record as AccionEliminadaAuditRecord;
+        // Parsear ejecutores si vienen como JSON string
+        let ejecutoresArray: Array<{ nombre: string; cedula: string; fecha_ejecucion: string }> | null = null;
+        if (r.ejecutores) {
+          if (typeof r.ejecutores === 'string') {
+            try {
+              ejecutoresArray = JSON.parse(r.ejecutores);
+            } catch {
+              ejecutoresArray = null;
+            }
+          } else if (Array.isArray(r.ejecutores)) {
+            ejecutoresArray = r.ejecutores;
+          }
+        }
+        // Obtener fechas de ejecución únicas de los ejecutores
+        const fechasEjecucion = ejecutoresArray
+          ? [...new Set(ejecutoresArray.map(e => e.fecha_ejecucion).filter(Boolean))]
+          : [];
+        return (
+          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Información de la Acción Eliminada</p>
+              <p className="text-sm text-gray-600 whitespace-pre-wrap">Detalle: {r.detalle_accion}</p>
+              {r.comentario && <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">Comentario: {r.comentario}</p>}
+              <p className="text-sm text-gray-600 mt-1">
+                Usuarios Ejecutores:{' '}
+                {ejecutoresArray && ejecutoresArray.length > 0 ? (
+                  ejecutoresArray.map((e, idx) => (
+                    <span key={e.cedula}>
+                      <Link
+                        href={`/dashboard/users/${e.cedula}`}
+                        className="text-primary hover:underline"
+                        onClick={(ev) => ev.stopPropagation()}
+                      >
+                        {e.nombre}
+                      </Link>
+                      {idx < ejecutoresArray!.length - 1 && ', '}
+                    </span>
+                  ))
+                ) : (
+                  'Ninguno asignado'
+                )}
+              </p>
+              <p className="text-sm text-gray-600 mt-1">
+                Fecha de Ejecución:{' '}
+                {fechasEjecucion.length > 0
+                  ? fechasEjecucion.map((d: string) => formatOnlyDate(d)).join(', ')
+                  : 'No especificada'}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Datos de Eliminación</p>
+              <p className="text-sm text-gray-600">Fecha eliminación: {formatDateTime(r.fecha)}</p>
+              <p className="text-sm text-gray-600">
+                Eliminada por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_eliminado_por,
+                  r.nombres_eliminado_por,
+                  r.apellidos_eliminado_por,
+                  r.eliminado_por
+                )}
+              </p>
+              {r.motivo && (
+                <div className="mt-2">
+                  <p className="text-sm text-gray-600 font-medium">Motivo:</p>
+                  <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded mt-1">{r.motivo}</p>
+                </div>
+              )}
+            </div>
+            <div className="pt-2" onClick={(e) => e.stopPropagation()}>
+              <Link
+                href={`/dashboard/cases/${r.id_caso}`}
+                className="text-sm text-primary hover:underline"
+              >
+                Ver caso #{r.id_caso} →
+              </Link>
+            </div>
+          </div>
+        );
+      }
       case 'soporte': {
         const r = record as SoporteAuditRecord;
         return (
@@ -1718,12 +2135,15 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 )}
                 {r.orientacion_anterior !== r.orientacion_nueva && (
                   <div className="mb-2">
-                    <p className="text-sm text-gray-600">Orientación:</p>
-                    <p className="text-sm line-through text-red-500 bg-red-50 p-2 rounded">
-                      {r.orientacion_anterior || 'N/A'}
-                    </p>
-                    <p className="text-sm text-green-600 bg-green-50 p-2 rounded mt-1">
-                      {r.orientacion_nueva || 'N/A'}
+                    <p className="text-sm text-gray-600">
+                      Orientación:{' '}
+                      <span className="line-through text-red-500">
+                        {r.orientacion_anterior || 'N/A'}
+                      </span>
+                      {' → '}
+                      <span className="text-green-600">
+                        {r.orientacion_nueva || 'N/A'}
+                      </span>
                     </p>
                   </div>
                 )}
@@ -3614,6 +4034,13 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         return (record as BeneficiarioActualizadoAuditRecord).fecha_actualizacion;
       case 'beneficiario-eliminado':
         return (record as BeneficiarioEliminadoAuditRecord).fecha_eliminacion;
+      // Acciones
+      case 'accion-creada':
+        return (record as AccionCreadaAuditRecord).fecha_creacion;
+      case 'accion-actualizada':
+        return (record as AccionActualizadaAuditRecord).fecha_actualizacion;
+      case 'accion-eliminada':
+        return (record as AccionEliminadaAuditRecord).fecha;
     }
   };
 

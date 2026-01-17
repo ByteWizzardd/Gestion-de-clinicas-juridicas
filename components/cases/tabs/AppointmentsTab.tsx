@@ -41,6 +41,7 @@ interface AppointmentsTabProps {
 export default function AppointmentsTab({ citas, onRefresh, onEditAppointment }: AppointmentsTabProps) {
   const [citaToDelete, setCitaToDelete] = useState<{ num_cita: number; id_caso: number; fecha_encuentro: string } | null>(null);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [deleteMotive, setDeleteMotive] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleEditAppointment = (cita: {
@@ -71,22 +72,30 @@ export default function AppointmentsTab({ citas, onRefresh, onEditAppointment }:
       id_caso: cita.id_caso,
       fecha_encuentro: cita.fecha_encuentro
     });
+    setDeleteMotive(''); // Limpiar motivo anterior
     setShowDeleteConfirmModal(true);
   };
 
   const handleConfirmDelete = async () => {
     if (!citaToDelete) return;
 
+    if (!deleteMotive.trim()) {
+      alert('Debe indicar un motivo para cancelar la cita');
+      return;
+    }
+
     setIsDeleting(true);
     try {
       const result = await deleteCitaAction({
-        appointmentId: `cita-${citaToDelete.num_cita}-${citaToDelete.id_caso}-${new Date(citaToDelete.fecha_encuentro).getTime()}`
+        appointmentId: `cita-${citaToDelete.num_cita}-${citaToDelete.id_caso}-${new Date(citaToDelete.fecha_encuentro).getTime()}`,
+        motivo: deleteMotive
       });
 
       if (result.success) {
         // Cerrar modal y limpiar estado
         setShowDeleteConfirmModal(false);
         setCitaToDelete(null);
+        setDeleteMotive('');
 
         // Recargar los datos del caso
         if (onRefresh) {
@@ -110,6 +119,7 @@ export default function AppointmentsTab({ citas, onRefresh, onEditAppointment }:
   const handleCancelDelete = () => {
     setShowDeleteConfirmModal(false);
     setCitaToDelete(null);
+    setDeleteMotive('');
   };
 
   // Ordenar citas por fecha de registro (descendente - más recientes primero)
@@ -232,6 +242,10 @@ export default function AppointmentsTab({ citas, onRefresh, onEditAppointment }:
         confirmLabel="Eliminar"
         cancelLabel="Cancelar"
         disabled={isDeleting}
+        showMotive={true}
+        motiveValue={deleteMotive}
+        onMotiveChange={setDeleteMotive}
+        motivePlaceholder="Indique el motivo de la eliminación..."
       />
     </div>
   );

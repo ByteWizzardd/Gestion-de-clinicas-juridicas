@@ -88,7 +88,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
     setError(null);
     try {
       const result = await getUsuariosAction();
-      
+
       if (!result.success) {
         setError(result.error?.message || 'Error al cargar usuarios disponibles');
         return;
@@ -139,6 +139,18 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
     if (!isCitaAction && !fechaEjecucion) {
       setErrors(prev => ({ ...prev, fechaEjecucion: 'La fecha de ejecución es requerida' }));
       return;
+    }
+
+    // Validar que la fecha no sea futura (solo al registrar, no al editar)
+    if (!editingAction && !isCitaAction && fechaEjecucion) {
+      const fechaSeleccionada = new Date(fechaEjecucion + 'T00:00:00');
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+
+      if (fechaSeleccionada > hoy) {
+        setErrors(prev => ({ ...prev, fechaEjecucion: 'La fecha de ejecución no puede ser futura' }));
+        return;
+      }
     }
 
     setLoading(true);
@@ -289,12 +301,12 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
           ) : (
             <>
               {/* Grid de formulario */}
-              <form 
+              <form
                 onSubmit={(e) => {
                   console.log('DEBUG AddActionModal - Form onSubmit triggered');
                   handleSubmit(e);
-                }} 
-                noValidate 
+                }}
+                noValidate
                 className="grid grid-cols-2 gap-x-8 gap-y-4"
               >
                 {/* Detalle de la Acción (ocupa todo el ancho) */}
@@ -328,7 +340,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
                   <div className="flex flex-col gap-1">
                     <label className="text-base font-normal text-foreground mb-1 flex items-center gap-2">
                       <Users className="w-4 h-4" />
-                      Usuarios Ejecutores {isCitaAction ? '' : '*'}
+                      Usuarios Ejecutores {isCitaAction ? '' : <span className="text-danger">*</span>}
                     </label>
                     <MultiSelect
                       options={usuariosOptions}
@@ -360,7 +372,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
                   <div className="flex flex-col gap-1">
                     <label className="text-base font-normal text-foreground mb-1 flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
-                      Fecha de Ejecución {isCitaAction ? '' : '*'}
+                      Fecha de Ejecución {isCitaAction ? '' : <span className="text-danger">*</span>}
                     </label>
                     <DatePicker
                       value={fechaEjecucion}

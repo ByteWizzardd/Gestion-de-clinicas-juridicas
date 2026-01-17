@@ -357,6 +357,8 @@ export const casosService = {
     deleteAccion: async (params: {
         numAccion: number;
         idCaso: number;
+        idUsuarioElimino: string;
+        motivo: string;
     }): Promise<{ num_accion: number; id_caso: number }> => {
         try {
             // Asegurar que los parámetros sean números
@@ -364,6 +366,12 @@ export const casosService = {
             const idCaso = Number(params.idCaso);
 
             return await withTransaction(async (client) => {
+                // Establecer variables de sesión para auditoría
+                const cedulaEscapada = params.idUsuarioElimino.replace(/'/g, "''");
+                const motivoEscapado = params.motivo.replace(/'/g, "''");
+                await client.query(`SET LOCAL app.usuario_elimina_accion = '${cedulaEscapada}'`);
+                await client.query(`SET LOCAL app.motivo_eliminacion_accion = '${motivoEscapado}'`);
+
                 // 1. Obtener información completa de la acción antes de eliminarla
                 const getAccionQuery = `
                     SELECT num_accion, id_caso, detalle_accion, comentario
@@ -469,7 +477,21 @@ export const casosService = {
                     }
                 }
 
-                // 3. Eliminar ejecutores asociados a la acción
+                // 3. Obtener ejecutores y fechas de ejecución ANTES de eliminarlos (para auditoría)
+                const getEjecutoresQuery = `
+                    SELECT 
+                        u.cedula,
+                        u.nombres,
+                        u.apellidos,
+                        e.fecha_ejecucion
+                    FROM ejecutan e
+                    JOIN usuarios u ON e.id_usuario_ejecuta = u.cedula
+                    WHERE e.num_accion = $1 AND e.id_caso = $2
+                `;
+                const ejecutoresResult = await client.query(getEjecutoresQuery, [numAccion, idCaso]);
+                const ejecutoresData = ejecutoresResult.rows;
+
+                // 4. Eliminar ejecutores asociados a la acción
                 const deleteEjecutoresQuery = `
                     DELETE FROM ejecutan
                     WHERE num_accion = $1 AND id_caso = $2
@@ -477,7 +499,7 @@ export const casosService = {
 
                 await client.query(deleteEjecutoresQuery, [numAccion, idCaso]);
 
-                // 4. Eliminar la acción
+                // 5. Eliminar la acción (el trigger creará el registro de auditoría)
                 const deleteAccionQuery = `
                     DELETE FROM acciones
                     WHERE num_accion = $1 AND id_caso = $2
@@ -488,6 +510,34 @@ export const casosService = {
 
                 if (result.rows.length === 0) {
                     throw new AppError('No se pudo eliminar la acción', 500);
+                }
+
+                // 6. Insertar los ejecutores en la tabla normalizada de auditoría
+                if (ejecutoresData.length > 0) {
+                    // Obtener el ID del registro de auditoría recién creado
+                    const auditoriaResult = await client.query(`
+                        SELECT id FROM auditoria_eliminacion_acciones 
+                        WHERE num_accion = $1 AND id_caso = $2 
+                        ORDER BY fecha DESC LIMIT 1
+                    `, [numAccion, idCaso]);
+
+                    if (auditoriaResult.rows.length > 0) {
+                        const idAuditoria = auditoriaResult.rows[0].id;
+
+                        for (const ejecutor of ejecutoresData) {
+                            await client.query(`
+                                INSERT INTO auditoria_eliminacion_acciones_ejecutores 
+                                (id_auditoria_eliminacion, id_usuario_ejecutor, nombres_ejecutor, apellidos_ejecutor, fecha_ejecucion)
+                                VALUES ($1, $2, $3, $4, $5)
+                            `, [
+                                idAuditoria,
+                                ejecutor.cedula,
+                                ejecutor.nombres,
+                                ejecutor.apellidos,
+                                ejecutor.fecha_ejecucion
+                            ]);
+                        }
+                    }
                 }
 
                 return result.rows[0];
@@ -508,11 +558,16 @@ export const casosService = {
         idCaso: number;
         detalleAccion: string;
         comentario: string | null;
+        idUsuarioActualizo: string;
         ejecutores?: Array<{ idUsuario: string; fechaEjecucion: string }>;
     }) => {
         console.log('DEBUG updateAccion - Updating action with params:', params);
 
         return await withTransaction(async (client) => {
+            // Establecer variable de sesión para auditoría
+            const cedulaEscapada = params.idUsuarioActualizo.replace(/'/g, "''");
+            await client.query(`SET LOCAL app.usuario_actualiza_accion = '${cedulaEscapada}'`);
+
             // Verificar que la acción existe antes de actualizar
             const checkQuery = 'SELECT num_accion, detalle_accion, comentario FROM acciones WHERE num_accion = $1 AND id_caso = $2';
             const existingAction = await client.query(checkQuery, [params.numAccion, params.idCaso]);
@@ -521,14 +576,30 @@ export const casosService = {
                 throw new NotFoundError('La acción no existe');
             }
 
+            // Obtener ejecutores actuales para auditoría (antes de modificarlos)
+            const currentEjecutoresQuery = `
+                SELECT 
+                    e.id_usuario_ejecuta as cedula,
+                    e.fecha_ejecucion,
+                    u.nombres,
+                    u.apellidos
+                FROM ejecutan e
+                JOIN usuarios u ON e.id_usuario_ejecuta = u.cedula
+                WHERE e.num_accion = $1 AND e.id_caso = $2
+            `;
+            const currentEjecutoresResult = await client.query(currentEjecutoresQuery, [params.numAccion, params.idCaso]);
+            const ejecutoresAnteriores = currentEjecutoresResult.rows;
+
             console.log('DEBUG updateAccion - Existing action before update:', existingAction.rows[0]);
 
-            // Actualizar la acción usando client de la transacción
+            // Actualizar la acción usando client de la transacción (el trigger crea el registro de auditoría base)
             const updateAccionQuery = loadSQL('acciones/update.sql');
             await client.query(updateAccionQuery, [params.numAccion, params.idCaso, params.detalleAccion, params.comentario]);
             console.log('DEBUG updateAccion - Action updated in database');
 
             // Si se proporcionan ejecutores, actualizarlos
+            let ejecutoresNuevos: Array<{ cedula: string; nombres: string; apellidos: string; fecha_ejecucion: string }> = [];
+
             if (params.ejecutores !== undefined) {
                 console.log('DEBUG updateAccion - Updating ejecutores:', params.ejecutores);
 
@@ -539,6 +610,12 @@ export const casosService = {
 
                 // Crear nuevos ejecutores si hay usuarios
                 if (params.ejecutores.length > 0) {
+                    // Obtener nombres de los nuevos ejecutores
+                    const idsUsuarios = params.ejecutores.map(e => e.idUsuario);
+                    const namesQuery = `SELECT cedula, nombres, apellidos FROM usuarios WHERE cedula = ANY($1)`;
+                    const namesResult = await client.query(namesQuery, [idsUsuarios]);
+                    const usersMap = new Map(namesResult.rows.map((u: any) => [u.cedula, { nombres: u.nombres, apellidos: u.apellidos }]));
+
                     const createEjecutanQuery = loadSQL('ejecutan/create.sql');
                     for (const ejecutor of params.ejecutores) {
                         await client.query(createEjecutanQuery, [
@@ -547,8 +624,60 @@ export const casosService = {
                             params.idCaso,
                             ejecutor.fechaEjecucion
                         ]);
+
+                        const userData = usersMap.get(ejecutor.idUsuario);
+                        ejecutoresNuevos.push({
+                            cedula: ejecutor.idUsuario,
+                            nombres: userData?.nombres || '',
+                            apellidos: userData?.apellidos || '',
+                            fecha_ejecucion: ejecutor.fechaEjecucion
+                        });
                     }
                     console.log('DEBUG updateAccion - New ejecutores created:', params.ejecutores.length);
+                }
+            } else {
+                // Si no se modifican los ejecutores, los nuevos son igual a los anteriores
+                ejecutoresNuevos = ejecutoresAnteriores.map((e: any) => ({
+                    cedula: e.cedula,
+                    nombres: e.nombres,
+                    apellidos: e.apellidos,
+                    fecha_ejecucion: e.fecha_ejecucion instanceof Date
+                        ? e.fecha_ejecucion.toISOString().split('T')[0]
+                        : e.fecha_ejecucion
+                }));
+            }
+
+            // Insertar ejecutores en tabla normalizada de auditoría
+            // Solo si hubo cambios en la acción (el trigger inserta el registro base)
+            const auditoriaResult = await client.query(`
+                SELECT id FROM auditoria_actualizacion_acciones 
+                WHERE num_accion = $1 AND id_caso = $2 
+                ORDER BY fecha_actualizacion DESC LIMIT 1
+            `, [params.numAccion, params.idCaso]);
+
+            if (auditoriaResult.rows.length > 0) {
+                const idAuditoria = auditoriaResult.rows[0].id;
+
+                // Insertar ejecutores anteriores (tipo = 'anterior')
+                for (const ejecutor of ejecutoresAnteriores) {
+                    const fechaStr = ejecutor.fecha_ejecucion instanceof Date
+                        ? ejecutor.fecha_ejecucion.toISOString().split('T')[0]
+                        : ejecutor.fecha_ejecucion;
+
+                    await client.query(`
+                        INSERT INTO auditoria_actualizacion_acciones_ejecutores 
+                        (id_auditoria_actualizacion, tipo, id_usuario_ejecutor, nombres_ejecutor, apellidos_ejecutor, fecha_ejecucion)
+                        VALUES ($1, 'anterior', $2, $3, $4, $5)
+                    `, [idAuditoria, ejecutor.cedula, ejecutor.nombres, ejecutor.apellidos, fechaStr]);
+                }
+
+                // Insertar ejecutores nuevos (tipo = 'nuevo')
+                for (const ejecutor of ejecutoresNuevos) {
+                    await client.query(`
+                        INSERT INTO auditoria_actualizacion_acciones_ejecutores 
+                        (id_auditoria_actualizacion, tipo, id_usuario_ejecutor, nombres_ejecutor, apellidos_ejecutor, fecha_ejecucion)
+                        VALUES ($1, 'nuevo', $2, $3, $4, $5)
+                    `, [idAuditoria, ejecutor.cedula, ejecutor.nombres, ejecutor.apellidos, ejecutor.fecha_ejecucion]);
                 }
             }
 

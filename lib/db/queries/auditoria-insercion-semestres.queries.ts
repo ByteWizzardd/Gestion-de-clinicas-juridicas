@@ -27,7 +27,7 @@ export const auditoriaInsercionSemestresQueries = {
   }): Promise<Array<{
     id: number;
     term: string;
-    term: string;
+
     fecha_inicio?: string | null;
     fecha_fin?: string | null;
     habilitado: boolean | null;
@@ -48,7 +48,7 @@ export const auditoriaInsercionSemestresQueries = {
     ]);
     return result.rows.map(row => ({
       ...row,
-      foto_perfil_usuario_creo: row.foto_perfil_usuario_creo 
+      foto_perfil_usuario_creo: row.foto_perfil_usuario_creo
         ? `data:image/jpeg;base64,${(row.foto_perfil_usuario_creo as Buffer).toString('base64')}`
         : null,
     }));
