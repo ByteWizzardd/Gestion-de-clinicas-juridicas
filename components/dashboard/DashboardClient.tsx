@@ -189,7 +189,7 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
             </motion.div>
 
             <motion.div
-              className="bg-white rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] p-4 md:p-6 w-full lg:max-w-[calc(2*21.25rem+1.5rem)] 2xl:max-w-[calc(2*24rem+1.5rem)] flex-1 flex flex-col min-h-0"
+              className="bg-white rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] p-4 md:p-6 w-full flex-1 flex flex-col min-h-0"
               initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
