@@ -88,7 +88,7 @@ export default function CatalogViewModal({ isOpen, onClose, title, fields }: Cat
                                     {getIcon(field.icon)}
                                     {field.label}
                                 </label>
-                                <div className="text-base text-gray-900 break-words">
+                                <div className="text-base text-gray-900 wrap-break-words">
                                     {formatValue(field.value)}
                                 </div>
                             </div>
