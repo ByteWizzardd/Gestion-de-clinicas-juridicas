@@ -304,12 +304,15 @@ export function RegistroControlCasosPDF({ data, logoBase64 }: RegistroControlCas
                         {(() => {
                             const cat = caso.nombre_categoria;
                             const sub = caso.nombre_subcategoria;
+                            const amb = caso.nombre_ambito_legal;
+
                             const hasCat = cat && cat.toLowerCase() !== 'sin categoría' && cat.toLowerCase() !== 'n/a';
                             const hasSub = sub && sub.toLowerCase() !== 'sin subcategoría' && sub.toLowerCase() !== 'n/a';
+                            const hasAmb = amb && amb.toLowerCase() !== 'sin ámbito' && amb.toLowerCase() !== 'n/a';
 
                             return (
                                 <Text style={styles.valueText}>
-                                    {`${caso.nombre_materia || ''}${hasCat ? ` (${cat})` : ''}${hasSub ? ` - ${sub}` : ''}`}
+                                    {`${caso.nombre_materia || ''}${hasCat ? ` (${cat})` : ''}${hasSub ? ` - ${sub}` : ''}${hasAmb ? ` - ${amb}` : ''}`}
                                 </Text>
                             );
                         })()}

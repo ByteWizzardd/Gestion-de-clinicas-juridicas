@@ -73,7 +73,8 @@ SELECT
     -- Información del ámbito legal
     m.nombre_materia,
     cat.nombre_categoria,
-    sub.nombre_subcategoria
+    sub.nombre_subcategoria,
+    al.nombre_ambito AS nombre_ambito_legal
 FROM casos c
 INNER JOIN solicitantes s ON c.cedula = s.cedula
 INNER JOIN nucleos n ON c.id_nucleo = n.id_nucleo
