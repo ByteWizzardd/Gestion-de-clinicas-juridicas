@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Archive, Download } from 'lucide-react';
+import { Archive, Download, FileDown } from 'lucide-react';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import CaseFormModal from '@/components/forms/CaseFormModal';
@@ -431,6 +431,33 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
     }
   };
 
+  const handleDownloadRegistro = async (data: Record<string, unknown>) => {
+    const casoRow = data as TableRow;
+    const idCaso = parseInt(casoRow.codigo);
+
+    try {
+      // Necesitamos obtener los datos completos del caso, equipos y beneficiarios
+      // Reutilizamos la accion getCasoByIdAction que ya trae todo estructurado
+      const { getCasoByIdAction } = await import('@/app/actions/casos');
+      const result = await getCasoByIdAction(idCaso);
+
+      if (result.success && result.data) {
+        const { generateRegistroControlCasosPDF } = await import('@/lib/utils/case-registration-pdf-generator');
+        await generateRegistroControlCasosPDF({
+          caso: result.data,
+          equipo: result.data.equipo || [],
+          beneficiarios: result.data.beneficiarios || []
+        });
+      } else {
+        alert('Error al obtener los datos del caso para el reporte.');
+      }
+
+    } catch (error) {
+      console.error('Error al generar registro:', error);
+      alert('Error al generar el documento');
+    }
+  };
+
   return (
     <>
       <motion.div
@@ -513,6 +540,15 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
                   </>
                 ),
                 onClick: handleDownloadHistorial
+              },
+              {
+                label: (
+                  <>
+                    <FileDown className="w-4 h-4 text-gray-500 group-hover:text-yellow-600 transition-colors" />
+                    Descargar registro y control
+                  </>
+                ),
+                onClick: handleDownloadRegistro
               }
             ]}
           />

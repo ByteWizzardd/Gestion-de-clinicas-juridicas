@@ -26,8 +26,7 @@ export async function generateCasoHistorialExcel(data: CasoHistorialData): Promi
         { campo: 'Fecha Fin', valor: caso.fecha_fin_caso ? formatDate(caso.fecha_fin_caso) : 'Activo' },
         { campo: 'Estatus', valor: caso.estatus },
         { campo: 'Materia', valor: caso.nombre_materia },
-        { campo: 'Categoría', valor: caso.nombre_categoria },
-        { campo: 'Subcategoría', valor: caso.nombre_subcategoria },
+
         { campo: 'Ámbito Legal', valor: caso.nombre_ambito_legal },
         { campo: 'Trámite', valor: caso.tramite },
         { campo: 'Solicitante (Nombre)', valor: caso.nombre_completo_solicitante || caso.nombres_solicitante },
@@ -302,7 +301,7 @@ export async function generateCasoHistorialExcelFormatoUCAB(data: CasoHistorialD
     // El usuario muestra una barra/caja larga
     sheet.mergeCells(r, 31, r, 39);
     const materiaCell = sheet.getCell(r, 31);
-    materiaCell.value = `${caso.nombre_materia || ''} ${caso.nombre_categoria || ''}`;
+    materiaCell.value = caso.nombre_materia || '';
     materiaCell.border = borderBox;
     materiaCell.font = fontValue;
     materiaCell.alignment = { horizontal: 'left', indent: 1 };
