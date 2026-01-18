@@ -26,9 +26,6 @@ export async function generateCasoHistorialExcel(data: CasoHistorialData): Promi
         { campo: 'Fecha Fin', valor: caso.fecha_fin_caso ? formatDate(caso.fecha_fin_caso) : 'Activo' },
         { campo: 'Estatus', valor: caso.estatus },
         { campo: 'Materia', valor: caso.nombre_materia },
-
-        { campo: 'Ámbito Legal', valor: caso.nombre_ambito_legal },
-        { campo: 'Trámite', valor: caso.tramite },
         { campo: 'Solicitante (Nombre)', valor: caso.nombre_completo_solicitante || caso.nombres_solicitante },
         { campo: 'Solicitante (Cédula)', valor: caso.cedula },
         { campo: 'Responsable', valor: caso.nombre_responsable },
