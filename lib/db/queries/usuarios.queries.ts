@@ -289,6 +289,31 @@ export const usuariosQueries = {
     return result.rows;
   },
 
+  getAllStudents: async (habilitadosOnly: boolean = false): Promise<
+    Array<{
+      cedula: string;
+      nombres: string;
+      apellidos: string;
+      nombre_completo: string;
+      correo_electronico: string;
+      nombre_usuario: string;
+      telefono_celular: string | null;
+      habilitado_sistema: boolean;
+      tipo_usuario: string;
+      info_estudiante: string | null;
+    }>
+  > => {
+    let query = loadSQL("usuarios/get-all-students.sql");
+    if (habilitadosOnly) {
+      const parts = query.split('ORDER BY');
+      if (parts.length > 1) {
+        query = parts[0] + 'AND u.habilitado_sistema = true ORDER BY' + parts[1];
+      }
+    }
+    const result: QueryResult = await pool.query(query);
+    return result.rows;
+  },
+
   /**
    * Actualiza la contraseña de un usuario por correo electrónico
    */

@@ -57,8 +57,8 @@ export const fullMenu: MenuItem[] = [
     roles: ['coordinator'],
   },
   {
-    label: 'Gestión de Equipo',
-    href: '/dashboard/team',
+    label: 'Estudiantes',
+    href: '/dashboard/students',
     icon: Users,
     roles: ['professor'],
   },

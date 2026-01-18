@@ -1,0 +1,194 @@
+'use client';
+
+import { useState, useMemo, useEffect } from 'react';
+import { motion } from 'motion/react';
+import { useRouter } from 'next/navigation';
+import CaseTools from '@/components/CaseTools/CaseTools';
+import Table from '@/components/Table/Table';
+import {
+    getEstudiantesAction,
+} from '@/app/actions/usuarios';
+
+interface Estudiante extends Record<string, unknown> {
+    cedula: string;
+    nombres?: string;
+    apellidos?: string;
+    nombre_usuario: string;
+    habilitado_sistema?: boolean;
+    tipo_usuario: string;
+    correo_electronico?: string;
+    info_estudiante?: string | null;
+}
+
+interface StudentsClientProps {
+    initialEstudiantes?: Estudiante[];
+}
+
+export default function StudentsClient({ initialEstudiantes = [] }: StudentsClientProps) {
+    const [usuarios, setUsuarios] = useState<Estudiante[]>(initialEstudiantes);
+    const [searchValue, setSearchValue] = useState('');
+    const [estadoFilter, setEstadoFilter] = useState('');
+    const [tipoFilter, setTipoFilter] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+
+
+    const router = useRouter();
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+        setPrefersReducedMotion(mediaQuery.matches);
+
+        const handleChange = (e: MediaQueryListEvent) => {
+            setPrefersReducedMotion(e.matches);
+        };
+
+        mediaQuery.addEventListener("change", handleChange);
+        return () => mediaQuery.removeEventListener("change", handleChange);
+    }, []);
+
+    useEffect(() => {
+        if (initialEstudiantes.length === 0) {
+            loadEstudiantes();
+        }
+    }, [initialEstudiantes.length]);
+
+    const loadEstudiantes = async () => {
+        setLoading(true);
+        try {
+            const result = await getEstudiantesAction();
+            if (result.success && result.data) {
+                // Mapeamos los datos para asegurar compatibilidad
+                const estudiantesData = result.data.map(item => ({
+                    ...item,
+                    // Asegurar que info_estudiante sea string o null, no undefined
+                    info_estudiante: item.info_estudiante || null
+                })) as Estudiante[];
+                setUsuarios(estudiantesData);
+            }
+        } catch (error) {
+            console.error('Error al cargar estudiantes:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const normalizeText = (text: string): string => {
+        return text
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase();
+    };
+
+    const tiposDisponibles = useMemo(() => {
+        const tipos = new Set(usuarios.map(u => u.info_estudiante).filter(t => t && t !== 'Sin información'));
+        return Array.from(tipos).map(t => ({ value: t as string, label: t as string }));
+    }, [usuarios]);
+
+    const filteredUsuarios = useMemo(() => {
+        if (!searchValue && !estadoFilter && !tipoFilter) {
+            return usuarios;
+        }
+
+        return usuarios.filter((usuario) => {
+            const normalizedSearch = normalizeText(searchValue);
+            const matchesSearch =
+                !searchValue ||
+                usuario.cedula.includes(searchValue) ||
+                normalizeText((usuario.nombres || '') + ' ' + (usuario.apellidos || '')).includes(normalizedSearch) ||
+                normalizeText(usuario.nombre_usuario || '').includes(normalizedSearch);
+
+            const matchesEstado = !estadoFilter ||
+                (estadoFilter === 'Habilitado' && usuario.habilitado_sistema) ||
+                (estadoFilter === 'Deshabilitado' && !usuario.habilitado_sistema);
+
+            const matchesTipo = !tipoFilter ||
+                (usuario.info_estudiante === tipoFilter);
+
+            return matchesSearch && matchesEstado && matchesTipo;
+        });
+    }, [usuarios, searchValue, estadoFilter, tipoFilter]);
+
+    const handleView = (data: Record<string, unknown>) => {
+        const usuario = data as Estudiante;
+        router.push(`/dashboard/users/${usuario.cedula}`);
+    };
+
+
+
+    return (
+        <>
+            <motion.div
+                className="mb-4 md:mb-6 mt-4"
+                initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: "easeOut" }}
+            >
+                <h1 className="text-4xl m-3 font-semibold font-primary">Estudiantes</h1>
+                <p className="mb-6 ml-3">
+                    Visualización y gestión de estudiantes registrados en el sistema.
+                </p>
+            </motion.div>
+
+            <motion.div
+                initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
+            >
+                <div className="flex flex-col md:flex-row md:items-center gap-3 sm:gap-4 w-full px-3">
+                    <div className="flex-1 min-w-0">
+                        <CaseTools
+                            searchValue={searchValue}
+                            onSearchChange={setSearchValue}
+                            searchPlaceholder="Buscar estudiante..."
+
+                            // Filtro de Estado
+                            estatusFilter={estadoFilter}
+                            onEstatusChange={setEstadoFilter}
+                            estatusLabel="Estado"
+                            estatusOptions={[
+                                { value: 'Habilitado', label: 'Habilitado' },
+                                { value: 'Deshabilitado', label: 'Deshabilitado' }
+                            ]}
+
+                            // Filtro de Tipo (usando nucleoFilter)
+                            nucleoFilter={tipoFilter}
+                            onNucleoChange={setTipoFilter}
+                            nucleoLabel="Tipo"
+                            nucleoAllLabel="Todos los tipos"
+                            nucleoOptions={tiposDisponibles}
+                        />
+                    </div>
+                </div>
+            </motion.div>
+
+            <div className="mt-10"></div>
+
+            {loading ? (
+                <div className="m-3 p-4 text-center">
+                    <p className="text-gray-600">Cargando estudiantes...</p>
+                </div>
+            ) : (
+                <motion.div
+                    initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
+                >
+                    <Table
+                        data={filteredUsuarios.map((u) => ({
+                            cedula: u.cedula,
+                            nombre_completo: `${u.nombres || ''} ${u.apellidos || ''}`.trim(),
+                            nombre_usuario: u.nombre_usuario,
+                            info_estudiante: u.info_estudiante || 'Sin información',
+                            estado: u.habilitado_sistema ? 'Habilitado' : 'Deshabilitado',
+                        }))}
+                        columns={["Cédula", "Nombre Completo", "Usuario", "Tipo", "Estado"]}
+                        onView={handleView}
+                        idKey="cedula"
+                    />
+                </motion.div>
+            )}
+        </>
+    );
+}

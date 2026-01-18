@@ -23,6 +23,9 @@ type CaseToolsProps = {
     materiaFilter?: string;
     onMateriaChange?: (value: string) => void;
     materias?: { id_materia: number; nombre_materia: string; habilitado?: boolean }[];
+    nucleoLabel?: string;
+    nucleoAllLabel?: string;
+    estatusLabel?: string;
 };
 
 function CaseTools({
@@ -45,7 +48,10 @@ function CaseTools({
     showCasosAsignados = false,
     materiaFilter = '',
     onMateriaChange,
-    materias = []
+    materias = [],
+    nucleoLabel,
+    nucleoAllLabel,
+    estatusLabel
 }: CaseToolsProps) {
     const hasSearch = onSearchChange !== undefined;
     const hasFilter = onNucleoChange !== undefined || onTramiteChange !== undefined || onEstatusChange !== undefined || onCasosAsignadosChange !== undefined || onMateriaChange !== undefined;
@@ -75,6 +81,9 @@ function CaseTools({
                         materiaFilter={materiaFilter}
                         onMateriaChange={onMateriaChange}
                         materias={materias}
+                        nucleoLabel={nucleoLabel}
+                        nucleoAllLabel={nucleoAllLabel}
+                        estatusLabel={estatusLabel}
                     />
                 )}
                 {(addLabel || onAddClick) && <Add label={addLabel} onClick={onAddClick} />}
