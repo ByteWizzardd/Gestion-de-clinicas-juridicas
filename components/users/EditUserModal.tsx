@@ -8,6 +8,7 @@ import { UpdateUserSchema } from '@/lib/validations/user.schema';
 import { getSemestresAction } from '@/app/actions/estudiantes';
 import PhoneInput from '../forms/PhoneInput';
 import { validateEmailFormat, validateEmailDomain } from '@/lib/utils/email-validation';
+import { Loader2 } from 'lucide-react';
 
 interface Usuario {
   cedula: string;
@@ -389,7 +390,14 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
                   Cancelar
                 </Button>
                 <Button type="submit" variant="primary" size="xl" disabled={loading}>
-                  {loading ? 'Guardando...' : 'Guardar'}
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    'Guardar'
+                  )}
                 </Button>
               </div>
             </div>

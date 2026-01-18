@@ -5,6 +5,7 @@ import { Calendar, Clock, Users, FileText, Trash2, Pencil } from 'lucide-react';
 import { formatDate } from '@/lib/utils/date-formatter';
 import { deleteCitaAction } from '@/app/actions/citas';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
+import { useToast } from '@/components/ui/feedback/ToastProvider';
 
 interface AppointmentsTabProps {
   citas?: Array<{
@@ -43,6 +44,7 @@ export default function AppointmentsTab({ citas, onRefresh, onEditAppointment }:
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [deleteMotive, setDeleteMotive] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const { toast } = useToast();
 
   const handleEditAppointment = (cita: {
     num_cita: number;
@@ -80,7 +82,7 @@ export default function AppointmentsTab({ citas, onRefresh, onEditAppointment }:
     if (!citaToDelete) return;
 
     if (!deleteMotive.trim()) {
-      alert('Debe indicar un motivo para cancelar la cita');
+      toast.error('Debe indicar un motivo para cancelar la cita');
       return;
     }
 
@@ -97,20 +99,21 @@ export default function AppointmentsTab({ citas, onRefresh, onEditAppointment }:
         setCitaToDelete(null);
         setDeleteMotive('');
 
-        // Recargar los datos del caso
         if (onRefresh) {
           onRefresh();
         } else {
           // Fallback: recargar la página
           window.location.reload();
         }
+
+        toast.success("Cita eliminada correctamente");
       } else {
         console.error('Error deleting appointment:', result.error);
-        alert(result.error?.message || 'Error al eliminar la cita');
+        toast.error(result.error?.message || 'Error al eliminar la cita');
       }
     } catch (error) {
       console.error('Error deleting appointment:', error);
-      alert('Error inesperado al eliminar la cita');
+      toast.error('Error inesperado al eliminar la cita');
     } finally {
       setIsDeleting(false);
     }
@@ -121,7 +124,7 @@ export default function AppointmentsTab({ citas, onRefresh, onEditAppointment }:
     setCitaToDelete(null);
     setDeleteMotive('');
   };
- 
+
   // Ordenar citas por fecha de registro (descendente - más recientes primero)
   const citasOrdenadas = citas ? [...citas].sort((a, b) => {
     const fechaA = new Date(a.fecha_encuentro);

@@ -1,6 +1,8 @@
 'use server';
 
 import { usuariosQueries } from '@/lib/db/queries/usuarios.queries';
+import { solicitantesQueries } from '@/lib/db/queries/solicitantes.queries';
+import { beneficiariosQueries } from '@/lib/db/queries/beneficiarios.queries';
 import { AppError } from '@/lib/utils/errors';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { handleServerActionError } from '@/lib/utils/server-action-helpers';
@@ -996,6 +998,110 @@ export async function enableUsuariosLoteAction(
       success: false,
       error: {
         message: error instanceof Error ? error.message : "Error al habilitar usuarios",
+      },
+    };
+  }
+}
+
+/**
+ * Resultado de la búsqueda de persona por cédula
+ */
+export interface LookupPersonByCedulaResult {
+  success: boolean;
+  data?: {
+    source: 'solicitante' | 'beneficiario';
+    nombres: string;
+    apellidos: string;
+    correo_electronico?: string | null;
+    telefono_celular?: string | null;
+  } | null;
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+/**
+ * Server Action para buscar datos de una persona por cédula en solicitantes o beneficiarios.
+ * Útil para auto-completar formularios de registro de usuarios y evitar inconsistencias.
+ */
+export async function lookupPersonByCedulaAction(
+  cedula: string
+): Promise<LookupPersonByCedulaResult> {
+  try {
+    // Verificar autenticación
+    const userResult = await getCurrentUserAction();
+    if (!userResult.success || !userResult.data) {
+      return {
+        success: false,
+        error: { message: "No autorizado", code: "UNAUTHORIZED" },
+      };
+    }
+
+    if (!cedula || cedula.trim() === '') {
+      return {
+        success: true,
+        data: null,
+      };
+    }
+
+    // Normalizar cédula (quitar espacios)
+    const cedulaNormalizada = cedula.trim();
+
+    // 1. Buscar en solicitantes primero
+    try {
+      const solicitante = await solicitantesQueries.getSolicitanteById(cedulaNormalizada) as {
+        nombres: string;
+        apellidos: string;
+        correo_electronico?: string | null;
+        telefono_celular?: string | null;
+      } | null;
+      if (solicitante) {
+        return {
+          success: true,
+          data: {
+            source: 'solicitante',
+            nombres: solicitante.nombres,
+            apellidos: solicitante.apellidos,
+            correo_electronico: solicitante.correo_electronico || null,
+            telefono_celular: solicitante.telefono_celular || null,
+          },
+        };
+      }
+    } catch {
+      // Continuar buscando en beneficiarios si falla
+    }
+
+    // 2. Buscar en beneficiarios
+    try {
+      const beneficiario = await beneficiariosQueries.getByCedula(cedulaNormalizada);
+      if (beneficiario) {
+        return {
+          success: true,
+          data: {
+            source: 'beneficiario',
+            nombres: beneficiario.nombres,
+            apellidos: beneficiario.apellidos,
+            correo_electronico: null, // Beneficiarios no tienen correo
+            telefono_celular: null, // Beneficiarios no tienen teléfono
+          },
+        };
+      }
+    } catch {
+      // No encontrado en beneficiarios
+    }
+
+    // No encontrado en ninguna tabla
+    return {
+      success: true,
+      data: null,
+    };
+  } catch (error) {
+    console.error("Error en lookupPersonByCedulaAction:", error);
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : "Error al buscar persona",
       },
     };
   }

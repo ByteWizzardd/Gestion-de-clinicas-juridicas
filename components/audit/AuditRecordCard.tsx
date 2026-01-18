@@ -2178,14 +2178,27 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
       }
       case 'cita-actualizada': {
         const r = record as CitaActualizadaAuditRecord;
+
+        // Verificar si realmente hubo cambios en cada campo
+        const hasFechaEncuentroChange = !areDatesEqual(r.fecha_encuentro_anterior, r.fecha_encuentro_nueva);
+        const hasFechaProximaCitaChange = !areDatesEqual(r.fecha_proxima_cita_anterior, r.fecha_proxima_cita_nueva);
+        const hasOrientacionChange = r.orientacion_anterior !== r.orientacion_nueva;
+
+        // Verificar si hay al menos un cambio para mostrar
+        const hasAnyChange = hasFechaEncuentroChange || hasFechaProximaCitaChange || hasOrientacionChange;
+
         return (
           <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm font-semibold text-gray-700 mb-1">Cambios Realizados</p>
-                {r.fecha_encuentro_anterior !== r.fecha_encuentro_nueva && (
+                {!hasAnyChange && (
+                  <p className="text-sm text-gray-500 italic">Solo se actualizaron los usuarios que atendieron</p>
+                )}
+                {hasFechaEncuentroChange && (
                   <div className="mb-2">
                     <p className="text-sm text-gray-600">
+                      Fecha encuentro:{' '}
                       <span className="line-through text-red-500">
                         {r.fecha_encuentro_anterior ? formatDateOnly(r.fecha_encuentro_anterior) : 'N/A'}
                       </span>
@@ -2196,7 +2209,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                     </p>
                   </div>
                 )}
-                {r.fecha_proxima_cita_anterior !== r.fecha_proxima_cita_nueva && (
+                {hasFechaProximaCitaChange && (
                   <div className="mb-2">
                     <p className="text-sm text-gray-600">
                       Próxima cita:{' '}
@@ -2210,7 +2223,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                     </p>
                   </div>
                 )}
-                {r.orientacion_anterior !== r.orientacion_nueva && (
+                {hasOrientacionChange && (
                   <div className="mb-2">
                     <p className="text-sm text-gray-600">
                       Orientación:{' '}
@@ -2222,23 +2235,6 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                         {r.orientacion_nueva || 'N/A'}
                       </span>
                     </p>
-                  </div>
-                )}
-                {r.usuarios_atendieron && Array.isArray(r.usuarios_atendieron) && r.usuarios_atendieron.length > 0 && (
-                  <div className="mt-3">
-                    <p className="text-sm font-semibold text-gray-700 mb-1">Atendida por:</p>
-                    <div className="space-y-1">
-                      {r.usuarios_atendieron.map((usuario: any, idx: number) => (
-                        <p key={idx} className="text-sm text-gray-600">
-                          {renderUserLink(
-                            usuario.nombre_completo,
-                            usuario.nombres,
-                            usuario.apellidos,
-                            usuario.id_usuario
-                          )}
-                        </p>
-                      ))}
-                    </div>
                   </div>
                 )}
               </div>
@@ -2256,6 +2252,23 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 <p className="text-sm text-gray-600">
                   Fecha actualización: {formatDate(r.fecha_actualizacion)}
                 </p>
+                {r.usuarios_atendieron && Array.isArray(r.usuarios_atendieron) && r.usuarios_atendieron.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-sm font-semibold text-gray-700 mb-1">Atendida por:</p>
+                    <div className="space-y-1">
+                      {r.usuarios_atendieron.map((usuario: any, idx: number) => (
+                        <p key={idx} className="text-sm text-gray-600">
+                          {renderUserLink(
+                            usuario.nombre_completo,
+                            usuario.nombres,
+                            usuario.apellidos,
+                            usuario.id_usuario
+                          )}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <div className="pt-2" onClick={(e) => e.stopPropagation()}>

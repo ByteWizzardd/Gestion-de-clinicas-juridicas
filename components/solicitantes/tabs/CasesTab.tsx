@@ -7,6 +7,7 @@ import Table from '@/components/Table/Table';
 import { useState } from 'react';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 import { deleteCasoAction } from '@/app/actions/casos';
+import { useToast } from '@/components/ui/feedback/ToastProvider';
 
 interface CasesTabProps {
   casos: Array<{
@@ -26,6 +27,7 @@ interface CasesTabProps {
 }
 
 export default function CasesTab({ casos }: CasesTabProps) {
+  const { toast } = useToast();
   const router = useRouter();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<number | null>(null);
@@ -96,16 +98,17 @@ export default function CasesTab({ casos }: CasesTabProps) {
     try {
       const result = await deleteCasoAction(itemToDelete, motivo || 'Sin motivo especificado');
       if (result.success) {
+        toast.success('Caso eliminado correctamente');
         setShowDeleteConfirm(false);
         setItemToDelete(null);
         setDeleteMotivo('');
         router.refresh(); // O recargar datos si es necesario
       } else {
-        alert(`Error al eliminar: ${result.error?.message || 'Error desconocido'}`);
+        toast.error(result.error?.message || 'Error desconocido', 'Error al eliminar');
       }
     } catch (e) {
       console.error(e);
-      alert('Ocurrió un error al intentar eliminar el caso');
+      toast.error('Ocurrió un error al intentar eliminar el caso');
     } finally {
       setIsDeleting(false);
     }

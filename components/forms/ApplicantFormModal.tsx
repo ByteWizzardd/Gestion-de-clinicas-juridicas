@@ -9,7 +9,8 @@ import InputGroup from './InputGroup';
 import PhoneInput from './PhoneInput';
 import Select from './Select';
 import Button from '../ui/Button';
-import { ArrowRight, ArrowLeft, Calendar } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Calendar, Loader2 } from 'lucide-react';
+import { useToast } from '@/components/ui/feedback/ToastProvider';
 import DatePicker from './DatePicker';
 import { validateEmailFormat } from '@/lib/utils/email-validation';
 
@@ -354,6 +355,8 @@ export default function ApplicantFormModal({
   onSubmit,
   initialData,
 }: ApplicantFormModalProps) {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   // Cargar el paso actual desde localStorage
   const [currentStep, setCurrentStep] = useState(() => loadCurrentStepFromStorage());
   const [shouldClearOnClose, setShouldClearOnClose] = useState(false);
@@ -963,13 +966,14 @@ export default function ApplicantFormModal({
         };
 
         if (JSON.stringify(currentCheck) === JSON.stringify(initialCheck)) {
-          alert('No se han detectado cambios en la información.');
+          toast.info('No se han detectado cambios en la información.', 'Sin cambios');
           handleClose();
           return;
         }
       }
 
       try {
+        setIsSubmitting(true);
         let result;
         if (initialData) {
           const { updateSolicitanteAction } = await import('@/app/actions/solicitantes');
@@ -1013,8 +1017,10 @@ export default function ApplicantFormModal({
           }));
           setCurrentStep(0);
         } else {
-          alert(errorMessage);
+          toast.error(errorMessage, 'Error de registro');
         }
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
@@ -2919,8 +2925,15 @@ export default function ApplicantFormModal({
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 ) : (
-                  <Button variant="primary" size="xl" onClick={handleSubmit}>
-                    Registrar
+                  <Button variant="primary" size="xl" onClick={handleSubmit} disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Registrando...
+                      </>
+                    ) : (
+                      'Registrar'
+                    )}
                   </Button>
                 )}
               </div>

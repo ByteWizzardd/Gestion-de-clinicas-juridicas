@@ -118,7 +118,7 @@ export default function AuditClient() {
       {
         title: "Casos",
         description: "Registro de casos del sistema",
-        icon: Scale,
+        icon: Briefcase,
         totalCount: (counts.casosEliminados || 0) + (counts.casosActualizados || 0) + (counts.casosCreados || 0),
         href: "/dashboard/audit/casos",
         operations: [

@@ -12,6 +12,7 @@ import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 import ArchiveInactiveCasesModal from '@/components/cases/modals/ArchiveInactiveCasesModal';
 import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
 import { getCasosAction, getCasosByUsuarioAction, deleteCasoAction } from '@/app/actions/casos';
+import { useToast } from '@/components/ui/feedback/ToastProvider';
 import { createCasoAction, updateCasoAction, uploadSoportesAction } from '@/app/actions/casos';
 import { getMateriasAction } from '@/app/actions/materias';
 import { descargarHistorialCasoAction } from '@/app/actions/reports';
@@ -55,6 +56,7 @@ interface CasesClientProps {
 }
 
 export default function CasesClient({ initialCasos }: CasesClientProps) {
+  const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [casos, setCasos] = useState<Caso[]>(initialCasos);
@@ -279,7 +281,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
     setDeleteLoading(false);
 
     if (!result.success) {
-      alert(result.error?.message || 'Error al eliminar caso');
+      toast.error(result.error?.message || 'Error al eliminar caso', 'Error');
       return;
     }
 
@@ -325,7 +327,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
         if (!result.success) {
           const errorMessage = result.error?.message || 'Error al actualizar el caso';
-          alert(`Error: ${errorMessage}`);
+          toast.error(errorMessage, 'Error de actualización');
           return;
         }
 
@@ -339,14 +341,14 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
           try {
             const uploadResult = await uploadSoportesAction(Number(caseData.id_caso), formData);
             if (!uploadResult.success) {
-              alert(`Caso actualizado, pero error al subir archivos: ${uploadResult.error?.message}`);
+              toast.error(`Caso actualizado, pero error al subir archivos: ${uploadResult.error?.message}`);
             }
           } catch (uploadErr) {
-            alert('Caso actualizado, pero error al subir archivos');
+            toast.error('Caso actualizado, pero error al subir archivos');
           }
         }
 
-        alert('Caso actualizado exitosamente');
+        toast.success('Caso actualizado exitosamente');
         setIsModalOpen(false);
         setEditingCase(null);
         fetchCasos();
@@ -375,22 +377,25 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
         const errorCode = result.error?.code || 'UNKNOWN_ERROR';
         const errorFields = result.error?.fields;
 
+        // Lanzar error con información del campo para que el modal lo capture
         if (errorFields) {
           const fieldErrors = Object.entries(errorFields)
             .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
             .join('\n');
-          alert(`Error de validación:\n${fieldErrors}`);
+          throw new Error(`VALIDATION_ERROR:${fieldErrors}`);
+        } else if (errorCode === 'NOT_FOUND' || errorMessage.toLowerCase().includes('solicitante')) {
+          // Error específico de solicitante no encontrado
+          throw new Error(`SOLICITANTE_NOT_FOUND:${errorMessage}`);
         } else {
-          alert(`Error: ${errorMessage}\nCódigo: ${errorCode}`);
+          throw new Error(`${errorCode}:${errorMessage}`);
         }
-        return;
       }
 
       if (archivos.length > 0 && result.success && result.data) {
         const idCaso = (result.data as any).id_caso;
 
         if (!idCaso || isNaN(Number(idCaso))) {
-          alert('Caso creado exitosamente, pero no se pudo obtener el ID del caso para subir los archivos');
+          toast.warning('Caso creado exitosamente, pero no se pudo obtener el ID para subir archivos');
           setIsModalOpen(false);
           fetchCasos();
           return;
@@ -405,19 +410,19 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
           const uploadResult = await uploadSoportesAction(Number(idCaso), formData);
 
           if (!uploadResult.success) {
-            alert(`Caso creado exitosamente, pero hubo un error al subir los archivos: ${uploadResult.error?.message || 'Error desconocido'}`);
+            toast.error(`Caso creado, pero error al subir archivos: ${uploadResult.error?.message || 'Error desconocido'}`);
           }
         } catch (uploadErr) {
-          alert('Caso creado exitosamente, pero hubo un error al subir los archivos');
+          toast.error('Caso creado, pero error al subir archivos');
         }
       }
 
-      alert('Caso registrado exitosamente');
+      toast.success('Caso registrado exitosamente');
       setIsModalOpen(false);
       fetchCasos();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
-      alert(`Error al procesar el caso: ${errorMessage}`);
+      // Re-lanzar el error para que CaseFormModal lo capture
+      throw err;
     }
   };
 
@@ -430,7 +435,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       if (result.success && result.data) {
         await generateCasoHistorialZip(result.data);
       } else {
-        alert(`Error al descargar el historial: ${result.error || 'Error desconocido'}`);
+        toast.error(`Error al descargar el historial: ${result.error || 'Error desconocido'}`);
       }
     } catch (error) {
       console.error('Error al descargar historial:', error);

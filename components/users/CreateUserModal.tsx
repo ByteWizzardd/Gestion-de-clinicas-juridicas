@@ -8,6 +8,8 @@ import { getCurrentTermAction } from '@/app/actions/estudiantes';
 import PhoneInput from '../forms/PhoneInput';
 import CedulaInput from '../forms/CedulaInput';
 import { validateEmailFormat, validateEmailDomain } from '@/lib/utils/email-validation';
+import { Loader2 } from 'lucide-react';
+import { useToast } from '@/components/ui/feedback/ToastProvider';
 
 interface CreateUserForm {
   cedulaTipo: string;
@@ -51,6 +53,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
   const cedulaCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const emailCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const usernameCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { toast } = useToast();
 
   // Resetear formulario cuando se abre el modal
   useEffect(() => {
@@ -141,7 +144,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
 
     try {
       // Verificar si la cédula ya está registrada como usuario
-      const { getUsuarioInfoByCedulaAction } = await import('@/app/actions/usuarios');
+      const { getUsuarioInfoByCedulaAction, lookupPersonByCedulaAction } = await import('@/app/actions/usuarios');
       const usuarioResult = await getUsuarioInfoByCedulaAction(cedula);
 
       if (usuarioResult.success && usuarioResult.data) {
@@ -151,12 +154,27 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
           cedulaNumero: `La cédula ${cedula} ya está registrada como usuario`,
         }));
       } else {
-        // Si no existe, limpiar el error
+        // Si no existe como usuario, limpiar el error
         setErrors((prev) => {
           const newErrors = { ...prev };
           delete newErrors.cedulaNumero;
           return newErrors;
         });
+
+        // Buscar en solicitantes o beneficiarios para auto-completar
+        const lookupResult = await lookupPersonByCedulaAction(cedula);
+        if (lookupResult.success && lookupResult.data) {
+          // Auto-completar campos con los datos encontrados
+          setForm((prev) => ({
+            ...prev,
+            nombres: lookupResult.data!.nombres || prev.nombres,
+            apellidos: lookupResult.data!.apellidos || prev.apellidos,
+            // Solo llenar correo si viene de solicitante y no está vacío
+            correo_electronico: lookupResult.data!.correo_electronico || prev.correo_electronico,
+            // Solo llenar teléfono si viene de solicitante y no está vacío
+            telefono: lookupResult.data!.telefono_celular || prev.telefono,
+          }));
+        }
       }
     } catch (err) {
       // En caso de error, no mostrar nada (puede ser un error de red, etc.)
@@ -272,13 +290,13 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
       clearTimeout(cedulaCheckTimeoutRef.current);
     }
 
-    // Solo verificar si la cédula tiene al menos 4 caracteres
-    if (form.cedulaNumero && form.cedulaNumero.trim().length >= 4) {
+    // Verificar si hay cédula
+    if (form.cedulaNumero && form.cedulaNumero.trim().length > 0) {
       cedulaCheckTimeoutRef.current = setTimeout(() => {
         checkCedulaExists(form.cedulaTipo, form.cedulaNumero);
       }, 500); // Debounce de 500ms
     } else {
-      // Si la cédula es muy corta, limpiar el error
+      // Si la cédula está vacía, limpiar el error
       setErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors.cedulaNumero;
@@ -486,12 +504,15 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
       });
 
       if (result && result.success) {
+        toast.success('¡Usuario registrado exitosamente!');
         onSuccess();
         onClose();
       } else {
+        toast.error(result?.error?.message || 'Error al crear usuario');
         setError(result?.error?.message || 'Error al crear usuario');
       }
     } catch (err) {
+      toast.error('Error inesperado al crear usuario');
       setError('Error inesperado al crear usuario');
     } finally {
       setLoading(false);
@@ -704,7 +725,14 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
                 Cancelar
               </Button>
               <Button type="submit" variant="primary" size="xl" disabled={loading}>
-                {loading ? 'Registrando...' : 'Registrar'}
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Registrando...
+                  </>
+                ) : (
+                  'Registrar'
+                )}
               </Button>
             </div>
           </div>

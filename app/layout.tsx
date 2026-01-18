@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Urbanist, League_Spartan } from "next/font/google";
 import "./globals.css";
+import { ToastProvider } from '@/components/ui/feedback/ToastProvider';
 
 //font secundaria
 const urbanist = Urbanist({
@@ -31,9 +32,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-          className={`${urbanist.className} ${leagueSpartan.className} antialiased`}
+        className={`${urbanist.className} ${leagueSpartan.className} antialiased`}
       >
-        {children}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );

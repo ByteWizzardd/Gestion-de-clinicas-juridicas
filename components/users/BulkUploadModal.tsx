@@ -7,6 +7,7 @@ import Select from '../forms/Select';
 import { Upload, File, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { bulkCreateEstudiantesAction, getSemestresAction } from '@/app/actions/estudiantes';
 import { BulkUploadResult } from '@/lib/services/estudiantes.service';
+import { useToast } from '@/components/ui/feedback/ToastProvider';
 
 interface BulkUploadModalProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export default function BulkUploadModal({
   const [preview, setPreview] = useState<BulkUploadResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [uploadResult, setUploadResult] = useState<BulkUploadResult | null>(null);
+  const { toast } = useToast();
 
   // Cargar semestres al abrir el modal
   useEffect(() => {
@@ -130,6 +132,7 @@ export default function BulkUploadModal({
 
       if (result.success && result.data) {
         setUploadResult(result.data);
+        toast.success(`¡${result.data.success} estudiantes cargados exitosamente!`);
         if (onSuccess) {
           onSuccess();
         }
@@ -138,9 +141,11 @@ export default function BulkUploadModal({
           handleClose();
         }, 2000);
       } else {
+        toast.error(result.error?.message || 'Error al cargar estudiantes');
         setError(result.error?.message || 'Error al cargar estudiantes');
       }
     } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Error al cargar estudiantes');
       setError(err instanceof Error ? err.message : 'Error al cargar estudiantes');
     } finally {
       setLoading(false);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Modal from '../ui/feedback/Modal';
 import Input from './Input';
 import Select from './Select';
@@ -8,7 +8,8 @@ import TextArea from './TextArea';
 import DatePicker from './DatePicker';
 import Button from '../ui/Button';
 import CedulaInput from './CedulaInput';
-import { X, Calendar, Upload, File, XCircle } from 'lucide-react';
+import { X, Calendar, Upload, File, XCircle, Loader2 } from 'lucide-react';
+import { useToast } from '@/components/ui/feedback/ToastProvider';
 import { TRAMITES, ESTATUS_CASO } from '@/lib/constants/status';
 
 interface CaseData {
@@ -30,7 +31,7 @@ interface CaseData {
 interface CaseFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: unknown) => void;
+  onSubmit: (data: unknown) => void | Promise<void>;
   initialCedula?: string;
   initialCedulaTipo?: string;
   isEditing?: boolean;
@@ -69,6 +70,9 @@ export default function CaseFormModal({
     return `${year}-${month}-${day}`;
   };
 
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // Inicializar con fecha vacía, se establecerá cuando se abra el modal
   const [formData, setFormData] = useState<FormData>({
     fechaCaso: '',
@@ -99,6 +103,8 @@ export default function CaseFormModal({
   const [loadingCaseNumber, setLoadingCaseNumber] = useState(false);
   const [archivos, setArchivos] = useState<File[]>([]);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [checkingSolicitante, setCheckingSolicitante] = useState(false);
+  const cedulaCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const loadNextCaseNumber = async () => {
     try {
@@ -306,6 +312,66 @@ export default function CaseFormModal({
     }
   }, [isOpen]); // Reduced dependencies to avoid loops, explicit re-init when opened.
 
+  // Efecto para verificar si el solicitante existe cuando cambia la cédula (con debounce de 500ms)
+  useEffect(() => {
+    // No verificar en modo edición (el solicitante ya existe)
+    if (isEditing) return;
+
+    // Limpiar timeout anterior si existe
+    if (cedulaCheckTimeoutRef.current) {
+      clearTimeout(cedulaCheckTimeoutRef.current);
+    }
+
+    // Verificar si hay cédula
+    if (formData.cedulaSolicitante && formData.cedulaSolicitante.trim().length > 0) {
+      cedulaCheckTimeoutRef.current = setTimeout(async () => {
+        const cedulaCompleta = `${formData.cedulaSolicitanteTipo}-${formData.cedulaSolicitante}`;
+
+        try {
+          setCheckingSolicitante(true);
+          const { getSolicitanteByIdAction } = await import('@/app/actions/solicitantes');
+          const result = await getSolicitanteByIdAction(cedulaCompleta);
+
+          if (!result.success || !result.data) {
+            // Solicitante no encontrado
+            setErrors(prev => ({
+              ...prev,
+              cedulaSolicitante: 'No existe un solicitante con esta cédula'
+            }));
+          } else {
+            // Solicitante encontrado - limpiar error si existe
+            setErrors(prev => {
+              const newErrors = { ...prev };
+              delete newErrors.cedulaSolicitante;
+              return newErrors;
+            });
+          }
+        } catch (err) {
+          console.error('Error verificando solicitante:', err);
+        } finally {
+          setCheckingSolicitante(false);
+        }
+      }, 500); // Debounce de 500ms
+    } else {
+      // Si la cédula está vacía, limpiar el error de solicitante no encontrado
+      setErrors(prev => {
+        if (prev.cedulaSolicitante === 'No existe un solicitante con esta cédula') {
+          const newErrors = { ...prev };
+          delete newErrors.cedulaSolicitante;
+          return newErrors;
+        }
+        return prev;
+      });
+    }
+
+    // Cleanup
+    return () => {
+      if (cedulaCheckTimeoutRef.current) {
+        clearTimeout(cedulaCheckTimeoutRef.current);
+      }
+    };
+  }, [formData.cedulaSolicitanteTipo, formData.cedulaSolicitante, isEditing]);
+
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
 
@@ -355,7 +421,7 @@ export default function CaseFormModal({
           formData.observaciones !== originalFormData.observaciones;
 
         if (!hasChanges) {
-          alert('No se han detectado cambios para guardar.');
+          toast.info('No se han detectado cambios para guardar.', 'Sin cambios');
           return;
         }
       }
@@ -385,7 +451,37 @@ export default function CaseFormModal({
         id_caso: isEditing ? ((initialData?.id_caso) as number) : undefined,
       };
 
-      onSubmit(apiData);
+      try {
+        setIsSubmitting(true);
+        await onSubmit(apiData);
+      } catch (error) {
+        console.error('Error submitting case:', error);
+
+        // Parsear el error para mostrar mensaje apropiado
+        if (error instanceof Error) {
+          const errorMsg = error.message;
+
+          if (errorMsg.startsWith('SOLICITANTE_NOT_FOUND:')) {
+            // Error de solicitante no encontrado - mostrar debajo del campo de cédula
+            const message = errorMsg.replace('SOLICITANTE_NOT_FOUND:', '');
+            setErrors(prev => ({
+              ...prev,
+              cedulaSolicitante: message || 'El solicitante no está registrado en el sistema'
+            }));
+          } else if (errorMsg.startsWith('VALIDATION_ERROR:')) {
+            // Error de validación general
+            const message = errorMsg.replace('VALIDATION_ERROR:', '');
+            toast.error(message, 'Error de validación');
+          } else {
+            // Otros errores
+            const parts = errorMsg.split(':');
+            const message = parts.length > 1 ? parts.slice(1).join(':') : errorMsg;
+            toast.error(message, 'Error');
+          }
+        }
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -744,8 +840,15 @@ export default function CaseFormModal({
           </div>
 
           <div className="flex justify-end">
-            <Button variant="primary" size="xl" onClick={handleSubmit}>
-              {isEditing ? 'Guardar Cambios' : 'Registrar Caso'}
+            <Button variant="primary" size="xl" onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  {isEditing ? 'Guardando...' : 'Registrando...'}
+                </>
+              ) : (
+                isEditing ? 'Guardar Cambios' : 'Registrar Caso'
+              )}
             </Button>
           </div>
         </div>

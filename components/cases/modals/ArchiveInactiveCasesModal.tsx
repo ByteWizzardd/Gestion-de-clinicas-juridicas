@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Archive, AlertTriangle, CheckCircle2, Loader2, Calendar, User, Briefcase } from 'lucide-react';
 import Modal from '@/components/ui/feedback/Modal';
+import { useToast } from '@/components/ui/feedback/ToastProvider';
 import { getInactiveCasesAction, archiveInactiveCasesAction, InactiveCase } from '@/app/actions/casos';
 
 interface ArchiveInactiveCasesModalProps {
@@ -17,6 +18,7 @@ export default function ArchiveInactiveCasesModal({
     onClose,
     onArchiveComplete,
 }: ArchiveInactiveCasesModalProps) {
+    const { toast } = useToast();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [inactiveCases, setInactiveCases] = useState<InactiveCase[]>([]);
@@ -69,7 +71,7 @@ export default function ArchiveInactiveCasesModal({
 
     const handleArchive = async () => {
         if (selectedCases.size === 0) {
-            alert('Selecciona al menos un caso para archivar');
+            toast.warning('Selecciona al menos un caso para archivar', 'Selección requerida');
             return;
         }
 
@@ -77,14 +79,14 @@ export default function ArchiveInactiveCasesModal({
         try {
             const result = await archiveInactiveCasesAction(Array.from(selectedCases));
             if (result.success && result.data) {
-                alert(result.data.mensaje);
+                toast.success(result.data.mensaje, 'Casos archivados');
                 onArchiveComplete?.();
                 onClose();
             } else {
-                alert(result.error?.message || 'Error al archivar casos');
+                toast.error(result.error?.message || 'Error al archivar casos', 'Error');
             }
         } catch (err) {
-            alert('Error al archivar casos');
+            toast.error('Error al archivar casos', 'Error inesperado');
         } finally {
             setArchiving(false);
         }

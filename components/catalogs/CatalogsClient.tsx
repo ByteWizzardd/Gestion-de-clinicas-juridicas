@@ -36,7 +36,7 @@ export default function CatalogsClient({ counts }: CatalogsClientProps) {
                 transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: "easeOut" }}
             >
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl m-3 font-semibold font-primary">Administración</h1>
-                <p className="mb-6 ml-3 text-base">Mantenimiento de las tablas maestras del sistema</p>
+                <p className="mb-6 ml-3 text-base">Mantenimiento de los catálogos del sistema</p>
             </motion.div>
 
             {/* Buscador */}

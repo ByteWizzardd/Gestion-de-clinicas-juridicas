@@ -11,7 +11,8 @@ import { getUsuariosAction } from "@/app/actions/usuarios";
 import TextArea from "../forms/TextArea";
 import Button from "../ui/Button";
 import ConfirmModal from "../ui/feedback/ConfirmModal";
-import { X, Calendar } from "lucide-react";
+import { X, Calendar, Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/feedback/ToastProvider";
 import { formatDate } from "@/lib/utils/date-formatter";
 import type { Appointment } from "@/types/appointment";
 import { useRouter } from "next/navigation";
@@ -60,8 +61,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
       : []
   );
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<boolean>(false);
+  const { toast } = useToast();
   const [loading, setLoading] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState(true);
   const [caseOptions, setCaseOptions] = useState<{ value: string; label: string }[]>([]);
@@ -238,9 +238,9 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
       // Crear ejecutores (usuarios que atendieron la cita)
       const ejecutores = usuariosAtienden.length > 0
         ? usuariosAtienden.map((cedula: string) => ({
-            idUsuario: cedula,
-            fechaEjecucion: fecha, // YYYY-MM-DD
-          }))
+          idUsuario: cedula,
+          fechaEjecucion: fecha, // YYYY-MM-DD
+        }))
         : undefined;
 
       // Comentario: usar la nueva orientación
@@ -277,8 +277,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
       setOrientacion("");
       setUsuariosAtienden([]);
       setErrors({});
-      setError(null);
-      setSuccess(false);
+      setErrors({});
       if (onClose) onClose();
     }, 200); // 200ms coincide con la duración de la animación del Modal
   };
@@ -290,8 +289,10 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
       return;
     }
 
-    setError(null);
-    setSuccess(false);
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -347,7 +348,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
       setLoading(false);
 
       if (result.success && result.data) {
-        setSuccess(true);
+        toast.success(isEditing ? '¡Cita actualizada exitosamente!' : '¡Cita registrada exitosamente!');
 
         if (isEditing) {
           // Modo edición: verificar si era una cita programada que se completó
@@ -381,13 +382,12 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
           // NO cerrar el modal todavía, esperar respuesta del usuario
         }
       } else {
-        setError(result.error?.message || (isEditing ? "Error al actualizar la cita" : "Error al crear la cita"));
+        toast.error(result.error?.message || (isEditing ? "Error al actualizar la cita" : "Error al crear la cita"));
       }
     } catch (error) {
       console.error('Error al guardar cita:', error);
       setLoading(false);
-      setError('Error al guardar la cita. Por favor, inténtelo de nuevo.');
-      setSuccess(false);
+      toast.error('Error al guardar la cita. Por favor, inténtelo de nuevo.');
     }
   };
 
@@ -395,7 +395,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
     if (!citaCreada) return;
 
     setCreatingAction(true);
-    setError(null);
+    setCreatingAction(true);
 
     try {
       // Construir detalle de la acción
@@ -426,12 +426,12 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
       if (result.success) {
         // Guardar el id_caso antes de limpiar el estado
         const idCasoParaRedireccion = citaCreada.id_caso;
-        
+
         // Cerrar modal de confirmación
         setShowActionConfirmModal(false);
         // Marcar acción como registrada
         setActionRegistered(true);
-        setError(null);
+        setActionRegistered(true);
         // Limpiar formulario y cerrar modal inmediatamente
         setDate(initialDate || null);
         setEndDate(null);
@@ -442,20 +442,22 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
         setIsOpen(false);
         setCitaCreada(null);
         if (onClose) onClose();
-        
+
         // Después de crear la acción exitosamente, redirigir al detalle del caso
         setTimeout(() => {
           router.push(`/dashboard/cases/${idCasoParaRedireccion}?tab=acciones`);
         }, 500);
       } else {
         // Error al crear la acción (pero la cita ya está guardada)
-        setError(result.error?.message || "Error al crear la acción. La cita fue guardada correctamente.");
+        // Error al crear la acción (pero la cita ya está guardada)
+        toast.error(result.error?.message || "Error al crear la acción. La cita fue guardada correctamente.");
         // Permitir cerrar el modal de confirmación para continuar
         setShowActionConfirmModal(false);
       }
     } catch (error) {
       setCreatingAction(false);
-      setError(error instanceof Error ? error.message : "Error al crear la acción. La cita fue guardada correctamente.");
+      setCreatingAction(false);
+      toast.error(error instanceof Error ? error.message : "Error al crear la acción. La cita fue guardada correctamente.");
       setShowActionConfirmModal(false);
     }
   };
@@ -613,14 +615,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
           </div>
 
           {/* Mensajes de error y éxito */}
-          {error && (
-            <div className="col-span-3 text-danger mb-2">{error}</div>
-          )}
-          {success && (
-            <div className="col-span-3 text-success mb-2">
-              {isEditing ? '¡Cita actualizada exitosamente!' : '¡Cita registrada exitosamente!'}
-            </div>
-          )}
+          {/* No mostramos mensajes de error/éxito inline ya que usamos Toast */}
         </form>
 
         {/* Footer con botón */}
@@ -633,9 +628,14 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
 
           <div className="flex justify-end">
             <Button variant="primary" size="xl" onClick={handleSubmit} disabled={loading}>
-              {loading
-                ? (isEditing ? 'Actualizando...' : 'Registrando...')
-                : (isEditing ? 'Actualizar Cita' : 'Registrar Cita')}
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  {isEditing ? 'Actualizando...' : 'Registrando...'}
+                </>
+              ) : (
+                isEditing ? 'Actualizar Cita' : 'Registrar Cita'
+              )}
             </Button>
           </div>
         </div>

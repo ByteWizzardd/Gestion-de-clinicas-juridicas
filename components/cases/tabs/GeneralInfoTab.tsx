@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { formatDate, calculateAge } from '@/lib/utils/date-formatter';
 import EditBeneficiaryModal from '../modals/EditBeneficiaryModal';
 import { deleteBeneficiarioAction } from '@/app/actions/beneficiarios';
+import { useToast } from '@/components/ui/feedback/ToastProvider';
+import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 
 interface GeneralInfoTabProps {
   caso: {
@@ -44,30 +46,42 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
   const router = useRouter();
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedBeneficiary, setSelectedBeneficiary] = useState<any>(null);
+  const { toast } = useToast();
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [beneficiaryToDelete, setBeneficiaryToDelete] = useState<{ num: number, nombre: string } | null>(null);
 
   const formatSexo = (sexo: string | null) => {
     if (!sexo) return 'No especificado';
     return sexo === 'M' ? 'Masculino' : 'Femenino';
   };
 
-  const handleDeleteBeneficiario = async (numBeneficiario: number, nombreCompleto: string) => {
-    if (confirm(`¿Estás seguro de que deseas eliminar al beneficiario ${nombreCompleto}? Esta acción no se puede deshacer.`)) {
-      try {
-        const result = await deleteBeneficiarioAction({
-          id_caso: caso.id_caso,
-          num_beneficiario: numBeneficiario
-        });
+  const handleDeleteClick = (numBeneficiario: number, nombreCompleto: string) => {
+    setBeneficiaryToDelete({ num: numBeneficiario, nombre: nombreCompleto });
+    setDeleteModalOpen(true);
+  };
 
-        if (result.success) {
-          router.refresh(); // Mantiene estado de server components actualizado
-          if (onRefresh) onRefresh(); // Actualiza el estado local del cliente
-        } else {
-          alert('Error al eliminar: ' + (result.error?.message || 'Error desconocido'));
-        }
-      } catch (error) {
-        console.error('Error al eliminar beneficiario:', error);
-        alert('Error al procesar la solicitud');
+  const handleConfirmDelete = async () => {
+    if (!beneficiaryToDelete) return;
+
+    try {
+      const result = await deleteBeneficiarioAction({
+        id_caso: caso.id_caso,
+        num_beneficiario: beneficiaryToDelete.num
+      });
+
+      if (result.success) {
+        toast.success(`Beneficiario ${beneficiaryToDelete.nombre} eliminado correctamente`);
+        router.refresh(); // Mantiene estado de server components actualizado
+        if (onRefresh) onRefresh(); // Actualiza el estado local del cliente
+      } else {
+        toast.error(result.error?.message || 'Error desconocido', 'Error al eliminar');
       }
+    } catch (error) {
+      console.error('Error al eliminar beneficiario:', error);
+      toast.error('Error al procesar la solicitud');
+    } finally {
+      setDeleteModalOpen(false);
+      setBeneficiaryToDelete(null);
     }
   };
 
@@ -211,7 +225,7 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDeleteBeneficiario(beneficiario.num_beneficiario, beneficiario.nombre_completo)}
+                      onClick={() => handleDeleteClick(beneficiario.num_beneficiario, beneficiario.nombre_completo)}
                       className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors cursor-pointer"
                       type="button"
                       title="Eliminar beneficiario"
@@ -276,6 +290,19 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
           router.refresh(); // Mantiene estado de server components actualizado
           if (onRefresh) onRefresh(); // Actualiza el estado local del cliente
         }}
+      />
+      <ConfirmModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setBeneficiaryToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Eliminar Beneficiario"
+        message={`¿Estás seguro de que deseas eliminar al beneficiario ${beneficiaryToDelete?.nombre}? Esta acción no se puede deshacer.`}
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        confirmVariant="danger"
       />
     </div>
   );

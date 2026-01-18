@@ -9,7 +9,8 @@ import { getCaseIdsAction } from "@/app/actions/casos";
 import { getUsuariosAction } from "@/app/actions/usuarios";
 import { createCitaAction } from "@/app/actions/citas";
 import Button from "../ui/Button";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/feedback/ToastProvider";
 
 interface AppointmentScheduleModalProps {
   onClose: () => void;
@@ -17,17 +18,16 @@ interface AppointmentScheduleModalProps {
   initialDate?: Date;
 }
 
-export function AppointmentScheduleModal({ 
-  onClose, 
-  onSave, 
-  initialDate 
+export function AppointmentScheduleModal({
+  onClose,
+  onSave,
+  initialDate
 }: AppointmentScheduleModalProps) {
   const [date, setDate] = useState<Date | null>(initialDate || null);
   const [selectedCaseID, setSelectedCaseID] = useState<string>("");
   const [usuariosInvitados, setUsuariosInvitados] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<boolean>(false);
+  const { toast } = useToast();
   const [loading, setLoading] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState(true);
   const [caseOptions, setCaseOptions] = useState<{ value: string; label: string }[]>([]);
@@ -128,9 +128,8 @@ export function AppointmentScheduleModal({
       setDate(initialDate || null);
       setSelectedCaseID("");
       setUsuariosInvitados([]);
+      setUsuariosInvitados([]);
       setErrors({});
-      setError(null);
-      setSuccess(false);
       if (onClose) onClose();
     }, 200);
   };
@@ -142,8 +141,6 @@ export function AppointmentScheduleModal({
       return;
     }
 
-    setError(null);
-    setSuccess(false);
     setLoading(true);
 
     try {
@@ -156,7 +153,7 @@ export function AppointmentScheduleModal({
       });
 
       if (result.success) {
-        setSuccess(true);
+        toast.success("¡Cita programada exitosamente!");
         setDate(initialDate || null);
         setSelectedCaseID("");
         setUsuariosInvitados([]);
@@ -164,11 +161,11 @@ export function AppointmentScheduleModal({
         onSave();
         if (onClose) onClose();
       } else {
-        setError(result.error?.message || "Error al programar la cita");
+        toast.error(result.error?.message || "Error al programar la cita");
       }
     } catch (error) {
       console.error("Error creating scheduled appointment:", error);
-      setError("Error inesperado al programar la cita");
+      toast.error("Error inesperado al programar la cita");
     } finally {
       setLoading(false);
     }
@@ -248,14 +245,7 @@ export function AppointmentScheduleModal({
             />
           </div>
 
-          {error && (
-            <div className="col-span-3 text-danger mb-2">{error}</div>
-          )}
-          {success && (
-            <div className="col-span-3 text-success mb-2">
-              ¡Cita programada exitosamente!
-            </div>
-          )}
+
         </form>
 
         <div className="flex flex-col border-t border-gray-200">
@@ -263,10 +253,17 @@ export function AppointmentScheduleModal({
             <span className="text-danger font-medium text-sm">*</span>
             <span className="text-sm text-gray-600">Campo obligatorio</span>
           </div>
-          
+
           <div className="flex justify-end">
             <Button variant="primary" size="xl" onClick={handleSubmit} disabled={loading}>
-              {loading ? 'Programando...' : 'Programar Cita'}
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Programando...
+                </>
+              ) : (
+                'Programar Cita'
+              )}
             </Button>
           </div>
         </div>

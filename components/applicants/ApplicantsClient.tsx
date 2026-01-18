@@ -11,6 +11,7 @@ import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 import { getSolicitantesAction } from '@/app/actions/solicitantes';
 import { descargarFichaSolicitanteAction } from '@/app/actions/reports';
 import { generateSolicitanteFichaZip } from '@/lib/utils/applicant-file-pdf-generator';
+import { useToast } from '@/components/ui/feedback/ToastProvider';
 
 interface Solicitante extends Record<string, unknown> {
   cedula: string;
@@ -29,6 +30,7 @@ export default function ApplicantsClient({
   initialSolicitantes,
   initialNucleos,
 }: ApplicantsClientProps) {
+  const { toast } = useToast();
   const router = useRouter();
   const [solicitantes, setSolicitantes] = useState<Solicitante[]>(initialSolicitantes);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -122,11 +124,11 @@ export default function ApplicantsClient({
         setSelectedApplicant(result.data);
         setIsModalOpen(true);
       } else {
-        alert('No se pudo cargar la información completa del solicitante.');
+        toast.error('No se pudo cargar la información completa del solicitante.');
       }
     } catch (e) {
       console.error(e);
-      alert('Ocurrió un error al cargar los datos.');
+      toast.error('Ocurrió un error al cargar los datos.');
     }
   };
 
@@ -146,16 +148,17 @@ export default function ApplicantsClient({
       const result = await deleteSolicitanteAction(itemToDelete.cedula, motivo || 'Sin motivo especificado');
 
       if (result.success) {
+        toast.success(`Solicitante ${itemToDelete.nombre_completo} eliminado correctamente`);
         setShowDeleteConfirm(false);
         setItemToDelete(null);
         setDeleteMotivo('');
         await handleRefresh();
       } else {
-        alert(`Error al eliminar: ${result.error?.message || 'Error desconocido'}`);
+        toast.error(result.error?.message || 'Error desconocido', 'Error al eliminar');
       }
     } catch (e) {
       console.error(e);
-      alert('Ocurrió un error al intentar eliminar el solicitante');
+      toast.error('Ocurrió un error al intentar eliminar el solicitante');
     } finally {
       setIsDeleting(false);
     }
@@ -175,12 +178,13 @@ export default function ApplicantsClient({
 
       if (result.success && result.data) {
         await generateSolicitanteFichaZip(result.data);
+        toast.success(`Ficha de ${solicitante.nombre_completo} descargada correctamente`);
       } else {
-        alert(`Error al descargar la ficha: ${result.error || 'Error desconocido'}`);
+        toast.error(result.error || 'Error desconocido', 'Error al descargar la ficha');
       }
     } catch (error) {
       console.error('Error al descargar ficha:', error);
-      alert('Ocurrió un error al descargar la ficha del solicitante');
+      toast.error('Ocurrió un error al descargar la ficha del solicitante');
     }
   };
 
