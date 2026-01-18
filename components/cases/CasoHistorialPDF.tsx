@@ -233,10 +233,16 @@ export function CasoHistorialPDF({ data, logoBase64 }: CasoHistorialPDFProps) {
 
         {/* ROW 5: Recaudos */}
         <Text style={[styles.label, { marginTop: 10 }]}>7. Recaudos consignados:</Text>
-        <View style={[styles.largeTextBox, { minHeight: 45 }]}>
-          <Text style={styles.valueText}>
-            {soportes.map(s => s.nombre_archivo).join(', ')}
-          </Text>
+        <View style={[styles.largeTextBox, { minHeight: 60 }]}>
+          {soportes.length > 0 ? (
+            soportes.map((s, i) => (
+              <Text key={i} style={[styles.valueText, { marginBottom: 2 }]}>
+                • {s.nombre_archivo} ({s.tipo_mime}){s.descripcion ? ` - ${s.descripcion}` : ''}
+              </Text>
+            ))
+          ) : (
+            <Text style={styles.valueText}>Sin recaudos</Text>
+          )}
         </View>
 
         {/* ROW 6: Orientacion */}
@@ -261,7 +267,9 @@ export function CasoHistorialPDF({ data, logoBase64 }: CasoHistorialPDFProps) {
         <View style={{ marginLeft: 10, marginBottom: 15 }}>
           <Text style={[styles.label, { marginBottom: 2 }]}>Equipo:</Text>
           {equipo.map((m, i) => (
-            <Text key={i} style={{ fontSize: 10, paddingLeft: 10 }}>• {m.nombre_completo} - {m.rol}</Text>
+            <Text key={i} style={{ fontSize: 10, paddingLeft: 10 }}>
+              • {m.nombre_completo} - {m.rol} ({m.habilitado ? 'Activo' : 'Desasignado'})
+            </Text>
           ))}
         </View>
 

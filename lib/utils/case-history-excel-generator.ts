@@ -46,11 +46,13 @@ export async function generateCasoHistorialExcel(data: CasoHistorialData): Promi
     ];
 
     (data.equipo || []).forEach(miembro => {
+        // Map 'habilitado' to friendly status
+        const estatus = miembro.habilitado ? 'Activo' : 'Desasignado';
         sheetEquipo.addRow({
             nombre: miembro.nombre_completo,
             rol: miembro.rol,
             tipo: miembro.tipo === 'profesor' ? 'Profesor' : 'Estudiante',
-            estatus: miembro.habilitado ? 'Activo' : 'Inactivo',
+            estatus: estatus,
         });
     });
     sheetEquipo.getRow(1).font = { bold: true };
@@ -146,15 +148,20 @@ export async function generateCasoHistorialExcel(data: CasoHistorialData): Promi
     sheetSoportes.columns = [
         { header: 'Fecha Subida', key: 'fecha', width: 20 },
         { header: 'Nombre Archivo', key: 'nombre', width: 40 },
+        { header: 'Tipo', key: 'tipo', width: 15 },
+        { header: 'Comentario', key: 'comentario', width: 50 },
         { header: 'Subido Por', key: 'responsable', width: 30 },
     ];
 
     (data.soportes || []).forEach(doc => {
-        const fecha = new Date(doc.fecha_subida);
+        const fecha = new Date(doc.fecha_subida || doc.fecha_consignacion);
+
         sheetSoportes.addRow({
             fecha: fecha.toLocaleString('es-VE'),
             nombre: doc.nombre_archivo,
-            responsable: doc.nombre_responsable || 'Usuario'
+            tipo: doc.tipo_mime || 'Desconocido',
+            comentario: doc.descripcion || '',
+            responsable: doc.nombre_responsable || doc.nombre_completo_usuario_subio || 'Usuario'
         });
     });
     sheetSoportes.getRow(1).font = { bold: true };
@@ -378,10 +385,14 @@ export async function generateCasoHistorialExcelFormatoUCAB(data: CasoHistorialD
     r++;
 
     // SINGLE MERGED BLOCK
-    const recaudosStr = (data.soportes || []).map(s => s.nombre_archivo).join(', ');
+    // Build multiline recaudos with entity attributes
+    const recaudosLines = (data.soportes || []).map(s => {
+        return `${s.nombre_archivo} (${s.tipo_mime || 'Desconocido'})${s.descripcion ? ' - ' + s.descripcion : ''}`;
+    });
+    const recaudosStr = recaudosLines.join('\n');
     sheet.mergeCells(r, 3, r + 3, 39); // 4 rows high
     const recaudosCell = sheet.getCell(r, 3);
-    recaudosCell.value = recaudosStr;
+    recaudosCell.value = recaudosStr || 'Sin recaudos';
     recaudosCell.alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
     recaudosCell.border = borderBox;
 
@@ -428,8 +439,9 @@ export async function generateCasoHistorialExcelFormatoUCAB(data: CasoHistorialD
     sheet.getCell(r, 3).font = fontLabel;
     (data.equipo || []).forEach(m => {
         r++;
-        sheet.mergeCells(r, 4, r, 20);
-        sheet.getCell(r, 4).value = `${m.nombre_completo} - ${m.rol}`;
+        const estatus = m.habilitado ? 'Activo' : 'Desasignado';
+        sheet.mergeCells(r, 4, r, 25);
+        sheet.getCell(r, 4).value = `${m.nombre_completo} - ${m.rol} (${estatus})`;
     });
 
     r += 2;
