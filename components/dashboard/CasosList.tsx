@@ -49,15 +49,17 @@ export default function CasosList({ casos, loading, error }: CasosListProps) {
 
   if (!casos || casos.length === 0) {
     return (
-      <EmptyState
-        icon={Briefcase}
-        title="Aún no tienes casos asignados"
-        description="Cuando seas asignado a un caso o participes en alguno, aparecerá aquí"
-        action={{
-          label: "Ver todos los casos",
-          href: "/dashboard/cases"
-        }}
-      />
+      <div className="min-h-full flex flex-col items-center justify-center">
+        <EmptyState
+          icon={Briefcase}
+          title="Aún no tienes casos asignados"
+          description="Cuando seas asignado a un caso o participes en alguno, aparecerá aquí"
+          action={{
+            label: "Ver todos los casos",
+            href: "/dashboard/cases"
+          }}
+        />
+      </div>
     );
   }
 

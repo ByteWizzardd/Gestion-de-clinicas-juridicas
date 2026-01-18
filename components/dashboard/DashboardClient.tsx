@@ -188,7 +188,7 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
             >
-              <div className="flex items-center justify-between mb-4 flex-shrink-0">
+              <div className="flex items-center justify-between mb-4 shrink-0">
                 <h3 className="text-xl md:text-2xl font-semibold text-neutral-800">
                   Mis Casos
                 </h3>
@@ -196,7 +196,7 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
                   {casos.length} {casos.length === 1 ? 'caso' : 'casos'}
                 </span>
               </div>
-              <div className={`flex-1 pr-2 min-h-0 w-full ${casos.length > 0 ? 'overflow-y-auto' : ''}`}>
+              <div className="flex-1 pr-2 min-h-0 w-full overflow-y-auto">
                 <CasosList
                   casos={casos}
                   loading={false}
@@ -213,7 +213,7 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
             >
               <div className="flex flex-col md:flex-row gap-4 md:gap-6 flex-1 min-h-0">
                 <div className="w-full md:w-1/2 flex flex-col min-h-0">
-                  <h3 className="text-xl md:text-2xl font-semibold text-neutral-800 mb-3 md:mb-4 flex-shrink-0">
+                  <h3 className="text-xl md:text-2xl font-semibold text-neutral-800 mb-3 md:mb-4 shrink-0">
                     Mi Agenda
                   </h3>
                   <div className="flex-1 overflow-y-auto pr-2 min-h-[200px] md:min-h-0">
@@ -240,14 +240,14 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
             </motion.div>
           </div>
 
-          <div className="flex-1 w-full lg:min-w-94 lg:max-w-116 2xl:max-w-[28rem]">
+          <div className="flex-1 w-full lg:min-w-94 lg:max-w-116 2xl:max-w-md">
             <motion.div
               className="bg-white rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] p-4 md:p-6 h-full min-h-[200px] lg:min-h-0 flex flex-col"
               initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.25, ease: "easeOut" }}
             >
-              <h3 className="text-xl md:text-2xl font-semibold text-center text-neutral-800 mb-4 md:mb-6 flex-shrink-0">
+              <h3 className="text-xl md:text-2xl font-semibold text-center text-neutral-800 mb-4 md:mb-6 shrink-0">
                 Historial de Acciones
               </h3>
               <div className="flex-1 overflow-y-auto">

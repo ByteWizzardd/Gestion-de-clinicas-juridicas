@@ -14,10 +14,10 @@ interface EmptyStateProps {
 
 export default function EmptyState({ icon: Icon, title, description, action }: EmptyStateProps) {
     return (
-        <div className="flex flex-col items-center justify-center py-8">
+        <div className="flex flex-col items-center justify-center py-4">
             {/* Ícono con color de marca */}
-            <div className="bg-primary/5 rounded-full p-6 mb-4">
-                <Icon className="w-12 h-12 text-primary/60" />
+            <div className="bg-primary/5 rounded-full p-4 md:p-6 mb-3 md:mb-4">
+                <Icon className="w-8 h-8 md:w-12 md:h-12 text-primary/60" />
             </div>
 
             {/* Título */}
