@@ -64,7 +64,10 @@ export async function checkAndNotifyInactiveCases() {
         // 4. Notificar a Coordinadores (Resumen)
         const cantidadInactivos = inactiveCases.length;
         const titulo = "Casos inactivos";
-        const mensaje = `Actualmente hay ${cantidadInactivos} casos inactivos de los 2 últimos semestres. Los casos son: ${inactiveCases.map((c: any) => c.id_caso).join(', ')}.`;
+        const casosTexto = cantidadInactivos === 1
+            ? `El caso es: ${inactiveCases[0].id_caso}`
+            : `Los casos son: ${inactiveCases.map((c: any) => c.id_caso).join(', ')}`;
+        const mensaje = `Actualmente hay ${cantidadInactivos} ${cantidadInactivos === 1 ? 'caso inactivo' : 'casos inactivos'} de los 2 últimos semestres. ${casosTexto}.`;
 
         let activeNotificationsSent = 0;
 
