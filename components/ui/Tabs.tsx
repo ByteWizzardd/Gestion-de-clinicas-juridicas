@@ -43,7 +43,7 @@ export default function Tabs({ tabs, defaultTab, onTabChange }: TabsProps) {
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
               className={`
-                px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-medium whitespace-nowrap flex-shrink
+                px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-medium whitespace-nowrap shrink
                 border-b-2 transition-colors duration-200 cursor-pointer
                 ${activeTab === tab.id
                   ? 'border-primary text-primary'
