@@ -134,7 +134,7 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido' }: Si
       {/* Botón de toggle (visible al hacer hover o siempre visible) */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-8 bg-white rounded-full p-1.5 shadow-md border border-gray-100 text-gray-500 hover:text-primary transition-colors z-50 opacity-0 group-hover:opacity-100 focus:opacity-100"
+        className="absolute -right-3 top-8 bg-white rounded-full p-1.5 shadow-md border border-gray-100 text-gray-500 hover:text-primary transition-colors z-50 opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"
         aria-label={isCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
       >
         {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
@@ -152,7 +152,7 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido' }: Si
             >
               {/* Versión ícono/pequeña del logo con hover y link */}
               <Link href="/dashboard">
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-200 hover:bg-red-100 group/logo p-2">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-200 group/logo p-2">
                   <Image
                     src="/logo-mini-v2.png"
                     alt="Logo DER"
