@@ -1,4 +1,4 @@
-    'use client';
+'use client';
 
 
 import { ChevronDown } from "lucide-react";
@@ -8,6 +8,8 @@ import DropdownMenu from '../ui/navigation/DropdownMenu';
 interface SelectOption {
     value: string;
     label: string;
+    groupHeader?: string; // Si está presente, se muestra como encabezado de grupo antes de esta opción
+    isDisabled?: boolean; // Para opciones que son solo encabezados
 }
 
 interface SelectProps {
@@ -45,8 +47,8 @@ export default function Select({ label, error, options, placeholder = "Seleccion
                 ${error ? 'border-danger' : 'border-transparent shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)]'}
                 outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0
                 ${error ? 'focus:ring-1 focus:ring-danger' : ''}
-                ${disabled 
-                    ? 'bg-gray-100 cursor-not-allowed opacity-60' 
+                ${disabled
+                    ? 'bg-gray-100 cursor-not-allowed opacity-60'
                     : 'bg-white cursor-pointer'
                 }
                 text-neutral-800/90 text-left font-normal
@@ -69,7 +71,7 @@ export default function Select({ label, error, options, placeholder = "Seleccion
         <div className="flex flex-col gap-1">
             {label && (
                 <label className="text-base font-normal text-foreground mb-1">
-                    {label.split(' *').map((part, index, array) => 
+                    {label.split(' *').map((part, index, array) =>
                         index < array.length - 1 ? (
                             <span key={index}>
                                 {part} <span className="text-danger">*</span>
@@ -96,22 +98,35 @@ export default function Select({ label, error, options, placeholder = "Seleccion
                         className="bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-auto py-1"
                     >
                         {options.length > 0 ? (
-                            options.map((option, index) => (
-                                <button
-                                    key={option.value}
-                                    type="button"
-                                    data-close-menu
-                                    onClick={() => handleSelect(option.value)}
-                                    className={`
-                                        w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer
-                                        ${value === option.value ? 'bg-primary-light text-primary font-medium' : ''}
-                                        ${index === 0 ? 'rounded-t-xl' : ''}
-                                        ${index === options.length - 1 ? 'rounded-b-xl' : ''}
-                                    `}
-                                >
-                                    {option.label}
-                                </button>
-                            ))
+                            options.map((option, index) => {
+                                // Si la opción está deshabilitada (es un encabezado), renderizar como encabezado
+                                if (option.isDisabled) {
+                                    return (
+                                        <div
+                                            key={option.value}
+                                            className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50 border-b border-gray-200 cursor-default select-none"
+                                        >
+                                            {option.label}
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        data-close-menu
+                                        onClick={() => handleSelect(option.value)}
+                                        className={`
+                                            w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer
+                                            ${value === option.value ? 'bg-primary-light text-primary font-medium' : ''}
+                                            ${index === options.length - 1 ? 'rounded-b-xl' : ''}
+                                        `}
+                                    >
+                                        {option.label}
+                                    </button>
+                                );
+                            })
                         ) : (
                             <div className="px-4 py-2.5 text-base text-gray-500 text-center">
                                 No hay opciones disponibles

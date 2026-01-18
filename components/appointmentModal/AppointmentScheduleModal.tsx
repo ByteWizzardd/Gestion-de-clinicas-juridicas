@@ -5,7 +5,7 @@ import Modal from "../ui/feedback/Modal";
 import Select from "../forms/Select";
 import MultiSelect from "../forms/MultiSelect";
 import DatePicker from "../forms/DatePicker";
-import { getCaseIdsAction } from "@/app/actions/casos";
+import { getCaseIdsAction, getCasosByUsuarioAction } from "@/app/actions/casos";
 import { getUsuariosAction } from "@/app/actions/usuarios";
 import { createCitaAction } from "@/app/actions/citas";
 import Button from "../ui/Button";
@@ -30,22 +30,68 @@ export function AppointmentScheduleModal({
   const { toast } = useToast();
   const [loading, setLoading] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState(true);
-  const [caseOptions, setCaseOptions] = useState<{ value: string; label: string }[]>([]);
+  const [caseOptions, setCaseOptions] = useState<{ value: string; label: string; isDisabled?: boolean }[]>([]);
   const [usuarioOptions, setUsuarioOptions] = useState<{ value: string; label: string }[]>([]);
 
   useEffect(() => {
     async function fetchCaseIds() {
-      const result = await getCaseIdsAction();
-      if (result.success && result.data) {
-        setCaseOptions(
-          result.data.map((id) => ({
+      // Obtener casos del usuario y todos los casos
+      const [userCasesResult, allCasesResult] = await Promise.all([
+        getCasosByUsuarioAction(),
+        getCaseIdsAction()
+      ]);
+
+      const options: { value: string; label: string; isDisabled?: boolean }[] = [];
+
+      // Primero agregar los casos del usuario con encabezado
+      if (userCasesResult.success && userCasesResult.data && userCasesResult.data.length > 0) {
+        const userCaseIds = new Set(userCasesResult.data.map((c: { id_caso: number }) => c.id_caso));
+
+        // Encabezado "Mis casos"
+        options.push({
+          value: '__header_mis_casos__',
+          label: 'Mis casos',
+          isDisabled: true
+        });
+
+        // Agregar casos del usuario
+        userCasesResult.data.forEach((caso: { id_caso: number }) => {
+          options.push({
+            value: caso.id_caso.toString(),
+            label: `Caso #${caso.id_caso}`,
+          });
+        });
+
+        // Agregar encabezado "Otros casos" si hay más casos
+        if (allCasesResult.success && allCasesResult.data) {
+          const otherCases = allCasesResult.data.filter((id: number) => !userCaseIds.has(id));
+
+          if (otherCases.length > 0) {
+            options.push({
+              value: '__header_otros_casos__',
+              label: 'Otros casos',
+              isDisabled: true
+            });
+
+            otherCases.forEach((id: number) => {
+              options.push({
+                value: id.toString(),
+                label: `Caso #${id}`,
+              });
+            });
+          }
+        }
+      } else if (allCasesResult.success && allCasesResult.data) {
+        // Si no hay casos del usuario, mostrar todos los casos sin encabezados
+        allCasesResult.data.forEach((id: number) => {
+          options.push({
             value: id.toString(),
             label: `Caso #${id}`,
-          }))
-        );
-      } else {
-        setCaseOptions([]);
+          });
+        });
       }
+
+      setCaseOptions(options);
     }
     fetchCaseIds();
   }, []);
