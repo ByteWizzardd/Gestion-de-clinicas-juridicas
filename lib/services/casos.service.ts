@@ -108,6 +108,23 @@ export const casosService = {
                 throw new NotFoundError(`Ámbito legal no encontrado`);
             }
 
+            // Validar fechas no futuras
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (validatedData.fecha_solicitud) {
+                const fechaSolicitud = new Date(validatedData.fecha_solicitud);
+                if (fechaSolicitud > today) {
+                    throw new ValidationError('La fecha de solicitud no puede ser futura', { fecha_solicitud: ['La fecha no puede ser futura'] });
+                }
+            }
+            if (validatedData.fecha_inicio_caso) {
+                const fechaInicio = new Date(validatedData.fecha_inicio_caso);
+                if (fechaInicio > today) {
+                    throw new ValidationError('La fecha de inicio no puede ser futura', { fecha_inicio_caso: ['La fecha no puede ser futura'] });
+                }
+            }
+
             // Crear el caso
             // Si fecha_solicitud no se proporciona, se usa CURRENT_DATE en la BD
             // Si no hay categoría o subcategoría, usar 0 en lugar de null/undefined
@@ -203,6 +220,16 @@ export const casosService = {
 
                 if (!ambitoExists) {
                     throw new NotFoundError(`Ámbito legal no encontrado para Materia ${idMateria}, Categ ${numCategoria}, Subcateg ${numSubcategoria}, Ambito ${numAmbitoLegal}`);
+                }
+            }
+
+            // Validar fecha solicitud no futura
+            if (validatedData.fecha_solicitud) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const fechaSolicitud = new Date(validatedData.fecha_solicitud);
+                if (fechaSolicitud > today) {
+                    throw new ValidationError('La fecha de solicitud no puede ser futura', { fecha_solicitud: ['La fecha no puede ser futura'] });
                 }
             }
 

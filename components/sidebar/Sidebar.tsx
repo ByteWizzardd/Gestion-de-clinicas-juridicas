@@ -232,7 +232,6 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido' }: Si
           userRole={displayRole}
           onProfileClick={() => router.push('/dashboard/profile')}
           onPasswordClick={() => router.push('/dashboard/profile/change-password')}
-          onNotificationsClick={() => router.push('/dashboard/profile/notifications')}
           onHelpClick={() => router.push('/dashboard/profile/help')}
           onLogoutClick={handleLogout}
         >

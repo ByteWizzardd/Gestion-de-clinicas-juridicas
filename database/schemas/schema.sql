@@ -244,7 +244,7 @@ CREATE TABLE semestres (
     fecha_inicio DATE NOT NULL,
     fecha_fin DATE NOT NULL,
     habilitado BOOLEAN NOT NULL DEFAULT TRUE,
-    CONSTRAINT chk_fechas CHECK (fecha_fin >= fecha_inicio)
+    CHECK (fecha_fin >= fecha_inicio)
 );
 
 -- 7.1) AUDITORÍA DE INSERCIÓN DE SEMESTRES
@@ -286,7 +286,7 @@ CREATE TABLE usuarios (
     cedula VARCHAR(20) PRIMARY KEY,
     nombres VARCHAR(100) NOT NULL,
     apellidos VARCHAR(100) NOT NULL,
-    correo_electronico VARCHAR(100) NOT NULL UNIQUE,
+    correo_electronico VARCHAR(100) NOT NULL UNIQUE CHECK (correo_electronico LIKE '%@ucab.edu.ve' OR correo_electronico LIKE '%@est.ucab.edu.ve'),
     nombre_usuario VARCHAR(50) NOT NULL UNIQUE,
     contrasena VARCHAR(255) NOT NULL,
     telefono_celular VARCHAR(20),
@@ -511,7 +511,7 @@ CREATE TABLE solicitantes (
     cedula VARCHAR(20) PRIMARY KEY,
     nombres VARCHAR(100) NOT NULL,
     apellidos VARCHAR(100) NOT NULL,
-    fecha_nacimiento DATE NOT NULL,
+    fecha_nacimiento DATE NOT NULL CHECK (fecha_nacimiento <= CURRENT_DATE),
     telefono_local VARCHAR(20),
     telefono_celular VARCHAR(20) NOT NULL,
     correo_electronico VARCHAR(100) NOT NULL UNIQUE,
@@ -631,7 +631,7 @@ CREATE TABLE asignadas_a (
 -- 14) FAMILIAS Y HOGARES
 CREATE TABLE familias_y_hogares (
     cedula_solicitante VARCHAR(20) PRIMARY KEY,
-    cant_personas INTEGER NOT NULL CHECK (cant_personas >= 0),
+    cant_personas INTEGER NOT NULL CHECK (cant_personas >= 1),
     cant_trabajadores INTEGER NOT NULL CHECK (cant_trabajadores >= 0),
     cant_no_trabajadores INTEGER NOT NULL CHECK (cant_no_trabajadores >= 0),
     cant_ninos INTEGER NOT NULL CHECK (cant_ninos >= 0),
@@ -643,7 +643,12 @@ CREATE TABLE familias_y_hogares (
     tipo_tiempo_estudio_jefe VARCHAR(20) CHECK (tipo_tiempo_estudio_jefe IN ('Años', 'Semestres', 'Trimestres')),
     tiempo_estudio_jefe INTEGER CHECK (tiempo_estudio_jefe >= 0),
     id_nivel_educativo_jefe INTEGER REFERENCES niveles_educativos(id_nivel_educativo),
-    FOREIGN KEY (cedula_solicitante) REFERENCES solicitantes(cedula)
+    FOREIGN KEY (cedula_solicitante) REFERENCES solicitantes(cedula),
+    
+    -- Validaciones de relación entre campos (deben estar a nivel de tabla)
+    CHECK (cant_ninos_estudiando <= cant_ninos),
+    CHECK (cant_ninos < cant_personas),
+    CHECK (cant_trabajadores <= cant_personas)
 );
 
 -- =========================================================
@@ -900,8 +905,8 @@ CREATE TABLE auditoria_insercion_profesores (
 -- 22) CASOS
 CREATE TABLE casos (
     id_caso SERIAL PRIMARY KEY,
-    fecha_solicitud DATE NOT NULL DEFAULT CURRENT_DATE,
-    fecha_inicio_caso DATE NOT NULL,
+    fecha_solicitud DATE NOT NULL DEFAULT CURRENT_DATE CHECK (fecha_solicitud <= CURRENT_DATE),
+    fecha_inicio_caso DATE NOT NULL CHECK (fecha_inicio_caso <= CURRENT_DATE),
     fecha_fin_caso DATE,
     
     tramite VARCHAR(200) NOT NULL CHECK (tramite IN ('Asesoría', 'Conciliación y Mediación', 'Redacción documentos y/o convenio', 'Asistencia Judicial - Casos externos')),
@@ -917,7 +922,8 @@ CREATE TABLE casos (
     num_ambito_legal INTEGER NOT NULL,
     
     FOREIGN KEY (id_materia, num_categoria, num_subcategoria, num_ambito_legal)
-    REFERENCES ambitos_legales(id_materia, num_categoria, num_subcategoria, num_ambito_legal)
+    CONSTRAINT chk_casos_inicio_post_solicitud CHECK (fecha_inicio_caso >= fecha_solicitud),
+    CONSTRAINT chk_casos_fin_post_inicio CHECK (fecha_fin_caso IS NULL OR fecha_fin_caso >= fecha_inicio_caso)
 );
 
 -- 22.1) AUDITORÍA DE INSERCIÓN DE CASOS
@@ -1009,8 +1015,9 @@ CREATE TABLE citas (
     fecha_proxima_cita DATE,
     fecha_encuentro DATE NOT NULL,
     orientacion TEXT NOT NULL,
-    id_usuario_registro VARCHAR(20) REFERENCES usuarios(cedula), -- Usuario que registró la cita
-    PRIMARY KEY (num_cita, id_caso)
+    id_usuario_registro VARCHAR(20) REFERENCES usuarios(cedula),
+    PRIMARY KEY (num_cita, id_caso),
+    CHECK (fecha_proxima_cita IS NULL OR fecha_proxima_cita > fecha_encuentro)
 );
 
 -- 23.1) AUDITORÍA DE INSERCIÓN DE CITAS
@@ -1062,7 +1069,7 @@ CREATE TABLE atienden (
     id_usuario VARCHAR(20) NOT NULL,
     num_cita INTEGER NOT NULL,
     id_caso INTEGER NOT NULL,
-    fecha_registro DATE NOT NULL DEFAULT CURRENT_DATE,
+    fecha_registro DATE NOT NULL DEFAULT CURRENT_DATE CHECK (fecha_registro <= CURRENT_DATE),
     
     PRIMARY KEY (num_cita, id_caso, id_usuario),
     FOREIGN KEY (id_usuario) REFERENCES usuarios(cedula),
@@ -1076,7 +1083,7 @@ CREATE TABLE acciones (
     detalle_accion TEXT NOT NULL,
     comentario TEXT,
     id_usuario_registra VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
-    fecha_registro DATE NOT NULL DEFAULT CURRENT_DATE,
+    fecha_registro DATE NOT NULL DEFAULT CURRENT_DATE CHECK (fecha_registro <= CURRENT_DATE),
     PRIMARY KEY (num_accion, id_caso)
 );
 
@@ -1163,7 +1170,7 @@ CREATE TABLE ejecutan (
     id_usuario_ejecuta VARCHAR(20) NOT NULL,
     num_accion INTEGER NOT NULL,
     id_caso INTEGER NOT NULL,
-    fecha_ejecucion DATE NOT NULL DEFAULT CURRENT_DATE,
+    fecha_ejecucion DATE NOT NULL DEFAULT CURRENT_DATE CHECK (fecha_ejecucion <= CURRENT_DATE),
     
     PRIMARY KEY (id_usuario_ejecuta, num_accion, id_caso),
     FOREIGN KEY (id_usuario_ejecuta) REFERENCES usuarios(cedula),
@@ -1176,7 +1183,7 @@ CREATE TABLE cambio_estatus (
     id_caso INTEGER NOT NULL REFERENCES casos(id_caso),
     motivo TEXT,
     nuevo_estatus VARCHAR(50) NOT NULL CHECK (nuevo_estatus IN ('En proceso', 'Archivado', 'Entregado', 'Asesoría')),
-    fecha DATE NOT NULL DEFAULT CURRENT_DATE,
+    fecha DATE NOT NULL DEFAULT CURRENT_DATE CHECK (fecha <= CURRENT_DATE),
     id_usuario_cambia VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
     PRIMARY KEY (num_cambio, id_caso)
 );
@@ -1191,7 +1198,7 @@ CREATE TABLE soportes (
     tipo_mime VARCHAR(100) NOT NULL,
     descripcion TEXT,
     
-    fecha_consignacion DATE NOT NULL DEFAULT CURRENT_DATE,
+    fecha_consignacion DATE NOT NULL DEFAULT CURRENT_DATE CHECK (fecha_consignacion <= CURRENT_DATE),
     
     -- Campos de auditoría: quién subió el archivo
     id_usuario_subio VARCHAR(20) REFERENCES usuarios(cedula),
@@ -1235,7 +1242,7 @@ CREATE TABLE beneficiarios (
     cedula VARCHAR(20),
     nombres VARCHAR(100) NOT NULL,
     apellidos VARCHAR(100) NOT NULL,
-    fecha_nac DATE NOT NULL,
+    fecha_nac DATE NOT NULL CHECK (fecha_nac <= CURRENT_DATE),
     
     sexo VARCHAR(20) NOT NULL CHECK (sexo IN ('M', 'F')),
     tipo_beneficiario VARCHAR(50) NOT NULL CHECK (tipo_beneficiario IN ('Directo', 'Indirecto')),

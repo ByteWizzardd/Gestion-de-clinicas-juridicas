@@ -110,6 +110,51 @@ export async function getUsuariosAction(soloHabilitados: boolean = false): Promi
   }
 }
 
+export interface GetEstudiantesResult {
+  success: boolean;
+  data?: Array<{
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+    nombre_completo: string;
+    correo_electronico: string;
+    nombre_usuario: string;
+    telefono_celular: string | null;
+    habilitado_sistema: boolean;
+    tipo_usuario: string;
+    info_estudiante: string | null;
+  }>;
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+/**
+ * Server Action para obtener todos los estudiantes.
+ * Accesible para Coordinadores y Profesores.
+ */
+export async function getEstudiantesAction(soloHabilitados: boolean = false): Promise<GetEstudiantesResult> {
+  try {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return { success: false, error: authResult.error! };
+    }
+
+    if (authResult.user.rol !== 'Coordinador' && authResult.user.rol !== 'Profesor') {
+      return {
+        success: false,
+        error: { message: "Acceso denegado. Permiso insuficiente.", code: "FORBIDDEN" }
+      }
+    }
+
+    const estudiantes = await usuariosQueries.getAllStudents(soloHabilitados);
+    return { success: true, data: estudiantes };
+  } catch (error) {
+    return handleServerActionError(error, 'getEstudiantesAction', 'USUARIO_ERROR');
+  }
+}
+
 // Toggle habilitado usuario result interface
 
 export interface toggleHabilitadoUsuarioResult {
@@ -136,6 +181,8 @@ export async function toggleHabilitadoUsuarioAction(
         error: { message: "No autorizado", code: "UNAUTHORIZED" },
       };
     }
+
+    // Verificar permisos (Solo Coordinador)
     if (userResult.data.rol !== "Coordinador") {
       return {
         success: false,
@@ -145,6 +192,7 @@ export async function toggleHabilitadoUsuarioAction(
         },
       };
     }
+
     const cedula_actor = userResult.data.cedula;
 
     const estadoAntes = await usuariosQueries.getHabilitadoSistema(cedula);
@@ -208,6 +256,7 @@ export async function deleteUsuarioFisicoAction(
       },
     };
   }
+
   try {
     // 3. Ejecutar la eliminación física
     await usuariosQueries.deleteFisico(
@@ -280,7 +329,9 @@ export async function getUsuarioInfoByCedulaAction(
         error: { message: "No autorizado", code: "UNAUTHORIZED" },
       };
     }
-    if (userResult.data.rol !== "Coordinador") {
+
+    // Permitir Profesor y Coordinador
+    if (userResult.data.rol !== "Coordinador" && userResult.data.rol !== "Profesor") {
       return {
         success: false,
         error: {
@@ -289,7 +340,20 @@ export async function getUsuarioInfoByCedulaAction(
         },
       };
     }
+
     const usuario = await usuariosQueries.getInfoByCedula(cedula);
+
+    // Si es Profesor, solo puede ver info de Estudiantes
+    if (userResult.data.rol === 'Profesor' && usuario && usuario.tipo_usuario !== 'Estudiante') {
+      return {
+        success: false,
+        error: {
+          message: "Los profesores solo pueden ver detalles de estudiantes.",
+          code: "FORBIDDEN"
+        }
+      };
+    }
+
     return {
       success: true,
       data: usuario,

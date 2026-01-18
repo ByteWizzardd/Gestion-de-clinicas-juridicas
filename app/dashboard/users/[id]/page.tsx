@@ -10,6 +10,7 @@ import GeneralInfoTab from "@/components/users/tabs/GeneralInfoTab";
 import RolesTab from "@/components/users/tabs/RolesTab";
 import EditableAvatar from "@/components/users/EditableAvatar";
 import { getUsuarioInfoByCedulaAction } from "@/app/actions/usuarios";
+import { getCurrentUserAction } from "@/app/actions/auth";
 
 interface Usuario {
   cedula: string;
@@ -36,6 +37,7 @@ export default function UserDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -43,7 +45,16 @@ export default function UserDetailPage() {
         try {
           setLoading(true);
           setError(null);
-          const result = await getUsuarioInfoByCedulaAction(id);
+
+          const [result, userResult] = await Promise.all([
+            getUsuarioInfoByCedulaAction(id),
+            getCurrentUserAction()
+          ]);
+
+          if (userResult.success && userResult.data) {
+            setCurrentUserRole(userResult.data.rol);
+          }
+
           if (!result.success) {
             throw new Error(
               result.error?.message || "Error al cargar la información del usuario"
@@ -116,11 +127,15 @@ export default function UserDetailPage() {
       >
         <Breadcrumbs
           items={[
-            { label: "Usuarios", href: "/dashboard/users" },
+            {
+              label: currentUserRole === 'Profesor' ? "Estudiantes" : "Usuarios",
+              href: currentUserRole === 'Profesor' ? "/dashboard/students" : "/dashboard/users"
+            },
             { label: usuario.nombre_completo },
           ]}
         />
       </motion.div>
+
 
       <motion.div
         className="mb-6 sm:mb-8 relative"
@@ -159,7 +174,7 @@ export default function UserDetailPage() {
             </p>
           </div>
         </div>
-        
+
         {/* Notificación de éxito centrada abajo de la sección */}
         <AnimatePresence>
           {showSuccess && (

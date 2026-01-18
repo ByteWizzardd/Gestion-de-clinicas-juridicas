@@ -377,6 +377,13 @@ export default function CaseFormModal({
 
     if (!formData.fechaCaso) {
       newErrors.fechaCaso = 'Este campo es requerido';
+    } else {
+      const inputDate = new Date(formData.fechaCaso + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (inputDate > today) {
+        newErrors.fechaCaso = 'La fecha del caso no puede ser futura';
+      }
     }
     if (!formData.cedulaSolicitante.trim()) {
       newErrors.cedulaSolicitante = 'Este campo es requerido';

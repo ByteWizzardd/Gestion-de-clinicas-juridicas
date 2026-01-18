@@ -198,6 +198,16 @@ export const solicitantesService = {
    * que trabajan en la clínica, mientras que los solicitantes son las personas que solicitan servicios legales.
    */
   create: async (data: ApplicantFormData, usuarioActualizo: string): Promise<any> => {
+    // Validar fecha de nacimiento (no futura)
+    if (data.fechaNacimiento) {
+      const dateToCheck = new Date(data.fechaNacimiento);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (dateToCheck > today) {
+        throw new AppError('La fecha de nacimiento no puede ser futura', 400, 'VALIDATION_ERROR');
+      }
+    }
+
     const client = await pool.connect();
 
     try {
@@ -490,6 +500,16 @@ export const solicitantesService = {
    * Actualiza un solicitante existente con todos sus datos completos
    */
   update: async (cedulaOriginal: string, data: ApplicantFormData, usuarioActualizo: string): Promise<any> => {
+    // Validar fecha de nacimiento (no futura)
+    if (data.fechaNacimiento) {
+      const dateToCheck = new Date(data.fechaNacimiento);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (dateToCheck > today) {
+        throw new AppError('La fecha de nacimiento no puede ser futura', 400, 'VALIDATION_ERROR');
+      }
+    }
+
     const client = await pool.connect();
 
     try {

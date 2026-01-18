@@ -361,10 +361,13 @@ export default function ApplicantFormModal({
 }: ApplicantFormModalProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // Cargar el paso actual desde localStorage
-  const [currentStep, setCurrentStep] = useState(() => loadCurrentStepFromStorage());
+  // Cargar el paso actual desde localStorage (solo en modo creación)
+  const [currentStep, setCurrentStep] = useState(0);
   const [shouldClearOnClose, setShouldClearOnClose] = useState(false);
   const [initialFormState, setInitialFormState] = useState<FormData | null>(null);
+  // Estado interno para rastrear si estamos en modo edición
+  // Esto persiste durante toda la sesión del modal, a diferencia de la prop initialData
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Cargar datos guardados o usar datos iniciales
   const [formData, setFormData] = useState<FormData>(() => {
@@ -375,21 +378,29 @@ export default function ApplicantFormModal({
     return stored || getInitialFormData();
   });
 
-  // Efecto para actualizar cuando initialData cambia
+  // Efecto para actualizar cuando initialData cambia o el modal se abre/cierra
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
+        // Modo edición: usar los datos del solicitante existente
+        // NO limpiamos localStorage para preservar datos de registro incompleto
         const mappedData = mapInitialDataToFormData(initialData);
         setFormData(mappedData);
         setInitialFormState(mappedData);
-        // Si hay datos iniciales, limpiamos el localStorage para evitar mezcla
-        clearFormDataFromStorage();
+        setCurrentStep(0); // Empezar desde el primer paso al editar
+        setIsEditMode(true); // Marcar que estamos en modo edición
       } else {
         // Modo creación: intentar cargar de localStorage o usar default
         const stored = loadFormDataFromStorage();
+        const storedStep = loadCurrentStepFromStorage();
         setFormData(stored || getInitialFormData());
+        setCurrentStep(storedStep);
         setInitialFormState(null);
+        setIsEditMode(false); // Marcar que estamos en modo creación
       }
+    } else {
+      // Cuando el modal se cierra, resetear el modo de edición
+      setIsEditMode(false);
     }
   }, [isOpen, initialData]);
 
@@ -581,6 +592,16 @@ export default function ApplicantFormModal({
     // Validar fecha de nacimiento
     if (!formData.fechaNacimiento || formData.fechaNacimiento.trim() === '') {
       newErrors.fechaNacimiento = 'Este campo es requerido';
+    } else {
+      // Validar que no sea fecha futura
+      const [year, month, day] = formData.fechaNacimiento.split('-').map(Number);
+      const inputDate = new Date(year, month - 1, day);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (inputDate > today) {
+        newErrors.fechaNacimiento = 'La fecha de nacimiento no puede ser una fecha futura';
+      }
     }
 
     // Validar sexo
@@ -1097,17 +1118,20 @@ export default function ApplicantFormModal({
     }
   }, [isOpen, formData.idEstado, formData.numMunicipio]);
 
-  // Guardar datos en localStorage cada vez que formData cambie
+  // Guardar datos en localStorage cada vez que formData cambie, pero SOLO si estamos en modo creación
   useEffect(() => {
-    if (formData) {
+    // Solo guardar si el modal está abierto, no estamos en modo edición, y hay datos
+    if (isOpen && formData && !isEditMode) {
       saveFormDataToStorage(formData);
     }
-  }, [formData]);
+  }, [formData, isOpen, isEditMode]);
 
-  // Guardar el paso actual en localStorage cada vez que cambie
+  // Guardar el paso actual en localStorage cada vez que cambie, pero SOLO si estamos en modo creación
   useEffect(() => {
-    saveCurrentStepToStorage(currentStep);
-  }, [currentStep]);
+    if (isOpen && !isEditMode) {
+      saveCurrentStepToStorage(currentStep);
+    }
+  }, [currentStep, isOpen, isEditMode]);
 
   // Limpiar el formulario solo cuando el modal se cierra después de un registro exitoso
   useEffect(() => {
@@ -2919,7 +2943,9 @@ export default function ApplicantFormModal({
           </button>
 
           {/* Título */}
-          <h2 className="text-2xl font-normal text-foreground mb-6">Registro de Solicitante</h2>
+          <h2 className="text-2xl font-normal text-foreground mb-6">
+            {initialData ? 'Editar Solicitante' : 'Registro de Solicitante'}
+          </h2>
 
           {/* Stepper */}
           <Stepper steps={STEPS} currentStep={currentStep} />
@@ -2959,10 +2985,10 @@ export default function ApplicantFormModal({
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Registrando...
+                        {initialData ? 'Actualizando...' : 'Registrando...'}
                       </>
                     ) : (
-                      'Registrar'
+                      initialData ? 'Actualizar' : 'Registrar'
                     )}
                   </Button>
                 )}

@@ -104,7 +104,18 @@ export default function AddBeneficiaryModal({
       newErrors.apellidos = 'Solo se permiten letras y espacios';
     }
 
-    if (!formData.fechaNac) newErrors.fechaNac = 'La fecha de nacimiento es requerida';
+    if (!formData.fechaNac) {
+      newErrors.fechaNac = 'La fecha de nacimiento es requerida';
+    } else {
+      const [year, month, day] = formData.fechaNac.split('-').map(Number);
+      const inputDate = new Date(year, month - 1, day);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (inputDate > today) {
+        newErrors.fechaNac = 'La fecha de nacimiento no puede ser una fecha futura';
+      }
+    }
     if (!formData.sexo) newErrors.sexo = 'El sexo es requerido';
     if (!formData.tipoBeneficiario) newErrors.tipoBeneficiario = 'El tipo es requerido';
     if (!formData.parentesco.trim()) newErrors.parentesco = 'El parentesco es requerido';

@@ -8,7 +8,6 @@ interface ProfileDropdownProps {
   userRole: string;
   onProfileClick: () => void;
   onPasswordClick: () => void;
-  onNotificationsClick: () => void;
   onHelpClick: () => void;
   onLogoutClick: () => void;
   children: ReactNode;
@@ -19,7 +18,6 @@ export default function ProfileDropdown({
   userRole,
   onProfileClick,
   onPasswordClick,
-  onNotificationsClick,
   onHelpClick,
   onLogoutClick,
   children,
@@ -43,7 +41,7 @@ export default function ProfileDropdown({
 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
-      
+
       // Verificar si hay espacio suficiente abajo
       const checkPosition = () => {
         if (buttonRef.current && menuRef.current) {
@@ -51,7 +49,7 @@ export default function ProfileDropdown({
           const menuHeight = menuRef.current.offsetHeight || 250;
           const spaceBelow = window.innerHeight - buttonRect.bottom;
           const spaceAbove = buttonRect.top;
-          
+
           // Si no hay espacio abajo pero sí arriba, mostrar arriba
           if (spaceBelow < menuHeight + 10 && spaceAbove > menuHeight + 10) {
             setShowAbove(true);
@@ -60,7 +58,7 @@ export default function ProfileDropdown({
           }
         }
       };
-      
+
       // Verificar posición después de que el menú se renderice
       setTimeout(checkPosition, 0);
     }
@@ -77,9 +75,9 @@ export default function ProfileDropdown({
 
   return (
     <div className="relative">
-      <div 
-        ref={buttonRef} 
-        onClick={() => setIsOpen(!isOpen)} 
+      <div
+        ref={buttonRef}
+        onClick={() => setIsOpen(!isOpen)}
         className="cursor-pointer"
       >
         {children}
@@ -87,64 +85,55 @@ export default function ProfileDropdown({
 
       <AnimatePresence>
         {isOpen && (
-          <motion.div 
-            ref={menuRef} 
+          <motion.div
+            ref={menuRef}
             initial={{ opacity: 0, y: showAbove ? 10 : -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: showAbove ? 10 : -10, scale: 0.95 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className={`absolute left-full ml-0.1 w-56 bg-white rounded-xl shadow-xl border border-gray-200 z-50 py-2 ${
-              showAbove ? 'bottom-0' : 'top-0'
-            }`}
+            className={`absolute left-full ml-0.1 w-56 bg-white rounded-xl shadow-xl border border-gray-200 z-50 py-2 ${showAbove ? 'bottom-0' : 'top-0'
+              }`}
           >
             {/* Opciones del menú */}
-          <div className="py-1">
-            <button 
-              onClick={() => handleAction(onProfileClick)} 
-              className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 hover:bg-gray-50 flex items-center gap-3 transition-colors cursor-pointer"
-            >
-              <User className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
-              Perfil
-            </button>
-            
-            <button 
-              onClick={() => handleAction(onPasswordClick)} 
-              className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 hover:bg-gray-50 flex items-center gap-3 transition-colors cursor-pointer"
-            >
-              <Key className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
-              Cambiar contraseña
-            </button>
-            
-            <button 
-              onClick={() => handleAction(onNotificationsClick)} 
-              className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 hover:bg-gray-50 flex items-center gap-3 transition-colors cursor-pointer"
-            >
-              <Bell className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
-              Notificaciones
-            </button>
-            
-            <button 
-              onClick={() => handleAction(onHelpClick)} 
-              className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 hover:bg-gray-50 flex items-center gap-3 transition-colors cursor-pointer"
-            >
-              <HelpCircle className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
-              Preguntas frecuentes
-            </button>
-          </div>
+            <div className="py-1">
+              <button
+                onClick={() => handleAction(onProfileClick)}
+                className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 hover:bg-gray-50 flex items-center gap-3 transition-colors cursor-pointer"
+              >
+                <User className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
+                Perfil
+              </button>
 
-          {/* Separador antes de cerrar sesión */}
-          <div className="border-t border-gray-100 my-1"></div>
+              <button
+                onClick={() => handleAction(onPasswordClick)}
+                className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 hover:bg-gray-50 flex items-center gap-3 transition-colors cursor-pointer"
+              >
+                <Key className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
+                Cambiar contraseña
+              </button>
 
-          {/* Cerrar sesión */}
-          <div className="py-1">
-            <button 
-              onClick={() => handleAction(onLogoutClick)} 
-              className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors cursor-pointer"
-            >
-              <LogOut className="w-4 h-4 text-gray-500 group-hover:text-red-600 transition-colors" />
-              Cerrar sesión
-            </button>
-          </div>
+              <button
+                onClick={() => handleAction(onHelpClick)}
+                className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 hover:bg-gray-50 flex items-center gap-3 transition-colors cursor-pointer"
+              >
+                <HelpCircle className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
+                Preguntas frecuentes
+              </button>
+            </div>
+
+            {/* Separador antes de cerrar sesión */}
+            <div className="border-t border-gray-100 my-1"></div>
+
+            {/* Cerrar sesión */}
+            <div className="py-1">
+              <button
+                onClick={() => handleAction(onLogoutClick)}
+                className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors cursor-pointer"
+              >
+                <LogOut className="w-4 h-4 text-gray-500 group-hover:text-red-600 transition-colors" />
+                Cerrar sesión
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

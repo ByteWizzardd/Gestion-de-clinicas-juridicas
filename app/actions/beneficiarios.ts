@@ -113,6 +113,22 @@ export async function createBeneficiarioAction(data: {
       };
     }
 
+    // Validar que la fecha de nacimiento no sea futura
+    if (data.fecha_nac) {
+      const dateToCheck = new Date(data.fecha_nac);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (dateToCheck > today) {
+        return {
+          success: false,
+          error: {
+            message: 'La fecha de nacimiento no puede ser una fecha futura',
+            code: 'VALIDATION_ERROR'
+          }
+        };
+      }
+    }
+
     // Verificar si ya existe en este caso por cédula
     if (data.cedula) {
       const beneficiariosActuales = await beneficiariosQueries.getByCaso(data.id_caso);
@@ -167,6 +183,22 @@ export async function updateBeneficiarioAction(data: {
         success: false,
         error: authResult.error!,
       };
+    }
+
+    // Validar que la fecha de nacimiento no sea futura
+    if (data.fecha_nac) {
+      const dateToCheck = new Date(data.fecha_nac);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (dateToCheck > today) {
+        return {
+          success: false,
+          error: {
+            message: 'La fecha de nacimiento no puede ser una fecha futura',
+            code: 'VALIDATION_ERROR'
+          }
+        };
+      }
     }
 
     // Verificar si ya existe en este caso por cédula (si se proporcionó cédula)
