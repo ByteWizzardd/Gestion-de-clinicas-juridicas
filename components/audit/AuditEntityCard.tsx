@@ -38,7 +38,7 @@ export default function AuditEntityCard({
       </h3>
 
       {/* Descripción */}
-      <p className="text-xs md:text-sm text-neutral-600 mb-3 relative z-10 flex-grow leading-relaxed">
+      <p className="text-xs md:text-sm text-neutral-600 mb-3 relative z-10 grow leading-relaxed">
         {description}
       </p>
 
