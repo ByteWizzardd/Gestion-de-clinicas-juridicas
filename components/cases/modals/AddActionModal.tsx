@@ -264,7 +264,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
     >
       <div className="flex flex-col relative">
         {/* Header fijo */}
-        <div className="flex-shrink-0 p-8 pb-4 relative border-b border-gray-200">
+        <div className="shrink-0 p-8 pb-4 relative border-b border-gray-200">
           {/* Botón de cerrar */}
           <button
             onClick={handleClose}
@@ -423,7 +423,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
         </div>
 
         {/* Footer fijo */}
-        <div className="flex-shrink-0 flex flex-col border-t border-gray-200 px-8 py-4 bg-white">
+        <div className="shrink-0 flex flex-col border-t border-gray-200 px-8 py-4 bg-white">
           {/* Nota sobre campos obligatorios */}
           <div className="flex items-center gap-1">
             <span className="text-danger font-medium text-sm">*</span>

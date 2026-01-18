@@ -118,7 +118,7 @@ export default function ArchiveInactiveCasesModal({
             <div className="p-6 space-y-6 overflow-y-auto max-h-[70vh]">
                 {/* Información */}
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
-                    <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                     <div>
                         <h4 className="font-medium text-amber-800">Casos inactivos por más de 2 semestres</h4>
                         <p className="text-sm text-amber-700 mt-1">

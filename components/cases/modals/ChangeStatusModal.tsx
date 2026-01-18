@@ -86,7 +86,7 @@ export default function ChangeStatusModal({
         >
             <div className="flex flex-col relative w-full">
                 {/* Header fijo */}
-                <div className="flex-shrink-0 p-8 pb-4 relative border-b border-gray-200">
+                <div className="shrink-0 p-8 pb-4 relative border-b border-gray-200">
                     {/* Botón de cerrar */}
                     <button
                         onClick={handleClose}
@@ -169,7 +169,7 @@ export default function ChangeStatusModal({
                 </div>
 
                 {/* Footer fijo */}
-                <div className="flex-shrink-0 flex items-center justify-between border-t border-gray-200 px-8 py-4 bg-white rounded-b-[30px]">
+                <div className="shrink-0 flex items-center justify-between border-t border-gray-200 px-8 py-4 bg-white rounded-b-[30px]">
                     <div className="flex items-center gap-1">
                         <span className="text-danger font-medium text-sm">*</span>
                         <span className="text-sm text-gray-600">Campo obligatorio</span>
