@@ -297,12 +297,6 @@ export default function AppointmentsToolbar({
     label: `C-${c.id_caso} - ${c.tramite}`,
   }));
 
-  // Agregar opción para citas sin caso asignado (por si acaso)
-  casoOptions.unshift({
-    value: 'no-case',
-    label: 'Sin caso asignado',
-  });
-
   const triggerButton = (isOpenState: boolean) => (
     <button
       type="button"

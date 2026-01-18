@@ -120,10 +120,6 @@ export default function AppointmentsClient({
     // Filtro por caso (múltiple) - la cita debe estar en uno de los casos seleccionados
     if (caseFilter.length > 0) {
       filtered = filtered.filter((apt) => {
-        // Caso especial: citas sin caso asignado
-        if (!apt.caseId && apt.caseId !== 0) {
-          return caseFilter.includes('no-case');
-        }
         const caseIdStr = String(apt.caseId);
         return caseFilter.includes(caseIdStr);
       });
@@ -195,10 +191,6 @@ export default function AppointmentsClient({
     // Filtro por caso (múltiple) - la cita debe estar en uno de los casos seleccionados
     if (caseFilter.length > 0) {
       filtered = filtered.filter((apt) => {
-        // Caso especial: citas sin caso asignado
-        if (!apt.caseId && apt.caseId !== 0) {
-          return caseFilter.includes('no-case');
-        }
         const caseIdStr = String(apt.caseId);
         return caseFilter.includes(caseIdStr);
       });
