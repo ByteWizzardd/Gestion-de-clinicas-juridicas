@@ -1,7 +1,6 @@
 'use client';
 
 import { Clock } from 'lucide-react';
-import { ReactNode } from 'react';
 
 interface ActionHistoryCardProps {
   mainText: string;
@@ -32,9 +31,9 @@ export default function ActionHistoryCard({
       {!isLast && (
         <div className="absolute left-4 md:left-5 top-8 md:top-10 w-0.5 h-full bg-secondary" />
       )}
-      
+
       {/* Punto/Icono de la línea de tiempo */}
-      <div className={`relative z-0 flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-full ${colorClass} border-2 flex items-center justify-center`}>
+      <div className={`relative z-0 shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-full ${colorClass} border-2 flex items-center justify-center`}>
         <Icon className="w-4 h-4 md:w-5 md:h-5" />
       </div>
 
