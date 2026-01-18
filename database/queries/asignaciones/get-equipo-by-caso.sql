@@ -1,5 +1,5 @@
 -- Obtener el equipo asignado a un caso (profesores y estudiantes)
--- Solo incluye asignaciones directas: profesores supervisores y estudiantes asignados
+-- Solo incluye asignaciones activas
 -- Parámetros: $1 = id_caso
 
 -- Profesores supervisores

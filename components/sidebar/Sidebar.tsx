@@ -152,8 +152,14 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido' }: Si
             >
               {/* Versión ícono/pequeña del logo con hover y link */}
               <Link href="/dashboard">
-                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center font-bold text-xl cursor-pointer transition-colors duration-200 text-primary hover:bg-red-100 hover:text-red-600">
-                  D
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-200 hover:bg-red-100 group/logo p-2">
+                  <Image
+                    src="/logo-mini-v2.png"
+                    alt="Logo DER"
+                    width={48}
+                    height={48}
+                    className="object-contain transition-transform duration-300 group-hover/logo:scale-110"
+                  />
                 </div>
               </Link>
             </motion.div>

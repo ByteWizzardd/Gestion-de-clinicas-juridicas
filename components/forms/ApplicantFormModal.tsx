@@ -13,6 +13,7 @@ import { ArrowRight, ArrowLeft, Calendar, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
 import DatePicker from './DatePicker';
 import { validateEmailFormat } from '@/lib/utils/email-validation';
+import { useEmailVerification } from '@/hooks/useEmailVerification';
 
 interface ApplicantFormModalProps {
   isOpen: boolean;
@@ -392,6 +393,7 @@ export default function ApplicantFormModal({
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [cedulaCheckTimeout, setCedulaCheckTimeout] = useState<NodeJS.Timeout | null>(null);
   const [emailCheckTimeout, setEmailCheckTimeout] = useState<NodeJS.Timeout | null>(null);
+  const { verifyEmail, isVerifying: isVerifyingEmail } = useEmailVerification();
 
   // Estados para recomendaciones de cédula
   const [cedulaSuggestions, setCedulaSuggestions] = useState<Array<{
@@ -1647,9 +1649,18 @@ export default function ApplicantFormModal({
     // Esperar 500ms después de que el usuario deje de escribir
     const timeout = setTimeout(async () => {
       try {
+        // Primero verificar que el email sea real y exista
+        const isEmailValid = await verifyEmail(email);
+        if (!isEmailValid) {
+          setErrors((prev) => ({
+            ...prev,
+            correoElectronico: 'El correo electrónico no es válido o no existe',
+          }));
+          return;
+        }
+
+        // Si el email es válido, verificar si ya está registrado en la BD
         const { checkEmailExistsAction } = await import('@/app/actions/solicitantes');
-        // Siempre verificar si el correo existe, sin excluir ninguna cédula
-        // Si el correo existe, mostrar el error
         const result = await checkEmailExistsAction(email);
 
         if (result.success && result.exists) {

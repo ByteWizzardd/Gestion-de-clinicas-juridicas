@@ -3,6 +3,7 @@
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { Briefcase, Calendar, User, MapPin } from 'lucide-react';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface Caso {
   id_caso: number;
@@ -48,11 +49,15 @@ export default function CasosList({ casos, loading, error }: CasosListProps) {
 
   if (!casos || casos.length === 0) {
     return (
-      <div className="w-full flex flex-col items-center justify-center text-gray-500">
-        <Briefcase className="w-16 h-16 mb-4 opacity-40" />
-        <p className="text-lg font-medium text-gray-600">No tienes casos asignados</p>
-        <p className="text-sm mt-2 text-gray-500">Los casos donde participas aparecerán aquí</p>
-      </div>
+      <EmptyState
+        icon={Briefcase}
+        title="Aún no tienes casos asignados"
+        description="Cuando seas asignado a un caso o participes en alguno, aparecerá aquí"
+        action={{
+          label: "Ver todos los casos",
+          href: "/dashboard/cases"
+        }}
+      />
     );
   }
 

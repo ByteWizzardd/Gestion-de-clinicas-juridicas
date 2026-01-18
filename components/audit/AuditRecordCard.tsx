@@ -1262,9 +1262,11 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
       }
       case 'caso-actualizado': {
         const r = record as CasoActualizadoAuditRecord;
+        const isEquipoUpdate = (record as any).tipo_cambio === 'equipo-actualizado';
+
         return (
           <div className="flex items-center gap-3">
-            <Briefcase className="w-5 h-5 text-gray-600" />
+            {isEquipoUpdate ? <Users className="w-5 h-5 text-gray-600" /> : <Briefcase className="w-5 h-5 text-gray-600" />}
             <div className="flex-1">
               <p className="font-semibold text-gray-900">
                 <Link
@@ -1276,7 +1278,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 </Link>
               </p>
               <p className="text-sm text-gray-600">
-                Actualizado por:{' '}
+                {isEquipoUpdate ? 'Equipo actualizado por:' : 'Actualizado por:'}{' '}
                 {renderUserLink(
                   r.nombre_completo_usuario_actualizo,
                   r.nombres_usuario_actualizo,
@@ -3561,6 +3563,126 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
       }
       case 'caso-actualizado': {
         const r = record as CasoActualizadoAuditRecord;
+
+        // Manejo específico para cambios de equipo dentro de casos actualizados
+        if ((record as any).tipo_cambio === 'equipo-actualizado') {
+          const rEquipo = record as unknown as EquipoActualizadoAuditRecord;
+          const miembrosAnteriores = rEquipo.miembros_anteriores || [];
+          const miembrosNuevos = rEquipo.miembros_nuevos || [];
+
+          const estudiantesAnteriores = miembrosAnteriores.filter((m: MiembroEquipoAudit) => m.tipo === 'estudiante');
+          const profesoresAnteriores = miembrosAnteriores.filter((m: MiembroEquipoAudit) => m.tipo === 'profesor');
+          const estudiantesNuevos = miembrosNuevos.filter((m: MiembroEquipoAudit) => m.tipo === 'estudiante');
+          const profesoresNuevos = miembrosNuevos.filter((m: MiembroEquipoAudit) => m.tipo === 'profesor');
+
+          // Función auxiliar para verificar si hubo cambios
+          const hasTeamChanged = (oldMembers: MiembroEquipoAudit[], newMembers: MiembroEquipoAudit[]) => {
+            if (oldMembers.length !== newMembers.length) return true;
+            const oldIds = oldMembers.map(m => m.cedula).sort().join(',');
+            const newIds = newMembers.map(m => m.cedula).sort().join(',');
+            return oldIds !== newIds;
+          };
+
+          const profesoresChanged = hasTeamChanged(profesoresAnteriores, profesoresNuevos);
+          const estudiantesChanged = hasTeamChanged(estudiantesAnteriores, estudiantesNuevos);
+
+          return (
+            <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-2">Cambios en el Equipo</p>
+
+                {/* Profesores */}
+                {profesoresChanged && (
+                  <div className="mb-2">
+                    <p className="text-sm text-gray-600">
+                      <span className="font-semibold text-gray-700">Profesores:</span>{' '}
+                      <span className="line-through text-red-500">
+                        {profesoresAnteriores.length > 0 ? (
+                          profesoresAnteriores.map((m: MiembroEquipoAudit, i: number) => (
+                            <span key={i}>
+                              {m.nombre_completo}
+                              {i < profesoresAnteriores.length - 1 && ', '}
+                            </span>
+                          ))
+                        ) : 'Ninguno'}
+                      </span>
+                      {' → '}
+                      <span className="text-green-600">
+                        {profesoresNuevos.length > 0 ? (
+                          profesoresNuevos.map((m: MiembroEquipoAudit, i: number) => (
+                            <span key={i}>
+                              <Link
+                                href={`/dashboard/users/${m.cedula}`}
+                                className="text-green-600 hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {m.nombre_completo}
+                              </Link>
+                              {i < profesoresNuevos.length - 1 && ', '}
+                            </span>
+                          ))
+                        ) : 'Ninguno'}
+                      </span>
+                    </p>
+                  </div>
+                )}
+
+                {/* Estudiantes */}
+                {estudiantesChanged && (
+                  <div className="mb-2">
+                    <p className="text-sm text-gray-600">
+                      <span className="font-semibold text-gray-700">Estudiantes:</span>{' '}
+                      <span className="line-through text-red-500">
+                        {estudiantesAnteriores.length > 0 ? (
+                          estudiantesAnteriores.map((m: MiembroEquipoAudit, i: number) => (
+                            <span key={i}>
+                              {m.nombre_completo}
+                              {i < estudiantesAnteriores.length - 1 && ', '}
+                            </span>
+                          ))
+                        ) : 'Ninguno'}
+                      </span>
+                      {' → '}
+                      <span className="text-green-600">
+                        {estudiantesNuevos.length > 0 ? (
+                          estudiantesNuevos.map((m: MiembroEquipoAudit, i: number) => (
+                            <span key={i}>
+                              <Link
+                                href={`/dashboard/users/${m.cedula}`}
+                                className="text-green-600 hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {m.nombre_completo}
+                              </Link>
+                              {i < estudiantesNuevos.length - 1 && ', '}
+                            </span>
+                          ))
+                        ) : 'Ninguno'}
+                      </span>
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-4 border-t border-gray-200">
+                <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
+                <p className="text-sm text-gray-600">
+                  Modificado por:{' '}
+                  {renderUserLink(
+                    rEquipo.nombre_completo_usuario_modifico,
+                    rEquipo.nombres_usuario_modifico,
+                    rEquipo.apellidos_usuario_modifico,
+                    rEquipo.id_usuario_modifico
+                  )}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Fecha modificación: {formatDate(rEquipo.fecha || r.fecha_actualizacion)}
+                </p>
+              </div>
+            </div>
+          );
+        }
+
         const isCambioEstatus = r.tipo_cambio === 'cambio_estatus';
 
         // Detectar cambios en campos

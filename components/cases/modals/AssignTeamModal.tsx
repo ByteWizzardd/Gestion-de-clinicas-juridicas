@@ -15,16 +15,17 @@ interface AssignTeamModalProps {
     tipo: 'profesor' | 'estudiante';
     cedula: string;
     nombre_completo: string;
+    habilitado: boolean;
   }>;
   onSuccess?: () => void;
 }
 
-export default function AssignTeamModal({ 
-  isOpen, 
-  onClose, 
-  idCaso, 
+export default function AssignTeamModal({
+  isOpen,
+  onClose,
+  idCaso,
   equipoActual = [],
-  onSuccess 
+  onSuccess
 }: AssignTeamModalProps) {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
@@ -52,7 +53,7 @@ export default function AssignTeamModal({
     setError(null);
     try {
       const result = await getEquipoDisponibleAction();
-      
+
       if (!result.success) {
         setError(result.error?.message || 'Error al cargar equipo disponible');
         return;
@@ -71,17 +72,17 @@ export default function AssignTeamModal({
           nombre_completo: e.nombre_completo,
         }));
 
-        // Obtener profesores actuales del equipo (pueden ser de otros semestres)
+        // Obtener profesores actuales del equipo (solo habilitados)
         const profesoresActualesDelEquipo = equipoActual
-          .filter(m => m.tipo === 'profesor')
+          .filter(m => m.tipo === 'profesor' && m.habilitado === true)
           .map(m => ({
             cedula: m.cedula,
             nombre_completo: m.nombre_completo,
           }));
 
-        // Obtener estudiantes actuales del equipo (pueden ser de otros semestres)
+        // Obtener estudiantes actuales del equipo (solo habilitados)
         const estudiantesActualesDelEquipo = equipoActual
-          .filter(m => m.tipo === 'estudiante')
+          .filter(m => m.tipo === 'estudiante' && m.habilitado === true)
           .map(m => ({
             cedula: m.cedula,
             nombre_completo: m.nombre_completo,
@@ -130,7 +131,7 @@ export default function AssignTeamModal({
         profesoresSeleccionados,
         estudiantesSeleccionados
       );
-      
+
       if (!result.success) {
         setError(result.error?.message || 'Error al asignar equipo');
         return;

@@ -655,14 +655,41 @@ export async function getCasosActualizadosAuditAction(filters?: AuditFilters) {
   }
 
   try {
-    const records = await auditoriaActualizacionCasosQueries.getAll(filters);
+    const [casosRecords, equipoRecords] = await Promise.all([
+      auditoriaActualizacionCasosQueries.getAll(filters),
+      auditoriaActualizacionEquipoQueries.getAll(filters),
+    ]);
 
-    return records.map((r) => ({
+    const mappedCasosRecords = casosRecords.map((r) => ({
       ...r,
       fecha: r.fecha_actualizacion,
       usuario_accion: r.id_usuario_actualizo,
       nombre_completo_usuario_accion: r.nombre_completo_usuario_actualizo || undefined,
     }));
+
+    const mappedEquipoRecords = equipoRecords.map((r) => ({
+      ...r,
+      // Añadir propiedades para compatibilidad y visualización
+      tipo_cambio: 'equipo-actualizado',
+      id_usuario_actualizo: r.id_usuario_modifico,
+      nombres_usuario_actualizo: r.nombres_usuario_modifico,
+      apellidos_usuario_actualizo: r.apellidos_usuario_modifico,
+      nombre_completo_usuario_actualizo: r.nombre_completo_usuario_modifico,
+      foto_perfil_usuario_actualizo: r.foto_perfil_usuario_modifico,
+      fecha_actualizacion: r.fecha,
+      usuario_accion: r.id_usuario_modifico,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_modifico || undefined,
+    }));
+
+    // Combinar y ordenar
+    const allRecords = [...mappedCasosRecords, ...mappedEquipoRecords].sort((a, b) => {
+      // Usar fecha_actualizacion para asegurar consistencia
+      const dateA = new Date(a.fecha_actualizacion).getTime();
+      const dateB = new Date(b.fecha_actualizacion).getTime();
+      return filters?.orden === 'asc' ? dateA - dateB : dateB - dateA;
+    });
+
+    return allRecords;
   } catch (error) {
     console.error('Error obteniendo auditoría de casos actualizados:', error);
     throw new Error('Error al obtener auditoría de casos actualizados');

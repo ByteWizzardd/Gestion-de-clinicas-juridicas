@@ -10,6 +10,7 @@ import CedulaInput from '../forms/CedulaInput';
 import { validateEmailFormat, validateEmailDomain } from '@/lib/utils/email-validation';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
+import { useEmailVerification } from '@/hooks/useEmailVerification';
 
 interface CreateUserForm {
   cedulaTipo: string;
@@ -54,6 +55,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
   const emailCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const usernameCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
+  const { verifyEmail, isVerifying: isVerifyingEmail } = useEmailVerification();
 
   // Resetear formulario cuando se abre el modal
   useEffect(() => {
@@ -199,11 +201,13 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
       return;
     }
 
-    // Validar dominio del correo
-    if (!validateEmailDomain(email)) {
+    // Verificar que el email sea real y exista
+    const isEmailValid = await verifyEmail(email);
+    if (!isEmailValid) {
+      // El hook ya estableció el error, pero lo ponemos en nuestro estado de errores
       setErrors((prev) => ({
         ...prev,
-        correo_electronico: 'El correo debe tener dominio @est.ucab.edu.ve o @ucab.edu.ve',
+        correo_electronico: 'El correo electrónico no es válido o no existe',
       }));
       return;
     }
@@ -214,13 +218,13 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
       const emailResult = await checkEmailExistsUsuarioAction(email);
 
       if (emailResult.success && emailResult.exists) {
-        // Si el correo existe, mostrar error
+        // Si el correo existe en la BD, mostrar error
         setErrors((prev) => ({
           ...prev,
           correo_electronico: `El correo electrónico ${email} ya está registrado como usuario`,
         }));
       } else {
-        // Si no existe y el dominio es válido, limpiar el error
+        // Si no existe en la BD y es válido, limpiar el error
         setErrors((prev) => {
           const newErrors = { ...prev };
           delete newErrors.correo_electronico;
@@ -396,10 +400,8 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
       newErrors.correo_electronico = 'El correo electrónico es requerido';
     } else if (!validateEmailFormat(form.correo_electronico)) {
       newErrors.correo_electronico = 'Correo electrónico inválido';
-    } else if (!validateEmailDomain(form.correo_electronico)) {
-      newErrors.correo_electronico = 'El correo debe tener dominio @est.ucab.edu.ve o @ucab.edu.ve';
-    } else if (errors.correo_electronico && errors.correo_electronico.includes('ya está registrado')) {
-      // Mantener el error de correo duplicado si existe
+    } else if (errors.correo_electronico && (errors.correo_electronico.includes('ya está registrado') || errors.correo_electronico.includes('no es válido') || errors.correo_electronico.includes('no existe'))) {
+      // Mantener el error de correo si existe (duplicado o inválido)
       newErrors.correo_electronico = errors.correo_electronico;
     }
 
