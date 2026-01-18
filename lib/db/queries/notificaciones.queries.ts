@@ -74,4 +74,13 @@ export const notificacionesQueries = {
         const result: QueryResult = await pool.query(query, [interval]);
         return result.rowCount ?? 0;
     },
+
+    /**
+     * Obtiene receptores (usuarios habilitados) relacionados con los casos donde participa el usuario dado.
+     */
+    getReceptoresPorCasosDelUsuario: async (cedulaUsuario: string): Promise<string[]> => {
+        const query = loadSQL('notificaciones/get-receptores-por-casos-del-usuario.sql');
+        const result: QueryResult = await pool.query(query, [cedulaUsuario]);
+        return (result.rows as Array<{ cedula: string }>).map(r => r.cedula);
+    },
 };

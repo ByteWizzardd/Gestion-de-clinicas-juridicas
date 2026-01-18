@@ -5,6 +5,8 @@ import { AppError } from '@/lib/utils/errors';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 import { getCurrentUserAction } from "./auth";
+import { revalidatePath } from 'next/cache';
+import { notificarDeshabilitacionUsuarioEnCasosService } from '@/lib/services/notificaciones.service';
 export interface GetUsuarioCompleteByCedulaResult {
   success: boolean;
   data?: {
@@ -142,7 +144,29 @@ export async function toggleHabilitadoUsuarioAction(
       };
     }
     const cedula_actor = userResult.data.cedula;
-    return await usuariosQueries.toggleHabilitado(cedula, cedula_actor);
+
+    const estadoAntes = await usuariosQueries.getHabilitadoSistema(cedula);
+    const toggleResult = await usuariosQueries.toggleHabilitado(cedula, cedula_actor);
+    if (!toggleResult.success) return toggleResult;
+
+    const estadoDespues = await usuariosQueries.getHabilitadoSistema(cedula);
+
+    // Si pasó a deshabilitado, notificar a usuarios relacionados con sus casos
+    if (estadoAntes === true && estadoDespues === false) {
+      const notif = await notificarDeshabilitacionUsuarioEnCasosService({
+        cedulaActor: cedula_actor,
+        cedulaUsuarioDeshabilitado: cedula,
+      });
+
+      // Best-effort: no revertimos el toggle si falla la notificación
+      if (!notif.success) {
+        console.error('Error al notificar deshabilitación:', notif.error);
+      }
+
+      revalidatePath('/dashboard/notificaciones');
+    }
+
+    return { success: true };
   } catch (error: unknown) {
     return {
       success: false,
@@ -901,6 +925,22 @@ export async function disableUsuariosLoteAction(
 
     // 3. Ejecutar actualización con registro en auditoría
     await usuariosQueries.disableLote(cedulasFiltradas, userResult.data.cedula);
+
+    // 4. Notificar a usuarios relacionados con los casos de cada usuario deshabilitado
+    for (const cedulaUsuarioDeshabilitado of cedulasFiltradas) {
+      const notif = await notificarDeshabilitacionUsuarioEnCasosService({
+        cedulaActor: userResult.data.cedula,
+        cedulaUsuarioDeshabilitado,
+      });
+      if (!notif.success) {
+        console.error('Error al notificar deshabilitación (lote):', {
+          cedulaUsuarioDeshabilitado,
+          error: notif.error,
+        });
+      }
+    }
+
+    revalidatePath('/dashboard/notificaciones');
     
     return { success: true };
   } catch (error) {
