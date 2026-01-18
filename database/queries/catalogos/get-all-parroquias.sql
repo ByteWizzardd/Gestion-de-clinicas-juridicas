@@ -1,11 +1,11 @@
 -- Get all parroquias with municipio and estado information
 SELECT 
-    p.id_estado,
-    p.num_municipio,
     p.num_parroquia,
     p.nombre_parroquia,
-    m.nombre_municipio,
+    p.id_estado,
+    p.num_municipio,
     e.nombre_estado,
+    m.nombre_municipio,
     p.habilitado
 FROM parroquias p
 JOIN municipios m ON p.id_estado = m.id_estado AND p.num_municipio = m.num_municipio
