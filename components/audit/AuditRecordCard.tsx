@@ -3577,10 +3577,16 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
 
           // Función auxiliar para verificar si hubo cambios
           const hasTeamChanged = (oldMembers: MiembroEquipoAudit[], newMembers: MiembroEquipoAudit[]) => {
-            if (oldMembers.length !== newMembers.length) return true;
-            const oldIds = oldMembers.map(m => m.cedula).sort().join(',');
-            const newIds = newMembers.map(m => m.cedula).sort().join(',');
-            return oldIds !== newIds;
+            const normalize = (val: string | number) => String(val).trim();
+            const oldIds = new Set(oldMembers.map(m => normalize(m.cedula)));
+            const newIds = new Set(newMembers.map(m => normalize(m.cedula)));
+
+            if (oldIds.size !== newIds.size) return true;
+
+            for (const id of Array.from(oldIds)) {
+              if (!newIds.has(id)) return true;
+            }
+            return false;
           };
 
           const profesoresChanged = hasTeamChanged(profesoresAnteriores, profesoresNuevos);
@@ -4201,78 +4207,99 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         const estudiantesNuevos = miembrosNuevos.filter((m: MiembroEquipoAudit) => m.tipo === 'estudiante');
         const profesoresNuevos = miembrosNuevos.filter((m: MiembroEquipoAudit) => m.tipo === 'profesor');
 
+        // Función auxiliar para verificar si hubo cambios
+        const hasTeamChanged = (oldMembers: MiembroEquipoAudit[], newMembers: MiembroEquipoAudit[]) => {
+          const normalize = (val: string | number) => String(val).trim();
+          const oldIds = new Set(oldMembers.map(m => normalize(m.cedula)));
+          const newIds = new Set(newMembers.map(m => normalize(m.cedula)));
+
+          if (oldIds.size !== newIds.size) return true;
+
+          for (const id of Array.from(oldIds)) {
+            if (!newIds.has(id)) return true;
+          }
+          return false;
+        };
+
+        const profesoresChanged = hasTeamChanged(profesoresAnteriores, profesoresNuevos);
+        const estudiantesChanged = hasTeamChanged(estudiantesAnteriores, estudiantesNuevos);
+
         return (
           <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
             <div>
               <p className="text-sm font-semibold text-gray-700 mb-2">Cambios en el Equipo</p>
 
               {/* Profesores */}
-              <div className="mb-2">
-                <p className="text-sm text-gray-600">
-                  <span className="font-semibold text-gray-700">Profesores:</span>{' '}
-                  <span className="line-through text-red-500">
-                    {profesoresAnteriores.length > 0 ? (
-                      profesoresAnteriores.map((m: MiembroEquipoAudit, i: number) => (
-                        <span key={i}>
-                          {m.nombre_completo}
-                          {i < profesoresAnteriores.length - 1 && ', '}
-                        </span>
-                      ))
-                    ) : 'Ninguno'}
-                  </span>
-                  {' → '}
-                  <span className="text-green-600">
-                    {profesoresNuevos.length > 0 ? (
-                      profesoresNuevos.map((m: MiembroEquipoAudit, i: number) => (
-                        <span key={i}>
-                          <Link
-                            href={`/dashboard/users/${m.cedula}`}
-                            className="text-green-600 hover:underline"
-                            onClick={(e) => e.stopPropagation()}
-                          >
+              {profesoresChanged && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    <span className="font-semibold text-gray-700">Profesores:</span>{' '}
+                    <span className="line-through text-red-500">
+                      {profesoresAnteriores.length > 0 ? (
+                        profesoresAnteriores.map((m: MiembroEquipoAudit, i: number) => (
+                          <span key={i}>
                             {m.nombre_completo}
-                          </Link>
-                          {i < profesoresNuevos.length - 1 && ', '}
-                        </span>
-                      ))
-                    ) : 'Ninguno'}
-                  </span>
-                </p>
-              </div>
+                            {i < profesoresAnteriores.length - 1 && ', '}
+                          </span>
+                        ))
+                      ) : 'Ninguno'}
+                    </span>
+                    {' → '}
+                    <span className="text-green-600">
+                      {profesoresNuevos.length > 0 ? (
+                        profesoresNuevos.map((m: MiembroEquipoAudit, i: number) => (
+                          <span key={i}>
+                            <Link
+                              href={`/dashboard/users/${m.cedula}`}
+                              className="text-green-600 hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {m.nombre_completo}
+                            </Link>
+                            {i < profesoresNuevos.length - 1 && ', '}
+                          </span>
+                        ))
+                      ) : 'Ninguno'}
+                    </span>
+                  </p>
+                </div>
+              )}
 
               {/* Estudiantes */}
-              <div className="mb-2">
-                <p className="text-sm text-gray-600">
-                  <span className="font-semibold text-gray-700">Estudiantes:</span>{' '}
-                  <span className="line-through text-red-500">
-                    {estudiantesAnteriores.length > 0 ? (
-                      estudiantesAnteriores.map((m: MiembroEquipoAudit, i: number) => (
-                        <span key={i}>
-                          {m.nombre_completo}
-                          {i < estudiantesAnteriores.length - 1 && ', '}
-                        </span>
-                      ))
-                    ) : 'Ninguno'}
-                  </span>
-                  {' → '}
-                  <span className="text-green-600">
-                    {estudiantesNuevos.length > 0 ? (
-                      estudiantesNuevos.map((m: MiembroEquipoAudit, i: number) => (
-                        <span key={i}>
-                          <Link
-                            href={`/dashboard/users/${m.cedula}`}
-                            className="text-green-600 hover:underline"
-                            onClick={(e) => e.stopPropagation()}
-                          >
+              {estudiantesChanged && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    <span className="font-semibold text-gray-700">Estudiantes:</span>{' '}
+                    <span className="line-through text-red-500">
+                      {estudiantesAnteriores.length > 0 ? (
+                        estudiantesAnteriores.map((m: MiembroEquipoAudit, i: number) => (
+                          <span key={i}>
                             {m.nombre_completo}
-                          </Link>
-                          {i < estudiantesNuevos.length - 1 && ', '}
-                        </span>
-                      ))
-                    ) : 'Ninguno'}
-                  </span>
-                </p>
-              </div>
+                            {i < estudiantesAnteriores.length - 1 && ', '}
+                          </span>
+                        ))
+                      ) : 'Ninguno'}
+                    </span>
+                    {' → '}
+                    <span className="text-green-600">
+                      {estudiantesNuevos.length > 0 ? (
+                        estudiantesNuevos.map((m: MiembroEquipoAudit, i: number) => (
+                          <span key={i}>
+                            <Link
+                              href={`/dashboard/users/${m.cedula}`}
+                              className="text-green-600 hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {m.nombre_completo}
+                            </Link>
+                            {i < estudiantesNuevos.length - 1 && ', '}
+                          </span>
+                        ))
+                      ) : 'Ninguno'}
+                    </span>
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="pt-4 border-t border-gray-200">

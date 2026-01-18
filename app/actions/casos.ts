@@ -970,16 +970,20 @@ export async function asignarEquipoAction(
       const equipoActual = await asignacionesQueries.getEquipoByCaso(idCaso);
       const profesoresActuales = equipoActual
         .filter(m => m.tipo === 'profesor' && m.habilitado)
-        .map(m => m.cedula);
+        .map(m => String(m.cedula).trim());
       const estudiantesActuales = equipoActual
         .filter(m => m.tipo === 'estudiante' && m.habilitado)
-        .map(m => m.cedula);
+        .map(m => String(m.cedula).trim());
+
+      // Sanitizar entradas para eliminar duplicados y espacios
+      const profesoresUnicos = [...new Set(profesores.map(p => String(p).trim()))];
+      const estudiantesUnicos = [...new Set(estudiantes.map(e => String(e).trim()))];
 
       // Identificar profesores nuevos (que no estaban asignados antes)
-      const profesoresNuevos = profesores.filter(cedula => !profesoresActuales.includes(cedula));
+      const profesoresNuevos = profesoresUnicos.filter(cedula => !profesoresActuales.includes(cedula));
 
       // Identificar estudiantes nuevos (que no estaban asignados antes)
-      const estudiantesNuevos = estudiantes.filter(cedula => !estudiantesActuales.includes(cedula));
+      const estudiantesNuevos = estudiantesUnicos.filter(cedula => !estudiantesActuales.includes(cedula));
 
       // Obtener todos los profesores activos para verificar disponibilidad
       const profesoresAllActive = await profesoresQueries.getAllActive();
@@ -1025,7 +1029,7 @@ export async function asignarEquipoAction(
 
       // Deshabilitar profesores que ya no están en la lista
       for (const cedula of profesoresActuales) {
-        if (!profesores.includes(cedula)) {
+        if (!profesoresUnicos.includes(cedula)) {
           // Obtener el term del profesor actual para deshabilitarlo correctamente
           const profesorActual = equipoActual.find(m => m.tipo === 'profesor' && m.cedula === cedula);
           const termProfesor = profesorActual?.term || currentTerm;
@@ -1035,7 +1039,7 @@ export async function asignarEquipoAction(
 
       // Deshabilitar estudiantes que ya no están en la lista
       for (const cedula of estudiantesActuales) {
-        if (!estudiantes.includes(cedula)) {
+        if (!estudiantesUnicos.includes(cedula)) {
           // Obtener el term del estudiante actual para deshabilitarlo correctamente
           const estudianteActual = equipoActual.find(m => m.tipo === 'estudiante' && m.cedula === cedula);
           const termEstudiante = estudianteActual?.term || currentTerm;
@@ -1094,8 +1098,21 @@ export async function asignarEquipoAction(
 
       // --- AUDITORÍA DE MODIFICACIÓN DE EQUIPO ---
       // Registrar solo si hubo cambios reales (miembros agregados o removidos)
-      const huboCambiosProfesores = profesoresNuevos.length > 0 || profesoresActuales.some(p => !profesores.includes(p));
-      const huboCambiosEstudiantes = estudiantesNuevos.length > 0 || estudiantesActuales.some(e => !estudiantes.includes(e));
+      const setProfesoresActuales = new Set(profesoresActuales);
+      const setProfesoresNuevos = new Set(profesoresUnicos);
+      const setEstudiantesActuales = new Set(estudiantesActuales);
+      const setEstudiantesNuevos = new Set(estudiantesUnicos);
+
+      const coincidenProfesores =
+        setProfesoresActuales.size === setProfesoresNuevos.size &&
+        [...setProfesoresActuales].every(p => setProfesoresNuevos.has(p));
+
+      const coincidenEstudiantes =
+        setEstudiantesActuales.size === setEstudiantesNuevos.size &&
+        [...setEstudiantesActuales].every(e => setEstudiantesNuevos.has(e));
+
+      const huboCambiosProfesores = !coincidenProfesores;
+      const huboCambiosEstudiantes = !coincidenEstudiantes;
 
       if (huboCambiosProfesores || huboCambiosEstudiantes) {
         // 1. Crear registro principal de auditoría
@@ -1152,7 +1169,7 @@ export async function asignarEquipoAction(
         `;
 
         // Profesores finales
-        for (const cedula of profesores) {
+        for (const cedula of profesoresUnicos) {
           const profesorInfo = profesoresAllActiveMap.get(cedula);
           if (profesorInfo) {
             const termToUse = profesorInfo.term === currentTerm ? currentTerm : profesorInfo.term;
@@ -1163,7 +1180,7 @@ export async function asignarEquipoAction(
         }
 
         // Estudiantes finales
-        for (const cedula of estudiantes) {
+        for (const cedula of estudiantesUnicos) {
           const estudianteInfo = estudiantesAllActiveMap.get(cedula);
           if (estudianteInfo) {
             const termToUse = estudianteInfo.term === currentTerm ? currentTerm : estudianteInfo.term;
