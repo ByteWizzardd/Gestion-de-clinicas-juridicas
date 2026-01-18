@@ -625,7 +625,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
           {/* Fila 2: Usuarios que atendieron */}
           <div className="col-span-3">
             <MultiSelect
-              label="Usuarios que atendieron *"
+              label="Personas que atendieron *"
               options={usuarioOptions}
               value={usuariosAtienden}
               onChange={(values) => updateField('usuariosAtienden', values)}

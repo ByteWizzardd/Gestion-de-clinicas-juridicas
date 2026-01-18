@@ -289,12 +289,12 @@ export function AppointmentScheduleModal({
 
           <div className="col-span-3">
             <MultiSelect
-              label="Estudiantes que atenderán la cita *"
+              label="Personas que atenderán la cita *"
               options={usuarioOptions}
               value={usuariosInvitados}
               onChange={(values) => updateField('usuariosInvitados', values)}
               error={errors.usuariosInvitados}
-              placeholder="Selecciona estudiantes..."
+              placeholder="Selecciona usuarios..."
               required
               className="w-full"
             />
