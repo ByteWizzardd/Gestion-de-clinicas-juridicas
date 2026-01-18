@@ -1,8 +1,6 @@
 import { loadSQL } from '../sql-loader';
 import { pool } from '../pool';
 import { QueryResult } from 'pg';
-import { estudiantesQueries } from './estudiantes.queries';
-import { profesoresQueries } from './profesores.queries';
 
 /**
  * Queries para la entidad Usuarios
@@ -325,6 +323,17 @@ export const usuariosQueries = {
         },
       };
     }
+  },
+
+  /**
+   * Obtiene el estado habilitado_sistema de un usuario
+   */
+  getHabilitadoSistema: async (cedula: string): Promise<boolean | null> => {
+    const query = loadSQL('usuarios/get-habilitado-sistema.sql');
+    const result: QueryResult = await pool.query(query, [cedula]);
+    const row = result.rows[0] as { habilitado_sistema?: boolean } | undefined;
+    if (!row || typeof row.habilitado_sistema !== 'boolean') return null;
+    return row.habilitado_sistema;
   },
 
   /**

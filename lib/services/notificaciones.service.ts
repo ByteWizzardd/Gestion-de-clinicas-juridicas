@@ -49,3 +49,68 @@ export async function notificarVariosUsuariosService(input: NotificarVariosUsuar
     return { success: false, error: { message: error instanceof Error ? error.message : 'Error al notificar', code: 'NOTIFICACION_ERROR' } };
   }
 }
+
+export interface NotificarDeshabilitacionUsuarioEnCasosInput {
+  cedulaActor: string;
+  cedulaUsuarioDeshabilitado: string;
+}
+
+export interface NotificarDeshabilitacionUsuarioEnCasosResult {
+  success: boolean;
+  data?: { receptoresNotificados: number };
+  error?: { message: string; code?: string };
+}
+
+/**
+ * Notifica a usuarios que participan en casos donde también participaba
+ * el usuario deshabilitado (cuando habilitado_sistema pasa a false).
+ */
+export async function notificarDeshabilitacionUsuarioEnCasosService(
+  input: NotificarDeshabilitacionUsuarioEnCasosInput
+): Promise<NotificarDeshabilitacionUsuarioEnCasosResult> {
+  try {
+    const actor = await usuariosQueries.getInfoByCedula(input.cedulaActor);
+    if (!actor) {
+      return { success: false, error: { message: 'Actor no existe', code: 'ACTOR_NO_EXISTE' } };
+    }
+
+    const usuario = await usuariosQueries.getInfoByCedula(input.cedulaUsuarioDeshabilitado);
+    if (!usuario) {
+      return { success: false, error: { message: 'Usuario deshabilitado no existe', code: 'USUARIO_NO_EXISTE' } };
+    }
+
+    const receptores = await notificacionesQueries.getReceptoresPorCasosDelUsuario(
+      input.cedulaUsuarioDeshabilitado
+    );
+
+    const receptoresFiltrados = receptores
+      .filter(r => r !== input.cedulaActor)
+      .filter(r => r !== input.cedulaUsuarioDeshabilitado);
+
+    if (receptoresFiltrados.length === 0) {
+      return { success: true, data: { receptoresNotificados: 0 } };
+    }
+
+    const titulo = 'Usuario deshabilitado';
+    const mensaje = `El usuario ${usuario.nombre_completo} (${usuario.cedula}) fue deshabilitado del sistema. Revisa los casos relacionados para reasignación/seguimiento.`;
+
+    for (const cedulaReceptor of receptoresFiltrados) {
+      await notificacionesQueries.create({
+        cedulaReceptor,
+        cedulaEmisor: input.cedulaActor,
+        titulo,
+        mensaje,
+      });
+    }
+
+    return { success: true, data: { receptoresNotificados: receptoresFiltrados.length } };
+  } catch (error) {
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Error al notificar deshabilitación',
+        code: 'NOTIFICACION_DESHABILITACION_ERROR',
+      },
+    };
+  }
+}
