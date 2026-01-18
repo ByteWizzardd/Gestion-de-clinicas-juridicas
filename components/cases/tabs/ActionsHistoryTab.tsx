@@ -191,13 +191,13 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium text-gray-500">Detalle de la Acción</label>
-              <p className="text-base text-gray-900 mt-1 whitespace-pre-wrap break-words overflow-wrap-anywhere hyphens-auto" style={{ wordBreak: 'break-word', hyphens: 'auto' }}>{accion.detalle_accion}</p>
+              <p className="text-base text-gray-900 mt-1 whitespace-pre-wrap wrap-break-word overflow-wrap-anywhere hyphens-auto" style={{ wordBreak: 'break-word', hyphens: 'auto' }}>{accion.detalle_accion}</p>
             </div>
 
             {accion.comentario && (
               <div>
                 <label className="text-sm font-medium text-gray-500">Comentario</label>
-                <p className="text-base text-gray-900 mt-1 whitespace-pre-wrap break-words overflow-wrap-anywhere hyphens-auto" style={{ wordBreak: 'break-word', hyphens: 'auto' }}>{accion.comentario}</p>
+                <p className="text-base text-gray-900 mt-1 whitespace-pre-wrap wrap-break-word overflow-wrap-anywhere hyphens-auto" style={{ wordBreak: 'break-word', hyphens: 'auto' }}>{accion.comentario}</p>
               </div>
             )}
 
