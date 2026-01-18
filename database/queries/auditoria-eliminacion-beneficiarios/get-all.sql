@@ -20,7 +20,8 @@ SELECT
     ae.fecha_nacimiento,
     ae.sexo,
     ae.tipo_beneficiario,
-    ae.parentesco
+    ae.parentesco,
+    ae.motivo
 FROM auditoria_eliminacion_beneficiarios ae
 LEFT JOIN usuarios u ON ae.id_usuario_elimino = u.cedula
 LEFT JOIN casos c ON ae.id_caso = c.id_caso

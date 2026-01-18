@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { FileText, Download, Calendar, File, Loader2, Image, FileEdit, FileSpreadsheet, Trash2, User } from 'lucide-react';
-import { formatDate } from '@/lib/utils/date-formatter';
+import { formatDateTime } from '@/lib/utils/date-formatter';
 import { downloadSoporteAction, deleteSoporteAction } from '@/app/actions/casos';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 
@@ -48,7 +48,7 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
     setDownloading({ idCaso, numSoporte });
     try {
       const result = await downloadSoporteAction(idCaso, numSoporte);
-      
+
       if (!result.success || !result.data) {
         alert(result.error?.message || 'Error al descargar el archivo');
         return;
@@ -82,29 +82,29 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
 
   const handleDelete = async (idCaso: number, numSoporte: number) => {
     if (!confirmDelete) return;
-    
+
     if (!motivoEliminacion.trim()) {
       alert('Debe proporcionar un motivo para la eliminación');
       return;
     }
-    
+
     setDeleting({ idCaso, numSoporte });
     try {
       const result = await deleteSoporteAction(idCaso, numSoporte, motivoEliminacion.trim());
-      
+
       if (!result.success) {
         alert(result.error?.message || 'Error al eliminar el archivo');
         return;
       }
 
       // Remover el soporte del estado local
-      setSoportesState(prev => prev.filter(s => 
+      setSoportesState(prev => prev.filter(s =>
         !(s.id_caso === idCaso && s.num_soporte === numSoporte)
       ));
-      
+
       setConfirmDelete(null);
       setMotivoEliminacion('');
-      
+
       // Notificar al padre para que recargue los datos
       onSoporteDeleted?.();
     } catch (error) {
@@ -117,33 +117,33 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
 
   const getFileIcon = (mimeType: string) => {
     const mimeLower = mimeType.toLowerCase();
-    
+
     // PDF: application/pdf
     if (mimeLower === 'application/pdf' || mimeLower.includes('pdf')) {
       return <FileText className="w-8 h-8 text-gray-600" />;
     }
-    
+
     // Imágenes: image/*
     if (mimeLower.startsWith('image/')) {
       return <Image className="w-8 h-8 text-gray-600" />;
     }
-    
+
     // Word: application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document
-    if (mimeLower.includes('msword') || 
-        mimeLower.includes('wordprocessingml') || 
-        mimeLower.includes('application/vnd.ms-word') ||
-        mimeLower.includes('docx')) {
+    if (mimeLower.includes('msword') ||
+      mimeLower.includes('wordprocessingml') ||
+      mimeLower.includes('application/vnd.ms-word') ||
+      mimeLower.includes('docx')) {
       return <FileEdit className="w-8 h-8 text-gray-600" />;
     }
-    
+
     // Excel: application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
-    if (mimeLower.includes('ms-excel') || 
-        mimeLower.includes('spreadsheetml') || 
-        mimeLower.includes('application/vnd.ms-excel') ||
-        mimeLower.includes('xlsx')) {
+    if (mimeLower.includes('ms-excel') ||
+      mimeLower.includes('spreadsheetml') ||
+      mimeLower.includes('application/vnd.ms-excel') ||
+      mimeLower.includes('xlsx')) {
       return <FileSpreadsheet className="w-8 h-8 text-gray-600" />;
     }
-    
+
     // Por defecto
     return <File className="w-8 h-8 text-gray-600" />;
   };
@@ -203,100 +203,100 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
         cancelLabel="Cancelar"
         disabled={!!deleting || !motivoEliminacion.trim()}
       />
-      
-    <div className="space-y-4">
+
+      <div className="space-y-4">
         {soportesState.map((soporte) => {
           const isDeleting = deleting?.idCaso === soporte.id_caso && deleting?.numSoporte === soporte.num_soporte;
-          
+
           return (
-        <div key={`${soporte.num_soporte}-${soporte.id_caso}`} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 relative group">
-          {/* Icono de eliminar en la esquina superior derecha */}
-          <button
-            onClick={() => setConfirmDelete({ idCaso: soporte.id_caso, numSoporte: soporte.num_soporte, nombreArchivo: soporte.nombre_archivo })}
-            disabled={isDeleting || downloading?.idCaso === soporte.id_caso && downloading?.numSoporte === soporte.num_soporte}
-            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-            title="Eliminar archivo"
-          >
-            {isDeleting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Trash2 className="w-4 h-4" />
-            )}
-          </button>
-
-          <div className="flex items-start justify-between mb-4 pr-8">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center">{getFileIcon(soporte.tipo_mime)}</div>
-              <div>
-                <h4 className="text-base sm:text-lg font-semibold text-gray-900">{soporte.nombre_archivo}</h4>
-                <p className="text-sm text-gray-500 mt-1">
-                  {formatDate(soporte.fecha_consignacion)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Tipo de Archivo</label>
-                <p className="text-base text-gray-900 mt-1">{soporte.tipo_mime.replace(/^application\//, '')}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Tamaño</label>
-                <p className="text-base text-gray-900 mt-1">{formatFileSize(soporte.tamano_bytes)}</p>
-              </div>
-            </div>
-
-            {soporte.nombre_completo_usuario_subio && (
-              <div>
-                <label className="text-sm font-medium text-gray-500 flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  Subido por
-                </label>
-                <p className="text-base text-gray-900 mt-1">{soporte.nombre_completo_usuario_subio}</p>
-                {soporte.fecha_consignacion && (
-                  <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    {formatDate(soporte.fecha_consignacion)}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {soporte.descripcion && (
-              <div>
-                <label className="text-sm font-medium text-gray-500">Descripción</label>
-                <p className="text-base text-gray-900 mt-1 whitespace-pre-wrap bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  {soporte.descripcion}
-                </p>
-              </div>
-            )}
-
-            <div className="pt-2 border-t border-gray-200">
+            <div key={`${soporte.num_soporte}-${soporte.id_caso}`} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 relative group">
+              {/* Icono de eliminar en la esquina superior derecha */}
               <button
-                className="inline-flex items-center gap-2 px-4 py-2 text-primary hover:bg-primary-light rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                onClick={() => handleDownload(soporte.id_caso, soporte.num_soporte, soporte.nombre_archivo)}
-                disabled={downloading?.idCaso === soporte.id_caso && downloading?.numSoporte === soporte.num_soporte || isDeleting}
+                onClick={() => setConfirmDelete({ idCaso: soporte.id_caso, numSoporte: soporte.num_soporte, nombreArchivo: soporte.nombre_archivo })}
+                disabled={isDeleting || downloading?.idCaso === soporte.id_caso && downloading?.numSoporte === soporte.num_soporte}
+                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                title="Eliminar archivo"
               >
-                {downloading?.idCaso === soporte.id_caso && downloading?.numSoporte === soporte.num_soporte ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Descargando...
-                  </>
+                {isDeleting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <>
-                <Download className="w-4 h-4" />
-                    Descargar
-                  </>
+                  <Trash2 className="w-4 h-4" />
                 )}
               </button>
+
+              <div className="flex items-start justify-between mb-4 pr-8">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center">{getFileIcon(soporte.tipo_mime)}</div>
+                  <div>
+                    <h4 className="text-base sm:text-lg font-semibold text-gray-900">{soporte.nombre_archivo}</h4>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {formatDateTime(soporte.fecha_consignacion)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Tipo de Archivo</label>
+                    <p className="text-base text-gray-900 mt-1">{soporte.tipo_mime.replace(/^application\//, '')}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Tamaño</label>
+                    <p className="text-base text-gray-900 mt-1">{formatFileSize(soporte.tamano_bytes)}</p>
+                  </div>
+                </div>
+
+                {soporte.nombre_completo_usuario_subio && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      Subido por
+                    </label>
+                    <p className="text-base text-gray-900 mt-1">{soporte.nombre_completo_usuario_subio}</p>
+                    {soporte.fecha_consignacion && (
+                      <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        {formatDateTime(soporte.fecha_consignacion)}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {soporte.descripcion && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Descripción</label>
+                    <p className="text-base text-gray-900 mt-1 whitespace-pre-wrap bg-gray-50 rounded-lg p-3 border border-gray-200">
+                      {soporte.descripcion}
+                    </p>
+                  </div>
+                )}
+
+                <div className="pt-2 border-t border-gray-200">
+                  <button
+                    className="inline-flex items-center gap-2 px-4 py-2 text-primary hover:bg-primary-light rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    onClick={() => handleDownload(soporte.id_caso, soporte.num_soporte, soporte.nombre_archivo)}
+                    disabled={downloading?.idCaso === soporte.id_caso && downloading?.numSoporte === soporte.num_soporte || isDeleting}
+                  >
+                    {downloading?.idCaso === soporte.id_caso && downloading?.numSoporte === soporte.num_soporte ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Descargando...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4" />
+                        Descargar
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
           );
         })}
-    </div>
+      </div>
     </>
   );
 }

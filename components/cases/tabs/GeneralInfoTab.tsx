@@ -50,6 +50,7 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
   const { toast } = useToast();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [beneficiaryToDelete, setBeneficiaryToDelete] = useState<{ num: number, nombre: string } | null>(null);
+  const [deleteMotivo, setDeleteMotivo] = useState('');
 
   const formatSexo = (sexo: string | null) => {
     if (!sexo) return 'No especificado';
@@ -64,10 +65,16 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
   const handleConfirmDelete = async () => {
     if (!beneficiaryToDelete) return;
 
+    if (!deleteMotivo.trim()) {
+      toast.error('Debes ingresar un motivo para eliminar el beneficiario');
+      return;
+    }
+
     try {
       const result = await deleteBeneficiarioAction({
         id_caso: caso.id_caso,
-        num_beneficiario: beneficiaryToDelete.num
+        num_beneficiario: beneficiaryToDelete.num,
+        motivo: deleteMotivo.trim()
       });
 
       if (result.success) {
@@ -83,6 +90,7 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
     } finally {
       setDeleteModalOpen(false);
       setBeneficiaryToDelete(null);
+      setDeleteMotivo('');
     }
   };
 
@@ -294,6 +302,7 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
         onClose={() => {
           setDeleteModalOpen(false);
           setBeneficiaryToDelete(null);
+          setDeleteMotivo('');
         }}
         onConfirm={handleConfirmDelete}
         title="Eliminar Beneficiario"
@@ -301,6 +310,11 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
         confirmLabel="Eliminar"
         cancelLabel="Cancelar"
         confirmVariant="danger"
+        showMotive={true}
+        motiveValue={deleteMotivo}
+        onMotiveChange={setDeleteMotivo}
+        motivePlaceholder="Describe el motivo de la eliminación..."
+        motiveRequired={true}
       />
     </div>
   );

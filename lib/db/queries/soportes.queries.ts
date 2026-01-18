@@ -22,9 +22,9 @@ export const soportesQueries = {
   }): Promise<any> => {
     const query = loadSQL('soportes/create.sql');
     const fechaConsignacionStr = data.fecha_consignacion
-      ? (typeof data.fecha_consignacion === 'string' 
-          ? data.fecha_consignacion 
-          : data.fecha_consignacion.toISOString().split('T')[0])
+      ? (typeof data.fecha_consignacion === 'string'
+        ? data.fecha_consignacion
+        : data.fecha_consignacion.toISOString()) // Preservar timestamp completo
       : null;
 
     const result: QueryResult = await pool.query(query, [
@@ -97,18 +97,18 @@ export const soportesQueries = {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      
+
       // Establecer las variables de sesión para el trigger usando set_config
       // El tercer parámetro 'true' hace que sea local a la transacción
       await client.query("SELECT set_config('app.usuario_elimina_soporte', $1, true)", [idUsuarioElimino]);
       await client.query("SELECT set_config('app.motivo_eliminacion_soporte', $1, true)", [motivo || '']);
-      
+
       // Ejecutar el DELETE (el trigger capturará la auditoría usando OLD)
       const query = loadSQL('soportes/delete.sql');
       const result: QueryResult = await client.query(query, [idCaso, numSoporte]);
-      
+
       await client.query('COMMIT');
-      
+
       if (result.rows.length === 0) {
         return null;
       }

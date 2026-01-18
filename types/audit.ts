@@ -763,6 +763,7 @@ export interface BeneficiarioEliminadoAuditRecord extends AuditRecord {
   parentesco: string;
   id_usuario_elimino: string | null;
   usuario_nombre_completo?: string;
+  motivo?: string | null;
 }
 
 // Auditoría de Acciones en Casos

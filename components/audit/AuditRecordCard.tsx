@@ -362,13 +362,17 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
             <div className="flex-1">
               <p className="font-semibold text-gray-900">
                 Acción #{r.num_accion} -{' '}
-                <Link
-                  href={`/dashboard/cases/${r.id_caso}`}
-                  className="text-primary hover:underline font-medium transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Caso #{r.id_caso}
-                </Link>
+                {r.motivo?.includes('Eliminado por eliminación del caso') ? (
+                  <span className="text-gray-700">Caso #{r.id_caso}</span>
+                ) : (
+                  <Link
+                    href={`/dashboard/cases/${r.id_caso}`}
+                    className="text-primary hover:underline font-medium transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Caso #{r.id_caso}
+                  </Link>
+                )}
               </p>
               <p className="text-sm text-gray-600">
                 Eliminada por:{' '}
@@ -431,13 +435,17 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
             <div className="flex-1">
               <p className="font-semibold text-gray-900">
                 Cita #{r.num_cita} -{' '}
-                <Link
-                  href={`/dashboard/cases/${r.id_caso}`}
-                  className="text-primary hover:underline font-medium transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Caso #{r.id_caso}
-                </Link>
+                {r.motivo?.includes('Eliminado por eliminación del caso') ? (
+                  <span className="text-gray-700">Caso #{r.id_caso}</span>
+                ) : (
+                  <Link
+                    href={`/dashboard/cases/${r.id_caso}`}
+                    className="text-primary hover:underline font-medium transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Caso #{r.id_caso}
+                  </Link>
+                )}
               </p>
               <p className="text-sm text-gray-600">
                 Eliminado por:{' '}
@@ -1730,14 +1738,17 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 </div>
               )}
             </div>
-            <div className="pt-2" onClick={(e) => e.stopPropagation()}>
-              <Link
-                href={`/dashboard/cases/${r.id_caso}`}
-                className="text-sm text-primary hover:underline"
-              >
-                Ver caso #{r.id_caso} →
-              </Link>
-            </div>
+            {/* No mostrar enlace al caso si fue eliminado junto con el caso */}
+            {!r.motivo?.includes('Eliminado por eliminación del caso') && (
+              <div className="pt-2" onClick={(e) => e.stopPropagation()}>
+                <Link
+                  href={`/dashboard/cases/${r.id_caso}`}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Ver caso #{r.id_caso} →
+                </Link>
+              </div>
+            )}
           </div>
         );
       }
@@ -1795,14 +1806,17 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
               <p className="text-sm font-semibold text-gray-700 mb-1">Motivo de eliminación</p>
               <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
             </div>
-            <div className="pt-2" onClick={(e) => e.stopPropagation()}>
-              <Link
-                href={`/dashboard/cases/${r.id_caso}`}
-                className="text-sm text-primary hover:underline"
-              >
-                Ver caso #{r.id_caso} →
-              </Link>
-            </div>
+            {/* No mostrar enlace al caso si fue eliminado junto con el caso */}
+            {!r.motivo?.includes('Eliminado por eliminación del caso') && (
+              <div className="pt-2" onClick={(e) => e.stopPropagation()}>
+                <Link
+                  href={`/dashboard/cases/${r.id_caso}`}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Ver caso #{r.id_caso} →
+                </Link>
+              </div>
+            )}
           </div>
         );
       }
@@ -1821,11 +1835,8 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 )}
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Fechas</p>
-                {r.fecha_consignacion && (
-                  <p className="text-sm text-gray-600">Consignación: {formatDateOnly(r.fecha_consignacion)}</p>
-                )}
-                <p className="text-sm text-gray-600">Fecha creación: {formatDate(r.fecha_creacion)}</p>
+                <p className="text-sm font-semibold text-gray-700 mb-1">Fecha</p>
+                <p className="text-sm text-gray-600">Creación: {formatDateTime(r.fecha_creacion)}</p>
               </div>
             </div>
             <div>
@@ -2040,14 +2051,21 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 )}
               </p>
             </div>
-            <div className="pt-2" onClick={(e) => e.stopPropagation()}>
-              <Link
-                href={`/dashboard/cases/${r.id_caso}`}
-                className="text-sm text-primary hover:underline"
-              >
-                Ver caso #{r.id_caso} →
-              </Link>
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Motivo de eliminación</p>
+              <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
             </div>
+            {/* No mostrar enlace al caso si fue eliminado junto con el caso */}
+            {!r.motivo?.includes('Eliminado por eliminación del caso') && (
+              <div className="pt-2" onClick={(e) => e.stopPropagation()}>
+                <Link
+                  href={`/dashboard/cases/${r.id_caso}`}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Ver caso #{r.id_caso} →
+                </Link>
+              </div>
+            )}
           </div>
         );
       }
@@ -2111,14 +2129,17 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
               <p className="text-sm font-semibold text-gray-700 mb-1">Motivo de eliminación</p>
               <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
             </div>
-            <div className="pt-2" onClick={(e) => e.stopPropagation()}>
-              <Link
-                href={`/dashboard/cases/${r.id_caso}`}
-                className="text-sm text-primary hover:underline"
-              >
-                Ver caso #{r.id_caso} →
-              </Link>
-            </div>
+            {/* No mostrar enlace al caso si fue eliminado junto con el caso */}
+            {!r.motivo?.includes('Eliminado por eliminación del caso') && (
+              <div className="pt-2" onClick={(e) => e.stopPropagation()}>
+                <Link
+                  href={`/dashboard/cases/${r.id_caso}`}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Ver caso #{r.id_caso} →
+                </Link>
+              </div>
+            )}
           </div>
         );
       }

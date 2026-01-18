@@ -267,6 +267,7 @@ export async function updateBeneficiarioAction(data: {
 export async function deleteBeneficiarioAction(data: {
   id_caso: number;
   num_beneficiario: number;
+  motivo: string;
 }): Promise<{ success: boolean; data?: any; error?: { message: string; code?: string } }> {
   try {
     // Verificar autenticación
@@ -278,7 +279,23 @@ export async function deleteBeneficiarioAction(data: {
       };
     }
 
-    const result = await beneficiariosQueries.delete(data.id_caso, data.num_beneficiario, authResult.user.cedula);
+    // Validar motivo
+    if (!data.motivo || data.motivo.trim() === '') {
+      return {
+        success: false,
+        error: {
+          message: 'El motivo de eliminación es obligatorio',
+          code: 'VALIDATION_ERROR',
+        },
+      };
+    }
+
+    const result = await beneficiariosQueries.delete(
+      data.id_caso,
+      data.num_beneficiario,
+      authResult.user.cedula,
+      data.motivo.trim()
+    );
 
     // Revalidar el detalle del caso para que se vean los cambios
     revalidatePath(`/dashboard/cases/${data.id_caso}`);

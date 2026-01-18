@@ -222,12 +222,13 @@ export const beneficiariosQueries = {
   /**
    * Elimina un beneficiario
    */
-  delete: async (idCaso: number, numBeneficiario: number, userId: string): Promise<any> => {
+  delete: async (idCaso: number, numBeneficiario: number, userId: string, motivo: string): Promise<any> => {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
       // Set session config for audit trigger
       await client.query(`SELECT set_config('app.current_user_id', $1, true)`, [userId]);
+      await client.query(`SELECT set_config('app.motivo_eliminacion_beneficiario', $1, true)`, [motivo]);
 
       const query = loadSQL('beneficiarios/delete.sql');
       const result = await client.query(query, [idCaso, numBeneficiario]);
