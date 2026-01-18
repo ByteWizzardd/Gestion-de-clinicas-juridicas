@@ -544,7 +544,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
               {
                 label: (
                   <>
-                    <FileDown className="w-4 h-4 text-gray-500 group-hover:text-yellow-600 transition-colors" />
+                    <Download className="w-4 h-4 text-gray-500 group-hover:text-yellow-600 transition-colors" />
                     Descargar registro y control
                   </>
                 ),
