@@ -80,8 +80,17 @@ export function AppointmentScheduleModal({
       const dateObj = new Date(date);
       if (isNaN(dateObj.getTime())) {
         newErrors.date = 'Fecha inválida';
+      } else {
+        // La fecha debe ser mayor o igual a hoy
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const selectedDate = new Date(dateObj);
+        selectedDate.setHours(0, 0, 0, 0);
+
+        if (selectedDate < today) {
+          newErrors.date = 'La fecha de la cita no puede ser anterior a hoy';
+        }
       }
-      // Se permiten fechas pasadas, presentes y futuras sin restricciones
     }
 
     if (usuariosInvitados.length === 0) {
