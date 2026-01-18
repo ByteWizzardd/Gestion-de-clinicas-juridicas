@@ -20,7 +20,7 @@ const faqs: FAQ[] = [
   {
     id: '2',
     question: '¿Cómo agendo una cita con un solicitante?',
-    answer: 'Puedes agendar una cita desde la sección "Citas" en el menú lateral. Haz clic en "Nueva Cita" y selecciona el solicitante, la fecha, hora y el tipo de consulta. El sistema te mostrará los horarios disponibles según la programación de consultas configurada.',
+    answer: 'Puedes agendar una cita desde la sección "Citas" en el menú lateral o desde el detalle de un caso en la pestaña "Citas". Haz clic en "Nueva Cita", selecciona el caso, la fecha y los estudiantes que atenderán. Nota: la fecha de la cita debe ser igual o posterior a la fecha actual.',
   },
   {
     id: '3',
@@ -30,12 +30,12 @@ const faqs: FAQ[] = [
   {
     id: '4',
     question: '¿Qué información puedo ver en los reportes?',
-    answer: 'Los reportes te permiten visualizar estadísticas sobre casos, solicitantes y actividades de la clínica. Puedes generar reportes por estatus de casos, tipos de casos, información socioeconómica de solicitantes, y más. Los reportes se pueden exportar en formato PDF y DOCX.',
+    answer: 'Los reportes te permiten visualizar estadísticas sobre casos, solicitantes y actividades de la clínica. Puedes generar reportes por estatus de casos, tipos de casos, información socioeconómica de solicitantes, y más. Los reportes se pueden exportar en formato PDF y DOCX. Nota: solo coordinadores y profesores tienen acceso a esta sección.',
   },
   {
     id: '5',
     question: '¿Cómo registro un nuevo solicitante?',
-    answer: 'Ve a la sección "Solicitantes" y haz clic en "Nuevo Solicitante". El formulario tiene varios pasos donde deberás ingresar información personal, datos socioeconómicos, información de vivienda y familia. Puedes guardar el progreso y continuar más tarde si es necesario.',
+    answer: 'Ve a la sección "Solicitantes" y haz clic en "Nuevo Solicitante". El formulario tiene varios pasos donde deberás ingresar información personal, datos socioeconómicos, información de vivienda y familia. El progreso se guarda automáticamente para que puedas continuar más tarde si cierras el formulario.',
   },
   {
     id: '6',
@@ -45,12 +45,12 @@ const faqs: FAQ[] = [
   {
     id: '7',
     question: '¿Cómo filtro los casos?',
-    answer: 'En la página de casos, puedes usar la barra de búsqueda para buscar por número de caso, nombre del solicitante o cédula. También puedes usar los filtros disponibles para buscar por estatus, categoría, materia, o rango de fechas.',
+    answer: 'En la página de casos, puedes usar la barra de búsqueda para buscar por número de caso, nombre del solicitante o cédula. También puedes usar los filtros disponibles para buscar por estatus, núcleo, materia, trámite, o ver solo tus casos asignados.',
   },
   {
     id: '8',
     question: '¿Qué roles existen en el sistema?',
-    answer: 'El sistema tiene tres roles principales: Coordinador (puede gestionar usuarios, catálogos y tiene acceso completo), Profesor (puede gestionar su equipo y casos asignados), y Estudiante (puede ver y trabajar con casos asignados). Cada rol tiene permisos específicos según su función.',
+    answer: 'El sistema tiene tres roles principales: Coordinador (puede gestionar usuarios, catálogos, auditoría y tiene acceso completo), Profesor (puede gestionar su equipo de estudiantes y casos asignados), y Estudiante (puede ver y trabajar con casos asignados a su equipo). Cada rol tiene permisos específicos según su función.',
   },
   {
     id: '9',
@@ -62,6 +62,42 @@ const faqs: FAQ[] = [
     question: '¿Qué hago si olvidé mi contraseña?',
     answer: 'Si olvidaste tu contraseña, en la página de inicio de sesión haz clic en "¿Olvidaste tu contraseña?". Ingresa tu correo electrónico y recibirás un código de verificación por email. Luego podrás establecer una nueva contraseña.',
   },
+  {
+    id: '11',
+    question: '¿Cómo agrego beneficiarios a un caso?',
+    answer: 'Dentro del detalle de un caso, ve a la pestaña "Beneficiarios" y haz clic en "Agregar Beneficiario". Completa el formulario con los datos del beneficiario incluyendo nombres, apellidos, fecha de nacimiento, sexo, tipo de beneficiario (directo o indirecto) y su parentesco con el solicitante.',
+  },
+  {
+    id: '12',
+    question: '¿Cómo registro una acción o actuación en un caso?',
+    answer: 'En el detalle del caso, ve a la pestaña "Acciones" y haz clic en "Nueva Acción". Selecciona el tipo de acción, la fecha de ejecución, descripción y los estudiantes ejecutores. Las acciones permiten documentar todas las actividades realizadas en el caso.',
+  },
+  {
+    id: '13',
+    question: '¿Cómo funcionan las notificaciones?',
+    answer: 'El sistema envía notificaciones cuando te asignan a un caso o cita, cuando hay actualizaciones importantes, o cuando se requiere tu atención. Puedes ver tus notificaciones haciendo clic en el icono de campana en la esquina superior derecha. Las notificaciones no leídas se muestran con un indicador numérico.',
+  },
+  {
+    id: '14',
+    question: '¿Qué es la sección de Auditoría?',
+    answer: 'La Auditoría es una sección disponible solo para coordinadores que permite ver un registro histórico de todas las acciones realizadas en el sistema: creación, modificación y eliminación de usuarios, casos, solicitantes, beneficiarios, acciones y más. Es útil para supervisar la actividad y mantener un control de cambios.',
+  },
+  {
+    id: '15',
+    question: '¿Cómo funciona la Gestión de Equipo para profesores?',
+    answer: 'Los profesores pueden gestionar su equipo de estudiantes desde la sección "Gestión de Equipo". Allí pueden ver los estudiantes asignados a su grupo, inscribir nuevos estudiantes o removerlos. Los estudiantes del equipo pueden trabajar en los casos asignados al profesor.',
+  },
+  {
+    id: '16',
+    question: '¿Qué muestra el Dashboard?',
+    answer: 'El Dashboard muestra un resumen de la actividad: estadísticas de casos por estatus, últimas citas programadas, casos recientes, y métricas clave. Para coordinadores, muestra datos globales; para profesores y estudiantes, muestra información relevante a sus casos asignados.',
+  },
+  {
+    id: '17',
+    question: '¿Cómo edito un solicitante existente?',
+    answer: 'Ve a la sección "Solicitantes", busca al solicitante que deseas editar y haz clic en él para ver su detalle. Luego usa el botón "Editar" para modificar su información. Todos los campos del formulario de registro están disponibles para edición.',
+  },
+
 ];
 
 export default function HelpClient() {
@@ -131,7 +167,7 @@ export default function HelpClient() {
                   <ChevronDown className="w-5 h-5 text-gray-500 flex-shrink-0" />
                 )}
               </button>
-              
+
               <AnimatePresence>
                 {openFaq === faq.id && (
                   <motion.div
@@ -153,20 +189,7 @@ export default function HelpClient() {
           ))}
         </div>
 
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <p className="text-sm text-gray-600 mb-2">
-            ¿No encuentras la respuesta que buscas?
-          </p>
-          <p className="text-sm text-gray-500">
-            Contacta al equipo de soporte en:{' '}
-            <a 
-              href="mailto:soporte@clinicasjuridicas.com" 
-              className="text-primary hover:underline"
-            >
-              soporte@clinicasjuridicas.com
-            </a>
-          </p>
-        </div>
+
       </motion.div>
     </div>
   );

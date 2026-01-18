@@ -48,7 +48,7 @@ export const fullMenu: MenuItem[] = [
     label: 'Reportes',
     href: '/dashboard/reports',
     icon: Clock,
-    roles: ['coordinator', 'professor', 'student'],
+    roles: ['coordinator', 'professor'],
   },
   {
     label: 'Usuarios',
