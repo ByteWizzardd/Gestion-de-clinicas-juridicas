@@ -22,7 +22,8 @@ SELECT
     vc.nombre_nucleo,
     vc.nombre_materia,
     vc.nombre_categoria,
-    vc.nombre_subcategoria
+    vc.nombre_subcategoria,
+    vc.nombre_ambito_legal
 FROM view_casos_detalle vc
 ORDER BY vc.id_caso DESC;
 

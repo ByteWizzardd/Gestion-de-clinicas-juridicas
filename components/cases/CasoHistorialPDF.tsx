@@ -190,7 +190,7 @@ export function CasoHistorialPDF({ data, logoBase64 }: CasoHistorialPDFProps) {
           <Text style={styles.label}>3. Caso (Materia):</Text>
           <View style={[styles.boxField, { flex: 1 }]}>
             <Text style={styles.valueText}>
-              {`${casoData.nombre_materia || ''} ${casoData.nombre_categoria || ''}`}
+              {casoData.nombre_materia || ''}
             </Text>
           </View>
         </View>

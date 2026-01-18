@@ -331,6 +331,8 @@ export default function CaseDetailClient() {
           >
             <span className="text-base text-center">Cambiar Estatus</span>
           </button>
+
+
         </div>
       </motion.div>
       <motion.div
