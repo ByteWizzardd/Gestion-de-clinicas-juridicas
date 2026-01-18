@@ -3463,7 +3463,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                   </p>
                 )}
                 {r.artefactos_sin_cambio?.length > 0 && (
-                  <p className="text-sm text-gray-500 ml-2 text-xs">
+                  <p className="text-sm text-gray-500 ml-2">
                     Sin cambio: {r.artefactos_sin_cambio.join(', ')}
                   </p>
                 )}
@@ -4436,7 +4436,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           {renderSummary()}
           <p className="text-xs text-gray-500 mt-2">{formatOnlyDate(getDate())}</p>
         </div>
-        <div className="flex-shrink-0 p-2 hover:bg-gray-100 rounded-full transition-colors">
+        <div className="shrink-0 p-2 hover:bg-gray-100 rounded-full transition-colors">
           {expanded ? (
             <ChevronUp className="w-5 h-5 text-gray-600" />
           ) : (
