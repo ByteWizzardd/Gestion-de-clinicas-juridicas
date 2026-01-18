@@ -84,6 +84,19 @@ export default function CalendarWidget({
     return date.getTime() === today.getTime();
   };
 
+  // Verificar si es el día seleccionado
+  const isSelected = (day: number, isCurrentMonth: boolean) => {
+    if (!isCurrentMonth) return false;
+    const date = new Date(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth(),
+      day
+    );
+    return date.getDate() === selectedDate.getDate() &&
+      date.getMonth() === selectedDate.getMonth() &&
+      date.getFullYear() === selectedDate.getFullYear();
+  };
+
   const handlePrevMonth = () => {
     const newMonth = new Date(
       currentMonth.getFullYear(),
@@ -159,7 +172,7 @@ export default function CalendarWidget({
   return (
     <div className="h-full flex flex-col">
       {/* Header con navegación */}
-      <div className="flex items-center justify-between mb-6 flex-shrink-0">
+      <div className="flex items-center justify-between mb-6 shrink-0">
         <button
           onClick={handlePrevMonth}
           className="p-2 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
@@ -182,13 +195,12 @@ export default function CalendarWidget({
       {/* Tabla de calendario con bordes */}
       <div className="border border-gray-300 rounded-2xl overflow-hidden flex-1 flex flex-col">
         {/* Header de días de la semana */}
-        <div className="grid grid-cols-7 border-b border-gray-300 flex-shrink-0">
+        <div className="grid grid-cols-7 border-b border-gray-300 shrink-0">
           {dayNames.map((day, index) => (
             <div
               key={day}
-              className={`text-center text-xs font-medium text-gray-600 py-2 border-r border-gray-300 bg-gray-50 ${
-                index === dayNames.length - 1 ? 'border-r-0' : ''
-              }`}
+              className={`text-center text-xs font-medium text-gray-600 py-2 border-r border-gray-300 bg-gray-50 ${index === dayNames.length - 1 ? 'border-r-0' : ''
+                }`}
             >
               {day}
             </div>
@@ -213,9 +225,8 @@ export default function CalendarWidget({
                 <button
                   key={`prev-${day}`}
                   onClick={() => handleDayClick(day, false)}
-                  className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-base text-left cursor-pointer ${
-                    isLastInRow ? 'border-r-0' : ''
-                  }`}
+                  className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-base text-left cursor-pointer ${isLastInRow ? 'border-r-0' : ''
+                    }`}
                 >
                   {day}
                 </button>
@@ -226,6 +237,7 @@ export default function CalendarWidget({
             {Array.from({ length: daysInMonth }).map((_, index) => {
               const day = index + 1;
               const isCurrentDay = isToday(day, true);
+              const isSelectedDay = isSelected(day, true);
               const hasApts = hasAppointments(day, true);
               // Calcular posición en el grid completo (incluyendo días previos)
               const gridPosition = startingDayOfWeek + index;
@@ -238,18 +250,21 @@ export default function CalendarWidget({
                   className={`
  p-2 border-r border-b border-gray-300 transition-all duration-200 ease-in-out text-base text-left relative cursor-pointer
                     ${isLastInRow ? 'border-r-0' : ''}
-                    ${
-                      isCurrentDay
+                    ${isSelectedDay
+                      ? isCurrentDay
                         ? 'bg-primary text-white font-semibold hover:bg-primary-dark'
+                        : 'bg-primary/20 text-primary font-bold border border-primary/20 hover:bg-primary/30'
+                      : isCurrentDay
+                        ? 'text-primary font-bold border border-primary shadow-sm'
                         : hasApts
-                        ? 'bg-primary-light text-primary font-medium hover:bg-primary-light/80'
-                        : 'text-foreground hover:bg-gray-200 hover:font-medium'
+                          ? 'bg-primary-light text-primary font-medium hover:bg-primary-light/80'
+                          : 'text-foreground hover:bg-gray-200 hover:font-medium'
                     }
                   `}
                 >
                   {day}
-                  {hasApts && !isCurrentDay && (
-                    <span className="absolute bottom-2 left-2 w-1.5 h-1.5 bg-primary rounded-full" />
+                  {hasApts && !isSelectedDay && (
+                    <span className={`absolute bottom-2 left-2 w-1.5 h-1.5 rounded-full ${isCurrentDay ? 'bg-primary' : 'bg-primary'}`} />
                   )}
                 </button>
               );
@@ -265,9 +280,8 @@ export default function CalendarWidget({
                 <button
                   key={`next-${day}`}
                   onClick={() => handleDayClick(day, false)}
-                  className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-base text-left cursor-pointer ${
-                    isLastInRow ? 'border-r-0' : ''
-                  }`}
+                  className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-base text-left cursor-pointer ${isLastInRow ? 'border-r-0' : ''
+                    }`}
                 >
                   {day}
                 </button>
