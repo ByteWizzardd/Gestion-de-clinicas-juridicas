@@ -10,6 +10,7 @@
 -- $8 = nacionalidad ('V' o 'E')
 -- $9 = id_trabajo (opcional, puede ser NULL)
 -- $10 = id_actividad (opcional, puede ser NULL)
+-- $11 = direccion_habitacion
 -- 
 -- Nota: Este query crea un solicitante con valores por defecto para los campos requeridos.
 -- Los valores por defecto deben existir en las tablas de referencia.
@@ -35,7 +36,8 @@ INSERT INTO solicitantes (
     id_actividad,
     id_estado,
     num_municipio,
-    num_parroquia
+    num_parroquia,
+    direccion_habitacion
 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 
     'Soltero', -- estado_civil por defecto
     false, -- concubinato por defecto
@@ -46,12 +48,14 @@ INSERT INTO solicitantes (
     $10, -- id_actividad (puede ser NULL)
     1, -- id_estado (debe existir en estados)
     1, -- num_municipio (debe existir en municipios con id_estado=1)
-    1  -- num_parroquia (debe existir en parroquias con id_estado=1, num_municipio=1)
+    1, -- num_parroquia (debe existir en parroquias con id_estado=1, num_municipio=1)
+    $11 -- direccion_habitacion
 )
 ON CONFLICT (cedula) DO UPDATE
 SET nombres = EXCLUDED.nombres,
     apellidos = EXCLUDED.apellidos,
     correo_electronico = EXCLUDED.correo_electronico,
-    telefono_celular = EXCLUDED.telefono_celular
+    telefono_celular = EXCLUDED.telefono_celular,
+    direccion_habitacion = EXCLUDED.direccion_habitacion
 RETURNING *;
 

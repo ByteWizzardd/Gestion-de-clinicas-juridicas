@@ -129,6 +129,7 @@ export const solicitantesQueries = {
         idEstado?: number | null;
         numMunicipio?: number | null;
         numParroquia?: number | null;
+        direccionHabitacion?: string | null;
     }): Promise<unknown> => {
         const query = loadSQL('solicitantes/update-complete.sql');
         const result: QueryResult = await pool.query(query, [
@@ -144,6 +145,7 @@ export const solicitantesQueries = {
             data.idEstado || null,
             data.numMunicipio || null,
             data.numParroquia || null,
+            data.direccionHabitacion || null,
         ]);
         return result.rows[0];
     },

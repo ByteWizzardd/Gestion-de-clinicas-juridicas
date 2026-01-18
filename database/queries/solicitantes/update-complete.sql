@@ -13,6 +13,7 @@
 -- $11 = id_estado
 -- $12 = num_municipio
 -- $13 = num_parroquia
+-- $14 = direccion_habitacion
 
 UPDATE solicitantes
 SET 
@@ -27,7 +28,8 @@ SET
     id_actividad = $10,
     id_estado = $11,
     num_municipio = $12,
-    num_parroquia = $13
+    num_parroquia = $13,
+    direccion_habitacion = $14
 WHERE cedula = $1
 RETURNING *;
 

@@ -52,6 +52,7 @@ interface ApplicantFormData {
   idEstado: string;
   numMunicipio: string;
   numParroquia: string;
+  direccionHabitacion?: string;
   // Trabajo
   trabaja: string;
   condicionTrabajo: string;
@@ -303,6 +304,7 @@ export const solicitantesService = {
             nacionalidad,
             idTrabajo, // Puede ser NULL
             idActividad, // Puede ser NULL
+            data.direccionHabitacion || null,
           ]);
         } catch (error: any) {
           // Si es un error de unique constraint en correo_electronico
@@ -449,6 +451,7 @@ export const solicitantesService = {
         data.idEstado ? parseInt(data.idEstado) : 1, // id_estado
         data.numMunicipio ? parseInt(data.numMunicipio) : 1, // num_municipio
         data.numParroquia ? parseInt(data.numParroquia) : 1, // num_parroquia
+        data.direccionHabitacion || null, // direccion_habitacion
       ]);
       const solicitanteActualizado = solicitanteResult.rows[0];
 
@@ -575,6 +578,7 @@ export const solicitantesService = {
         data.idEstado ? parseInt(data.idEstado) : 1, // $16
         data.numMunicipio ? parseInt(data.numMunicipio) : 1, // $17
         data.numParroquia ? parseInt(data.numParroquia) : 1, // $18
+        data.direccionHabitacion || null, // $19
       ]);
       const solicitanteActualizado = solicitanteResult.rows[0];
 
@@ -663,7 +667,7 @@ export const solicitantesService = {
 
         // Encontrar los que se eliminaron (están en actuales pero no en nuevos)
         const artefactosAEliminar = [...artefactosActuales].filter(a => !artefactosNuevos.has(a));
-        
+
         // Encontrar los que se agregaron (están en nuevos pero no en actuales)
         const artefactosAAgregar = [...artefactosNuevos].filter(a => !artefactosActuales.has(a));
 

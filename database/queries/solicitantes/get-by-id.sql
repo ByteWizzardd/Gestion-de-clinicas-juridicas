@@ -16,6 +16,7 @@ SELECT
     vs.estado_civil,
     vs.concubinato,
     vs.tiempo_estudio,
+    vs.direccion_habitacion,
     
     -- Información educativa
     ne.id_nivel_educativo,

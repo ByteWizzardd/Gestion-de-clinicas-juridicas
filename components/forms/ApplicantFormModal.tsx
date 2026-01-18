@@ -40,6 +40,7 @@ interface FormData {
   idEstado: string;
   numMunicipio: string;
   numParroquia: string;
+  direccionHabitacion: string;
   // Paso 3 - Vivienda
   tipoVivienda: string;
   cantHabitaciones: string;
@@ -166,6 +167,7 @@ const getInitialFormData = (): FormData => ({
   idEstado: '',
   numMunicipio: '',
   numParroquia: '',
+  direccionHabitacion: '',
   tipoVivienda: '',
   cantHabitaciones: '',
   cantBanos: '',
@@ -310,6 +312,7 @@ const mapInitialDataToFormData = (data: any): FormData => {
     idEstado: (data.id_estado || '').toString(),
     numMunicipio: (data.num_municipio || '').toString(),
     numParroquia: (data.num_parroquia || '').toString(),
+    direccionHabitacion: data.direccion_habitacion || '',
 
     tipoVivienda: data.tipo_vivienda || '',
     cantHabitaciones: (data.cant_habitaciones || '').toString(),
@@ -667,6 +670,11 @@ export default function ApplicantFormModal({
     // Validar parroquia
     if (!formData.numParroquia || formData.numParroquia.trim() === '') {
       newErrors.numParroquia = 'Este campo es requerido';
+    }
+
+    // Validar dirección de habitación
+    if (!formData.direccionHabitacion || formData.direccionHabitacion.trim() === '') {
+      newErrors.direccionHabitacion = 'Este campo es requerido';
     }
 
     setErrors(newErrors);
@@ -2283,6 +2291,17 @@ export default function ApplicantFormModal({
             error={errors.numParroquia}
             required
             disabled={!formData.numMunicipio || loadingCatalogos}
+          />
+        </div>
+        <div className="col-span-3">
+          <Input
+            label="Dirección de Habitación *"
+            name="direccionHabitacion"
+            value={formData.direccionHabitacion}
+            onChange={(e) => updateField('direccionHabitacion', e.target.value)}
+            error={errors.direccionHabitacion}
+            placeholder="Indique avenida, calle, edificio, piso, apartamento..."
+            required
           />
         </div>
       </div>

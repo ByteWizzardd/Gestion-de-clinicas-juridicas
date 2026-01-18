@@ -531,6 +531,7 @@ CREATE TABLE solicitantes (
     id_estado INTEGER NOT NULL,
     num_municipio INTEGER NOT NULL,
     num_parroquia INTEGER NOT NULL,
+    direccion_habitacion VARCHAR(500),
     
     FOREIGN KEY (id_estado, num_municipio, num_parroquia) 
     REFERENCES parroquias(id_estado, num_municipio, num_parroquia)
