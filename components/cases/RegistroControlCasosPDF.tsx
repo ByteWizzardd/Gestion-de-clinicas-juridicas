@@ -228,13 +228,14 @@ const DateBoxes = ({ date }: { date?: string | Date | null }) => {
 export function RegistroControlCasosPDF({ data, logoBase64 }: RegistroControlCasosPDFProps) {
     const { caso } = data;
 
-    // Profesores y Alumnos - Case Insensitive Search
-    const profesor = data.equipo?.find((m: any) =>
+    // Profesores y Alumnos - Case Insensitive Search & Multiple Support
+    const profesores = data.equipo?.filter((m: any) =>
         (m.rol?.toLowerCase() === 'profesor' || m.tipo?.toLowerCase() === 'profesor')
-    );
-    const alumno = data.equipo?.find((m: any) =>
+    ).map((p: any) => p.cedula).join(', ');
+
+    const alumnos = data.equipo?.filter((m: any) =>
         (m.rol?.toLowerCase() === 'estudiante' || m.tipo?.toLowerCase() === 'estudiante')
-    );
+    ).map((a: any) => a.cedula).join(', ');
 
     // Tramite Check logic - Case Insensitive & Trimmed
     const tramite = (caso.tramite || '').trim().toLowerCase();
@@ -352,7 +353,7 @@ export function RegistroControlCasosPDF({ data, logoBase64 }: RegistroControlCas
                     <View style={{ width: '50%', flexDirection: 'row', alignItems: 'center' }}>
                         <Text style={styles.label}>7. C.I Profesor:</Text>
                         <View style={[styles.underlinedField, { borderBottomWidth: 2, marginRight: 20 }]}>
-                            <Text style={styles.valueText}>{profesor?.cedula || ''}</Text>
+                            <Text style={styles.valueText}>{profesores || ''}</Text>
                         </View>
                     </View>
 
@@ -360,7 +361,7 @@ export function RegistroControlCasosPDF({ data, logoBase64 }: RegistroControlCas
                     <View style={{ width: '50%', flexDirection: 'row', alignItems: 'center' }}>
                         <Text style={styles.label}>8. C.I Alumno:</Text>
                         <View style={[styles.underlinedField, { borderBottomWidth: 2 }]}>
-                            <Text style={styles.valueText}>{alumno?.cedula || ''}</Text>
+                            <Text style={styles.valueText}>{alumnos || ''}</Text>
                         </View>
                     </View>
                 </View>
