@@ -1,15 +1,7 @@
 'use client';
 
-import {
-  Filter as FilterIcon,
-  ChevronLeft,
-  Layers,
-  UserCheck,
-  Calendar,
-  FileText
-} from 'lucide-react';
+import { Filter as FilterIcon, ChevronLeft, Layers, UserCheck, Calendar, FileText, X, Users } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
-import DropdownMenu from '@/components/ui/navigation/DropdownMenu';
 import { AppointmentViewMode } from '@/components/ui/navigation/AppointmentViewSwitcher';
 import DatePicker from '@/components/forms/DatePicker';
 import { AnimatePresence, motion } from 'motion/react';
@@ -41,171 +33,8 @@ interface AppointmentsToolbarProps {
   filterOptions: AppointmentFilterOptions;
 }
 
-interface FilterMenuItemProps {
-  title: string;
-  icon: React.ReactNode;
-  isOpen: boolean;
-  onToggle: () => void;
-  hasActiveFilter?: boolean;
-  showArrow?: boolean;
-  submenuContent?: React.ReactNode;
-  triggerRef?: React.RefObject<HTMLButtonElement | null>;
-}
-
-function FilterMenuItem({
-  title,
-  icon,
-  isOpen,
-  onToggle,
-  hasActiveFilter = false,
-  showArrow = true,
-  submenuContent,
-  triggerRef,
-  ...props
-}: FilterMenuItemProps & React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, height: 0 });
-  const [mounted, setMounted] = useState(false);
-  const submenuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        isOpen &&
-        submenuRef.current &&
-        triggerRef?.current &&
-        !submenuRef.current.contains(event.target as Node) &&
-        !triggerRef.current.contains(event.target as Node)
-      ) {
-        // Verificar que el click no sea en el menú principal
-        const mainMenu = document.querySelector('[data-filter-main-menu]');
-        if (mainMenu && !mainMenu.contains(event.target as Node)) {
-          onToggle();
-        }
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-      };
-    }
-  }, [isOpen, triggerRef, onToggle]);
-
-  useEffect(() => {
-    if (isOpen && triggerRef?.current) {
-      const updatePosition = () => {
-        if (triggerRef.current) {
-          const rect = triggerRef.current.getBoundingClientRect();
-          const submenuWidth = 320; // Ancho estimado del submenú
-          const submenuMaxHeight = window.innerHeight * 0.8; // 80vh
-          const spaceOnRight = window.innerWidth - rect.right;
-          const spaceOnLeft = rect.left;
-          const spaceBelow = window.innerHeight - rect.bottom;
-          const spaceAbove = rect.top;
-
-          // Si no hay espacio a la derecha, mostrar a la izquierda
-          const shouldShowOnLeft = spaceOnRight < submenuWidth && spaceOnLeft > submenuWidth;
-
-          // Calcular posición vertical para que no se corte
-          let topPosition = rect.top + window.scrollY;
-          if (spaceBelow < submenuMaxHeight && spaceAbove > spaceBelow) {
-            // Si no hay espacio abajo pero sí arriba, ajustar hacia arriba
-            topPosition = Math.max(8, rect.top + window.scrollY - (submenuMaxHeight - spaceBelow));
-          } else {
-            // Asegurar que no se salga por abajo
-            const maxTop = window.innerHeight + window.scrollY - submenuMaxHeight - 8;
-            topPosition = Math.min(topPosition, maxTop);
-          }
-
-          setCoords({
-            top: topPosition,
-            left: shouldShowOnLeft
-              ? rect.left + window.scrollX - submenuWidth + 8
-              : rect.left + window.scrollX + rect.width - 8,
-            width: rect.width,
-            height: rect.height
-          });
-        }
-      };
-
-      updatePosition();
-      window.addEventListener('scroll', updatePosition, true);
-      window.addEventListener('resize', updatePosition);
-
-      return () => {
-        window.removeEventListener('scroll', updatePosition, true);
-        window.removeEventListener('resize', updatePosition);
-      };
-    }
-  }, [isOpen, triggerRef]);
-
-  return (
-    <>
-      <button
-        ref={triggerRef}
-        {...props}
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onToggle();
-        }}
-        className={`relative w-full flex items-center gap-3 px-4 py-3.5 text-left cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-all duration-150 border-b border-gray-200 last:border-b-0 ${hasActiveFilter ? 'bg-primary-light/10 border-l-4 border-l-primary' : ''
-          }`}
-      >
-        {showArrow && (
-          <ChevronLeft className={`w-4 h-4 text-gray-500 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-90' : ''}`} />
-        )}
-        <span className={`flex-1 text-sm font-medium ${hasActiveFilter ? 'text-primary' : 'text-gray-700'}`}>
-          {title}
-        </span>
-        <div className="text-gray-400 shrink-0">
-          {icon}
-        </div>
-      </button>
-
-      {/* Submenú lateral */}
-      {mounted && isOpen && submenuContent && createPortal(
-        <AnimatePresence>
-          <motion.div
-            ref={submenuRef}
-            initial={{ opacity: 0, x: -10, scale: 0.95 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: -10, scale: 0.95 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            style={{
-              position: 'fixed',
-              top: coords.top + 8,
-              left: coords.left,
-              zIndex: 10000,
-              pointerEvents: 'auto',
-              maxHeight: '80vh',
-            }}
-            className="bg-white border border-gray-300 rounded-2xl shadow-xl min-w-[280px] max-w-[320px] flex flex-col"
-            data-submenu
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-            }}
-          >
-            {submenuContent}
-          </motion.div>
-        </AnimatePresence>,
-        document.body
-      )}
-    </>
-  );
-}
-
 export default function AppointmentsToolbar({
   viewMode,
-  onViewModeChange,
   nucleoFilter,
   usuarioFilter,
   caseFilter,
@@ -222,56 +51,88 @@ export default function AppointmentsToolbar({
   onCustomDateEndChange,
   filterOptions,
 }: AppointmentsToolbarProps) {
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    fecha: false,
-    nucleo: false,
-    usuario: false,
-    caso: false,
-  });
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeSubmenu, setActiveSubmenu] = useState<'nucleo' | 'usuario' | 'caso' | 'fechas' | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const [submenuPosition, setSubmenuPosition] = useState({ top: 0, right: 0 });
 
-  const fechaItemRef = useRef<HTMLButtonElement>(null);
-  const nucleoItemRef = useRef<HTMLButtonElement>(null);
-  const usuarioItemRef = useRef<HTMLButtonElement>(null);
-  const casoItemRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const submenuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const activeButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Cerrar todos los submenús cuando se cierra el filtro principal
   useEffect(() => {
-    if (!isFilterOpen) {
-      setOpenSections({ fecha: false, nucleo: false, usuario: false, caso: false });
-    }
-  }, [isFilterOpen]);
+    setMounted(true);
+  }, []);
 
   // Solo mostrar el filtro en vista de lista o agendadas
   if (viewMode !== 'list' && viewMode !== 'scheduled') {
     return null;
   }
 
-  const hasActiveFilter = nucleoFilter !== '' || usuarioFilter.length > 0 || caseFilter.length > 0 || misCasosFilter || dateRangeFilter !== 'all';
+  const handleSubmenuToggle = (type: 'nucleo' | 'usuario' | 'caso' | 'fechas', e: React.MouseEvent<HTMLButtonElement>) => {
+    if (activeSubmenu === type) {
+      setActiveSubmenu(null);
+    } else {
+      const buttonRect = e.currentTarget.getBoundingClientRect();
+      const menuRect = menuRef.current?.getBoundingClientRect();
+      const submenuWidth = 280; // Ancho estimado del submenú
+      const submenuMaxHeight = window.innerHeight * 0.8; // 80vh
+      const spaceBelow = window.innerHeight - buttonRect.top;
+      const spaceAbove = buttonRect.top;
 
-  const getActiveFilterCount = () => {
-    let count = 0;
-    if (nucleoFilter !== '') count++;
-    if (usuarioFilter.length > 0) count++;
-    if (caseFilter.length > 0) count++;
-    if (misCasosFilter) count++;
-    if (dateRangeFilter !== 'all') count++;
-    return count;
-  };
+      // Calcular posición vertical para que no se corte
+      let topPosition = buttonRect.top;
+      if (spaceBelow < submenuMaxHeight && spaceAbove > spaceBelow) {
+        // Si no hay espacio abajo pero sí arriba, ajustar hacia arriba
+        topPosition = Math.max(8, buttonRect.top - (submenuMaxHeight - spaceBelow));
+      } else {
+        // Asegurar que no se salga por abajo
+        const maxTop = window.innerHeight - submenuMaxHeight - 8;
+        topPosition = Math.min(topPosition, maxTop);
+      }
 
-  const toggleSection = (section: string) => {
-    setOpenSections(prev => {
-      const newState = { ...prev };
-      // Cerrar otras secciones cuando se abre una nueva
-      Object.keys(newState).forEach(key => {
-        if (key !== section) {
-          newState[key] = false;
-        }
+      setSubmenuPosition({
+        top: Math.max(8, topPosition), // Mínimo 8px desde el top
+        right: menuRect ? (window.innerWidth - menuRect.left + 8) : 0
       });
-      newState[section] = !prev[section];
-      return newState;
-    });
+      setActiveSubmenu(type);
+    }
   };
+
+  // Cerrar al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      const isInsideMenu = menuRef.current?.contains(target);
+      const isInsideSubmenu = submenuRef.current?.contains(target);
+      const isInsideTrigger = triggerRef.current?.contains(target);
+      const isInsideDatePicker = (target as Element).closest?.('.datepicker-portal') !== null;
+
+      if (activeSubmenu === 'fechas' && isInsideSubmenu) {
+        return;
+      }
+
+      if (!isInsideMenu && !isInsideSubmenu && !isInsideTrigger && !isInsideDatePicker) {
+        setIsOpen(false);
+        setActiveSubmenu(null);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen, activeSubmenu]);
+
+  const activeFilterCount =
+    (nucleoFilter ? 1 : 0) +
+    (usuarioFilter.length > 0 ? 1 : 0) +
+    (caseFilter.length > 0 ? 1 : 0) +
+    (misCasosFilter ? 1 : 0) +
+    (dateRangeFilter !== 'all' ? 1 : 0);
+
+  const hasActiveFilter = activeFilterCount > 0;
 
   const handleClearFilters = () => {
     onNucleoFilterChange('');
@@ -281,389 +142,384 @@ export default function AppointmentsToolbar({
     onDateRangeFilterChange('all');
     onCustomDateStartChange('');
     onCustomDateEndChange('');
-    setIsFilterOpen(false);
-    setOpenSections({ fecha: false, nucleo: false, usuario: false, caso: false });
+    setActiveSubmenu(null);
   };
 
-  // Preparar opciones de núcleos
+  // Preparar opciones
   const nucleoOptions = filterOptions.nucleos.map((n) => ({
-    value: n.nombre_nucleo,
+    value: n.id_nucleo.toString(),
     label: n.nombre_nucleo,
   }));
 
-  // Preparar opciones de usuarios
   const usuarioOptions = filterOptions.usuarios.map((u) => ({
     value: u.cedula,
     label: u.nombre_completo,
   }));
 
-  // Preparar opciones de casos
   const casoOptions = filterOptions.casos.map((c) => ({
     value: c.id_caso.toString(),
     label: `C-${c.id_caso} - ${c.tramite}`,
   }));
 
-  const triggerButton = (isOpenState: boolean) => (
-    <button
-      type="button"
-      onClick={() => setIsFilterOpen(!isOpenState)}
-      className={`h-10 px-4 cursor-pointer rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors ${hasActiveFilter ? 'bg-primary-light border-primary-dark' : ''
-        }`}
-    >
-      <FilterIcon className="w-[18px] h-[18px] text-[#414040]" />
-      <span className="text-base text-center">Filtro</span>
-      {hasActiveFilter && (
-        <span className="ml-1 bg-primary text-on-primary rounded-full w-5 h-5 flex items-center justify-center text-xs font-medium">
-          {getActiveFilterCount()}
-        </span>
-      )}
-    </button>
-  );
+  // Renderizar submenú
+  const renderSubmenu = () => {
+    if (!mounted || !activeSubmenu) return null;
+
+    // Submenú de Fechas
+    if (activeSubmenu === 'fechas') {
+      return createPortal(
+        <AnimatePresence>
+          <motion.div
+            key="fechas-submenu"
+            ref={submenuRef}
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
+            transition={{ duration: 0.15 }}
+            style={{
+              position: 'fixed',
+              top: submenuPosition.top,
+              right: submenuPosition.right,
+              zIndex: 10000,
+            }}
+            className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[280px] p-4"
+          >
+            <div className="space-y-3">
+              {/* Opciones rápidas de fecha */}
+              {['all', 'today', 'week', 'month'].map((range) => (
+                <motion.button
+                  key={range}
+                  type="button"
+                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                  onClick={() => {
+                    onDateRangeFilterChange(range);
+                    if (range !== 'custom') {
+                      setActiveSubmenu(null);
+                    }
+                  }}
+                  className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end ${dateRangeFilter === range
+                    ? 'bg-primary-light text-primary font-medium'
+                    : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                >
+                  {range === 'all' && 'Todas las fechas'}
+                  {range === 'today' && 'Hoy'}
+                  {range === 'week' && 'Última semana'}
+                  {range === 'month' && 'Último mes'}
+                </motion.button>
+              ))}
+
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                onClick={() => onDateRangeFilterChange('custom')}
+                className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end ${dateRangeFilter === 'custom'
+                  ? 'bg-primary-light text-primary font-medium'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                Rango personalizado
+              </motion.button>
+
+              {dateRangeFilter === 'custom' && (
+                <div className="mt-3 space-y-2 pl-2 border-l-2 border-primary-light">
+                  <DatePicker
+                    label="Fecha inicio"
+                    value={customDateStart}
+                    onChange={(value) => onCustomDateStartChange(value || '')}
+                  />
+                  <DatePicker
+                    label="Fecha fin"
+                    value={customDateEnd}
+                    onChange={(value) => onCustomDateEndChange(value || '')}
+                  />
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </AnimatePresence>,
+        document.body
+      );
+    }
+
+    // Submenús de selección simple/múltiple
+    let options: { value: string; label: string }[] = [];
+    let filterValue: string | string[] = '';
+    let isMultiple = false;
+    let handler: ((value: string) => void) | ((values: string[]) => void) = () => { };
+    let allLabel = '';
+
+    switch (activeSubmenu) {
+      case 'nucleo':
+        options = nucleoOptions;
+        filterValue = nucleoFilter;
+        handler = onNucleoFilterChange;
+        allLabel = 'Todos los núcleos';
+        break;
+      case 'usuario':
+        options = usuarioOptions;
+        filterValue = usuarioFilter;
+        isMultiple = true;
+        handler = onUsuarioFilterChange;
+        allLabel = 'Todos los usuarios';
+        break;
+      case 'caso':
+        options = casoOptions;
+        filterValue = caseFilter;
+        isMultiple = true;
+        handler = onCaseFilterChange;
+        allLabel = 'Todos los casos';
+        break;
+    }
+
+    return createPortal(
+      <AnimatePresence>
+        <motion.div
+          key="submenu"
+          ref={submenuRef}
+          initial={{ opacity: 0, x: 10 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 10 }}
+          transition={{ duration: 0.15 }}
+          style={{
+            position: 'fixed',
+            top: submenuPosition.top,
+            right: submenuPosition.right,
+            zIndex: 10000,
+          }}
+          className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[220px] p-2 max-h-[300px] overflow-y-auto"
+        >
+          {/* Opción "Todos" */}
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+            onClick={() => {
+              if (isMultiple) {
+                (handler as (values: string[]) => void)([]);
+              } else {
+                (handler as (value: string) => void)('');
+                setActiveSubmenu(null);
+              }
+            }}
+            className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end ${(isMultiple ? (filterValue as string[]).length === 0 : filterValue === '')
+              ? 'bg-primary-light text-primary font-medium'
+              : 'text-gray-600 hover:bg-gray-100'
+              }`}
+          >
+            <div className="flex-1" />
+            {allLabel}
+          </motion.button>
+
+          {/* Opciones */}
+          {options.map((option) => {
+            const isSelected = isMultiple
+              ? (filterValue as string[]).includes(option.value)
+              : filterValue === option.value;
+
+            return (
+              <motion.button
+                key={option.value}
+                type="button"
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                onClick={() => {
+                  if (isMultiple) {
+                    const currentValues = filterValue as string[];
+                    if (isSelected) {
+                      (handler as (values: string[]) => void)(currentValues.filter(v => v !== option.value));
+                    } else {
+                      (handler as (values: string[]) => void)([...currentValues, option.value]);
+                    }
+                  } else {
+                    (handler as (value: string) => void)(option.value);
+                    setActiveSubmenu(null);
+                  }
+                }}
+                className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center gap-2 ${isSelected
+                  ? 'bg-primary-light text-primary font-medium'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                {isMultiple && (
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => { }}
+                    className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer"
+                  />
+                )}
+                <div className="flex-1" />
+                <span className="truncate">{option.label}</span>
+              </motion.button>
+            );
+          })}
+        </motion.div>
+      </AnimatePresence>,
+      document.body
+    );
+  };
 
   return (
     <div className="relative">
-      <DropdownMenu
-        trigger={triggerButton}
-        onOpenChange={setIsFilterOpen}
-        align="left"
-        className="relative"
-        menuClassName="bg-white border border-gray-300 rounded-2xl shadow-xl min-w-[280px] max-w-[300px] overflow-hidden"
+      {/* Botón trigger */}
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => {
+          setIsOpen(!isOpen);
+          if (isOpen) setActiveSubmenu(null);
+        }}
+        className={`h-10 px-4 cursor-pointer rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors ${hasActiveFilter ? 'bg-primary-light border-primary-dark' : ''
+          }`}
       >
-        <div data-filter-main-menu onClick={(e) => e.stopPropagation()}>
-          {/* Item: Rango de Fechas */}
-          <FilterMenuItem
-            title="Rango de Fechas"
-            icon={<Calendar className="w-5 h-5" />}
-            isOpen={openSections.fecha}
-            onToggle={() => toggleSection('fecha')}
-            hasActiveFilter={dateRangeFilter !== 'all'}
-            triggerRef={fechaItemRef}
-            data-keep-open
-            submenuContent={
-              <div className="p-3 space-y-1.5 overflow-y-auto flex-1 min-h-0" style={{ maxHeight: 'calc(80vh - 24px)' }}>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDateRangeFilterChange('all');
-                    setOpenSections(prev => ({ ...prev, fecha: false }));
-                  }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${dateRangeFilter === 'all'
-                    ? 'bg-primary-light text-primary font-medium shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                    }`}
-                >
-                  Todas las fechas
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDateRangeFilterChange('today');
-                    setOpenSections(prev => ({ ...prev, fecha: false }));
-                  }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${dateRangeFilter === 'today'
-                    ? 'bg-primary-light text-primary font-medium shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                    }`}
-                >
-                  Hoy
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDateRangeFilterChange('week');
-                    setOpenSections(prev => ({ ...prev, fecha: false }));
-                  }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${dateRangeFilter === 'week'
-                    ? 'bg-primary-light text-primary font-medium shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                    }`}
-                >
-                  Última semana
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDateRangeFilterChange('month');
-                    setOpenSections(prev => ({ ...prev, fecha: false }));
-                  }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${dateRangeFilter === 'month'
-                    ? 'bg-primary-light text-primary font-medium shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                    }`}
-                >
-                  Último mes
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDateRangeFilterChange('custom');
-                  }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${dateRangeFilter === 'custom'
-                    ? 'bg-primary-light text-primary font-medium shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                    }`}
-                >
-                  Rango personalizado
-                </button>
+        <FilterIcon className="w-[18px] h-[18px] text-[#414040]" />
+        <span className="text-base text-center">Filtro</span>
+        {hasActiveFilter && (
+          <span className="ml-1 bg-primary text-on-primary rounded-full w-5 h-5 flex items-center justify-center text-xs font-medium">
+            {activeFilterCount}
+          </span>
+        )}
+      </button>
 
-                {/* Campos de fecha personalizada */}
-                {dateRangeFilter === 'custom' && (
-                  <div className="mt-3 space-y-2 pl-2 border-l-2 border-primary-light">
-                    <div>
-                      <label className="block text-xs text-gray-600 mb-1">Fecha inicio</label>
-                      <DatePicker
-                        value={customDateStart}
-                        onChange={(date) => onCustomDateStartChange(date || '')}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-600 mb-1">Fecha fin</label>
-                      <DatePicker
-                        value={customDateEnd}
-                        onChange={(date) => onCustomDateEndChange(date || '')}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            }
-          />
-
-          {/* Item: Núcleo */}
-          <FilterMenuItem
-            title="Núcleo"
-            icon={<Layers className="w-5 h-5" />}
-            isOpen={openSections.nucleo}
-            onToggle={() => toggleSection('nucleo')}
-            hasActiveFilter={nucleoFilter !== ''}
-            triggerRef={nucleoItemRef}
-            submenuContent={
-              <div className="p-3 space-y-1 overflow-y-auto flex-1 min-h-0" style={{ maxHeight: 'calc(80vh - 24px)' }}>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onNucleoFilterChange('');
-                    setOpenSections(prev => ({ ...prev, nucleo: false }));
-                  }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${nucleoFilter === ''
-                    ? 'bg-primary-light text-primary font-medium shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                    }`}
-                >
-                  Todos los núcleos
-                </button>
-                {nucleoOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onNucleoFilterChange(option.value);
-                      setOpenSections(prev => ({ ...prev, nucleo: false }));
-                    }}
-                    className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 ${nucleoFilter === option.value
-                      ? 'bg-primary-light text-primary font-medium shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                      }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            }
-          />
-
-          {/* Item: Usuario que Atendió */}
-          <FilterMenuItem
-            title="Usuario que Atendió"
-            icon={<UserCheck className="w-5 h-5" />}
-            isOpen={openSections.usuario}
-            onToggle={() => toggleSection('usuario')}
-            hasActiveFilter={usuarioFilter.length > 0}
-            triggerRef={usuarioItemRef}
-            submenuContent={
-              <div className="p-3 space-y-1 overflow-y-auto flex-1 min-h-0" style={{ maxHeight: 'calc(80vh - 24px)' }}>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onUsuarioFilterChange([]);
-                  }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 flex items-center gap-2 ${usuarioFilter.length === 0
-                    ? 'bg-primary-light text-primary font-medium shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                    }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={usuarioFilter.length === 0}
-                    onChange={() => { }}
-                    className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onUsuarioFilterChange([]);
-                    }}
-                  />
-                  <span>Todos los usuarios</span>
-                </button>
-                {usuarioOptions.map((option) => {
-                  const isSelected = usuarioFilter.includes(option.value);
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (isSelected) {
-                          // Deseleccionar
-                          onUsuarioFilterChange(usuarioFilter.filter(v => v !== option.value));
-                        } else {
-                          // Seleccionar
-                          onUsuarioFilterChange([...usuarioFilter, option.value]);
-                        }
-                      }}
-                      className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 flex items-center gap-2 ${isSelected
-                        ? 'bg-primary-light text-primary font-medium shadow-sm'
-                        : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                        }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => { }}
-                        className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (isSelected) {
-                            onUsuarioFilterChange(usuarioFilter.filter(v => v !== option.value));
-                          } else {
-                            onUsuarioFilterChange([...usuarioFilter, option.value]);
-                          }
-                        }}
-                      />
-                      <span>{option.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            }
-          />
-
-          {/* Item: Caso */}
-          <FilterMenuItem
-            title="Caso"
-            icon={<FileText className="w-5 h-5" />}
-            isOpen={openSections.caso}
-            onToggle={() => toggleSection('caso')}
-            hasActiveFilter={caseFilter.length > 0}
-            triggerRef={casoItemRef}
-            data-keep-open
-            submenuContent={
-              <div className="p-3 space-y-1 overflow-y-auto flex-1 min-h-0" style={{ maxHeight: 'calc(80vh - 24px)' }}>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCaseFilterChange([]);
-                  }}
-                  className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 flex items-center gap-2 ${caseFilter.length === 0
-                    ? 'bg-primary-light text-primary font-medium shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                    }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={caseFilter.length === 0}
-                    onChange={() => { }}
-                    className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onCaseFilterChange([]);
-                    }}
-                  />
-                  <span>Todos los casos</span>
-                </button>
-                {casoOptions.map((option) => {
-                  const isSelected = caseFilter.includes(option.value);
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (isSelected) {
-                          // Deseleccionar
-                          onCaseFilterChange(caseFilter.filter(v => v !== option.value));
-                        } else {
-                          // Seleccionar
-                          onCaseFilterChange([...caseFilter, option.value]);
-                        }
-                      }}
-                      className={`w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-150 flex items-center gap-2 ${isSelected
-                        ? 'bg-primary-light text-primary font-medium shadow-sm'
-                        : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                        }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => { }}
-                        className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (isSelected) {
-                            onCaseFilterChange(caseFilter.filter(v => v !== option.value));
-                          } else {
-                            onCaseFilterChange([...caseFilter, option.value]);
-                          }
-                        }}
-                      />
-                      <span className="truncate">{option.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            }
-          />
-
-          {/* Item: Mis Casos (toggle) */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onMisCasosFilterChange(!misCasosFilter);
-            }}
-            className={`relative w-full flex items-center gap-3 px-4 py-3.5 text-left cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-all duration-150 border-b border-gray-200 ${misCasosFilter ? 'bg-primary-light/10 border-l-4 border-l-primary' : ''}`}
-          >
-            <span className={`flex-1 text-sm font-medium ${misCasosFilter ? 'text-primary' : 'text-gray-700'}`}>
-              Mis casos
-            </span>
-            <UserCheck className={`w-5 h-5 ${misCasosFilter ? 'text-primary' : 'text-gray-400'}`} />
-          </button>
-
-          {/* Botón para limpiar filtros */}
-          {hasActiveFilter && (
-            <div className="border-t border-gray-200 p-3 bg-gray-50/50">
-              <button
+      {/* Menú principal */}
+      {mounted && createPortal(
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: -10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -10 }}
+              transition={{ duration: 0.1 }}
+              ref={menuRef}
+              style={{
+                position: 'fixed',
+                top: triggerRef.current ? triggerRef.current.getBoundingClientRect().bottom + 8 : 0,
+                right: triggerRef.current ? window.innerWidth - triggerRef.current.getBoundingClientRect().right : 0,
+                zIndex: 9999,
+              }}
+              className="bg-white border border-gray-300 rounded-2xl shadow-lg w-auto p-2"
+            >
+              {/* Opción: Rango de Fechas */}
+              <motion.button
+                ref={activeSubmenu === 'fechas' ? activeButtonRef : undefined}
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleClearFilters();
-                }}
-                className="w-full px-3 py-2.5 text-sm text-center text-red-600 hover:bg-red-50 active:bg-red-100 rounded-lg cursor-pointer transition-all duration-150 font-medium"
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                onClick={(e) => handleSubmenuToggle('fechas', e)}
+                className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'fechas'
+                  ? 'bg-primary-light text-primary'
+                  : dateRangeFilter !== 'all'
+                    ? 'text-primary hover:bg-gray-100'
+                    : 'text-gray-700 hover:bg-gray-100'
+                  }`}
               >
-                Limpiar filtros
-              </button>
-            </div>
+                <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'fechas' ? '-rotate-90' : ''}`} />
+                <div className="flex-1" />
+                <span>Rango de fechas</span>
+                <Calendar className="w-4 h-4" />
+              </motion.button>
+              <div className="border-t border-gray-200 my-2"></div>
+
+              {/* Opción: Núcleo */}
+              <motion.button
+                ref={activeSubmenu === 'nucleo' ? activeButtonRef : undefined}
+                type="button"
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                onClick={(e) => handleSubmenuToggle('nucleo', e)}
+                className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'nucleo'
+                  ? 'bg-primary-light text-primary'
+                  : nucleoFilter
+                    ? 'text-primary hover:bg-gray-100'
+                    : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+              >
+                <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'nucleo' ? '-rotate-90' : ''}`} />
+                <div className="flex-1" />
+                <span>Núcleo</span>
+                <Layers className="w-4 h-4" />
+              </motion.button>
+              <div className="border-t border-gray-200 my-2"></div>
+
+              {/* Opción: Usuario que Atendió */}
+              <motion.button
+                ref={activeSubmenu === 'usuario' ? activeButtonRef : undefined}
+                type="button"
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                onClick={(e) => handleSubmenuToggle('usuario', e)}
+                className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'usuario'
+                  ? 'bg-primary-light text-primary'
+                  : usuarioFilter.length > 0
+                    ? 'text-primary hover:bg-gray-100'
+                    : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+              >
+                <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'usuario' ? '-rotate-90' : ''}`} />
+                <div className="flex-1" />
+                <span>Usuario que Atendió</span>
+                <Users className="w-4 h-4" />
+              </motion.button>
+              <div className="border-t border-gray-200 my-2"></div>
+
+              {/* Opción: Caso */}
+              <motion.button
+                ref={activeSubmenu === 'caso' ? activeButtonRef : undefined}
+                type="button"
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                onClick={(e) => handleSubmenuToggle('caso', e)}
+                className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'caso'
+                  ? 'bg-primary-light text-primary'
+                  : caseFilter.length > 0
+                    ? 'text-primary hover:bg-gray-100'
+                    : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+              >
+                <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'caso' ? '-rotate-90' : ''}`} />
+                <div className="flex-1" />
+                <span>Caso</span>
+                <FileText className="w-4 h-4" />
+              </motion.button>
+              <div className="border-t border-gray-200 my-2"></div>
+
+              {/* Opción: Mis Casos (toggle) */}
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                onClick={() => onMisCasosFilterChange(!misCasosFilter)}
+                className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 group ${misCasosFilter ? 'text-red-600' : 'text-gray-600'
+                  }`}
+              >
+                <div className="flex-1" />
+                <span>Mis casos</span>
+                <UserCheck className={`w-4 h-4 ${misCasosFilter ? 'text-red-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
+              </motion.button>
+              <div className="border-t border-gray-200 my-2"></div>
+
+              {/* Botón limpiar filtros */}
+              {hasActiveFilter && (
+                <button
+                  type="button"
+                  onClick={handleClearFilters}
+                  className="w-full px-3 py-2 text-sm text-center text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <X className="w-4 h-4" />
+                  Limpiar filtros
+                </button>
+              )}
+            </motion.div>
           )}
-        </div>
-      </DropdownMenu>
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* Submenú flotante a la izquierda */}
+      {renderSubmenu()}
     </div>
   );
 }
