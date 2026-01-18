@@ -66,6 +66,7 @@ export default function AppointmentsClient({
   const [nucleoFilter, setNucleoFilter] = useState<string>('');
   const [usuarioFilter, setUsuarioFilter] = useState<string[]>([]);
   const [caseFilter, setCaseFilter] = useState<string[]>([]);
+  const [misCasosFilter, setMisCasosFilter] = useState<boolean>(false);
   const [dateRangeFilter, setDateRangeFilter] = useState<string>('all'); // 'all', 'today', 'week', 'month', 'custom'
   const [customDateStart, setCustomDateStart] = useState<string>('');
   const [customDateEnd, setCustomDateEnd] = useState<string>('');
@@ -151,7 +152,9 @@ export default function AppointmentsClient({
 
   // Filtrar citas por búsqueda y filtros (solo para vista de lista)
   const filteredAppointmentsForList = useMemo(() => {
-    let filtered = appointments;
+    // Si misCasosFilter está activo, usar solo las citas del usuario
+    // De lo contrario, usar todas las citas
+    let filtered = misCasosFilter ? userAppointments : appointments;
 
     // Filtro por búsqueda de texto
     if (searchValue.trim()) {
@@ -239,7 +242,7 @@ export default function AppointmentsClient({
     }
 
     return filtered;
-  }, [appointments, searchValue, nucleoFilter, usuarioFilter, caseFilter, dateRangeFilter, customDateStart, customDateEnd]);
+  }, [appointments, userAppointments, misCasosFilter, searchValue, nucleoFilter, usuarioFilter, caseFilter, dateRangeFilter, customDateStart, customDateEnd]);
 
   // Filtrar citas agendadas (citas programadas)
   const scheduledAppointments = useMemo(() => {
@@ -590,12 +593,14 @@ export default function AppointmentsClient({
                         nucleoFilter={nucleoFilter}
                         usuarioFilter={usuarioFilter}
                         caseFilter={caseFilter}
+                        misCasosFilter={misCasosFilter}
                         dateRangeFilter={dateRangeFilter}
                         customDateStart={customDateStart}
                         customDateEnd={customDateEnd}
                         onNucleoFilterChange={setNucleoFilter}
                         onUsuarioFilterChange={setUsuarioFilter}
                         onCaseFilterChange={setCaseFilter}
+                        onMisCasosFilterChange={setMisCasosFilter}
                         onDateRangeFilterChange={setDateRangeFilter}
                         onCustomDateStartChange={setCustomDateStart}
                         onCustomDateEndChange={setCustomDateEnd}
@@ -673,12 +678,14 @@ export default function AppointmentsClient({
                         nucleoFilter={nucleoFilter}
                         usuarioFilter={usuarioFilter}
                         caseFilter={caseFilter}
+                        misCasosFilter={misCasosFilter}
                         dateRangeFilter={dateRangeFilter}
                         customDateStart={customDateStart}
                         customDateEnd={customDateEnd}
                         onNucleoFilterChange={setNucleoFilter}
                         onUsuarioFilterChange={setUsuarioFilter}
                         onCaseFilterChange={setCaseFilter}
+                        onMisCasosFilterChange={setMisCasosFilter}
                         onDateRangeFilterChange={setDateRangeFilter}
                         onCustomDateStartChange={setCustomDateStart}
                         onCustomDateEndChange={setCustomDateEnd}

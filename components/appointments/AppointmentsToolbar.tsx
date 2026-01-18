@@ -27,12 +27,14 @@ interface AppointmentsToolbarProps {
   nucleoFilter: string;
   usuarioFilter: string[];
   caseFilter: string[];
+  misCasosFilter: boolean;
   dateRangeFilter: string;
   customDateStart: string;
   customDateEnd: string;
   onNucleoFilterChange: (value: string) => void;
   onUsuarioFilterChange: (value: string[]) => void;
   onCaseFilterChange: (value: string[]) => void;
+  onMisCasosFilterChange: (value: boolean) => void;
   onDateRangeFilterChange: (value: string) => void;
   onCustomDateStartChange: (value: string) => void;
   onCustomDateEndChange: (value: string) => void;
@@ -207,12 +209,14 @@ export default function AppointmentsToolbar({
   nucleoFilter,
   usuarioFilter,
   caseFilter,
+  misCasosFilter,
   dateRangeFilter,
   customDateStart,
   customDateEnd,
   onNucleoFilterChange,
   onUsuarioFilterChange,
   onCaseFilterChange,
+  onMisCasosFilterChange,
   onDateRangeFilterChange,
   onCustomDateStartChange,
   onCustomDateEndChange,
@@ -243,13 +247,14 @@ export default function AppointmentsToolbar({
     return null;
   }
 
-  const hasActiveFilter = nucleoFilter !== '' || usuarioFilter.length > 0 || caseFilter.length > 0 || dateRangeFilter !== 'all';
+  const hasActiveFilter = nucleoFilter !== '' || usuarioFilter.length > 0 || caseFilter.length > 0 || misCasosFilter || dateRangeFilter !== 'all';
 
   const getActiveFilterCount = () => {
     let count = 0;
     if (nucleoFilter !== '') count++;
     if (usuarioFilter.length > 0) count++;
     if (caseFilter.length > 0) count++;
+    if (misCasosFilter) count++;
     if (dateRangeFilter !== 'all') count++;
     return count;
   };
@@ -272,6 +277,7 @@ export default function AppointmentsToolbar({
     onNucleoFilterChange('');
     onUsuarioFilterChange([]);
     onCaseFilterChange([]);
+    onMisCasosFilterChange(false);
     onDateRangeFilterChange('all');
     onCustomDateStartChange('');
     onCustomDateEndChange('');
@@ -625,6 +631,21 @@ export default function AppointmentsToolbar({
               </div>
             }
           />
+
+          {/* Item: Mis Casos (toggle) */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onMisCasosFilterChange(!misCasosFilter);
+            }}
+            className={`relative w-full flex items-center gap-3 px-4 py-3.5 text-left cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-all duration-150 border-b border-gray-200 ${misCasosFilter ? 'bg-primary-light/10 border-l-4 border-l-primary' : ''}`}
+          >
+            <span className={`flex-1 text-sm font-medium ${misCasosFilter ? 'text-primary' : 'text-gray-700'}`}>
+              Mis casos
+            </span>
+            <UserCheck className={`w-5 h-5 ${misCasosFilter ? 'text-primary' : 'text-gray-400'}`} />
+          </button>
 
           {/* Botón para limpiar filtros */}
           {hasActiveFilter && (
