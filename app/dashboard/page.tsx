@@ -12,7 +12,7 @@ export default async function DashboardPage() {
 
   // Cargar citas, casos y acciones en el servidor
   const [citasResult, casosResult, accionesResult] = await Promise.all([
-    getCitasAction(),
+    getCitasAction({ onlyMine: true }),
     getCasosByUsuarioAction(),
     getAccionesRecientesAction(10),
   ]);

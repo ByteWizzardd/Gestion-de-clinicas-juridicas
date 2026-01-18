@@ -26,11 +26,13 @@ interface AppointmentFilterOptions {
 
 interface AppointmentsClientProps {
   initialAppointments: Appointment[];
+  initialUserAppointments: Appointment[];
   initialFilterOptions?: AppointmentFilterOptions;
 }
 
 export default function AppointmentsClient({
   initialAppointments,
+  initialUserAppointments,
   initialFilterOptions = { nucleos: [], usuarios: [], casos: [] }
 }: AppointmentsClientProps) {
   const [viewMode, setViewMode] = useState<AppointmentViewMode>('calendar');
@@ -44,6 +46,9 @@ export default function AppointmentsClient({
 
   const [appointments, setAppointments] = useState<Appointment[]>(
     initialAppointments.map((apt) => ({ ...apt, date: new Date(apt.date) }))
+  );
+  const [userAppointments, setUserAppointments] = useState<Appointment[]>(
+    initialUserAppointments.map((apt) => ({ ...apt, date: new Date(apt.date) }))
   );
   const [showModal, setShowModal] = useState(false);
   const [modalDate, setModalDate] = useState<Date | null>(null);
@@ -81,11 +86,15 @@ export default function AppointmentsClient({
     if (initialAppointments) {
       setAppointments(initialAppointments.map((apt) => ({ ...apt, date: new Date(apt.date) })));
     }
-  }, [initialAppointments]);
+    if (initialUserAppointments) {
+      setUserAppointments(initialUserAppointments.map((apt) => ({ ...apt, date: new Date(apt.date) })));
+    }
+  }, [initialAppointments, initialUserAppointments]);
 
-  // Filtrar citas según el modo: por día específico o por mes completo
+  // Filtrar citas según el modo: por día específico o por mes completo (Solo para Calendario personal)
   const displayedAppointments = useMemo(() => {
-    let filtered = appointments;
+    // Para la vista de calendario, usamos SOLO las citas del usuario
+    let filtered = userAppointments;
 
     // Aplicar filtros de búsqueda (igual que en vista de lista)
     // Filtro por núcleo
@@ -142,7 +151,7 @@ export default function AppointmentsClient({
     }
 
     return filtered;
-  }, [appointments, selectedMonth, selectedDate, filterByDate, nucleoFilter, usuarioFilter, caseFilter]);
+  }, [userAppointments, selectedMonth, selectedDate, filterByDate, nucleoFilter, usuarioFilter, caseFilter]);
 
   // Filtrar citas por búsqueda y filtros (solo para vista de lista)
   const filteredAppointmentsForList = useMemo(() => {
@@ -250,12 +259,12 @@ export default function AppointmentsClient({
     });
   }, [filteredAppointmentsForList]);
 
-  // Preparar datos para el calendario (solo fechas)
+  // Preparar datos para el calendario (solo fechas - usar citas del USUARIO)
   const calendarAppointments = useMemo(() => {
-    return appointments.map((apt) => ({
+    return userAppointments.map((apt) => ({
       date: new Date(apt.date),
     }));
-  }, [appointments]);
+  }, [userAppointments]);
 
   const handleDateChange = (date: Date) => {
     setSelectedDate(date);
@@ -298,13 +307,25 @@ export default function AppointmentsClient({
 
   // Guardar cita programada
   const handleScheduleModalSave = async () => {
-    // Recargar citas desde el backend
-    const result = await getCitasAction();
+    // Recargar citas desde el backend (ambas listas)
+    const [result, userResult] = await Promise.all([
+      getCitasAction(),
+      getCitasAction({ onlyMine: true })
+    ]);
+
     if (result.success && result.data) {
       if (Array.isArray(result.data)) {
         setAppointments(result.data.map((apt: Appointment) => ({ ...apt, date: new Date(apt.date) })));
       } else {
         setAppointments([]);
+      }
+    }
+
+    if (userResult.success && userResult.data) {
+      if (Array.isArray(userResult.data)) {
+        setUserAppointments(userResult.data.map((apt: Appointment) => ({ ...apt, date: new Date(apt.date) })));
+      } else {
+        setUserAppointments([]);
       }
     }
     setShowScheduleModal(false);
@@ -318,13 +339,25 @@ export default function AppointmentsClient({
   };
 
   const handleModalSave = async () => {
-    // Recargar citas desde el backend
-    const result = await getCitasAction();
+    // Recargar citas desde el backend (ambas listas)
+    const [result, userResult] = await Promise.all([
+      getCitasAction(),
+      getCitasAction({ onlyMine: true })
+    ]);
+
     if (result.success && result.data) {
       if (Array.isArray(result.data)) {
         setAppointments(result.data.map((apt: Appointment) => ({ ...apt, date: new Date(apt.date) })));
       } else {
         setAppointments([]);
+      }
+    }
+
+    if (userResult.success && userResult.data) {
+      if (Array.isArray(userResult.data)) {
+        setUserAppointments(userResult.data.map((apt: Appointment) => ({ ...apt, date: new Date(apt.date) })));
+      } else {
+        setUserAppointments([]);
       }
     }
     setShowModal(false);
@@ -380,11 +413,21 @@ export default function AppointmentsClient({
         setShowDeleteConfirmModal(false);
         setAppointmentToDelete(null);
 
-        // Recargar citas después de eliminar
-        const result = await getCitasAction();
+        // Recargar citas después de eliminar (ambale listas)
+        const [result, userResult] = await Promise.all([
+          getCitasAction(),
+          getCitasAction({ onlyMine: true })
+        ]);
+
         if (result.success && result.data) {
           if (Array.isArray(result.data)) {
             setAppointments(result.data.map((apt: Appointment) => ({ ...apt, date: new Date(apt.date) })));
+          }
+        }
+
+        if (userResult.success && userResult.data) {
+          if (Array.isArray(userResult.data)) {
+            setUserAppointments(userResult.data.map((apt: Appointment) => ({ ...apt, date: new Date(apt.date) })));
           }
         }
       } else {

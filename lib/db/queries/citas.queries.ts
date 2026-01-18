@@ -55,8 +55,23 @@ export const citasQueries = {
     // Parsear el JSON de atenciones (similar a getByCaso)
     return result.rows.map(row => ({
       ...row,
-      atenciones: typeof row.atenciones === 'string' 
-        ? JSON.parse(row.atenciones) 
+      atenciones: typeof row.atenciones === 'string'
+        ? JSON.parse(row.atenciones)
+        : row.atenciones || []
+    })) as CitaCompleta[];
+  },
+
+  /**
+   * Obtiene las citas donde un usuario específico es parte de los que atienden
+   */
+  getByUsuario: async (cedulaUsuario: string): Promise<CitaCompleta[]> => {
+    const query = loadSQL('citas/get-by-usuario.sql');
+    const result: QueryResult = await pool.query(query, [cedulaUsuario]);
+    // Parsear el JSON de atenciones
+    return result.rows.map(row => ({
+      ...row,
+      atenciones: typeof row.atenciones === 'string'
+        ? JSON.parse(row.atenciones)
         : row.atenciones || []
     })) as CitaCompleta[];
   },
@@ -77,8 +92,8 @@ export const citasQueries = {
     // Parsear el JSON de atenciones
     return result.rows.map(row => ({
       ...row,
-      atenciones: typeof row.atenciones === 'string' 
-        ? JSON.parse(row.atenciones) 
+      atenciones: typeof row.atenciones === 'string'
+        ? JSON.parse(row.atenciones)
         : row.atenciones || []
     }));
   },
@@ -116,18 +131,18 @@ export const citasQueries = {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      
+
       // Establecer las variables de sesión para el trigger usando set_config
       // El tercer parámetro 'true' hace que sea local a la transacción
       await client.query("SELECT set_config('app.usuario_elimina_cita', $1, true)", [idUsuarioElimino]);
       await client.query("SELECT set_config('app.motivo_eliminacion_cita', $1, true)", [motivo || '']);
-      
+
       // Ejecutar el DELETE (el trigger capturará la auditoría usando OLD)
       const query = loadSQL('citas/delete.sql');
       const result: QueryResult = await client.query(query, [numCita, idCaso]);
-      
+
       await client.query('COMMIT');
-      
+
       if (result.rows.length === 0) {
         return null;
       }

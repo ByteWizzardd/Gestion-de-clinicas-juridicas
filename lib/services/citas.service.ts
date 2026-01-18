@@ -9,17 +9,17 @@ import { atiendenQueries } from '@/lib/db/queries/atienden.queries';
  * Contiene la lógica de negocio para el módulo de Programación y Consultas
  */
 export const citasService = {
-    /**
-     * Obtiene el id_caso y num_cita a partir del appointmentId
-     */
-    getCitaInfoByAppointmentId(appointmentId: string): { num_cita: number; id_caso: number } | null {
-      const idParts = appointmentId.split('-');
-      if (idParts.length < 3 || idParts[0] !== 'cita') return null;
-      const num_cita = parseInt(idParts[1], 10);
-      const id_caso = parseInt(idParts[2], 10);
-      if (isNaN(num_cita) || isNaN(id_caso)) return null;
-      return { num_cita, id_caso };
-    },
+  /**
+   * Obtiene el id_caso y num_cita a partir del appointmentId
+   */
+  getCitaInfoByAppointmentId(appointmentId: string): { num_cita: number; id_caso: number } | null {
+    const idParts = appointmentId.split('-');
+    if (idParts.length < 3 || idParts[0] !== 'cita') return null;
+    const num_cita = parseInt(idParts[1], 10);
+    const id_caso = parseInt(idParts[2], 10);
+    if (isNaN(num_cita) || isNaN(id_caso)) return null;
+    return { num_cita, id_caso };
+  },
   /**
    * Obtiene todas las citas formateadas para el frontend
    */
@@ -99,10 +99,99 @@ export const citasService = {
           isMultiplePeople,
           nextAppointmentDate,
         };
-      }); 
+      });
     } catch (error) {
       throw new AppError(
         "Error al obtener las citas",
+        500,
+        error instanceof Error ? error.message : "Error desconocido"
+      );
+    }
+  },
+
+  /**
+   * Obtiene las citas donde un usuario específico es parte de los que atienden
+   */
+  async getAppointmentsByUser(cedula: string): Promise<
+    Array<{
+      id: string;
+      title: string;
+      date: Date;
+      time: string;
+      caseId: number;
+      caseDetail: string;
+      client: string;
+      location: string;
+      orientation: string;
+      attendingUsers: string;
+      attendingUsersList: Array<{
+        id_usuario: string;
+        nombres: string;
+        apellidos: string;
+        nombre_completo: string;
+        fecha_registro: string;
+      }>;
+      isMultiplePeople: boolean;
+      nextAppointmentDate?: string | null;
+    }>
+  > {
+    try {
+      const citas = await citasQueries.getByUsuario(cedula);
+
+      return citas.map((cita: CitaCompleta) => {
+        const fechaCita = new Date(cita.fecha_encuentro);
+        const horas = fechaCita.getHours().toString().padStart(2, "0");
+        const minutos = fechaCita.getMinutes().toString().padStart(2, "0");
+        const time = `${horas}:${minutos}`;
+        const client =
+          cita.nombre_completo_solicitante ||
+          `${cita.nombres_solicitante || ""} ${cita.apellidos_solicitante || ""
+            }`.trim() ||
+          cita.cedula;
+
+        // Detalle del caso: C-{id_caso} (Nombre Solicitante) - Nombre Núcleo
+        const caseDetail = `C-${cita.id_caso} (${client}) - ${cita.nombre_nucleo}`;
+
+        // Título: Materia del ámbito legal
+        const title = cita.nombre_materia || cita.tramite;
+
+        // Usuarios que atendieron (ahora es un array)
+        const atenciones = cita.atenciones || [];
+        const attendingUsersNames = atenciones.length > 0
+          ? atenciones.map(a => a.nombre_completo).join(', ')
+          : 'No especificado';
+        const isMultiplePeople = atenciones.length > 1;
+
+        // Fecha de próxima cita formateada
+        const nextAppointmentDate = cita.fecha_proxima_cita
+          ? (() => {
+            const nextDate = new Date(cita.fecha_proxima_cita);
+            const day = String(nextDate.getDate()).padStart(2, '0');
+            const month = String(nextDate.getMonth() + 1).padStart(2, '0');
+            const year = nextDate.getFullYear();
+            return `${day}/${month}/${year}`;
+          })()
+          : null;
+
+        return {
+          id: `cita-${cita.num_cita}-${cita.id_caso}-${fechaCita.getTime()}`,
+          title,
+          date: fechaCita,
+          time,
+          caseId: cita.id_caso,
+          caseDetail,
+          client,
+          location: cita.nombre_nucleo,
+          orientation: cita.orientacion || 'Sin orientación especificada',
+          attendingUsers: attendingUsersNames,
+          attendingUsersList: atenciones, // Array completo para uso detallado
+          isMultiplePeople,
+          nextAppointmentDate,
+        };
+      });
+    } catch (error) {
+      throw new AppError(
+        "Error al obtener las citas del usuario",
         500,
         error instanceof Error ? error.message : "Error desconocido"
       );
@@ -133,7 +222,7 @@ export const citasService = {
       return await withTransaction(async (client) => {
         // Establecer la variable de sesión para el trigger de auditoría
         await client.query("SELECT set_config('app.usuario_crea_cita', $1, true)", [params.idUsuarioRegistro]);
-        
+
         // 1. Crear la cita
         const createQuery = loadSQL('citas/create.sql');
         const citaResult = await client.query(createQuery, [
@@ -211,7 +300,7 @@ export const citasService = {
         if (params.date || params.endDate !== undefined || params.orientacion) {
           // Establecer la variable de sesión para el trigger de auditoría
           await client.query("SELECT set_config('app.usuario_actualiza_cita', $1, true)", [params.idUsuarioActualizo]);
-          
+
           const updateQuery = loadSQL('citas/update.sql');
 
           // Manejar fecha_proxima_cita: si es null explícitamente, enviar 'NULL' como string
@@ -605,7 +694,7 @@ export const citasService = {
         // Establecer las variables de sesión para el trigger
         await client.query("SELECT set_config('app.usuario_elimina_cita', $1, true)", [params.idUsuarioElimino]);
         await client.query("SELECT set_config('app.motivo_eliminacion_cita', $1, true)", [params.motivo || '']);
-        
+
         const deleteCitaQuery = loadSQL('citas/delete.sql');
         const citaResult = await client.query(deleteCitaQuery, [num_cita, id_caso]);
 

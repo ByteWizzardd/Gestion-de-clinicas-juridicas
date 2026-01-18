@@ -183,7 +183,7 @@ export async function getAppointmentFilterOptionsAction(): Promise<GetAppointmen
 }
 
 // Server Action para obtener todas las citas
-export async function getCitasAction(): Promise<GetCitasResult> {
+export async function getCitasAction(options?: { onlyMine?: boolean }): Promise<GetCitasResult> {
   try {
     // Verificar autenticación
     const authResult = await requireAuthInServerActionWithCode();
@@ -194,7 +194,12 @@ export async function getCitasAction(): Promise<GetCitasResult> {
       };
     }
 
-    const appointments = await citasService.getAllAppointments();
+    let appointments;
+    if (options?.onlyMine) {
+      appointments = await citasService.getAppointmentsByUser(authResult.user.cedula);
+    } else {
+      appointments = await citasService.getAllAppointments();
+    }
 
     return {
       success: true,
