@@ -228,7 +228,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
       isOpen={isOpen}
       onClose={onClose}
       size="custom"
-      className="rounded-[50px] max-w-300 mx-auto"
+      className="rounded-[30px] sm:rounded-[40px] lg:rounded-[50px] w-[95vw] sm:w-[85vw] lg:w-[70vw] max-w-300 mx-auto"
       showCloseButton={false}
     >
       {form && ( // Renderizar el contenido solo si hay un formulario

@@ -589,10 +589,10 @@ export default function CaseFormModal({
       isOpen={isOpen}
       onClose={handleClose}
       size="custom"
-      className="rounded-[50px] max-w-[1200px] mx-auto"
+      className="rounded-[30px] sm:rounded-[40px] lg:rounded-[50px] w-[95vw] sm:w-[90vw] lg:w-[85vw] max-w-[1200px] mx-auto"
       showCloseButton={false}
     >
-      <div className="p-6 relative">
+      <div className="p-4 sm:p-6 lg:p-8 relative max-h-[90vh] overflow-y-auto">
         <button
           onClick={handleClose}
           className="absolute top-3 right-3 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
@@ -603,7 +603,7 @@ export default function CaseFormModal({
 
         <h2 className="text-2xl font-normal text-foreground mb-3">{isEditing ? 'Editar Caso' : 'Registro de Caso'}</h2>
 
-        <div className="grid grid-cols-3 gap-x-6 gap-y-2.5 mb-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 sm:gap-x-6 gap-y-2.5 mb-3">
           <div className="col-span-1">
             <div className="flex flex-col gap-1">
               <label className="text-base font-normal text-foreground mb-1">Fecha del Caso <span className="text-danger">*</span></label>
@@ -761,7 +761,7 @@ export default function CaseFormModal({
             </div>
           )}
 
-          <div className="col-span-3">
+          <div className="col-span-full">
             <TextArea
               label="Observaciones"
               value={formData.observaciones}
@@ -771,7 +771,7 @@ export default function CaseFormModal({
             />
           </div>
 
-          <div className="col-span-3">
+          <div className="col-span-full">
             <div className="flex flex-col gap-0.5">
               <label className="text-base font-normal text-foreground mb-0.5">
                 Soportes/Documentos
@@ -803,11 +803,11 @@ export default function CaseFormModal({
                       className="flex items-center justify-between px-4 py-2 rounded-lg bg-gray-100 border border-gray-200"
                     >
                       <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <File className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                        <File className="w-4 h-4 text-gray-600 shrink-0" />
                         <span className="text-sm text-foreground truncate" title={archivo.name}>
                           {archivo.name}
                         </span>
-                        <span className={`text-xs flex-shrink-0 ${archivo.size > MAX_FILE_SIZE ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
+                        <span className={`text-xs shrink-0 ${archivo.size > MAX_FILE_SIZE ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
                           ({(archivo.size / 1024 / 1024).toFixed(2)} MB)
                         </span>
                       </div>

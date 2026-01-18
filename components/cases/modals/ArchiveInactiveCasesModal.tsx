@@ -113,7 +113,7 @@ export default function ArchiveInactiveCasesModal({
             onClose={onClose}
             title="Archivar Casos Inactivos"
             size="custom"
-            className="max-w-4xl"
+            className="w-[95vw] sm:w-[90vw] lg:w-[85vw] max-w-4xl"
         >
             <div className="p-6 space-y-6 overflow-y-auto max-h-[70vh]">
                 {/* Información */}

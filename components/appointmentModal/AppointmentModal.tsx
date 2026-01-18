@@ -487,7 +487,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
       isOpen={isOpen}
       onClose={handleClose}
       size="custom"
-      className="rounded-[50px] max-w-[1200px] mx-auto"
+      className="rounded-[30px] sm:rounded-[40px] lg:rounded-[50px] w-[95vw] sm:w-[90vw] lg:w-[85vw] max-w-[1200px] mx-auto"
       showCloseButton={false}
     >
       <div className="p-12 relative">

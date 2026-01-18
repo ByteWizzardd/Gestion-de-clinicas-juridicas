@@ -81,7 +81,7 @@ export default function ChangeStatusModal({
             isOpen={isOpen}
             onClose={handleClose}
             size="custom"
-            className="rounded-[30px] max-w-[600px] mx-auto"
+            className="rounded-[30px] w-[95vw] sm:w-[85vw] lg:w-[70vw] max-w-[600px] mx-auto"
             showCloseButton={false}
         >
             <div className="flex flex-col relative w-full">

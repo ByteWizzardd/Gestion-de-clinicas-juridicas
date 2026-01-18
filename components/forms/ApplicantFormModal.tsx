@@ -1931,7 +1931,7 @@ export default function ApplicantFormModal({
   };
 
   const renderStep1 = () => (
-    <div className="grid grid-cols-3 gap-x-6 gap-y-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 sm:gap-x-6 gap-y-4">
       {/* Fila 1: Cédula, Nombres, Apellidos */}
       <div className="col-span-1 relative" ref={cedulaInputRef}>
         <InputGroup
@@ -1989,7 +1989,7 @@ export default function ApplicantFormModal({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="fixed z-[100] bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+              className="fixed z-100 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
               style={{
                 top: `${cedulaDropdownPosition.top}px`,
                 left: `${cedulaDropdownPosition.left}px`,
@@ -2241,7 +2241,7 @@ export default function ApplicantFormModal({
     };
 
     return (
-      <div className="grid grid-cols-3 gap-x-6 gap-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 sm:gap-x-6 gap-y-4">
         <div className="col-span-1">
           <Select
             label="Estado *"
@@ -2293,7 +2293,7 @@ export default function ApplicantFormModal({
             disabled={!formData.numMunicipio || loadingCatalogos}
           />
         </div>
-        <div className="col-span-3">
+        <div className="col-span-full">
           <Input
             label="Dirección de Habitación *"
             name="direccionHabitacion"
@@ -2309,7 +2309,7 @@ export default function ApplicantFormModal({
   };
 
   const renderStep2 = () => (
-    <div className="grid grid-cols-3 gap-x-6 gap-y-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 sm:gap-x-6 gap-y-4">
       {/* Fila 1: Tipo de Vivienda, Cantidad de Habitaciones, Cantidad de Baños */}
       <div className="col-span-1">
         <Select
@@ -2456,7 +2456,7 @@ export default function ApplicantFormModal({
       </div>
 
       {/* Fila 4: Artefactos Domésticos */}
-      <div className="col-span-3">
+      <div className="col-span-full">
         <div className="flex flex-col gap-1">
           <label className="text-base font-normal text-foreground mb-1">
             Artefactos Domésticos
@@ -2520,7 +2520,7 @@ export default function ApplicantFormModal({
   );
 
   const renderStep3 = () => (
-    <div className="grid grid-cols-3 gap-x-6 gap-y-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 sm:gap-x-6 gap-y-4">
       {/* Fila 1: Cantidad de Personas, Cantidad de Trabajadores, Cantidad de Niños */}
       <div className="col-span-1">
         <Input
@@ -2692,7 +2692,7 @@ export default function ApplicantFormModal({
   );
 
   const renderStep4 = () => (
-    <div className="grid grid-cols-3 gap-x-6 gap-y-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 sm:gap-x-6 gap-y-4">
       {/* Fila 1: Nivel Educativo */}
       <div className="col-span-1">
         <Select
@@ -2767,7 +2767,7 @@ export default function ApplicantFormModal({
   );
 
   const renderStep5 = () => (
-    <div className="grid grid-cols-3 gap-x-6 gap-y-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 sm:gap-x-6 gap-y-4">
       {/* Pregunta principal: ¿Trabaja? */}
       <div className="col-span-1">
         <Select
@@ -2903,10 +2903,10 @@ export default function ApplicantFormModal({
         isOpen={isOpen}
         onClose={handleClose}
         size="custom"
-        className="rounded-[50px] max-w-[1200px] mx-auto"
+        className="rounded-[30px] sm:rounded-[40px] lg:rounded-[50px] w-[95vw] sm:w-[90vw] lg:w-[85vw] max-w-[1200px] mx-auto"
         showCloseButton={false}
       >
-        <div className="p-12 relative">
+        <div className="p-4 sm:p-6 md:p-8 lg:p-12 relative max-h-[90vh] overflow-y-auto">
           {/* Botón de cerrar */}
           <button
             onClick={handleClose}

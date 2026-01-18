@@ -259,7 +259,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
       isOpen={isOpen}
       onClose={handleClose}
       size="custom"
-      className="rounded-[50px] max-w-[1100px] mx-auto"
+      className="rounded-[30px] sm:rounded-[40px] lg:rounded-[50px] w-[95vw] sm:w-[90vw] lg:w-[85vw] max-w-[1100px] mx-auto"
       showCloseButton={false}
     >
       <div className="flex flex-col relative">
