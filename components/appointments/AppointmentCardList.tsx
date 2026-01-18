@@ -124,7 +124,7 @@ export default function AppointmentCardList({
                 {/* Caso relacionado */}
                 <div className="mb-3">
                   <div className="flex items-start gap-2">
-                    <FileText className="w-4 h-4 text-gray-400 mt-1 flex-shrink-0" />
+                    <FileText className="w-4 h-4 text-gray-400 mt-1 shrink-0" />
                     <p className="text-sm text-gray-600 line-clamp-2">
                       {appointment.caseDetail}
                     </p>
@@ -134,7 +134,7 @@ export default function AppointmentCardList({
                 {/* Cliente */}
                 <div className="mb-3">
                   <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <User className="w-4 h-4 text-gray-400 shrink-0" />
                     <p className="text-sm text-gray-600 truncate">
                       {appointment.client}
                     </p>
@@ -144,7 +144,7 @@ export default function AppointmentCardList({
                 {/* Ubicación */}
                 <div className="mb-3">
                   <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
                     <p className="text-sm text-gray-600 truncate">
                       {appointment.location}
                     </p>
@@ -155,7 +155,7 @@ export default function AppointmentCardList({
                 {appointment.attendingUsers && (
                   <div className="mb-3">
                     <div className="flex items-start gap-2">
-                      <User className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                      <User className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
                       <p className="text-xs text-gray-500 line-clamp-2">
                         {appointment.isMultiplePeople ? 'Atendido por: ' : 'Atendido por: '}
                         {appointment.attendingUsers}
