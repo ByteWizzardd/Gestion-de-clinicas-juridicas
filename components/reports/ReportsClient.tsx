@@ -5,30 +5,29 @@ import { motion, AnimatePresence } from 'motion/react';
 import { FileBarChart, Clock, User, Briefcase, X, Calendar, Home, History, Users, Scale } from 'lucide-react';
 import ReportCard from '@/components/cards/ReportCard';
 import FilterBar, { ReportFilters } from '@/components/reports/FilterBar';
-import { ViewMode } from '@/components/ui/navigation/ViewSwitcher';
+
 import DistributionChart from '@/components/reports/charts/DistributionChart';
 import TopCasesChart from '@/components/reports/charts/TopCasesChart';
 import StatusDistributionChart from '@/components/reports/charts/StatusDistributionChart';
 import TramiteDistributionChart from '@/components/reports/charts/TramiteDistributionChart'; // New Import
-import KPIDashboard from '@/components/reports/KPIDashboard';
+
 import Select from '@/components/forms/Select';
 import Modal from '@/components/ui/feedback/Modal';
 import DatePicker from '@/components/forms/DatePicker';
 import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/feedback/Spinner';
 import { saveAs } from 'file-saver';
-import type { DistributionData, TopCasesData, KPIData, StatusDistributionData, CaseLoadTrendData } from '@/lib/utils/reports-data-mapper';
+import type { DistributionData, TopCasesData, StatusDistributionData, CaseLoadTrendData } from '@/lib/utils/reports-data-mapper';
 
 import {
     getDistributionByNucleo,
     getTopCases,
     getDistributionByStatus,
-    getKPIStats,
-    getDistributionByTramite // New Action
+    getDistributionByTramite
 } from '@/app/actions/reports';
 
 export default function ReportsPage() {
-    const [viewMode, setViewMode] = useState<ViewMode>('charts');
+
     const [filters, setFilters] = useState<ReportFilters>({
         dateRange: 'all',
         nucleo: 'all',
@@ -52,7 +51,7 @@ export default function ReportsPage() {
     const [topCasesData, setTopCasesData] = useState<TopCasesData[]>([]);
     const [statusDistributionData, setStatusDistributionData] = useState<StatusDistributionData[]>([]);
     const [tramiteDistributionData, setTramiteDistributionData] = useState<any[]>([]); // New State
-    const [kpiData, setKPIData] = useState<KPIData | null>(null);
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -167,12 +166,11 @@ export default function ReportsPage() {
                 }
 
                 // Fetch all data in parallel using server actions
-                const [distributionResult, topCasesResult, statusDistResult, tramitetResult, kpiResult] = await Promise.all([
+                const [distributionResult, topCasesResult, statusDistResult, tramitetResult] = await Promise.all([
                     getDistributionByNucleo(fechaInicio, fechaFin, idNucleo, term),
                     getTopCases(fechaInicio, fechaFin, idNucleo, term),
                     getDistributionByStatus(fechaInicio, fechaFin, idNucleo, term),
-                    getDistributionByTramite(fechaInicio, fechaFin, idNucleo, term),
-                    getKPIStats(fechaInicio, fechaFin, idNucleo, term)
+                    getDistributionByTramite(fechaInicio, fechaFin, idNucleo, term)
                 ]);
 
                 if (distributionResult.success && distributionResult.data) {
@@ -189,10 +187,6 @@ export default function ReportsPage() {
 
                 if (tramitetResult.success && tramitetResult.data) {
                     setTramiteDistributionData(tramitetResult.data);
-                }
-
-                if (kpiResult.success && kpiResult.data) {
-                    setKPIData(kpiResult.data);
                 }
 
             } catch (err) {
@@ -604,8 +598,6 @@ export default function ReportsPage() {
                 <FilterBar
                     filters={filters}
                     onFilterChange={setFilters}
-                    viewMode={viewMode}
-                    onViewModeChange={setViewMode}
                 />
             </motion.div>
 
@@ -618,40 +610,35 @@ export default function ReportsPage() {
 
             {/* Dynamic Content Area */}
             <motion.div
-                key={`content-${viewMode}`}
                 className="transition-all duration-300 mt-6"
                 initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
             >
-                {viewMode === 'charts' ? (
-                    loading ? (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {[1, 2, 3, 4].map((i) => (
-                                <div key={i} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm h-96 animate-pulse">
-                                    <div className="h-6 bg-gray-200 rounded w-1/2 mx-auto mb-4"></div>
-                                    <div className="h-64 bg-gray-100 rounded"></div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full min-w-0">
-                            <div className="w-full min-w-0">
-                                <DistributionChart data={distributionData} />
+                {loading ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {[1, 2, 3, 4].map((i) => (
+                            <div key={i} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm h-96 animate-pulse">
+                                <div className="h-6 bg-gray-200 rounded w-1/2 mx-auto mb-4"></div>
+                                <div className="h-64 bg-gray-100 rounded"></div>
                             </div>
-                            <div className="w-full min-w-0">
-                                <TopCasesChart data={topCasesData} />
-                            </div>
-                            <div className="w-full min-w-0">
-                                <StatusDistributionChart data={statusDistributionData} />
-                            </div>
-                            <div className="w-full min-w-0">
-                                <TramiteDistributionChart data={tramiteDistributionData} />
-                            </div>
-                        </div>
-                    )
+                        ))}
+                    </div>
                 ) : (
-                    <KPIDashboard data={kpiData || undefined} loading={loading} />
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full min-w-0">
+                        <div className="w-full min-w-0">
+                            <DistributionChart data={distributionData} />
+                        </div>
+                        <div className="w-full min-w-0">
+                            <TopCasesChart data={topCasesData} />
+                        </div>
+                        <div className="w-full min-w-0">
+                            <StatusDistributionChart data={statusDistributionData} />
+                        </div>
+                        <div className="w-full min-w-0">
+                            <TramiteDistributionChart data={tramiteDistributionData} />
+                        </div>
+                    </div>
                 )}
             </motion.div>
 

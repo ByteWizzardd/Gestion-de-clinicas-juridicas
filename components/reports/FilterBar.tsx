@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Select from '@/components/forms/Select';
-import ViewSwitcher, { ViewMode } from '../ui/navigation/ViewSwitcher';
 import { Calendar } from 'lucide-react';
 
 export interface ReportFilters {
@@ -14,8 +13,6 @@ export interface ReportFilters {
 interface FilterBarProps {
     filters: ReportFilters;
     onFilterChange: (filters: ReportFilters) => void;
-    viewMode: ViewMode;
-    onViewModeChange: (mode: ViewMode) => void;
 }
 
 interface FilterOptions {
@@ -26,9 +23,7 @@ interface FilterOptions {
 
 export default function FilterBar({
     filters,
-    onFilterChange,
-    viewMode,
-    onViewModeChange
+    onFilterChange
 }: FilterBarProps) {
     const [filterOptions, setFilterOptions] = useState<FilterOptions>({
         dateRangeOptions: [{ value: 'last-month', label: 'Último mes' }],
@@ -59,10 +54,10 @@ export default function FilterBar({
     };
 
     return (
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-4 justify-between w-full min-w-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-4 w-full min-w-0">
             {/* Filters Section */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-3 flex-1 min-w-0">
-                <div className="flex-1 sm:flex-initial sm:min-w-0 sm:max-w-[320px] w-full">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-4 flex-1 w-full">
+                <div className="flex-1 w-full">
                     <Select
                         options={filterOptions.dateRangeOptions}
                         value={filters.dateRange}
@@ -73,7 +68,7 @@ export default function FilterBar({
                     />
                 </div>
 
-                <div className="flex-1 sm:flex-initial sm:min-w-0 sm:max-w-[280px] w-full">
+                <div className="flex-1 w-full">
                     <Select
                         options={filterOptions.nucleoOptions}
                         value={filters.nucleo}
@@ -83,7 +78,7 @@ export default function FilterBar({
                     />
                 </div>
 
-                <div className="flex-1 sm:flex-initial sm:min-w-0 sm:max-w-[300px] w-full">
+                <div className="flex-1 w-full">
                     <Select
                         options={filterOptions.termOptions}
                         value={filters.term}
@@ -92,14 +87,6 @@ export default function FilterBar({
                         className="text-md w-full"
                     />
                 </div>
-            </div>
-
-            {/* View Switcher */}
-            <div className="flex-shrink-0 w-full sm:w-auto flex justify-start sm:justify-end">
-                <ViewSwitcher
-                    activeView={viewMode}
-                    onViewChange={onViewModeChange}
-                />
             </div>
         </div>
     );

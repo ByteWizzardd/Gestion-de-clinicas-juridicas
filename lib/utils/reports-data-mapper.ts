@@ -15,17 +15,7 @@ export interface TopCasesData {
     value: number;
 }
 
-export interface KPIData {
-    totalCasos: number;
-    casosEnRiesgo: number;
-    totalAcciones: number;
-    casosArchivados: number;
-    materiaComun: string;
-    cantidadMateriaComun: number;
-    tasaCierrePorcentaje: number;
-    promedioAccionesPorCaso: number;
-    casosPendientesCierre: number;
-}
+// KPIData interface removed
 
 // Color palette for distribution chart
 const DISTRIBUTION_COLORS = [
@@ -72,36 +62,7 @@ export function mapTopCasesData(
     });
 }
 
-/**
- * Maps database KPI stats to dashboard-ready format
- * @param dbData - KPI stats object from database
- * @returns KPIData object with calculated fields
- */
-export function mapKPIData(dbData: {
-    total_casos: number;
-    casos_en_riesgo: number;
-    total_acciones: number;
-    casos_archivados: number;
-    materia_mas_comun: string;
-    cantidad_materia_comun: number;
-    tasa_cierre_porcentaje: number;
-}): KPIData {
-    const totalCasos = Number(dbData.total_casos);
-    const totalAcciones = Number(dbData.total_acciones);
-    const casosArchivados = Number(dbData.casos_archivados);
-
-    return {
-        totalCasos,
-        casosEnRiesgo: Number(dbData.casos_en_riesgo),
-        totalAcciones,
-        casosArchivados,
-        materiaComun: dbData.materia_mas_comun || 'N/A',
-        cantidadMateriaComun: Number(dbData.cantidad_materia_comun),
-        tasaCierrePorcentaje: Number(dbData.tasa_cierre_porcentaje),
-        promedioAccionesPorCaso: totalCasos > 0 ? Math.round((totalAcciones / totalCasos) * 10) / 10 : 0,
-        casosPendientesCierre: totalCasos - casosArchivados,
-    };
-}
+// mapKPIData function removed
 
 // Additional chart data interfaces
 export interface StatusDistributionData {

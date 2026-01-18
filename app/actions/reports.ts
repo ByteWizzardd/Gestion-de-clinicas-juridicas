@@ -9,7 +9,6 @@ import { pool } from '@/lib/db/pool';
 import {
   mapCaseLoadTrendData,
   mapDistributionData,
-  mapKPIData,
   mapStatusDistributionData,
   mapTopCasesData,
 } from '@/lib/utils/reports-data-mapper';
@@ -299,35 +298,7 @@ export async function getFilterOptions(): Promise<{
 /**
  * Obtiene estadísticas KPI
  */
-export async function getKPIStats(
-  fechaInicio?: string,
-  fechaFin?: string,
-  idNucleo?: number,
-  term?: string
-): Promise<{ success: boolean; data?: any; error?: string }> {
-  try {
-    const authResult = await requireAuthInServerAction();
-    if (!authResult.success) {
-      return { success: false, error: authResult.error };
-    }
-
-    const { start, end } = await resolveDateRange(fechaInicio, fechaFin, term);
-
-    // Obtener datos de la base de datos
-    const dbData = await casosQueries.getKPIStats(
-      start,
-      end,
-      idNucleo
-    );
-
-    // Mapear datos al formato del dashboard
-    const kpiData = mapKPIData(dbData);
-
-    return { success: true, data: kpiData };
-  } catch (error) {
-    return handleReportError(error, 'getKPIStats');
-  }
-}
+// function removed
 
 /**
  * Obtiene datos de distribución por estatus

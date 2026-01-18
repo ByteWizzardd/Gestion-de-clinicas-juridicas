@@ -304,48 +304,7 @@ export const casosQueries = {
     return result.rows;
   },
 
-  /**
-   * Obtiene estadísticas KPI para el dashboard
-   * @param fechaInicio - Fecha de inicio del rango (opcional)
-   * @param fechaFin - Fecha de fin del rango (opcional)
-   * @param idNucleo - ID del núcleo para filtrar (opcional)
-   * @param term - TERM para filtrar (opcional)
-   */
-  getKPIStats: async (
-    fechaInicio?: string | Date,
-    fechaFin?: string | Date,
-    idNucleo?: number): Promise<{
-      total_casos: number;
-      casos_en_riesgo: number;
-      total_acciones: number;
-      casos_archivados: number;
-      materia_mas_comun: string;
-      cantidad_materia_comun: number;
-      tasa_cierre_porcentaje: number;
-    }> => {
-    const query = loadSQL('casos/get-kpi-stats.sql');
-    const fechaInicioStr = fechaInicio && fechaInicio !== ''
-      ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
-      : null;
-    const fechaFinStr = fechaFin && fechaFin !== ''
-      ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
-      : null;
-
-    const result: QueryResult = await pool.query(query, [
-      fechaInicioStr,
-      fechaFinStr,
-      idNucleo || null,
-    ]);
-    return result.rows[0] || {
-      total_casos: 0,
-      casos_en_riesgo: 0,
-      total_acciones: 0,
-      casos_archivados: 0,
-      materia_mas_comun: '',
-      cantidad_materia_comun: 0,
-      tasa_cierre_porcentaje: 0,
-    };
-  },
+  // function removed
 
   /**
    * Obtiene la distribución de casos por estatus
