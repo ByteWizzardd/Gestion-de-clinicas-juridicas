@@ -94,6 +94,19 @@ export default function CompactCalendar({
     return date.getTime() === today.getTime();
   };
 
+  // Verificar si es el día seleccionado
+  const isSelected = (day: number, isCurrentMonth: boolean) => {
+    if (!isCurrentMonth) return false;
+    const date = new Date(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth(),
+      day
+    );
+    return date.getDate() === selectedDate.getDate() &&
+      date.getMonth() === selectedDate.getMonth() &&
+      date.getFullYear() === selectedDate.getFullYear();
+  };
+
   const handlePrevMonth = () => {
     const newMonth = new Date(
       currentMonth.getFullYear(),
@@ -169,7 +182,7 @@ export default function CompactCalendar({
   return (
     <div className="h-full flex flex-col">
       {/* Header con navegación - más compacto */}
-      <div className="flex items-center justify-between mb-2 md:mb-3 flex-shrink-0">
+      <div className="flex items-center justify-between mb-2 md:mb-3 shrink-0">
         <button
           onClick={handlePrevMonth}
           className="p-0.5 md:p-1 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
@@ -192,13 +205,12 @@ export default function CompactCalendar({
       {/* Tabla de calendario con bordes - más compacta */}
       <div className="border border-gray-300 rounded-lg md:rounded-xl overflow-hidden flex-1 flex flex-col">
         {/* Header de días de la semana - más compacto */}
-        <div className="grid grid-cols-7 border-b border-gray-300 flex-shrink-0">
+        <div className="grid grid-cols-7 border-b border-gray-300 shrink-0">
           {dayNames.map((day, index) => (
             <div
               key={day}
-              className={`text-center text-[9px] md:text-[10px] font-medium text-gray-600 py-0.5 md:py-1 border-r border-gray-300 bg-gray-50 ${
-                index === dayNames.length - 1 ? 'border-r-0' : ''
-              }`}
+              className={`text-center text-[9px] md:text-[10px] font-medium text-gray-600 py-0.5 md:py-1 border-r border-gray-300 bg-gray-50 ${index === dayNames.length - 1 ? 'border-r-0' : ''
+                }`}
             >
               {day}
             </div>
@@ -210,74 +222,76 @@ export default function CompactCalendar({
           key={`${currentMonth.getFullYear()}-${currentMonth.getMonth()}`}
           className="grid grid-cols-7 grid-rows-6 flex-1"
         >
-            {/* Días del mes anterior */}
-            {Array.from({ length: startingDayOfWeek }).map((_, index) => {
-              const day = daysInPrevMonth - startingDayOfWeek + index + 1;
-              const isLastInRow = (index + 1) % 7 === 0;
-              return (
-                <button
-                  key={`prev-${day}`}
-                  onClick={() => handleDayClick(day, false)}
-                  className={`p-0.5 md:p-1 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-[10px] md:text-xs text-center cursor-pointer ${
-                    isLastInRow ? 'border-r-0' : ''
+          {/* Días del mes anterior */}
+          {Array.from({ length: startingDayOfWeek }).map((_, index) => {
+            const day = daysInPrevMonth - startingDayOfWeek + index + 1;
+            const isLastInRow = (index + 1) % 7 === 0;
+            return (
+              <button
+                key={`prev-${day}`}
+                onClick={() => handleDayClick(day, false)}
+                className={`p-0.5 md:p-1 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-[10px] md:text-xs text-center cursor-pointer ${isLastInRow ? 'border-r-0' : ''
                   }`}
-                >
-                  {day}
-                </button>
-              );
-            })}
+              >
+                {day}
+              </button>
+            );
+          })}
 
-            {/* Días del mes actual */}
-            {Array.from({ length: daysInMonth }).map((_, index) => {
-              const day = index + 1;
-              const isCurrentDay = isToday(day, true);
-              const hasApts = hasAppointments(day, true);
-              // Calcular posición en el grid completo (incluyendo días previos)
-              const gridPosition = startingDayOfWeek + index;
-              const isLastInRow = (gridPosition + 1) % 7 === 0;
+          {/* Días del mes actual */}
+          {Array.from({ length: daysInMonth }).map((_, index) => {
+            const day = index + 1;
+            const isCurrentDay = isToday(day, true);
+            const isSelectedDay = isSelected(day, true);
+            const hasApts = hasAppointments(day, true);
+            // Calcular posición en el grid completo (incluyendo días previos)
+            const gridPosition = startingDayOfWeek + index;
+            const isLastInRow = (gridPosition + 1) % 7 === 0;
 
-              return (
-                <button
-                  key={day}
-                  onClick={() => handleDayClick(day, true)}
-                  className={`
+            return (
+              <button
+                key={day}
+                onClick={() => handleDayClick(day, true)}
+                className={`
                     p-0.5 md:p-1 border-r border-b border-gray-300 transition-colors text-[10px] md:text-xs text-center relative cursor-pointer
                     ${isLastInRow ? 'border-r-0' : ''}
-                    ${
-                      isCurrentDay
-                        ? 'bg-primary text-white font-semibold hover:bg-primary-dark'
-                        : hasApts
+                    ${isSelectedDay
+                    ? isCurrentDay
+                      ? 'bg-primary text-white font-semibold hover:bg-primary-dark'
+                      : 'bg-primary/20 text-primary font-bold border border-primary/20 hover:bg-primary/30'
+                    : isCurrentDay
+                      ? 'text-primary font-bold border border-primary shadow-sm'
+                      : hasApts
                         ? 'bg-primary-light text-primary font-medium hover:bg-primary-light/80'
                         : 'text-foreground hover:bg-gray-50'
-                    }
+                  }
                   `}
-                >
-                  {day}
-                  {hasApts && !isCurrentDay && (
-                    <span className="absolute bottom-0.5 left-0.5 w-0.5 h-0.5 md:w-1 md:h-1 bg-primary rounded-full" />
-                  )}
-                </button>
-              );
-            })}
+              >
+                {day}
+                {hasApts && !isSelectedDay && (
+                  <span className={`absolute bottom-0.5 left-0.5 w-0.5 h-0.5 md:w-1 md:h-1 rounded-full ${isCurrentDay ? 'bg-primary' : 'bg-primary'}`} />
+                )}
+              </button>
+            );
+          })}
 
-            {/* Días del mes siguiente */}
-            {Array.from({ length: daysInNextMonth }).map((_, index) => {
-              const day = index + 1;
-              // Calcular posición en el grid completo
-              const gridPosition = startingDayOfWeek + daysInMonth + index;
-              const isLastInRow = (gridPosition + 1) % 7 === 0;
-              return (
-                <button
-                  key={`next-${day}`}
-                  onClick={() => handleDayClick(day, false)}
-                  className={`p-0.5 md:p-1 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-[10px] md:text-xs text-center cursor-pointer ${
-                    isLastInRow ? 'border-r-0' : ''
+          {/* Días del mes siguiente */}
+          {Array.from({ length: daysInNextMonth }).map((_, index) => {
+            const day = index + 1;
+            // Calcular posición en el grid completo
+            const gridPosition = startingDayOfWeek + daysInMonth + index;
+            const isLastInRow = (gridPosition + 1) % 7 === 0;
+            return (
+              <button
+                key={`next-${day}`}
+                onClick={() => handleDayClick(day, false)}
+                className={`p-0.5 md:p-1 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-[10px] md:text-xs text-center cursor-pointer ${isLastInRow ? 'border-r-0' : ''
                   }`}
-                >
-                  {day}
-                </button>
-              );
-            })}
+              >
+                {day}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
