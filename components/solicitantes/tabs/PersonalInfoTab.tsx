@@ -1,6 +1,6 @@
 'use client';
 
-import { User, Calendar, MapPin, Building2 } from 'lucide-react';
+import { User, MapPin, Building2 } from 'lucide-react';
 import { formatDate, calculateAge } from '@/lib/utils/date-formatter';
 
 interface PersonalInfoTabProps {
@@ -75,15 +75,12 @@ export default function PersonalInfoTab({ solicitante }: PersonalInfoTabProps) {
               <p className="text-base text-gray-900 mt-1">{solicitante.apellidos}</p>
             </div>
           )}
-          {solicitante.fecha_nacimiento && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Fecha de Nacimiento</label>
-              <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-gray-400" />
-                {formatDate(solicitante.fecha_nacimiento)}
-              </p>
-            </div>
-          )}
+          <div>
+            <label className="text-sm font-medium text-gray-500">Fecha de Nacimiento</label>
+            <p className="text-base text-gray-900 mt-1">
+              {formatDate(solicitante.fecha_nacimiento)}
+            </p>
+          </div>
           {edad !== null && edad !== undefined && (
             <div>
               <label className="text-sm font-medium text-gray-500">Edad</label>
@@ -143,8 +140,7 @@ export default function PersonalInfoTab({ solicitante }: PersonalInfoTabProps) {
             {(solicitante.nucleo_nombre_parroquia || solicitante.nombre_parroquia) && (
               <div>
                 <label className="text-sm font-medium text-gray-500">Parroquia</label>
-                <p className="text-base text-gray-900 mt-1 flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-gray-400" />
+                <p className="text-base text-gray-900 mt-1">
                   {solicitante.nucleo_nombre_parroquia || solicitante.nombre_parroquia}
                 </p>
               </div>
