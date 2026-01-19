@@ -766,7 +766,7 @@ export async function getHistorialCasosBySolicitante(
     // 2. Obtener la información completa de cada caso (incluyendo citas, acciones, etc.)
     // Usamos Promise.all para hacerlo en paralelo
     const casosCompletos = await Promise.all(
-      casosBasicos.map(async (casoBasico) => {
+      (casosBasicos as { id_caso: number }[]).map(async (casoBasico) => {
         try {
           const casoCompleto = await casosService.getCasoByIdCompleto(casoBasico.id_caso);
           return casoCompleto;

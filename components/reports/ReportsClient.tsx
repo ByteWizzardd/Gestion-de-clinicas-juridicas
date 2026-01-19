@@ -18,6 +18,7 @@ import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/feedback/Spinner';
 import { saveAs } from 'file-saver';
 import type { DistributionData, TopCasesData, StatusDistributionData, CaseLoadTrendData } from '@/lib/utils/reports-data-mapper';
+import type { CasoHistorialData, SolicitanteFichaData } from '@/lib/types/report-types';
 
 import {
     getDistributionByNucleo,
@@ -173,15 +174,15 @@ export default function ReportsPage() {
                 ]);
 
                 if (distributionResult.success && distributionResult.data) {
-                    setDistributionData(distributionResult.data);
+                    setDistributionData(distributionResult.data as DistributionData[]);
                 }
 
                 if (topCasesResult.success && topCasesResult.data) {
-                    setTopCasesData(topCasesResult.data);
+                    setTopCasesData(topCasesResult.data as TopCasesData[]);
                 }
 
                 if (statusDistResult.success && statusDistResult.data) {
-                    setStatusDistributionData(statusDistResult.data);
+                    setStatusDistributionData(statusDistResult.data as StatusDistributionData[]);
                 }
 
                 if (tramitetResult.success && tramitetResult.data) {
@@ -287,7 +288,7 @@ export default function ReportsPage() {
                     if (result.success && result.data && result.data.length > 0) {
                         // 2. Generar ZIP
                         const { generateHistorialSolicitanteZIP } = await import('@/lib/utils/case-history-pdf-generator');
-                        await generateHistorialSolicitanteZIP(result.data, selectedSolicitante.nombre_completo || `${selectedSolicitante.nombres} ${selectedSolicitante.apellidos}`);
+                        await generateHistorialSolicitanteZIP(result.data as CasoHistorialData[], selectedSolicitante.nombre_completo || `${selectedSolicitante.nombres} ${selectedSolicitante.apellidos}`);
                     } else {
                         if (result.success && (!result.data || result.data.length === 0)) {
                             alert('No se encontraron casos para el solicitante en el rango de fechas seleccionado.');
@@ -315,8 +316,8 @@ export default function ReportsPage() {
                         // 3. Generar ZIP Completo
                         const { generateExpedienteSolicitanteZIP } = await import('@/lib/utils/case-history-pdf-generator');
                         await generateExpedienteSolicitanteZIP(
-                            fichaResult.data,
-                            historialResult.data,
+                            fichaResult.data as SolicitanteFichaData,
+                            historialResult.data as CasoHistorialData[],
                             selectedSolicitante.nombre_completo || `${selectedSolicitante.nombres} ${selectedSolicitante.apellidos}`
                         );
                     } else {

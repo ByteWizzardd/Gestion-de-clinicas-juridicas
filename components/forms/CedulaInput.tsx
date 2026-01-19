@@ -203,7 +203,7 @@ export default function CedulaInput({
         }
 
         if (result.success && result.data) {
-          setSuggestions(result.data);
+          setSuggestions(result.data as Solicitante[]);
           setShowSuggestions(result.data.length > 0);
         } else {
           setSuggestions([]);
