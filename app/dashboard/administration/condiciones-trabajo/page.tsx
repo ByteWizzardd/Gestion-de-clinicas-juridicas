@@ -7,6 +7,7 @@ import CatalogActionsMenu from "@/components/catalogs/CatalogActionsMenu";
 import CatalogViewModal from "@/components/catalogs/CatalogViewModal";
 import { Hash, FileText, CheckCircle2 } from "lucide-react";
 import { getCondicionesTrabajo, createCondicionTrabajo, updateCondicionTrabajo, toggleCondicionTrabajoHabilitado, deleteCondicionTrabajo } from "@/app/actions/catalogos/condiciones-trabajo.actions";
+import { useToast } from "@/components/ui/feedback/ToastProvider";
 
 export default function CondicionesTrabajoPage() {
   const [condiciones, setCondiciones] = useState<any[]>([]);
@@ -15,6 +16,7 @@ export default function CondicionesTrabajoPage() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewItem, setViewItem] = useState<any>(null);
+  const { toast } = useToast();
 
   useEffect(() => { loadCondiciones(); }, []);
 
@@ -26,7 +28,7 @@ export default function CondicionesTrabajoPage() {
   const handleAdd = async (data: Record<string, string>) => {
     const result = await createCondicionTrabajo(data as { nombre_trabajo: string });
     if (result.success) { setIsModalOpen(false); await loadCondiciones(); }
-    else alert(result.error || 'Error al añadir condición');
+    else toast.error(result.error || 'Error al añadir condición');
   };
 
   const handleEdit = (item: any) => { setEditingItem(item); setIsEditMode(true); setIsModalOpen(true); };
@@ -40,19 +42,19 @@ export default function CondicionesTrabajoPage() {
     if (!editingItem) return;
     const result = await updateCondicionTrabajo(editingItem.id_trabajo, data as { nombre_trabajo: string });
     if (result.success) { setIsModalOpen(false); setIsEditMode(false); setEditingItem(null); await loadCondiciones(); }
-    else alert(result.error || 'Error al actualizar');
+    else toast.error(result.error || 'Error al actualizar');
   };
 
   const handleToggle = async (item: any) => {
     const result = await toggleCondicionTrabajoHabilitado(item.id_trabajo);
     if (result.success) await loadCondiciones();
-    else alert(result.error);
+    else toast.error(result.error || 'Error al cambiar estado');
   };
 
   const handleDelete = async (item: any, motivo?: string) => {
-    const result = await deleteCondicionTrabajo(item.id_trabajo, motivo);
+    const result = await deleteCondicionTrabajo(item.id_condicion_trabajo, motivo);
     if (result.success) await loadCondiciones();
-    else alert(result.error === 'HAS_ASSOCIATIONS' ? result.message : result.error);
+    else toast.error(result.error === 'HAS_ASSOCIATIONS' ? (result.message || 'No se puede eliminar') : (result.error || 'Error al eliminar'));
   };
 
   return (

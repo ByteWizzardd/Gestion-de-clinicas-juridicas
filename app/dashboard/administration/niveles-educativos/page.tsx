@@ -7,6 +7,7 @@ import CatalogActionsMenu from "@/components/catalogs/CatalogActionsMenu";
 import CatalogViewModal from "@/components/catalogs/CatalogViewModal";
 import { Hash, FileText, CheckCircle2 } from "lucide-react";
 import { getNivelesEducativos, updateNivelEducativo, toggleNivelEducativoHabilitado, deleteNivelEducativo } from "@/app/actions/catalogos/niveles-educativos.actions";
+import { useToast } from "@/components/ui/feedback/ToastProvider";
 
 export default function NivelesEducativosPage() {
     const [nivelesEducativos, setNivelesEducativos] = useState<any[]>([]);
@@ -15,6 +16,7 @@ export default function NivelesEducativosPage() {
     const [editingItem, setEditingItem] = useState<any>(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [viewItem, setViewItem] = useState<any>(null);
+    const { toast } = useToast();
 
     useEffect(() => {
         loadNivelesEducativos();
@@ -35,7 +37,7 @@ export default function NivelesEducativosPage() {
             setIsModalOpen(false);
             await loadNivelesEducativos();
         } else {
-            alert(result.error || 'Error al añadir nivel educativo');
+            toast.error(result.error || 'Error al añadir nivel educativo');
         }
     };
 
@@ -59,7 +61,7 @@ export default function NivelesEducativosPage() {
             setEditingItem(null);
             await loadNivelesEducativos();
         } else {
-            alert(result.error || 'Error al actualizar nivel educativo');
+            toast.error(result.error || 'Error al actualizar nivel educativo');
         }
     };
 
@@ -68,7 +70,7 @@ export default function NivelesEducativosPage() {
         if (result.success) {
             await loadNivelesEducativos();
         } else {
-            alert(result.error || 'Error al cambiar estado');
+            toast.error(result.error || 'Error al cambiar estado');
         }
     };
 
@@ -78,9 +80,9 @@ export default function NivelesEducativosPage() {
             await loadNivelesEducativos();
         } else {
             if (result.error === 'HAS_ASSOCIATIONS') {
-                alert(result.message || 'No se puede eliminar este nivel educativo porque tiene asociaciones.');
+                toast.error(result.message || 'No se puede eliminar este nivel educativo porque tiene asociaciones.');
             } else {
-                alert(result.error || 'Error al eliminar nivel educativo');
+                toast.error(result.error || 'Error al eliminar nivel educativo');
             }
         }
     };

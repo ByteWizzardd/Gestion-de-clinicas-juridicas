@@ -7,6 +7,7 @@ import CatalogActionsMenu from "@/components/catalogs/CatalogActionsMenu";
 import CatalogViewModal from "@/components/catalogs/CatalogViewModal";
 import { Hash, FileText, CheckCircle2 } from "lucide-react";
 import { getEstados, updateEstado, toggleEstadoHabilitado, deleteEstado } from "@/app/actions/catalogos/estados.actions";
+import { useToast } from "@/components/ui/feedback/ToastProvider";
 
 export default function EstadosPage() {
     const [estados, setEstados] = useState<any[]>([]);
@@ -15,6 +16,7 @@ export default function EstadosPage() {
     const [editingItem, setEditingItem] = useState<any>(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [viewItem, setViewItem] = useState<any>(null);
+    const { toast } = useToast();
 
     useEffect(() => {
         loadEstados();
@@ -35,7 +37,7 @@ export default function EstadosPage() {
             setIsModalOpen(false);
             await loadEstados();
         } else {
-            alert(result.error || 'Error al añadir estado');
+            toast.error(result.error || 'Error al añadir estado');
         }
     };
 
@@ -59,7 +61,7 @@ export default function EstadosPage() {
             setEditingItem(null);
             await loadEstados();
         } else {
-            alert(result.error || 'Error al actualizar estado');
+            toast.error(result.error || 'Error al actualizar estado');
         }
     };
 
@@ -68,7 +70,7 @@ export default function EstadosPage() {
         if (result.success) {
             await loadEstados();
         } else {
-            alert(result.error || 'Error al cambiar estado');
+            toast.error(result.error || 'Error al cambiar estado');
         }
     };
 
@@ -78,9 +80,9 @@ export default function EstadosPage() {
             await loadEstados();
         } else {
             if (result.error === 'HAS_ASSOCIATIONS') {
-                alert(result.message || 'No se puede eliminar este estado porque tiene asociaciones.');
+                toast.error(result.message || 'No se puede eliminar este estado porque tiene asociaciones.');
             } else {
-                alert(result.error || 'Error al eliminar estado');
+                toast.error(result.error || 'Error al eliminar estado');
             }
         }
     };

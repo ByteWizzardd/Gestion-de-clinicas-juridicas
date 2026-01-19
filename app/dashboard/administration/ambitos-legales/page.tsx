@@ -10,6 +10,7 @@ import { getAmbitosLegales, createAmbitoLegal, updateAmbitoLegal, toggleAmbitoLe
 import { getMaterias } from "@/app/actions/catalogos/materias.actions";
 import { getCategorias } from "@/app/actions/catalogos/categorias.actions";
 import { getSubcategorias } from "@/app/actions/catalogos/subcategorias.actions";
+import { useToast } from "@/components/ui/feedback/ToastProvider";
 
 export default function AmbitosLegalesPage() {
     const [ambitos, setAmbitos] = useState<any[]>([]);
@@ -25,6 +26,7 @@ export default function AmbitosLegalesPage() {
     const [editingItem, setEditingItem] = useState<any>(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [viewItem, setViewItem] = useState<any>(null);
+    const { toast } = useToast();
 
     useEffect(() => { loadData(); }, []);
 
@@ -65,7 +67,7 @@ export default function AmbitosLegalesPage() {
             handleCloseModal();
             await loadData();
         } else {
-            alert(result.error || 'Error al añadir ámbito legal');
+            toast.error(result.error || 'Error al añadir ámbito legal');
         }
     };
 
@@ -116,20 +118,20 @@ export default function AmbitosLegalesPage() {
             handleCloseModal();
             await loadData();
         } else {
-            alert(result.error || 'Error al actualizar ámbito legal');
+            toast.error(result.error || 'Error al actualizar ámbito legal');
         }
     };
 
     const handleToggle = async (item: any) => {
         const result = await toggleAmbitoLegalHabilitado(item.id_materia, item.num_categoria, item.num_subcategoria, item.num_ambito_legal);
         if (result.success) await loadData();
-        else alert(result.error);
+        else toast.error(result.error || 'Error al cambiar estado');
     };
 
     const handleDelete = async (item: any, motivo?: string) => {
         const result = await deleteAmbitoLegal(item.id_materia, item.num_categoria, item.num_subcategoria, item.num_ambito_legal, motivo);
         if (result.success) await loadData();
-        else alert(result.error === 'HAS_ASSOCIATIONS' ? result.message : result.error);
+        else toast.error(result.error === 'HAS_ASSOCIATIONS' ? (result.message || 'No se puede eliminar') : (result.error || 'Error al eliminar'));
     };
 
     const handleCloseModal = () => {

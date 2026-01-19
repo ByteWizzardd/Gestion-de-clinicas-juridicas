@@ -9,6 +9,7 @@ import { Hash, FileText, CheckCircle2 } from "lucide-react";
 import { getParroquias, createParroquia, updateParroquia, toggleParroquiaHabilitado, deleteParroquia } from "@/app/actions/catalogos/parroquias.actions";
 import { getEstados } from "@/app/actions/catalogos/estados.actions";
 import { getMunicipios } from "@/app/actions/catalogos/municipios.actions";
+import { useToast } from "@/components/ui/feedback/ToastProvider";
 
 export default function ParroquiasPage() {
     const [parroquias, setParroquias] = useState<any[]>([]);
@@ -21,6 +22,7 @@ export default function ParroquiasPage() {
     const [editingItem, setEditingItem] = useState<any>(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [viewItem, setViewItem] = useState<any>(null);
+    const { toast } = useToast();
 
     useEffect(() => { loadData(); }, []);
 
@@ -46,7 +48,7 @@ export default function ParroquiasPage() {
             handleCloseModal();
             await loadData();
         } else {
-            alert(result.error || 'Error al añadir parroquia');
+            toast.error(result.error || 'Error al añadir parroquia');
         }
     };
 
@@ -80,20 +82,20 @@ export default function ParroquiasPage() {
             handleCloseModal();
             await loadData();
         } else {
-            alert(result.error || 'Error al actualizar parroquia');
+            toast.error(result.error || 'Error al actualizar parroquia');
         }
     };
 
     const handleToggle = async (item: any) => {
         const result = await toggleParroquiaHabilitado(item.id_estado, item.num_municipio, item.num_parroquia);
         if (result.success) await loadData();
-        else alert(result.error);
+        else toast.error(result.error || 'Error al cambiar estado');
     };
 
     const handleDelete = async (item: any, motivo?: string) => {
         const result = await deleteParroquia(item.id_estado, item.num_municipio, item.num_parroquia, motivo);
         if (result.success) await loadData();
-        else alert(result.error);
+        else toast.error(result.error === 'HAS_ASSOCIATIONS' ? (result.message || 'No se puede eliminar') : (result.error || 'Error al eliminar parroquia'));
     };
 
     const handleCloseModal = () => {

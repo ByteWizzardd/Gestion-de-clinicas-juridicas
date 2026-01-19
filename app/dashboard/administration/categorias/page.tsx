@@ -8,6 +8,7 @@ import CatalogViewModal from "@/components/catalogs/CatalogViewModal";
 import { Hash, FileText, CheckCircle2 } from "lucide-react";
 import { getCategorias, createCategoria, updateCategoria, toggleCategoriaHabilitado, deleteCategoria } from "@/app/actions/catalogos/categorias.actions";
 import { getMaterias } from "@/app/actions/catalogos/materias.actions";
+import { useToast } from "@/components/ui/feedback/ToastProvider";
 
 export default function CategoriasPage() {
     const [categorias, setCategorias] = useState<any[]>([]);
@@ -18,6 +19,7 @@ export default function CategoriasPage() {
     const [editingItem, setEditingItem] = useState<any>(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [viewItem, setViewItem] = useState<any>(null);
+    const { toast } = useToast();
 
     useEffect(() => { loadData(); }, []);
 
@@ -39,7 +41,7 @@ export default function CategoriasPage() {
             handleCloseModal();
             await loadData();
         } else {
-            alert(result.error || 'Error al añadir categoría');
+            toast.error(result.error || 'Error al añadir categoría');
         }
     };
 
@@ -71,20 +73,20 @@ export default function CategoriasPage() {
             handleCloseModal();
             await loadData();
         } else {
-            alert(result.error || 'Error al actualizar categoría');
+            toast.error(result.error || 'Error al actualizar categoría');
         }
     };
 
     const handleToggle = async (item: any) => {
         const result = await toggleCategoriaHabilitado(item.id_materia, item.num_categoria);
         if (result.success) await loadData();
-        else alert(result.error);
+        else toast.error(result.error || 'Error al cambiar estado');
     };
 
     const handleDelete = async (item: any, motivo?: string) => {
         const result = await deleteCategoria(item.id_materia, item.num_categoria, motivo);
         if (result.success) await loadData();
-        else alert(result.error === 'HAS_IN_USE' ? result.message : result.error);
+        else toast.error(result.error === 'HAS_IN_USE' ? (result.message || 'No se puede eliminar') : (result.error || 'Error al eliminar'));
     };
 
     const handleCloseModal = () => {

@@ -10,6 +10,7 @@ import { getNucleos, createNucleo, updateNucleo, toggleNucleoHabilitado, deleteN
 import { getParroquias } from "@/app/actions/catalogos/parroquias.actions";
 import { getEstados } from "@/app/actions/catalogos/estados.actions";
 import { getMunicipios } from "@/app/actions/catalogos/municipios.actions";
+import { useToast } from "@/components/ui/feedback/ToastProvider";
 
 export default function NucleosPage() {
     const [nucleos, setNucleos] = useState<any[]>([]);
@@ -28,6 +29,7 @@ export default function NucleosPage() {
     const [editingItem, setEditingItem] = useState<any>(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [viewItem, setViewItem] = useState<any>(null);
+    const { toast } = useToast();
 
     useEffect(() => { loadData(); }, []);
 
@@ -75,7 +77,7 @@ export default function NucleosPage() {
             handleCloseModal();
             await loadData();
         } else {
-            alert(result.error || 'Error al añadir núcleo');
+            toast.error(result.error || 'Error al añadir núcleo');
         }
     };
 
@@ -110,20 +112,20 @@ export default function NucleosPage() {
             handleCloseModal();
             await loadData();
         } else {
-            alert(result.error || 'Error al actualizar núcleo');
+            toast.error(result.error || 'Error al actualizar núcleo');
         }
     };
 
     const handleToggle = async (item: any) => {
         const result = await toggleNucleoHabilitado(item.id_nucleo);
         if (result.success) await loadData();
-        else alert(result.error);
+        else toast.error(result.error || 'Error al cambiar estado');
     };
 
     const handleDelete = async (item: any, motivo?: string) => {
         const result = await deleteNucleo(item.id_nucleo, motivo);
         if (result.success) await loadData();
-        else alert(result.error === 'HAS_ASSOCIATIONS' ? result.message : result.error);
+        else toast.error(result.error === 'HAS_ASSOCIATIONS' ? (result.message || 'No se puede eliminar') : (result.error || 'Error al eliminar'));
     };
 
     const handleCloseModal = () => {

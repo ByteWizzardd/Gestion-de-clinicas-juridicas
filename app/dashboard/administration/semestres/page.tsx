@@ -7,6 +7,7 @@ import CatalogActionsMenu from "@/components/catalogs/CatalogActionsMenu";
 import CatalogViewModal from "@/components/catalogs/CatalogViewModal";
 import { Hash, Calendar, CheckCircle2 } from "lucide-react";
 import { getSemestres, createSemestre, updateSemestre, toggleSemestreHabilitado, deleteSemestre } from "@/app/actions/catalogos/semestres.actions";
+import { useToast } from "@/components/ui/feedback/ToastProvider";
 
 export default function SemestresPage() {
   const [semestres, setSemestres] = useState<any[]>([]);
@@ -15,6 +16,7 @@ export default function SemestresPage() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewItem, setViewItem] = useState<any>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     loadSemestres();
@@ -33,7 +35,7 @@ export default function SemestresPage() {
       setIsModalOpen(false);
       await loadSemestres();
     } else {
-      alert(result.error || 'Error al añadir semestre');
+      toast.error(result.error || 'Error al añadir semestre');
     }
   };
 
@@ -57,14 +59,14 @@ export default function SemestresPage() {
       setEditingItem(null);
       await loadSemestres();
     } else {
-      alert(result.error || 'Error al actualizar semestre');
+      toast.error(result.error || 'Error al actualizar semestre');
     }
   };
 
   const handleToggleHabilitado = async (item: any) => {
     const result = await toggleSemestreHabilitado(item.term);
     if (result.success) await loadSemestres();
-    else alert(result.error || 'Error al cambiar estado');
+    else toast.error(result.error || 'Error al cambiar estado');
   };
 
   const handleDelete = async (item: any, motivo?: string) => {
@@ -73,9 +75,9 @@ export default function SemestresPage() {
       await loadSemestres();
     } else {
       if (result.error === 'HAS_ASSOCIATIONS') {
-        alert(result.message || 'No se puede eliminar este semestre.');
+        toast.error(result.message || 'No se puede eliminar este semestre.');
       } else {
-        alert(result.error || 'Error al eliminar semestre');
+        toast.error(result.error || 'Error al eliminar semestre');
       }
     }
   };

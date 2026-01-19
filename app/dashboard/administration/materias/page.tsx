@@ -7,6 +7,7 @@ import CatalogActionsMenu from "@/components/catalogs/CatalogActionsMenu";
 import CatalogViewModal from "@/components/catalogs/CatalogViewModal";
 import { Hash, FileText, CheckCircle2 } from "lucide-react";
 import { getMaterias, updateMateria, toggleMateriaHabilitado, deleteMateria } from "@/app/actions/catalogos/materias.actions";
+import { useToast } from "@/components/ui/feedback/ToastProvider";
 
 export default function MateriasPage() {
     const [materias, setMaterias] = useState<any[]>([]);
@@ -15,6 +16,7 @@ export default function MateriasPage() {
     const [editingItem, setEditingItem] = useState<any>(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [viewItem, setViewItem] = useState<any>(null);
+    const { toast } = useToast();
 
     useEffect(() => {
         loadMaterias();
@@ -37,7 +39,7 @@ export default function MateriasPage() {
             await loadMaterias();
         } else {
             console.error('Error al añadir materia:', result.error);
-            alert(result.error || 'Error al añadir materia');
+            toast.error(result.error || 'Error al añadir materia');
         }
     };
 
@@ -63,7 +65,7 @@ export default function MateriasPage() {
             setEditingItem(null);
             await loadMaterias();
         } else {
-            alert(result.error || 'Error al actualizar materia');
+            toast.error(result.error || 'Error al actualizar materia');
         }
     };
 
@@ -73,7 +75,7 @@ export default function MateriasPage() {
         if (result.success) {
             await loadMaterias();
         } else {
-            alert(result.error || 'Error al cambiar estado');
+            toast.error(result.error || 'Error al cambiar estado');
         }
     };
 
@@ -84,9 +86,9 @@ export default function MateriasPage() {
             await loadMaterias();
         } else {
             if (result.error === 'HAS_ASSOCIATIONS') {
-                alert(result.message || 'No se puede eliminar esta materia porque tiene categorías o casos asociados. Deshabilítela en su lugar.');
+                toast.error(result.message || 'No se puede eliminar esta materia porque tiene categorías o casos asociados. Deshabilítela en su lugar.');
             } else {
-                alert(result.error || 'Error al eliminar materia');
+                toast.error(result.error || 'Error al eliminar materia');
             }
         }
     };

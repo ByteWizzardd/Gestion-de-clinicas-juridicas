@@ -9,6 +9,7 @@ import { Hash, FileText, CheckCircle2 } from "lucide-react";
 import { getSubcategorias, createSubcategoria, updateSubcategoria, toggleSubcategoriaHabilitado, deleteSubcategoria } from "@/app/actions/catalogos/subcategorias.actions";
 import { getMaterias } from "@/app/actions/catalogos/materias.actions";
 import { getCategorias } from "@/app/actions/catalogos/categorias.actions";
+import { useToast } from "@/components/ui/feedback/ToastProvider";
 
 export default function SubcategoriasPage() {
     const [subcategorias, setSubcategorias] = useState<any[]>([]);
@@ -22,6 +23,7 @@ export default function SubcategoriasPage() {
     const [selectedMateria, setSelectedMateria] = useState('');
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [viewItem, setViewItem] = useState<any>(null);
+    const { toast } = useToast();
 
     useEffect(() => { loadData(); }, []);
 
@@ -52,7 +54,7 @@ export default function SubcategoriasPage() {
             handleCloseModal();
             await loadData();
         } else {
-            alert(result.error || 'Error al añadir subcategoría');
+            toast.error(result.error || 'Error al añadir subcategoría');
         }
     };
 
@@ -96,20 +98,20 @@ export default function SubcategoriasPage() {
             handleCloseModal();
             await loadData();
         } else {
-            alert(result.error || 'Error al actualizar subcategoría');
+            toast.error(result.error || 'Error al actualizar subcategoría');
         }
     };
 
     const handleToggle = async (item: any) => {
         const result = await toggleSubcategoriaHabilitado(item.id_materia, item.num_categoria, item.num_subcategoria);
         if (result.success) await loadData();
-        else alert(result.error);
+        else toast.error(result.error || 'Error al cambiar estado');
     };
 
     const handleDelete = async (item: any, motivo?: string) => {
         const result = await deleteSubcategoria(item.id_materia, item.num_categoria, item.num_subcategoria, motivo);
         if (result.success) await loadData();
-        else alert(result.error === 'HAS_ASSOCIATIONS' ? result.message : result.error);
+        else toast.error(result.error === 'HAS_ASSOCIATIONS' ? (result.message || 'No se puede eliminar') : (result.error || 'Error al eliminar'));
     };
 
     const handleCloseModal = () => {

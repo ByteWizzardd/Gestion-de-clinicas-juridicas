@@ -8,6 +8,7 @@ import CatalogViewModal from "@/components/catalogs/CatalogViewModal";
 import { Hash, FileText, CheckCircle2, Tag } from "lucide-react";
 import { getCaracteristicas, createCaracteristica, updateCaracteristica, toggleCaracteristicaHabilitado, deleteCaracteristica } from "@/app/actions/catalogos/caracteristicas.actions";
 import { getTiposCaracteristicas } from "@/app/actions/catalogos/tipos-caracteristicas.actions";
+import { useToast } from "@/components/ui/feedback/ToastProvider";
 
 export default function CaracteristicasPage() {
   const [caracteristicas, setCaracteristicas] = useState<any[]>([]);
@@ -18,6 +19,7 @@ export default function CaracteristicasPage() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewItem, setViewItem] = useState<any>(null);
+  const { toast } = useToast();
 
   useEffect(() => { loadData(); }, []);
 
@@ -35,7 +37,7 @@ export default function CaracteristicasPage() {
       handleCloseModal();
       await loadData();
     } else {
-      alert(result.error || 'Error al añadir característica');
+      toast.error(result.error || 'Error al añadir característica');
     }
   };
 
@@ -64,20 +66,20 @@ export default function CaracteristicasPage() {
       handleCloseModal();
       await loadData();
     } else {
-      alert(result.error === 'HAS_ASSOCIATIONS' ? result.message : (result.error || 'Error al actualizar característica'));
+      toast.error(result.error === 'HAS_ASSOCIATIONS' ? result.message : (result.error || 'Error al actualizar característica'));
     }
   };
 
   const handleToggle = async (item: any) => {
     const result = await toggleCaracteristicaHabilitado(item.id_tipo_caracteristica, item.num_caracteristica);
     if (result.success) await loadData();
-    else alert(result.error);
+    else toast.error(result.error || 'Error al cambiar estado');
   };
 
   const handleDelete = async (item: any, motivo?: string) => {
     const result = await deleteCaracteristica(item.id_tipo_caracteristica, item.num_caracteristica, motivo);
     if (result.success) await loadData();
-    else alert(result.error === 'HAS_ASSOCIATIONS' ? result.message : result.error);
+    else toast.error(result.error === 'HAS_ASSOCIATIONS' ? (result.message || 'No se puede eliminar') : (result.error || 'Error al eliminar'));
   };
 
   const handleCloseModal = () => {

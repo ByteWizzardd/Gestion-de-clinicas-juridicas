@@ -7,6 +7,7 @@ import CatalogActionsMenu from "@/components/catalogs/CatalogActionsMenu";
 import CatalogViewModal from "@/components/catalogs/CatalogViewModal";
 import { Hash, FileText, CheckCircle2 } from "lucide-react";
 import { getTiposCaracteristicas, createTipoCaracteristica, updateTipoCaracteristica, toggleTipoCaracteristicaHabilitado, deleteTipoCaracteristica } from "@/app/actions/catalogos/tipos-caracteristicas.actions";
+import { useToast } from "@/components/ui/feedback/ToastProvider";
 
 export default function TiposCaracteristicasPage() {
   const [tipos, setTipos] = useState<any[]>([]);
@@ -16,6 +17,7 @@ export default function TiposCaracteristicasPage() {
 
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewItem, setViewItem] = useState<any>(null);
+  const { toast } = useToast();
 
   useEffect(() => { loadTipos(); }, []);
 
@@ -27,7 +29,7 @@ export default function TiposCaracteristicasPage() {
   const handleAdd = async (data: Record<string, string>) => {
     const result = await createTipoCaracteristica(data as { nombre_tipo_caracteristica: string });
     if (result.success) { setIsModalOpen(false); await loadTipos(); }
-    else alert(result.error || 'Error al añadir tipo');
+    else toast.error(result.error || 'Error al añadir tipo');
   };
 
   const handleEdit = (item: any) => { setEditingItem(item); setIsEditMode(true); setIsModalOpen(true); };
@@ -41,19 +43,19 @@ export default function TiposCaracteristicasPage() {
     if (!editingItem) return;
     const result = await updateTipoCaracteristica(editingItem.id_tipo, data as { nombre_tipo_caracteristica: string });
     if (result.success) { setIsModalOpen(false); setIsEditMode(false); setEditingItem(null); await loadTipos(); }
-    else alert(result.error || 'Error al actualizar');
+    else toast.error(result.error || 'Error al actualizar');
   };
 
   const handleToggle = async (item: any) => {
     const result = await toggleTipoCaracteristicaHabilitado(item.id_tipo);
     if (result.success) await loadTipos();
-    else alert(result.error);
+    else toast.error(result.error || 'Error al cambiar estado');
   };
 
   const handleDelete = async (item: any, motivo?: string) => {
     const result = await deleteTipoCaracteristica(item.id_tipo, motivo);
     if (result.success) await loadTipos();
-    else alert(result.error);
+    else toast.error(result.error === 'HAS_ASSOCIATIONS' ? (result.message || 'No se puede eliminar') : (result.error || 'Error al eliminar'));
   };
 
   return (
