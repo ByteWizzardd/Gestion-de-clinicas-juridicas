@@ -60,22 +60,7 @@ export async function createCitaAction(
       };
     }
 
-    // Validar que la fecha de la cita no sea anterior a hoy
-    if (params.date) {
-      const citaDate = new Date(params.date + 'T00:00:00');
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
 
-      if (citaDate < today) {
-        return {
-          success: false,
-          error: {
-            message: 'La fecha de la cita no puede ser anterior a hoy',
-            code: 'VALIDATION_ERROR',
-          },
-        };
-      }
-    }
 
     // Crear la cita primero
     const newCita = await citasService.createAppointment({

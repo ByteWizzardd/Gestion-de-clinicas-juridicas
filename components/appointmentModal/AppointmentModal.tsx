@@ -1,7 +1,7 @@
 'use client';
 
 import DatePicker from "../forms/DatePicker";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Modal from "../ui/feedback/Modal";
 import Select from "../forms/Select";
 import MultiSelect from "../forms/MultiSelect";
@@ -69,7 +69,8 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
 
   // Estados para el modal de confirmación de acción
   const [showActionConfirmModal, setShowActionConfirmModal] = useState(false);
-  const [creatingAction, setCreatingAction] = useState(false);
+  /* REMOVED: const [creatingAction, setCreatingAction] = useState(false); */
+  const creatingActionRef = useRef(false); // Use ref for synchronous locking
   const [citaCreada, setCitaCreada] = useState<{
     id_caso: number;
     fecha: string;
@@ -190,6 +191,15 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
         const dateObj = new Date(dateString);
         if (isNaN(dateObj.getTime())) {
           newErrors.date = 'Fecha inválida';
+        } else if (!isEditing) {
+          // Registrar Cita: la fecha debe ser hoy o en el pasado
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          dateObj.setHours(0, 0, 0, 0);
+
+          if (dateObj > today) {
+            newErrors.date = 'La fecha del encuentro no puede ser posterior a hoy';
+          }
         }
       }
     }
@@ -412,10 +422,9 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
   };
 
   const handleCreateAction = async () => {
-    if (!citaCreada) return;
+    if (!citaCreada || creatingActionRef.current) return;
 
-    setCreatingAction(true);
-    setCreatingAction(true);
+    creatingActionRef.current = true;
 
     try {
       // Construir detalle de la acción
@@ -441,7 +450,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
         undefined // fechaRegistro: usa fecha actual automáticamente
       );
 
-      setCreatingAction(false);
+      creatingActionRef.current = false;
 
       if (result.success) {
         // Guardar el id_caso antes de limpiar el estado
@@ -475,8 +484,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
         setShowActionConfirmModal(false);
       }
     } catch (error) {
-      setCreatingAction(false);
-      setCreatingAction(false);
+      creatingActionRef.current = false;
       toast.error(error instanceof Error ? error.message : "Error al crear la acción. La cita fue guardada correctamente.");
       setShowActionConfirmModal(false);
     }
@@ -670,7 +678,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
         message="Se ha registrado la cita. ¿Desea agregarla también al historial de acciones del caso?"
         confirmLabel="Sí, agregar"
         cancelLabel="No, solo cita"
-        disabled={creatingAction}
+        disabled={creatingActionRef.current}
       />
     </Modal>
   );

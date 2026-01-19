@@ -127,7 +127,9 @@ export default function AppointmentsTab({ citas, onRefresh, onEditAppointment }:
 
   // Ordenar citas por número de cita (descendente - mayor número primero)
   const citasOrdenadas = citas ? [...citas].sort((a, b) => {
-    return b.num_cita - a.num_cita; // Mayor número primero
+    const numA = typeof a.num_cita === 'number' ? a.num_cita : 0;
+    const numB = typeof b.num_cita === 'number' ? b.num_cita : 0;
+    return numB - numA; // Mayor número primero
   }).map(cita => ({
     ...cita,
     // Ordenar atenciones por fecha de registro (descendente)

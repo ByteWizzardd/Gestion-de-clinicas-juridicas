@@ -123,18 +123,23 @@ export function AppointmentScheduleModal({
     if (!date) {
       newErrors.date = 'Este campo es requerido';
     } else {
-      const dateObj = new Date(date);
-      if (isNaN(dateObj.getTime())) {
+      // Parse the date from state (which is already a Date object from DatePicker)
+      // Get local date components to avoid UTC timezone issues
+      const selectedYear = date.getFullYear();
+      const selectedMonth = date.getMonth();
+      const selectedDay = date.getDate();
+      const selectedDate = new Date(selectedYear, selectedMonth, selectedDay);
+      selectedDate.setHours(0, 0, 0, 0);
+
+      if (isNaN(selectedDate.getTime())) {
         newErrors.date = 'Fecha inválida';
       } else {
-        // La fecha debe ser mayor o igual a hoy
+        // Programar Cita: la fecha debe ser hoy o en el futuro
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const selectedDate = new Date(dateObj);
-        selectedDate.setHours(0, 0, 0, 0);
 
         if (selectedDate < today) {
-          newErrors.date = 'La fecha de la cita no puede ser anterior a hoy';
+          newErrors.date = 'La fecha de la cita programada no puede ser anterior a hoy';
         }
       }
     }
