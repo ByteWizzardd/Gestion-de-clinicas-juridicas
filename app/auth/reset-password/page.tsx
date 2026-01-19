@@ -112,7 +112,7 @@ function ResetPasswordForm() {
     };
 
     return(
-        <div className="bg-background relative overflow-hidden h-screen">
+        <div className="bg-background relative overflow-hidden min-h-svh">
             <AnimatePresence>
                 {!isExiting && (
                     <motion.div
@@ -122,28 +122,28 @@ function ResetPasswordForm() {
                         exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                         transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.15, ease: "easeOut" }}>
                         <Link href="/auth/login" onClick={handleBack}
-                            className="absolute top-10 left-8 z-30 p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                            className="absolute top-4 left-4 sm:top-10 sm:left-8 z-30 p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
                         >
-                            <ArrowLeft className="w-8 h-8 text-foreground hover:text-primary transition-colors" />
+                            <ArrowLeft className="w-6 h-6 sm:w-8 sm:h-8 text-foreground hover:text-primary transition-colors" />
                         </Link>
                     </motion.div>
                 )}
             </AnimatePresence>
             
             {/* Contenedor principal con layout flex */}
-            <div className="flex h-screen items-center justify-start px-12 relative">
+            <div className="flex min-h-svh items-center justify-center sm:justify-start px-4 sm:px-12 relative">
                 <AnimatePresence>
                     {!isExiting && (
                         <motion.div 
                             key="reset-password-form"
-                            className="w-full max-w-md pl-15"
+                            className="w-full max-w-md mx-auto sm:mx-0 sm:pl-15"
                             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}>
                     <form onSubmit={handleSubmit} className="flex flex-col gap-6 w-full">
                         <div className="mb-5">
-                            <h1 className="text-5xl font-normal text-foreground mb-2 text-center font-primary">Restablecer Contraseña</h1>
+                            <h1 className="text-3xl sm:text-5xl font-normal text-foreground mb-2 text-center font-primary">Restablecer Contraseña</h1>
                             <div className="w-full h-0.5 bg-secondary mt-5"/>
                         </div>
                         {error && (
@@ -156,7 +156,7 @@ function ResetPasswordForm() {
                                 Contraseña actualizada exitosamente. Redirigiendo al inicio de sesión...
                             </div>
                         )}
-                        <div className="flex flex-col gap-4 !font-urbanist">
+                        <div className="flex flex-col gap-4 font-urbanist!">
                             {formData.email && (
                                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700">
                                     <strong>Correo:</strong> {formData.email}
@@ -178,7 +178,7 @@ function ResetPasswordForm() {
                             <Input 
                                 label="Confirmar contraseña" 
                                 placeholder="Confirme su nueva contraseña" 
-                                className="bg-gray-200 !text-base"
+                                className="bg-gray-200 text-base!"
                                 name="confirmPassword"
                                 type="password"
                                 value={formData.confirmPassword}
@@ -187,13 +187,13 @@ function ResetPasswordForm() {
                                 disabled={success}
                             />
                         </div>
-                        <div className="flex flex-col gap-2 mt-4 !font-urbanist">
+                        <div className="flex flex-col gap-2 mt-4 font-urbanist!">
                             <Button 
                                 children={success ? "Redirigiendo..." : "Restablecer contraseña"} 
                                 variant="primary" 
                                 size="lg" 
                                 isLoading={isLoading}  
-                                className="!rounded-3xl !text-xl w-full" 
+                                className="rounded-3xl! text-xl! w-full" 
                                 type="submit"
                                 disabled={isLoading || success}
                             />
@@ -208,14 +208,14 @@ function ResetPasswordForm() {
                     {!isExiting && (
                         <motion.div 
                             key="circle"
-                            className="absolute right-5 top-1/2 -translate-y-1/2 translate-x-1/2 font-primary"
+                            className="hidden lg:block absolute right-5 top-1/2 -translate-y-1/2 translate-x-1/2 font-primary"
                             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}>
-                            <div className="w-[1620px] h-[1620px] flex flex-col justify-center items-start rounded-full border-4 border-primary bg-primary">
-                                <p className="text-white w-1/2 font-semibold text-7xl text-right pl-50 pr-20">Juntos por la Justicia Social.</p>
-                                <p className="text-white text-right w-1/2 text-4xl/8 pl-30 pr-20 mt-2">ODS 16 - Promoviendo la paz y la inclusión en Ciudad Guayana.</p>
+                            <div className="lg:w-[1200px] lg:h-[1200px] xl:w-[1620px] xl:h-[1620px] flex flex-col justify-center items-start rounded-full border-4 border-primary bg-primary">
+                                <p className="text-white w-1/2 font-semibold text-5xl xl:text-7xl text-right pl-50 pr-20">Juntos por la Justicia Social.</p>
+                                <p className="text-white text-right w-1/2 text-3xl/8 xl:text-4xl/8 pl-30 pr-20 mt-2">ODS 16 - Promoviendo la paz y la inclusión en Ciudad Guayana.</p>
                             </div>
                         </motion.div>)}
                 </AnimatePresence>
@@ -227,7 +227,7 @@ function ResetPasswordForm() {
 export default function ResetPasswordPage() {
     return (
         <Suspense fallback={
-            <div className="flex h-screen items-center justify-center bg-background">
+            <div className="flex min-h-svh items-center justify-center bg-background">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
         }>

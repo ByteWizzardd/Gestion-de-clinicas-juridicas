@@ -71,6 +71,7 @@ export default function AppointmentsToolbar({
       const buttonRect = e.currentTarget.getBoundingClientRect();
       const menuRect = menuRef.current?.getBoundingClientRect();
       const submenuWidth = type === 'fechas' ? 200 : 180;
+      
       const submenuMaxHeight = window.innerHeight * 0.8; // 80vh
       const spaceBelow = window.innerHeight - buttonRect.top;
       const spaceAbove = buttonRect.top;
