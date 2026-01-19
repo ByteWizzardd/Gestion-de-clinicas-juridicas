@@ -41,7 +41,7 @@
     "@types/node": "^20",
     "@types/nodemailer": "^7.0.4",
     "@types/pg": "^8.15.6",
-    "@types/react": "^19",
+    "@types/react": "^19.2.8",
     "@types/react-dom": "^19",
     "baseline-browser-mapping": "^2.9.4",
     "eslint": "^9",

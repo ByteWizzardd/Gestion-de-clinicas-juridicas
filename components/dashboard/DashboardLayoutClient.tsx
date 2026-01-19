@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import Sidebar from '../sidebar/Sidebar';
 import type { UserRole } from '../sidebar/menu-config';
@@ -8,6 +7,7 @@ import Notification from '../ui/feedback/Notification';
 import DateTime from '../ui/calendar/DateTime';
 import { mapSystemRoleToSidebarRole } from '@/lib/utils/role-mapper';
 import { useState, useEffect } from 'react';
+import { Menu, X } from 'lucide-react';
 
 interface DashboardLayoutClientProps {
   user: {
@@ -23,11 +23,16 @@ interface DashboardLayoutClientProps {
 export default function DashboardLayoutClient({ user, children }: DashboardLayoutClientProps) {
   const userRole: UserRole = mapSystemRoleToSidebarRole(user.rol);
   const userName = `${user.nombres} ${user.apellidos}`.trim() || 'Usuario';
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    }
+    return false;
+  });
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setPrefersReducedMotion(mediaQuery.matches);
 
     const handleChange = (e: MediaQueryListEvent) => {
       setPrefersReducedMotion(e.matches);
@@ -37,11 +42,58 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
+  useEffect(() => {
+    if (!isMobileSidebarOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isMobileSidebarOpen]);
+
   return (
     <div className="flex h-screen bg-background relative overflow-x-hidden">
-      <div className="shrink-0">
+      {/* Sidebar escritorio */}
+      <div className="shrink-0 hidden md:block">
         <Sidebar role={userRole} userName={userName} />
       </div>
+
+      {/* Sidebar móvil (off-canvas) */}
+      <div className="md:hidden">
+        {isMobileSidebarOpen && (
+          <button
+            type="button"
+            aria-label="Cerrar menú"
+            className="fixed inset-0 bg-black/40 z-40"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+        )}
+
+        <div
+          id="mobile-sidebar"
+          className={
+            `fixed inset-y-0 left-0 z-50 transition-transform duration-200 ease-out ` +
+            (isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full')
+          }
+          aria-hidden={!isMobileSidebarOpen}
+        >
+          <Sidebar role={userRole} userName={userName} onNavigate={() => setIsMobileSidebarOpen(false)} />
+        </div>
+      </div>
+
+      {/* Botón hamburguesa (móvil) */}
+      <button
+        type="button"
+        className="md:hidden fixed top-6 left-6 z-60 inline-flex items-center justify-center rounded-xl bg-white p-1.5 border border-gray-200 shadow-sm"
+        aria-label={isMobileSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
+        aria-controls="mobile-sidebar"
+        aria-expanded={isMobileSidebarOpen}
+        onClick={() => setIsMobileSidebarOpen((v: boolean) => !v)}
+        style={{ width: 28, height: 28 }}
+      >
+        {isMobileSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+      </button>
 
       <div className="flex-1 flex flex-col w-full min-w-0 overflow-x-hidden">
         <motion.div

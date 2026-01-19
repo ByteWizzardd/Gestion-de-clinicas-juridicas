@@ -13,9 +13,10 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 interface SidebarProps {
   role: UserRole;
   userName?: string;
+  onNavigate?: () => void;
 }
 
-const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido' }: SidebarProps) {
+const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const menu = getMenuByRole(role);
@@ -151,7 +152,7 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido' }: Si
               transition={{ duration: 0.2 }}
             >
               {/* Versión ícono/pequeña del logo con hover y link */}
-              <Link href="/dashboard">
+              <Link href="/dashboard" onClick={onNavigate}>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-200 group/logo p-2">
                   <Image
                     src="/logo-mini-v2.png"
@@ -171,7 +172,7 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido' }: Si
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <Link href="/dashboard">
+              <Link href="/dashboard" onClick={onNavigate}>
                 <Image src="/image.png" alt="DER Logo" width={240} height={87} className="object-contain cursor-pointer transition-transform duration-300 ease-in-out hover:scale-105" />
               </Link>
             </motion.div>
@@ -195,6 +196,7 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido' }: Si
               >
                 <Link
                   href={item.href}
+                  onClick={onNavigate}
                   className={`flex items-center gap-3 px-4 py-3 transition-all duration-200 whitespace-nowrap
                       ${isActive ? 'bg-primary text-white font-semibold rounded-3xl'
                       : 'text-foreground hover:bg-gray-100 rounded-lg hover:rounded-3xl'}
@@ -230,14 +232,23 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido' }: Si
         <ProfileDropdown
           userName={displayName}
           userRole={displayRole}
-          onProfileClick={() => router.push('/dashboard/profile')}
-          onPasswordClick={() => router.push('/dashboard/profile/change-password')}
-          onHelpClick={() => router.push('/dashboard/profile/help')}
+          onProfileClick={() => {
+            onNavigate?.();
+            router.push('/dashboard/profile');
+          }}
+          onPasswordClick={() => {
+            onNavigate?.();
+            router.push('/dashboard/profile/change-password');
+          }}
+          onHelpClick={() => {
+            onNavigate?.();
+            router.push('/dashboard/profile/help');
+          }}
           onLogoutClick={handleLogout}
         >
           <div className={`flex items-center gap-3 mb-5 cursor-pointer hover:opacity-80 transition-opacity ${isCollapsed ? 'justify-center mb-2' : ''}`}>
             {fotoPerfil ? (
-              <img
+              <Image
                 src={fotoPerfil}
                 alt="Foto de perfil"
                 className="w-10 h-10 rounded-full object-cover shrink-0 border-2 border-gray-200"
