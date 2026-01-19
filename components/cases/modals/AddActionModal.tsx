@@ -300,6 +300,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
             <>
               {/* Grid de formulario */}
               <form
+                id="add-action-form"
                 onSubmit={(e) => {
                   console.log('DEBUG AddActionModal - Form onSubmit triggered');
                   handleSubmit(e);
@@ -404,31 +405,30 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
                     {error}
                   </div>
                 )}
-
-                {/* Botón de submit dentro del formulario */}
-                <div className="col-span-2 flex justify-end pt-4">
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="xl"
-                    disabled={loading || loadingData}
-                    isLoading={loading}
-                  >
-                    {editingAction ? 'Actualizar Acción' : 'Registrar Acción'}
-                  </Button>
-                </div>
               </form>
             </>
           )}
         </div>
 
         {/* Footer fijo */}
-        <div className="shrink-0 flex flex-col border-t border-gray-200 px-8 py-4 bg-white">
+        <div className="shrink-0 flex items-center justify-between border-t border-gray-200 px-8 py-4 bg-white">
           {/* Nota sobre campos obligatorios */}
           <div className="flex items-center gap-1">
             <span className="text-danger font-medium text-sm">*</span>
             <span className="text-sm text-gray-600">Campo obligatorio</span>
           </div>
+
+          {/* Botón de submit */}
+          <Button
+            type="submit"
+            form="add-action-form"
+            variant="primary"
+            size="xl"
+            disabled={loading || loadingData}
+            isLoading={loading}
+          >
+            {editingAction ? 'Actualizar Acción' : 'Registrar Acción'}
+          </Button>
         </div>
       </div>
     </Modal>

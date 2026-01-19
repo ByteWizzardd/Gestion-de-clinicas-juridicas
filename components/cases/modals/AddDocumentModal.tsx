@@ -24,7 +24,7 @@ export default function AddDocumentModal({ isOpen, onClose, idCaso, onSuccess }:
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
       setError(null);
-      
+
       // Validar tamaño de cada archivo
       const invalidFiles = newFiles.filter(file => file.size > MAX_FILE_SIZE);
       if (invalidFiles.length > 0) {
@@ -35,7 +35,7 @@ export default function AddDocumentModal({ isOpen, onClose, idCaso, onSuccess }:
         setFiles((prev) => [...prev, ...validFiles]);
         return;
       }
-      
+
       setFiles((prev) => [...prev, ...newFiles]);
     }
   };
@@ -69,7 +69,7 @@ export default function AddDocumentModal({ isOpen, onClose, idCaso, onSuccess }:
       });
 
       const result = await uploadSoportesAction(idCaso, formData);
-      
+
       if (!result.success) {
         setError(result.error?.message || 'Error al subir los documentos');
         return;
@@ -100,7 +100,7 @@ export default function AddDocumentModal({ isOpen, onClose, idCaso, onSuccess }:
       title="Agregar Documento"
       size="md"
     >
-      <form onSubmit={handleSubmit} className="px-6 pb-6">
+      <form onSubmit={handleSubmit} className="px-6 pb-6 pt-6">
         <div className="mb-6">
           <div className="flex flex-col gap-1">
             <label className="text-base font-normal text-foreground mb-1">
@@ -118,11 +118,9 @@ export default function AddDocumentModal({ isOpen, onClose, idCaso, onSuccess }:
               />
               <label
                 htmlFor="file-upload"
-                className={`flex items-center gap-2 px-4 py-2 rounded-full border ${
-                  error && files.length === 0 ? 'border-danger' : 'border-gray-300'
-                } bg-[#E5E7EB] cursor-pointer hover:bg-gray-200 transition-colors ${
-                  loading ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border ${error && files.length === 0 ? 'border-danger' : 'border-gray-300'
+                  } bg-[#E5E7EB] cursor-pointer hover:bg-gray-200 transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
               >
                 <Upload className="w-5 h-5 text-gray-600" />
                 <span className="text-base text-foreground">

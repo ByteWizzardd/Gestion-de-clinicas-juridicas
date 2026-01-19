@@ -172,7 +172,7 @@ export default function AssignTeamModal({
       title={equipoActual.length > 0 ? "Modificar Equipo" : "Asignar Equipo"}
       size="md"
     >
-      <form onSubmit={handleSubmit} className="px-6 pb-6">
+      <form onSubmit={handleSubmit} className="px-6 pb-6 pt-6">
         {loadingData ? (
           <div className="py-8 text-center">
             <div className="text-gray-600">Cargando equipo disponible...</div>
