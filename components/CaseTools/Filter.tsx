@@ -13,6 +13,7 @@ interface FilterProps {
   estadoCivilFilter?: string;
   nacionalidadFilter?: string;
   casosAsignadosFilter?: boolean;
+  onClearFilters?: () => void | Promise<void>;
   onNucleoChange?: (value: string) => void;
   onTramiteChange?: (value: string) => void;
   onEstatusChange?: (value: string) => void;
@@ -45,6 +46,7 @@ function Filter({
   estadoCivilFilter,
   nacionalidadFilter,
   casosAsignadosFilter,
+  onClearFilters,
   onNucleoChange,
   onTramiteChange,
   onEstatusChange,
@@ -250,17 +252,26 @@ function Filter({
 
   const hasActiveFilter = activeFilterCount > 0;
 
-  const handleClearFilters = () => {
-    if (onNucleoChange) onNucleoChange('');
-    if (onTramiteChange) onTramiteChange('');
-    if (onEstatusChange) onEstatusChange('');
-    if (onEstadoCivilChange) onEstadoCivilChange('');
-    if (onNacionalidadChange) onNacionalidadChange('');
-    if (onMateriaChange) onMateriaChange('');
-    if (onCasosAsignadosChange) onCasosAsignadosChange(false);
-    if (onFechaInicioChange) onFechaInicioChange('');
-    if (onFechaFinChange) onFechaFinChange('');
-    setActiveSubmenu(null);
+  const handleClearFilters = async () => {
+    try {
+      if (onClearFilters) {
+        await onClearFilters();
+      } else {
+        if (onNucleoChange) onNucleoChange('');
+        if (onTramiteChange) onTramiteChange('');
+        if (onEstatusChange) onEstatusChange('');
+        if (onEstadoCivilChange) onEstadoCivilChange('');
+        if (onNacionalidadChange) onNacionalidadChange('');
+        if (onMateriaChange) onMateriaChange('');
+        if (onCasosAsignadosChange) onCasosAsignadosChange(false);
+        if (onFechaInicioChange) onFechaInicioChange('');
+        if (onFechaFinChange) onFechaFinChange('');
+      }
+    } catch (e) {
+      console.error('Error al limpiar filtros:', e);
+    } finally {
+      setActiveSubmenu(null);
+    }
   };
 
   const renderSubmenu = () => {

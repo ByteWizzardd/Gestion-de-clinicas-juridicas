@@ -33,6 +33,9 @@ type CaseToolsProps = {
     onNacionalidadChange?: (value: string) => void;
     nacionalidadOptions?: { value: string; label: string }[];
 
+    // Limpieza atómica (evita condiciones de carrera en consumers que disparan fetch)
+    onClearFilters?: () => void | Promise<void>;
+
     // Rango de fechas (fecha de solicitud)
     showDateRange?: boolean;
     fechaInicio?: string;
@@ -71,6 +74,7 @@ function CaseTools({
     nacionalidadFilter = '',
     onNacionalidadChange,
     nacionalidadOptions,
+    onClearFilters,
     showDateRange = false,
     fechaInicio,
     fechaFin,
@@ -111,6 +115,7 @@ function CaseTools({
                         tramiteFilter={tramiteFilter}
                         estatusFilter={estatusFilter}
                         casosAsignadosFilter={casosAsignadosFilter}
+                        onClearFilters={onClearFilters}
                         onNucleoChange={onNucleoChange}
                         onTramiteChange={onTramiteChange}
                         onEstatusChange={onEstatusChange}

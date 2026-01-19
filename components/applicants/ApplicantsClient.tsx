@@ -178,6 +178,13 @@ export default function ApplicantsClient({
     await applyServerFilters({ nucleo: nucleoFilter, estadoCivil: estadoCivilFilter, nacionalidad: value });
   };
 
+  const handleClearApplicantFilters = async () => {
+    setNucleoFilter('');
+    setEstadoCivilFilter('');
+    setNacionalidadFilter('');
+    await applyServerFilters({ nucleo: '', estadoCivil: '', nacionalidad: '' });
+  };
+
   // Función para normalizar texto removiendo acentos
   const normalizeText = (text: string): string => {
     return text
@@ -323,6 +330,7 @@ export default function ApplicantsClient({
           onEstadoCivilChange={handleEstadoCivilChange}
           nacionalidadFilter={nacionalidadFilter}
           onNacionalidadChange={handleNacionalidadChange}
+          onClearFilters={handleClearApplicantFilters}
         />
       </motion.div>
       <div className="mt-10"></div>
