@@ -20,6 +20,10 @@ interface CatalogDetailClientProps {
     filterTarget?: 'estatus' | 'materia' | 'nucleo' | 'tramite'; // Explicitly map to CaseTools filter slot
 }
 
+import { useRouter } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
+import Button from '@/components/ui/Button';
+
 export default function CatalogDetailClient({
     data,
     columns,
@@ -34,6 +38,7 @@ export default function CatalogDetailClient({
     renderActions,
     filterTarget = 'estatus' // Default to estatus
 }: CatalogDetailClientProps) {
+    const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterValue, setFilterValue] = useState('');
     const [estatusFilterValue, setEstatusFilterValue] = useState('');
@@ -107,11 +112,21 @@ export default function CatalogDetailClient({
         return result;
     }, [data, searchQuery, filterValue, filterField, estatusFilterValue]);
 
-    // Only show filter if options are available and not explicitly disabled
     const hasFilter = !disableFilter && generatedFilterOptions.length > 0 && filterField;
 
     return (
         <>
+            <div className="mb-4">
+                <Button
+                    variant="ghost"
+                    onClick={() => router.push('/dashboard/administration')}
+                    className="flex items-center gap-2 px-2 hover:bg-gray-100"
+                    size="sm"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span className="text-sm font-medium">Volver a administración</span>
+                </Button>
+            </div>
             <CaseTools
                 addLabel={addLabel}
                 onAddClick={onAddClick}
