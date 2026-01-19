@@ -82,30 +82,48 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
         </div>
       </div>
 
-      {/* Botón hamburguesa (móvil) */}
-      <button
-        type="button"
-        className="md:hidden fixed top-6 left-6 z-60 inline-flex items-center justify-center rounded-xl bg-white p-1.5 shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)]"
-        aria-label={isMobileSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
-        aria-controls="mobile-sidebar"
-        aria-expanded={isMobileSidebarOpen}
-        onClick={() => setIsMobileSidebarOpen((v: boolean) => !v)}
-      >
-        {isMobileSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-      </button>
-
       <div className="flex-1 flex flex-col w-full min-w-0 overflow-x-hidden">
+        {/* Header móvil (reserva espacio arriba para no tapar títulos) */}
+        <div className="md:hidden sticky top-0 z-30 bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60">
+          <div className="px-4 pt-[env(safe-area-inset-top)]">
+            <div className="h-14 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-xl bg-white p-1.5 shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] shrink-0"
+                aria-label={isMobileSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
+                aria-controls="mobile-sidebar"
+                aria-expanded={isMobileSidebarOpen}
+                onClick={() => setIsMobileSidebarOpen((v: boolean) => !v)}
+              >
+                {isMobileSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              </button>
+
+              <div className="min-w-0">
+                <motion.div
+                  initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: "easeOut" }}
+                  className="flex items-center gap-3 text-base bg-white rounded-3xl shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] px-3 py-2 max-w-[calc(100vw-5rem)] overflow-hidden"
+                >
+                  <Notification />
+                  <DateTime />
+                </motion.div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <motion.div
           initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: prefersReducedMotion ? 0 : 0.4, delay: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
-          className="absolute top-6 right-6 flex items-center gap-4 z-30 text-lg bg-white rounded-3xl shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] px-4 py-2"
+          className="hidden md:flex absolute top-6 right-6 items-center gap-4 z-30 text-lg bg-white rounded-3xl shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] px-4 py-2"
         >
           <Notification />
           <DateTime />
         </motion.div>
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-6 bg-background">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 bg-background">
           {children}
         </main>
       </div>

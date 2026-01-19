@@ -130,18 +130,22 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
         x: 0,
       }}
       transition={{ duration: prefersReducedMotion ? 0 : 0.4, ease: "easeInOut" }}
-      className={`bg-background flex flex-col h-[calc(100vh-2rem)] rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] m-4 relative group transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-56'}`}
+      className={`bg-background flex flex-col h-[calc(100vh-2rem)] rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] m-2 md:m-4 relative group transition-all duration-300 ease-in-out ${isCollapsed ? 'w-16 md:w-20' : 'w-52 md:w-56'}`}
     >
       {/* Botón de toggle (visible al hacer hover o siempre visible) */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-8 bg-white rounded-full p-1.5 shadow-md border border-gray-100 text-gray-500 hover:text-primary transition-colors z-50 opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"
+        className="absolute -right-2 md:-right-3 top-6 md:top-8 bg-white rounded-full p-1 md:p-1.5 shadow-md border border-gray-100 text-gray-500 hover:text-primary transition-colors z-50 opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 cursor-pointer"
         aria-label={isCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
       >
-        {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        {isCollapsed ? (
+          <ChevronRight className="w-3.5 h-3.5 md:w-4 md:h-4" />
+        ) : (
+          <ChevronLeft className="w-3.5 h-3.5 md:w-4 md:h-4" />
+        )}
       </button>
 
-      <div className={`p-6 flex justify-center items-center overflow-hidden transition-all duration-300 ${isCollapsed ? 'px-2' : ''}`}>
+      <div className={`p-4 md:p-6 flex justify-center items-center overflow-hidden transition-all duration-300 ${isCollapsed ? 'px-2' : ''}`}>
         <AnimatePresence mode="wait">
           {isCollapsed ? (
             <motion.div
@@ -173,7 +177,7 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
               transition={{ duration: 0.2 }}
             >
               <Link href="/dashboard" onClick={onNavigate}>
-                <Image src="/image.png" alt="DER Logo" width={240} height={87} className="object-contain cursor-pointer transition-transform duration-300 ease-in-out hover:scale-105" />
+                <Image src="/image.png" alt="DER Logo" width={240} height={87} className="object-contain cursor-pointer transition-transform duration-300 ease-in-out hover:scale-105 w-40 md:w-60 h-auto" />
               </Link>
             </motion.div>
           )}
@@ -181,7 +185,7 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
       </div>
 
       {/* Menú de Navegación */}
-      <nav className="flex-1 overflow-y-auto overflow-x-hidden mt-[-8] p-4">
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden mt-[-8] p-3 md:p-4">
         <ul className="space-y-1">
           {menu.map((item, index) => {
             const Icon = item.icon;
@@ -197,20 +201,20 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
                 <Link
                   href={item.href}
                   onClick={onNavigate}
-                  className={`flex items-center gap-3 px-4 py-3 transition-all duration-200 whitespace-nowrap
+                  className={`flex items-center gap-3 px-3 md:px-4 py-2.5 md:py-3 transition-all duration-200 whitespace-nowrap
                       ${isActive ? 'bg-primary text-white font-semibold rounded-3xl'
                       : 'text-foreground hover:bg-gray-100 rounded-lg hover:rounded-3xl'}
                       ${isCollapsed ? 'justify-center px-2' : ''}
                   `}
                   title={isCollapsed ? item.label : undefined}
                 >
-                  <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-white' : 'text-foreground'}`} />
+                  <Icon className={`w-4 h-4 md:w-5 md:h-5 shrink-0 ${isActive ? 'text-white' : 'text-foreground'}`} />
                   {!isCollapsed && (
                     <motion.span
                       initial={{ opacity: 0, width: 0 }}
                       animate={{ opacity: 1, width: 'auto' }}
                       exit={{ opacity: 0, width: 0 }}
-                      className="overflow-hidden"
+                      className="overflow-hidden text-sm md:text-base"
                     >
                       {item.label}
                     </motion.span>
