@@ -26,6 +26,7 @@ export default function DropdownMenu({
   const [isOpen, setIsOpen] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0, right: 0, width: 0 });
+  const [menuLeft, setMenuLeft] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
   const [, setHasModal] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -115,6 +116,28 @@ export default function DropdownMenu({
     }
   };
 
+  const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+  const recomputeMenuLeft = () => {
+    if (!isOpen || !menuRef.current) return;
+
+    const menuWidth = menuRef.current.getBoundingClientRect().width;
+    if (!menuWidth || !Number.isFinite(menuWidth)) return;
+
+    const margin = 8; // px
+    const maxLeft = Math.max(margin, window.innerWidth - menuWidth - margin);
+
+    let nextLeft = coords.left;
+    if (align === 'right') {
+      nextLeft = coords.right - menuWidth;
+    } else if (align === 'center') {
+      nextLeft = coords.left + coords.width / 2 - menuWidth / 2;
+    }
+
+    nextLeft = clamp(nextLeft, margin, maxLeft);
+    setMenuLeft(prev => (prev !== null && Math.abs(prev - nextLeft) < 0.5 ? prev : nextLeft));
+  };
+
   useEffect(() => {
     if (isOpen) {
       updatePosition();
@@ -126,6 +149,22 @@ export default function DropdownMenu({
       window.removeEventListener('resize', updatePosition);
     };
   }, [isOpen, align]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setMenuLeft(null);
+      return;
+    }
+
+    // Esperar a que el portal pinte el menú para medirlo
+    const raf = window.requestAnimationFrame(() => {
+      recomputeMenuLeft();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+    };
+  }, [isOpen, coords.left, coords.right, coords.width, align]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -189,8 +228,8 @@ export default function DropdownMenu({
             style={{
               position: 'fixed',
               top: openUpward ? coords.top - 4 : coords.top + 4,
-              left: align === 'right' ? 'auto' : (align === 'center' ? coords.left + coords.width / 2 : coords.left),
-              right: align === 'right' ? window.innerWidth - coords.right : 'auto',
+              left: menuLeft ?? (align === 'center' ? coords.left + coords.width / 2 : coords.left),
+              right: 'auto',
               // Solo setear width si menuClassName NO define un ancho (w-*)
               ...(menuClassName && /w-\[?\d/.test(menuClassName) ? {} : { width: coords.width }),
               zIndex: isInsideModal ? 99999 : 9999,

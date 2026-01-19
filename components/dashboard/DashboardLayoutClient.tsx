@@ -85,12 +85,11 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
       {/* Botón hamburguesa (móvil) */}
       <button
         type="button"
-        className="md:hidden fixed top-6 left-6 z-60 inline-flex items-center justify-center rounded-xl bg-white p-1.5 border border-gray-200 shadow-sm"
+        className="md:hidden fixed top-6 left-6 z-60 inline-flex items-center justify-center rounded-xl bg-white p-1.5 shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)]"
         aria-label={isMobileSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
         aria-controls="mobile-sidebar"
         aria-expanded={isMobileSidebarOpen}
         onClick={() => setIsMobileSidebarOpen((v: boolean) => !v)}
-        style={{ width: 28, height: 28 }}
       >
         {isMobileSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
       </button>
