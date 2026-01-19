@@ -457,7 +457,6 @@ export async function getCasosByUsuarioAction(): Promise<GetCasosResult> {
  */
 export async function getCasosByUsuarioCedulaAction(cedula: string): Promise<GetCasosResult> {
   try {
-    // Verificar autenticación
     const authResult = await requireAuthInServerActionWithCode();
     if (!authResult.success || !authResult.user) {
       return {
@@ -475,6 +474,89 @@ export async function getCasosByUsuarioCedulaAction(cedula: string): Promise<Get
     };
   } catch (error) {
     return handleServerActionError(error, 'getCasosByUsuarioCedulaAction', 'CASO_ERROR');
+  }
+}
+
+/**
+ * Server Action para obtener casos filtrados por rango de fecha de solicitud.
+ * @param fechaInicio - YYYY-MM-DD 
+ * @param fechaFin - YYYY-MM-DD 
+ */
+export async function getCasosByFechaSolicitudAction(
+  fechaInicio?: string,
+  fechaFin?: string
+): Promise<GetCasosResult> {
+  try {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    const todayISO = new Date().toISOString().slice(0, 10);
+    const isValidISODate = (value: string): boolean => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+      const d = new Date(value);
+      return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
+    };
+
+    const normalize = (value?: string): string | null => {
+      const trimmed = value?.trim();
+      return trimmed ? trimmed : null;
+    };
+
+    const start = normalize(fechaInicio);
+    const end = normalize(fechaFin);
+
+    if (start && !isValidISODate(start)) {
+      return {
+        success: false,
+        error: { message: 'Fecha inicio inválida. Use formato YYYY-MM-DD.' },
+      };
+    }
+
+    if (end && !isValidISODate(end)) {
+      return {
+        success: false,
+        error: { message: 'Fecha fin inválida. Use formato YYYY-MM-DD.' },
+      };
+    }
+
+    if (start && start > todayISO) {
+      return {
+        success: false,
+        error: { message: 'La fecha inicio no puede ser futura.' },
+      };
+    }
+
+    if (end && end > todayISO) {
+      return {
+        success: false,
+        error: { message: 'La fecha fin no puede ser futura.' },
+      };
+    }
+
+    if (start && end && end < start) {
+      return {
+        success: false,
+        error: { message: 'La fecha fin no puede ser menor que la fecha inicio.' },
+      };
+    }
+
+    const { casosQueries } = await import('@/lib/db/queries/casos.queries');
+    const casos = await casosQueries.getByFechaSolicitudRange(
+      start,
+      end
+    );
+
+    return {
+      success: true,
+      data: casos,
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'getCasosByFechaSolicitudAction', 'CASO_ERROR');
   }
 }
 

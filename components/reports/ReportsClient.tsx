@@ -142,7 +142,6 @@ export default function ReportsPage() {
                     getTopCases,
                     getDistributionByStatus,
                     getCaseLoadTrend,
-                    getKPIStats,
                     getDistributionByTramite
                 } = await import('@/app/actions/reports');
 

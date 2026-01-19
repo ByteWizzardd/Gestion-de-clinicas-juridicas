@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Archive, Download, FileDown } from 'lucide-react';
+import { Download } from 'lucide-react';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import CaseFormModal from '@/components/forms/CaseFormModal';
@@ -11,12 +11,13 @@ import Spinner from '@/components/ui/feedback/Spinner';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 import ArchiveInactiveCasesModal from '@/components/cases/modals/ArchiveInactiveCasesModal';
 import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
-import { getCasosAction, getCasosByUsuarioAction, deleteCasoAction } from '@/app/actions/casos';
+import { getCasosAction, getCasosByUsuarioAction, getCasosByFechaSolicitudAction, deleteCasoAction } from '@/app/actions/casos';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
 import { createCasoAction, updateCasoAction, uploadSoportesAction } from '@/app/actions/casos';
 import { getMateriasAction } from '@/app/actions/materias';
 import { descargarHistorialCasoAction } from '@/app/actions/reports';
 import { generateCasoHistorialZip } from '@/lib/utils/case-history-pdf-generator';
+import type { CasoHistorialData } from '@/lib/types/report-types';
 
 interface Caso {
   id_caso: number;
@@ -71,6 +72,8 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   const [casosAsignadosFilter, setCasosAsignadosFilter] = useState(false);
   const [materias, setMaterias] = useState<{ id_materia: number; nombre_materia: string }[]>([]);
   const [materiaFilter, setMateriaFilter] = useState('');
+  const [fechaInicioFilter, setFechaInicioFilter] = useState('');
+  const [fechaFinFilter, setFechaFinFilter] = useState('');
   const [initialCedula, setInitialCedula] = useState<string>('');
   const [initialCedulaTipo, setInitialCedulaTipo] = useState<string>('V');
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -125,6 +128,152 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
     { value: TRAMITES.ASISTENCIA_JUDICIAL, label: TRAMITES.ASISTENCIA_JUDICIAL },
   ];
 
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const isValidISODate = (value: string): boolean => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const d = new Date(value);
+    return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
+  };
+
+  const clampToToday = (value: string): string => (value > todayISO ? todayISO : value);
+
+  // Mantener invariantes:
+  // - o están ambas fechas vacías (sin filtro) o están ambas seteadas
+  // - fechaInicio <= fechaFin
+  // - ninguna fecha puede ser futura
+  const handleFechaInicioChange = (raw: string) => {
+    const next = raw?.trim() || '';
+
+    if (!next) {
+      setFechaInicioFilter('');
+      setFechaFinFilter('');
+      return;
+    }
+
+    if (!isValidISODate(next)) {
+      toast.error('Formato de fecha inválido. Use YYYY-MM-DD');
+      return;
+    }
+
+    const clamped = clampToToday(next);
+    if (clamped !== next) {
+      toast.info('La fecha no puede ser futura; se ajustó a hoy.');
+    }
+
+    const currentFin = fechaFinFilter;
+    const fin = currentFin && isValidISODate(currentFin) ? clampToToday(currentFin) : '';
+
+    setFechaInicioFilter(clamped);
+    if (!fin) {
+      setFechaFinFilter(clamped);
+      return;
+    }
+    if (fin < clamped) {
+      setFechaFinFilter(clamped);
+    }
+  };
+
+  const handleFechaFinChange = (raw: string) => {
+    const next = raw?.trim() || '';
+
+    if (!next) {
+      setFechaInicioFilter('');
+      setFechaFinFilter('');
+      return;
+    }
+
+    if (!isValidISODate(next)) {
+      toast.error('Formato de fecha inválido. Use YYYY-MM-DD');
+      return;
+    }
+
+    const clamped = clampToToday(next);
+    if (clamped !== next) {
+      toast.info('La fecha no puede ser futura; se ajustó a hoy.');
+    }
+
+    const currentInicio = fechaInicioFilter;
+    const inicio = currentInicio && isValidISODate(currentInicio) ? clampToToday(currentInicio) : '';
+
+    if (!inicio) {
+      setFechaInicioFilter(clamped);
+      setFechaFinFilter(clamped);
+      return;
+    }
+
+    if (clamped < inicio) {
+      toast.error('La fecha fin no puede ser menor que la fecha inicio');
+      return;
+    }
+
+    setFechaFinFilter(clamped);
+  };
+
+  const applyDateRangeLocal = (rows: Caso[], fechaInicio: string, fechaFin: string): Caso[] => {
+    if (!fechaInicio && !fechaFin) return rows;
+    return rows.filter((c) => {
+      const f = c.fecha_solicitud;
+      if (fechaInicio && f < fechaInicio) return false;
+      if (fechaFin && f > fechaFin) return false;
+      return true;
+    });
+  };
+
+  const applyFechaSolicitudFilter = async (opts: {
+    fechaInicio: string;
+    fechaFin: string;
+    casosAsignados: boolean;
+  }) => {
+    const { fechaInicio, fechaFin, casosAsignados } = opts;
+
+    if (fechaInicio && !isValidISODate(fechaInicio)) {
+      throw new Error('Fecha inicio inválida');
+    }
+    if (fechaFin && !isValidISODate(fechaFin)) {
+      throw new Error('Fecha fin inválida');
+    }
+    if (fechaInicio && fechaFin && fechaFin < fechaInicio) {
+      throw new Error('El rango de fechas es inválido');
+    }
+
+    // Sin filtro de fechas: solo restaurar la lista base.
+    if (!fechaInicio && !fechaFin) {
+      if (casosAsignados) {
+        const result = await getCasosByUsuarioAction();
+        if (result.success && result.data) {
+          setCasos(result.data as Caso[]);
+        } else {
+          setCasos([]);
+        }
+      } else {
+        setCasos(allCasos);
+      }
+      return;
+    }
+
+    // "Mis casos" + fechas: filtrar local sobre el set asignado.
+    if (casosAsignados) {
+      const result = await getCasosByUsuarioAction();
+      if (result.success && result.data) {
+        const base = result.data as Caso[];
+        setCasos(applyDateRangeLocal(base, fechaInicio, fechaFin));
+      } else {
+        setCasos([]);
+      }
+      return;
+    }
+
+    // Casos generales + fechas: filtrar en backend.
+    const result = await getCasosByFechaSolicitudAction(
+      fechaInicio || undefined,
+      fechaFin || undefined
+    );
+    if (!result.success) {
+      throw new Error(result.error?.message || 'Error al filtrar casos por fecha');
+    }
+    setCasos((result.data || []) as Caso[]);
+  };
+
   const fetchCasos = async () => {
     try {
       setLoading(true);
@@ -134,8 +283,19 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
         throw new Error(result.error?.message || 'Error al cargar los casos');
       }
       if (result.data) {
-        setCasos(result.data as Caso[]);
-        setAllCasos(result.data as Caso[]); // Actualizar cache de todos los casos
+        const rows = result.data as Caso[];
+        setAllCasos(rows); // Actualizar cache de todos los casos
+
+        // Mantener filtros actuales tras refrescar
+        if (casosAsignadosFilter || fechaInicioFilter || fechaFinFilter) {
+          await applyFechaSolicitudFilter({
+            fechaInicio: fechaInicioFilter,
+            fechaFin: fechaFinFilter,
+            casosAsignados: casosAsignadosFilter,
+          });
+        } else {
+          setCasos(rows);
+        }
       } else {
         setCasos([]);
         setAllCasos([]);
@@ -149,28 +309,36 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
   const handleCasosAsignadosChange = async (checked: boolean) => {
     setCasosAsignadosFilter(checked);
-    setLoading(true);
     try {
-      if (checked) {
-        // Cargar casos asignados al usuario
-        const result = await getCasosByUsuarioAction();
-        if (result.success && result.data) {
-          setCasos(result.data as Caso[]);
-        } else {
-          // Si falla o no hay datos, mostrar lista vacía o manejar error
-          console.error('Error cargando casos asignados:', result.error);
-          setCasos([]);
-        }
-      } else {
-        // Restaurar todos los casos (usando cache local para velocidad)
-        setCasos(allCasos);
-      }
+      setLoading(true);
+      await applyFechaSolicitudFilter({
+        fechaInicio: fechaInicioFilter,
+        fechaFin: fechaFinFilter,
+        casosAsignados: checked,
+      });
     } catch (error) {
       console.error('Error al cambiar filtro de asignación:', error);
+      toast.error('No se pudo aplicar el filtro de casos asignados');
     } finally {
       setLoading(false);
     }
   };
+
+  // Aplicar filtro por rango de fechas cuando cambie.
+  useEffect(() => {
+    setLoading(true);
+    applyFechaSolicitudFilter({
+      fechaInicio: fechaInicioFilter,
+      fechaFin: fechaFinFilter,
+      casosAsignados: casosAsignadosFilter,
+    })
+      .catch((e) => {
+        console.error(e);
+        toast.error('Ocurrió un error al aplicar el filtro de fechas');
+      })
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fechaInicioFilter, fechaFinFilter, casosAsignadosFilter]);
 
   // Leer parámetros de URL para abrir modal con cédula prellenada
   useEffect(() => {
@@ -203,7 +371,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   };
 
   const filteredCasos = useMemo(() => {
-    if (!searchValue && !nucleoFilter && !tramiteFilter && !estatusFilter && !casosAsignadosFilter && !materiaFilter) {
+    if (!searchValue && !nucleoFilter && !tramiteFilter && !estatusFilter && !casosAsignadosFilter && !materiaFilter && !fechaInicioFilter && !fechaFinFilter) {
       return casos;
     }
 
@@ -240,7 +408,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
       return matchesSearch && matchesNucleo && matchesTramite && matchesEstatus && matchesMateria;
     });
-  }, [casos, searchValue, nucleoFilter, tramiteFilter, estatusFilter, casosAsignadosFilter, materiaFilter]);
+  }, [casos, searchValue, nucleoFilter, tramiteFilter, estatusFilter, casosAsignadosFilter, materiaFilter, fechaInicioFilter, fechaFinFilter]);
 
   const handleView = (data: Record<string, unknown>) => {
     const caso = data as TableRow;
@@ -305,8 +473,27 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
   const handleSubmitCase = async (data: unknown) => {
     try {
-      const caseData = data as any;
-      const archivos = Array.isArray(caseData.archivos) ? caseData.archivos : [];
+      type CaseSubmitPayload = {
+        id_caso?: number;
+        tramite?: string;
+        observaciones?: string;
+        fecha_fin_caso?: string | null;
+        id_nucleo?: number;
+        id_materia?: number;
+        num_categoria?: number;
+        num_subcategoria?: number;
+        num_ambito_legal?: number;
+        fecha_solicitud?: string;
+        fecha_inicio_caso?: string;
+        estatus?: string;
+        cedula?: string;
+        archivos?: unknown;
+      };
+
+      const caseData = data as CaseSubmitPayload;
+      const archivos = Array.isArray(caseData.archivos)
+        ? (caseData.archivos.filter((a): a is File => a instanceof File))
+        : [];
 
       if (editingCase) {
         // Lógica de Actualización
@@ -322,6 +509,11 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
           num_ambito_legal: caseData.num_ambito_legal,
           fecha_solicitud: caseData.fecha_solicitud,
         };
+
+        if (typeof caseData.id_caso !== 'number') {
+          toast.error('ID de caso inválido');
+          return;
+        }
 
         const result = await updateCasoAction(caseData.id_caso, updateData);
 
@@ -343,7 +535,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
             if (!uploadResult.success) {
               toast.error(`Caso actualizado, pero error al subir archivos: ${uploadResult.error?.message}`);
             }
-          } catch (uploadErr) {
+          } catch {
             toast.error('Caso actualizado, pero error al subir archivos');
           }
         }
@@ -392,7 +584,9 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       }
 
       if (archivos.length > 0 && result.success && result.data) {
-        const idCaso = (result.data as any).id_caso;
+        const rec = (result.data ?? {}) as Record<string, unknown>;
+        const rawId = rec.id_caso;
+        const idCaso = typeof rawId === 'number' ? rawId : (typeof rawId === 'string' ? Number(rawId) : NaN);
 
         if (!idCaso || isNaN(Number(idCaso))) {
           toast.warning('Caso creado exitosamente, pero no se pudo obtener el ID para subir archivos');
@@ -412,7 +606,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
           if (!uploadResult.success) {
             toast.error(`Caso creado, pero error al subir archivos: ${uploadResult.error?.message || 'Error desconocido'}`);
           }
-        } catch (uploadErr) {
+        } catch {
           toast.error('Caso creado, pero error al subir archivos');
         }
       }
@@ -433,7 +627,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       const result = await descargarHistorialCasoAction(idCaso);
 
       if (result.success && result.data) {
-        await generateCasoHistorialZip(result.data);
+        await generateCasoHistorialZip(result.data as CasoHistorialData);
       } else {
         toast.error(`Error al descargar el historial: ${result.error || 'Error desconocido'}`);
       }
@@ -508,6 +702,12 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
           casosAsignadosFilter={casosAsignadosFilter}
           onCasosAsignadosChange={handleCasosAsignadosChange}
           showCasosAsignados={true}
+
+          showDateRange={true}
+          fechaInicio={fechaInicioFilter}
+          fechaFin={fechaFinFilter}
+          onFechaInicioChange={handleFechaInicioChange}
+          onFechaFinChange={handleFechaFinChange}
         />
       </motion.div>
       <div className="mt-10"></div>

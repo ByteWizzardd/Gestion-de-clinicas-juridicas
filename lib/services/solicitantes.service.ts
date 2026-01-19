@@ -14,7 +14,7 @@ interface ApplicantFormData {
   fechaNacimiento: string;
   sexo: string;
   telefonoLocal: string;
-  codigoPaisCelular: string;
+  codigoPaisCelular?: string;
   telefonoCelular: string;
   correoElectronico: string;
   estadoCivil: string;

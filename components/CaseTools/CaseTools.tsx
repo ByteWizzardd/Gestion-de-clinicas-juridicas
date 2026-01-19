@@ -26,6 +26,19 @@ type CaseToolsProps = {
     nucleoLabel?: string;
     nucleoAllLabel?: string;
     estatusLabel?: string;
+    estadoCivilFilter?: string;
+    onEstadoCivilChange?: (value: string) => void;
+    estadoCivilOptions?: { value: string; label: string }[];
+    nacionalidadFilter?: string;
+    onNacionalidadChange?: (value: string) => void;
+    nacionalidadOptions?: { value: string; label: string }[];
+
+    // Rango de fechas (fecha de solicitud)
+    showDateRange?: boolean;
+    fechaInicio?: string;
+    fechaFin?: string;
+    onFechaInicioChange?: (value: string) => void;
+    onFechaFinChange?: (value: string) => void;
 };
 
 function CaseTools({
@@ -51,10 +64,30 @@ function CaseTools({
     materias = [],
     nucleoLabel,
     nucleoAllLabel,
-    estatusLabel
+    estatusLabel,
+    estadoCivilFilter = '',
+    onEstadoCivilChange,
+    estadoCivilOptions,
+    nacionalidadFilter = '',
+    onNacionalidadChange,
+    nacionalidadOptions,
+    showDateRange = false,
+    fechaInicio,
+    fechaFin,
+    onFechaInicioChange,
+    onFechaFinChange
 }: CaseToolsProps) {
     const hasSearch = onSearchChange !== undefined;
-    const hasFilter = onNucleoChange !== undefined || onTramiteChange !== undefined || onEstatusChange !== undefined || onCasosAsignadosChange !== undefined || onMateriaChange !== undefined;
+    const hasFilter =
+        onNucleoChange !== undefined ||
+        onTramiteChange !== undefined ||
+        onEstatusChange !== undefined ||
+        onCasosAsignadosChange !== undefined ||
+        onMateriaChange !== undefined ||
+        onEstadoCivilChange !== undefined ||
+        onNacionalidadChange !== undefined ||
+        onFechaInicioChange !== undefined ||
+        onFechaFinChange !== undefined;
 
     return (
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center w-full px-3">
@@ -84,6 +117,18 @@ function CaseTools({
                         nucleoLabel={nucleoLabel}
                         nucleoAllLabel={nucleoAllLabel}
                         estatusLabel={estatusLabel}
+                        estadoCivilFilter={estadoCivilFilter}
+                        onEstadoCivilChange={onEstadoCivilChange}
+                        estadoCivilOptions={estadoCivilOptions}
+                        nacionalidadFilter={nacionalidadFilter}
+                        onNacionalidadChange={onNacionalidadChange}
+                        nacionalidadOptions={nacionalidadOptions}
+
+                        showDateRange={showDateRange}
+                        fechaInicio={fechaInicio}
+                        fechaFin={fechaFin}
+                        onFechaInicioChange={onFechaInicioChange}
+                        onFechaFinChange={onFechaFinChange}
                     />
                 )}
                 {(addLabel || onAddClick) && <Add label={addLabel} onClick={onAddClick} />}

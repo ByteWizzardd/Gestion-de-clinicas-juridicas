@@ -76,7 +76,7 @@ export async function getDistributionByTramite(
   fechaFin?: string,
   idNucleo?: number, // Not used in specific query but kept for signature consistency if extended later
   term?: string
-): Promise<{ success: boolean; data?: any[]; error?: string }> {
+): Promise<{ success: boolean; data?: unknown[]; error?: string }> {
   try {
     const authResult = await requireAuthInServerAction();
     if (!authResult.success) {
@@ -136,7 +136,7 @@ export async function getCaseLoadTrend(
   fechaFin?: string,
   idNucleo?: number,
   term?: string
-): Promise<{ success: boolean; data?: any; error?: string }> {
+): Promise<{ success: boolean; data?: unknown; error?: string }> {
   try {
     const authResult = await requireAuthInServerAction();
     if (!authResult.success) {
@@ -170,7 +170,7 @@ export async function getDistributionByGender(
   fechaFin?: string,
   idNucleo?: number, // Note: Not used in query currently but kept for interface consistency
   term?: string
-): Promise<{ success: boolean; data?: any[]; error?: string }> {
+): Promise<{ success: boolean; data?: unknown[]; error?: string }> {
   try {
     const authResult = await requireAuthInServerAction();
     if (!authResult.success) {
@@ -202,7 +202,7 @@ export async function getDistributionByNucleo(
   fechaFin?: string,
   idNucleo?: number,
   term?: string
-): Promise<{ success: boolean; data?: any; error?: string }> {
+): Promise<{ success: boolean; data?: unknown; error?: string }> {
   try {
     const authResult = await requireAuthInServerAction();
     if (!authResult.success) {
@@ -298,7 +298,28 @@ export async function getFilterOptions(): Promise<{
 /**
  * Obtiene estadísticas KPI
  */
-// function removed
+export async function getKPIStats(): Promise<{ success: boolean; data?: Record<string, number>; error?: string }> {
+  try {
+    const authResult = await requireAuthInServerAction();
+    if (!authResult.success) {
+      return { success: false, error: authResult.error };
+    }
+
+    // Nota: actualmente el cliente no consume estos KPI.
+    // Devolvemos un shape estable para evitar fallos de tipado/import.
+    return {
+      success: true,
+      data: {
+        totalCasos: 0,
+        totalSolicitantes: 0,
+        totalEstudiantes: 0,
+        totalProfesores: 0,
+      },
+    };
+  } catch (error) {
+    return handleReportError(error, 'getKPIStats');
+  }
+}
 
 /**
  * Obtiene datos de distribución por estatus
@@ -308,7 +329,7 @@ export async function getDistributionByStatus(
   fechaFin?: string,
   idNucleo?: number,
   term?: string
-): Promise<{ success: boolean; data?: any; error?: string }> {
+): Promise<{ success: boolean; data?: unknown; error?: string }> {
   try {
     const authResult = await requireAuthInServerAction();
     if (!authResult.success) {
@@ -341,7 +362,7 @@ export async function getTopCases(
   fechaFin?: string,
   idNucleo?: number,
   term?: string
-): Promise<{ success: boolean; data?: any; error?: string }> {
+): Promise<{ success: boolean; data?: unknown; error?: string }> {
   try {
     const authResult = await requireAuthInServerAction();
     if (!authResult.success) {
@@ -582,7 +603,7 @@ export async function getInformeSocioeconomicoData(
  */
 export async function getSolicitanteFichaData(cedula: string): Promise<{
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: string;
 }> {
   try {
@@ -603,9 +624,15 @@ export async function getSolicitanteFichaData(cedula: string): Promise<{
 
     // Obtener beneficiarios de todos los casos (esto es específico del reporte, no del detalle simple)
     // El servicio getSolicitanteCompleto no trae los beneficiarios anidados por defecto
-    let beneficiariosData: any[] = [];
+    let beneficiariosData: unknown[] = [];
     if (casosData.length > 0) {
-      const beneficiariosPromises = casosData.map((caso: any) => beneficiariosQueries.getByCaso(caso.id_caso));
+      const beneficiariosPromises = casosData.map((caso: { id_caso: number; } | null) => {
+        // Asumimos que cada caso tiene la propiedad id_caso
+        if (typeof caso === 'object' && caso !== null && 'id_caso' in caso) {
+          return beneficiariosQueries.getByCaso((caso as { id_caso: number }).id_caso);
+        }
+        throw new Error('El caso no tiene la propiedad id_caso');
+      });
       const beneficiariosArrays = await Promise.all(beneficiariosPromises);
       beneficiariosData = beneficiariosArrays.flat();
     }
@@ -628,7 +655,7 @@ export async function getSolicitanteFichaData(cedula: string): Promise<{
  */
 export async function getCasoHistorialData(idCaso: number): Promise<{
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: string;
 }> {
   try {
@@ -667,7 +694,7 @@ export async function getCasoHistorialData(idCaso: number): Promise<{
  */
 export async function descargarFichaSolicitanteAction(cedula: string): Promise<{
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: string;
 }> {
   try {
@@ -692,7 +719,7 @@ export async function descargarFichaSolicitanteAction(cedula: string): Promise<{
  */
 export async function descargarHistorialCasoAction(idCaso: number): Promise<{
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: string;
 }> {
   try {
@@ -719,7 +746,7 @@ export async function getHistorialCasosBySolicitante(
   cedula: string,
   fechaInicio?: string,
   fechaFin?: string
-): Promise<{ success: boolean; data?: any[]; error?: string }> {
+): Promise<{ success: boolean; data?: unknown[]; error?: string }> {
   try {
     const authResult = await requireAuthInServerAction();
     if (!authResult.success) {
@@ -755,7 +782,6 @@ export async function getHistorialCasosBySolicitante(
       .filter(c => c !== null)
       .map(c => {
         // Desestructurar para separar las listas del objeto del caso
-        const cTyped = c as any;
         const {
           acciones,
           citas,
@@ -764,7 +790,15 @@ export async function getHistorialCasosBySolicitante(
           equipo,
           cambiosEstatus,
           ...casoDetails
-        } = cTyped;
+        } = c as {
+          acciones?: unknown;
+          citas?: unknown;
+          soportes?: unknown;
+          beneficiarios?: unknown;
+          equipo?: unknown;
+          cambiosEstatus?: unknown;
+          [key: string]: unknown;
+        };
 
         return {
           caso: casoDetails,

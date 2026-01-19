@@ -3,14 +3,22 @@
 import { solicitantesService } from '@/lib/services/solicitantes.service';
 import { solicitantesQueries } from '@/lib/db/queries/solicitantes.queries';
 import { SolicitantesService } from '@/lib/services/solicitantes.service';
-import { AppError, UnauthorizedError } from '@/lib/utils/errors';
+import { AppError } from '@/lib/utils/errors';
 import { revalidatePath } from 'next/cache';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 
+import type { Solicitante as SolicitanteListItem } from '@/lib/db/queries/solicitantes.queries';
+
+type ApplicantFormData = Parameters<(typeof solicitantesService)['create']>[0];
+
+type SearchByCedulaRow = Awaited<ReturnType<(typeof solicitantesQueries)['searchByCedula']>>[number];
+type SearchByEmailRow = Awaited<ReturnType<(typeof solicitantesQueries)['searchUsuariosByEmail']>>[number];
+type SearchSolicitantesRow = SearchByCedulaRow | SearchByEmailRow;
+
 export interface CreateSolicitanteResult {
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: {
     message: string;
     code?: string;
@@ -20,7 +28,7 @@ export interface CreateSolicitanteResult {
 
 export interface GetSolicitantesResult {
   success: boolean;
-  data?: any[];
+  data?: SolicitanteListItem[];
   error?: {
     message: string;
     code?: string;
@@ -29,7 +37,7 @@ export interface GetSolicitantesResult {
 
 export interface GetSolicitanteByIdResult {
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: {
     message: string;
     code?: string;
@@ -38,7 +46,7 @@ export interface GetSolicitanteByIdResult {
 
 export interface SearchSolicitantesResult {
   success: boolean;
-  data?: any[];
+  data?: SearchSolicitantesRow[];
   error?: {
     message: string;
     code?: string;
@@ -50,7 +58,7 @@ export interface SearchSolicitantesResult {
  * Nota: Un solicitante es una persona que solicita servicios legales en la clínica.
  * Esto es diferente de registrar un usuario (estudiante/profesor/coordinador).
  */
-export async function createSolicitanteAction(data: any): Promise<CreateSolicitanteResult> {
+export async function createSolicitanteAction(data: ApplicantFormData): Promise<CreateSolicitanteResult> {
   try {
     // Verificar autenticación
     const authResult = await requireAuthInServerActionWithCode();
@@ -289,7 +297,7 @@ export async function checkEmailExistsAction(
 /**
  * Server Action para actualizar un solicitante existente
  */
-export async function updateSolicitanteAction(cedulaOriginal: string, data: any): Promise<CreateSolicitanteResult> {
+export async function updateSolicitanteAction(cedulaOriginal: string, data: ApplicantFormData): Promise<CreateSolicitanteResult> {
   try {
     // Verificar autenticación
     const authResult = await requireAuthInServerActionWithCode();
@@ -324,10 +332,16 @@ export async function updateSolicitanteAction(cedulaOriginal: string, data: any)
           promises.push(usuariosQueries.updateContactInfo(cedulaOriginal, data.nombres, data.apellidos, data.correoElectronico, telefono, authResult.user.cedula));
         }
 
-        // Actualizar beneficiario - verificar campos con diferentes posibles nombres
+        // Actualizar beneficiario - tolerar posibles nombres alternativos de campos
+        const dataRecord = data as unknown as Record<string, unknown>;
         const nombres = data.nombres;
         const apellidos = data.apellidos;
-        const fechaNac = data.fechaNacimiento || data.fecha_nacimiento || data.fechaNac;
+
+        const fechaNac =
+          (typeof data.fechaNacimiento === 'string' && data.fechaNacimiento ? data.fechaNacimiento : null) ||
+          (typeof dataRecord.fecha_nacimiento === 'string' && dataRecord.fecha_nacimiento ? dataRecord.fecha_nacimiento : null) ||
+          (typeof dataRecord.fechaNac === 'string' && dataRecord.fechaNac ? dataRecord.fechaNac : null);
+
         const sexo = data.sexo;
 
         console.log('[Sync Beneficiario] Intentando sincronizar con cédula:', cedulaOriginal);
@@ -352,7 +366,7 @@ export async function updateSolicitanteAction(cedulaOriginal: string, data: any)
             apellidos: !!apellidos,
             fechaNac: !!fechaNac,
             sexo: !!sexo,
-            dataKeys: Object.keys(data)
+            dataKeys: Object.keys(dataRecord)
           });
         }
 
@@ -382,7 +396,7 @@ export async function updateSolicitanteAction(cedulaOriginal: string, data: any)
 /**
  * Server Action para eliminar un solicitante
  */
-export async function deleteSolicitanteAction(cedula: string, motivo: string): Promise<{ success: boolean; error?: any }> {
+export async function deleteSolicitanteAction(cedula: string, motivo: string): Promise<{ success: boolean; error?: unknown }> {
   try {
     const authResult = await requireAuthInServerActionWithCode();
     if (!authResult.success || !authResult.user) {
@@ -399,5 +413,120 @@ export async function deleteSolicitanteAction(cedula: string, motivo: string): P
     return { success: true };
   } catch (error) {
     return handleServerActionError(error, 'deleteSolicitanteAction', 'SOLICITANTE_ERROR');
+  }
+}
+
+/**
+ * Server Action para obtener solicitantes filtrados por núcleo
+ */
+export async function getSolicitantesByNucleoAction(nombreNucleo: string): Promise<GetSolicitantesResult> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    if (!nombreNucleo || nombreNucleo.trim().length === 0) {
+      return {
+        success: true,
+        data: [],
+      };
+    }
+
+  const rawResult = await solicitantesQueries.getByNucleo(nombreNucleo.trim());
+  const result: SolicitanteListItem[] = rawResult.map((row: Record<string, unknown>) => ({
+    cedula: String(row.cedula ?? ''),
+    nombre_completo: String(row.nombre_completo ?? ''),
+    telefono_celular: String(row.telefono_celular ?? ''),
+    nucleo: row.nucleo !== undefined ? (row.nucleo as string | null) : null,
+    fecha_solicitud: row.fecha_solicitud !== undefined ? (row.fecha_solicitud as string | null) : null,
+  }));
+
+    return {
+      success: true,
+      data: result,
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'getSolicitantesByNucleoAction', 'SOLICITANTE_ERROR');
+  }
+}
+
+/**
+ * Server Action para obtener solicitantes filtrados por estado civil
+ */
+export async function getSolicitantesByEstadoCivilAction(estadoCivil: string): Promise<GetSolicitantesResult> {
+  try {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    if (!estadoCivil || estadoCivil.trim().length === 0) {
+      return {
+        success: true,
+        data: [],
+      };
+    }
+
+    const rawResult = await solicitantesQueries.getByEstadoCivil(estadoCivil.trim());
+    const result: SolicitanteListItem[] = rawResult.map((row: Record<string, unknown>) => ({
+      cedula: String(row.cedula ?? ''),
+      nombre_completo: String(row.nombre_completo ?? ''),
+      telefono_celular: String(row.telefono_celular ?? ''),
+      nucleo: row.nucleo !== undefined ? (row.nucleo as string | null) : null,
+      fecha_solicitud: row.fecha_solicitud !== undefined ? (row.fecha_solicitud as string | null) : null,
+    }));
+
+    return {
+      success: true,
+      data: result,
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'getSolicitantesByEstadoCivilAction', 'SOLICITANTE_ERROR');
+  }
+}
+
+/**
+ * Server Action para obtener solicitantes filtrados por nacionalidad
+ */
+export async function getSolicitantesByNacionalidadAction(nacionalidad: string): Promise<GetSolicitantesResult> {
+  try {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    if (!nacionalidad || nacionalidad.trim().length === 0) {
+      return {
+        success: true,
+        data: [],
+      };
+    }
+
+    const rawResult = await solicitantesQueries.getByNacionalidad(nacionalidad.trim());
+    const result: SolicitanteListItem[] = rawResult.map((row: Record<string, unknown>) => ({
+      cedula: String(row.cedula ?? ''),
+      nombre_completo: String(row.nombre_completo ?? ''),
+      telefono_celular: String(row.telefono_celular ?? ''),
+      nucleo: row.nucleo !== undefined ? (row.nucleo as string | null) : null,
+      fecha_solicitud: row.fecha_solicitud !== undefined ? (row.fecha_solicitud as string | null) : null,
+    }));
+
+    return {
+      success: true,
+      data: result,
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'getSolicitantesByNacionalidadAction', 'SOLICITANTE_ERROR');
   }
 }
