@@ -68,7 +68,14 @@ export default function TiposCaracteristicasPage() {
         addLabel="Añadir Tipo"
         onAddClick={() => setIsModalOpen(true)}
         renderActions={(item: any) => (
-          <CatalogActionsMenu item={item} onView={() => handleView(item)} onEdit={() => handleEdit(item)} onToggleHabilitado={() => handleToggle(item)} onDelete={(motivo) => handleDelete(item, motivo)} />
+          <CatalogActionsMenu
+            item={item}
+            titleField="nombre_tipo_caracteristica"
+            onView={() => handleView(item)}
+            onEdit={() => handleEdit(item)}
+            onToggleHabilitado={() => handleToggle(item)}
+            onDelete={(motivo) => handleDelete(item, motivo)}
+          />
         )}
       />
       <CatalogFormModal

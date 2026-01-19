@@ -148,6 +148,7 @@ export default function NucleosPage() {
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}
+                        titleField="nombre_nucleo"
                         onView={() => handleView(item)}
                         onEdit={() => handleEdit(item)}
                         onToggleHabilitado={() => handleToggle(item)}

@@ -105,6 +105,7 @@ export default function NivelesEducativosPage() {
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}
+                        titleField="descripcion"
                         onView={() => handleView(item)}
                         onEdit={() => handleEdit(item)}
                         onToggleHabilitado={() => handleToggleHabilitado(item)}

@@ -100,6 +100,7 @@ export default function CaracteristicasPage() {
         renderActions={(item: any) => (
           <CatalogActionsMenu
             item={item}
+            titleField="descripcion"
             onView={() => handleView(item)}
             onEdit={() => handleEdit(item)}
             onToggleHabilitado={() => handleToggle(item)}

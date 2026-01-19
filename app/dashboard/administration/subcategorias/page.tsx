@@ -137,6 +137,7 @@ export default function SubcategoriasPage() {
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}
+                        titleField="nombre_subcategoria"
                         onView={() => handleView(item)}
                         onEdit={() => handleEdit(item)}
                         onToggleHabilitado={() => handleToggle(item)}

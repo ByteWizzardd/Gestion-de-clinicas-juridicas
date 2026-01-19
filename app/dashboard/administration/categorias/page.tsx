@@ -110,6 +110,7 @@ export default function CategoriasPage() {
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}
+                        titleField="nombre_categoria"
                         onView={() => handleView(item)}
                         onEdit={() => handleEdit(item)}
                         onToggleHabilitado={() => handleToggle(item)}

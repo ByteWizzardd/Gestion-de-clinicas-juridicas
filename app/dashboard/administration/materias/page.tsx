@@ -112,6 +112,7 @@ export default function MateriasPage() {
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}
+                        titleField="nombre_materia"
                         onView={() => handleView(item)}
                         onEdit={() => handleEdit(item)}
                         onToggleHabilitado={() => handleToggleHabilitado(item)}

@@ -69,6 +69,7 @@ export default function CondicionesActividadPage() {
         renderActions={(item: any) => (
           <CatalogActionsMenu
             item={item}
+            titleField="nombre_actividad"
             onView={() => handleView(item)}
             onEdit={() => handleEdit(item)}
             onToggleHabilitado={() => handleToggle(item)}

@@ -100,6 +100,7 @@ export default function SemestresPage() {
         renderActions={(item: any) => (
           <CatalogActionsMenu
             item={item}
+            titleField="term"
             onView={() => handleView(item)}
             onEdit={() => handleEdit(item)}
             onToggleHabilitado={() => handleToggleHabilitado(item)}

@@ -80,6 +80,7 @@ export default function MunicipiosPage() {
         renderActions={(item: any) => (
           <CatalogActionsMenu
             item={item}
+            titleField="nombre_municipio"
             onView={() => handleView(item)}
             onEdit={() => handleEdit(item)}
             onToggleHabilitado={() => handleToggle(item)}
