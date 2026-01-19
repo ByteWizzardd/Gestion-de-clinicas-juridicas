@@ -125,11 +125,9 @@ export default function AppointmentsTab({ citas, onRefresh, onEditAppointment }:
     setDeleteMotive('');
   };
 
-  // Ordenar citas por fecha de registro (descendente - más recientes primero)
+  // Ordenar citas por número de cita (descendente - mayor número primero)
   const citasOrdenadas = citas ? [...citas].sort((a, b) => {
-    const fechaA = new Date(a.fecha_encuentro);
-    const fechaB = new Date(b.fecha_encuentro);
-    return fechaB.getTime() - fechaA.getTime(); // Más recientes primero
+    return b.num_cita - a.num_cita; // Mayor número primero
   }).map(cita => ({
     ...cita,
     // Ordenar atenciones por fecha de registro (descendente)
