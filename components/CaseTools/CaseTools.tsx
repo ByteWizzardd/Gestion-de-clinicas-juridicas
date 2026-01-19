@@ -78,6 +78,7 @@ function CaseTools({
     onFechaFinChange
 }: CaseToolsProps) {
     const hasSearch = onSearchChange !== undefined;
+    const hasAdd = Boolean(addLabel || onAddClick);
     const hasFilter =
         onNucleoChange !== undefined ||
         onTramiteChange !== undefined ||
@@ -96,7 +97,13 @@ function CaseTools({
                     <Search value={searchValue} onChange={onSearchChange} placeholder={searchPlaceholder} />
                 </div>
             )}
-            <div className="flex gap-3 sm:gap-4 items-center shrink-0">
+            <div
+                className={
+                    `grid gap-3 w-full shrink-0 ` +
+                    (hasFilter && hasAdd ? 'grid-cols-2' : 'grid-cols-1') +
+                    ' sm:flex sm:w-auto sm:gap-4 sm:items-center'
+                }
+            >
                 {hasFilter && (
                     <Filter
                         nucleoFilter={nucleoFilter}
@@ -131,7 +138,7 @@ function CaseTools({
                         onFechaFinChange={onFechaFinChange}
                     />
                 )}
-                {(addLabel || onAddClick) && <Add label={addLabel} onClick={onAddClick} />}
+                {hasAdd && <Add label={addLabel} onClick={onAddClick} />}
             </div>
         </div>
     );

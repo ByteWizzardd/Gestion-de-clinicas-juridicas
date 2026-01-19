@@ -80,15 +80,19 @@ function Filter({
   const [isOpen, setIsOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<'nucleo' | 'materia' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas' | null>(null);
   const [nucleos, setNucleos] = useState<Array<{ id_nucleo: number; nombre_nucleo: string; habilitado?: boolean }>>([]);
-  const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
-  const [submenuPosition, setSubmenuPosition] = useState({ top: 0, right: 0 });
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 });
+  const [submenuPosition, setSubmenuPosition] = useState({ top: 0, left: 0, width: 0 });
 
   const menuRef = useRef<HTMLDivElement>(null);
   const submenuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const activeButtonRef = useRef<HTMLButtonElement>(null);
+  const lastTriggerRectRef = useRef<DOMRect | null>(null);
 
   const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+
+  const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+  const isMobileViewport = () => window.innerWidth < 640; // Tailwind sm
 
   const formatISODate = (date: Date): string => date.toISOString().slice(0, 10);
   const addDays = (base: Date, days: number): Date => {
@@ -142,13 +146,65 @@ function Filter({
       const buttonRect = e.currentTarget.getBoundingClientRect();
       const menuRect = menuRef.current?.getBoundingClientRect();
 
-      setSubmenuPosition({
-        top: buttonRect.top,
-        right: menuRect ? (window.innerWidth - menuRect.left + 8) : 0
-      });
+      const margin = 8;
+      const width = type === 'fechas' ? 200 : 180;
+
+      if (!menuRect || isMobileViewport()) {
+        // En móvil: abrir el submenú como panel sobre el menú (mismo ancho) para evitar overflow lateral
+        const mobileWidth = Math.max(180, window.innerWidth - margin * 2);
+        setSubmenuPosition({
+          top: (menuRect?.top ?? buttonRect.bottom) + 8,
+          left: margin,
+          width: mobileWidth,
+        });
+      } else {
+        // Desktop: preferir abrir a la izquierda del menú; si no cabe, abrir a la derecha
+        const preferredLeft = menuRect.left - margin - width;
+        const alternativeLeft = menuRect.right + margin;
+        const maxLeft = Math.max(margin, window.innerWidth - width - margin);
+
+        const nextLeft =
+          preferredLeft >= margin
+            ? preferredLeft
+            : (alternativeLeft + width <= window.innerWidth - margin ? alternativeLeft : clamp(preferredLeft, margin, maxLeft));
+
+        setSubmenuPosition({
+          top: buttonRect.top,
+          left: nextLeft,
+          width,
+        });
+      }
       setActiveSubmenu(type);
     }
   };
+
+  useEffect(() => {
+    if (!isBrowser || !isOpen) return;
+
+    const margin = 8;
+    const rect = lastTriggerRectRef.current;
+    const menuRect = menuRef.current?.getBoundingClientRect();
+    if (!rect || !menuRect) return;
+
+    if (isMobileViewport()) {
+      const width = Math.max(180, window.innerWidth - margin * 2);
+      setMenuPosition({
+        top: menuPosition.top,
+        left: margin,
+        width,
+      });
+      return;
+    }
+
+    const width = menuRect.width;
+    const maxLeft = Math.max(margin, window.innerWidth - width - margin);
+    const left = clamp(rect.right - width, margin, maxLeft);
+    setMenuPosition({
+      top: menuPosition.top,
+      left,
+      width: 0,
+    });
+  }, [isBrowser, isOpen, menuPosition.top]);
 
   // Cerrar al hacer clic fuera
   useEffect(() => {
@@ -286,10 +342,11 @@ function Filter({
               style={{
                 position: 'fixed',
                 top: submenuPosition.top,
-                right: submenuPosition.right,
+                left: submenuPosition.left,
                 zIndex: 10000,
+                width: submenuPosition.width || undefined,
               }}
-              className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[280px] p-4"
+              className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[200px] p-4"
             >
               <div className="space-y-3">
                 {/* Opciones rápidas de fecha (mismo patrón que Citas) */}
@@ -412,10 +469,11 @@ function Filter({
             style={{
               position: 'fixed',
               top: submenuPosition.top,
-              right: submenuPosition.right,
+              left: submenuPosition.left,
               zIndex: 10000,
+              width: submenuPosition.width || undefined,
             }}
-            className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[220px] p-2 max-h-[300px] overflow-y-auto"
+            className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[180px] p-2 max-h-[300px] overflow-y-auto"
           >
             <motion.button
               type="button"
@@ -468,15 +526,17 @@ function Filter({
         onClick={() => {
           const rect = triggerRef.current?.getBoundingClientRect();
           if (rect) {
+            lastTriggerRectRef.current = rect;
             setMenuPosition({
               top: rect.bottom + 8,
-              right: window.innerWidth - rect.right,
+              left: rect.left,
+              width: 0,
             });
           }
           setIsOpen(!isOpen);
           if (isOpen) setActiveSubmenu(null);
         }}
-        className={`h-10 px-4 cursor-pointer rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors ${hasActiveFilter ? 'bg-primary-light border-primary-dark' : ''
+        className={`h-10 w-full sm:w-auto px-4 cursor-pointer rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors ${hasActiveFilter ? 'bg-primary-light border-primary-dark' : ''
           }`}
       >
         <FilterIcon className="w-[18px] h-[18px] text-[#414040]" />
@@ -501,8 +561,9 @@ function Filter({
               style={{
                 position: 'fixed',
                 top: menuPosition.top,
-                right: menuPosition.right,
+                left: menuPosition.left,
                 zIndex: 9999,
+                width: menuPosition.width || undefined,
               }}
               className="bg-white border border-gray-300 rounded-2xl shadow-lg w-auto p-2"
             >

@@ -53,22 +53,16 @@ export default function AppointmentsToolbar({
 }: AppointmentsToolbarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<'nucleo' | 'usuario' | 'caso' | 'fechas' | null>(null);
-  const [mounted, setMounted] = useState(false);
-  const [submenuPosition, setSubmenuPosition] = useState({ top: 0, right: 0 });
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 });
+  const [submenuPosition, setSubmenuPosition] = useState({ top: 0, left: 0, width: 0 });
 
   const menuRef = useRef<HTMLDivElement>(null);
   const submenuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const activeButtonRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Solo mostrar el filtro en vista de lista o agendadas
-  if (viewMode !== 'list' && viewMode !== 'scheduled') {
-    return null;
-  }
+  const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+  const isMobileViewport = () => window.innerWidth < 640; // Tailwind sm
 
   const handleSubmenuToggle = (type: 'nucleo' | 'usuario' | 'caso' | 'fechas', e: React.MouseEvent<HTMLButtonElement>) => {
     if (activeSubmenu === type) {
@@ -76,7 +70,7 @@ export default function AppointmentsToolbar({
     } else {
       const buttonRect = e.currentTarget.getBoundingClientRect();
       const menuRect = menuRef.current?.getBoundingClientRect();
-      const submenuWidth = 280; // Ancho estimado del submenú
+      const submenuWidth = type === 'fechas' ? 200 : 180;
       const submenuMaxHeight = window.innerHeight * 0.8; // 80vh
       const spaceBelow = window.innerHeight - buttonRect.top;
       const spaceAbove = buttonRect.top;
@@ -92,10 +86,32 @@ export default function AppointmentsToolbar({
         topPosition = Math.min(topPosition, maxTop);
       }
 
-      setSubmenuPosition({
-        top: Math.max(8, topPosition), // Mínimo 8px desde el top
-        right: menuRect ? (window.innerWidth - menuRect.left + 8) : 0
-      });
+      const margin = 8;
+      if (!menuRect || isMobileViewport()) {
+        const width = Math.max(180, window.innerWidth - margin * 2);
+        setSubmenuPosition({
+          top: Math.max(8, topPosition),
+          left: margin,
+          width,
+        });
+      } else {
+        const preferredLeft = menuRect.left - margin - submenuWidth;
+        const alternativeLeft = menuRect.right + margin;
+        const maxLeft = Math.max(margin, window.innerWidth - submenuWidth - margin);
+
+        const left =
+          preferredLeft >= margin
+            ? preferredLeft
+            : (alternativeLeft + submenuWidth <= window.innerWidth - margin
+              ? alternativeLeft
+              : clamp(preferredLeft, margin, maxLeft));
+
+        setSubmenuPosition({
+          top: Math.max(8, topPosition),
+          left,
+          width: submenuWidth,
+        });
+      }
       setActiveSubmenu(type);
     }
   };
@@ -163,7 +179,8 @@ export default function AppointmentsToolbar({
 
   // Renderizar submenú
   const renderSubmenu = () => {
-    if (!mounted || !activeSubmenu) return null;
+    if (!activeSubmenu) return null;
+    if (typeof document === 'undefined') return null;
 
     // Submenú de Fechas
     if (activeSubmenu === 'fechas') {
@@ -179,10 +196,11 @@ export default function AppointmentsToolbar({
             style={{
               position: 'fixed',
               top: submenuPosition.top,
-              right: submenuPosition.right,
+              left: submenuPosition.left,
               zIndex: 10000,
+              width: submenuPosition.width || undefined,
             }}
-            className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[280px] p-4"
+            className="bg-white border border-gray-300 rounded-2xl shadow-lg w-auto p-4"
           >
             <div className="space-y-3">
               {/* Opciones rápidas de fecha */}
@@ -286,10 +304,11 @@ export default function AppointmentsToolbar({
           style={{
             position: 'fixed',
             top: submenuPosition.top,
-            right: submenuPosition.right,
+            left: submenuPosition.left,
             zIndex: 10000,
+            width: submenuPosition.width || undefined,
           }}
-          className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[220px] p-2 max-h-[300px] overflow-y-auto"
+          className="bg-white border border-gray-300 rounded-2xl shadow-lg w-auto p-2 max-h-[300px] overflow-y-auto"
         >
           {/* Opción "Todos" */}
           <motion.button
@@ -362,6 +381,10 @@ export default function AppointmentsToolbar({
     );
   };
 
+  // Solo mostrar el filtro en vista de lista o agendadas
+  const shouldRender = viewMode === 'list' || viewMode === 'scheduled';
+  if (!shouldRender) return null;
+
   return (
     <div className="relative">
       {/* Botón trigger */}
@@ -369,10 +392,30 @@ export default function AppointmentsToolbar({
         ref={triggerRef}
         type="button"
         onClick={() => {
-          setIsOpen(!isOpen);
-          if (isOpen) setActiveSubmenu(null);
+          if (isOpen) {
+            setIsOpen(false);
+            setActiveSubmenu(null);
+            return;
+          }
+
+          const rect = triggerRef.current?.getBoundingClientRect();
+          if (!rect) return;
+
+          const margin = 8;
+          const isMobile = isMobileViewport();
+          const width = isMobile ? Math.max(180, window.innerWidth - margin * 2) : 240;
+          const maxLeft = Math.max(margin, window.innerWidth - width - margin);
+          const left = isMobile ? margin : clamp(rect.right - width, margin, maxLeft);
+
+          setMenuPosition({
+            top: rect.bottom + 8,
+            left,
+            width,
+          });
+
+          setIsOpen(true);
         }}
-        className={`h-10 px-4 cursor-pointer rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors ${hasActiveFilter ? 'bg-primary-light border-primary-dark' : ''
+        className={`h-10 w-full sm:w-auto px-4 cursor-pointer rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors ${hasActiveFilter ? 'bg-primary-light border-primary-dark' : ''
           }`}
       >
         <FilterIcon className="w-[18px] h-[18px] text-[#414040]" />
@@ -385,7 +428,7 @@ export default function AppointmentsToolbar({
       </button>
 
       {/* Menú principal */}
-      {mounted && createPortal(
+      {typeof document !== 'undefined' && createPortal(
         <AnimatePresence>
           {isOpen && (
             <motion.div
@@ -396,9 +439,10 @@ export default function AppointmentsToolbar({
               ref={menuRef}
               style={{
                 position: 'fixed',
-                top: triggerRef.current ? triggerRef.current.getBoundingClientRect().bottom + 8 : 0,
-                right: triggerRef.current ? window.innerWidth - triggerRef.current.getBoundingClientRect().right : 0,
+                top: menuPosition.top,
+                left: menuPosition.left,
                 zIndex: 9999,
+                width: menuPosition.width || undefined,
               }}
               className="bg-white border border-gray-300 rounded-2xl shadow-lg w-auto p-2"
             >
