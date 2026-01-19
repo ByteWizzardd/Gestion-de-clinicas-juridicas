@@ -199,15 +199,21 @@ export async function generateSolicitanteFichaExcel(data: SolicitanteFichaData):
     r++;
     sheet.getCell(r, 1).value = '0. Sin Nivel'; drawBox(sheet, r, 10, s.nivel_educativo === 'Sin Nivel' ? 'X' : '');
     sheet.getCell(r, 20).value = '12. Tec. Medio'; drawBox(sheet, r, 32, s.nivel_educativo === 'Técnico Medio' ? 'X' : '');
-    sheet.getCell(r, 40).value = 'a. Años'; drawBox(sheet, r, 50, '');
+    sheet.getCell(r, 40).value = 'a. Años'; drawBox(sheet, r, 50, s.tipo_tiempo_estudio === 'Años' ? 'X' : '');
     r++;
     sheet.getCell(r, 1).value = '1-6. Primaria'; drawBox(sheet, r, 10, s.nivel_educativo === 'Primaria' ? 'X' : '');
     sheet.getCell(r, 20).value = '13. Tec. Superior'; drawBox(sheet, r, 32, s.nivel_educativo === 'Técnico Superior' ? 'X' : '');
-    sheet.getCell(r, 40).value = 'b. Semestres'; drawBox(sheet, r, 50, '');
+    sheet.getCell(r, 40).value = 'b. Semestres'; drawBox(sheet, r, 50, s.tipo_tiempo_estudio === 'Semestres' ? 'X' : '');
     r++;
     sheet.getCell(r, 1).value = '7-9. Básica'; drawBox(sheet, r, 10, s.nivel_educativo === 'Básica' ? 'X' : '');
     sheet.getCell(r, 20).value = '14. Universitaria'; drawBox(sheet, r, 32, s.nivel_educativo === 'Universitaria' ? 'X' : '');
-    sheet.getCell(r, 40).value = 'c. Trimestres'; drawBox(sheet, r, 50, '');
+    sheet.getCell(r, 40).value = 'c. Trimestres'; drawBox(sheet, r, 50, s.tipo_tiempo_estudio === 'Trimestres' ? 'X' : '');
+    // Cantidad de tiempo de estudio
+    sheet.getCell(r, 52).value = 'Tiempo:';
+    sheet.mergeCells(r, 54, r, 55);
+    sheet.getCell(r, 54).value = s.tiempo_estudio || '';
+    sheet.getCell(r, 54).border = borderBottom;
+    sheet.getCell(r, 54).alignment = alignCenter;
     r++;
     sheet.getCell(r, 1).value = '10-11. Media Div.'; drawBox(sheet, r, 10, s.nivel_educativo === 'Media Diversificada' ? 'X' : '');
     r += 2;

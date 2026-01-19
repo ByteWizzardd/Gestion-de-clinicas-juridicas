@@ -326,9 +326,19 @@ export function SolicitanteFichaPDF({ data, logoBase64 }: SolicitanteFichaPDFPro
                 </View>
                 {/* @ts-ignore */}
                 <View style={{ width: '40%' }}>
-                  <Checkbox label="a. Años" />
-                  <Checkbox label="b. Semestres" />
-                  <Checkbox label="c. Trimestres" />
+                  <Checkbox label="a. Años" checked={s.tipo_tiempo_estudio === 'Años'} />
+                  <Checkbox label="b. Semestres" checked={s.tipo_tiempo_estudio === 'Semestres'} />
+                  <Checkbox label="c. Trimestres" checked={s.tipo_tiempo_estudio === 'Trimestres'} />
+                  {/* @ts-ignore */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 3 }}>
+                    {/* @ts-ignore */}
+                    <Text style={styles.label}>Tiempo:</Text>
+                    {/* @ts-ignore */}
+                    <View style={[styles.underlined, { width: 30, flexGrow: 0, marginLeft: 3 }]}>
+                      {/* @ts-ignore */}
+                      <Text style={[styles.valueText, { textAlign: 'center' }]}>{s.tiempo_estudio || ''}</Text>
+                    </View>
+                  </View>
                 </View>
               </View>
             </View>
