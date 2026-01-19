@@ -273,7 +273,15 @@ export default function ApplicantsClient({
       const result = await descargarFichaSolicitanteAction(solicitante.cedula);
 
       if (result.success && result.data) {
-        await generateSolicitanteFichaZip(result.data);
+        if (
+          result.data &&
+          typeof result.data === 'object' &&
+          'solicitante' in result.data
+        ) {
+          await generateSolicitanteFichaZip(result.data as import('@/lib/types/report-types').SolicitanteFichaData);
+        } else {
+          toast.error('Los datos de la ficha del solicitante están incompletos.', 'Error al descargar la ficha');
+        }
         toast.success(`Ficha de ${solicitante.nombre_completo} descargada correctamente`);
       } else {
         toast.error(result.error || 'Error desconocido', 'Error al descargar la ficha');

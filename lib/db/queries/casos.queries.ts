@@ -27,6 +27,22 @@ export const casosQueries = {
   },
 
   /**
+   * Obtiene casos por rango de fecha de solicitud.
+   * Si una fecha no se proporciona, se ignora ese extremo del rango.
+   */
+  getByFechaSolicitudRange: async (
+    fechaInicio?: string | null,
+    fechaFin?: string | null
+  ): Promise<unknown[]> => {
+    const query = loadSQL('casos/get-by-fecha.sql');
+    const result: QueryResult = await pool.query(query, [
+      fechaInicio || null,
+      fechaFin || null,
+    ]);
+    return result.rows;
+  },
+
+  /**
    * Obtiene un caso por su ID con información completa
    */
   getById: async (id: number): Promise<unknown | null> => {
@@ -55,7 +71,7 @@ export const casosQueries = {
     cedula: string,
     fechaInicio?: string,
     fechaFin?: string
-  ): Promise<any[]> => {
+  ): Promise<unknown[]> => {
     const query = loadSQL('casos/get-casos-by-cedula-fecha.sql');
     const result: QueryResult = await pool.query(query, [
       cedula,
@@ -492,7 +508,7 @@ export const casosQueries = {
    * Un caso es inactivo si no ha tenido actividad en N meses (por defecto 12 = 2 semestres)
    * @param mesesInactividad - Número de meses de inactividad (por defecto 12)
    */
-  getInactiveCases: async (mesesInactividad: number = 12): Promise<Array<{
+  getInactiveCases: async (_mesesInactividad: number = 12): Promise<Array<{
     id_caso: number;
     fecha_inicio_caso: string;
     fecha_fin_caso: string | null;
@@ -517,6 +533,7 @@ export const casosQueries = {
     fecha_ultima_actividad: string;
     meses_inactividad: number;
   }>> => {
+    void _mesesInactividad;
     const query = loadSQL('casos/get-inactive-cases.sql');
     // El SQL define la lógica de inactividad basándose en los semestres y no acepta parámetros
     const result: QueryResult = await pool.query(query);

@@ -32,6 +32,13 @@ type CaseToolsProps = {
     nacionalidadFilter?: string;
     onNacionalidadChange?: (value: string) => void;
     nacionalidadOptions?: { value: string; label: string }[];
+
+    // Rango de fechas (fecha de solicitud)
+    showDateRange?: boolean;
+    fechaInicio?: string;
+    fechaFin?: string;
+    onFechaInicioChange?: (value: string) => void;
+    onFechaFinChange?: (value: string) => void;
 };
 
 function CaseTools({
@@ -63,7 +70,12 @@ function CaseTools({
     estadoCivilOptions,
     nacionalidadFilter = '',
     onNacionalidadChange,
-    nacionalidadOptions
+    nacionalidadOptions,
+    showDateRange = false,
+    fechaInicio,
+    fechaFin,
+    onFechaInicioChange,
+    onFechaFinChange
 }: CaseToolsProps) {
     const hasSearch = onSearchChange !== undefined;
     const hasFilter =
@@ -73,7 +85,9 @@ function CaseTools({
         onCasosAsignadosChange !== undefined ||
         onMateriaChange !== undefined ||
         onEstadoCivilChange !== undefined ||
-        onNacionalidadChange !== undefined;
+        onNacionalidadChange !== undefined ||
+        onFechaInicioChange !== undefined ||
+        onFechaFinChange !== undefined;
 
     return (
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center w-full px-3">
@@ -109,6 +123,12 @@ function CaseTools({
                         nacionalidadFilter={nacionalidadFilter}
                         onNacionalidadChange={onNacionalidadChange}
                         nacionalidadOptions={nacionalidadOptions}
+
+                        showDateRange={showDateRange}
+                        fechaInicio={fechaInicio}
+                        fechaFin={fechaFin}
+                        onFechaInicioChange={onFechaInicioChange}
+                        onFechaFinChange={onFechaFinChange}
                     />
                 )}
                 {(addLabel || onAddClick) && <Add label={addLabel} onClick={onAddClick} />}

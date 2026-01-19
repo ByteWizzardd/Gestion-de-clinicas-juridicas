@@ -90,6 +90,39 @@ function Filter({
 
   const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
 
+  const formatISODate = (date: Date): string => date.toISOString().slice(0, 10);
+  const addDays = (base: Date, days: number): Date => {
+    const d = new Date(base);
+    d.setDate(d.getDate() + days);
+    return d;
+  };
+
+  const todayISO = formatISODate(new Date());
+  const weekStartISO = formatISODate(addDays(new Date(), -7));
+  const monthStartISO = formatISODate(addDays(new Date(), -30));
+
+  const inferredDateRange = (() => {
+    if (!fechaInicio && !fechaFin) return 'all';
+    if (fechaInicio === todayISO && fechaFin === todayISO) return 'today';
+    if (fechaInicio === weekStartISO && fechaFin === todayISO) return 'week';
+    if (fechaInicio === monthStartISO && fechaFin === todayISO) return 'month';
+    return 'custom';
+  })();
+
+  const [dateRangeFilter, setDateRangeFilter] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>(() => inferredDateRange);
+
+  useEffect(() => {
+    if (dateRangeFilter === 'custom') {
+      if (!fechaInicio && !fechaFin) {
+        setDateRangeFilter('all');
+      }
+      return;
+    }
+
+    setDateRangeFilter(inferredDateRange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fechaInicio, fechaFin, inferredDateRange]);
+
   // Cargar núcleos al montar el componente
   useEffect(() => {
     const loadNucleos = async () => {
@@ -259,32 +292,103 @@ function Filter({
               className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[280px] p-4"
             >
               <div className="space-y-3">
-                <DatePicker
-                  label="Fecha inicio"
-                  value={fechaInicio || ''}
-                  onChange={(value) => {
-                    if (onFechaInicioChange) onFechaInicioChange(value || '');
-                  }}
-                />
-                <DatePicker
-                  label="Fecha fin"
-                  value={fechaFin || ''}
-                  onChange={(value) => {
-                    if (onFechaFinChange) onFechaFinChange(value || '');
-                  }}
-                />
-                {(fechaInicio || fechaFin) && (
-                  <button
+                {/* Opciones rápidas de fecha (mismo patrón que Citas) */}
+                {(['all', 'today', 'week', 'month'] as const).map((range) => (
+                  <motion.button
+                    key={range}
                     type="button"
+                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
                     onClick={() => {
-                      if (onFechaInicioChange) onFechaInicioChange('');
-                      if (onFechaFinChange) onFechaFinChange('');
+                      if (!onFechaInicioChange || !onFechaFinChange) return;
+
+                      setDateRangeFilter(range);
+
+                      if (range === 'all') {
+                        onFechaInicioChange('');
+                        onFechaFinChange('');
+                        setActiveSubmenu(null);
+                        return;
+                      }
+
+                      if (range === 'today') {
+                        onFechaInicioChange(todayISO);
+                        onFechaFinChange(todayISO);
+                        setActiveSubmenu(null);
+                        return;
+                      }
+
+                      if (range === 'week') {
+                        onFechaInicioChange(weekStartISO);
+                        onFechaFinChange(todayISO);
+                        setActiveSubmenu(null);
+                        return;
+                      }
+
+                      // month
+                      onFechaInicioChange(monthStartISO);
+                      onFechaFinChange(todayISO);
+                      setActiveSubmenu(null);
                     }}
-                    className="w-full px-3 py-2 text-sm text-center text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2"
+                    className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end ${dateRangeFilter === range
+                      ? 'bg-primary-light text-primary font-medium'
+                      : 'text-gray-600 hover:bg-gray-100'
+                      }`}
                   >
-                    <X className="w-4 h-4" />
-                    Limpiar fechas
-                  </button>
+                    {range === 'all' && 'Todas las fechas'}
+                    {range === 'today' && 'Hoy'}
+                    {range === 'week' && 'Última semana'}
+                    {range === 'month' && 'Último mes'}
+                  </motion.button>
+                ))}
+                <div className="border-t border-gray-200 my-2" />
+
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                  onClick={() => {
+                    setDateRangeFilter('custom');
+                  }}
+                  className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end ${dateRangeFilter === 'custom'
+                    ? 'bg-primary-light text-primary font-medium'
+                    : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                >
+                  Rango personalizado
+                </motion.button>
+
+                {dateRangeFilter === 'custom' && (
+                  <div className="mt-3 space-y-2 pl-2 border-l-2 border-primary-light">
+                    <DatePicker
+                      label="Fecha inicio"
+                      value={fechaInicio || ''}
+                      onChange={(value) => {
+                        if (onFechaInicioChange) onFechaInicioChange(value || '');
+                      }}
+                    />
+                    <DatePicker
+                      label="Fecha fin"
+                      value={fechaFin || ''}
+                      onChange={(value) => {
+                        if (onFechaFinChange) onFechaFinChange(value || '');
+                      }}
+                    />
+                    {(fechaInicio || fechaFin) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (onFechaInicioChange) onFechaInicioChange('');
+                          if (onFechaFinChange) onFechaFinChange('');
+                          setDateRangeFilter('all');
+                        }}
+                        className="w-full px-3 py-2 text-sm text-center text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <X className="w-4 h-4" />
+                        Limpiar fechas
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             </motion.div>
@@ -293,6 +397,7 @@ function Filter({
         document.body
       );
     }
+
 
     return createPortal(
       <AnimatePresence>
