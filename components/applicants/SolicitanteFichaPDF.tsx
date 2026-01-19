@@ -184,7 +184,7 @@ export function SolicitanteFichaPDF({ data, logoBase64 }: SolicitanteFichaPDFPro
   const s = solicitante || {};
 
   // Helpers logic
-  const trabaja = !!s.ocupacion && !['desempleado', 'estudiante', 'no trabaja'].includes((s.ocupacion || '').toLowerCase());
+  const trabaja = !!s.nombre_trabajo && !['No trabaja', 'Desempleado'].includes(s.nombre_trabajo);
 
   // Calculate kids 7-12
   const ninos = (beneficiarios || []).filter((b: any) => {
@@ -326,17 +326,25 @@ export function SolicitanteFichaPDF({ data, logoBase64 }: SolicitanteFichaPDFPro
                 </View>
                 {/* @ts-ignore */}
                 <View style={{ width: '40%' }}>
-                  <Checkbox label="a. Años" checked={s.tipo_tiempo_estudio === 'Años'} />
-                  <Checkbox label="b. Semestres" checked={s.tipo_tiempo_estudio === 'Semestres'} />
-                  <Checkbox label="c. Trimestres" checked={s.tipo_tiempo_estudio === 'Trimestres'} />
                   {/* @ts-ignore */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 3 }}>
-                    {/* @ts-ignore */}
-                    <Text style={styles.label}>Tiempo:</Text>
-                    {/* @ts-ignore */}
-                    <View style={[styles.underlined, { width: 30, flexGrow: 0, marginLeft: 3 }]}>
-                      {/* @ts-ignore */}
-                      <Text style={[styles.valueText, { textAlign: 'center' }]}>{s.tiempo_estudio || ''}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 5, marginBottom: 3 }}>
+                    <Text style={styles.valueText}>a. Años</Text>
+                    <View style={styles.checkbox}>
+                      {s.tipo_tiempo_estudio === 'Años' && <Text style={styles.checkMark}>{s.tiempo_estudio || ''}</Text>}
+                    </View>
+                  </View>
+                  {/* @ts-ignore */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 5, marginBottom: 3 }}>
+                    <Text style={styles.valueText}>b. Semestres</Text>
+                    <View style={styles.checkbox}>
+                      {s.tipo_tiempo_estudio === 'Semestres' && <Text style={styles.checkMark}>{s.tiempo_estudio || ''}</Text>}
+                    </View>
+                  </View>
+                  {/* @ts-ignore */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 5, marginBottom: 3 }}>
+                    <Text style={styles.valueText}>c. Trimestres</Text>
+                    <View style={styles.checkbox}>
+                      {s.tipo_tiempo_estudio === 'Trimestres' && <Text style={styles.checkMark}>{s.tiempo_estudio || ''}</Text>}
                     </View>
                   </View>
                 </View>
@@ -371,8 +379,8 @@ export function SolicitanteFichaPDF({ data, logoBase64 }: SolicitanteFichaPDFPro
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             {/* @ts-ignore */}
             <Text style={styles.label}>{'-> 14b. ¿Está buscando Trabajo?'}</Text>
-            <Checkbox label="a. Sí" />
-            <Checkbox label="b. No" />
+            <Checkbox label="a. Sí" checked={s.id_actividad === 0} />
+            <Checkbox label="b. No" checked={!trabaja && s.id_actividad !== 0 && s.id_actividad !== null} />
           </View>
 
           {/* @ts-ignore */}
@@ -601,9 +609,27 @@ export function SolicitanteFichaPDF({ data, logoBase64 }: SolicitanteFichaPDFPro
               {/* Duration */}
               {/* @ts-ignore */}
               <View style={{ width: '40%' }}>
-                <Checkbox label="a. Años" />
-                <Checkbox label="b. Semestres" />
-                <Checkbox label="c. Trimestres" />
+                {/* @ts-ignore */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 5, marginBottom: 3 }}>
+                  <Text style={styles.valueText}>a. Años</Text>
+                  <View style={styles.checkbox}>
+                    {s.tipo_tiempo_estudio_jefe === 'Años' && <Text style={styles.checkMark}>{s.tiempo_estudio_jefe || ''}</Text>}
+                  </View>
+                </View>
+                {/* @ts-ignore */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 5, marginBottom: 3 }}>
+                  <Text style={styles.valueText}>b. Semestres</Text>
+                  <View style={styles.checkbox}>
+                    {s.tipo_tiempo_estudio_jefe === 'Semestres' && <Text style={styles.checkMark}>{s.tiempo_estudio_jefe || ''}</Text>}
+                  </View>
+                </View>
+                {/* @ts-ignore */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 5, marginBottom: 3 }}>
+                  <Text style={styles.valueText}>c. Trimestres</Text>
+                  <View style={styles.checkbox}>
+                    {s.tipo_tiempo_estudio_jefe === 'Trimestres' && <Text style={styles.checkMark}>{s.tiempo_estudio_jefe || ''}</Text>}
+                  </View>
+                </View>
               </View>
             </View>
           </View>
