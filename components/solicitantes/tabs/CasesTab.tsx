@@ -1,15 +1,17 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FileText } from 'lucide-react';
 import { formatDate } from '@/lib/utils/date-formatter';
 import Table from '@/components/Table/Table';
-import { useState } from 'react';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 import { deleteCasoAction } from '@/app/actions/casos';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
+import CaseTools from '@/components/CaseTools/CaseTools';
 
 interface CasesTabProps {
+  cedulaSolicitante?: string;
   casos: Array<{
     id_caso: number;
     fecha_solicitud: string | null;
@@ -26,13 +28,103 @@ interface CasesTabProps {
   }>;
 }
 
-export default function CasesTab({ casos }: CasesTabProps) {
+export default function CasesTab({ casos, cedulaSolicitante }: CasesTabProps) {
   const { toast } = useToast();
   const router = useRouter();
+
+  const [searchValue, setSearchValue] = useState('');
+
+  const [nucleoFilter, setNucleoFilter] = useState('');
+  const [materiaFilter, setMateriaFilter] = useState('');
+  const [tramiteFilter, setTramiteFilter] = useState('');
+  const [estatusFilter, setEstatusFilter] = useState('');
+  const [fechaInicio, setFechaInicio] = useState('');
+  const [fechaFin, setFechaFin] = useState('');
+
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<number | null>(null);
   const [deleteMotivo, setDeleteMotivo] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const uniqueOptions = (values: Array<string | null | undefined>) => {
+    const set = new Set(values.map((v) => (v ?? '').trim()).filter(Boolean));
+    return Array.from(set).sort((a, b) => a.localeCompare(b)).map((v) => ({ value: v, label: v }));
+  };
+
+  const normalizeText = (text: string): string => {
+    return text
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+  };
+
+  const nucleoOptions = useMemo(
+    () => uniqueOptions(casos.map((c) => c.nombre_nucleo)),
+    [casos]
+  );
+
+  const tramiteOptions = useMemo(
+    () => uniqueOptions(casos.map((c) => c.tramite)),
+    [casos]
+  );
+
+  const estatusOptions = useMemo(
+    () => uniqueOptions(casos.map((c) => c.estatus)),
+    [casos]
+  );
+
+  const materiaOptions = useMemo(
+    () => uniqueOptions(casos.map((c) => c.nombre_materia)),
+    [casos]
+  );
+
+  const getCasoFechaSolicitudISO = (caso: CasesTabProps['casos'][number]): string | null => {
+    const anyCaso = caso as unknown as Record<string, unknown>;
+    const raw =
+      (typeof caso.fecha_solicitud === 'string' && caso.fecha_solicitud) ||
+      (typeof anyCaso.fecha_solicitud_str === 'string' && anyCaso.fecha_solicitud_str) ||
+      null;
+
+    if (!raw) return null;
+    const iso = raw.slice(0, 10);
+    return /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso : null;
+  };
+
+  const filteredCasos = useMemo(() => {
+    return casos.filter((c) => {
+      const normalizedSearch = normalizeText(searchValue);
+
+      const materiaDisplay = c.nombre_materia || '';
+      const categoria = c.nombre_categoria?.trim() || '';
+      const subcategoria = c.nombre_subcategoria?.trim() || '';
+
+      const matchesSearch =
+        !searchValue ||
+        c.id_caso.toString().includes(searchValue) ||
+        normalizeText(c.tramite || '').includes(normalizedSearch) ||
+        normalizeText(c.estatus || '').includes(normalizedSearch) ||
+        normalizeText(c.nombre_nucleo || '').includes(normalizedSearch) ||
+        normalizeText(materiaDisplay).includes(normalizedSearch) ||
+        normalizeText(categoria).includes(normalizedSearch) ||
+        normalizeText(subcategoria).includes(normalizedSearch);
+
+      if (!matchesSearch) return false;
+
+      if (nucleoFilter && (c.nombre_nucleo ?? '') !== nucleoFilter) return false;
+      if (materiaFilter && (c.nombre_materia ?? '') !== materiaFilter) return false;
+      if (tramiteFilter && (c.tramite ?? '') !== tramiteFilter) return false;
+      if (estatusFilter && (c.estatus ?? '') !== estatusFilter) return false;
+
+      const iso = getCasoFechaSolicitudISO(c);
+      if (fechaInicio || fechaFin) {
+        if (!iso) return false;
+        if (fechaInicio && iso < fechaInicio) return false;
+        if (fechaFin && iso > fechaFin) return false;
+      }
+
+      return true;
+    });
+  }, [casos, searchValue, nucleoFilter, materiaFilter, tramiteFilter, estatusFilter, fechaInicio, fechaFin]);
 
   if (!casos || casos.length === 0) {
     return (
@@ -42,9 +134,16 @@ export default function CasesTab({ casos }: CasesTabProps) {
       </div>
     );
   }
-  const tableData = casos.map((caso) => ({
+  const tableData = filteredCasos.map((caso) => ({
     id_caso: caso.id_caso,
-    fecha_solicitud: caso.fecha_solicitud ? formatDate(caso.fecha_solicitud) : 'N/A',
+    fecha_solicitud: (() => {
+      const anyCaso = caso as unknown as Record<string, unknown>;
+      const raw =
+        (typeof caso.fecha_solicitud === 'string' && caso.fecha_solicitud) ||
+        (typeof anyCaso.fecha_solicitud_str === 'string' && anyCaso.fecha_solicitud_str) ||
+        null;
+      return raw ? formatDate(raw) : 'N/A';
+    })(),
     tramite: caso.tramite || 'N/A',
     estatus: caso.estatus || 'N/A',
     nucleo: caso.nombre_nucleo || 'N/A',
@@ -116,6 +215,54 @@ export default function CasesTab({ casos }: CasesTabProps) {
 
   return (
     <div className="space-y-4">
+      <CaseTools
+        addLabel="Añadir Caso"
+        onAddClick={() => {
+          const rawCedula = (cedulaSolicitante ?? '').trim();
+          if (!rawCedula) {
+            router.push('/dashboard/cases');
+            return;
+          }
+
+          const tipo = rawCedula.charAt(0).toUpperCase();
+          const numero = rawCedula.slice(1).replace(/[^0-9]/g, '');
+          const cedulaParam = numero ? `${tipo}${numero}` : rawCedula;
+          const tipoParam = tipo || 'V';
+
+          router.push(`/dashboard/cases?cedula=${encodeURIComponent(cedulaParam)}&cedulaTipo=${encodeURIComponent(tipoParam)}`);
+        }}
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+        nucleoLabel="Núcleo"
+        nucleoAllLabel="Todos los núcleos"
+        nucleoFilter={nucleoFilter}
+        onNucleoChange={setNucleoFilter}
+        nucleoOptions={nucleoOptions}
+        materiaFilter={materiaFilter}
+        onMateriaChange={setMateriaFilter}
+        materiaOptions={materiaOptions}
+        tramiteFilter={tramiteFilter}
+        onTramiteChange={setTramiteFilter}
+        tramiteOptions={tramiteOptions}
+        estatusLabel="Estatus"
+        estatusFilter={estatusFilter}
+        onEstatusChange={setEstatusFilter}
+        estatusOptions={estatusOptions}
+        showDateRange={true}
+        fechaInicio={fechaInicio}
+        fechaFin={fechaFin}
+        onFechaInicioChange={setFechaInicio}
+        onFechaFinChange={setFechaFin}
+        onClearFilters={() => {
+          setSearchValue('');
+          setNucleoFilter('');
+          setMateriaFilter('');
+          setTramiteFilter('');
+          setEstatusFilter('');
+          setFechaInicio('');
+          setFechaFin('');
+        }}
+      />
       <Table
         data={tableData}
         columns={['Código', 'Fecha Solicitud', 'Trámite', 'Estatus', 'Núcleo', 'Materia']}

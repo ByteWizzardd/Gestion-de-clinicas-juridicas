@@ -323,6 +323,7 @@ export default function ApplicantsClient({
           }}
           searchValue={searchValue}
           onSearchChange={setSearchValue}
+           searchPlaceholder="Buscar solicitantes..."
           nucleoFilter={nucleoFilter}
           onNucleoChange={handleNucleoChange}
           nucleoOptions={nucleoOptions}

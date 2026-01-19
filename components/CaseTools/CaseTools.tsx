@@ -23,6 +23,7 @@ type CaseToolsProps = {
     materiaFilter?: string;
     onMateriaChange?: (value: string) => void;
     materias?: { id_materia: number; nombre_materia: string; habilitado?: boolean }[];
+    materiaOptions?: { value: string; label: string }[];
     nucleoLabel?: string;
     nucleoAllLabel?: string;
     estatusLabel?: string;
@@ -65,6 +66,7 @@ function CaseTools({
     materiaFilter = '',
     onMateriaChange,
     materias = [],
+    materiaOptions,
     nucleoLabel,
     nucleoAllLabel,
     estatusLabel,
@@ -126,6 +128,7 @@ function CaseTools({
                         materiaFilter={materiaFilter}
                         onMateriaChange={onMateriaChange}
                         materias={materias}
+                        materiaOptions={materiaOptions}
                         nucleoLabel={nucleoLabel}
                         nucleoAllLabel={nucleoAllLabel}
                         estatusLabel={estatusLabel}

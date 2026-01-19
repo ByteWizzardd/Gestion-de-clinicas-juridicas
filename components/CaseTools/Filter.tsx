@@ -30,6 +30,7 @@ interface FilterProps {
   materiaFilter?: string;
   onMateriaChange?: (value: string) => void;
   materias?: { id_materia: number; nombre_materia: string; habilitado?: boolean }[];
+  materiaOptions?: { value: string; label: string }[];
   nucleoLabel?: string;
   nucleoAllLabel?: string;
   fechaInicio?: string;
@@ -71,6 +72,7 @@ function Filter({
   materiaFilter,
   onMateriaChange,
   materias = [],
+  materiaOptions,
   nucleoLabel = 'Núcleo',
   nucleoAllLabel = 'Todos los núcleos',
   fechaInicio,
@@ -304,9 +306,11 @@ function Filter({
           allLabel = 'Todos los trámites';
           break;
         case 'materia':
-          options = materias
-            .filter((m) => m.habilitado !== false)
-            .map(m => ({ value: m.id_materia.toString(), label: m.nombre_materia }));
+          options = (materiaOptions && materiaOptions.length > 0)
+            ? materiaOptions
+            : materias
+              .filter((m) => m.habilitado !== false)
+              .map(m => ({ value: m.id_materia.toString(), label: m.nombre_materia }));
           handler = onMateriaChange || (() => { });
           allLabel = 'Todas las materias';
           break;

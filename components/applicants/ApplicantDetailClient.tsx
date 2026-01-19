@@ -111,7 +111,7 @@ export default function ApplicantDetailClient() {
     {
       id: 'casos',
       label: 'Casos Asociados',
-      content: <CasesTab casos={solicitante.casos || []} />,
+      content: <CasesTab cedulaSolicitante={solicitante.cedula} casos={solicitante.casos || []} />,
     },
   ];
 
