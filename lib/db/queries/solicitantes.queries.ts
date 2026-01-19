@@ -473,6 +473,129 @@ export const solicitantesQueries = {
         await pool.query(query, [cedula]);
     },
 
+    getsNacionality: async (nacionalidad: string): Promise<Array<{
+        cedula: string;
+        nombres: string;
+        apellidos: string;
+        nacionalidad: string;
+    }>> => {
+        const query = loadSQL('solicitantes/get-nacionalidad.sql');
+        const result: QueryResult = await pool.query(query, [nacionalidad]);
+        return result.rows;
+    },
+
+    getsEstadoCivil: async (estadoCivil: string): Promise<Array<{
+        cedula: string;
+        nombres: string;
+        apellidos: string;
+        estado_civil: string;
+    }>> => {
+        const query = loadSQL('solicitantes/get-estado-civil.sql');
+        const result: QueryResult = await pool.query(query, [estadoCivil]);
+        return result.rows;
+    },
+    /**
+     * Obtiene solicitantes filtrados por núcleo (nombre de núcleo)
+     * Devuelve todos los campos del solicitante (s.*) + campos calculados del query.
+     */
+    getByNucleo: async (nombreNucleo: string): Promise<Array<Record<string, unknown>>> => {
+        const query = loadSQL('solicitantes/get-by-nucleo.sql');
+        const result: QueryResult = await pool.query(query, [nombreNucleo]);
+
+        const rows = result.rows.map((rowUnknown: unknown) => {
+            const row = rowUnknown as Record<string, unknown>;
+            const nombres = typeof row.nombres === 'string' ? row.nombres : null;
+            const apellidos = typeof row.apellidos === 'string' ? row.apellidos : null;
+
+            const mapped: Record<string, unknown> = {
+                ...row,
+                nombre_completo: nombres && apellidos ? `${nombres} ${apellidos}` : null,
+            };
+
+            const fechaSolicitud = row.fecha_solicitud;
+            if (fechaSolicitud instanceof Date) {
+                mapped.fecha_solicitud = fechaSolicitud.toISOString().slice(0, 10);
+            }
+
+            const fechaNacimiento = row.fecha_nacimiento;
+            if (fechaNacimiento instanceof Date) {
+                mapped.fecha_nacimiento = fechaNacimiento.toISOString().slice(0, 10);
+            }
+
+            return mapped;
+        });
+
+        return rows;
+    },
+
+    /**
+     * Obtiene solicitantes filtrados por estado civil
+     * Devuelve todos los campos del solicitante (s.*) + campos calculados del query.
+     */
+    getByEstadoCivil: async (estadoCivil: string): Promise<Array<Record<string, unknown>>> => {
+        const query = loadSQL('solicitantes/get-by-estado-civil.sql');
+        const result: QueryResult = await pool.query(query, [estadoCivil]);
+
+        const rows = result.rows.map((rowUnknown: unknown) => {
+            const row = rowUnknown as Record<string, unknown>;
+            const nombres = typeof row.nombres === 'string' ? row.nombres : null;
+            const apellidos = typeof row.apellidos === 'string' ? row.apellidos : null;
+
+            const mapped: Record<string, unknown> = {
+                ...row,
+                nombre_completo: nombres && apellidos ? `${nombres} ${apellidos}` : null,
+            };
+
+            const fechaSolicitud = row.fecha_solicitud;
+            if (fechaSolicitud instanceof Date) {
+                mapped.fecha_solicitud = fechaSolicitud.toISOString().slice(0, 10);
+            }
+
+            const fechaNacimiento = row.fecha_nacimiento;
+            if (fechaNacimiento instanceof Date) {
+                mapped.fecha_nacimiento = fechaNacimiento.toISOString().slice(0, 10);
+            }
+
+            return mapped;
+        });
+
+        return rows;
+    },
+
+    /**
+     * Obtiene solicitantes filtrados por nacionalidad
+     * Devuelve todos los campos del solicitante (s.*) + campos calculados del query.
+     */
+    getByNacionalidad: async (nacionalidad: string): Promise<Array<Record<string, unknown>>> => {
+        const query = loadSQL('solicitantes/get-by-nacionalidad.sql');
+        const result: QueryResult = await pool.query(query, [nacionalidad]);
+
+        const rows = result.rows.map((rowUnknown: unknown) => {
+            const row = rowUnknown as Record<string, unknown>;
+            const nombres = typeof row.nombres === 'string' ? row.nombres : null;
+            const apellidos = typeof row.apellidos === 'string' ? row.apellidos : null;
+
+            const mapped: Record<string, unknown> = {
+                ...row,
+                nombre_completo: nombres && apellidos ? `${nombres} ${apellidos}` : null,
+            };
+
+            const fechaSolicitud = row.fecha_solicitud;
+            if (fechaSolicitud instanceof Date) {
+                mapped.fecha_solicitud = fechaSolicitud.toISOString().slice(0, 10);
+            }
+
+            const fechaNacimiento = row.fecha_nacimiento;
+            if (fechaNacimiento instanceof Date) {
+                mapped.fecha_nacimiento = fechaNacimiento.toISOString().slice(0, 10);
+            }
+
+            return mapped;
+        });
+
+        return rows;
+    },
+
     /**
      * Actualiza nombres, apellidos, fecha de nacimiento y sexo de un solicitante
      */

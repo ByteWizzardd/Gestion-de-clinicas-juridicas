@@ -1,5 +1,5 @@
 'use client';
-import { Filter as FilterIcon, ChevronLeft, Building2, FileText, UserCheck, X, Activity, BookOpen, Calendar } from 'lucide-react';
+import { Filter as FilterIcon, ChevronLeft, Building2, FileText, UserCheck, X, Activity, BookOpen, Calendar, User, Flag } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { createPortal } from 'react-dom';
@@ -10,12 +10,18 @@ interface FilterProps {
   nucleoFilter?: string;
   tramiteFilter?: string;
   estatusFilter?: string;
+  estadoCivilFilter?: string;
+  nacionalidadFilter?: string;
   casosAsignadosFilter?: boolean;
   onNucleoChange?: (value: string) => void;
   onTramiteChange?: (value: string) => void;
   onEstatusChange?: (value: string) => void;
+  onEstadoCivilChange?: (value: string) => void;
+  onNacionalidadChange?: (value: string) => void;
   onCasosAsignadosChange?: (value: boolean) => void;
   nucleoOptions?: { value: string; label: string }[];
+  estadoCivilOptions?: { value: string; label: string }[];
+  nacionalidadOptions?: { value: string; label: string }[];
   tramiteOptions: { value: string; label: string }[];
   estatusOptions: { value: string; label: string }[];
   estatusLabel?: string;
@@ -36,12 +42,26 @@ function Filter({
   nucleoFilter,
   tramiteFilter,
   estatusFilter,
+  estadoCivilFilter,
+  nacionalidadFilter,
   casosAsignadosFilter,
   onNucleoChange,
   onTramiteChange,
   onEstatusChange,
+  onEstadoCivilChange,
+  onNacionalidadChange,
   onCasosAsignadosChange,
   nucleoOptions,
+  estadoCivilOptions = [
+    { value: 'Soltero', label: 'Soltero' },
+    { value: 'Casado', label: 'Casado' },
+    { value: 'Divorciado', label: 'Divorciado' },
+    { value: 'Viudo', label: 'Viudo' },
+  ],
+  nacionalidadOptions = [
+    { value: 'V', label: 'Venezolano (V)' },
+    { value: 'E', label: 'Extranjero (E)' },
+  ],
   tramiteOptions,
   estatusOptions,
   estatusLabel = 'Estatus',
@@ -58,9 +78,9 @@ function Filter({
   showDateRange = false
 }: FilterProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeSubmenu, setActiveSubmenu] = useState<'nucleo' | 'materia' | 'tramite' | 'estatus' | 'fechas' | null>(null);
+  const [activeSubmenu, setActiveSubmenu] = useState<'nucleo' | 'materia' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas' | null>(null);
   const [nucleos, setNucleos] = useState<Array<{ id_nucleo: number; nombre_nucleo: string; habilitado?: boolean }>>([]);
-  const [mounted, setMounted] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
   const [submenuPosition, setSubmenuPosition] = useState({ top: 0, right: 0 });
 
   const menuRef = useRef<HTMLDivElement>(null);
@@ -68,9 +88,7 @@ function Filter({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const activeButtonRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
 
   // Cargar núcleos al montar el componente
   useEffect(() => {
@@ -84,7 +102,7 @@ function Filter({
   }, []);
 
   // Eliminar useEffect de posicionamiento automático y usar el evento de click
-  const handleSubmenuToggle = (type: 'nucleo' | 'materia' | 'tramite' | 'estatus' | 'fechas', e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleSubmenuToggle = (type: 'nucleo' | 'materia' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas', e: React.MouseEvent<HTMLButtonElement>) => {
     if (activeSubmenu === type) {
       setActiveSubmenu(null);
     } else {
@@ -134,6 +152,8 @@ function Filter({
     (nucleoFilter ? 1 : 0) +
     (tramiteFilter ? 1 : 0) +
     (estatusFilter ? 1 : 0) +
+    (estadoCivilFilter ? 1 : 0) +
+    (nacionalidadFilter ? 1 : 0) +
     (casosAsignadosFilter ? 1 : 0) +
     (materiaFilter ? 1 : 0) +
     (fechaInicio ? 1 : 0) +
@@ -145,6 +165,8 @@ function Filter({
     if (onNucleoChange) onNucleoChange('');
     if (onTramiteChange) onTramiteChange('');
     if (onEstatusChange) onEstatusChange('');
+    if (onEstadoCivilChange) onEstadoCivilChange('');
+    if (onNacionalidadChange) onNacionalidadChange('');
     if (onMateriaChange) onMateriaChange('');
     if (onCasosAsignadosChange) onCasosAsignadosChange(false);
     if (onFechaInicioChange) onFechaInicioChange('');
@@ -152,60 +174,10 @@ function Filter({
     setActiveSubmenu(null);
   };
 
-  // Obtener nombres seleccionados
-  const selectedNucleoName = nucleos.find(n => n.id_nucleo.toString() === nucleoFilter)?.nombre_nucleo;
-  const selectedTramiteName = tramiteOptions.find(t => t.value === tramiteFilter)?.label;
-  const selectedEstatusName = estatusOptions.find(e => e.value === estatusFilter)?.label;
-
-  // Renderizar el submenú como portal
-  // Guardar opciones para la animación de salida
-  const [currentOptions, setCurrentOptions] = useState<{ options: { value: string; label: string }[], allLabel: string, handler: (value: string) => void, menuType: string } | null>(null);
-
-  useEffect(() => {
-    if (activeSubmenu) {
-      let options: { value: string; label: string }[] = [];
-      let onChangeHandler: (value: string) => void = () => { };
-      let allLabel = '';
-
-      switch (activeSubmenu) {
-        case 'nucleo':
-          if (nucleoOptions && nucleoOptions.length > 0) {
-            options = nucleoOptions;
-          } else {
-            options = nucleos
-              .filter((n) => n.habilitado !== false)
-              .map(n => ({ value: n.id_nucleo.toString(), label: n.nombre_nucleo }));
-          }
-          onChangeHandler = onNucleoChange || (() => { });
-          allLabel = nucleoAllLabel;
-          break;
-        case 'tramite':
-          options = tramiteOptions;
-          onChangeHandler = onTramiteChange || (() => { });
-          allLabel = 'Todos los trámites';
-          break;
-        case 'materia':
-          options = materias
-            .filter((m) => m.habilitado !== false)
-            .map(m => ({ value: m.id_materia.toString(), label: m.nombre_materia }));
-          onChangeHandler = onMateriaChange || (() => { });
-          allLabel = 'Todas las materias';
-          break;
-        case 'estatus':
-          options = estatusOptions;
-          onChangeHandler = onEstatusChange || (() => { });
-          allLabel = 'Todos los estatus';
-          break;
-      }
-      setCurrentOptions({ options, allLabel, handler: onChangeHandler, menuType: activeSubmenu });
-    }
-  }, [activeSubmenu, nucleos, tramiteOptions, estatusOptions, onNucleoChange, onTramiteChange, onEstatusChange]);
-
   const renderSubmenu = () => {
-    if (!mounted) return null;
+    if (!isBrowser) return null;
 
     // Usar opciones guardadas si se está cerrando
-    const displayData = activeSubmenu ? null : currentOptions;
     // Si hay un submenú activo, ya se habrá actualizado el efecto o se usará currentOptions del render anterior si coincide
     // Pero mejor recalcular si está activo para reactividad instantánea, o confiar en el efecto.
     // El efecto puede tener un ligero retraso. Para evitar parpadeo al abrir, calculamos si está activo.
@@ -214,7 +186,6 @@ function Filter({
     let filterValue = '';
     let handler: (value: string) => void = () => { };
     let allLabel = '';
-    let type = activeSubmenu || (currentOptions ? currentOptions.menuType : '');
 
     if (activeSubmenu) {
       switch (activeSubmenu) {
@@ -244,19 +215,27 @@ function Filter({
           handler = onEstatusChange || (() => { });
           allLabel = `Todos los ${estatusLabel.toLowerCase()}`;
           break;
+        case 'estadoCivil':
+          options = estadoCivilOptions;
+          handler = onEstadoCivilChange || (() => { });
+          allLabel = 'Todos los estados civiles';
+          break;
+        case 'nacionalidad':
+          options = nacionalidadOptions;
+          handler = onNacionalidadChange || (() => { });
+          allLabel = 'Todas las nacionalidades';
+          break;
       }
-    } else if (currentOptions) {
-      options = currentOptions.options;
-      handler = currentOptions.handler;
-      allLabel = currentOptions.allLabel;
     }
 
     // Resolver filterValue dinámicamente
-    switch (type) {
+    switch (activeSubmenu) {
       case 'nucleo': filterValue = nucleoFilter || ''; break;
       case 'materia': filterValue = materiaFilter || ''; break;
       case 'tramite': filterValue = tramiteFilter || ''; break;
       case 'estatus': filterValue = estatusFilter || ''; break;
+      case 'estadoCivil': filterValue = estadoCivilFilter || ''; break;
+      case 'nacionalidad': filterValue = nacionalidadFilter || ''; break;
     }
 
     // Si es el submenú de fechas, renderizar DatePickers
@@ -382,6 +361,13 @@ function Filter({
         ref={triggerRef}
         type="button"
         onClick={() => {
+          const rect = triggerRef.current?.getBoundingClientRect();
+          if (rect) {
+            setMenuPosition({
+              top: rect.bottom + 8,
+              right: window.innerWidth - rect.right,
+            });
+          }
           setIsOpen(!isOpen);
           if (isOpen) setActiveSubmenu(null);
         }}
@@ -398,7 +384,7 @@ function Filter({
       </button>
 
       {/* Menú principal */}
-      {mounted && createPortal(
+      {isBrowser && createPortal(
         <AnimatePresence>
           {isOpen && (
             <motion.div
@@ -409,8 +395,8 @@ function Filter({
               ref={menuRef}
               style={{
                 position: 'fixed',
-                top: triggerRef.current ? triggerRef.current.getBoundingClientRect().bottom + 8 : 0,
-                right: triggerRef.current ? window.innerWidth - triggerRef.current.getBoundingClientRect().right : 0,
+                top: menuPosition.top,
+                right: menuPosition.right,
                 zIndex: 9999,
               }}
               className="bg-white border border-gray-300 rounded-2xl shadow-lg w-auto p-2"
@@ -435,6 +421,56 @@ function Filter({
                     <div className="flex-1" /> {/* Spacer agregado nuevamente para asegurar alineación derecha */}
                     <span>{nucleoLabel}</span>
                     <Building2 className="w-4 h-4" />
+                  </motion.button>
+                  <div className="border-t border-gray-200 my-2"></div>
+                </>
+              )}
+
+              {/* Opción: Estado civil */}
+              {onEstadoCivilChange && (
+                <>
+                  <motion.button
+                    ref={activeSubmenu === 'estadoCivil' ? activeButtonRef : undefined}
+                    type="button"
+                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                    onClick={(e) => handleSubmenuToggle('estadoCivil', e)}
+                    className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'estadoCivil'
+                      ? 'bg-primary-light text-primary'
+                      : estadoCivilFilter
+                        ? 'text-primary hover:bg-gray-100'
+                        : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                  >
+                    <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'estadoCivil' ? '-rotate-90' : ''}`} />
+                    <div className="flex-1" />
+                    <span>Estado civil</span>
+                    <User className="w-4 h-4" />
+                  </motion.button>
+                  <div className="border-t border-gray-200 my-2"></div>
+                </>
+              )}
+
+              {/* Opción: Nacionalidad */}
+              {onNacionalidadChange && (
+                <>
+                  <motion.button
+                    ref={activeSubmenu === 'nacionalidad' ? activeButtonRef : undefined}
+                    type="button"
+                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                    onClick={(e) => handleSubmenuToggle('nacionalidad', e)}
+                    className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'nacionalidad'
+                      ? 'bg-primary-light text-primary'
+                      : nacionalidadFilter
+                        ? 'text-primary hover:bg-gray-100'
+                        : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                  >
+                    <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'nacionalidad' ? '-rotate-90' : ''}`} />
+                    <div className="flex-1" />
+                    <span>Nacionalidad</span>
+                    <Flag className="w-4 h-4" />
                   </motion.button>
                   <div className="border-t border-gray-200 my-2"></div>
                 </>

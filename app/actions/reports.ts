@@ -298,7 +298,33 @@ export async function getFilterOptions(): Promise<{
 /**
  * Obtiene estadísticas KPI
  */
-// function removed
+export async function getKPIStats(
+  _fechaInicio?: string,
+  _fechaFin?: string,
+  _idNucleo?: number,
+  _term?: string
+): Promise<{ success: boolean; data?: Record<string, number>; error?: string }> {
+  try {
+    const authResult = await requireAuthInServerAction();
+    if (!authResult.success) {
+      return { success: false, error: authResult.error };
+    }
+
+    // Nota: actualmente el cliente no consume estos KPI.
+    // Devolvemos un shape estable para evitar fallos de tipado/import.
+    return {
+      success: true,
+      data: {
+        totalCasos: 0,
+        totalSolicitantes: 0,
+        totalEstudiantes: 0,
+        totalProfesores: 0,
+      },
+    };
+  } catch (error) {
+    return handleReportError(error, 'getKPIStats');
+  }
+}
 
 /**
  * Obtiene datos de distribución por estatus

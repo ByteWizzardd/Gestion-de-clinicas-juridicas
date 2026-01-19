@@ -8,17 +8,24 @@ import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import ApplicantFormModal from '@/components/forms/ApplicantFormModal';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
-import { getSolicitantesAction } from '@/app/actions/solicitantes';
+import {
+  getSolicitantesAction,
+  getSolicitantesByNucleoAction,
+  getSolicitantesByEstadoCivilAction,
+  getSolicitantesByNacionalidadAction,
+} from '@/app/actions/solicitantes';
 import { descargarFichaSolicitanteAction } from '@/app/actions/reports';
 import { generateSolicitanteFichaZip } from '@/lib/utils/applicant-file-pdf-generator';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
 
-interface Solicitante extends Record<string, unknown> {
+interface Solicitante {
   cedula: string;
   nombre_completo: string;
   telefono_celular: string;
   nucleo: string | null;
   fecha_solicitud: string | null;
+  estado_civil?: string | null;
+  nacionalidad?: string | null;
 }
 
 interface ApplicantsClientProps {
@@ -34,12 +41,15 @@ export default function ApplicantsClient({
   const router = useRouter();
   const [solicitantes, setSolicitantes] = useState<Solicitante[]>(initialSolicitantes);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedApplicant, setSelectedApplicant] = useState<any | null>(null);
+  const [selectedApplicant, setSelectedApplicant] = useState<unknown | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [registeredCedula, setRegisteredCedula] = useState<{ tipo: string; numero: string } | null>(null);
   const [registeredNombre, setRegisteredNombre] = useState<string>('');
   const [searchValue, setSearchValue] = useState('');
   const [nucleoFilter, setNucleoFilter] = useState('');
+  const [estadoCivilFilter, setEstadoCivilFilter] = useState('');
+  const [nacionalidadFilter, setNacionalidadFilter] = useState('');
+  const [isFiltering, setIsFiltering] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   // Deletion state
@@ -63,10 +73,8 @@ export default function ApplicantsClient({
   // Preparar opciones de núcleos
   const nucleoOptions = useMemo(() => {
     const nucleos = new Set<string>();
-    solicitantes.forEach(s => {
-      if (s.nucleo) {
-        nucleos.add(s.nucleo);
-      }
+    initialSolicitantes.forEach(s => {
+      if (s.nucleo) nucleos.add(s.nucleo);
     });
     initialNucleos.forEach(n => {
       if (n.nombre_nucleo) {
@@ -77,7 +85,98 @@ export default function ApplicantsClient({
       value: nucleo,
       label: nucleo
     }));
-  }, [solicitantes, initialNucleos]);
+  }, [initialSolicitantes, initialNucleos]);
+
+  const normalizeRowToSolicitante = (row: unknown): Solicitante => {
+    const rec = (row ?? {}) as Record<string, unknown>;
+
+    const cedula = typeof rec.cedula === 'string' ? rec.cedula : '';
+    const nombreCompleto =
+      typeof rec.nombre_completo === 'string'
+        ? rec.nombre_completo
+        : `${typeof rec.nombres === 'string' ? rec.nombres : ''} ${typeof rec.apellidos === 'string' ? rec.apellidos : ''}`.trim();
+
+    const telefonoCelular = typeof rec.telefono_celular === 'string' ? rec.telefono_celular : '';
+    const nucleo = typeof rec.nucleo === 'string' ? rec.nucleo : null;
+    const fechaSolicitud = typeof rec.fecha_solicitud === 'string' ? rec.fecha_solicitud : null;
+
+    const estadoCivil = typeof rec.estado_civil === 'string' ? rec.estado_civil : null;
+    const nacionalidad = typeof rec.nacionalidad === 'string' ? rec.nacionalidad : null;
+
+    return {
+      cedula,
+      nombre_completo: nombreCompleto,
+      telefono_celular: telefonoCelular,
+      nucleo,
+      fecha_solicitud: fechaSolicitud,
+      estado_civil: estadoCivil,
+      nacionalidad,
+    };
+  };
+
+  const applyServerFilters = async (filters: {
+    nucleo: string;
+    estadoCivil: string;
+    nacionalidad: string;
+  }) => {
+    setIsFiltering(true);
+    try {
+      // 1) Elegir el filtro "principal" que se hace en backend.
+      // 2) Si hay otros filtros seleccionados, se aplican sobre el resultado (ya reducido).
+      let result:
+        | Awaited<ReturnType<typeof getSolicitantesAction>>
+        | Awaited<ReturnType<typeof getSolicitantesByNucleoAction>>
+        | Awaited<ReturnType<typeof getSolicitantesByEstadoCivilAction>>
+        | Awaited<ReturnType<typeof getSolicitantesByNacionalidadAction>>;
+
+      if (filters.nucleo) {
+        result = await getSolicitantesByNucleoAction(filters.nucleo);
+      } else if (filters.estadoCivil) {
+        result = await getSolicitantesByEstadoCivilAction(filters.estadoCivil);
+      } else if (filters.nacionalidad) {
+        result = await getSolicitantesByNacionalidadAction(filters.nacionalidad);
+      } else {
+        result = await getSolicitantesAction();
+      }
+
+      if (!result.success || !result.data) {
+        toast.error(result.error?.message || 'No se pudieron cargar los solicitantes');
+        return;
+      }
+
+      let rows = (result.data as unknown[]).map(normalizeRowToSolicitante);
+
+      // Aplicar filtros secundarios sobre el conjunto ya reducido.
+      if (filters.estadoCivil) {
+        rows = rows.filter((r) => (r.estado_civil ?? '') === filters.estadoCivil);
+      }
+      if (filters.nacionalidad) {
+        rows = rows.filter((r) => (r.nacionalidad ?? '') === filters.nacionalidad);
+      }
+
+      setSolicitantes(rows);
+    } catch (e) {
+      console.error(e);
+      toast.error('Ocurrió un error al aplicar el filtro');
+    } finally {
+      setIsFiltering(false);
+    }
+  };
+
+  const handleNucleoChange = async (value: string) => {
+    setNucleoFilter(value);
+    await applyServerFilters({ nucleo: value, estadoCivil: estadoCivilFilter, nacionalidad: nacionalidadFilter });
+  };
+
+  const handleEstadoCivilChange = async (value: string) => {
+    setEstadoCivilFilter(value);
+    await applyServerFilters({ nucleo: nucleoFilter, estadoCivil: value, nacionalidad: nacionalidadFilter });
+  };
+
+  const handleNacionalidadChange = async (value: string) => {
+    setNacionalidadFilter(value);
+    await applyServerFilters({ nucleo: nucleoFilter, estadoCivil: estadoCivilFilter, nacionalidad: value });
+  };
 
   // Función para normalizar texto removiendo acentos
   const normalizeText = (text: string): string => {
@@ -110,12 +209,12 @@ export default function ApplicantsClient({
   }, [solicitantes, searchValue, nucleoFilter]);
 
   const handleView = (data: Record<string, unknown>) => {
-    const solicitante = data as Solicitante;
+    const solicitante = data as unknown as Solicitante;
     router.push(`/dashboard/applicants/${solicitante.cedula}`);
   };
 
   const handleEdit = async (data: Record<string, unknown>) => {
-    const solicitante = data as Solicitante;
+    const solicitante = data as unknown as Solicitante;
     try {
       const { getSolicitanteByIdAction } = await import('@/app/actions/solicitantes');
       const result = await getSolicitanteByIdAction(solicitante.cedula);
@@ -133,7 +232,7 @@ export default function ApplicantsClient({
   };
 
   const handleDelete = (data: Record<string, unknown>) => {
-    const solicitante = data as Solicitante;
+    const solicitante = data as unknown as Solicitante;
     setItemToDelete(solicitante);
     setDeleteMotivo('');
     setShowDeleteConfirm(true);
@@ -154,7 +253,7 @@ export default function ApplicantsClient({
         setDeleteMotivo('');
         await handleRefresh();
       } else {
-        toast.error(result.error?.message || 'Error desconocido', 'Error al eliminar');
+        toast.error(getErrorMessage(result.error) || 'Error desconocido', 'Error al eliminar');
       }
     } catch (e) {
       console.error(e);
@@ -165,14 +264,11 @@ export default function ApplicantsClient({
   };
 
   const handleRefresh = async () => {
-    const result = await getSolicitantesAction();
-    if (result.success && result.data) {
-      setSolicitantes(result.data);
-    }
+    await applyServerFilters({ nucleo: nucleoFilter, estadoCivil: estadoCivilFilter, nacionalidad: nacionalidadFilter });
   };
 
   const handleDownloadFicha = async (data: Record<string, unknown>) => {
-    const solicitante = data as Solicitante;
+    const solicitante = data as unknown as Solicitante;
     try {
       const result = await descargarFichaSolicitanteAction(solicitante.cedula);
 
@@ -213,11 +309,19 @@ export default function ApplicantsClient({
           searchValue={searchValue}
           onSearchChange={setSearchValue}
           nucleoFilter={nucleoFilter}
-          onNucleoChange={setNucleoFilter}
+          onNucleoChange={handleNucleoChange}
           nucleoOptions={nucleoOptions}
+          estadoCivilFilter={estadoCivilFilter}
+          onEstadoCivilChange={handleEstadoCivilChange}
+          nacionalidadFilter={nacionalidadFilter}
+          onNacionalidadChange={handleNacionalidadChange}
         />
       </motion.div>
       <div className="mt-10"></div>
+
+      {isFiltering && (
+        <div className="px-3 py-2 text-sm text-gray-500">Cargando solicitantes...</div>
+      )}
 
       <motion.div
         initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
@@ -261,15 +365,17 @@ export default function ApplicantsClient({
           setSelectedApplicant(null);
         }}
         onSubmit={async (data: unknown) => {
-          const solicitante = (data as any).data?.solicitante;
+          const solicitante = extractSolicitanteFromSubmit(data);
           if (solicitante && solicitante.cedula) {
-            const cedulaCompleta = solicitante.cedula;
+            const cedulaCompleta = String(solicitante.cedula);
             const tipo = cedulaCompleta.charAt(0);
             // Extraer solo los números, eliminando guiones y cualquier otro carácter
             const numero = cedulaCompleta.substring(1).replace(/[^0-9]/g, '');
             setRegisteredCedula({ tipo, numero });
-            setRegisteredNombre(solicitante.nombres && solicitante.apellidos
-              ? `${solicitante.nombres} ${solicitante.apellidos}`
+            const nombres = typeof solicitante.nombres === 'string' ? solicitante.nombres : '';
+            const apellidos = typeof solicitante.apellidos === 'string' ? solicitante.apellidos : '';
+            setRegisteredNombre(nombres && apellidos
+              ? `${nombres} ${apellidos}`
               : '');
           }
 
@@ -337,5 +443,20 @@ export default function ApplicantsClient({
       />
     </>
   );
+}
+
+function extractSolicitanteFromSubmit(payload: unknown): Record<string, unknown> | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const data = (payload as Record<string, unknown>).data;
+  if (!data || typeof data !== 'object') return null;
+  const solicitante = (data as Record<string, unknown>).solicitante;
+  if (!solicitante || typeof solicitante !== 'object') return null;
+  return solicitante as Record<string, unknown>;
+}
+
+function getErrorMessage(error: unknown): string | null {
+  if (!error || typeof error !== 'object') return null;
+  const msg = (error as Record<string, unknown>).message;
+  return typeof msg === 'string' ? msg : null;
 }
 
