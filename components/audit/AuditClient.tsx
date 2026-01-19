@@ -537,11 +537,15 @@ export default function AuditClient() {
         transition={{ duration: 0.3 }}
         className="mb-6"
       >
-        <Search
-          value={searchQuery}
-          onChange={setSearchQuery}
-          placeholder="Buscar por entidad..."
-        />
+        <div className="w-full flex">
+          <div className="flex-1 min-w-0">
+            <Search
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Buscar por entidad..."
+            />
+          </div>
+        </div>
       </motion.div>
 
       {/* Cards de entidades filtradas */}

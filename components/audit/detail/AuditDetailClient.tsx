@@ -493,16 +493,16 @@ export default function AuditDetailClient({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.1, ease: "easeOut" }}
-        className="flex flex-nowrap gap-3 sm:gap-4 items-center w-full px-3 mb-4 md:mb-6 mt-4"
+        className="flex flex-wrap gap-3 sm:gap-4 items-center w-full px-3 mb-4 md:mb-6 mt-4"
       >
-        <div className="flex-1 min-w-0">
+        <div className="w-full sm:flex-1 sm:min-w-0">
           <Search
             value={filters.busqueda || ''}
             onChange={(value) => handleFilterChange('busqueda', value || undefined)}
             placeholder="Buscar..."
           />
         </div>
-        <div className="flex gap-3 sm:gap-4 items-center shrink-0">
+        <div className="flex w-full sm:w-auto gap-3 sm:gap-4 items-center shrink-0 justify-start sm:justify-end">
           <button
             type="button"
             onClick={handleOrdenChange}
