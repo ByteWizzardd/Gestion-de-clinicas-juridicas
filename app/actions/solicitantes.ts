@@ -437,14 +437,16 @@ export async function getSolicitantesByNucleoAction(nombreNucleo: string): Promi
       };
     }
 
-  const rawResult = await solicitantesQueries.getByNucleo(nombreNucleo.trim());
-  const result: SolicitanteListItem[] = rawResult.map((row: Record<string, unknown>) => ({
-    cedula: String(row.cedula ?? ''),
-    nombre_completo: String(row.nombre_completo ?? ''),
-    telefono_celular: String(row.telefono_celular ?? ''),
-    nucleo: row.nucleo !== undefined ? (row.nucleo as string | null) : null,
-    fecha_solicitud: row.fecha_solicitud !== undefined ? (row.fecha_solicitud as string | null) : null,
-  }));
+    const rawResult = await solicitantesQueries.getByNucleo(nombreNucleo.trim());
+    const result: SolicitanteListItem[] = rawResult.map((row: Record<string, unknown>) => ({
+      cedula: String(row.cedula ?? ''),
+      nombre_completo: String(row.nombre_completo ?? ''),
+      telefono_celular: String(row.telefono_celular ?? ''),
+      nucleo: row.nucleo !== undefined ? (row.nucleo as string | null) : null,
+      fecha_solicitud: row.fecha_solicitud !== undefined ? (row.fecha_solicitud as string | null) : null,
+      estado_civil: row.estado_civil !== undefined ? (row.estado_civil as string | null) : null,
+      nacionalidad: row.nacionalidad !== undefined ? (row.nacionalidad as string | null) : null,
+    }));
 
     return {
       success: true,
@@ -482,6 +484,8 @@ export async function getSolicitantesByEstadoCivilAction(estadoCivil: string): P
       telefono_celular: String(row.telefono_celular ?? ''),
       nucleo: row.nucleo !== undefined ? (row.nucleo as string | null) : null,
       fecha_solicitud: row.fecha_solicitud !== undefined ? (row.fecha_solicitud as string | null) : null,
+      estado_civil: row.estado_civil !== undefined ? (row.estado_civil as string | null) : null,
+      nacionalidad: row.nacionalidad !== undefined ? (row.nacionalidad as string | null) : null,
     }));
 
     return {
@@ -520,6 +524,8 @@ export async function getSolicitantesByNacionalidadAction(nacionalidad: string):
       telefono_celular: String(row.telefono_celular ?? ''),
       nucleo: row.nucleo !== undefined ? (row.nucleo as string | null) : null,
       fecha_solicitud: row.fecha_solicitud !== undefined ? (row.fecha_solicitud as string | null) : null,
+      estado_civil: row.estado_civil !== undefined ? (row.estado_civil as string | null) : null,
+      nacionalidad: row.nacionalidad !== undefined ? (row.nacionalidad as string | null) : null,
     }));
 
     return {

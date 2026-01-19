@@ -11,6 +11,8 @@ export const getAllSolicitantes = z.object({
     telefono_celular: z.string(),
     nucleo: z.string().nullable(),
     fecha_solicitud: z.string().nullable(),
+    estado_civil: z.string().nullable().optional(),
+    nacionalidad: z.string().nullable().optional(),
 });
 
 export type Solicitante = z.infer<typeof getAllSolicitantes>;
