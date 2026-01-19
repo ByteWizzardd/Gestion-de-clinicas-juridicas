@@ -452,6 +452,33 @@ export async function getCasosByUsuarioAction(): Promise<GetCasosResult> {
 }
 
 /**
+ * Server Action para obtener casos de un usuario específico por su cédula
+ * (Para ver en el perfil del usuario)
+ */
+export async function getCasosByUsuarioCedulaAction(cedula: string): Promise<GetCasosResult> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    const { casosQueries } = await import('@/lib/db/queries/casos.queries');
+    const casos = await casosQueries.getByUsuario(cedula);
+
+    return {
+      success: true,
+      data: casos,
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'getCasosByUsuarioCedulaAction', 'CASO_ERROR');
+  }
+}
+
+/**
  * Server Action para obtener el siguiente número de caso disponible
  */
 export async function getNextCaseNumberAction(): Promise<GetNextCaseNumberResult> {

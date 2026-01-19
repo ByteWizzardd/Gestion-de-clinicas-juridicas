@@ -11,6 +11,8 @@ import RolesTab from "@/components/users/tabs/RolesTab";
 import EditableAvatar from "@/components/users/EditableAvatar";
 import { getUsuarioInfoByCedulaAction } from "@/app/actions/usuarios";
 import { getCurrentUserAction } from "@/app/actions/auth";
+import { getCasosByUsuarioCedulaAction } from "@/app/actions/casos"; // Importar acción para casos
+import UserCasesTab from "@/components/users/tabs/UserCasesTab"; // Importar el componente de la pestaña
 
 interface Usuario {
   cedula: string;
@@ -38,6 +40,7 @@ export default function UserDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
+  const [casos, setCasos] = useState<any[]>([]); // Estado para los casos
 
   useEffect(() => {
     if (id) {
@@ -46,9 +49,10 @@ export default function UserDetailPage() {
           setLoading(true);
           setError(null);
 
-          const [result, userResult] = await Promise.all([
+          const [result, userResult, casosResult] = await Promise.all([
             getUsuarioInfoByCedulaAction(id),
-            getCurrentUserAction()
+            getCurrentUserAction(),
+            getCasosByUsuarioCedulaAction(id) // Obtener casos del usuario
           ]);
 
           if (userResult.success && userResult.data) {
@@ -65,6 +69,11 @@ export default function UserDetailPage() {
           } else {
             throw new Error("No se pudo obtener la información");
           }
+
+          if (casosResult.success && casosResult.data) {
+            setCasos(casosResult.data);
+          }
+
         } catch (err) {
           const errorMessage = err instanceof Error ? err.message : "Error desconocido";
           setError(errorMessage);
@@ -115,6 +124,11 @@ export default function UserDetailPage() {
       id: 'roles',
       label: 'Roles y Perfiles',
       content: <RolesTab usuario={usuario} />,
+    },
+    {
+      id: 'cases',
+      label: 'Casos',
+      content: <UserCasesTab casos={casos} />,
     },
   ];
 
