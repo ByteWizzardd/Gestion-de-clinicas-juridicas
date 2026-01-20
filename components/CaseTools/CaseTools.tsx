@@ -96,6 +96,34 @@ function CaseTools({
         onFechaInicioChange !== undefined ||
         onFechaFinChange !== undefined;
 
+    const handleClearFilters = async () => {
+        if (onClearFilters) {
+            await onClearFilters();
+            return;
+        }
+
+        // Por defecto, limpiar todo lo que el toolbar controla.
+        if (onSearchChange) {
+            onSearchChange('');
+        }
+
+        // Ejecutar de forma secuencial por si algún handler dispara fetch.
+        const call = async <T,>(fn: ((value: T) => void) | undefined, value: T) => {
+            if (!fn) return;
+            await Promise.resolve((fn as unknown as (v: T) => void | Promise<void>)(value));
+        };
+
+        await call(onNucleoChange, '');
+        await call(onMateriaChange, '');
+        await call(onTramiteChange, '');
+        await call(onEstatusChange, '');
+        await call(onEstadoCivilChange, '');
+        await call(onNacionalidadChange, '');
+        await call(onCasosAsignadosChange, false);
+        await call(onFechaInicioChange, '');
+        await call(onFechaFinChange, '');
+    };
+
     return (
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center w-full px-3">
             {hasSearch && (
@@ -117,7 +145,7 @@ function CaseTools({
                         tramiteFilter={tramiteFilter}
                         estatusFilter={estatusFilter}
                         casosAsignadosFilter={casosAsignadosFilter}
-                        onClearFilters={onClearFilters}
+                        onClearFilters={handleClearFilters}
                         onNucleoChange={onNucleoChange}
                         onTramiteChange={onTramiteChange}
                         onEstatusChange={onEstatusChange}

@@ -273,6 +273,7 @@ function Filter({
       console.error('Error al limpiar filtros:', e);
     } finally {
       setActiveSubmenu(null);
+      setIsOpen(false);
     }
   };
 

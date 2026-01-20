@@ -164,7 +164,9 @@ export default function AppointmentsToolbar({
 
   // Preparar opciones
   const nucleoOptions = filterOptions.nucleos.map((n) => ({
-    value: n.id_nucleo.toString(),
+    // El filtro en AppointmentsClient compara contra el texto de location,
+    // así que aquí usamos el nombre (no el id) como valor.
+    value: n.nombre_nucleo,
     label: n.nombre_nucleo,
   }));
 

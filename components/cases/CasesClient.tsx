@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useRef } from 'react';
 import { motion } from 'motion/react';
 import { Download } from 'lucide-react';
 import CaseTools from '@/components/CaseTools/CaseTools';
@@ -74,6 +75,18 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   const [materiaFilter, setMateriaFilter] = useState('');
   const [fechaInicioFilter, setFechaInicioFilter] = useState('');
   const [fechaFinFilter, setFechaFinFilter] = useState('');
+
+  // Evita condiciones de carrera cuando se setean ambas fechas en el mismo tick (ej: opciones rápidas semana/mes).
+  const fechaInicioRef = useRef(fechaInicioFilter);
+  const fechaFinRef = useRef(fechaFinFilter);
+
+  useEffect(() => {
+    fechaInicioRef.current = fechaInicioFilter;
+  }, [fechaInicioFilter]);
+
+  useEffect(() => {
+    fechaFinRef.current = fechaFinFilter;
+  }, [fechaFinFilter]);
   const [initialCedula, setInitialCedula] = useState<string>('');
   const [initialCedulaTipo, setInitialCedulaTipo] = useState<string>('V');
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -145,6 +158,8 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
     const next = raw?.trim() || '';
 
     if (!next) {
+      fechaInicioRef.current = '';
+      fechaFinRef.current = '';
       setFechaInicioFilter('');
       setFechaFinFilter('');
       return;
@@ -160,15 +175,20 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       toast.info('La fecha no puede ser futura; se ajustó a hoy.');
     }
 
-    const currentFin = fechaFinFilter;
+    // Actualizar ref primero para que otro handler (fin) vea el inicio correcto.
+    fechaInicioRef.current = clamped;
+
+    const currentFin = fechaFinRef.current;
     const fin = currentFin && isValidISODate(currentFin) ? clampToToday(currentFin) : '';
 
     setFechaInicioFilter(clamped);
     if (!fin) {
+      fechaFinRef.current = clamped;
       setFechaFinFilter(clamped);
       return;
     }
     if (fin < clamped) {
+      fechaFinRef.current = clamped;
       setFechaFinFilter(clamped);
     }
   };
@@ -177,6 +197,8 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
     const next = raw?.trim() || '';
 
     if (!next) {
+      fechaInicioRef.current = '';
+      fechaFinRef.current = '';
       setFechaInicioFilter('');
       setFechaFinFilter('');
       return;
@@ -192,10 +214,14 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       toast.info('La fecha no puede ser futura; se ajustó a hoy.');
     }
 
-    const currentInicio = fechaInicioFilter;
+    // Actualizar ref primero para coherencia si otro handler corre luego.
+    fechaFinRef.current = clamped;
+
+    const currentInicio = fechaInicioRef.current;
     const inicio = currentInicio && isValidISODate(currentInicio) ? clampToToday(currentInicio) : '';
 
     if (!inicio) {
+      fechaInicioRef.current = clamped;
       setFechaInicioFilter(clamped);
       setFechaFinFilter(clamped);
       return;

@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getCitasAction, deleteCitaAction } from '@/app/actions/citas';
-import { getCasosAction } from '@/app/actions/casos';
 import CalendarWidget from '@/components/ui/calendar/CalendarWidget';
 import AppointmentList from '@/components/cards/AppointmentList';
 import AppointmentCardList from './AppointmentCardList';
@@ -71,6 +70,94 @@ export default function AppointmentsClient({
   const [customDateStart, setCustomDateStart] = useState<string>('');
   const [customDateEnd, setCustomDateEnd] = useState<string>('');
 
+  const normalizeText = (text: string): string => {
+    return (text ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+  };
+
+  // Opciones del filtro de casos: deben reflejar los casos realmente asociados
+  // al/los usuarios seleccionados (y al resto de filtros activos), para que el dropdown no muestre casos imposibles.
+  const availableCaseIdsForFilter = useMemo(() => {
+    // Base igual que la lista (si "Mis casos" está activo, usar solo citas del usuario autenticado)
+    let filtered = misCasosFilter ? userAppointments : appointments;
+
+    // Núcleo
+    if (nucleoFilter) {
+      const nucleoNeedle = normalizeText(nucleoFilter);
+      filtered = filtered.filter((apt) => normalizeText(apt.location || '').includes(nucleoNeedle));
+    }
+
+    // Usuario(s) que atendió (AND: todos los seleccionados deben estar en la cita)
+    if (usuarioFilter.length > 0) {
+      filtered = filtered.filter((apt) => {
+        const list = apt.attendingUsersList || [];
+        if (list.length === 0) return false;
+        const userIdsInAppointment = list.map((u) => u.id_usuario);
+        return usuarioFilter.every((selectedUserId) => userIdsInAppointment.includes(selectedUserId));
+      });
+    }
+
+    // Rango de fechas
+    if (dateRangeFilter !== 'all') {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+
+      filtered = filtered.filter((apt) => {
+        const aptDateOriginal = new Date(apt.date);
+        const aptDate = new Date(apt.date);
+        aptDate.setHours(0, 0, 0, 0);
+
+        switch (dateRangeFilter) {
+          case 'today':
+            return aptDate.getTime() === now.getTime();
+          case 'week': {
+            const weekAgo = new Date(now);
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            return aptDate >= weekAgo && aptDate <= now;
+          }
+          case 'month': {
+            const monthAgo = new Date(now);
+            monthAgo.setMonth(monthAgo.getMonth() - 1);
+            return aptDate >= monthAgo && aptDate <= now;
+          }
+          case 'custom': {
+            if (customDateStart && customDateEnd) {
+              const start = new Date(customDateStart);
+              start.setHours(0, 0, 0, 0);
+              const end = new Date(customDateEnd);
+              end.setHours(23, 59, 59, 999);
+              return aptDateOriginal >= start && aptDateOriginal <= end;
+            }
+            return true;
+          }
+          default:
+            return true;
+        }
+      });
+    }
+
+    return new Set(filtered.map((apt) => String(apt.caseId)));
+  }, [appointments, userAppointments, misCasosFilter, nucleoFilter, usuarioFilter, dateRangeFilter, customDateStart, customDateEnd]);
+
+  const filterOptionsForToolbar = useMemo(() => {
+    const casos = initialFilterOptions.casos.filter((c) => availableCaseIdsForFilter.has(String(c.id_caso)));
+    return {
+      ...initialFilterOptions,
+      casos,
+    };
+  }, [initialFilterOptions, availableCaseIdsForFilter]);
+
+  // Si el usuario cambia y deja seleccionados casos que ya no están asociados, limpiarlos.
+  useEffect(() => {
+    if (caseFilter.length === 0) return;
+    const next = caseFilter.filter((id) => availableCaseIdsForFilter.has(String(id)));
+    if (next.length !== caseFilter.length) {
+      setCaseFilter(next);
+    }
+  }, [caseFilter, availableCaseIdsForFilter]);
+
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setPrefersReducedMotion(mediaQuery.matches);
@@ -100,9 +187,10 @@ export default function AppointmentsClient({
     // Aplicar filtros de búsqueda (igual que en vista de lista)
     // Filtro por núcleo
     if (nucleoFilter) {
+      const nucleoNeedle = normalizeText(nucleoFilter);
       filtered = filtered.filter((apt) => {
         // El location contiene el nombre del núcleo
-        return apt.location?.toLowerCase().includes(nucleoFilter.toLowerCase());
+        return normalizeText(apt.location || '').includes(nucleoNeedle);
       });
     }
 
@@ -173,9 +261,10 @@ export default function AppointmentsClient({
 
     // Filtro por núcleo
     if (nucleoFilter) {
+      const nucleoNeedle = normalizeText(nucleoFilter);
       filtered = filtered.filter((apt) => {
         // El location contiene el nombre del núcleo
-        return apt.location?.toLowerCase().includes(nucleoFilter.toLowerCase());
+        return normalizeText(apt.location || '').includes(nucleoNeedle);
       });
     }
 
@@ -604,7 +693,7 @@ export default function AppointmentsClient({
                         onDateRangeFilterChange={setDateRangeFilter}
                         onCustomDateStartChange={setCustomDateStart}
                         onCustomDateEndChange={setCustomDateEnd}
-                        filterOptions={initialFilterOptions}
+                        filterOptions={filterOptionsForToolbar}
                       />
 
                       {/* Botón Nueva Cita con Dropdown */}
@@ -689,7 +778,7 @@ export default function AppointmentsClient({
                         onDateRangeFilterChange={setDateRangeFilter}
                         onCustomDateStartChange={setCustomDateStart}
                         onCustomDateEndChange={setCustomDateEnd}
-                        filterOptions={initialFilterOptions}
+                        filterOptions={filterOptionsForToolbar}
                       />
 
                       {/* Botón Nueva Cita con Dropdown */}

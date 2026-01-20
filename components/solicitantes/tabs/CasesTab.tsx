@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FileText } from 'lucide-react';
 import { formatDate } from '@/lib/utils/date-formatter';
@@ -9,6 +9,8 @@ import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 import { deleteCasoAction } from '@/app/actions/casos';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
 import CaseTools from '@/components/CaseTools/CaseTools';
+import { getMateriasAction } from '@/app/actions/materias';
+import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
 
 interface CasesTabProps {
   cedulaSolicitante?: string;
@@ -32,6 +34,8 @@ export default function CasesTab({ casos, cedulaSolicitante }: CasesTabProps) {
   const { toast } = useToast();
   const router = useRouter();
 
+  const [materias, setMaterias] = useState<Array<{ id_materia: number; nombre_materia: string }>>([]);
+
   const [searchValue, setSearchValue] = useState('');
 
   const [nucleoFilter, setNucleoFilter] = useState('');
@@ -51,11 +55,33 @@ export default function CasesTab({ casos, cedulaSolicitante }: CasesTabProps) {
     return Array.from(set).sort((a, b) => a.localeCompare(b)).map((v) => ({ value: v, label: v }));
   };
 
+  useEffect(() => {
+    const fetchMaterias = async () => {
+      try {
+        const result = await getMateriasAction();
+        if (result.success && result.data) {
+          setMaterias(result.data);
+        }
+      } catch (error) {
+        console.error('Error cargando materias:', error);
+      }
+    };
+
+    fetchMaterias();
+  }, []);
+
   const normalizeText = (text: string): string => {
     return text
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase();
+  };
+
+  const canonicalMateria = (name: string): string => {
+    // Normaliza nombres para que el filtro funcione aunque en BD/joins venga como "Materia Civil"
+    // pero el usuario seleccione "Civil".
+    const trimmed = (name ?? '').trim();
+    return trimmed.replace(/^materia\s+/i, '').trim();
   };
 
   const nucleoOptions = useMemo(
@@ -64,19 +90,57 @@ export default function CasesTab({ casos, cedulaSolicitante }: CasesTabProps) {
   );
 
   const tramiteOptions = useMemo(
-    () => uniqueOptions(casos.map((c) => c.tramite)),
-    [casos]
+    () => [
+      { value: TRAMITES.ASESORIA, label: 'Asesoría' },
+      { value: TRAMITES.CONCILIACION_MEDIACION, label: 'Conciliación y Mediación' },
+      { value: TRAMITES.REDACCION_DOCUMENTOS, label: 'Redacción documentos y/o Convenios' },
+      { value: TRAMITES.ASISTENCIA_JUDICIAL, label: 'Asistencia Judicial - Casos Extremos' },
+    ],
+    []
   );
 
   const estatusOptions = useMemo(
-    () => uniqueOptions(casos.map((c) => c.estatus)),
-    [casos]
+    () => [
+      { value: ESTATUS_CASO.EN_PROCESO, label: ESTATUS_CASO.EN_PROCESO },
+      { value: ESTATUS_CASO.ARCHIVADO, label: ESTATUS_CASO.ARCHIVADO },
+      { value: ESTATUS_CASO.ENTREGADO, label: ESTATUS_CASO.ENTREGADO },
+      { value: ESTATUS_CASO.ASESORIA, label: ESTATUS_CASO.ASESORIA },
+    ],
+    []
   );
 
-  const materiaOptions = useMemo(
-    () => uniqueOptions(casos.map((c) => c.nombre_materia)),
-    [casos]
-  );
+  const materiaOptions = useMemo(() => {
+    const raw = materias
+      .map((m) => {
+        const canon = canonicalMateria(m.nombre_materia);
+        return { value: canon, label: canon };
+      })
+      .filter((m) => Boolean(m.value?.trim()));
+
+    // Dedupe por normalización (por si existiera "Materia Civil" y "Civil")
+    const deduped = Array.from(
+      new Map(raw.map((o) => [normalizeText(o.value), o] as const)).values()
+    );
+
+    // Orden solicitado: Civil, Penal, Laboral, Mercantil, Administrativa, Otros
+    const rank = (label: string): number => {
+      const n = normalizeText(label);
+      if (n.includes('civil')) return 0;
+      if (n.includes('penal')) return 1;
+      if (n.includes('laboral')) return 2;
+      if (n.includes('mercantil')) return 3;
+      if (n.includes('administrativa')) return 4;
+      if (n.includes('otros')) return 999;
+      return 50;
+    };
+
+    return deduped.sort((a, b) => {
+      const ra = rank(a.label);
+      const rb = rank(b.label);
+      if (ra !== rb) return ra - rb;
+      return a.label.localeCompare(b.label);
+    });
+  }, [materias]);
 
   const getCasoFechaSolicitudISO = (caso: CasesTabProps['casos'][number]): string | null => {
     const anyCaso = caso as unknown as Record<string, unknown>;
@@ -111,7 +175,7 @@ export default function CasesTab({ casos, cedulaSolicitante }: CasesTabProps) {
       if (!matchesSearch) return false;
 
       if (nucleoFilter && (c.nombre_nucleo ?? '') !== nucleoFilter) return false;
-      if (materiaFilter && (c.nombre_materia ?? '') !== materiaFilter) return false;
+      if (materiaFilter && canonicalMateria(c.nombre_materia ?? '') !== materiaFilter) return false;
       if (tramiteFilter && (c.tramite ?? '') !== tramiteFilter) return false;
       if (estatusFilter && (c.estatus ?? '') !== estatusFilter) return false;
 
