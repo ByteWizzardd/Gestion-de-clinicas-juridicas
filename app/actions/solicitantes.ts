@@ -9,6 +9,7 @@ import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 
 import type { Solicitante as SolicitanteListItem } from '@/lib/db/queries/solicitantes.queries';
+import type { SolicitanteCompleto } from '@/lib/db/queries/solicitantes.queries';
 
 type ApplicantFormData = Parameters<(typeof solicitantesService)['create']>[0];
 
@@ -37,7 +38,7 @@ export interface GetSolicitantesResult {
 
 export interface GetSolicitanteByIdResult {
   success: boolean;
-  data?: unknown;
+  data?: SolicitanteCompleto;
   error?: {
     message: string;
     code?: string;

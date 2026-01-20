@@ -17,6 +17,38 @@ export const getAllSolicitantes = z.object({
 
 export type Solicitante = z.infer<typeof getAllSolicitantes>;
 
+export type SolicitanteCompletoCaso = {
+    id_caso: number;
+    id?: number;
+    fecha_solicitud?: Date | string | null;
+    fecha_solicitud_str?: string;
+    fecha_inicio_caso?: Date | string | null;
+    fecha_inicio_caso_str?: string;
+    fecha_fin_caso?: Date | string | null;
+    fecha_fin_caso_str?: string;
+    tramite?: string | null;
+    estatus?: string | null;
+    cant_beneficiarios?: number | null;
+    observaciones?: string | null;
+    nombre_nucleo?: string | null;
+    nombre_materia?: string | null;
+    nombre_categoria?: string | null;
+    nombre_subcategoria?: string | null;
+} & Record<string, unknown>;
+
+export type SolicitanteCompleto = {
+    cedula: string;
+    nombres?: string | null;
+    apellidos?: string | null;
+    telefono_local?: string | null;
+    telefono_celular?: string | null;
+    correo_electronico?: string | null;
+    fecha_nacimiento?: string | null;
+    informacion_socioeconomica?: Record<string, unknown> | null;
+    informacion_ubicacion_vivienda?: Record<string, unknown> | null;
+    casos: SolicitanteCompletoCaso[];
+} & Record<string, unknown>;
+
 export const solicitantesQueries = {
     /**
      * Obtiene todos los solicitantes
@@ -47,7 +79,7 @@ export const solicitantesQueries = {
     /**
      * Obtiene un solicitante por su cédula
      */
-    getSolicitanteById: async (cedula: string): Promise<unknown | null> => {
+    getSolicitanteById: async (cedula: string): Promise<Record<string, unknown> | null> => {
         const getSolicitanteSQL = loadSQL("solicitantes/get-by-id.sql");
         const result: QueryResult = await pool.query(getSolicitanteSQL, [cedula]);
         if (result.rows.length === 0) {
@@ -58,7 +90,7 @@ export const solicitantesQueries = {
         if (row.fecha_nacimiento) {
             row.fecha_nacimiento = row.fecha_nacimiento.toISOString().slice(0, 10);
         }
-        return row;
+        return row as Record<string, unknown>;
     },
 
     /**
@@ -183,7 +215,7 @@ export const solicitantesQueries = {
      * Obtiene un solicitante completo por su cédula con todas sus relaciones
      * (núcleo, educación, trabajo, hogar, vivienda, casos)
      */
-    getSolicitanteCompleto: async (cedula: string): Promise<unknown | null> => {
+    getSolicitanteCompleto: async (cedula: string): Promise<SolicitanteCompleto | null> => {
         try {
             // Obtener información completa del solicitante
             const getCompletoSQL = loadSQL('solicitantes/get-by-cedula-completo.sql');
@@ -193,25 +225,21 @@ export const solicitantesQueries = {
                 return null;
             }
 
-            const solicitante = resultCompleto.rows[0];
+            const solicitante = resultCompleto.rows[0] as SolicitanteCompleto;
+            // Garantizar que exista la propiedad para el tipado y evitar undefined.
+            solicitante.casos = [];
 
             // Formatear fechas
-            if (solicitante.fecha_nacimiento) {
-                solicitante.fecha_nacimiento = solicitante.fecha_nacimiento.toISOString().slice(0, 10);
+            const rawFechaNacimiento = (solicitante as unknown as { fecha_nacimiento?: unknown }).fecha_nacimiento;
+            if (rawFechaNacimiento instanceof Date) {
+                solicitante.fecha_nacimiento = rawFechaNacimiento.toISOString().slice(0, 10);
             }
 
             // Obtener casos asociados
             try {
                 const getCasosSQL = loadSQL('solicitantes/get-casos-by-cedula.sql');
                 const resultCasos: QueryResult = await pool.query(getCasosSQL, [cedula]);
-                solicitante.casos = resultCasos.rows.map((caso: unknown) => {
-                    // Aseguramos el tipo de caso como un objeto con las propiedades esperadas
-                    const c = caso as {
-                        fecha_solicitud?: Date | null;
-                        fecha_inicio_caso?: Date | null;
-                        fecha_fin_caso?: Date | null;
-                        [key: string]: unknown;
-                    };
+                solicitante.casos = (resultCasos.rows as SolicitanteCompletoCaso[]).map((c) => {
                     // Formatear fechas de casos
                     if (c.fecha_solicitud instanceof Date) {
                         c.fecha_solicitud_str = c.fecha_solicitud.toISOString().slice(0, 10);

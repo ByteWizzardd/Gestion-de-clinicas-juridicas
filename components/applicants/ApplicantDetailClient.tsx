@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, type ComponentProps } from 'react';
 import { motion } from 'motion/react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
@@ -12,22 +12,58 @@ import SocioeconomicInfoTab from '@/components/solicitantes/tabs/SocioeconomicIn
 import LocationHousingTab from '@/components/solicitantes/tabs/LocationHousingTab';
 import CasesTab from '@/components/solicitantes/tabs/CasesTab';
 
+type GetSolicitanteByIdAction = typeof import('@/app/actions/solicitantes').getSolicitanteByIdAction;
+type GetSolicitanteByIdResult = Awaited<ReturnType<GetSolicitanteByIdAction>>;
+type Solicitante = NonNullable<GetSolicitanteByIdResult['data']>;
+type CasesTabCaso = ComponentProps<typeof CasesTab>['casos'][number];
+
+const toStringOrNull = (value: unknown): string | null => {
+  if (typeof value === 'string') return value;
+  if (value == null) return null;
+  return String(value);
+};
+
+const toStringOrEmpty = (value: unknown): string => {
+  const s = toStringOrNull(value);
+  return s ?? '';
+};
+
+const toNumberOrNull = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (value == null) return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+};
+
+const toCasesTabCaso = (c: Solicitante['casos'][number]): CasesTabCaso => {
+  const idCaso = toNumberOrNull((c as { id_caso?: unknown }).id_caso) ?? toNumberOrNull((c as { id?: unknown }).id) ?? 0;
+
+  return {
+    id_caso: idCaso,
+    fecha_solicitud: toStringOrNull((c as { fecha_solicitud_str?: unknown }).fecha_solicitud_str ?? (c as { fecha_solicitud?: unknown }).fecha_solicitud),
+    fecha_inicio_caso: toStringOrNull((c as { fecha_inicio_caso_str?: unknown }).fecha_inicio_caso_str ?? (c as { fecha_inicio_caso?: unknown }).fecha_inicio_caso),
+    fecha_fin_caso: toStringOrNull((c as { fecha_fin_caso_str?: unknown }).fecha_fin_caso_str ?? (c as { fecha_fin_caso?: unknown }).fecha_fin_caso),
+    tramite: toStringOrNull((c as { tramite?: unknown }).tramite),
+    estatus: toStringOrNull((c as { estatus?: unknown }).estatus),
+    cant_beneficiarios: toNumberOrNull((c as { cant_beneficiarios?: unknown }).cant_beneficiarios),
+    observaciones: toStringOrNull((c as { observaciones?: unknown }).observaciones),
+    nombre_nucleo: toStringOrNull((c as { nombre_nucleo?: unknown }).nombre_nucleo),
+    nombre_materia: toStringOrNull((c as { nombre_materia?: unknown }).nombre_materia),
+    nombre_categoria: toStringOrNull((c as { nombre_categoria?: unknown }).nombre_categoria),
+    nombre_subcategoria: toStringOrNull((c as { nombre_subcategoria?: unknown }).nombre_subcategoria),
+  };
+};
+
 export default function ApplicantDetailClient() {
   const params = useParams();
   const router = useRouter();
   const cedula = params.id as string;
 
-  const [solicitante, setSolicitante] = useState<any>(null);
+  const [solicitante, setSolicitante] = useState<Solicitante | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (cedula) {
-      fetchSolicitante();
-    }
-  }, [cedula]);
-
-  const fetchSolicitante = async () => {
+  const fetchSolicitante = useCallback(async () => {
     if (!cedula) {
       setError('Cédula no proporcionada');
       setLoading(false);
@@ -57,7 +93,13 @@ export default function ApplicantDetailClient() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [cedula]);
+
+  useEffect(() => {
+    if (cedula) {
+      void fetchSolicitante();
+    }
+  }, [cedula, fetchSolicitante]);
 
   if (loading) {
     return (
@@ -96,22 +138,68 @@ export default function ApplicantDetailClient() {
     {
       id: 'contacto',
       label: 'Información de Contacto',
-      content: <ContactInfoTab solicitante={solicitante} />,
+      content: (
+        <ContactInfoTab
+          solicitante={{
+            telefono_local: toStringOrNull(solicitante.telefono_local),
+            telefono_celular: toStringOrEmpty(solicitante.telefono_celular),
+            correo_electronico: toStringOrEmpty(solicitante.correo_electronico),
+          }}
+        />
+      ),
     },
     {
       id: 'socioeconomica',
       label: 'Información Socioeconómica',
-      content: <SocioeconomicInfoTab solicitante={solicitante} />,
+      content: (
+        <SocioeconomicInfoTab solicitante={{
+          nivel: undefined,
+          anos_cursados: undefined,
+          semestres_cursados: undefined,
+          trimestres_cursados: undefined,
+          condicion_actividad: undefined,
+          buscando_trabajo: undefined,
+          condicion_trabajo: undefined,
+          cant_personas: undefined,
+          cant_trabajadores: undefined,
+          cant_ninos: undefined,
+          cant_ninos_estudiando: undefined,
+          jefe_hogar: undefined
+        }} {...(solicitante?.informacion_socioeconomica ?? {})} />
+      ),
     },
     {
       id: 'ubicacion',
       label: 'Ubicación y Vivienda',
-      content: <LocationHousingTab solicitante={solicitante} />,
+      content: (
+        <LocationHousingTab
+        solicitante={{
+          nombre_estado: undefined,
+          nombre_municipio: undefined,
+          nombre_parroquia: undefined,
+          direccion_habitacion: undefined,
+          tipo_vivienda: undefined,
+          cant_habitaciones: undefined,
+          cant_banos: undefined,
+          material_piso: undefined,
+          material_paredes: undefined,
+          material_techo: undefined,
+          agua_potable: undefined,
+          eliminacion_aguas_n: undefined,
+          aseo: undefined,
+          artefactos_domesticos: undefined
+        }} {...(solicitante?.informacion_ubicacion_vivienda ?? {})}        />
+      ),
     },
     {
       id: 'casos',
       label: 'Casos Asociados',
-      content: <CasesTab cedulaSolicitante={solicitante.cedula} casos={solicitante.casos || []} />,
+      content: (
+        <CasesTab
+          cedulaSolicitante={solicitante.cedula}
+          casos={(solicitante.casos ?? []).map(toCasesTabCaso)}
+        />
+      ),
     },
   ];
 

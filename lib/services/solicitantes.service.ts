@@ -1,8 +1,8 @@
 import { pool } from '@/lib/db/pool';
 import { loadSQL } from '@/lib/db/sql-loader';
-import { QueryResult } from 'pg';
+import { QueryResult, type PoolClient } from 'pg';
 import { logger } from '@/lib/utils/logger';
-import { solicitantesQueries, type Solicitante } from '@/lib/db/queries/solicitantes.queries';
+import { solicitantesQueries, type Solicitante, type SolicitanteCompleto } from '@/lib/db/queries/solicitantes.queries';
 import { AppError } from '@/lib/utils/errors';
 
 interface ApplicantFormData {
@@ -106,7 +106,7 @@ function buildTelefonoCelular(input: {
  * @param descripcion - Descripción del nivel educativo
  * @returns Nivel educativo encontrado o creado
  */
-async function findOrCreateNivelEducativo(client: any, descripcion: string): Promise<any> {
+async function findOrCreateNivelEducativo(client: PoolClient, descripcion: string): Promise<Record<string, unknown>> {
   // Primero intentar buscar
   const findResult: QueryResult = await client.query(
     'SELECT * FROM niveles_educativos WHERE descripcion = $1 LIMIT 1',
@@ -114,13 +114,13 @@ async function findOrCreateNivelEducativo(client: any, descripcion: string): Pro
   );
 
   if (findResult.rows.length > 0) {
-    return findResult.rows[0];
+    return findResult.rows[0] as Record<string, unknown>;
   }
 
   // Si no existe, crearlo
   const createNivelEducativoQuery = loadSQL('niveles-educativos/create.sql');
   const createResult: QueryResult = await client.query(createNivelEducativoQuery, [descripcion]);
-  return createResult.rows[0];
+  return createResult.rows[0] as Record<string, unknown>;
 }
 
 export class SolicitantesService {
@@ -151,7 +151,7 @@ export class SolicitantesService {
    * @returns Promise<any | null> - Información completa del solicitante o null si no existe
    * @throws {AppError} - Si ocurre un error al obtener los datos
    */
-  static async getSolicitanteById(cedula: string): Promise<any | null> {
+  static async getSolicitanteById(cedula: string): Promise<Record<string, unknown> | null> {
     try {
       return await solicitantesQueries.getSolicitanteById(cedula);
     } catch (error) {
@@ -174,7 +174,7 @@ export class SolicitantesService {
    * @returns Promise<any | null> - Información completa del solicitante o null si no existe
    * @throws {AppError} - Si ocurre un error al obtener los datos
    */
-  static async getSolicitanteCompleto(cedula: string): Promise<any | null> {
+  static async getSolicitanteCompleto(cedula: string): Promise<SolicitanteCompleto | null> {
     try {
       return await solicitantesQueries.getSolicitanteCompleto(cedula);
     } catch (error) {
@@ -197,7 +197,7 @@ export const solicitantesService = {
    * Nota: Un solicitante es diferente de un usuario. Los usuarios son estudiantes/profesores/coordinadores
    * que trabajan en la clínica, mientras que los solicitantes son las personas que solicitan servicios legales.
    */
-  create: async (data: ApplicantFormData, usuarioActualizo: string): Promise<any> => {
+  create: async (data: ApplicantFormData, usuarioActualizo: string): Promise<Record<string, unknown>> => {
     // Validar fecha de nacimiento (no futura)
     if (data.fechaNacimiento) {
       const dateToCheck = new Date(data.fechaNacimiento);
@@ -316,9 +316,10 @@ export const solicitantesService = {
             idActividad, // Puede ser NULL
             data.direccionHabitacion || null,
           ]);
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const pgError = error as { code?: string; constraint?: string };
           // Si es un error de unique constraint en correo_electronico
-          if (error.code === '23505' && error.constraint === 'solicitantes_correo_electronico_unique') {
+          if (pgError.code === '23505' && pgError.constraint === 'solicitantes_correo_electronico_unique') {
             await client.query('ROLLBACK');
             throw new AppError(
               `El correo electrónico ${data.correoElectronico} ya está asociado a otro solicitante`,
@@ -475,20 +476,23 @@ export const solicitantesService = {
         idActividad,
         hogar,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       await client.query('ROLLBACK');
       logger.error('Error al registrar solicitante', error);
 
       // Mejorar el mensaje de error para debugging
-      const errorMessage = error?.message || 'Error desconocido';
-      const errorCode = error?.code || 'UNKNOWN_ERROR';
-      const errorDetail = error?.detail || '';
+      const err = error as { message?: string; code?: string; detail?: string };
+      const errorMessage = err?.message || 'Error desconocido';
+      const errorCode = err?.code || 'UNKNOWN_ERROR';
+      const errorDetail = err?.detail || '';
 
       const enhancedError = new Error(
         `Error al registrar solicitante: ${errorMessage}${errorDetail ? ` (${errorDetail})` : ''}`
       );
-      (enhancedError as any).code = errorCode;
-      (enhancedError as any).detail = errorDetail;
+      Object.assign(enhancedError as unknown as Record<string, unknown>, {
+        code: errorCode,
+        detail: errorDetail,
+      });
 
       throw enhancedError;
     } finally {
@@ -499,7 +503,7 @@ export const solicitantesService = {
   /**
    * Actualiza un solicitante existente con todos sus datos completos
    */
-  update: async (cedulaOriginal: string, data: ApplicantFormData, usuarioActualizo: string): Promise<any> => {
+  update: async (cedulaOriginal: string, data: ApplicantFormData, usuarioActualizo: string): Promise<Record<string, unknown>> => {
     // Validar fecha de nacimiento (no futura)
     if (data.fechaNacimiento) {
       const dateToCheck = new Date(data.fechaNacimiento);
@@ -530,17 +534,6 @@ export const solicitantesService = {
         telefonoCelular: data.telefonoCelular,
         codigoPaisCelular: data.codigoPaisCelular,
       });
-
-      // Asignar nacionalidad (lógica igual a create)
-      let nacionalidad = 'V';
-      if (data.cedulaTipo === 'V' || data.cedulaTipo === 'J') {
-        nacionalidad = 'V';
-      } else if (data.cedulaTipo === 'E') {
-        nacionalidad = 'E';
-      } else if (data.cedulaTipo === 'P') {
-        const nacionalidadForm = data.nacionalidad || 'E';
-        nacionalidad = nacionalidadForm === 'Ext' ? 'E' : (nacionalidadForm === 'V' ? 'V' : 'E');
-      }
 
       // 2. IDs de trabajo y actividad
       let idTrabajo: number | null = null;
@@ -719,13 +712,14 @@ export const solicitantesService = {
         hogar,
       };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       await client.query('ROLLBACK');
       logger.error('Error al actualizar solicitante', error);
+      const err = error as { message?: string; code?: string };
       throw new AppError(
-        `Error al actualizar solicitante: ${error?.message || 'Error desconocido'}`,
+        `Error al actualizar solicitante: ${err?.message || 'Error desconocido'}`,
         500,
-        error?.code || 'UNKNOWN'
+        err?.code || 'UNKNOWN'
       );
     } finally {
       client.release();
