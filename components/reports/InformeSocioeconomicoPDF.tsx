@@ -152,10 +152,15 @@ const styles = StyleSheet.create({
 });
 
 function formatDate(dateStr: string): string {
+    if (!dateStr) return '';
+    if (dateStr.includes('-')) {
+        const [year, month, day] = dateStr.split('T')[0].split('-');
+        return `${day}/${month}/${year}`;
+    }
     const date = new Date(dateStr);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const year = date.getUTCFullYear();
     return `${day}/${month}/${year}`;
 }
 

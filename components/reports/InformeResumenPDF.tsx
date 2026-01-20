@@ -293,10 +293,19 @@ const styles = StyleSheet.create({
  * Formatea una fecha a DD/MM/YYYY
  */
 function formatDate(dateStr: string): string {
+  if (!dateStr) return '';
+  // Handle YYYY-MM-DD string parsing directly to avoid timezone issues
+  if (dateStr.includes('-')) {
+    const [year, month, day] = dateStr.split('T')[0].split('-');
+    return `${day}/${month}/${year}`;
+  }
+
+  // Fallback for other formats
   const date = new Date(dateStr);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
+  // Use UTC methods to avoid local timezone offset shifting
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const year = date.getUTCFullYear();
   return `${day}/${month}/${year}`;
 }
 
@@ -424,10 +433,51 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
     <Document>
       {/* PORTADA - Primera hoja */}
       {portadaBase64 && (
-        // @ts-ignore
         <Page size="A4" orientation="portrait" style={styles.coverPage}>
-          {/* @ts-ignore */}
-          <Image src={portadaBase64} style={styles.coverImage} />
+          <View style={{ width: '100%', height: '100%', position: 'relative' }}>
+            {/* Imagen de fondo */}
+            <Image
+              src={portadaBase64}
+              style={[styles.coverImage, { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }]}
+            />
+
+            {/* Contenedor del Texto (capa superior) */}
+            <View style={{
+              position: 'absolute',
+              top: '26%',
+              left: 0,
+              right: 0,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+              <Text style={{
+                fontSize: 30, // Reduced from 36
+                fontWeight: 400, // Regular weight (thinner)
+                fontFamily: 'Times-Roman',
+                color: '#000000',
+                textAlign: 'center'
+              }}>
+                {(() => {
+                  if (term && term !== 'all') return term;
+                  if (fechaInicio) {
+                    // Start Year: Use string split to avoid timezone shift on Jan 1st
+                    const startParts = fechaInicio.split('T')[0].split('-');
+                    const startYear = startParts[0];
+
+                    if (fechaFin) {
+                      // End Year
+                      const endParts = fechaFin.split('T')[0].split('-');
+                      const endYear = endParts[0];
+
+                      if (startYear !== endYear) return `${startYear}-${endYear}`;
+                    }
+                    return startYear;
+                  }
+                  return new Date().getFullYear().toString();
+                })()}
+              </Text>
+            </View>
+          </View>
         </Page>
       )}
 

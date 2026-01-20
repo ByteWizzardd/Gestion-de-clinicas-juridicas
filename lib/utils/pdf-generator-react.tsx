@@ -590,7 +590,7 @@ export async function generateTiposCasosPDFReact(
     await new Promise(resolve => setTimeout(resolve, 0));
 
     // Generar el documento PDF
-    const doc = React.createElement(TiposCasosPDF, { data, fechaInicio, fechaFin, chartImages, logoBase64 });
+    const doc = React.createElement(TiposCasosPDF, { data, fechaInicio, fechaFin, chartImages, logoBase64, term });
 
     // Crear el blob del PDF
     // @ts-ignore - React PDF types issue with React 19
