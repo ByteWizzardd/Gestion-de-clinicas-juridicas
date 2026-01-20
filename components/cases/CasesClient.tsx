@@ -817,7 +817,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
               ¿Estás seguro de que deseas eliminar el caso <strong>{casoToDelete?.codigo}</strong> del solicitante <strong>{casoToDelete?.solicitante}</strong>?
             </p>
             <p className="mb-6 text-red-600 font-semibold text-base">
-              Esta acción es irreversible y solo puede realizarla un coordinador. Se eliminarán todas las referencias asociadas (citas, acciones, soportes, etc.).
+              Esta acción es irreversible. Se eliminarán todas las referencias asociadas (citas, acciones, soportes, etc.).
             </p>
             <div className="flex flex-col gap-1">
               <label className="text-base font-normal text-foreground mb-1">

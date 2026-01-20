@@ -99,6 +99,19 @@ Sigue la guía en `ARCHITECTURE.md` sección "Guía de Implementación" para cre
 
 ---
 
+## ⏰ Scripts de recordatorios
+
+### Recordatorios de citas (mañana por defecto)
+
+- Comando: `npm run reminders:citas` (o `node scripts/send-cita-reminders.mjs`)
+- Variables:
+    - `CITA_REMINDER_DAYS_AHEAD=1` (1 = mañana)
+    - `NOTIFICATIONS_SYSTEM_SENDER_CEDULA=<cédula>` (emisor de la notificación)
+
+Si `NOTIFICATIONS_SYSTEM_SENDER_CEDULA` no está configurada, el script intentará usar automáticamente un usuario habilitado de tipo **Coordinador** como emisor.
+
+---
+
 ## 📋 Checklist de Implementación
 
 Cuando implementes un módulo nuevo, asegúrate de:

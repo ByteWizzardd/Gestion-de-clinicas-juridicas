@@ -62,6 +62,20 @@ function parsePgTextArray(value) {
   return [];
 }
 
+async function resolveCedulaEmisor(pool) {
+  // Siempre usa el primer Coordinador habilitado como emisor
+  const { rows: coordRows } = await pool.query(
+    "SELECT cedula FROM usuarios WHERE habilitado_sistema = TRUE AND tipo_usuario = 'Coordinador' ORDER BY cedula LIMIT 1"
+  );
+  const cedulaCoordinador = coordRows?.[0]?.cedula;
+  if (cedulaCoordinador) {
+    return cedulaCoordinador;
+  }
+  throw new Error(
+    'No hay usuarios habilitados de tipo Coordinador en la tabla usuarios para usar como emisor. Crea/rehabilita un Coordinador.'
+  );
+}
+
 async function main() {
   loadEnv();
 
@@ -69,14 +83,8 @@ async function main() {
     throw new Error('DATABASE_URL no está configurada en las variables de entorno');
   }
 
-  const cedulaEmisor = process.env.NOTIFICATIONS_SYSTEM_SENDER_CEDULA;
-  if (!cedulaEmisor) {
-    throw new Error(
-      'NOTIFICATIONS_SYSTEM_SENDER_CEDULA no está configurada (debe ser una cédula válida en usuarios)'
-    );
-  }
-
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const cedulaEmisor = await resolveCedulaEmisor(pool);
   const daysAhead = getDaysAheadFromEnv();
 
   const reminderSql = readFileSync(
@@ -95,6 +103,16 @@ async function main() {
   let recordatoriosEnviados = 0;
 
   try {
+    // Validación previa: asegurar tabla idempotente de locks
+    const { rows: regRows } = await pool.query(
+      "SELECT to_regclass('public.cita_recordatorios') AS reg"
+    );
+    if (!regRows?.[0]?.reg) {
+      throw new Error(
+        'Falta la tabla cita_recordatorios. Ejecuta la migración database/migrations/cita-recordatorio.sql y vuelve a correr el script.'
+      );
+    }
+
     const { rows: citas } = await pool.query(reminderSql, [daysAhead]);
 
     for (const c of citas) {
@@ -119,7 +137,7 @@ async function main() {
           cedulaReceptor,
           cedulaEmisor,
           'Recordatorio de cita',
-          `Recordatorio: tienes la cita #${appointmentId} del caso #${idCaso} para la fecha ${fechaStr}.`,
+          `Tienes una cita del caso #${idCaso} programada para el día ${fechaStr}.`,
         ]);
         recordatoriosEnviados += 1;
       }

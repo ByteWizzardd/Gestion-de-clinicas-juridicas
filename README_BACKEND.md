@@ -8,6 +8,13 @@
 npm install
 ```
 
+> **Nota:** Algunos scripts Node.js (por ejemplo, migraciones manuales) requieren la dependencia `dotenv` para cargar variables de entorno. Si ves un error `Cannot find module 'dotenv'`, instálala con:
+>
+> ```bash
+> npm install dotenv
+> ```
+```
+
 ### 2. Configurar Variables de Entorno
 
 Copia el archivo `.env.example` a `.env` y completa los valores:
