@@ -15,9 +15,27 @@ export async function getSemestres() {
     }
 }
 
+export async function checkSemestreExists(term: string) {
+    const client = await pool.connect();
+    try {
+        const result = await client.query('SELECT 1 FROM semestres WHERE term = $1', [term]);
+        return { exists: result.rows.length > 0 };
+    } catch (error) {
+        console.error('Error checking semestre exists:', error);
+        return { exists: false };
+    } finally {
+        client.release();
+    }
+}
+
 export async function createSemestre(data: { term: string; fecha_inicio: string; fecha_fin: string }) {
     const client = await pool.connect();
     try {
+        // Validar formato YYYY-XX (ej: 2026-15)
+        if (!/^\d{4}-(15|25)$/.test(data.term)) {
+            return { success: false, error: 'El formato del semestre debe ser YYYY-15 o YYYY-25 (ej: 2026-15)' };
+        }
+
         await client.query('BEGIN');
 
         const authResult = await requireAuthInServerActionWithCode();

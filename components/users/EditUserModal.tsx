@@ -5,7 +5,7 @@ import Select from "../forms/Select";
 import { useEffect, useState } from 'react';
 import { updateUsuarioByCedulaAction } from '@/app/actions/usuarios';
 import { UpdateUserSchema } from '@/lib/validations/user.schema';
-import { getSemestresAction } from '@/app/actions/estudiantes';
+import { getSemestres } from '@/app/actions/catalogos/semestres.actions';
 import PhoneInput from '../forms/PhoneInput';
 import { validateEmailFormat, validateEmailDomain } from '@/lib/utils/email-validation';
 import { Loader2 } from 'lucide-react';
@@ -52,17 +52,20 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
     }
   }, [isOpen, usuario]);
 
-  const [terms, setTerms] = useState<Array<{ term: string }>>([]);
+  const [semesters, setSemesters] = useState<{ value: string; label: string }[]>([]);
   // Cargar los terms al abrir el modal
   useEffect(() => {
     if (isOpen) {
-      getSemestresAction()
+      getSemestres()
         .then((res) => {
           if (res.success && res.data) {
-            setTerms(res.data);
+            const enabledSemesters = res.data
+              .filter((s: { habilitado: boolean }) => s.habilitado)
+              .map((s: { term: string }) => ({ value: s.term, label: s.term }));
+            setSemesters(enabledSemesters);
           }
         })
-        .catch(() => setTerms([]));
+        .catch(() => setSemesters([]));
     }
   }, [isOpen]);
 
@@ -338,6 +341,25 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
                   onChange={handleChange}
                 />
               )}
+
+              <Select
+                label="TERM"
+                value={(form.term as string) || ''}
+                onChange={(e) => {
+                  if (form) { // Ensure form is not null
+                    setForm({ ...form, term: e.target.value });
+                    if (errors.term) {
+                      setErrors((prev) => {
+                        const newErrors = { ...prev };
+                        delete newErrors.term;
+                        return newErrors;
+                      });
+                    }
+                  }
+                }}
+                options={[{ value: '', label: 'Seleccione...' }, ...semesters]}
+                error={errors.term}
+              />
 
               {/* Campos adicionales según tipo de usuario */}
               {form.tipo_usuario === 'Estudiante' && (

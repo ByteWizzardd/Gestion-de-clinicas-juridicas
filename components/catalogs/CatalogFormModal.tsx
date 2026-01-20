@@ -19,6 +19,8 @@ interface CatalogFormModalProps {
         required?: boolean;
         options?: { value: string; label: string }[];
         defaultValue?: string; // For edit mode
+        validate?: (value: string, formData: Record<string, string>) => string | undefined;
+        asyncValidate?: (value: string) => Promise<string | undefined>;
     }[];
     onFieldChange?: (fieldName: string, value: string) => void | Record<string, string>;
 }
@@ -41,6 +43,7 @@ export default function CatalogFormModal({
 
     const [formData, setFormData] = useState<Record<string, string>>(initialFormData);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [validatingFields, setValidatingFields] = useState<Record<string, boolean>>({});
 
     // Reset form data when the modal opens with new fields/defaultValues
     useEffect(() => {
@@ -53,6 +56,7 @@ export default function CatalogFormModal({
             }, {} as Record<string, string>);
             setFormData(newFormData);
             setErrors({});
+            setValidatingFields({});
         }
     }, [isOpen]);
 
@@ -60,18 +64,31 @@ export default function CatalogFormModal({
         const newErrors: Record<string, string> = {};
 
         // Validate required fields
-        // Validate required fields
         fields.forEach(field => {
             const value = formData[field.name];
             const isEmpty = value === null || value === undefined || (typeof value === 'string' && !value.trim()) || (value === '');
 
             if (field.required && isEmpty) {
                 newErrors[field.name] = 'Este campo es requerido';
+            } else if (field.validate && value) {
+                const error = field.validate(value, formData);
+                if (error) {
+                    newErrors[field.name] = error;
+                }
             }
         });
 
-        if (Object.keys(newErrors).length > 0) {
-            setErrors(newErrors);
+        // Don't submit if there are existing errors (from async validation) or new sync errors
+        const allErrors = { ...errors, ...newErrors };
+
+        // Check if any async validations are pending
+        const hasPendingValidations = Object.values(validatingFields).some(isValidating => isValidating);
+        if (hasPendingValidations) {
+            return;
+        }
+
+        if (Object.keys(allErrors).length > 0) {
+            setErrors(allErrors);
             return;
         }
 
@@ -82,8 +99,12 @@ export default function CatalogFormModal({
     const handleClose = () => {
         setFormData({});
         setErrors({});
+        setValidatingFields({});
         onClose();
     };
+
+    // Store timeouts for debounce
+    const [timeouts, setTimeouts] = useState<Record<string, NodeJS.Timeout>>({});
 
     const updateField = (name: string, value: string) => {
         setFormData(prev => {
@@ -91,24 +112,59 @@ export default function CatalogFormModal({
             return nextData;
         });
 
-        // Call the onChange callback after state update using useEffect
+        // Trigger onFieldChange callback
         if (onFieldChange) {
-            // Use setTimeout to defer the callback until after render
             setTimeout(() => {
                 const updates = onFieldChange(name, value);
-                // If callback returns an object, merge it (e.g., to clear dependent fields)
                 if (updates && typeof updates === 'object') {
                     setFormData(prev => ({ ...prev, ...updates }));
                 }
             }, 0);
         }
 
+        // Clear existing error for this field to start fresh
         if (errors[name]) {
             setErrors(prev => {
                 const newErrors = { ...prev };
                 delete newErrors[name];
                 return newErrors;
             });
+        }
+
+        const fieldDef = fields.find(f => f.name === name);
+
+        // Handle Async Validation with Debounce
+        if (fieldDef?.asyncValidate) {
+            // Clear previous timeout
+            if (timeouts[name]) {
+                clearTimeout(timeouts[name]);
+            }
+
+            // Set loading state if value is not empty
+            if (value) {
+                // Set new timeout (500ms)
+                const timeoutId = setTimeout(async () => {
+                    setValidatingFields(prev => ({ ...prev, [name]: true }));
+                    try {
+                        const error = await fieldDef.asyncValidate!(value);
+                        setErrors(prev => {
+                            const newErrors = { ...prev };
+                            if (error) {
+                                newErrors[name] = error;
+                            } else {
+                                delete newErrors[name];
+                            }
+                            return newErrors;
+                        });
+                    } catch (err) {
+                        console.error("Async validation error", err);
+                    } finally {
+                        setValidatingFields(prev => ({ ...prev, [name]: false }));
+                    }
+                }, 500);
+
+                setTimeouts(prev => ({ ...prev, [name]: timeoutId }));
+            }
         }
     };
 

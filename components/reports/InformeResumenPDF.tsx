@@ -458,9 +458,15 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
                 textAlign: 'center'
               }}>
                 {(() => {
+                  // Prioritize Histórico check
+                  if (!fechaInicio && (!term || term === 'all')) {
+                    return 'Histórico';
+                  }
+
                   if (term && term !== 'all') return term;
+
                   if (fechaInicio) {
-                    // Start Year: Use string split to avoid timezone shift on Jan 1st
+                    // Start Year
                     const startParts = fechaInicio.split('T')[0].split('-');
                     const startYear = startParts[0];
 
@@ -473,7 +479,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
                     }
                     return startYear;
                   }
-                  return new Date().getFullYear().toString();
+
+                  return 'Histórico';
                 })()}
               </Text>
             </View>
@@ -504,7 +511,11 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
                 <View style={styles.titleBanner}>
                   {/* @ts-ignore */}
                   <Text style={styles.titleText}>
-                    Informe Resumen de Casos{term ? ` Semestre ${term}` : (fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : '')}
+                    Informe Resumen de Casos{term
+                      ? ` Semestre ${term}`
+                      : (fechaInicio && fechaFin
+                        ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}`
+                        : ' Histórico')}
                   </Text>
                 </View>
 

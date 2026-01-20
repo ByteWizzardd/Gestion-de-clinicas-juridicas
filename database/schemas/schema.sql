@@ -244,7 +244,8 @@ CREATE TABLE semestres (
     fecha_inicio DATE NOT NULL,
     fecha_fin DATE NOT NULL,
     habilitado BOOLEAN NOT NULL DEFAULT TRUE,
-    CHECK (fecha_fin >= fecha_inicio)
+    CHECK (fecha_fin >= fecha_inicio),
+    CHECK (term ~ '^\d{4}-(15|25)$')
 );
 
 -- 7.1) AUDITORÍA DE INSERCIÓN DE SEMESTRES

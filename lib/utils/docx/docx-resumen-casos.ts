@@ -30,7 +30,8 @@ import {
     generateChartImage,
     generateLegendImage,
     generateGenericBarChartImage,
-    generateGenericLegendImage
+    generateGenericLegendImage,
+    generateCoverImageWithDate
 } from './docx-image-generators';
 
 /**
@@ -160,10 +161,70 @@ export async function generateResumenCasosDOCX(
         const logoUint8 = base64ToUint8Array(logoBase64.split(',')[1]);
 
         const sections: any[] = [];
-        const reportTitle = `Informe Resumen de Casos${term ? ` Semestre ${term}` : (fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : '')}`;
+        const reportTitle = `Informe Resumen de Casos${term ? ` Semestre ${term}` : (fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : ' Histórico')}`;
 
-        // 1. Primera Hoja Vacía
-        sections.push(createEmptyPortraitPage());
+        // 1. Primera Hoja con Portada (con fecha sobrepuesta)
+        const portadaBase64 = await imageToBase64('/portada reporte.png');
+
+        let coverText = '';
+        if (term && term !== 'all') {
+            coverText = term;
+        } else if (fechaInicio) {
+            const startYear = fechaInicio.split('T')[0].split('-')[0];
+            if (fechaFin) {
+                const endYear = fechaFin.split('T')[0].split('-')[0];
+                if (startYear !== endYear) {
+                    coverText = `${startYear}-${endYear}`;
+                } else {
+                    coverText = startYear;
+                }
+            } else {
+                coverText = startYear;
+            }
+        } else {
+            coverText = 'Histórico';
+        }
+
+        const coverWithDateBase64 = await generateCoverImageWithDate(portadaBase64, coverText);
+
+        if (coverWithDateBase64.includes('data:image')) {
+            const portadaUint8 = base64ToUint8Array(coverWithDateBase64.split(',')[1]);
+            sections.push({
+                properties: {
+                    page: {
+                        size: {
+                            orientation: PageOrientation.PORTRAIT,
+                            width: 11906, // A4 Width
+                            height: 16838 // A4 Height
+                        },
+                        margin: {
+                            top: 0,
+                            right: 0,
+                            bottom: 0,
+                            left: 0
+                        },
+                    },
+                },
+                children: [
+                    new Paragraph({
+                        children: [
+                            new ImageRun({
+                                data: portadaUint8,
+                                transformation: {
+                                    width: 794,
+                                    height: 1123
+                                },
+                            }),
+                        ],
+                    }),
+                ],
+            });
+            // 2. Segunda Hoja Vacía (Vertical)
+            sections.push(createEmptyPortraitPage());
+        } else {
+            // Fallback si falla la imagen
+            sections.push(createEmptyPortraitPage());
+        }
 
         // 2. Tipos de Caso (Pie Charts agrupados)
         const groupedTiposCasos = groupDataByMateriaSubcategoria(data.tiposDeCaso);

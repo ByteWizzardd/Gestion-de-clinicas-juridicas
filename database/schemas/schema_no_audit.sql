@@ -1,7 +1,3 @@
--- =========================================================
--- BLOQUE 1: CATÁLOGOS GLOBALES
--- =========================================================
-
 -- 1) ESTADOS
 CREATE TABLE estados (
     id_estado SERIAL PRIMARY KEY,
@@ -52,7 +48,8 @@ CREATE TABLE semestres (
     fecha_inicio DATE NOT NULL,
     fecha_fin DATE NOT NULL,
     habilitado BOOLEAN NOT NULL DEFAULT TRUE,
-    CHECK (fecha_fin >= fecha_inicio)
+    CHECK (fecha_fin >= fecha_inicio),
+    CHECK (term ~ '^\d{4}-(15|25)$')
 );
 
 -- 8) USUARIOS
@@ -67,10 +64,6 @@ CREATE TABLE usuarios (
     habilitado_sistema BOOLEAN NOT NULL DEFAULT TRUE,
     tipo_usuario VARCHAR(20) NOT NULL CHECK (tipo_usuario IN ('Estudiante', 'Profesor', 'Coordinador'))
 );
-
--- =========================================================
--- BLOQUE 2: GEOGRAFÍA (Jerarquía Débil)
--- =========================================================
 
 -- 9) MUNICIPIOS
 CREATE TABLE municipios (
@@ -108,10 +101,6 @@ CREATE TABLE nucleos (
     FOREIGN KEY (id_estado, num_municipio, num_parroquia) 
     REFERENCES parroquias(id_estado, num_municipio, num_parroquia)
 );
-
--- =========================================================
--- BLOQUE 3: SOLICITANTES
--- =========================================================
 
 -- 12) SOLICITANTES
 CREATE TABLE solicitantes (
@@ -175,10 +164,6 @@ CREATE TABLE familias_y_hogares (
     CHECK (cant_trabajadores <= cant_personas)
 );
 
--- =========================================================
--- BLOQUE 4: ACADÉMICO Y LEGAL
--- =========================================================
-
 -- 15) CARACTERÍSTICAS
 CREATE TABLE caracteristicas (
     id_tipo_caracteristica INTEGER NOT NULL,
@@ -190,7 +175,6 @@ CREATE TABLE caracteristicas (
 );
 
 -- 16) ASIGNADAS_A (Relación entre Viviendas y Características)
--- Nota: En el schema original esta tabla tenía número 31 pero depende de viviendas y caracteristicas
 CREATE TABLE asignadas_a (
     cedula_solicitante VARCHAR(20) NOT NULL,
     id_tipo_caracteristica INTEGER NOT NULL,
@@ -264,10 +248,6 @@ CREATE TABLE profesores (
     FOREIGN KEY (term) REFERENCES semestres(term),
     FOREIGN KEY (cedula_profesor) REFERENCES usuarios(cedula)
 );
-
--- =========================================================
--- BLOQUE 5: CASOS Y OPERACIONES
--- =========================================================
 
 -- 23) CASOS
 CREATE TABLE casos (
@@ -370,7 +350,7 @@ CREATE TABLE soportes (
     PRIMARY KEY (num_soporte, id_caso)
 );
 
--- 30) BENEFICIARIOS (PARENTESCO LIBRE)
+-- 30) BENEFICIARIOS 
 CREATE TABLE beneficiarios (
     num_beneficiario INTEGER NOT NULL,
     id_caso INTEGER NOT NULL REFERENCES casos(id_caso),

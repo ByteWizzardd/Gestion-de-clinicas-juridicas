@@ -5,7 +5,8 @@ import Modal from '../ui/feedback/Modal';
 import Button from '../ui/Button';
 import Select from '../forms/Select';
 import { Upload, File, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
-import { bulkCreateEstudiantesAction, getSemestresAction } from '@/app/actions/estudiantes';
+import { bulkCreateEstudiantesAction } from '@/app/actions/estudiantes';
+import { getSemestres } from '@/app/actions/catalogos/semestres.actions';
 import { BulkUploadResult } from '@/lib/services/estudiantes.service';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
 
@@ -47,11 +48,13 @@ export default function BulkUploadModal({
   const loadSemestres = async () => {
     setLoadingSemestres(true);
     try {
-      const result = await getSemestresAction();
+      const result = await getSemestres();
       if (result.success && result.data) {
-        setSemestres(result.data);
-        if (result.data.length > 0 && !term) {
-          setTerm(result.data[0].term);
+        // Filtrar solo los semestres habilitados
+        const enabledSemestres = result.data.filter((s: { habilitado: boolean }) => s.habilitado);
+        setSemestres(enabledSemestres);
+        if (enabledSemestres.length > 0 && !term) {
+          setTerm(enabledSemestres[0].term);
         }
       } else {
         setError('Error al cargar semestres');

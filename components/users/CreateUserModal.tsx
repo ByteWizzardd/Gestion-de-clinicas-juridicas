@@ -4,7 +4,8 @@ import Input from "../forms/Input";
 import Select from "../forms/Select";
 import { useEffect, useState, useRef } from 'react';
 import { createUsuarioAction } from '@/app/actions/usuarios';
-import { getCurrentTermAction } from '@/app/actions/estudiantes';
+import { getSemestres } from '@/app/actions/catalogos/semestres.actions';
+
 import PhoneInput from '../forms/PhoneInput';
 import CedulaInput from '../forms/CedulaInput';
 import { validateEmailFormat, validateEmailDomain } from '@/lib/utils/email-validation';
@@ -60,73 +61,42 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
   // Resetear formulario cuando se abre el modal
   useEffect(() => {
     if (isOpen) {
-      // Obtener el término actual primero
-      getCurrentTermAction()
-        .then((currentTermRes) => {
-          const currentTerm = currentTermRes.success && currentTermRes.data
-            ? currentTermRes.data.term
-            : '';
-
-          setForm({
-            cedulaTipo: 'V',
-            cedulaNumero: '',
-            nombres: '',
-            apellidos: '',
-            correo_electronico: '',
-            nombre_usuario: '',
-            telefono: '+58',
-            tipo_usuario: '',
-            nrc: '',
-            term: currentTerm,
-            tipo_estudiante: '',
-            tipo_profesor: '',
-          });
-          setError(null);
-          setErrors({});
-        })
-        .catch(() => {
-          // Si falla, establecer sin término (se validará después)
-          setForm({
-            cedulaTipo: 'V',
-            cedulaNumero: '',
-            nombres: '',
-            apellidos: '',
-            correo_electronico: '',
-            nombre_usuario: '',
-            telefono: '+58',
-            tipo_usuario: '',
-            nrc: '',
-            term: '',
-            tipo_estudiante: '',
-            tipo_profesor: '',
-          });
-          setError(null);
-          setErrors({});
-        });
+      setForm({
+        cedulaTipo: 'V',
+        cedulaNumero: '',
+        nombres: '',
+        apellidos: '',
+        correo_electronico: '',
+        nombre_usuario: '',
+        telefono: '+58',
+        tipo_usuario: '',
+        nrc: '',
+        term: '',
+        tipo_estudiante: '',
+        tipo_profesor: '',
+      });
+      setError(null);
+      setErrors({});
     }
   }, [isOpen]);
 
-  // Estado para almacenar el término actual
-  const [currentTerm, setCurrentTerm] = useState<string>('');
+  const [semesters, setSemesters] = useState<{ value: string; label: string }[]>([]);
 
-  // Cargar el término actual cuando se abre el modal
+  // Cargar la lista de semestres cuando se abre el modal
   useEffect(() => {
     if (isOpen) {
-      getCurrentTermAction()
-        .then((currentTermRes) => {
-          // Si hay un término actual, establecerlo automáticamente
-          if (currentTermRes.success && currentTermRes.data) {
-            const term = currentTermRes.data.term;
-            setCurrentTerm(term);
-            setForm((prev) => ({
-              ...prev,
-              term: term,
-            }));
+      // Cargar semestres habilitados
+      getSemestres()
+        .then((result) => {
+          if (result.success && result.data) {
+            // Filtrar habilitados y mapear a opciones
+            const enabledSemesters = result.data
+              .filter((s: { habilitado: boolean }) => s.habilitado)
+              .map((s: { term: string }) => ({ value: s.term, label: s.term }));
+            setSemesters(enabledSemesters);
           }
         })
-        .catch(() => {
-          // Si falla, no hacer nada (el término ya se estableció en el reset)
-        });
+        .catch(console.error);
     }
   }, [isOpen]);
 
@@ -626,7 +596,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
                   tipo_usuario: nuevoTipoUsuario,
                   tipo_estudiante: '',
                   tipo_profesor: '',
-                  term: currentTerm || form.term, // Mantener el término actual
+                  term: form.term, // Mantener el término seleccionado si existe
                   nrc: nuevoTipoUsuario === 'Estudiante' ? '15753' : '',
                 });
                 // Limpiar errores de campos relacionados cuando cambia el tipo de usuario
@@ -648,12 +618,20 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
               error={errors.tipo_usuario}
             />
             {form.tipo_usuario && (
-              <Input
+              <Select
                 label="TERM *"
-                name="term"
-                value={form.term || currentTerm || ''}
-                onChange={() => { }} // No permitir cambios
-                disabled={true}
+                value={form.term || ''}
+                onChange={(e) => {
+                  setForm({ ...form, term: e.target.value });
+                  if (errors.term) {
+                    setErrors((prev) => {
+                      const newErrors = { ...prev };
+                      delete newErrors.term;
+                      return newErrors;
+                    });
+                  }
+                }}
+                options={[{ value: '', label: 'Seleccione...' }, ...semesters]}
                 error={errors.term}
               />
             )}

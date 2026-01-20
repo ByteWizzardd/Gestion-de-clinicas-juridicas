@@ -6,7 +6,7 @@ import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
 import CatalogActionsMenu from "@/components/catalogs/CatalogActionsMenu";
 import CatalogViewModal from "@/components/catalogs/CatalogViewModal";
 import { Hash, Calendar, CheckCircle2 } from "lucide-react";
-import { getSemestres, createSemestre, updateSemestre, toggleSemestreHabilitado, deleteSemestre } from "@/app/actions/catalogos/semestres.actions";
+import { getSemestres, createSemestre, updateSemestre, toggleSemestreHabilitado, deleteSemestre, checkSemestreExists } from "@/app/actions/catalogos/semestres.actions";
 import { useToast } from "@/components/ui/feedback/ToastProvider";
 
 export default function SemestresPage() {
@@ -114,9 +114,50 @@ export default function SemestresPage() {
         onSubmit={isEditMode ? handleUpdate : handleAdd}
         title={isEditMode ? "Editar Semestre" : "Añadir Semestre"}
         fields={[
-          { name: 'term', label: 'TERM (ej: 2024-1)', required: !isEditMode, defaultValue: isEditMode ? editingItem?.term : undefined },
-          { name: 'fecha_inicio', label: 'Fecha de Inicio', type: 'date', required: true, defaultValue: isEditMode ? editingItem?.fecha_inicio : undefined },
-          { name: 'fecha_fin', label: 'Fecha de Fin', type: 'date', required: true, defaultValue: isEditMode ? editingItem?.fecha_fin : undefined }
+          {
+            name: 'term',
+            label: 'TERM (ej: 2026-15)',
+            required: !isEditMode,
+            defaultValue: isEditMode ? editingItem?.term : undefined,
+            validate: (value: string, formData: Record<string, string>) => {
+              if (!/^\d{4}-(15|25)$/.test(value)) return 'Formato inválido. Use YYYY-15 o YYYY-25';
+              return undefined;
+            },
+            asyncValidate: !isEditMode ? async (value: string) => {
+              if (!value) return undefined;
+              const result = await checkSemestreExists(value);
+              if (result.exists) return 'Este TERM ya existe';
+              return undefined;
+            } : undefined
+          },
+          {
+            name: 'fecha_inicio',
+            label: 'Fecha de Inicio',
+            type: 'date',
+            required: true,
+            defaultValue: isEditMode ? editingItem?.fecha_inicio : undefined,
+            validate: (value: string, formData: Record<string, string>) => {
+              if (formData.term && /^\d{4}-(15|25)$/.test(formData.term)) {
+                const termYear = formData.term.substring(0, 4);
+                const startYear = value.split('-')[0];
+                if (startYear !== termYear) return `El año de inicio (${startYear}) debe coincidir con el término (${termYear})`;
+              }
+              return undefined;
+            }
+          },
+          {
+            name: 'fecha_fin',
+            label: 'Fecha de Fin',
+            type: 'date',
+            required: true,
+            defaultValue: isEditMode ? editingItem?.fecha_fin : undefined,
+            validate: (value: string, formData: Record<string, string>) => {
+              if (formData.fecha_inicio && value <= formData.fecha_inicio) {
+                return 'La fecha de fin debe ser posterior a la fecha de inicio';
+              }
+              return undefined;
+            }
+          }
         ]}
       />
       <CatalogViewModal

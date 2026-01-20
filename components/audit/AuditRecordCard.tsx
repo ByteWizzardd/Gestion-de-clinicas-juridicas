@@ -3956,6 +3956,9 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           // Estos usan descripcion en lugar de nombre
           nameFieldAnterior = r.descripcion_anterior || 'N/A';
           nameFieldNuevo = r.descripcion_nuevo || 'N/A';
+        } else if (type === 'semestre-actualizado') {
+          nameFieldAnterior = r.term || 'N/A';
+          nameFieldNuevo = r.term || 'N/A';
         } else {
           // Fallback para otros casos
           nameFieldAnterior = r.descripcion_anterior || 'N/A';

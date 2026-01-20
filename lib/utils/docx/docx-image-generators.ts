@@ -13,6 +13,51 @@ import {
 import { generateBarChartImage } from '../bar-chart-generator';
 
 /**
+ * Genera la imagen de la portada con la fecha sobrepuesta
+ */
+export async function generateCoverImageWithDate(
+    coverBase64: string,
+    text: string
+): Promise<string> {
+    const img = new Image();
+    img.src = coverBase64;
+    await new Promise(r => img.onload = r);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return coverBase64;
+
+    // Dibujar imagen original
+    ctx.drawImage(img, 0, 0);
+
+    // Configurar texto (Times Roman 30px regular)
+    // El PDF usa 'fontSize: 30' para una hoja A4.
+    // La imagen de portada es grande, así que tenemos que escalar la fuente proporcionalmente
+    // Si la imagen es A4 @ 72dpi ~= 595x842. Si es alta resolución, escalar.
+    // Asumiremos una escala basada en el ancho de la imagen vs ancho A4 estándar (595pt)
+
+    // Ancho A4 en puntos = 595.28
+    const scaleFactor = img.width / 595.28;
+    const fontSize = 30 * scaleFactor;
+
+    ctx.fillStyle = '#000000';
+    ctx.font = `400 ${fontSize}px "Times New Roman", Times, serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Posición: top 26%
+    const x = img.width / 2;
+    const y = img.height * 0.26;
+
+    ctx.fillText(text, x, y);
+
+    return canvas.toDataURL('image/png', 1.0);
+}
+
+/**
  * Genera una imagen del título de sección (League Spartan SemiBold/Bold)
  * Texto más grande para mejor visibilidad
  */
@@ -431,4 +476,3 @@ export async function generateGenericLegendImage(
         height: baseHeight
     };
 }
-
