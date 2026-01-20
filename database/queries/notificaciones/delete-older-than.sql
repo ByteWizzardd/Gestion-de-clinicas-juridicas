@@ -1,6 +1,5 @@
 -- Eliminar notificaciones más antiguas que un intervalo dado 
 -- Parámetro:
---   $1: intervalo PostgreSQL (texto) => '30 days'.
+--   $1: cantidad de días (int) => 30.
 DELETE FROM notificaciones
-WHERE fecha < NOW() - ($1::interval)
-RETURNING id_notificacion;
+WHERE fecha < NOW() - make_interval(days => ($1::int));

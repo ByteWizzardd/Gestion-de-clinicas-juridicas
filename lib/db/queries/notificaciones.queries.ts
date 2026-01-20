@@ -66,12 +66,12 @@ export const notificacionesQueries = {
 
     /**
      * Elimina notificaciones más antiguas que un intervalo (TTL)
-     * @param interval Intervalo PostgreSQL como texto (ej: '30 days')
+     * @param days Cantidad de días (ej: 30)
      * @returns cantidad de filas eliminadas
      */
-    deleteOlderThan: async (interval: string): Promise<number> => {
+    deleteOlderThan: async (days: number): Promise<number> => {
         const query = loadSQL('notificaciones/delete-older-than.sql');
-        const result: QueryResult = await pool.query(query, [interval]);
+        const result: QueryResult = await pool.query(query, [days]);
         return result.rowCount ?? 0;
     },
 

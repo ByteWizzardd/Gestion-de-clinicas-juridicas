@@ -38,17 +38,16 @@ async function main() {
 
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   const ttlDays = getTtlDaysFromEnv();
-  const interval = `${ttlDays} days`;
+
+  const deleteOlderThanSql = readFileSync(
+    'database/queries/notificaciones/delete-older-than.sql',
+    'utf-8'
+  );
 
   try {
-    const result = await pool.query(
-      `DELETE FROM notificaciones
-       WHERE fecha < NOW() - ($1::interval)`
-      ,
-      [interval]
-    );
+    const result = await pool.query(deleteOlderThanSql, [ttlDays]);
 
-    console.log(`[cleanup-notificaciones] Eliminadas: ${result.rowCount ?? 0} (TTL: ${interval})`);
+    console.log(`[cleanup-notificaciones] Eliminadas: ${result.rowCount ?? 0} (TTL: ${ttlDays} days)`);
   } finally {
     await pool.end();
   }
