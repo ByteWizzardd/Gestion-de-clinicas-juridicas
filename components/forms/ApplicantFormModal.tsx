@@ -2566,7 +2566,7 @@ export default function ApplicantFormModal({
       </div>
       <div className="col-span-1">
         <Input
-          label="Cantidad de Niños *"
+          label="Cantidad de Niños entre 7-12 años *"
           type="number"
           value={formData.cantNinos}
           onChange={(e) => updateField('cantNinos', e.target.value)}
