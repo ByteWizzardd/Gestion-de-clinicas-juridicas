@@ -255,6 +255,8 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
               <Image
                 src={fotoPerfil}
                 alt="Foto de perfil"
+                width={40}
+                height={40}
                 className="w-10 h-10 rounded-full object-cover shrink-0 border-2 border-gray-200"
               />
             ) : (
