@@ -32,6 +32,16 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error("[cleanup-notificaciones] Error:", error.message ?? error);
+  const message =
+    typeof error === "string"
+      ? error
+      : (error?.message && String(error.message).trim())
+        ? String(error.message)
+        : "(sin mensaje)";
+  console.error("[cleanup-notificaciones] Error:", message);
+  if (error?.code) console.error("[cleanup-notificaciones] code:", error.code);
+  if (error?.detail) console.error("[cleanup-notificaciones] detail:", error.detail);
+  if (error?.hint) console.error("[cleanup-notificaciones] hint:", error.hint);
+  if (error?.stack) console.error(error.stack);
   process.exit(1);
 });
