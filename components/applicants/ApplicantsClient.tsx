@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import { Download } from 'lucide-react';
@@ -49,8 +49,22 @@ export default function ApplicantsClient({
   const [nucleoFilter, setNucleoFilter] = useState('');
   const [estadoCivilFilter, setEstadoCivilFilter] = useState('');
   const [nacionalidadFilter, setNacionalidadFilter] = useState('');
+  const [fechaInicioFilter, setFechaInicioFilter] = useState('');
+  const [fechaFinFilter, setFechaFinFilter] = useState('');
   const [isFiltering, setIsFiltering] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  // Evita condiciones de carrera cuando se setean ambas fechas
+  const fechaInicioRef = useRef(fechaInicioFilter);
+  const fechaFinRef = useRef(fechaFinFilter);
+
+  useEffect(() => {
+    fechaInicioRef.current = fechaInicioFilter;
+  }, [fechaInicioFilter]);
+
+  useEffect(() => {
+    fechaFinRef.current = fechaFinFilter;
+  }, [fechaFinFilter]);
 
   // Deletion state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -182,7 +196,97 @@ export default function ApplicantsClient({
     setNucleoFilter('');
     setEstadoCivilFilter('');
     setNacionalidadFilter('');
+    setFechaInicioFilter('');
+    setFechaFinFilter('');
+    fechaInicioRef.current = '';
+    fechaFinRef.current = '';
     await applyServerFilters({ nucleo: '', estadoCivil: '', nacionalidad: '' });
+  };
+
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const isValidISODate = (value: string): boolean => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const d = new Date(value);
+    return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
+  };
+
+  const clampToToday = (value: string): string => (value > todayISO ? todayISO : value);
+
+  const handleFechaInicioChange = (raw: string) => {
+    const next = raw?.trim() || '';
+
+    if (!next) {
+      fechaInicioRef.current = '';
+      fechaFinRef.current = '';
+      setFechaInicioFilter('');
+      setFechaFinFilter('');
+      return;
+    }
+
+    if (!isValidISODate(next)) {
+      toast.error('Formato de fecha inválido. Use YYYY-MM-DD');
+      return;
+    }
+
+    const clamped = clampToToday(next);
+    if (clamped !== next) {
+      toast.info('La fecha no puede ser futura; se ajustó a hoy.');
+    }
+
+    fechaInicioRef.current = clamped;
+    const currentFin = fechaFinRef.current;
+    const fin = currentFin && isValidISODate(currentFin) ? clampToToday(currentFin) : '';
+
+    setFechaInicioFilter(clamped);
+    if (!fin) {
+      fechaFinRef.current = clamped;
+      setFechaFinFilter(clamped);
+      return;
+    }
+    if (fin < clamped) {
+      fechaFinRef.current = clamped;
+      setFechaFinFilter(clamped);
+    }
+  };
+
+  const handleFechaFinChange = (raw: string) => {
+    const next = raw?.trim() || '';
+
+    if (!next) {
+      fechaInicioRef.current = '';
+      fechaFinRef.current = '';
+      setFechaInicioFilter('');
+      setFechaFinFilter('');
+      return;
+    }
+
+    if (!isValidISODate(next)) {
+      toast.error('Formato de fecha inválido. Use YYYY-MM-DD');
+      return;
+    }
+
+    const clamped = clampToToday(next);
+    if (clamped !== next) {
+      toast.info('La fecha no puede ser futura; se ajustó a hoy.');
+    }
+
+    fechaFinRef.current = clamped;
+    const currentInicio = fechaInicioRef.current;
+    const inicio = currentInicio && isValidISODate(currentInicio) ? clampToToday(currentInicio) : '';
+
+    if (!inicio) {
+      fechaInicioRef.current = clamped;
+      setFechaInicioFilter(clamped);
+      setFechaFinFilter(clamped);
+      return;
+    }
+
+    if (clamped < inicio) {
+      toast.error('La fecha fin no puede ser menor que la fecha inicio');
+      return;
+    }
+
+    setFechaFinFilter(clamped);
   };
 
   // Función para normalizar texto removiendo acentos
@@ -195,7 +299,7 @@ export default function ApplicantsClient({
 
   // Filtrar solicitantes
   const filteredSolicitantes = useMemo(() => {
-    if (!searchValue && !nucleoFilter) {
+    if (!searchValue && !nucleoFilter && !fechaInicioFilter && !fechaFinFilter) {
       return solicitantes;
     }
 
@@ -211,9 +315,14 @@ export default function ApplicantsClient({
 
       const matchesNucleo = !nucleoFilter || solicitante.nucleo === nucleoFilter;
 
-      return matchesSearch && matchesNucleo;
+      const f = solicitante.fecha_solicitud;
+      const matchesDateRange =
+        (!fechaInicioFilter || (f && f >= fechaInicioFilter)) &&
+        (!fechaFinFilter || (f && f <= fechaFinFilter));
+
+      return matchesSearch && matchesNucleo && matchesDateRange;
     });
-  }, [solicitantes, searchValue, nucleoFilter]);
+  }, [solicitantes, searchValue, nucleoFilter, fechaInicioFilter, fechaFinFilter]);
 
   const handleView = (data: Record<string, unknown>) => {
     const solicitante = data as unknown as Solicitante;
@@ -323,7 +432,7 @@ export default function ApplicantsClient({
           }}
           searchValue={searchValue}
           onSearchChange={setSearchValue}
-           searchPlaceholder="Buscar solicitantes..."
+          searchPlaceholder="Buscar solicitantes..."
           nucleoFilter={nucleoFilter}
           onNucleoChange={handleNucleoChange}
           nucleoOptions={nucleoOptions}
@@ -332,6 +441,11 @@ export default function ApplicantsClient({
           nacionalidadFilter={nacionalidadFilter}
           onNacionalidadChange={handleNacionalidadChange}
           onClearFilters={handleClearApplicantFilters}
+          showDateRange={true}
+          fechaInicio={fechaInicioFilter}
+          fechaFin={fechaFinFilter}
+          onFechaInicioChange={handleFechaInicioChange}
+          onFechaFinChange={handleFechaFinChange}
         />
       </motion.div>
       <div className="mt-10"></div>

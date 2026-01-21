@@ -45,13 +45,7 @@ export function useNotifications() {
             id: String(n.id_notificacion),
             title: n.titulo,
             message: n.mensaje,
-            time: (() => {
-              const rawDate = n.fecha_creacion ?? n.fecha;
-              if (!rawDate) return '';
-              const date = rawDate instanceof Date ? rawDate : new Date(rawDate);
-              if (Number.isNaN(date.getTime())) return '';
-              return date.toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
-            })(),
+            time: '',
             read: n.leida,
           }))
         );

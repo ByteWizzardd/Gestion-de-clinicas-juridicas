@@ -362,7 +362,7 @@ function Filter({
                 zIndex: 10000,
                 width: submenuPosition.width || undefined,
               }}
-              className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[200px] p-4"
+              className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[200px] p-4 max-h-[calc(100vh-120px)] overflow-y-auto shadow-xl"
             >
               <div className="space-y-3">
                 {/* Opciones rápidas de fecha (mismo patrón que Citas) */}
@@ -489,7 +489,7 @@ function Filter({
               zIndex: 10000,
               width: submenuPosition.width || undefined,
             }}
-            className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[180px] p-2 max-h-[300px] overflow-y-auto"
+            className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[180px] p-2 max-h-[calc(100vh-120px)] overflow-y-auto shadow-xl"
           >
             <motion.button
               type="button"
@@ -581,8 +581,32 @@ function Filter({
                 zIndex: 9999,
                 width: menuPosition.width || undefined,
               }}
-              className="bg-white border border-gray-300 rounded-2xl shadow-lg w-auto p-2"
+              className="bg-white border border-gray-300 rounded-2xl shadow-lg w-auto min-w-[180px] p-2 max-h-[calc(100vh-120px)] overflow-y-auto shadow-xl"
             >
+              {/* Opción: Rango de Fechas */}
+              {showDateRange && (onFechaInicioChange || onFechaFinChange) && (
+                <>
+                  <motion.button
+                    ref={activeSubmenu === 'fechas' ? activeButtonRef : undefined}
+                    type="button"
+                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                    onClick={(e) => handleSubmenuToggle('fechas', e)}
+                    className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'fechas'
+                      ? 'bg-primary-light text-primary'
+                      : (fechaInicio || fechaFin)
+                        ? 'text-primary hover:bg-gray-100'
+                        : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                  >
+                    <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'fechas' ? '-rotate-90' : ''}`} />
+                    <div className="flex-1" />
+                    <span>Rango de fechas</span>
+                    <Calendar className="w-4 h-4" />
+                  </motion.button>
+                  <div className="border-t border-gray-200 my-2"></div>
+                </>
+              )}
               {/* Opción: Núcleo */}
               {onNucleoChange && (
                 <>
@@ -754,30 +778,6 @@ function Filter({
                 </>
               )}
 
-              {/* Opción: Rango de Fechas */}
-              {showDateRange && (onFechaInicioChange || onFechaFinChange) && (
-                <>
-                  <motion.button
-                    ref={activeSubmenu === 'fechas' ? activeButtonRef : undefined}
-                    type="button"
-                    whileTap={{ scale: 0.95 }}
-                    whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
-                    onClick={(e) => handleSubmenuToggle('fechas', e)}
-                    className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'fechas'
-                      ? 'bg-primary-light text-primary'
-                      : (fechaInicio || fechaFin)
-                        ? 'text-primary hover:bg-gray-100'
-                        : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                  >
-                    <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'fechas' ? '-rotate-90' : ''}`} />
-                    <div className="flex-1" />
-                    <span>Rango de fechas</span>
-                    <Calendar className="w-4 h-4" />
-                  </motion.button>
-                  <div className="border-t border-gray-200 my-2"></div>
-                </>
-              )}
 
               {/* Botón limpiar filtros */}
               {hasActiveFilter && (

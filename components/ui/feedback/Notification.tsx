@@ -127,7 +127,6 @@ const Notification: React.FC<NotificationProps> = () => {
                     <div className="flex-1 min-w-0">
                       <p className="text-md font-medium text-neutral-800">{notification.title}</p>
                       <p className="text-base text-neutral-600 mt-1 line-clamp-2">{notification.message}</p>
-                      <p className="text-base text-neutral-500 mt-1">{notification.time}</p>
                     </div>
 
                     <button
@@ -150,13 +149,7 @@ const Notification: React.FC<NotificationProps> = () => {
               </div>
             )}
           </div>
-          {notifications.length > 0 && (
-            <div className="p-3 border-t border-gray-200 shrink-0">
-              <button className="w-full text-base text-primary hover:text-primary/80 font-medium">
-                Ver todas las notificaciones
-              </button>
-            </div>
-          )}
+
         </motion.div>
       </AnimatePresence>
     </DropdownMenu>

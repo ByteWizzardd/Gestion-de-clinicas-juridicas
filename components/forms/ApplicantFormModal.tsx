@@ -1736,11 +1736,11 @@ export default function ApplicantFormModal({
     let cedulaNumero = solicitante.cedula || '';
 
     // Si la cédula tiene formato "V-XXXX", extraer el tipo y el número
-    const cedulaMatch = cedulaNumero.match(/^([VEJP])-?(.+)$/);
+    const cedulaMatch = cedulaNumero.match(/^([VE])-?(.+)$/);
     if (cedulaMatch) {
       cedulaTipo = cedulaMatch[1];
       cedulaNumero = cedulaMatch[2]; // Ya viene sin el guión después del tipo
-    } else if (cedulaNumero.match(/^[VEJP]/)) {
+    } else if (cedulaNumero.match(/^[VE]/)) {
       // Fallback: si viene como "V12345678" (sin guión), extraer el tipo
       cedulaTipo = cedulaNumero[0];
       cedulaNumero = cedulaNumero.substring(1);
@@ -1820,11 +1820,11 @@ export default function ApplicantFormModal({
     let cedulaTipo = 'V';
     let cedulaNumero = usuario.cedula || '';
 
-    const cedulaMatch = cedulaNumero.match(/^([VEJP])-?(.+)$/);
+    const cedulaMatch = cedulaNumero.match(/^([VE])-?(.+)$/);
     if (cedulaMatch) {
       cedulaTipo = cedulaMatch[1];
       cedulaNumero = cedulaMatch[2];
-    } else if (cedulaNumero.match(/^[VEJP]/)) {
+    } else if (cedulaNumero.match(/^[VE]/)) {
       cedulaTipo = cedulaNumero[0];
       cedulaNumero = cedulaNumero.substring(1);
     }
@@ -1834,12 +1834,10 @@ export default function ApplicantFormModal({
 
     // Asignar nacionalidad según el tipo de cédula
     let nacionalidadAsignada = '';
-    if (cedulaTipo === 'V' || cedulaTipo === 'J') {
+    if (cedulaTipo === 'V') {
       nacionalidadAsignada = 'V';
     } else if (cedulaTipo === 'E') {
       nacionalidadAsignada = 'E'; // Extranjero (el schema usa 'E')
-    } else if (cedulaTipo === 'P') {
-      nacionalidadAsignada = '';
     }
 
     // Actualizar el formulario con los datos del usuario
@@ -1897,23 +1895,21 @@ export default function ApplicantFormModal({
     let cedulaTipo = 'V';
     let cedulaNumero = beneficiario.cedula || '';
 
-    const cedulaMatch = cedulaNumero.match(/^([VEJP])-?(.+)$/);
+    const cedulaMatch = cedulaNumero.match(/^([VE])-?(.+)$/);
     if (cedulaMatch) {
       cedulaTipo = cedulaMatch[1];
       cedulaNumero = cedulaMatch[2];
-    } else if (cedulaNumero.match(/^[VEJP]/)) {
+    } else if (cedulaNumero.match(/^[VE]/)) {
       cedulaTipo = cedulaNumero[0];
       cedulaNumero = cedulaNumero.substring(1);
     }
 
     // Asignar nacionalidad según el tipo de cédula
     let nacionalidadAsignada = '';
-    if (cedulaTipo === 'V' || cedulaTipo === 'J') {
+    if (cedulaTipo === 'V') {
       nacionalidadAsignada = 'V';
     } else if (cedulaTipo === 'E') {
       nacionalidadAsignada = 'E'; // Extranjero (el schema usa 'E')
-    } else if (cedulaTipo === 'P') {
-      nacionalidadAsignada = '';
     }
 
     // Actualizar el formulario with los datos del beneficiario
@@ -1964,8 +1960,6 @@ export default function ApplicantFormModal({
           selectOptions={[
             { value: 'V', label: 'V' },
             { value: 'E', label: 'E' },
-            { value: 'J', label: 'J' },
-            { value: 'P', label: 'P' },
           ]}
           onSelectChange={(value) => {
             updateField('cedulaTipo', value);

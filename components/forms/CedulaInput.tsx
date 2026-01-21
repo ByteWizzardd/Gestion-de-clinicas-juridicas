@@ -146,8 +146,6 @@ export default function CedulaInput({
   const tipoOptions = [
     { value: 'V', label: 'V' },
     { value: 'E', label: 'E' },
-    { value: 'J', label: 'J' },
-    { value: 'P', label: 'P' },
   ];
 
   // Cerrar sugerencias al hacer clic fuera
@@ -232,11 +230,11 @@ export default function CedulaInput({
     let numeroCedula = solicitante.cedula;
 
     // Si la cédula tiene formato "V-XXXX", extraer el tipo y el número
-    const cedulaMatch = solicitante.cedula.match(/^([VEJP])-?(.+)$/);
+    const cedulaMatch = solicitante.cedula.match(/^([VE])-?(.+)$/);
     if (cedulaMatch) {
       tipoCedula = cedulaMatch[1];
       numeroCedula = cedulaMatch[2]; // Ya viene sin el guión después del tipo
-    } else if (solicitante.cedula.match(/^[VEJP]/)) {
+    } else if (solicitante.cedula.match(/^[VE]/)) {
       // Fallback: si viene como "V12345678" (sin guión), extraer el tipo
       tipoCedula = solicitante.cedula[0];
       numeroCedula = solicitante.cedula.substring(1);
