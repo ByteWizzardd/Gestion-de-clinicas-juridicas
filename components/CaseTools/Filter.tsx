@@ -1,6 +1,19 @@
 'use client';
-import { Filter as FilterIcon, ChevronLeft, Building2, FileText, UserCheck, X, Activity, BookOpen, Calendar, User, Flag, Clock } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import {
+  Activity,
+  BookOpen,
+  Building2,
+  Calendar,
+  ChevronLeft,
+  Clock,
+  FileText,
+  Filter as FilterIcon,
+  Flag,
+  User,
+  UserCheck,
+  X,
+} from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { createPortal } from 'react-dom';
 import { getNucleosAction } from '@/app/actions/nucleos';
@@ -85,10 +98,12 @@ function Filter({
   showDateRange = false,
   recentActivityFilter,
   onRecentActivityChange,
-  showRecentActivity = false
+  showRecentActivity = false,
 }: FilterProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeSubmenu, setActiveSubmenu] = useState<'nucleo' | 'materia' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas' | null>(null);
+  const [activeSubmenu, setActiveSubmenu] = useState<
+    'nucleo' | 'materia' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas' | null
+  >(null);
   const [nucleos, setNucleos] = useState<Array<{ id_nucleo: number; nombre_nucleo: string; habilitado?: boolean }>>([]);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 });
   const [submenuPosition, setSubmenuPosition] = useState({ top: 0, left: 0, width: 0 });
@@ -149,7 +164,10 @@ function Filter({
   }, []);
 
   // Eliminar useEffect de posicionamiento automático y usar el evento de click
-  const handleSubmenuToggle = (type: 'nucleo' | 'materia' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas', e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleSubmenuToggle = (
+    type: 'nucleo' | 'materia' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas',
+    e: React.MouseEvent<HTMLButtonElement>
+  ) => {
     if (activeSubmenu === type) {
       setActiveSubmenu(null);
     } else {
@@ -176,7 +194,9 @@ function Filter({
         const nextLeft =
           preferredLeft >= margin
             ? preferredLeft
-            : (alternativeLeft + width <= window.innerWidth - margin ? alternativeLeft : clamp(preferredLeft, margin, maxLeft));
+            : alternativeLeft + width <= window.innerWidth - margin
+              ? alternativeLeft
+              : clamp(preferredLeft, margin, maxLeft);
 
         setSubmenuPosition({
           top: buttonRect.top,
@@ -343,12 +363,24 @@ function Filter({
 
     // Resolver filterValue dinámicamente
     switch (activeSubmenu) {
-      case 'nucleo': filterValue = nucleoFilter || ''; break;
-      case 'materia': filterValue = materiaFilter || ''; break;
-      case 'tramite': filterValue = tramiteFilter || ''; break;
-      case 'estatus': filterValue = estatusFilter || ''; break;
-      case 'estadoCivil': filterValue = estadoCivilFilter || ''; break;
-      case 'nacionalidad': filterValue = nacionalidadFilter || ''; break;
+      case 'nucleo':
+        filterValue = nucleoFilter || '';
+        break;
+      case 'materia':
+        filterValue = materiaFilter || '';
+        break;
+      case 'tramite':
+        filterValue = tramiteFilter || '';
+        break;
+      case 'estatus':
+        filterValue = estatusFilter || '';
+        break;
+      case 'estadoCivil':
+        filterValue = estadoCivilFilter || '';
+        break;
+      case 'nacionalidad':
+        filterValue = nacionalidadFilter || '';
+        break;
     }
 
     // Si es el submenú de fechas, renderizar DatePickers
@@ -560,8 +592,7 @@ function Filter({
           setIsOpen(!isOpen);
           if (isOpen) setActiveSubmenu(null);
         }}
-        className={`h-10 w-full sm:w-auto px-4 cursor-pointer rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors ${hasActiveFilter ? 'bg-primary-light border-primary-dark' : ''
-          }`}
+        className={`h-10 w-full sm:w-auto px-4 cursor-pointer rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors ${hasActiveFilter ? 'bg-primary-light border-primary-dark' : ''}`}
       >
         <FilterIcon className="w-[18px] h-[18px] text-[#414040]" />
         <span className="text-base text-right">Filtro</span>
@@ -573,72 +604,76 @@ function Filter({
       </button>
 
       {/* Menú principal */}
-      {isBrowser && createPortal(
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: -10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -10 }}
-              transition={{ duration: 0.1 }}
-              ref={menuRef}
-              style={{
-                position: 'fixed',
-                top: menuPosition.top,
-                left: menuPosition.left,
-                zIndex: 9999,
-                width: menuPosition.width || undefined,
-              }}
-              className="bg-white border border-gray-300 rounded-2xl shadow-lg w-auto min-w-[180px] p-2 max-h-[calc(100vh-120px)] overflow-y-auto shadow-xl"
-            >
-              {/* Opción: Rango de Fechas */}
-              {showDateRange && (onFechaInicioChange || onFechaFinChange) && (
-                <>
-                  <motion.button
-                    ref={activeSubmenu === 'fechas' ? activeButtonRef : undefined}
-                    type="button"
-                    whileTap={{ scale: 0.95 }}
-                    whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
-                    onClick={(e) => handleSubmenuToggle('fechas', e)}
-                    className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'fechas'
-                      ? 'bg-primary-light text-primary'
-                      : (fechaInicio || fechaFin)
-                        ? 'text-primary hover:bg-gray-100'
-                        : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                  >
-                    <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'fechas' ? '-rotate-90' : ''}`} />
-                    <div className="flex-1" />
-                    <span>Rango de fechas</span>
-                    <Calendar className="w-4 h-4" />
-                  </motion.button>
-                  <div className="border-t border-gray-200 my-2"></div>
-                </>
-              )}
-              {/* Opción: Núcleo */}
-              {onNucleoChange && (
-                <>
-                  <motion.button
-                    ref={activeSubmenu === 'nucleo' ? activeButtonRef : undefined}
-                    type="button"
-                    whileTap={{ scale: 0.95 }}
-                    whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
-                    onClick={(e) => handleSubmenuToggle('nucleo', e)}
-                    className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'nucleo'
-                      ? 'bg-primary-light text-primary'
-                      : nucleoFilter
-                        ? 'text-primary hover:bg-gray-100'
-                        : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                  >
-                    <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'nucleo' ? '-rotate-90' : ''}`} />
-                    <div className="flex-1" /> {/* Spacer agregado nuevamente para asegurar alineación derecha */}
-                    <span>{nucleoLabel}</span>
-                    <Building2 className="w-4 h-4" />
-                  </motion.button>
-                  <div className="border-t border-gray-200 my-2"></div>
-                </>
-              )}
+      {isBrowser &&
+        createPortal(
+          <AnimatePresence>
+            {isOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                transition={{ duration: 0.1 }}
+                ref={menuRef}
+                style={{
+                  position: 'fixed',
+                  top: menuPosition.top,
+                  left: menuPosition.left,
+                  zIndex: 9999,
+                  width: menuPosition.width || undefined,
+                }}
+                className="bg-white border border-gray-300 rounded-2xl shadow-lg w-auto min-w-[180px] p-2 max-h-[calc(100vh-120px)] overflow-y-auto shadow-xl"
+              >
+                {/* Opción: Rango de Fechas */}
+                {showDateRange && (onFechaInicioChange || onFechaFinChange) && (
+                  <>
+                    <motion.button
+                      ref={activeSubmenu === 'fechas' ? activeButtonRef : undefined}
+                      type="button"
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      onClick={(e) => handleSubmenuToggle('fechas', e)}
+                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'fechas'
+                        ? 'bg-primary-light text-primary'
+                        : fechaInicio || fechaFin
+                          ? 'text-primary hover:bg-gray-100'
+                          : 'text-gray-700 hover:bg-gray-100'}`}
+                    >
+                      <ChevronLeft
+                        className={`w-4 h-4 transition-transform ${activeSubmenu === 'fechas' ? '-rotate-90' : ''}`}
+                      />
+                      <div className="flex-1" />
+                      <span>Rango de fechas</span>
+                      <Calendar className="w-4 h-4" />
+                    </motion.button>
+                    <div className="border-t border-gray-200 my-2"></div>
+                  </>
+                )}
+
+                {/* Opción: Núcleo */}
+                {onNucleoChange && (
+                  <>
+                    <motion.button
+                      ref={activeSubmenu === 'nucleo' ? activeButtonRef : undefined}
+                      type="button"
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      onClick={(e) => handleSubmenuToggle('nucleo', e)}
+                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'nucleo'
+                        ? 'bg-primary-light text-primary'
+                        : nucleoFilter
+                          ? 'text-primary hover:bg-gray-100'
+                          : 'text-gray-700 hover:bg-gray-100'}`}
+                    >
+                      <ChevronLeft
+                        className={`w-4 h-4 transition-transform ${activeSubmenu === 'nucleo' ? '-rotate-90' : ''}`}
+                      />
+                      <div className="flex-1" /> {/* Spacer agregado nuevamente para asegurar alineación derecha */}
+                      <span>{nucleoLabel}</span>
+                      <Building2 className="w-4 h-4" />
+                    </motion.button>
+                    <div className="border-t border-gray-200 my-2"></div>
+                  </>
+                )}
 
               {/* Opción: Estado civil */}
               {onEstadoCivilChange && (
@@ -820,11 +855,11 @@ function Filter({
                   Limpiar filtros
                 </button>
               )}
-            </motion.div>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
 
       {/* Submenú flotante a la izquierda */}
       {renderSubmenu()}
