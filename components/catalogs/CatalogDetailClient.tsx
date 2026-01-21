@@ -32,7 +32,7 @@ export default function CatalogDetailClient({
     onAddClick,
     filterField,
     filterOptions,
-    filterLabel = "Estatus",
+    filterLabel = "Filtro",
     filterAllLabel,
     autoGenerateFilter = false,
     disableFilter = false,

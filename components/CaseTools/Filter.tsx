@@ -556,7 +556,7 @@ function Filter({
           }`}
       >
         <FilterIcon className="w-[18px] h-[18px] text-[#414040]" />
-        <span className="text-base text-right">{estatusLabel || 'Filtro'}</span>
+        <span className="text-base text-right">Filtro</span>
         {hasActiveFilter && (
           <span className="ml-1 bg-primary text-on-primary rounded-full w-5 h-5 flex items-center justify-center text-xs font-medium">
             {activeFilterCount}
