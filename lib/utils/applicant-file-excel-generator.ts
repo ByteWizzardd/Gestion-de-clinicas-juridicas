@@ -161,9 +161,9 @@ export async function generateSolicitanteFichaExcel(data: SolicitanteFichaData):
     sheet.getCell(r, 10).font = fontBold;
     if (s.fecha_nacimiento) {
         const fn = new Date(s.fecha_nacimiento);
-        const fdd = String(fn.getDate()).padStart(2, '0');
-        const fmm = String(fn.getMonth() + 1).padStart(2, '0');
-        const fyyyy = String(fn.getFullYear());
+        const fdd = String(fn.getUTCDate()).padStart(2, '0');
+        const fmm = String(fn.getUTCMonth() + 1).padStart(2, '0');
+        const fyyyy = String(fn.getUTCFullYear());
         drawBox(sheet, r, 16, fdd[0]); drawBox(sheet, r, 17, fdd[1]);
         drawBox(sheet, r, 19, fmm[0]); drawBox(sheet, r, 20, fmm[1]);
         drawBox(sheet, r, 22, fyyyy[0]); drawBox(sheet, r, 23, fyyyy[1]); drawBox(sheet, r, 24, fyyyy[2]); drawBox(sheet, r, 25, fyyyy[3]);
@@ -412,8 +412,17 @@ export async function generateSolicitanteFichaExcel(data: SolicitanteFichaData):
     sheet.mergeCells(r, 28, r, 42);
     sheet.getCell(r, 28).value = '27. ¿Cuántos NO trabajan?';
     sheet.getCell(r, 28).font = fontBold;
-    drawBox(sheet, r, 44, String(s.cant_no_trabajadores || '')[0] || '');
-    drawBox(sheet, r, 45, String(s.cant_no_trabajadores || '')[1] || '');
+
+    // Logic: if all people work, then non-working is 0
+    let cantNoTrabajaVal = s.cant_no_trabajadores;
+    if (s.cant_personas && s.cant_trabajadores && s.cant_personas === s.cant_trabajadores) {
+        cantNoTrabajaVal = 0;
+    }
+
+    const cantNoTrabajaStr = cantNoTrabajaVal !== undefined && cantNoTrabajaVal !== null ? String(cantNoTrabajaVal) : '';
+
+    drawBox(sheet, r, 44, cantNoTrabajaStr[0] || '');
+    drawBox(sheet, r, 45, cantNoTrabajaStr[1] || '');
     r += 2;
 
     // 28. Niños | 28a. Estudian

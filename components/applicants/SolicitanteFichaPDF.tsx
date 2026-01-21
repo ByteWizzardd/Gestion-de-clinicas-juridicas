@@ -160,9 +160,9 @@ const DateBoxes = ({ date, label }: { date?: string | Date, label?: string }) =>
   if (date) d = new Date(date);
   else if (label?.includes('Fecha:')) d = new Date(); // Default for Header Date
 
-  const day = d ? String(d.getDate()).padStart(2, '0') : '';
-  const month = d ? String(d.getMonth() + 1).padStart(2, '0') : '';
-  const year = d ? String(d.getFullYear()) : '';
+  const day = d ? String(d.getUTCDate()).padStart(2, '0') : '';
+  const month = d ? String(d.getUTCMonth() + 1).padStart(2, '0') : '';
+  const year = d ? String(d.getUTCFullYear()) : '';
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -294,6 +294,63 @@ export function SolicitanteFichaPDF({ data, logoBase64 }: SolicitanteFichaPDFPro
             <Text style={styles.valueText}>
               {[s.nombre_estado, s.nombre_municipio, s.nombre_parroquia].filter(Boolean).join(', ') || ''}
             </Text>
+          </View>
+        </View>
+
+        {/* 8. Sexo | 9. Fecha Nac | 10. Nacionalidad */}
+        {/* @ts-ignore */}
+        <View style={{ flexDirection: 'row', marginTop: 10 }}>
+          {/* @ts-ignore */}
+          <View style={{ width: '20%' }}>
+            {/* @ts-ignore */}
+            <Text style={styles.label}>8. Sexo:</Text>
+            {/* @ts-ignore */}
+            <View style={{ flexDirection: 'row' }}>
+              <Checkbox label="M" checked={s.sexo === 'M'} />
+              <Checkbox label="F" checked={s.sexo === 'F'} />
+            </View>
+          </View>
+          {/* @ts-ignore */}
+          <View style={{ width: '50%' }}>
+            {/* @ts-ignore */}
+            <DateBoxes date={s.fecha_nacimiento} label="9. Fecha Nac:" />
+          </View>
+          {/* @ts-ignore */}
+          <View style={{ width: '30%' }}>
+            {/* @ts-ignore */}
+            <Text style={styles.label}>10. Nacionalidad:</Text>
+            {/* @ts-ignore */}
+            <View style={{ flexDirection: 'row' }}>
+              <Checkbox label="V" checked={s.nacionalidad === 'V'} />
+              <Checkbox label="E" checked={s.nacionalidad === 'E'} />
+            </View>
+          </View>
+        </View>
+
+        {/* 11. Estado Civil | 12. Concubinato */}
+        {/* @ts-ignore */}
+        <View style={{ flexDirection: 'row', marginTop: 10 }}>
+          {/* @ts-ignore */}
+          <View style={{ width: '70%' }}>
+            {/* @ts-ignore */}
+            <Text style={styles.label}>11. Estado Civil:</Text>
+            {/* @ts-ignore */}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+              <Checkbox label="Soltero" checked={s.estado_civil === 'Soltero'} />
+              <Checkbox label="Casado" checked={s.estado_civil === 'Casado'} />
+              <Checkbox label="Divorciado" checked={s.estado_civil === 'Divorciado'} />
+              <Checkbox label="Viudo" checked={s.estado_civil === 'Viudo'} />
+            </View>
+          </View>
+          {/* @ts-ignore */}
+          <View style={{ width: '30%' }}>
+            {/* @ts-ignore */}
+            <Text style={styles.label}>12. Concubinato:</Text>
+            {/* @ts-ignore */}
+            <View style={{ flexDirection: 'row' }}>
+              <Checkbox label="Sí" checked={s.concubinato === true} />
+              <Checkbox label="No" checked={s.concubinato === false} />
+            </View>
           </View>
         </View>
 
@@ -524,18 +581,26 @@ export function SolicitanteFichaPDF({ data, logoBase64 }: SolicitanteFichaPDFPro
           {/* @ts-ignore */}
           <Text style={[styles.label, { marginBottom: 5 }]}>23. Artefactos domésticos, bienes o servicios del hogar</Text>
           {/* @ts-ignore */}
-          <View style={{ flexDirection: 'row' }}>
-            {/* @ts-ignore */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             <View style={{ width: '25%' }}>
               <Checkbox label="1. Nevera" checked={s.artefactos_domesticos?.includes && s.artefactos_domesticos.includes('Nevera')} />
+            </View>
+            <View style={{ width: '25%' }}>
               <Checkbox label="2. Lavadora" checked={s.artefactos_domesticos?.includes && s.artefactos_domesticos.includes('Lavadora')} />
+            </View>
+            <View style={{ width: '25%' }}>
               <Checkbox label="3. Computadora" checked={s.artefactos_domesticos?.includes && s.artefactos_domesticos.includes('Computadora')} />
+            </View>
+            <View style={{ width: '25%' }}>
               <Checkbox label="4. Cable Satelital" checked={s.artefactos_domesticos?.includes && s.artefactos_domesticos.includes('Cable Satelital')} />
             </View>
-            {/* @ts-ignore */}
             <View style={{ width: '25%' }}>
               <Checkbox label="5. Internet" checked={s.artefactos_domesticos?.includes && s.artefactos_domesticos.includes('Internet')} />
+            </View>
+            <View style={{ width: '25%' }}>
               <Checkbox label="6. Carro" checked={s.artefactos_domesticos?.includes && s.artefactos_domesticos.includes('Carro')} />
+            </View>
+            <View style={{ width: '25%' }}>
               <Checkbox label="7. Moto" checked={s.artefactos_domesticos?.includes && s.artefactos_domesticos.includes('Moto')} />
             </View>
           </View>
@@ -661,7 +726,14 @@ export function SolicitanteFichaPDF({ data, logoBase64 }: SolicitanteFichaPDFPro
               {/* @ts-ignore */}
               <Text style={[styles.valueText, { fontSize: 7, fontStyle: 'italic' }]}>{'(Incluya niños y adultos mayores)'}</Text>
             </View>
-            <CharacterBoxes value={String(s.cant_no_trabajadores || '')} count={2} />
+            <CharacterBoxes
+              value={String(
+                (s.cant_personas && s.cant_trabajadores && s.cant_personas === s.cant_trabajadores)
+                  ? 0
+                  : (s.cant_no_trabajadores ?? '')
+              )}
+              count={2}
+            />
           </View>
         </View>
 
