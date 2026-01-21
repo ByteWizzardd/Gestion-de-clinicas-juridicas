@@ -391,12 +391,12 @@ export function SolicitanteFichaPDF({ data, logoBase64 }: SolicitanteFichaPDFPro
             <View style={{ flexDirection: 'row' }}>
               {/* @ts-ignore */}
               <View style={{ marginRight: 15 }}>
-                <Checkbox label="a. Ama de casa" checked={s.nombre_actividad === 'Ama de casa'} />
+                <Checkbox label="a. Ama de casa" checked={s.nombre_actividad === 'Ama de Casa' || s.nombre_actividad === 'Ama de casa'} />
                 <Checkbox label="b. Estudiante" checked={s.nombre_actividad === 'Estudiante'} />
               </View>
               {/* @ts-ignore */}
               <View>
-                <Checkbox label="c. Pensionado/Jubilado" checked={s.nombre_actividad === 'Pensionado' || s.nombre_actividad === 'Jubilado'} />
+                <Checkbox label="c. Pensionado/Jubilado" checked={s.nombre_actividad === 'Pensionado/Jubilado' || s.nombre_actividad === 'Pensionado' || s.nombre_actividad === 'Jubilado'} />
                 <Checkbox label="d. Otra" checked={s.nombre_actividad === 'Otra'} />
               </View>
             </View>

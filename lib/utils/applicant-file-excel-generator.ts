@@ -235,9 +235,9 @@ export async function generateSolicitanteFichaExcel(data: SolicitanteFichaData):
     sheet.getCell(r, 23).value = '-> 14c. Condición actividad:';
     sheet.getCell(r, 23).font = fontBold;
     r++;
-    sheet.getCell(r, 23).value = 'Ama de casa'; drawBox(sheet, r, 32, s.nombre_actividad === 'Ama de casa' ? 'X' : '');
+    sheet.getCell(r, 23).value = 'Ama de casa'; drawBox(sheet, r, 32, (s.nombre_actividad === 'Ama de Casa' || s.nombre_actividad === 'Ama de casa') ? 'X' : '');
     sheet.getCell(r, 34).value = 'Estudiante'; drawBox(sheet, r, 42, s.nombre_actividad === 'Estudiante' ? 'X' : '');
-    sheet.getCell(r, 44).value = 'Pensionado'; drawBox(sheet, r, 52, s.nombre_actividad === 'Pensionado' ? 'X' : '');
+    sheet.getCell(r, 44).value = 'Pensionado'; drawBox(sheet, r, 52, (s.nombre_actividad === 'Pensionado/Jubilado' || s.nombre_actividad === 'Pensionado') ? 'X' : '');
     sheet.getCell(r, 54).value = 'Otra'; drawBox(sheet, r, 55, s.nombre_actividad === 'Otra' ? 'X' : '');
     r += 2;
 
