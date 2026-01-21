@@ -1,1 +1,0 @@
-SELECT a.* FROM acciones a WHERE id_caso = 22;
