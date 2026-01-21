@@ -573,7 +573,7 @@ export function SolicitanteFichaPDF({ data, logoBase64 }: SolicitanteFichaPDFPro
         <View style={styles.row}>
           {/* @ts-ignore */}
           <Text style={styles.label}>24. ¿Cuántas personas viven en la vivienda, incluyéndolo a usted?</Text>
-          <CharacterBoxes value={String((beneficiarios.length || 0) + 1)} count={2} />
+          <CharacterBoxes value={String(s.cant_personas || 0)} count={2} />
         </View>
 
         {/* 25. Jefe de Hogar & 25a. Educacion Jefe */}

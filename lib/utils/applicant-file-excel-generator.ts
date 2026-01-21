@@ -361,8 +361,9 @@ export async function generateSolicitanteFichaExcel(data: SolicitanteFichaData):
     sheet.mergeCells(r, 1, r, 25);
     sheet.getCell(r, 1).value = '24. ¿Cuántas personas viven en la vivienda?';
     sheet.getCell(r, 1).font = fontBold;
-    drawBox(sheet, r, 27, String(beneficiarios.length + 1)[0] || '');
-    drawBox(sheet, r, 28, String(beneficiarios.length + 1)[1] || '');
+    const cantPersonasStr = String(s.cant_personas || '0');
+    drawBox(sheet, r, 27, cantPersonasStr[0] || '0');
+    drawBox(sheet, r, 28, cantPersonasStr[1] || '');
     r += 2;
 
     // 25. Jefe de hogar + 25a. Educación jefe (lado a lado como en PDF)
