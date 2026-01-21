@@ -555,7 +555,7 @@ CREATE TABLE auditoria_insercion_solicitantes (
 CREATE TABLE auditoria_actualizacion_solicitantes (
     id SERIAL PRIMARY KEY,
     cedula_solicitante VARCHAR(20) NOT NULL,
-    -- Anterior
+    -- Anterior (Solicitante)
     nombres_anterior VARCHAR(100),
     apellidos_anterior VARCHAR(100),
     fecha_nacimiento_anterior DATE,
@@ -574,7 +574,7 @@ CREATE TABLE auditoria_actualizacion_solicitantes (
     id_estado_anterior INTEGER,
     num_municipio_anterior INTEGER,
     num_parroquia_anterior INTEGER,
-    -- Nuevo
+    -- Nuevo (Solicitante)
     nombres_nuevo VARCHAR(100),
     apellidos_nuevo VARCHAR(100),
     fecha_nacimiento_nuevo DATE,
@@ -593,6 +593,52 @@ CREATE TABLE auditoria_actualizacion_solicitantes (
     id_estado_nuevo INTEGER,
     num_municipio_nuevo INTEGER,
     num_parroquia_nuevo INTEGER,
+    -- Familia/Hogar (Anterior)
+    cant_personas_anterior INTEGER,
+    cant_trabajadores_anterior INTEGER,
+    cant_no_trabajadores_anterior INTEGER,
+    cant_ninos_anterior INTEGER,
+    cant_ninos_estudiando_anterior INTEGER,
+    jefe_hogar_anterior BOOLEAN,
+    ingresos_mensuales_anterior NUMERIC(10,2),
+    id_nivel_educativo_jefe_anterior INTEGER,
+    tipo_tiempo_estudio_jefe_anterior VARCHAR(20),
+    tiempo_estudio_jefe_anterior INTEGER,
+    -- Familia/Hogar (Nuevo)
+    cant_personas_nuevo INTEGER,
+    cant_trabajadores_nuevo INTEGER,
+    cant_no_trabajadores_nuevo INTEGER,
+    cant_ninos_nuevo INTEGER,
+    cant_ninos_estudiando_nuevo INTEGER,
+    jefe_hogar_nuevo BOOLEAN,
+    ingresos_mensuales_nuevo NUMERIC(10,2),
+    id_nivel_educativo_jefe_nuevo INTEGER,
+    tipo_tiempo_estudio_jefe_nuevo VARCHAR(20),
+    tiempo_estudio_jefe_nuevo INTEGER,
+    -- Vivienda (Anterior)
+    cant_habitaciones_anterior INTEGER,
+    cant_banos_anterior INTEGER,
+    -- Vivienda (Nuevo)
+    cant_habitaciones_nuevo INTEGER,
+    cant_banos_nuevo INTEGER,
+    -- Dirección
+    direccion_habitacion_anterior TEXT,
+    direccion_habitacion_nuevo TEXT,
+    -- Características de Vivienda
+    tipo_vivienda_anterior TEXT,
+    tipo_vivienda_nuevo TEXT,
+    material_piso_anterior TEXT,
+    material_piso_nuevo TEXT,
+    material_paredes_anterior TEXT,
+    material_paredes_nuevo TEXT,
+    material_techo_anterior TEXT,
+    material_techo_nuevo TEXT,
+    agua_potable_anterior TEXT,
+    agua_potable_nuevo TEXT,
+    eliminacion_aguas_negras_anterior TEXT,
+    eliminacion_aguas_negras_nuevo TEXT,
+    aseo_anterior TEXT,
+    aseo_nuevo TEXT,
     
     id_usuario_actualizo VARCHAR(20),
     fecha_actualizacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')

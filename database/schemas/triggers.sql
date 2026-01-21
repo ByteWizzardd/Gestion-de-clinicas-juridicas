@@ -285,10 +285,24 @@ CREATE OR REPLACE FUNCTION public.trigger_auditoria_actualizacion_familia()
 AS $function$
 DECLARE
     v_usuario VARCHAR(20);
+    v_usuario_crea VARCHAR(20);
     v_solicitante RECORD;
     v_nivel_edu_jefe_ant VARCHAR(100);
     v_nivel_edu_jefe_nue VARCHAR(100);
 BEGIN
+    -- Verificar si estamos en modo de creación (ignorar actualizaciones durante la creación)
+    BEGIN
+        v_usuario_crea := current_setting('app.usuario_crea_solicitante', true);
+    EXCEPTION
+        WHEN OTHERS THEN
+            v_usuario_crea := NULL;
+    END;
+    
+    -- Si estamos en modo creación, NO registrar como actualización
+    IF v_usuario_crea IS NOT NULL AND v_usuario_crea != '' THEN
+        RETURN NEW;
+    END IF;
+
     -- Obtener el usuario
     BEGIN
         v_usuario := current_setting('app.usuario_actualiza_solicitante', true);
@@ -542,6 +556,7 @@ CREATE OR REPLACE FUNCTION public.trigger_auditoria_actualizacion_solicitante()
 AS $function$
 DECLARE
     v_usuario VARCHAR(20);
+    v_usuario_crea VARCHAR(20);
     v_hay_cambio BOOLEAN := FALSE;
     v_jefe_hogar_ant BOOLEAN;
     v_jefe_hogar_nue BOOLEAN;
@@ -550,6 +565,19 @@ DECLARE
     v_ingresos_ant NUMERIC;
     v_ingresos_nue NUMERIC;
 BEGIN
+    -- Verificar si estamos en modo de creación (ignorar actualizaciones durante la creación)
+    BEGIN
+        v_usuario_crea := current_setting('app.usuario_crea_solicitante', true);
+    EXCEPTION
+        WHEN OTHERS THEN
+            v_usuario_crea := NULL;
+    END;
+    
+    -- Si estamos en modo creación, NO registrar como actualización
+    IF v_usuario_crea IS NOT NULL AND v_usuario_crea != '' THEN
+        RETURN NEW;
+    END IF;
+
     -- Obtener el usuario que actualiza
     BEGIN
         v_usuario := current_setting('app.usuario_actualiza_solicitante', true);
@@ -763,9 +791,23 @@ CREATE OR REPLACE FUNCTION public.trigger_auditoria_actualizacion_vivienda()
 AS $function$
 DECLARE
     v_usuario VARCHAR(20);
+    v_usuario_crea VARCHAR(20);
     v_solicitante RECORD;
     v_familia RECORD;
 BEGIN
+    -- Verificar si estamos en modo de creación (ignorar actualizaciones durante la creación)
+    BEGIN
+        v_usuario_crea := current_setting('app.usuario_crea_solicitante', true);
+    EXCEPTION
+        WHEN OTHERS THEN
+            v_usuario_crea := NULL;
+    END;
+    
+    -- Si estamos en modo creación, NO registrar como actualización
+    IF v_usuario_crea IS NOT NULL AND v_usuario_crea != '' THEN
+        RETURN NEW;
+    END IF;
+
     -- Obtener el usuario
     BEGIN
         v_usuario := current_setting('app.usuario_actualiza_solicitante', true);
@@ -830,6 +872,7 @@ CREATE OR REPLACE FUNCTION public.trigger_auditoria_artefactos()
 AS $function$
 DECLARE
     v_usuario VARCHAR(20);
+    v_usuario_crea VARCHAR(20);
     v_id_auditoria INTEGER;
     v_solicitante RECORD;
     v_familia RECORD;
@@ -848,6 +891,23 @@ BEGIN
             RETURN OLD;
         END IF;
         v_cedula_solicitante := OLD.cedula_solicitante;
+    END IF;
+
+    -- Verificar si estamos en modo de creación (ignorar actualizaciones durante la creación)
+    BEGIN
+        v_usuario_crea := current_setting('app.usuario_crea_solicitante', true);
+    EXCEPTION
+        WHEN OTHERS THEN
+            v_usuario_crea := NULL;
+    END;
+    
+    -- Si estamos en modo creación, NO registrar como actualización
+    IF v_usuario_crea IS NOT NULL AND v_usuario_crea != '' THEN
+        IF TG_OP = 'INSERT' THEN
+            RETURN NEW;
+        ELSE
+            RETURN OLD;
+        END IF;
     END IF;
 
     -- Obtener el usuario que actualiza

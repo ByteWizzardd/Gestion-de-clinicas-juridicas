@@ -53,6 +53,19 @@ SELECT
     a.cant_no_trabajadores_anterior, a.cant_no_trabajadores_nuevo,
     a.cant_ninos_anterior, a.cant_ninos_nuevo,
     a.cant_ninos_estudiando_anterior, a.cant_ninos_estudiando_nuevo,
+    -- Tiempo de estudio del jefe
+    a.tipo_tiempo_estudio_jefe_anterior, a.tipo_tiempo_estudio_jefe_nuevo,
+    a.tiempo_estudio_jefe_anterior, a.tiempo_estudio_jefe_nuevo,
+    -- Dirección
+    a.direccion_habitacion_anterior, a.direccion_habitacion_nuevo,
+    -- Características de vivienda
+    a.tipo_vivienda_anterior, a.tipo_vivienda_nuevo,
+    a.material_piso_anterior, a.material_piso_nuevo,
+    a.material_paredes_anterior, a.material_paredes_nuevo,
+    a.material_techo_anterior, a.material_techo_nuevo,
+    a.agua_potable_anterior, a.agua_potable_nuevo,
+    a.eliminacion_aguas_negras_anterior, a.eliminacion_aguas_negras_nuevo,
+    a.aseo_anterior, a.aseo_nuevo,
     -- Artefactos agregados por estado
     COALESCE(
         (SELECT json_agg(artefacto ORDER BY artefacto)

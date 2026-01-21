@@ -3282,6 +3282,34 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 </div>
               )}
 
+              {/* Tiempo de Estudio */}
+              {(r.tiempo_estudio_anterior !== r.tiempo_estudio_nuevo || r.tipo_tiempo_estudio_anterior !== r.tipo_tiempo_estudio_nuevo) && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Tiempo de Estudio:{' '}
+                    <span className="line-through text-red-500">
+                      {r.tiempo_estudio_anterior ? `${r.tiempo_estudio_anterior} ${r.tipo_tiempo_estudio_anterior || ''}` : 'N/A'}
+                    </span>
+                    {' → '}
+                    <span className="text-green-600">
+                      {r.tiempo_estudio_nuevo ? `${r.tiempo_estudio_nuevo} ${r.tipo_tiempo_estudio_nuevo || ''}` : 'N/A'}
+                    </span>
+                  </p>
+                </div>
+              )}
+
+              {/* Dirección de Habitación */}
+              {(r.direccion_habitacion_anterior !== r.direccion_habitacion_nuevo) && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Dirección:{' '}
+                    <span className="line-through text-red-500">{r.direccion_habitacion_anterior || 'N/A'}</span>
+                    {' → '}
+                    <span className="text-green-600">{r.direccion_habitacion_nuevo || 'N/A'}</span>
+                  </p>
+                </div>
+              )}
+
               {/* Condición de Trabajo */}
               {(r.id_trabajo_anterior !== r.id_trabajo_nuevo) && (
                 <div className="mb-2">
@@ -3367,6 +3395,22 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
               </div>
             )}
 
+            {/* Tiempo de Estudio del Jefe */}
+            {(r.tiempo_estudio_jefe_anterior !== r.tiempo_estudio_jefe_nuevo || r.tipo_tiempo_estudio_jefe_anterior !== r.tipo_tiempo_estudio_jefe_nuevo) && (
+              <div className="mb-2">
+                <p className="text-sm text-gray-600">
+                  Tiempo Estudio Jefe:{' '}
+                  <span className="line-through text-red-500">
+                    {r.tiempo_estudio_jefe_anterior ? `${r.tiempo_estudio_jefe_anterior} ${r.tipo_tiempo_estudio_jefe_anterior || ''}` : 'N/A'}
+                  </span>
+                  {' → '}
+                  <span className="text-green-600">
+                    {r.tiempo_estudio_jefe_nuevo ? `${r.tiempo_estudio_jefe_nuevo} ${r.tipo_tiempo_estudio_jefe_nuevo || ''}` : 'N/A'}
+                  </span>
+                </p>
+              </div>
+            )}
+
             {/* Ingresos Mensuales */}
             {(String(r.ingresos_mensuales_anterior ?? '') !== String(r.ingresos_mensuales_nuevo ?? '')) && (
               <div className="mb-2">
@@ -3403,6 +3447,90 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                   <span className="line-through text-red-500">{r.cant_banos_anterior ?? 'N/A'}</span>
                   {' → '}
                   <span className="text-green-600">{r.cant_banos_nuevo ?? 'N/A'}</span>
+                </p>
+              </div>
+            )}
+
+            {/* Tipo Vivienda */}
+            {(r.tipo_vivienda_anterior !== r.tipo_vivienda_nuevo) && (
+              <div className="mb-2">
+                <p className="text-sm text-gray-600">
+                  Tipo Vivienda:{' '}
+                  <span className="line-through text-red-500">{r.tipo_vivienda_anterior || 'N/A'}</span>
+                  {' → '}
+                  <span className="text-green-600">{r.tipo_vivienda_nuevo || 'N/A'}</span>
+                </p>
+              </div>
+            )}
+
+            {/* Material Piso */}
+            {(r.material_piso_anterior !== r.material_piso_nuevo) && (
+              <div className="mb-2">
+                <p className="text-sm text-gray-600">
+                  Piso:{' '}
+                  <span className="line-through text-red-500">{r.material_piso_anterior || 'N/A'}</span>
+                  {' → '}
+                  <span className="text-green-600">{r.material_piso_nuevo || 'N/A'}</span>
+                </p>
+              </div>
+            )}
+
+            {/* Material Paredes */}
+            {(r.material_paredes_anterior !== r.material_paredes_nuevo) && (
+              <div className="mb-2">
+                <p className="text-sm text-gray-600">
+                  Paredes:{' '}
+                  <span className="line-through text-red-500">{r.material_paredes_anterior || 'N/A'}</span>
+                  {' → '}
+                  <span className="text-green-600">{r.material_paredes_nuevo || 'N/A'}</span>
+                </p>
+              </div>
+            )}
+
+            {/* Material Techo */}
+            {(r.material_techo_anterior !== r.material_techo_nuevo) && (
+              <div className="mb-2">
+                <p className="text-sm text-gray-600">
+                  Techo:{' '}
+                  <span className="line-through text-red-500">{r.material_techo_anterior || 'N/A'}</span>
+                  {' → '}
+                  <span className="text-green-600">{r.material_techo_nuevo || 'N/A'}</span>
+                </p>
+              </div>
+            )}
+
+            {/* Agua Potable */}
+            {(r.agua_potable_anterior !== r.agua_potable_nuevo) && (
+              <div className="mb-2">
+                <p className="text-sm text-gray-600">
+                  Agua Potable:{' '}
+                  <span className="line-through text-red-500">{r.agua_potable_anterior || 'N/A'}</span>
+                  {' → '}
+                  <span className="text-green-600">{r.agua_potable_nuevo || 'N/A'}</span>
+                </p>
+              </div>
+            )}
+
+            {/* Aguas Negras */}
+            {(r.eliminacion_aguas_negras_anterior !== r.eliminacion_aguas_negras_nuevo) && (
+              <div className="mb-2">
+                <p className="text-sm text-gray-600">
+                  Aguas Negras:{' '}
+                  <span className="line-through text-red-500">{r.eliminacion_aguas_negras_anterior || 'N/A'}</span>
+                  {' → '}
+                  <span className="text-green-600">{r.eliminacion_aguas_negras_nuevo || 'N/A'}</span>
+                </p>
+              </div>
+            )}
+
+            {/* Aseo */}
+            {(r.aseo_anterior !== r.aseo_nuevo) && (
+              <div className="mb-2">
+                <p className="text-sm text-gray-600">
+                  Aseo:{' '}
+                  <span className="line-through text-red-500">{r.aseo_anterior || 'N/A'}</span>
+                  {' → '}
+                  <span className="text-green-600">{r.aseo_nuevo || 'N/A'}</span>
                 </p>
               </div>
             )}

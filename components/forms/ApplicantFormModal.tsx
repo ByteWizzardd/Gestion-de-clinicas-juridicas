@@ -1962,6 +1962,7 @@ export default function ApplicantFormModal({
             { value: 'E', label: 'E' },
           ]}
           onSelectChange={(value) => {
+            if (isEditMode) return; // No permitir cambios en modo edición
             updateField('cedulaTipo', value);
             // Asignar nacionalidad automáticamente según el tipo de cédula
             // (esto se maneja dentro de updateField)
@@ -1972,6 +1973,7 @@ export default function ApplicantFormModal({
           }}
           inputValue={formData.cedulaNumero}
           onInputChange={(value) => {
+            if (isEditMode) return; // No permitir cambios en modo edición
             // El InputGroup ya filtra solo números si numbersOnly=true
             updateField('cedulaNumero', value);
             // Verificar cédula cuando se ingresa el número (con debounce)
@@ -1998,6 +2000,7 @@ export default function ApplicantFormModal({
           numbersOnly={true}
           inputPlaceholder="Ingrese cédula"
           error={errors.cedulaNumero}
+          disabled={isEditMode}
         />
         {/* Lista de sugerencias de cédula */}
         <AnimatePresence>

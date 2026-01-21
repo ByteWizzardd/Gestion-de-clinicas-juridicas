@@ -535,10 +535,34 @@ export interface SolicitanteActualizadoAuditRecord {
   parroquia_nuevo: string | null;
   jefe_hogar_anterior: boolean | null;
   jefe_hogar_nuevo: boolean | null;
+  id_nivel_educativo_jefe_anterior: number | null;
+  id_nivel_educativo_jefe_nuevo: number | null;
   nivel_educativo_jefe_anterior: string | null;
   nivel_educativo_jefe_nuevo: string | null;
+  tipo_tiempo_estudio_jefe_anterior: string | null;
+  tipo_tiempo_estudio_jefe_nuevo: string | null;
+  tiempo_estudio_jefe_anterior: number | null;
+  tiempo_estudio_jefe_nuevo: number | null;
   ingresos_mensuales_anterior: number | null;
   ingresos_mensuales_nuevo: number | null;
+  // Dirección
+  direccion_habitacion_anterior: string | null;
+  direccion_habitacion_nuevo: string | null;
+  // Características de Vivienda
+  tipo_vivienda_anterior: string | null;
+  tipo_vivienda_nuevo: string | null;
+  material_piso_anterior: string | null;
+  material_piso_nuevo: string | null;
+  material_paredes_anterior: string | null;
+  material_paredes_nuevo: string | null;
+  material_techo_anterior: string | null;
+  material_techo_nuevo: string | null;
+  agua_potable_anterior: string | null;
+  agua_potable_nuevo: string | null;
+  eliminacion_aguas_negras_anterior: string | null;
+  eliminacion_aguas_negras_nuevo: string | null;
+  aseo_anterior: string | null;
+  aseo_nuevo: string | null;
   // Datos de vivienda
   cant_habitaciones_anterior: number | null;
   cant_habitaciones_nuevo: number | null;

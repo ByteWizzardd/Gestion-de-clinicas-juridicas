@@ -2,6 +2,8 @@
 
 import { solicitantesService } from '@/lib/services/solicitantes.service';
 import { solicitantesQueries } from '@/lib/db/queries/solicitantes.queries';
+import { pool } from '@/lib/db/pool';
+import { loadSQL } from '@/lib/db/sql-loader';
 import { SolicitantesService } from '@/lib/services/solicitantes.service';
 import { AppError } from '@/lib/utils/errors';
 import { revalidatePath } from 'next/cache';
@@ -327,10 +329,45 @@ export async function updateSolicitanteAction(cedulaOriginal: string, data: Appl
         const promises = [];
 
         // Actualizar usuario (basic info + contact info)
+        // SOLO si el solicitante también es un usuario registrado en el sistema.
         if (data.nombres && data.apellidos && data.correoElectronico) {
           const telefono = data.telefonoCelular || '';
-          const { usuariosQueries } = await import('@/lib/db/queries/usuarios.queries');
-          promises.push(usuariosQueries.updateContactInfo(cedulaOriginal, data.nombres, data.apellidos, data.correoElectronico, telefono, authResult.user.cedula));
+
+          try {
+            const client = await pool.connect();
+            try {
+              // PRIMERO: Verificar si el solicitante existe como usuario
+              const checkUserResult = await client.query(
+                'SELECT 1 FROM usuarios WHERE cedula = $1',
+                [cedulaOriginal]
+              );
+
+              // Solo sincronizar si el usuario EXISTE
+              if (checkUserResult.rows.length > 0) {
+                await client.query('BEGIN');
+
+                // Variable para saltar el trigger de auditoría de usuarios (por si acaso)
+                await client.query("SELECT set_config('app.sync_solicitante_mode', 'true', true)");
+                await client.query("SELECT set_config('app.usuario_actualiza_usuario', $1, true)", [authResult.user.cedula]);
+
+                // Ejecutar update
+                const updateQuery = loadSQL('usuarios/update-contact-info.sql');
+                await client.query(updateQuery, [cedulaOriginal, data.nombres, data.apellidos, data.correoElectronico, telefono, authResult.user.cedula]);
+
+                await client.query('COMMIT');
+                console.log('[Sync Usuario] Datos sincronizados para usuario:', cedulaOriginal);
+              } else {
+                console.log('[Sync Usuario] Solicitante NO es usuario, omitiendo sincronización:', cedulaOriginal);
+              }
+            } catch (e) {
+              await client.query('ROLLBACK');
+              console.error('Error sincronizando usuario:', e);
+            } finally {
+              client.release();
+            }
+          } catch (error) {
+            console.error('Error obteniendo cliente para sync:', error);
+          }
         }
 
         // Actualizar beneficiario - tolerar posibles nombres alternativos de campos

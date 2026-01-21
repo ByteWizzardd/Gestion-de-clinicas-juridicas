@@ -518,10 +518,50 @@ export const solicitantesService = {
 
     try {
       await client.query('BEGIN');
-      // Establecer variable de sesión para auditoría
+      // Establecer variable de sesión para auditoría (por compatibilidad con otros triggers)
       if (usuarioActualizo) {
         await client.query("SELECT set_config('app.usuario_actualiza_solicitante', $1, true)", [usuarioActualizo]);
       }
+
+      // ========== OBTENER DATOS ANTERIORES PARA AUDITORÍA ==========
+      const datosAnterioresResult = await client.query(`
+        SELECT 
+          s.*,
+          fh.cant_personas, fh.cant_trabajadores, fh.cant_no_trabajadores,
+          fh.cant_ninos, fh.cant_ninos_estudiando, fh.jefe_hogar,
+          fh.ingresos_mensuales, fh.id_nivel_educativo_jefe,
+          fh.tipo_tiempo_estudio_jefe, fh.tiempo_estudio_jefe,
+          v.cant_habitaciones, v.cant_banos
+        FROM solicitantes s
+        LEFT JOIN familias_y_hogares fh ON s.cedula = fh.cedula_solicitante
+        LEFT JOIN viviendas v ON s.cedula = v.cedula_solicitante
+        WHERE s.cedula = $1
+      `, [cedulaOriginal]);
+
+      const datosAnteriores = datosAnterioresResult.rows[0] || {};
+
+      // Obtener características actuales de vivienda (tipos 1-7)
+      const caracteristicasResult = await client.query(`
+        SELECT c.id_tipo_caracteristica, c.descripcion
+        FROM asignadas_a a
+        JOIN caracteristicas c ON a.id_tipo_caracteristica = c.id_tipo_caracteristica AND a.num_caracteristica = c.num_caracteristica
+        WHERE a.cedula_solicitante = $1 AND c.id_tipo_caracteristica IN (1,2,3,4,5,6,7)
+      `, [cedulaOriginal]);
+
+      // Mapear características a un objeto para fácil acceso
+      const caracteristicasMap: Record<number, string> = {};
+      caracteristicasResult.rows.forEach(row => {
+        caracteristicasMap[row.id_tipo_caracteristica] = row.descripcion;
+      });
+
+      // Agregar al objeto datosAnteriores
+      datosAnteriores.tipo_vivienda = caracteristicasMap[1] || null;
+      datosAnteriores.material_piso = caracteristicasMap[2] || null;
+      datosAnteriores.material_paredes = caracteristicasMap[3] || null;
+      datosAnteriores.material_techo = caracteristicasMap[4] || null;
+      datosAnteriores.agua_potable = caracteristicasMap[5] || null;
+      datosAnteriores.aseo = caracteristicasMap[6] || null;
+      datosAnteriores.eliminacion_aguas_negras = caracteristicasMap[7] || null;
 
       // 1. Preparar datos básicos
       // Nota: No permitimos cambiar la cédula en la edición por ahora
@@ -665,7 +705,144 @@ export const solicitantesService = {
       await guardarCaracteristica(data.aseo, 6);
       await guardarCaracteristica(data.eliminacionAguasN, 7);
 
-      // 9. Artefactos domésticos (tipo 8): Solo modificar los que realmente cambiaron
+      // NOTA: Artefactos domésticos se procesan DESPUÉS de insertar auditoría
+      // para que el trigger pueda encontrar el registro existente
+
+      // ========== INSERTAR AUDITORÍA CONSOLIDADA ==========
+      // Obtener datos nuevos de familia y vivienda
+      const datosNuevosResult = await client.query(`
+        SELECT 
+          fh.cant_personas, fh.cant_trabajadores, fh.cant_no_trabajadores,
+          fh.cant_ninos, fh.cant_ninos_estudiando, fh.jefe_hogar,
+          fh.ingresos_mensuales, fh.id_nivel_educativo_jefe,
+          fh.tipo_tiempo_estudio_jefe, fh.tiempo_estudio_jefe,
+          v.cant_habitaciones, v.cant_banos
+        FROM familias_y_hogares fh
+        LEFT JOIN viviendas v ON fh.cedula_solicitante = v.cedula_solicitante
+        WHERE fh.cedula_solicitante = $1
+      `, [cedula]);
+
+      const datosNuevos = datosNuevosResult.rows[0] || {};
+
+      // Insertar UN SOLO registro de auditoría con TODO
+      // Insertar UN SOLO registro de auditoría con TODO
+      await client.query(`
+        INSERT INTO auditoria_actualizacion_solicitantes (
+          cedula_solicitante,
+          -- Solicitante anterior
+          nombres_anterior, apellidos_anterior, fecha_nacimiento_anterior,
+          telefono_local_anterior, telefono_celular_anterior, correo_electronico_anterior,
+          sexo_anterior, nacionalidad_anterior, estado_civil_anterior, concubinato_anterior,
+          tipo_tiempo_estudio_anterior, tiempo_estudio_anterior, id_nivel_educativo_anterior,
+          id_trabajo_anterior, id_actividad_anterior,
+          id_estado_anterior, num_municipio_anterior, num_parroquia_anterior,
+          -- Solicitante nuevo
+          nombres_nuevo, apellidos_nuevo, fecha_nacimiento_nuevo,
+          telefono_local_nuevo, telefono_celular_nuevo, correo_electronico_nuevo,
+          sexo_nuevo, nacionalidad_nuevo, estado_civil_nuevo, concubinato_nuevo,
+          tipo_tiempo_estudio_nuevo, tiempo_estudio_nuevo, id_nivel_educativo_nuevo,
+          id_trabajo_nuevo, id_actividad_nuevo,
+          id_estado_nuevo, num_municipio_nuevo, num_parroquia_nuevo,
+          -- Familia anterior
+          cant_personas_anterior, cant_trabajadores_anterior, cant_no_trabajadores_anterior,
+          cant_ninos_anterior, cant_ninos_estudiando_anterior, jefe_hogar_anterior,
+          ingresos_mensuales_anterior, id_nivel_educativo_jefe_anterior,
+          tipo_tiempo_estudio_jefe_anterior, tiempo_estudio_jefe_anterior,
+          -- Familia nuevo
+          cant_personas_nuevo, cant_trabajadores_nuevo, cant_no_trabajadores_nuevo,
+          cant_ninos_nuevo, cant_ninos_estudiando_nuevo, jefe_hogar_nuevo,
+          ingresos_mensuales_nuevo, id_nivel_educativo_jefe_nuevo,
+          tipo_tiempo_estudio_jefe_nuevo, tiempo_estudio_jefe_nuevo,
+          -- Vivienda anterior
+          cant_habitaciones_anterior, cant_banos_anterior,
+          -- Vivienda nuevo
+          cant_habitaciones_nuevo, cant_banos_nuevo,
+          -- Dirección
+          direccion_habitacion_anterior, direccion_habitacion_nuevo,
+          -- Características vivienda (tipo 1-7)
+          tipo_vivienda_anterior, tipo_vivienda_nuevo,
+          material_piso_anterior, material_piso_nuevo,
+          material_paredes_anterior, material_paredes_nuevo,
+          material_techo_anterior, material_techo_nuevo,
+          agua_potable_anterior, agua_potable_nuevo,
+          eliminacion_aguas_negras_anterior, eliminacion_aguas_negras_nuevo,
+          aseo_anterior, aseo_nuevo,
+          -- Meta
+          id_usuario_actualizo
+        ) VALUES (
+          $1,
+          -- Solicitante anterior
+          $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
+          -- Solicitante nuevo
+          $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37,
+          -- Familia anterior
+          $38, $39, $40, $41, $42, $43, $44, $45, $46, $47,
+          -- Familia nuevo
+          $48, $49, $50, $51, $52, $53, $54, $55, $56, $57,
+          -- Vivienda anterior
+          $58, $59,
+          -- Vivienda nuevo
+          $60, $61,
+          -- Dirección
+          $62, $63,
+          -- Características vivienda
+          $64, $65,
+          $66, $67,
+          $68, $69,
+          $70, $71,
+          $72, $73,
+          $74, $75,
+          $76, $77,
+          -- Meta
+          $78
+        )
+      `, [
+        cedula,
+        // Solicitante anterior
+        datosAnteriores.nombres, datosAnteriores.apellidos, datosAnteriores.fecha_nacimiento,
+        datosAnteriores.telefono_local, datosAnteriores.telefono_celular, datosAnteriores.correo_electronico,
+        datosAnteriores.sexo, datosAnteriores.nacionalidad, datosAnteriores.estado_civil, datosAnteriores.concubinato,
+        datosAnteriores.tipo_tiempo_estudio, datosAnteriores.tiempo_estudio, datosAnteriores.id_nivel_educativo,
+        datosAnteriores.id_trabajo, datosAnteriores.id_actividad,
+        datosAnteriores.id_estado, datosAnteriores.num_municipio, datosAnteriores.num_parroquia,
+        // Solicitante nuevo (usar los valores que acabamos de actualizar)
+        data.nombres, data.apellidos, data.fechaNacimiento,
+        data.telefonoLocal || null, telefonoCelularCompleto, data.correoElectronico,
+        sexo, datosAnteriores.nacionalidad, estadoCivil, concubinato,
+        tipoTiempoEstudioSolicitante, tiempoEstudioSolicitante, nivelEducativoSolicitante.id_nivel_educativo,
+        idTrabajo, idActividad,
+        data.idEstado ? parseInt(data.idEstado) : 1, data.numMunicipio ? parseInt(data.numMunicipio) : 1, data.numParroquia ? parseInt(data.numParroquia) : 1,
+        // Familia anterior
+        datosAnteriores.cant_personas, datosAnteriores.cant_trabajadores, datosAnteriores.cant_no_trabajadores,
+        datosAnteriores.cant_ninos, datosAnteriores.cant_ninos_estudiando, datosAnteriores.jefe_hogar,
+        datosAnteriores.ingresos_mensuales, datosAnteriores.id_nivel_educativo_jefe,
+        datosAnteriores.tipo_tiempo_estudio_jefe, datosAnteriores.tiempo_estudio_jefe,
+        // Familia nuevo
+        datosNuevos.cant_personas, datosNuevos.cant_trabajadores, datosNuevos.cant_no_trabajadores,
+        datosNuevos.cant_ninos, datosNuevos.cant_ninos_estudiando, datosNuevos.jefe_hogar,
+        datosNuevos.ingresos_mensuales, datosNuevos.id_nivel_educativo_jefe,
+        datosNuevos.tipo_tiempo_estudio_jefe, datosNuevos.tiempo_estudio_jefe,
+        // Vivienda anterior
+        datosAnteriores.cant_habitaciones, datosAnteriores.cant_banos,
+        // Vivienda nuevo
+        datosNuevos.cant_habitaciones, datosNuevos.cant_banos,
+        // Dirección
+        datosAnteriores.direccion_habitacion, data.direccionHabitacion || null,
+        // Características 
+        datosAnteriores.tipo_vivienda, data.tipoVivienda,
+        datosAnteriores.material_piso, data.materialPiso,
+        datosAnteriores.material_paredes, data.materialParedes,
+        datosAnteriores.material_techo, data.materialTecho,
+        datosAnteriores.agua_potable, data.aguaPotable,
+        datosAnteriores.eliminacion_aguas_negras, data.eliminacionAguasN,
+        datosAnteriores.aseo, data.aseo,
+        // Meta
+        usuarioActualizo
+      ]);
+
+      // ========== ARTEFACTOS DOMÉSTICOS (después de auditoría) ==========
+      // Se procesan DESPUÉS del INSERT de auditoría para que el trigger
+      // pueda encontrar el registro existente y asociarle los artefactos
       if (data.artefactosDomesticos) {
         // Obtener artefactos actuales con sus IDs
         const artefactosActualesResult = await client.query(
