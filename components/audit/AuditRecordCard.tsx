@@ -3222,6 +3222,22 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 </div>
               )}
 
+              {/* Concubinato */}
+              {(r.concubinato_anterior !== r.concubinato_nuevo) && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600">
+                    Concubinato:{' '}
+                    <span className="line-through text-red-500">
+                      {r.concubinato_anterior === true ? 'Sí' : (r.concubinato_anterior === false ? 'No' : 'N/A')}
+                    </span>
+                    {' → '}
+                    <span className="text-green-600">
+                      {r.concubinato_nuevo === true ? 'Sí' : (r.concubinato_nuevo === false ? 'No' : 'N/A')}
+                    </span>
+                  </p>
+                </div>
+              )}
+
               {/* Nacionalidad */}
               {(r.nacionalidad_anterior !== r.nacionalidad_nuevo) && (
                 <div className="mb-2">
