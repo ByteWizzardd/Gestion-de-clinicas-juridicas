@@ -2,9 +2,6 @@
 -- Parámetros:
 -- $1 = num_cita
 -- $2 = id_caso
---
--- Nota: Esta query debe ejecutarse después de eliminar los registros de atienden
--- que referencian esta cita, debido a la foreign key constraint.
 
 DELETE FROM citas
 WHERE num_cita = $1::INTEGER 

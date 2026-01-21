@@ -6,13 +6,6 @@
 --   p_cedula_actor VARCHAR(20): Usuario que realiza la acción
 --   p_motivo TEXT: Motivo de la eliminación (obligatorio)
 --
--- NOTA: El trigger trigger_auditoria_eliminacion_caso se encarga de registrar
--- la auditoría antes de eliminar usando OLD.
--- Las entidades relacionadas (citas, beneficiarios, acciones, soportes) 
--- también registran su auditoría con el motivo contextualizado.
--- Los ejecutores de acciones se capturan ANTES de eliminar para preservarlos
--- en la auditoría (tanto texto resumido como detalle por ejecutor).
--- =========================================================
 
 CREATE OR REPLACE FUNCTION eliminar_caso_fisico(
     p_id_caso INTEGER,

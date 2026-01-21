@@ -564,6 +564,33 @@ export async function updateUsuarioByCedulaAction(
       ? updates.tipo_usuario
       : tipoUsuarioActual;
 
+    // VALIDACIÓN: Si intenta cambiar de Profesor a otro rol, verificar que no tenga casos asignados
+    if (tipoUsuarioActual === "Profesor" && tipoUsuarioParaValores !== "Profesor") {
+      // Import dinámico para evitar ciclos si fuera necesario
+      const { casosQueries } = await import('@/lib/db/queries/casos.queries');
+
+      // Obtenemos los casos donde figura como supervisor
+      // La query getByUsuario retorna tanto si es estudiante como profesor.
+      // Al ser profesor actualmente, retornará sus supervisiones.
+      const casosSupervisor = await casosQueries.getByUsuario(cedula);
+
+      // Filtramos para asegurar que sean casos NO cerrados/entregados.
+      // Si el caso está en estatus 'Entregado', sí se permite el cambio.
+      // Por lo tanto, contamos solo los que NO están en 'Entregado'.
+      // Hacemos el cast a any[] porque getByUsuario puede retornar tipos genéricos dependiendo de la implementación
+      const casosActivos = (casosSupervisor as any[] || []).filter(c => c.estatus !== 'Entregado');
+
+      if (casosActivos.length > 0) {
+        return {
+          success: false,
+          error: {
+            message: `No se puede cambiar el rol de este usuario porque tiene ${casosActivos.length} caso(s) activos (no entregados) bajo su supervisión. Debes reasignarlos o finalizarlos primero.`,
+            code: "VALIDATION_ERROR"
+          }
+        };
+      }
+    }
+
     await usuariosQueries.updateUsuarioByCedulaAction({
       cedula,
       nombres: updates.nombre ?? "",
@@ -613,7 +640,6 @@ export async function updateUsuarioByCedulaAction(
         // Como el usuario no tiene esos datos, NO PODEMOS llamar updateBasicInfoByCedula sin riesgo de sobrescribir/necesitar esos datos.
         // Necesitamos un método updateNamesByCedula en beneficiariosQueries o obtener el beneficiario para preservar sus datos.
 
-        // Solución rápida: obtener beneficiario, y si existe, actualizarlo preservando fecha/sexo.
         const { beneficiariosQueries } = await import('@/lib/db/queries/beneficiarios.queries');
         const beneficiarioExistente = await beneficiariosQueries.getByCedula(cedula);
 

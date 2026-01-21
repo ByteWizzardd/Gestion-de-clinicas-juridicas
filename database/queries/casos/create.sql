@@ -10,7 +10,6 @@
 --   $8 = num_ambito_legal
 --   $9 = fecha_solicitud (si es NULL, se usa CURRENT_DATE)
 --   $10 = fecha_inicio_caso
--- Nota: La variable de sesión app.usuario_registra debe estar establecida antes de ejecutar este query
 INSERT INTO casos (
     tramite,
     observaciones,

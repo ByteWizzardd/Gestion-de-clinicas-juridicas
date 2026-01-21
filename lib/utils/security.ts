@@ -12,7 +12,6 @@ import jwt, { TokenExpiredError, JsonWebTokenError, SignOptions } from 'jsonwebt
 
 const JWT_SECRET: string = process.env.JWT_SECRET || 'tu-secreto-super-seguro-cambiar-en-produccion';
 // Por defecto: 30 días. Formato: número seguido de unidad (d=days, h=hours, m=minutes, s=seconds)
-// Ejemplos: '30d', '720h', '43200m'
 const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '30d';
 
 /**

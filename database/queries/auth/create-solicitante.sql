@@ -8,7 +8,6 @@
 -- $6 = fecha_nacimiento (requerido)
 -- $7 = sexo (requerido: 'M' o 'F')
 -- $8 = nacionalidad (requerido: 'V' o 'E')
--- Nota: Este query crea un solicitante básico. Los campos adicionales se actualizan después.
 
 INSERT INTO solicitantes (
     cedula,

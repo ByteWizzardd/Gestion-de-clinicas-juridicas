@@ -1,7 +1,5 @@
 -- Obtiene todas las citas con información relacionada
 -- Incluye: caso, solicitante, núcleo, ámbito legal, y usuarios que atendieron
--- Usa la vista view_casos_detalle para obtener estatus derivado
--- Usa json_agg para obtener TODOS los usuarios que atendieron (puede haber múltiples atenciones)
 SELECT 
     c.num_cita,
     c.id_caso,

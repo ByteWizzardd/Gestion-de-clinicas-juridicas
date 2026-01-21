@@ -1,4 +1,4 @@
--- Obtener casos agrupados por materia, categoría y subcategoría
+-- Obtener casos agrupados por materia, categoría y subcategoría para informe resumen
 -- Parámetros: $1 = fecha_inicio (opcional), $2 = fecha_fin (opcional)
 -- Agrupa por materia, categoría y subcategoría (sin ámbito legal)
 SELECT 
@@ -11,7 +11,9 @@ SELECT
     COUNT(*) AS cantidad_casos
 FROM casos c
 INNER JOIN materias m ON c.id_materia = m.id_materia
+-- Categorias pueden ser null, y puede que se pierdan en el conteo
 LEFT JOIN categorias cat ON c.id_materia = cat.id_materia AND c.num_categoria = cat.num_categoria
+-- Subcategorias pueden ser null y puede que se pierdan en el conteo
 LEFT JOIN subcategorias sub ON c.id_materia = sub.id_materia 
     AND c.num_categoria = sub.num_categoria 
     AND c.num_subcategoria = sub.num_subcategoria

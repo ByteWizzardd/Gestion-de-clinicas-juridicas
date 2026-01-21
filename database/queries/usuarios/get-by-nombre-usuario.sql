@@ -1,6 +1,5 @@
 -- Obtener usuario por nombre_usuario para autenticación
 -- Parámetros: $1 = nombre_usuario
--- IMPORTANTE: Ejecutar primero la migración add-nombre-usuario-to-usuarios.sql
 SELECT 
     u.cedula,
     u.habilitado_sistema AS habilitado,

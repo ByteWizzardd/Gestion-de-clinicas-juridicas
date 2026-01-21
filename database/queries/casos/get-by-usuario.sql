@@ -28,21 +28,21 @@ SELECT DISTINCT
     'Asignado' AS rol_usuario,
     sla.term,
     vc.estatus,
-    prof.nombre_completo_profesor AS nombre_responsable
+    -- Obtenemos el nombre del profesor supervisor más reciente mediante subconsulta
+    (
+        SELECT 
+            u.nombres || ' ' || u.apellidos
+        FROM supervisa s
+        INNER JOIN profesores p ON s.term = p.term AND s.cedula_profesor = p.cedula_profesor
+        INNER JOIN usuarios u ON p.cedula_profesor = u.cedula
+        INNER JOIN semestres sem ON p.term = sem.term
+        WHERE s.id_caso = vc.id_caso
+          AND s.habilitado = true
+        ORDER BY sem.fecha_inicio DESC, s.term DESC
+        LIMIT 1
+    ) AS nombre_responsable
 FROM se_le_asigna sla
 INNER JOIN view_casos_detalle vc ON sla.id_caso = vc.id_caso
-LEFT JOIN LATERAL (
-    SELECT 
-        u.nombres || ' ' || u.apellidos AS nombre_completo_profesor
-    FROM supervisa s
-    INNER JOIN profesores p ON s.term = p.term AND s.cedula_profesor = p.cedula_profesor
-    INNER JOIN usuarios u ON p.cedula_profesor = u.cedula
-    INNER JOIN semestres sem ON p.term = sem.term
-    WHERE s.id_caso = vc.id_caso
-      AND s.habilitado = true
-    ORDER BY sem.fecha_inicio DESC, s.term DESC
-    LIMIT 1
-) prof ON true
 WHERE 
     sla.cedula_estudiante = $1
     AND sla.habilitado = true

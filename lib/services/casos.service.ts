@@ -35,7 +35,6 @@ export const casosService = {
     /**
      * Obtiene todos los casos con información enriquecida
      * Incluye nombre del solicitante y nombre del profesor responsable
-     * OPTIMIZADO: Usa una sola query con JOIN LATERAL en lugar de N+1 queries
      */
     getAllCasos: async () => {
         try {

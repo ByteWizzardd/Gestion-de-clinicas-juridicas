@@ -46,11 +46,9 @@ SELECT
     vc.nombre_subcategoria
 FROM citas c
 INNER JOIN view_casos_detalle vc ON c.id_caso = vc.id_caso
-WHERE EXISTS (
-    SELECT 1 
-    FROM atienden a_filter 
-    WHERE a_filter.num_cita = c.num_cita 
-      AND a_filter.id_caso = c.id_caso 
-      AND a_filter.id_usuario = $1
-)
+-- Filtramos las citas uniendo con la tabla atienden solo para el usuario solicitado
+INNER JOIN atienden a2 
+    ON c.num_cita = a2.num_cita 
+    AND c.id_caso = a2.id_caso 
+    AND a2.id_usuario = $1
 ORDER BY c.fecha_encuentro DESC;

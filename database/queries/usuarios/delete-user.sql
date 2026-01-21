@@ -1,4 +1,3 @@
--- =========================================================
 -- FUNCION: eliminar_usuario_fisico
 -- Elimina físicamente un usuario y todas sus referencias asociadas.
 -- Parámetros:
@@ -6,8 +5,6 @@
 --   p_cedula_actor   VARCHAR(20): Usuario que realiza la acción
 --   p_motivo         TEXT: Motivo de la eliminación (obligatorio)
 --
--- NOTA: Usar solo en casos excepcionales. Se recomienda preferir el soft delete.
--- =========================================================
 
 CREATE OR REPLACE FUNCTION eliminar_usuario_fisico(
     p_cedula_usuario VARCHAR,
@@ -30,8 +27,7 @@ BEGIN
     FROM usuarios 
     WHERE cedula = p_cedula_usuario;
 
-    -- Se podría mandar esto para que el usuario conozca las implicaciones
-    -- Contar casos y acciones asociadas (solo informativo)
+    -- Contar casos y acciones asociadas para mostrarlos al usuario
     SELECT COUNT(*) INTO casos_count FROM (
         SELECT 1 FROM casos c INNER JOIN supervisa s ON c.id_caso = s.id_caso WHERE s.cedula_profesor = p_cedula_usuario
         UNION ALL
@@ -56,10 +52,6 @@ BEGIN
         DELETE FROM coordinadores WHERE id_coordinador = p_cedula_usuario;
         DELETE FROM estudiantes WHERE cedula_estudiante = p_cedula_usuario;
         DELETE FROM profesores WHERE cedula_profesor = p_cedula_usuario;
-        
-        -- Las notificaciones se eliminan automáticamente por ON DELETE CASCADE definido en el esquema
-        -- UPDATE notificaciones SET cedula_emisor = NULL WHERE cedula_emisor = p_cedula_usuario;
-        -- UPDATE notificaciones SET cedula_receptor = NULL WHERE cedula_receptor = p_cedula_usuario;
         
         -- Actualizar referencias en citas
         UPDATE citas SET id_usuario_registro = NULL WHERE id_usuario_registro = p_cedula_usuario;

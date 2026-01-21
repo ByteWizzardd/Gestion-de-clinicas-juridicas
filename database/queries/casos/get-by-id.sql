@@ -1,4 +1,4 @@
--- Obtener un caso por ID con información completa
+-- Obtener un caso por ID con información completa, para detalle de casos
 -- Usa la vista view_casos_detalle para obtener estatus y cant_beneficiarios derivados
 -- Parámetros: $1 = id_caso
 SELECT

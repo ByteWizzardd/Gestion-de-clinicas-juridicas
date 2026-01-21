@@ -10,6 +10,7 @@ import PhoneInput from '../forms/PhoneInput';
 import { validateEmailFormat, validateEmailDomain } from '@/lib/utils/email-validation';
 import { Loader2 } from 'lucide-react';
 import { useEmailVerification } from '@/hooks/useEmailVerification';
+import { useToast } from "../ui/feedback/ToastProvider";
 
 interface Usuario {
   cedula: string;
@@ -32,9 +33,9 @@ interface EditUserModalProps {
 const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario, onSave }) => {
   const [form, setForm] = useState<Usuario | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof Usuario, string>>>({});
   const { verifyEmail, isVerifying: isVerifyingEmail } = useEmailVerification();
+  const { toast } = useToast();
 
   // Sincronizar el estado local solo cuando cambia el usuario y el modal se abre
   useEffect(() => {
@@ -47,7 +48,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
         initialFormState.telefono = '+58';
       }
       setForm(initialFormState);
-      setError(null);
       setErrors({});
     }
   }, [isOpen, usuario]);
@@ -148,7 +148,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     if (!form) return;
 
     // Validar formulario
@@ -214,13 +213,14 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
         } : undefined,
       });
       if (result && result.success) {
+        toast.success('Usuario actualizado correctamente');
         onSave({ ...form });
         onClose();
       } else {
-        setError(result?.error?.message || 'Error al actualizar usuario');
+        toast.error(result?.error?.message || 'Error al actualizar usuario');
       }
     } catch {
-      setError('Error inesperado al actualizar usuario');
+      toast.error('Error inesperado al actualizar usuario');
     } finally {
       setLoading(false);
     }
@@ -250,9 +250,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
 
           {/* Grid de formulario */}
           <form onSubmit={handleSubmit}>
-            {error && (
-              <div className="mb-4 text-red-600 text-sm font-medium">{error}</div>
-            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 mb-6">
               <Input
                 label="Correo"

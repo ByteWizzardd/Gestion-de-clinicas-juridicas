@@ -1,6 +1,5 @@
 -- Asignar cambio de estatus inicial a casos que no tienen ningún registro en cambio_estatus
--- Query temporal para casos creados antes de implementar el trigger automático
--- Usa la cédula V-77777777 como usuario que asigna el estatus
+-- QUERY TEMPORAL
 
 WITH casos_sin_estatus AS (
     -- Encontrar casos que no tienen ningún registro en cambio_estatus

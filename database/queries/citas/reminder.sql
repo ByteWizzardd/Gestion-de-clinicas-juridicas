@@ -21,6 +21,7 @@ SELECT
         ARRAY[]::TEXT[]
     ) AS usuarios_atienden
 FROM citas c
+-- LEFT JOIN para obtener todas las citas, incluso las que no tienen usuarios asignados
 LEFT JOIN atienden a
     ON a.num_cita = c.num_cita
  AND a.id_caso = c.id_caso
