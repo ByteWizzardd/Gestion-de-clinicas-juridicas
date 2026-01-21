@@ -1,11 +1,3 @@
--- =========================================================
--- VISTAS PARA ATRIBUTOS DERIVADOS
--- =========================================================
--- Este archivo contiene vistas que calculan atributos derivados
--- que no se almacenan directamente en las tablas para evitar
--- redundancia y mantener la integridad de los datos.
--- =========================================================
-
 -- Vista para casos con estatus derivado y cantidad de beneficiarios
 CREATE VIEW view_casos_completo AS
 SELECT 

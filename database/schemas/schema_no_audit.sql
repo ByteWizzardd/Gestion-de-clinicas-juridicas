@@ -32,8 +32,6 @@ CREATE TABLE tipo_caracteristicas (
     nombre_tipo_caracteristica VARCHAR(100) NOT NULL,
     habilitado BOOLEAN NOT NULL DEFAULT TRUE
 );
--- Tipos: tipo_vivienda, material_piso, material_paredes, material_techo, 
---        agua_potable, aseo, eliminacion_aguas_n, artefactos_domesticos
 
 -- 6) MATERIAS
 CREATE TABLE materias (
@@ -48,8 +46,7 @@ CREATE TABLE semestres (
     fecha_inicio DATE NOT NULL,
     fecha_fin DATE NOT NULL,
     habilitado BOOLEAN NOT NULL DEFAULT TRUE,
-    CHECK (fecha_fin >= fecha_inicio),
-    CHECK (term ~ '^\d{4}-(15|25)$')
+    CHECK (fecha_fin >= fecha_inicio)
 );
 
 -- 8) USUARIOS
@@ -73,7 +70,8 @@ CREATE TABLE municipios (
     habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     
     PRIMARY KEY (id_estado, num_municipio),
-    FOREIGN KEY (id_estado) REFERENCES estados(id_estado)
+    FOREIGN KEY (id_estado) REFERENCES estados(id_estado) 
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- 10) PARROQUIAS
@@ -85,7 +83,8 @@ CREATE TABLE parroquias (
     habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     
     PRIMARY KEY (id_estado, num_municipio, num_parroquia),
-    FOREIGN KEY (id_estado, num_municipio) REFERENCES municipios(id_estado, num_municipio)
+    FOREIGN KEY (id_estado, num_municipio) REFERENCES municipios(id_estado, num_municipio) 
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- 11) NÚCLEOS
@@ -99,7 +98,8 @@ CREATE TABLE nucleos (
     num_parroquia INTEGER NOT NULL,
     
     FOREIGN KEY (id_estado, num_municipio, num_parroquia) 
-    REFERENCES parroquias(id_estado, num_municipio, num_parroquia)
+    REFERENCES parroquias(id_estado, num_municipio, num_parroquia) 
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- 12) SOLICITANTES
@@ -108,8 +108,8 @@ CREATE TABLE solicitantes (
     nombres VARCHAR(100) NOT NULL,
     apellidos VARCHAR(100) NOT NULL,
     fecha_nacimiento DATE NOT NULL CHECK (fecha_nacimiento <= CURRENT_DATE),
-    telefono_local VARCHAR(20) CHECK (LENGTH(telefono_local) <= 11),
-    telefono_celular VARCHAR(20) NOT NULL CHECK (LENGTH(telefono_celular) <= 20),
+    telefono_local VARCHAR(20),
+    telefono_celular VARCHAR(20) NOT NULL,
     correo_electronico VARCHAR(100) NOT NULL UNIQUE,
     
     sexo VARCHAR(20) NOT NULL CHECK (sexo IN ('M', 'F')),
@@ -120,17 +120,24 @@ CREATE TABLE solicitantes (
     tipo_tiempo_estudio VARCHAR(20) CHECK (tipo_tiempo_estudio IN ('Años', 'Semestres', 'Trimestres')),
     tiempo_estudio INTEGER CHECK (tiempo_estudio >= 0),
     
-    id_nivel_educativo INTEGER NOT NULL REFERENCES niveles_educativos(id_nivel_educativo),
-    id_trabajo INTEGER REFERENCES condicion_trabajo(id_trabajo),
-    id_actividad INTEGER REFERENCES condicion_actividad(id_actividad),
+    id_nivel_educativo INTEGER NOT NULL, 
+    id_trabajo INTEGER,
+    id_actividad INTEGER,
     
     id_estado INTEGER NOT NULL,
     num_municipio INTEGER NOT NULL,
     num_parroquia INTEGER NOT NULL,
     direccion_habitacion VARCHAR(500),
     
+    FOREIGN KEY (id_nivel_educativo) REFERENCES niveles_educativos(id_nivel_educativo) 
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    FOREIGN KEY (id_trabajo) REFERENCES condicion_trabajo(id_trabajo) 
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    FOREIGN KEY (id_actividad) REFERENCES condicion_actividad(id_actividad) 
+        ON UPDATE CASCADE ON DELETE RESTRICT,
     FOREIGN KEY (id_estado, num_municipio, num_parroquia) 
-    REFERENCES parroquias(id_estado, num_municipio, num_parroquia)
+        REFERENCES parroquias(id_estado, num_municipio, num_parroquia) 
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- 13) VIVIENDAS
@@ -138,7 +145,8 @@ CREATE TABLE viviendas (
     cedula_solicitante VARCHAR(20) PRIMARY KEY,
     cant_habitaciones INTEGER NOT NULL CHECK (cant_habitaciones >= 0),
     cant_banos INTEGER NOT NULL CHECK (cant_banos >= 0),
-    FOREIGN KEY (cedula_solicitante) REFERENCES solicitantes(cedula)
+    FOREIGN KEY (cedula_solicitante) REFERENCES solicitantes(cedula) 
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- 14) FAMILIAS Y HOGARES
@@ -155,10 +163,13 @@ CREATE TABLE familias_y_hogares (
     ingresos_mensuales DECIMAL(10,2) NOT NULL CHECK (ingresos_mensuales >= 0),
     tipo_tiempo_estudio_jefe VARCHAR(20) CHECK (tipo_tiempo_estudio_jefe IN ('Años', 'Semestres', 'Trimestres')),
     tiempo_estudio_jefe INTEGER CHECK (tiempo_estudio_jefe >= 0),
-    id_nivel_educativo_jefe INTEGER REFERENCES niveles_educativos(id_nivel_educativo),
-    FOREIGN KEY (cedula_solicitante) REFERENCES solicitantes(cedula),
+    id_nivel_educativo_jefe INTEGER,
     
-    -- Validaciones de relación entre campos
+    FOREIGN KEY (id_nivel_educativo_jefe) REFERENCES niveles_educativos(id_nivel_educativo)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    FOREIGN KEY (cedula_solicitante) REFERENCES solicitantes(cedula) 
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    
     CHECK (cant_ninos_estudiando <= cant_ninos),
     CHECK (cant_ninos < cant_personas),
     CHECK (cant_trabajadores <= cant_personas)
@@ -171,19 +182,22 @@ CREATE TABLE caracteristicas (
     habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     descripcion VARCHAR(200) NOT NULL,
     PRIMARY KEY (id_tipo_caracteristica, num_caracteristica),
-    FOREIGN KEY (id_tipo_caracteristica) REFERENCES tipo_caracteristicas(id_tipo)
+    FOREIGN KEY (id_tipo_caracteristica) REFERENCES tipo_caracteristicas(id_tipo) 
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
--- 16) ASIGNADAS_A (Relación entre Viviendas y Características)
+-- 16) ASIGNADAS_A
 CREATE TABLE asignadas_a (
     cedula_solicitante VARCHAR(20) NOT NULL,
     id_tipo_caracteristica INTEGER NOT NULL,
     num_caracteristica INTEGER NOT NULL,
     
     PRIMARY KEY (cedula_solicitante, id_tipo_caracteristica, num_caracteristica),
-    FOREIGN KEY (cedula_solicitante) REFERENCES viviendas(cedula_solicitante),
+    FOREIGN KEY (cedula_solicitante) REFERENCES viviendas(cedula_solicitante) 
+        ON UPDATE CASCADE ON DELETE RESTRICT,
     FOREIGN KEY (id_tipo_caracteristica, num_caracteristica) 
-        REFERENCES caracteristicas(id_tipo_caracteristica, num_caracteristica)
+        REFERENCES caracteristicas(id_tipo_caracteristica, num_caracteristica) 
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- 17) CATEGORÍAS
@@ -193,7 +207,8 @@ CREATE TABLE categorias (
     nombre_categoria VARCHAR(100) NOT NULL,
     habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (id_materia, num_categoria),
-    FOREIGN KEY (id_materia) REFERENCES materias(id_materia)
+    FOREIGN KEY (id_materia) REFERENCES materias(id_materia) 
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- 18) SUBCATEGORÍAS
@@ -204,7 +219,8 @@ CREATE TABLE subcategorias (
     nombre_subcategoria VARCHAR(100) NOT NULL,
     habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (id_materia, num_categoria, num_subcategoria),
-    FOREIGN KEY (id_materia, num_categoria) REFERENCES categorias(id_materia, num_categoria)
+    FOREIGN KEY (id_materia, num_categoria) REFERENCES categorias(id_materia, num_categoria) 
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- 19) ÁMBITOS LEGALES
@@ -217,15 +233,19 @@ CREATE TABLE ambitos_legales (
     habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (id_materia, num_categoria, num_subcategoria, num_ambito_legal),
     FOREIGN KEY (id_materia, num_categoria, num_subcategoria) 
-    REFERENCES subcategorias(id_materia, num_categoria, num_subcategoria)
+    REFERENCES subcategorias(id_materia, num_categoria, num_subcategoria) 
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- 20) COORDINADORES
 CREATE TABLE coordinadores (
     id_coordinador VARCHAR(20) PRIMARY KEY,
     term VARCHAR(20) NOT NULL,
-    FOREIGN KEY (term) REFERENCES semestres(term),
-    FOREIGN KEY (id_coordinador) REFERENCES usuarios(cedula)
+    
+    FOREIGN KEY (term) REFERENCES semestres(term) 
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    FOREIGN KEY (id_coordinador) REFERENCES usuarios(cedula) 
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- 21) ESTUDIANTES
@@ -235,8 +255,10 @@ CREATE TABLE estudiantes (
     tipo_estudiante VARCHAR(50) NOT NULL CHECK (tipo_estudiante IN ('Voluntario', 'Inscrito', 'Egresado', 'Servicio Comunitario')),
     nrc VARCHAR(20) NOT NULL,
     PRIMARY KEY (term, cedula_estudiante),
-    FOREIGN KEY (term) REFERENCES semestres(term),
-    FOREIGN KEY (cedula_estudiante) REFERENCES usuarios(cedula)
+    FOREIGN KEY (term) REFERENCES semestres(term) 
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    FOREIGN KEY (cedula_estudiante) REFERENCES usuarios(cedula) 
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- 22) PROFESORES
@@ -245,8 +267,10 @@ CREATE TABLE profesores (
     cedula_profesor VARCHAR(20) NOT NULL,
     tipo_profesor VARCHAR(50) NOT NULL CHECK (tipo_profesor IN ('Voluntario', 'Asesor')),
     PRIMARY KEY (term, cedula_profesor),
-    FOREIGN KEY (term) REFERENCES semestres(term),
-    FOREIGN KEY (cedula_profesor) REFERENCES usuarios(cedula)
+    FOREIGN KEY (term) REFERENCES semestres(term) 
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    FOREIGN KEY (cedula_profesor) REFERENCES usuarios(cedula) 
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- 23) CASOS
@@ -257,19 +281,23 @@ CREATE TABLE casos (
     fecha_fin_caso DATE,
     
     tramite VARCHAR(200) NOT NULL CHECK (tramite IN ('Asesoría', 'Conciliación y Mediación', 'Redacción documentos y/o convenio', 'Asistencia Judicial - Casos externos')),
-    
     observaciones TEXT,
     
-    id_nucleo INTEGER NOT NULL REFERENCES nucleos(id_nucleo),
-    cedula VARCHAR(20) NOT NULL REFERENCES solicitantes(cedula),
+    id_nucleo INTEGER NOT NULL,
+    cedula VARCHAR(20) NOT NULL,
     
     id_materia INTEGER NOT NULL,
     num_categoria INTEGER NOT NULL,
     num_subcategoria INTEGER NOT NULL,
     num_ambito_legal INTEGER NOT NULL,
     
+    FOREIGN KEY (id_nucleo) REFERENCES nucleos(id_nucleo) 
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    FOREIGN KEY (cedula) REFERENCES solicitantes(cedula) 
+        ON UPDATE CASCADE ON DELETE RESTRICT,
     FOREIGN KEY (id_materia, num_categoria, num_subcategoria, num_ambito_legal)
-    REFERENCES ambitos_legales(id_materia, num_categoria, num_subcategoria, num_ambito_legal),
+        REFERENCES ambitos_legales(id_materia, num_categoria, num_subcategoria, num_ambito_legal) 
+        ON UPDATE CASCADE ON DELETE RESTRICT,
     
     CONSTRAINT chk_casos_inicio_post_solicitud CHECK (fecha_inicio_caso >= fecha_solicitud),
     CONSTRAINT chk_casos_fin_post_inicio CHECK (fecha_fin_caso IS NULL OR fecha_fin_caso >= fecha_inicio_caso)
@@ -278,12 +306,19 @@ CREATE TABLE casos (
 -- 24) CITAS
 CREATE TABLE citas (
     num_cita INTEGER NOT NULL,
-    id_caso INTEGER NOT NULL REFERENCES casos(id_caso),
+    id_caso INTEGER NOT NULL,
     fecha_proxima_cita DATE,
     fecha_encuentro DATE NOT NULL,
     orientacion TEXT NOT NULL,
-    id_usuario_registro VARCHAR(20) REFERENCES usuarios(cedula),
+    id_usuario_registro VARCHAR(20),
+    
     PRIMARY KEY (num_cita, id_caso),
+    FOREIGN KEY (id_caso) REFERENCES casos(id_caso) 
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    -- CORREGIDO: Update RESTRICT porque es campo de auditoría
+    FOREIGN KEY (id_usuario_registro) REFERENCES usuarios(cedula) 
+        ON UPDATE RESTRICT ON DELETE RESTRICT,
+        
     CHECK (fecha_proxima_cita IS NULL OR fecha_proxima_cita > fecha_encuentro)
 );
 
@@ -295,22 +330,31 @@ CREATE TABLE atienden (
     fecha_registro DATE NOT NULL DEFAULT CURRENT_DATE CHECK (fecha_registro <= CURRENT_DATE),
     
     PRIMARY KEY (num_cita, id_caso, id_usuario),
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(cedula),
-    FOREIGN KEY (num_cita, id_caso) REFERENCES citas(num_cita, id_caso)
+    -- CORREGIDO: Update RESTRICT
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(cedula) 
+        ON UPDATE RESTRICT ON DELETE RESTRICT,
+    FOREIGN KEY (num_cita, id_caso) REFERENCES citas(num_cita, id_caso) 
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- 26) ACCIONES
 CREATE TABLE acciones (
     num_accion INTEGER NOT NULL,
-    id_caso INTEGER NOT NULL REFERENCES casos(id_caso),
+    id_caso INTEGER NOT NULL,
     detalle_accion TEXT NOT NULL,
     comentario TEXT,
-    id_usuario_registra VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    id_usuario_registra VARCHAR(20) NOT NULL,
     fecha_registro DATE NOT NULL DEFAULT CURRENT_DATE CHECK (fecha_registro <= CURRENT_DATE),
-    PRIMARY KEY (num_accion, id_caso)
+    
+    PRIMARY KEY (num_accion, id_caso),
+    FOREIGN KEY (id_caso) REFERENCES casos(id_caso) 
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    -- CORREGIDO: Update RESTRICT
+    FOREIGN KEY (id_usuario_registra) REFERENCES usuarios(cedula) 
+        ON UPDATE RESTRICT ON DELETE RESTRICT
 );
 
--- 27) EJECUTAN (Relación entre Usuarios y Acciones)
+-- 27) EJECUTAN
 CREATE TABLE ejecutan (
     id_usuario_ejecuta VARCHAR(20) NOT NULL,
     num_accion INTEGER NOT NULL,
@@ -318,25 +362,34 @@ CREATE TABLE ejecutan (
     fecha_ejecucion DATE NOT NULL DEFAULT CURRENT_DATE CHECK (fecha_ejecucion <= CURRENT_DATE),
     
     PRIMARY KEY (id_usuario_ejecuta, num_accion, id_caso),
-    FOREIGN KEY (id_usuario_ejecuta) REFERENCES usuarios(cedula),
-    FOREIGN KEY (num_accion, id_caso) REFERENCES acciones(num_accion, id_caso)
+    -- CORREGIDO: Update RESTRICT
+    FOREIGN KEY (id_usuario_ejecuta) REFERENCES usuarios(cedula) 
+        ON UPDATE RESTRICT ON DELETE RESTRICT,
+    FOREIGN KEY (num_accion, id_caso) REFERENCES acciones(num_accion, id_caso) 
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- 28) CAMBIO ESTATUS
 CREATE TABLE cambio_estatus (
     num_cambio INTEGER NOT NULL,
-    id_caso INTEGER NOT NULL REFERENCES casos(id_caso),
+    id_caso INTEGER NOT NULL,
     motivo TEXT,
     nuevo_estatus VARCHAR(50) NOT NULL CHECK (nuevo_estatus IN ('En proceso', 'Archivado', 'Entregado', 'Asesoría')),
     fecha DATE NOT NULL DEFAULT CURRENT_DATE CHECK (fecha <= CURRENT_DATE),
-    id_usuario_cambia VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
-    PRIMARY KEY (num_cambio, id_caso)
+    id_usuario_cambia VARCHAR(20) NOT NULL,
+    
+    PRIMARY KEY (num_cambio, id_caso),
+    FOREIGN KEY (id_caso) REFERENCES casos(id_caso) 
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    -- CORREGIDO: Update RESTRICT
+    FOREIGN KEY (id_usuario_cambia) REFERENCES usuarios(cedula) 
+        ON UPDATE RESTRICT ON DELETE RESTRICT
 );
 
 -- 29) SOPORTES
 CREATE TABLE soportes (
     num_soporte INTEGER NOT NULL,
-    id_caso INTEGER NOT NULL REFERENCES casos(id_caso),
+    id_caso INTEGER NOT NULL,
     
     documento_data BYTEA,
     nombre_archivo VARCHAR(150) NOT NULL,
@@ -345,15 +398,20 @@ CREATE TABLE soportes (
     
     fecha_consignacion DATE NOT NULL DEFAULT CURRENT_DATE CHECK (fecha_consignacion <= CURRENT_DATE),
     
-    id_usuario_subio VARCHAR(20) REFERENCES usuarios(cedula),
+    id_usuario_subio VARCHAR(20),
     
-    PRIMARY KEY (num_soporte, id_caso)
+    PRIMARY KEY (num_soporte, id_caso),
+    FOREIGN KEY (id_caso) REFERENCES casos(id_caso) 
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    -- CORREGIDO: Update RESTRICT (Tal como lo solicitaste explícitamente)
+    FOREIGN KEY (id_usuario_subio) REFERENCES usuarios(cedula) 
+        ON UPDATE RESTRICT ON DELETE RESTRICT
 );
 
 -- 30) BENEFICIARIOS 
 CREATE TABLE beneficiarios (
     num_beneficiario INTEGER NOT NULL,
-    id_caso INTEGER NOT NULL REFERENCES casos(id_caso),
+    id_caso INTEGER NOT NULL,
     cedula VARCHAR(20),
     nombres VARCHAR(100) NOT NULL,
     apellidos VARCHAR(100) NOT NULL,
@@ -362,54 +420,38 @@ CREATE TABLE beneficiarios (
     sexo VARCHAR(20) NOT NULL CHECK (sexo IN ('M', 'F')),
     tipo_beneficiario VARCHAR(50) NOT NULL CHECK (tipo_beneficiario IN ('Directo', 'Indirecto')),
     parentesco VARCHAR(50) NOT NULL, 
-    PRIMARY KEY (num_beneficiario, id_caso)
+    
+    PRIMARY KEY (num_beneficiario, id_caso),
+    FOREIGN KEY (id_caso) REFERENCES casos(id_caso) 
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
--- 31) SUPERVISA 
+-- 31) SUPERVISA
 CREATE TABLE supervisa (
     term VARCHAR(20) NOT NULL,
     cedula_profesor VARCHAR(20) NOT NULL,
-    id_caso INTEGER NOT NULL REFERENCES casos(id_caso),
+    id_caso INTEGER NOT NULL,
     
     habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     
     PRIMARY KEY (term, cedula_profesor, id_caso),
-    FOREIGN KEY (term, cedula_profesor) REFERENCES profesores(term, cedula_profesor)
+    FOREIGN KEY (term, cedula_profesor) REFERENCES profesores(term, cedula_profesor) 
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    FOREIGN KEY (id_caso) REFERENCES casos(id_caso) 
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
--- 32) SE LE ASIGNA 
+-- 32) SE LE ASIGNA
 CREATE TABLE se_le_asigna (
     term VARCHAR(20) NOT NULL,
     cedula_estudiante VARCHAR(20) NOT NULL,
-    id_caso INTEGER NOT NULL REFERENCES casos(id_caso),
+    id_caso INTEGER NOT NULL,
     
     habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     
     PRIMARY KEY (term, cedula_estudiante, id_caso),
-    FOREIGN KEY (term, cedula_estudiante) REFERENCES estudiantes(term, cedula_estudiante)
-);
-
--- 33) TOKENS DE RECUPERACIÓN DE CONTRASEÑA
-CREATE TABLE password_reset_tokens (
-    id_token SERIAL PRIMARY KEY,
-    cedula_usuario VARCHAR(20) NOT NULL,
-    codigo_verificacion VARCHAR(10) NOT NULL,
-    fecha_expiracion DATE NOT NULL,
-    usado BOOLEAN NOT NULL DEFAULT FALSE,
-    fecha_creacion DATE NOT NULL DEFAULT CURRENT_DATE,
-    
-    FOREIGN KEY (cedula_usuario) REFERENCES usuarios(cedula)
-);
-
--- 34) NOTIFICACIONES
-CREATE TABLE notificaciones (
-    id_notificacion INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    cedula_receptor VARCHAR(20) NOT NULL,
-    cedula_emisor VARCHAR(20) NOT NULL,
-    titulo VARCHAR(100) NOT NULL,
-    mensaje TEXT NOT NULL,
-    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    leida BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (cedula_receptor) REFERENCES usuarios(cedula) ON DELETE CASCADE,
-    FOREIGN KEY (cedula_emisor) REFERENCES usuarios(cedula) ON DELETE CASCADE
+    FOREIGN KEY (term, cedula_estudiante) REFERENCES estudiantes(term, cedula_estudiante) 
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    FOREIGN KEY (id_caso) REFERENCES casos(id_caso) 
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );

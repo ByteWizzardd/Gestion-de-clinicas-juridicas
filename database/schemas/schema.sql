@@ -1,7 +1,3 @@
--- =========================================================
--- BLOQUE 1: CATÁLOGOS GLOBALES (8 Tablas)
--- =========================================================
-
 -- 1) ESTADOS
 CREATE TABLE estados (
     id_estado SERIAL PRIMARY KEY,
