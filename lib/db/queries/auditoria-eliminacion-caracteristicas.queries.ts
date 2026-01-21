@@ -48,7 +48,7 @@ export const auditoriaEliminacionCaracteristicasQueries = {
     ]);
     return result.rows.map(row => ({
       ...row,
-      foto_perfil_usuario_elimino: row.foto_perfil_usuario_elimino 
+      foto_perfil_usuario_elimino: row.foto_perfil_usuario_elimino
         ? `data:image/jpeg;base64,${(row.foto_perfil_usuario_elimino as Buffer).toString('base64')}`
         : null,
     }));

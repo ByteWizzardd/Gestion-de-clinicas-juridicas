@@ -499,7 +499,7 @@ function Filter({
                 handler('');
                 setActiveSubmenu(null);
               }}
-              className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end ${filterValue === ''
+              className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end text-right ${filterValue === ''
                 ? 'bg-primary-light text-primary font-medium'
                 : 'text-gray-600 hover:bg-gray-100'
                 }`}
@@ -517,7 +517,7 @@ function Filter({
                   handler(option.value);
                   setActiveSubmenu(null);
                 }}
-                className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end ${filterValue === option.value
+                className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end text-right ${filterValue === option.value
                   ? 'bg-primary-light text-primary font-medium'
                   : 'text-gray-600 hover:bg-gray-100'
                   }`}
@@ -556,7 +556,7 @@ function Filter({
           }`}
       >
         <FilterIcon className="w-[18px] h-[18px] text-[#414040]" />
-        <span className="text-base text-center">Filtro</span>
+        <span className="text-base text-right">{estatusLabel || 'Filtro'}</span>
         {hasActiveFilter && (
           <span className="ml-1 bg-primary text-on-primary rounded-full w-5 h-5 flex items-center justify-center text-xs font-medium">
             {activeFilterCount}

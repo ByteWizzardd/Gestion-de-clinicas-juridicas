@@ -49,7 +49,7 @@ export const auditoriaActualizacionCaracteristicasQueries = {
     ]);
     return result.rows.map(row => ({
       ...row,
-      foto_perfil_usuario_actualizo: row.foto_perfil_usuario_actualizo 
+      foto_perfil_usuario_actualizo: row.foto_perfil_usuario_actualizo
         ? `data:image/jpeg;base64,${(row.foto_perfil_usuario_actualizo as Buffer).toString('base64')}`
         : null,
     }));

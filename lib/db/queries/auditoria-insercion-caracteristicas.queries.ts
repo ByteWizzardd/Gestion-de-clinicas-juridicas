@@ -47,7 +47,7 @@ export const auditoriaInsercionCaracteristicasQueries = {
     ]);
     return result.rows.map(row => ({
       ...row,
-      foto_perfil_usuario_creo: row.foto_perfil_usuario_creo 
+      foto_perfil_usuario_creo: row.foto_perfil_usuario_creo
         ? `data:image/jpeg;base64,${(row.foto_perfil_usuario_creo as Buffer).toString('base64')}`
         : null,
     }));

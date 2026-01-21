@@ -77,6 +77,9 @@ export default function MunicipiosPage() {
         columns={["ID Estado", "ID Municipio", "Municipio", "Estado", "Habilitado"]}
         addLabel="Añadir Municipio"
         onAddClick={() => setIsModalOpen(true)}
+        filterField="nombre_estado"
+        filterLabel="Estado"
+        autoGenerateFilter={true}
         renderActions={(item: any) => (
           <CatalogActionsMenu
             item={item}

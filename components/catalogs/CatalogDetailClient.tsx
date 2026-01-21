@@ -32,12 +32,13 @@ export default function CatalogDetailClient({
     onAddClick,
     filterField,
     filterOptions,
-    filterLabel = "Filtro",
+    filterLabel = "Estatus",
+    filterAllLabel,
     autoGenerateFilter = false,
     disableFilter = false,
     renderActions,
     filterTarget = 'estatus' // Default to estatus
-}: CatalogDetailClientProps) {
+}: CatalogDetailClientProps & { filterAllLabel?: string }) {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterValue, setFilterValue] = useState('');
@@ -49,7 +50,6 @@ export default function CatalogDetailClient({
             return filterOptions || [];
         }
 
-        // Extract unique values from the filter field
         const uniqueValues = new Set<string>();
         data.forEach((item: any) => {
             const value = item[filterField];
@@ -58,7 +58,6 @@ export default function CatalogDetailClient({
             }
         });
 
-        // Convert to options array
         return Array.from(uniqueValues)
             .sort()
             .map(value => ({
@@ -67,48 +66,33 @@ export default function CatalogDetailClient({
             }));
     }, [data, filterField, filterOptions, autoGenerateFilter]);
 
-    const estatusOptions = [
+    const estatusOptions = useMemo(() => [
         { value: 'true', label: 'Habilitado' },
         { value: 'false', label: 'Deshabilitado' }
-    ];
-
-
+    ], []);
 
     // Filter data based on search and filter
     const filteredData = useMemo(() => {
         let result = data;
-
-        // Apply filter if configured
         if (filterValue && filterField) {
             result = result.filter((item: any) => {
                 const fieldValue = item[filterField];
-                // Handle boolean values
-                if (typeof fieldValue === 'boolean') {
-                    return fieldValue.toString() === filterValue;
-                }
+                if (typeof fieldValue === 'boolean') return fieldValue.toString() === filterValue;
                 return fieldValue?.toString() === filterValue;
             });
         }
-
-        // Apply estatus filter
         if (estatusFilterValue) {
             result = result.filter((item: any) => {
                 const status = item.habilitado ?? item.estatus ?? item.activo;
                 return String(status) === estatusFilterValue;
             });
         }
-
-        // Apply search
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
-            result = result.filter((item: any) => {
-                // Search in all values of the object
-                return Object.values(item).some(value =>
-                    value?.toString().toLowerCase().includes(query)
-                );
-            });
+            result = result.filter((item: any) =>
+                Object.values(item).some(value => value?.toString().toLowerCase().includes(query))
+            );
         }
-
         return result;
     }, [data, searchQuery, filterValue, filterField, estatusFilterValue]);
 
@@ -144,7 +128,9 @@ export default function CatalogDetailClient({
                     } : filterTarget === 'nucleo' ? {
                         nucleoFilter: filterValue,
                         onNucleoChange: setFilterValue,
-                        nucleoOptions: generatedFilterOptions
+                        nucleoOptions: generatedFilterOptions,
+                        nucleoLabel: filterLabel,
+                        nucleoAllLabel: filterAllLabel
                     } : filterTarget === 'tramite' ? {
                         tramiteFilter: filterValue,
                         onTramiteChange: setFilterValue,
@@ -153,7 +139,8 @@ export default function CatalogDetailClient({
                         // Default to estatus
                         estatusFilter: filterValue,
                         onEstatusChange: setFilterValue,
-                        estatusOptions: generatedFilterOptions
+                        estatusOptions: generatedFilterOptions,
+                        estatusLabel: filterLabel
                     }),
                     // Standard Estatus Filter (if not primary target)
                     ...(filterTarget !== 'estatus' ? {

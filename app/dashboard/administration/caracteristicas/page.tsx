@@ -97,6 +97,9 @@ export default function CaracteristicasPage() {
         columns={["ID Tipo", "ID Característica", "Descripción", "Habilitado", "Tipo"]}
         addLabel="Añadir Característica"
         onAddClick={() => setIsModalOpen(true)}
+        filterField="nombre_tipo_caracteristica"
+        filterLabel="Tipo"
+        autoGenerateFilter={true}
         renderActions={(item: any) => (
           <CatalogActionsMenu
             item={item}
