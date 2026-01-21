@@ -8,9 +8,14 @@
 SELECT 
     a.id,
     a.cedula_solicitante,
-    s.nombres AS nombres_solicitante,
-    s.apellidos AS apellidos_solicitante,
-    CONCAT(s.nombres, ' ', s.apellidos) AS nombre_completo_solicitante,
+    COALESCE(s.nombres, a.nombres_nuevo, a.nombres_anterior, 'Solicitante Desconocido') AS nombres_solicitante,
+    COALESCE(s.apellidos, a.apellidos_nuevo, a.apellidos_anterior, '') AS apellidos_solicitante,
+    COALESCE(
+        CONCAT(s.nombres, ' ', s.apellidos), 
+        CONCAT(a.nombres_nuevo, ' ', a.apellidos_nuevo),
+        CONCAT(a.nombres_anterior, ' ', a.apellidos_anterior),
+        'Solicitante Desconocido'
+    ) AS nombre_completo_solicitante,
     a.nombres_anterior, a.nombres_nuevo,
     a.apellidos_anterior, a.apellidos_nuevo,
     a.fecha_nacimiento_anterior, a.fecha_nacimiento_nuevo,
