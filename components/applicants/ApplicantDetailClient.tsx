@@ -152,20 +152,22 @@ export default function ApplicantDetailClient() {
       id: 'socioeconomica',
       label: 'Información Socioeconómica',
       content: (
-        <SocioeconomicInfoTab solicitante={{
-          nivel: undefined,
-          anos_cursados: undefined,
-          semestres_cursados: undefined,
-          trimestres_cursados: undefined,
-          condicion_actividad: undefined,
-          buscando_trabajo: undefined,
-          condicion_trabajo: undefined,
-          cant_personas: undefined,
-          cant_trabajadores: undefined,
-          cant_ninos: undefined,
-          cant_ninos_estudiando: undefined,
-          jefe_hogar: undefined
-        }} {...(solicitante?.informacion_socioeconomica ?? {})} />
+        <SocioeconomicInfoTab
+          solicitante={{
+            nivel: (solicitante as any).nivel_educativo,
+            anos_cursados: (solicitante as any).tipo_tiempo_estudio === 'Años' ? (solicitante as any).tiempo_estudio : null,
+            semestres_cursados: (solicitante as any).tipo_tiempo_estudio === 'Semestres' ? (solicitante as any).tiempo_estudio : null,
+            trimestres_cursados: (solicitante as any).tipo_tiempo_estudio === 'Trimestres' ? (solicitante as any).tiempo_estudio : null,
+            condicion_actividad: (solicitante as any).nombre_actividad,
+            buscando_trabajo: (solicitante as any).id_actividad === 0,
+            condicion_trabajo: (solicitante as any).nombre_trabajo,
+            cant_personas: (solicitante as any).cant_personas,
+            cant_trabajadores: (solicitante as any).cant_trabajadores,
+            cant_ninos: (solicitante as any).cant_ninos,
+            cant_ninos_estudiando: (solicitante as any).cant_ninos_estudiando,
+            jefe_hogar: (solicitante as any).jefe_hogar
+          }}
+        />
       ),
     },
     {
@@ -173,22 +175,23 @@ export default function ApplicantDetailClient() {
       label: 'Ubicación y Vivienda',
       content: (
         <LocationHousingTab
-        solicitante={{
-          nombre_estado: undefined,
-          nombre_municipio: undefined,
-          nombre_parroquia: undefined,
-          direccion_habitacion: undefined,
-          tipo_vivienda: undefined,
-          cant_habitaciones: undefined,
-          cant_banos: undefined,
-          material_piso: undefined,
-          material_paredes: undefined,
-          material_techo: undefined,
-          agua_potable: undefined,
-          eliminacion_aguas_n: undefined,
-          aseo: undefined,
-          artefactos_domesticos: undefined
-        }} {...(solicitante?.informacion_ubicacion_vivienda ?? {})}        />
+          solicitante={{
+            nombre_estado: (solicitante as any).nombre_estado,
+            nombre_municipio: (solicitante as any).nombre_municipio,
+            nombre_parroquia: (solicitante as any).nombre_parroquia,
+            direccion_habitacion: (solicitante as any).direccion_habitacion,
+            tipo_vivienda: (solicitante as any).tipo_vivienda,
+            cant_habitaciones: (solicitante as any).cant_habitaciones,
+            cant_banos: (solicitante as any).cant_banos,
+            material_piso: (solicitante as any).material_piso,
+            material_paredes: (solicitante as any).material_paredes,
+            material_techo: (solicitante as any).material_techo,
+            agua_potable: (solicitante as any).agua_potable,
+            eliminacion_aguas_n: (solicitante as any).eliminacion_aguas_n,
+            aseo: (solicitante as any).aseo,
+            artefactos_domesticos: (solicitante as any).artefactos_domesticos
+          }}
+        />
       ),
     },
     {

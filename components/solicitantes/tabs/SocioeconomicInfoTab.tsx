@@ -4,7 +4,7 @@ import { GraduationCap, Briefcase, Home, CheckCircle } from 'lucide-react';
 
 interface SocioeconomicInfoTabProps {
   solicitante: {
-    nivel?: number | null;
+    nivel?: string | number | null;
     anos_cursados?: number | null;
     semestres_cursados?: number | null;
     trimestres_cursados?: number | null;
@@ -44,30 +44,30 @@ export default function SocioeconomicInfoTab({ solicitante }: SocioeconomicInfoT
             Educación
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {solicitante.nivel !== null && solicitante.nivel !== undefined && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Nivel Educativo</label>
-              <p className="text-base text-gray-900 mt-1">Nivel {solicitante.nivel}</p>
-            </div>
-          )}
-          {solicitante.anos_cursados !== null && solicitante.anos_cursados !== undefined && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Años Cursados</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.anos_cursados} años</p>
-            </div>
-          )}
-          {solicitante.semestres_cursados !== null && solicitante.semestres_cursados !== undefined && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Semestres Cursados</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.semestres_cursados} semestres</p>
-            </div>
-          )}
-          {solicitante.trimestres_cursados !== null && solicitante.trimestres_cursados !== undefined && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Trimestres Cursados</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.trimestres_cursados} trimestres</p>
-            </div>
-          )}
+            {solicitante.nivel !== null && solicitante.nivel !== undefined && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Nivel Educativo</label>
+                <p className="text-base text-gray-900 mt-1">Nivel {solicitante.nivel}</p>
+              </div>
+            )}
+            {solicitante.anos_cursados !== null && solicitante.anos_cursados !== undefined && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Años Cursados</label>
+                <p className="text-base text-gray-900 mt-1">{solicitante.anos_cursados} años</p>
+              </div>
+            )}
+            {solicitante.semestres_cursados !== null && solicitante.semestres_cursados !== undefined && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Semestres Cursados</label>
+                <p className="text-base text-gray-900 mt-1">{solicitante.semestres_cursados} semestres</p>
+              </div>
+            )}
+            {solicitante.trimestres_cursados !== null && solicitante.trimestres_cursados !== undefined && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Trimestres Cursados</label>
+                <p className="text-base text-gray-900 mt-1">{solicitante.trimestres_cursados} trimestres</p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -80,78 +80,82 @@ export default function SocioeconomicInfoTab({ solicitante }: SocioeconomicInfoT
             Trabajo
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {solicitante.condicion_actividad && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Condición de Actividad</label>
-              <span className="inline-block mt-1 px-3 py-1 bg-primary-light text-primary rounded-full text-sm font-medium">
-                {solicitante.condicion_actividad}
-              </span>
-            </div>
-          )}
-          {solicitante.buscando_trabajo !== null && solicitante.buscando_trabajo !== undefined && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Buscando Trabajo</label>
-              <p className="text-base text-gray-900 mt-1">
-                {solicitante.buscando_trabajo ? 'Sí' : 'No'}
-              </p>
-            </div>
-          )}
-          {solicitante.condicion_trabajo && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Condición de Trabajo</label>
-              <span className="inline-block mt-1 px-3 py-1 bg-secondary-light text-secondary rounded-full text-sm font-medium">
-                {solicitante.condicion_trabajo}
-              </span>
-            </div>
-          )}
+            {solicitante.condicion_actividad && (
+              <div className="flex flex-col items-start gap-2">
+                <label className="text-sm font-medium text-gray-500">Condición de Actividad</label>
+                <span className="px-3 py-1 bg-primary-light text-primary rounded-full text-sm font-medium">
+                  {solicitante.condicion_actividad}
+                </span>
+              </div>
+            )}
+            {solicitante.buscando_trabajo !== null && solicitante.buscando_trabajo !== undefined && (
+              <div>
+                <label className="text-sm font-medium text-gray-500">Buscando Trabajo</label>
+                <p className="text-base text-gray-900 mt-1">
+                  {solicitante.buscando_trabajo ? 'Sí' : 'No'}
+                </p>
+              </div>
+            )}
+            {solicitante.condicion_trabajo && (
+              <div className="flex flex-col items-start gap-2">
+                <label className="text-sm font-medium text-gray-500">Condición de Trabajo</label>
+                <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
+                  {solicitante.condicion_trabajo}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       )}
 
+
+
       {/* Hogar Familiar */}
-      {hasHome && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
-            <Home className="w-5 h-5 text-primary" />
-            Hogar Familiar
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          {solicitante.cant_personas !== null && solicitante.cant_personas !== undefined && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Cantidad de Personas</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.cant_personas} personas</p>
+      {
+        hasHome && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+            <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+              <Home className="w-5 h-5 text-primary" />
+              Hogar Familiar
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              {solicitante.cant_personas !== null && solicitante.cant_personas !== undefined && (
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Cantidad de Personas</label>
+                  <p className="text-base text-gray-900 mt-1">{solicitante.cant_personas} personas</p>
+                </div>
+              )}
+              {solicitante.cant_trabajadores !== null && solicitante.cant_trabajadores !== undefined && (
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Cantidad de Trabajadores</label>
+                  <p className="text-base text-gray-900 mt-1">{solicitante.cant_trabajadores} trabajadores</p>
+                </div>
+              )}
+              {solicitante.cant_ninos !== null && solicitante.cant_ninos !== undefined && (
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Cantidad de Niños</label>
+                  <p className="text-base text-gray-900 mt-1">{solicitante.cant_ninos} niños</p>
+                </div>
+              )}
+              {solicitante.cant_ninos_estudiando !== null && solicitante.cant_ninos_estudiando !== undefined && (
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Niños Estudiando</label>
+                  <p className="text-base text-gray-900 mt-1">{solicitante.cant_ninos_estudiando} niños</p>
+                </div>
+              )}
+              {solicitante.jefe_hogar !== null && solicitante.jefe_hogar !== undefined && (
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Es Jefe de Hogar</label>
+                  <p className="text-base text-gray-900 mt-1">
+                    {solicitante.jefe_hogar ? 'Sí' : 'No'}
+                  </p>
+                </div>
+              )}
             </div>
-          )}
-          {solicitante.cant_trabajadores !== null && solicitante.cant_trabajadores !== undefined && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Cantidad de Trabajadores</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.cant_trabajadores} trabajadores</p>
-            </div>
-          )}
-          {solicitante.cant_ninos !== null && solicitante.cant_ninos !== undefined && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Cantidad de Niños</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.cant_ninos} niños</p>
-            </div>
-          )}
-          {solicitante.cant_ninos_estudiando !== null && solicitante.cant_ninos_estudiando !== undefined && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Niños Estudiando</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.cant_ninos_estudiando} niños</p>
-            </div>
-          )}
-          {solicitante.jefe_hogar !== null && solicitante.jefe_hogar !== undefined && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Es Jefe de Hogar</label>
-              <p className="text-base text-gray-900 mt-1">
-                {solicitante.jefe_hogar ? 'Sí' : 'No'}
-              </p>
-            </div>
-          )}
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }
 
