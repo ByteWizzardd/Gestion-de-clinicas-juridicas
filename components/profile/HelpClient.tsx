@@ -141,7 +141,7 @@ export default function HelpClient() {
         <div className="flex items-center gap-3 mb-6">
           <HelpCircle className="w-6 h-6 text-primary" />
           <p className="text-gray-600 text-sm sm:text-base">
-            Encuentra respuestas a las preguntas más comunes sobre el uso del sistema de gestión de clínicas jurídicas.
+            Encuentra respuestas a las preguntas más comunes sobre el uso del sistema de gestión de clínica jurídica.
           </p>
         </div>
 
@@ -156,7 +156,7 @@ export default function HelpClient() {
             >
               <button
                 onClick={() => toggleFaq(faq.id)}
-                className="w-full px-4 sm:px-6 py-4 text-left flex items-center justify-between gap-4 hover:bg-gray-50 transition-colors"
+                className="w-full px-4 sm:px-6 py-4 text-left flex items-center justify-between gap-4 hover:bg-gray-50 transition-colors cursor-pointer"
               >
                 <span className="font-medium text-gray-900 text-sm sm:text-base pr-4">
                   {faq.question}
