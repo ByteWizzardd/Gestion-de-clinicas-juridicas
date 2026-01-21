@@ -639,8 +639,8 @@ export default function ApplicantFormModal({
         // Validar longitud: números locales venezolanos típicamente tienen 7 dígitos
         if (telefonoLocalLength < 7) {
           newErrors.telefonoLocal = 'El teléfono local debe tener al menos 7 dígitos';
-        } else if (telefonoLocalLength > 10) {
-          newErrors.telefonoLocal = 'El teléfono local no puede tener más de 10 dígitos';
+        } else if (telefonoLocalLength > 11) {
+          newErrors.telefonoLocal = 'El teléfono local no puede tener más de 11 dígitos';
         }
       }
     }

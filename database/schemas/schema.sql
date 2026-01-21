@@ -513,8 +513,8 @@ CREATE TABLE solicitantes (
     nombres VARCHAR(100) NOT NULL,
     apellidos VARCHAR(100) NOT NULL,
     fecha_nacimiento DATE NOT NULL CHECK (fecha_nacimiento <= CURRENT_DATE),
-    telefono_local VARCHAR(20),
-    telefono_celular VARCHAR(20) NOT NULL,
+    telefono_local VARCHAR(20) CHECK (LENGTH(telefono_local) <= 11),
+    telefono_celular VARCHAR(20) NOT NULL CHECK (LENGTH(telefono_celular) <= 20),
     correo_electronico VARCHAR(100) NOT NULL UNIQUE,
     
     sexo VARCHAR(20) NOT NULL CHECK (sexo IN ('M', 'F')),
