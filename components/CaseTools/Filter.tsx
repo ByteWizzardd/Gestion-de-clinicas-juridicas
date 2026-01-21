@@ -1,5 +1,5 @@
 'use client';
-import { Filter as FilterIcon, ChevronLeft, Building2, FileText, UserCheck, X, Activity, BookOpen, Calendar, User, Flag } from 'lucide-react';
+import { Filter as FilterIcon, ChevronLeft, Building2, FileText, UserCheck, X, Activity, BookOpen, Calendar, User, Flag, Clock } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { createPortal } from 'react-dom';
@@ -38,6 +38,9 @@ interface FilterProps {
   onFechaInicioChange?: (value: string) => void;
   onFechaFinChange?: (value: string) => void;
   showDateRange?: boolean;
+  recentActivityFilter?: boolean;
+  onRecentActivityChange?: (value: boolean) => void;
+  showRecentActivity?: boolean;
 }
 
 function Filter({
@@ -79,7 +82,10 @@ function Filter({
   fechaFin,
   onFechaInicioChange,
   onFechaFinChange,
-  showDateRange = false
+  showDateRange = false,
+  recentActivityFilter,
+  onRecentActivityChange,
+  showRecentActivity = false
 }: FilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<'nucleo' | 'materia' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas' | null>(null);
@@ -250,7 +256,8 @@ function Filter({
     (casosAsignadosFilter ? 1 : 0) +
     (materiaFilter ? 1 : 0) +
     (fechaInicio ? 1 : 0) +
-    (fechaFin ? 1 : 0);
+    (fechaFin ? 1 : 0) +
+    (recentActivityFilter ? 1 : 0);
 
   const hasActiveFilter = activeFilterCount > 0;
 
@@ -268,6 +275,7 @@ function Filter({
         if (onCasosAsignadosChange) onCasosAsignadosChange(false);
         if (onFechaInicioChange) onFechaInicioChange('');
         if (onFechaFinChange) onFechaFinChange('');
+        if (onRecentActivityChange) onRecentActivityChange(false);
       }
     } catch (e) {
       console.error('Error al limpiar filtros:', e);
@@ -773,6 +781,28 @@ function Filter({
                     <div className="flex-1" />
                     <span>Mis casos</span>
                     <UserCheck className={`w-4 h-4 ${casosAsignadosFilter ? 'text-red-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
+                  </motion.button>
+                  <div className="border-t border-gray-200 my-2"></div>
+                </>
+              )}
+
+
+              {/* Opción: Actividad Reciente */}
+              {showRecentActivity && onRecentActivityChange && (
+                <>
+                  <motion.button
+                    type="button"
+                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                    onClick={() => onRecentActivityChange(!recentActivityFilter)}
+                    className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 group ${recentActivityFilter
+                      ? 'text-primary'
+                      : 'text-gray-600'
+                      }`}
+                  >
+                    <div className="flex-1" />
+                    <span>Actividad más reciente</span>
+                    <Clock className={`w-4 h-4 ${recentActivityFilter ? 'text-primary' : 'text-gray-400 group-hover:text-gray-600'}`} />
                   </motion.button>
                   <div className="border-t border-gray-200 my-2"></div>
                 </>

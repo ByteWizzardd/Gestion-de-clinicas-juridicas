@@ -69,6 +69,7 @@ import { auditoriaActualizacionAccionesQueries } from '@/lib/db/queries/auditori
 import { auditoriaEliminacionAccionesQueries } from '@/lib/db/queries/auditoria-eliminacion-acciones.queries';
 import * as auditoriaActualizacionEquipoQueries from '@/lib/db/queries/auditoria-actualizacion-equipo.queries';
 import type { AuditFilters, AuditCounts } from '@/types/audit';
+import { loadSQL } from '@/lib/db/sql-loader';
 
 /**
  * Obtiene los contadores de cada tipo de auditoría
@@ -198,6 +199,12 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       auditoriaActualizacionEquipoQueries.getCount().catch(() => 0),
     ]);
 
+    // Obtener últimas fechas de actividad
+    const lastActivityQuery = loadSQL('audit/get-last-activities.sql');
+    const { pool } = await import('@/lib/db/pool');
+    const lastActivityRes = await pool.query(lastActivityQuery);
+    const lastActivityData = lastActivityRes.rows[0];
+
     return {
       soportes: soportesEliminados,
       soportesCreados: soportesCreados || 0,
@@ -272,6 +279,8 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       accionesEliminadas: accionesEliminadas || 0,
       // Equipo de casos
       equiposActualizados: equiposActualizados || 0,
+      // Últimas actividades
+      lastActivities: lastActivityData
     };
   } catch (error) {
     console.error('Error obteniendo contadores de auditoría:', error);

@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { LucideIcon, FileText, Calendar, Users, User, MapPin, BookOpen, FolderTree, Building2, Home, Building, Briefcase, Activity, GraduationCap, Tag, Tags, Scale, Calendar as CalendarIcon } from 'lucide-react';
+import Spinner from '@/components/ui/feedback/Spinner';
+import Search from '@/components/CaseTools/search';
+import Filter from '@/components/CaseTools/Filter';
 import AuditEntityCard from './AuditEntityCard';
 import { getAuditCountsAction } from '@/app/actions/audit';
 import type { AuditCounts } from '@/types/audit';
-import Spinner from '@/components/ui/feedback/Spinner';
-import Search from '@/components/CaseTools/search';
+import { LucideIcon, FileText, Calendar, Users, User, MapPin, BookOpen, FolderTree, Building2, Home, Building, Briefcase, Activity, GraduationCap, Tag, Tags, Scale, Calendar as CalendarIcon, Clock } from 'lucide-react';
 
 interface AuditOperation {
   label: string;
@@ -22,6 +23,7 @@ interface AuditEntity {
   operations: AuditOperation[];
   totalCount: number;
   href: string; // URL de la página de detalle de la entidad
+  lastActivity?: string | null;
 }
 
 
@@ -30,6 +32,7 @@ export default function AuditClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState<'alphabetical' | 'recency'>('alphabetical');
 
   useEffect(() => {
     async function loadCounts() {
@@ -52,13 +55,14 @@ export default function AuditClient() {
     if (!counts) {
       return [];
     }
-    return [
+    const list: AuditEntity[] = [
       {
         title: "Soportes",
         description: "Documentos y archivos del sistema",
         icon: FileText,
         totalCount: counts.soportes + (counts.soportesCreados || 0),
         href: "/dashboard/audit/soportes",
+        lastActivity: counts.lastActivities?.soportes,
         operations: [
           {
             label: "Eliminados",
@@ -78,6 +82,7 @@ export default function AuditClient() {
         icon: Calendar,
         totalCount: counts.citasEliminadas + counts.citasActualizadas + (counts.citasCreadas || 0),
         href: "/dashboard/audit/citas",
+        lastActivity: counts.lastActivities?.citas,
         operations: [
           {
             label: "Eliminadas",
@@ -97,6 +102,7 @@ export default function AuditClient() {
         icon: Users,
         totalCount: counts.usuariosEliminados + counts.usuariosActualizadosCampos + (counts.usuariosCreados || 0) + (counts.estudiantesInscritos || 0) + (counts.profesoresAsignados || 0),
         href: "/dashboard/audit/usuarios",
+        lastActivity: counts.lastActivities?.usuarios,
         operations: [
           {
             label: "Creados",
@@ -121,6 +127,7 @@ export default function AuditClient() {
         icon: Briefcase,
         totalCount: (counts.casosEliminados || 0) + (counts.casosActualizados || 0) + (counts.casosCreados || 0),
         href: "/dashboard/audit/casos",
+        lastActivity: counts.lastActivities?.casos,
         operations: [
           {
             label: "Creados",
@@ -145,6 +152,7 @@ export default function AuditClient() {
         icon: User,
         totalCount: (counts.solicitantesEliminados || 0) + (counts.solicitantesActualizados || 0) + (counts.solicitantesCreados || 0),
         href: "/dashboard/audit/solicitantes",
+        lastActivity: counts.lastActivities?.solicitantes,
         operations: [
           {
             label: "Creados",
@@ -169,6 +177,7 @@ export default function AuditClient() {
         icon: Users,
         totalCount: (counts.beneficiariosEliminados || 0) + (counts.beneficiariosActualizados || 0) + (counts.beneficiariosCreados || 0),
         href: "/dashboard/audit/beneficiarios",
+        lastActivity: counts.lastActivities?.beneficiarios,
         operations: [
           {
             label: "Creados",
@@ -193,6 +202,7 @@ export default function AuditClient() {
         icon: Activity,
         totalCount: (counts.accionesEliminadas || 0) + (counts.accionesActualizadas || 0) + (counts.accionesCreadas || 0),
         href: "/dashboard/audit/acciones",
+        lastActivity: counts.lastActivities?.acciones,
         operations: [
           {
             label: "Creadas",
@@ -217,6 +227,7 @@ export default function AuditClient() {
         icon: Users,
         totalCount: counts.equiposActualizados || 0,
         href: "/dashboard/audit/equipo",
+        lastActivity: counts.lastActivities?.equipo,
         operations: [
           {
             label: "Actualizados",
@@ -232,6 +243,7 @@ export default function AuditClient() {
         icon: MapPin,
         totalCount: (counts.estadosEliminados || 0) + (counts.estadosActualizados || 0) + (counts.estadosInsertados || 0),
         href: "/dashboard/audit/catalogos/estados",
+        lastActivity: counts.lastActivities?.estados,
         operations: [
           {
             label: "Eliminados",
@@ -244,13 +256,14 @@ export default function AuditClient() {
             href: "/dashboard/audit/catalogos/estados"
           }
         ]
-      }] : []),
+      } as AuditEntity] : []),
       ...(counts.materiasEliminadas !== undefined || counts.materiasActualizadas !== undefined || counts.materiasInsertadas !== undefined ? [{
         title: "Materias",
         description: "Registro de materias del sistema",
         icon: BookOpen,
         totalCount: (counts.materiasEliminadas || 0) + (counts.materiasActualizadas || 0) + (counts.materiasInsertadas || 0),
         href: "/dashboard/audit/catalogos/materias",
+        lastActivity: counts.lastActivities?.materias,
         operations: [
           {
             label: "Eliminadas",
@@ -263,13 +276,14 @@ export default function AuditClient() {
             href: "/dashboard/audit/catalogos/materias"
           }
         ]
-      }] : []),
+      } as AuditEntity] : []),
       ...(counts.nivelesEducativosEliminados !== undefined || counts.nivelesEducativosActualizados !== undefined || counts.nivelesEducativosInsertados !== undefined ? [{
         title: "Niveles Educativos",
         description: "Registro de niveles educativos del sistema",
         icon: GraduationCap,
         totalCount: (counts.nivelesEducativosEliminados || 0) + (counts.nivelesEducativosActualizados || 0) + (counts.nivelesEducativosInsertados || 0),
         href: "/dashboard/audit/catalogos/niveles-educativos",
+        lastActivity: counts.lastActivities?.niveles_educativos,
         operations: [
           {
             label: "Eliminados",
@@ -282,13 +296,14 @@ export default function AuditClient() {
             href: "/dashboard/audit/catalogos/niveles-educativos"
           }
         ]
-      }] : []),
+      } as AuditEntity] : []),
       ...(counts.nucleosEliminados !== undefined || counts.nucleosActualizados !== undefined || counts.nucleosInsertados !== undefined ? [{
         title: "Núcleos",
         description: "Registro de núcleos del sistema",
         icon: Building,
         totalCount: (counts.nucleosEliminados || 0) + (counts.nucleosActualizados || 0) + (counts.nucleosInsertados || 0),
         href: "/dashboard/audit/catalogos/nucleos",
+        lastActivity: counts.lastActivities?.nucleos,
         operations: [
           {
             label: "Eliminados",
@@ -301,13 +316,14 @@ export default function AuditClient() {
             href: "/dashboard/audit/catalogos/nucleos"
           }
         ]
-      }] : []),
+      } as AuditEntity] : []),
       ...(counts.condicionesTrabajoEliminadas !== undefined || counts.condicionesTrabajoActualizadas !== undefined || counts.condicionesTrabajoInsertadas !== undefined ? [{
         title: "Condiciones de Trabajo",
         description: "Registro de condiciones de trabajo del sistema",
         icon: Briefcase,
         totalCount: (counts.condicionesTrabajoEliminadas || 0) + (counts.condicionesTrabajoActualizadas || 0) + (counts.condicionesTrabajoInsertadas || 0),
         href: "/dashboard/audit/catalogos/condiciones-trabajo",
+        lastActivity: counts.lastActivities?.condiciones_trabajo,
         operations: [
           {
             label: "Eliminadas",
@@ -320,13 +336,14 @@ export default function AuditClient() {
             href: "/dashboard/audit/catalogos/condiciones-trabajo"
           }
         ]
-      }] : []),
+      } as AuditEntity] : []),
       ...(counts.condicionesActividadEliminadas !== undefined || counts.condicionesActividadActualizadas !== undefined || counts.condicionesActividadInsertadas !== undefined ? [{
         title: "Condiciones de Actividad",
         description: "Registro de condiciones de actividad del sistema",
         icon: Activity,
         totalCount: (counts.condicionesActividadEliminadas || 0) + (counts.condicionesActividadActualizadas || 0) + (counts.condicionesActividadInsertadas || 0),
         href: "/dashboard/audit/catalogos/condiciones-actividad",
+        lastActivity: counts.lastActivities?.condiciones_actividad,
         operations: [
           {
             label: "Eliminadas",
@@ -339,13 +356,14 @@ export default function AuditClient() {
             href: "/dashboard/audit/catalogos/condiciones-actividad"
           }
         ]
-      }] : []),
+      } as AuditEntity] : []),
       ...(counts.tiposCaracteristicasEliminados !== undefined || counts.tiposCaracteristicasActualizados !== undefined || counts.tiposCaracteristicasInsertados !== undefined ? [{
         title: "Tipos de Características",
         description: "Registro de tipos de características del sistema",
         icon: Tag,
         totalCount: (counts.tiposCaracteristicasEliminados || 0) + (counts.tiposCaracteristicasActualizados || 0) + (counts.tiposCaracteristicasInsertados || 0),
         href: "/dashboard/audit/catalogos/tipos-caracteristicas",
+        lastActivity: counts.lastActivities?.tipos_caracteristicas,
         operations: [
           {
             label: "Eliminados",
@@ -358,13 +376,14 @@ export default function AuditClient() {
             href: "/dashboard/audit/catalogos/tipos-caracteristicas"
           }
         ]
-      }] : []),
+      } as AuditEntity] : []),
       ...(counts.semestresEliminados !== undefined || counts.semestresActualizados !== undefined || counts.semestresInsertados !== undefined ? [{
         title: "Semestres",
         description: "Registro de semestres del sistema",
         icon: CalendarIcon,
         totalCount: (counts.semestresEliminados || 0) + (counts.semestresActualizados || 0) + (counts.semestresInsertados || 0),
         href: "/dashboard/audit/catalogos/semestres",
+        lastActivity: counts.lastActivities?.semestres,
         operations: [
           {
             label: "Eliminados",
@@ -377,13 +396,14 @@ export default function AuditClient() {
             href: "/dashboard/audit/catalogos/semestres"
           }
         ]
-      }] : []),
+      } as AuditEntity] : []),
       ...(counts.municipiosEliminados !== undefined || counts.municipiosActualizados !== undefined || counts.municipiosInsertados !== undefined ? [{
         title: "Municipios",
         description: "Registro de municipios del sistema",
         icon: Building2,
         totalCount: (counts.municipiosEliminados || 0) + (counts.municipiosActualizados || 0) + (counts.municipiosInsertados || 0),
         href: "/dashboard/audit/catalogos/municipios",
+        lastActivity: counts.lastActivities?.municipios,
         operations: [
           {
             label: "Eliminados",
@@ -396,13 +416,14 @@ export default function AuditClient() {
             href: "/dashboard/audit/catalogos/municipios"
           }
         ]
-      }] : []),
+      } as AuditEntity] : []),
       ...(counts.parroquiasEliminadas !== undefined || counts.parroquiasActualizadas !== undefined || counts.parroquiasInsertadas !== undefined ? [{
         title: "Parroquias",
         description: "Registro de parroquias del sistema",
         icon: Home,
         totalCount: (counts.parroquiasEliminadas || 0) + (counts.parroquiasActualizadas || 0) + (counts.parroquiasInsertadas || 0),
         href: "/dashboard/audit/catalogos/parroquias",
+        lastActivity: counts.lastActivities?.parroquias,
         operations: [
           {
             label: "Eliminadas",
@@ -415,13 +436,14 @@ export default function AuditClient() {
             href: "/dashboard/audit/catalogos/parroquias"
           }
         ]
-      }] : []),
+      } as AuditEntity] : []),
       ...(counts.categoriasEliminadas !== undefined || counts.categoriasActualizadas !== undefined || counts.categoriasInsertadas !== undefined ? [{
         title: "Categorías",
         description: "Registro de categorías del sistema",
         icon: FolderTree,
         totalCount: (counts.categoriasEliminadas || 0) + (counts.categoriasActualizadas || 0) + (counts.categoriasInsertadas || 0),
         href: "/dashboard/audit/catalogos/categorias",
+        lastActivity: counts.lastActivities?.categorias,
         operations: [
           {
             label: "Eliminadas",
@@ -434,13 +456,14 @@ export default function AuditClient() {
             href: "/dashboard/audit/catalogos/categorias"
           }
         ]
-      }] : []),
+      } as AuditEntity] : []),
       ...(counts.subcategoriasEliminadas !== undefined || counts.subcategoriasActualizadas !== undefined || counts.subcategoriasInsertadas !== undefined ? [{
         title: "Subcategorías",
         description: "Registro de subcategorías del sistema",
         icon: FileText,
         totalCount: (counts.subcategoriasEliminadas || 0) + (counts.subcategoriasActualizadas || 0) + (counts.subcategoriasInsertadas || 0),
         href: "/dashboard/audit/catalogos/subcategorias",
+        lastActivity: counts.lastActivities?.subcategorias,
         operations: [
           {
             label: "Eliminadas",
@@ -453,13 +476,14 @@ export default function AuditClient() {
             href: "/dashboard/audit/catalogos/subcategorias"
           }
         ]
-      }] : []),
+      } as AuditEntity] : []),
       ...(counts.ambitosLegalesEliminados !== undefined || counts.ambitosLegalesActualizados !== undefined || counts.ambitosLegalesInsertados !== undefined ? [{
         title: "Ámbitos Legales",
         description: "Registro de ámbitos legales del sistema",
         icon: Scale,
         totalCount: (counts.ambitosLegalesEliminados || 0) + (counts.ambitosLegalesActualizados || 0) + (counts.ambitosLegalesInsertados || 0),
         href: "/dashboard/audit/catalogos/ambitos-legales",
+        lastActivity: counts.lastActivities?.ambitos_legales,
         operations: [
           {
             label: "Eliminados",
@@ -472,13 +496,14 @@ export default function AuditClient() {
             href: "/dashboard/audit/catalogos/ambitos-legales"
           }
         ]
-      }] : []),
+      } as AuditEntity] : []),
       ...(counts.caracteristicasEliminadas !== undefined || counts.caracteristicasActualizadas !== undefined || counts.caracteristicasInsertadas !== undefined ? [{
         title: "Características",
-        description: "Registro de características del sistema",
-        icon: Tags,
+        description: "Registro de características de vivienda del sistema",
+        icon: Tag,
         totalCount: (counts.caracteristicasEliminadas || 0) + (counts.caracteristicasActualizadas || 0) + (counts.caracteristicasInsertadas || 0),
         href: "/dashboard/audit/catalogos/caracteristicas",
+        lastActivity: counts.lastActivities?.caracteristicas,
         operations: [
           {
             label: "Eliminadas",
@@ -491,9 +516,20 @@ export default function AuditClient() {
             href: "/dashboard/audit/catalogos/caracteristicas"
           }
         ]
-      }] : [])
-    ].sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
-  }, [counts]);
+      } as AuditEntity] : []),
+    ];
+
+    if (sortOrder === 'alphabetical') {
+      return list.sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
+    } else {
+      // Ordenar por recencia
+      return list.sort((a, b) => {
+        const dateA = a.lastActivity ? new Date(a.lastActivity).getTime() : 0;
+        const dateB = b.lastActivity ? new Date(b.lastActivity).getTime() : 0;
+        return dateB - dateA; // Más reciente primero
+      });
+    }
+  }, [counts, sortOrder]);
 
   // Filtrar entidades basándose en la búsqueda
   const filteredEntities = useMemo(() => {
@@ -537,12 +573,21 @@ export default function AuditClient() {
         transition={{ duration: 0.3 }}
         className="mb-6"
       >
-        <div className="w-full flex">
+        <div className="w-full flex items-center gap-4">
           <div className="flex-1 min-w-0">
             <Search
               value={searchQuery}
               onChange={setSearchQuery}
               placeholder="Buscar por entidad..."
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Filter
+              tramiteOptions={[]}
+              estatusOptions={[]}
+              showRecentActivity={true}
+              recentActivityFilter={sortOrder === 'recency'}
+              onRecentActivityChange={(isRecency) => setSortOrder(isRecency ? 'recency' : 'alphabetical')}
             />
           </div>
         </div>

@@ -696,6 +696,7 @@ export interface AuditCounts {
   accionesEliminadas?: number;
   // Equipo de casos
   equiposActualizados?: number;
+  lastActivities?: Record<string, string | null>;
 }
 
 // Auditoría de Beneficiarios
