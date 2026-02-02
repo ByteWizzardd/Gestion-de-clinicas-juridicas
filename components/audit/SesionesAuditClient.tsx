@@ -6,8 +6,10 @@ import { LogIn, LogOut, ChevronDown, ChevronUp, XCircle, ArrowDown, ArrowUp } fr
 import Spinner from '@/components/ui/feedback/Spinner';
 import Search from '@/components/CaseTools/search';
 import Tabs from '@/components/ui/Tabs';
+import Filter from '@/components/CaseTools/Filter';
 import { getSesionesAuditAction } from '@/app/actions/audit';
-import type { SesionAuditRecord } from '@/types/audit';
+import { getUsuariosAction } from '@/app/actions/usuarios';
+import type { SesionAuditRecord, AuditFilters } from '@/types/audit';
 import Link from 'next/link';
 
 interface SesionExtended extends SesionAuditRecord {
@@ -240,8 +242,29 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [total, setTotal] = useState(0);
     const [page, setPage] = useState(1);
-    const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+    const [filters, setFilters] = useState<AuditFilters>({ orden: 'desc' });
+    const [usuarioOptions, setUsuarioOptions] = useState<Array<{ value: string; label: string }>>([]);
     const limit = 20;
+
+    // Cargar opciones de usuarios
+    useEffect(() => {
+        async function loadUsuarios() {
+            try {
+                const result = await getUsuariosAction();
+                if (result.success && result.data) {
+                    setUsuarioOptions(
+                        result.data.map((u) => ({
+                            value: u.cedula,
+                            label: u.nombre_completo || `${u.nombres} ${u.apellidos}`,
+                        }))
+                    );
+                }
+            } catch (err) {
+                console.error('Error loading usuarios:', err);
+            }
+        }
+        loadUsuarios();
+    }, []);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -259,7 +282,10 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
                 limit,
                 offset: (page - 1) * limit,
                 type,
-                sortOrder
+                sortOrder: filters.orden || 'desc',
+                idUsuario: filters.idUsuario,
+                fechaInicio: filters.fechaInicio,
+                fechaFin: filters.fechaFin
             });
             setSesiones(result.records as SesionExtended[]);
             setTotal(result.total);
@@ -269,11 +295,28 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
         } finally {
             setLoading(false);
         }
-    }, [debouncedSearch, page, type, sortOrder]);
+    }, [debouncedSearch, page, type, filters]);
 
     useEffect(() => {
         loadSesiones();
     }, [loadSesiones]);
+
+    const handleFilterChange = (key: keyof AuditFilters, value: string | 'asc' | 'desc' | undefined) => {
+        setFilters((prev) => ({
+            ...prev,
+            [key]: value || undefined,
+        }));
+        setPage(1);
+    };
+
+    const handleUsuarioChange = (value: string) => {
+        handleFilterChange('idUsuario', value || undefined);
+    };
+
+    const handleOrdenChange = () => {
+        const nuevoOrden = (filters.orden || 'desc') === 'desc' ? 'asc' : 'desc';
+        handleFilterChange('orden', nuevoOrden);
+    };
 
     const totalPages = Math.ceil(total / limit);
 
@@ -300,24 +343,37 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
                         placeholder="Buscar por usuario, IP o dispositivo..."
                     />
                 </div>
-                <button
-                    type="button"
-                    onClick={() => {
-                        setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
-                        setPage(1);
-                    }}
-                    className="h-10 px-4 cursor-pointer rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors"
-                    title={sortOrder === 'desc' ? 'Más reciente primero' : 'Más antiguo primero'}
-                >
-                    {sortOrder === 'desc' ? (
-                        <ArrowDown className="w-[18px] h-[18px] text-[#414040]" />
-                    ) : (
-                        <ArrowUp className="w-[18px] h-[18px] text-[#414040]" />
-                    )}
-                    <span className="text-base text-center">
-                        {sortOrder === 'desc' ? 'Más reciente' : 'Más antiguo'}
-                    </span>
-                </button>
+                <div className="flex w-full sm:w-auto gap-3 sm:gap-4 items-center shrink-0 justify-start sm:justify-end">
+                    <button
+                        type="button"
+                        onClick={handleOrdenChange}
+                        className="h-10 px-4 cursor-pointer rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors"
+                        title={(filters.orden || 'desc') === 'desc' ? 'Más reciente primero' : 'Más antiguo primero'}
+                    >
+                        {(filters.orden || 'desc') === 'desc' ? (
+                            <ArrowDown className="w-[18px] h-[18px] text-[#414040]" />
+                        ) : (
+                            <ArrowUp className="w-[18px] h-[18px] text-[#414040]" />
+                        )}
+                        <span className="text-base text-center">
+                            {(filters.orden || 'desc') === 'desc' ? 'Más reciente' : 'Más antiguo'}
+                        </span>
+                    </button>
+                    <Filter
+                        nucleoFilter={usuarioOptions.length > 0 ? (filters.idUsuario || '') : undefined}
+                        onNucleoChange={usuarioOptions.length > 0 ? handleUsuarioChange : undefined}
+                        nucleoOptions={usuarioOptions.length > 0 ? usuarioOptions : []}
+                        tramiteOptions={[]}
+                        estatusOptions={[]}
+                        nucleoLabel="Usuario"
+                        nucleoAllLabel="Todos los usuarios"
+                        fechaInicio={filters.fechaInicio}
+                        fechaFin={filters.fechaFin}
+                        onFechaInicioChange={(value) => handleFilterChange('fechaInicio', value || undefined)}
+                        onFechaFinChange={(value) => handleFilterChange('fechaFin', value || undefined)}
+                        showDateRange={true}
+                    />
+                </div>
             </motion.div>
 
             <motion.div

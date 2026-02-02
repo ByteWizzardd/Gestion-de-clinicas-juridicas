@@ -2231,6 +2231,15 @@ export async function getSesionesAuditAction(filters?: AuditFilters & { limit?: 
     const offset = filters?.offset || 0;
     const type = filters?.type || 'all';
     const sortOrder = filters?.sortOrder || 'desc';
+    const startDate = filters?.fechaInicio ? new Date(filters.fechaInicio) : undefined;
+    const endDate = filters?.fechaFin ? new Date(filters.fechaFin) : undefined;
+
+    // Si hay fecha fin, ajustarla al final del día para incluir todos los registros de ese día
+    if (endDate) {
+      endDate.setUTCHours(23, 59, 59, 999);
+    }
+
+    const userId = filters?.idUsuario;
 
     let records;
     let total;
@@ -2238,38 +2247,38 @@ export async function getSesionesAuditAction(filters?: AuditFilters & { limit?: 
     if (filters?.busqueda) {
       switch (type) {
         case 'logins':
-          records = await auditoriaSesionesQueries.searchLogins(filters.busqueda, limit, offset, sortOrder);
-          total = await auditoriaSesionesQueries.countSearchLogins(filters.busqueda);
+          records = await auditoriaSesionesQueries.searchLogins(filters.busqueda, limit, offset, sortOrder, userId, startDate, endDate);
+          total = await auditoriaSesionesQueries.countSearchLogins(filters.busqueda, userId, startDate, endDate);
           break;
         case 'logouts':
-          records = await auditoriaSesionesQueries.searchLogouts(filters.busqueda, limit, offset, sortOrder);
-          total = await auditoriaSesionesQueries.countSearchLogouts(filters.busqueda);
+          records = await auditoriaSesionesQueries.searchLogouts(filters.busqueda, limit, offset, sortOrder, userId, startDate, endDate);
+          total = await auditoriaSesionesQueries.countSearchLogouts(filters.busqueda, userId, startDate, endDate);
           break;
         case 'failed':
-          records = await auditoriaSesionesQueries.searchFailed(filters.busqueda, limit, offset, sortOrder);
-          total = await auditoriaSesionesQueries.countSearchFailed(filters.busqueda);
+          records = await auditoriaSesionesQueries.searchFailed(filters.busqueda, limit, offset, sortOrder, userId, startDate, endDate);
+          total = await auditoriaSesionesQueries.countSearchFailed(filters.busqueda, userId, startDate, endDate);
           break;
         default:
-          records = await auditoriaSesionesQueries.search(filters.busqueda, limit, offset, sortOrder);
-          total = await auditoriaSesionesQueries.countSearch(filters.busqueda);
+          records = await auditoriaSesionesQueries.search(filters.busqueda, limit, offset, sortOrder, userId, startDate, endDate);
+          total = await auditoriaSesionesQueries.countSearch(filters.busqueda, userId, startDate, endDate);
       }
     } else {
       switch (type) {
         case 'logins':
-          records = await auditoriaSesionesQueries.getLogins(limit, offset, sortOrder);
-          total = await auditoriaSesionesQueries.countLogins();
+          records = await auditoriaSesionesQueries.getLogins(limit, offset, sortOrder, userId, startDate, endDate);
+          total = await auditoriaSesionesQueries.countLogins(userId, startDate, endDate);
           break;
         case 'logouts':
-          records = await auditoriaSesionesQueries.getLogouts(limit, offset, sortOrder);
-          total = await auditoriaSesionesQueries.countLogouts();
+          records = await auditoriaSesionesQueries.getLogouts(limit, offset, sortOrder, userId, startDate, endDate);
+          total = await auditoriaSesionesQueries.countLogouts(userId, startDate, endDate);
           break;
         case 'failed':
-          records = await auditoriaSesionesQueries.getFailed(limit, offset, sortOrder);
-          total = await auditoriaSesionesQueries.countFailed();
+          records = await auditoriaSesionesQueries.getFailed(limit, offset, sortOrder, userId, startDate, endDate);
+          total = await auditoriaSesionesQueries.countFailed(userId, startDate, endDate);
           break;
         default:
-          records = await auditoriaSesionesQueries.getAll(limit, offset, sortOrder);
-          total = await auditoriaSesionesQueries.count();
+          records = await auditoriaSesionesQueries.getAll(limit, offset, sortOrder, userId, startDate, endDate);
+          total = await auditoriaSesionesQueries.count(userId, startDate, endDate);
       }
     }
 

@@ -22,10 +22,10 @@ export const auditoriaSesionesQueries = {
     // ==========================================
     // TODAS LAS SESIONES
     // ==========================================
-    getAll: async (limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc'): Promise<SesionAuditoria[]> => {
+    getAll: async (limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc', userId?: string, startDate?: Date, endDate?: Date): Promise<SesionAuditoria[]> => {
         try {
             const query = loadSQL('auditoria-sesiones/get-all.sql');
-            const result = await pool.query(query, [limit, offset, sortOrder]);
+            const result = await pool.query(query, [limit, offset, sortOrder, userId || null, startDate || null, endDate || null]);
             return result.rows;
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.getAll', error);
@@ -33,10 +33,10 @@ export const auditoriaSesionesQueries = {
         }
     },
 
-    count: async (): Promise<number> => {
+    count: async (userId?: string, startDate?: Date, endDate?: Date): Promise<number> => {
         try {
             const query = loadSQL('auditoria-sesiones/count.sql');
-            const result = await pool.query(query);
+            const result = await pool.query(query, [userId || null, startDate || null, endDate || null]);
             return parseInt(result.rows[0]?.count || '0', 10);
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.count', error);
@@ -44,10 +44,10 @@ export const auditoriaSesionesQueries = {
         }
     },
 
-    search: async (searchTerm: string, limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc'): Promise<SesionAuditoria[]> => {
+    search: async (searchTerm: string, limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc', userId?: string, startDate?: Date, endDate?: Date): Promise<SesionAuditoria[]> => {
         try {
             const query = loadSQL('auditoria-sesiones/search.sql');
-            const result = await pool.query(query, [limit, offset, searchTerm, sortOrder]);
+            const result = await pool.query(query, [limit, offset, searchTerm, sortOrder, userId || null, startDate || null, endDate || null]);
             return result.rows;
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.search', error);
@@ -55,10 +55,10 @@ export const auditoriaSesionesQueries = {
         }
     },
 
-    countSearch: async (searchTerm: string): Promise<number> => {
+    countSearch: async (searchTerm: string, userId?: string, startDate?: Date, endDate?: Date): Promise<number> => {
         try {
             const query = loadSQL('auditoria-sesiones/count-search.sql');
-            const result = await pool.query(query, [searchTerm]);
+            const result = await pool.query(query, [searchTerm, userId || null, startDate || null, endDate || null]);
             return parseInt(result.rows[0]?.count || '0', 10);
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.countSearch', error);
@@ -69,10 +69,10 @@ export const auditoriaSesionesQueries = {
     // ==========================================
     // INICIOS DE SESIÓN (LOGINS - EXITOSOS)
     // ==========================================
-    getLogins: async (limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc'): Promise<SesionAuditoria[]> => {
+    getLogins: async (limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc', userId?: string, startDate?: Date, endDate?: Date): Promise<SesionAuditoria[]> => {
         try {
             const query = loadSQL('auditoria-sesiones/get-logins.sql');
-            const result = await pool.query(query, [limit, offset, sortOrder]);
+            const result = await pool.query(query, [limit, offset, sortOrder, userId || null, startDate || null, endDate || null]);
             return result.rows;
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.getLogins', error);
@@ -80,10 +80,10 @@ export const auditoriaSesionesQueries = {
         }
     },
 
-    countLogins: async (): Promise<number> => {
+    countLogins: async (userId?: string, startDate?: Date, endDate?: Date): Promise<number> => {
         try {
             const query = loadSQL('auditoria-sesiones/count-logins.sql');
-            const result = await pool.query(query);
+            const result = await pool.query(query, [userId || null, startDate || null, endDate || null]);
             return parseInt(result.rows[0]?.count || '0', 10);
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.countLogins', error);
@@ -91,10 +91,10 @@ export const auditoriaSesionesQueries = {
         }
     },
 
-    searchLogins: async (searchTerm: string, limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc'): Promise<SesionAuditoria[]> => {
+    searchLogins: async (searchTerm: string, limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc', userId?: string, startDate?: Date, endDate?: Date): Promise<SesionAuditoria[]> => {
         try {
             const query = loadSQL('auditoria-sesiones/search-logins.sql');
-            const result = await pool.query(query, [limit, offset, searchTerm, sortOrder]);
+            const result = await pool.query(query, [limit, offset, searchTerm, sortOrder, userId || null, startDate || null, endDate || null]);
             return result.rows;
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.searchLogins', error);
@@ -102,10 +102,10 @@ export const auditoriaSesionesQueries = {
         }
     },
 
-    countSearchLogins: async (searchTerm: string): Promise<number> => {
+    countSearchLogins: async (searchTerm: string, userId?: string, startDate?: Date, endDate?: Date): Promise<number> => {
         try {
             const query = loadSQL('auditoria-sesiones/count-search-logins.sql');
-            const result = await pool.query(query, [searchTerm]);
+            const result = await pool.query(query, [searchTerm, userId || null, startDate || null, endDate || null]);
             return parseInt(result.rows[0]?.count || '0', 10);
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.countSearchLogins', error);
@@ -116,10 +116,10 @@ export const auditoriaSesionesQueries = {
     // ==========================================
     // CIERRES DE SESIÓN (LOGOUTS)
     // ==========================================
-    getLogouts: async (limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc'): Promise<SesionAuditoria[]> => {
+    getLogouts: async (limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc', userId?: string, startDate?: Date, endDate?: Date): Promise<SesionAuditoria[]> => {
         try {
             const query = loadSQL('auditoria-sesiones/get-logouts.sql');
-            const result = await pool.query(query, [limit, offset, sortOrder]);
+            const result = await pool.query(query, [limit, offset, sortOrder, userId || null, startDate || null, endDate || null]);
             return result.rows;
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.getLogouts', error);
@@ -127,10 +127,10 @@ export const auditoriaSesionesQueries = {
         }
     },
 
-    countLogouts: async (): Promise<number> => {
+    countLogouts: async (userId?: string, startDate?: Date, endDate?: Date): Promise<number> => {
         try {
             const query = loadSQL('auditoria-sesiones/count-logouts.sql');
-            const result = await pool.query(query);
+            const result = await pool.query(query, [userId || null, startDate || null, endDate || null]);
             return parseInt(result.rows[0]?.count || '0', 10);
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.countLogouts', error);
@@ -138,10 +138,10 @@ export const auditoriaSesionesQueries = {
         }
     },
 
-    searchLogouts: async (searchTerm: string, limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc'): Promise<SesionAuditoria[]> => {
+    searchLogouts: async (searchTerm: string, limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc', userId?: string, startDate?: Date, endDate?: Date): Promise<SesionAuditoria[]> => {
         try {
             const query = loadSQL('auditoria-sesiones/search-logouts.sql');
-            const result = await pool.query(query, [limit, offset, searchTerm, sortOrder]);
+            const result = await pool.query(query, [limit, offset, searchTerm, sortOrder, userId || null, startDate || null, endDate || null]);
             return result.rows;
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.searchLogouts', error);
@@ -149,10 +149,10 @@ export const auditoriaSesionesQueries = {
         }
     },
 
-    countSearchLogouts: async (searchTerm: string): Promise<number> => {
+    countSearchLogouts: async (searchTerm: string, userId?: string, startDate?: Date, endDate?: Date): Promise<number> => {
         try {
             const query = loadSQL('auditoria-sesiones/count-search-logouts.sql');
-            const result = await pool.query(query, [searchTerm]);
+            const result = await pool.query(query, [searchTerm, userId || null, startDate || null, endDate || null]);
             return parseInt(result.rows[0]?.count || '0', 10);
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.countSearchLogouts', error);
@@ -163,10 +163,10 @@ export const auditoriaSesionesQueries = {
     // ==========================================
     // INTENTOS FALLIDOS (FAILED)
     // ==========================================
-    getFailed: async (limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc'): Promise<SesionAuditoria[]> => {
+    getFailed: async (limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc', userId?: string, startDate?: Date, endDate?: Date): Promise<SesionAuditoria[]> => {
         try {
             const query = loadSQL('auditoria-sesiones/get-failed.sql');
-            const result = await pool.query(query, [limit, offset, sortOrder]);
+            const result = await pool.query(query, [limit, offset, sortOrder, userId || null, startDate || null, endDate || null]);
             return result.rows;
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.getFailed', error);
@@ -174,10 +174,10 @@ export const auditoriaSesionesQueries = {
         }
     },
 
-    countFailed: async (): Promise<number> => {
+    countFailed: async (userId?: string, startDate?: Date, endDate?: Date): Promise<number> => {
         try {
             const query = loadSQL('auditoria-sesiones/count-failed.sql');
-            const result = await pool.query(query);
+            const result = await pool.query(query, [userId || null, startDate || null, endDate || null]);
             return parseInt(result.rows[0]?.count || '0', 10);
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.countFailed', error);
@@ -185,10 +185,10 @@ export const auditoriaSesionesQueries = {
         }
     },
 
-    searchFailed: async (searchTerm: string, limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc'): Promise<SesionAuditoria[]> => {
+    searchFailed: async (searchTerm: string, limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc', userId?: string, startDate?: Date, endDate?: Date): Promise<SesionAuditoria[]> => {
         try {
             const query = loadSQL('auditoria-sesiones/search-failed.sql');
-            const result = await pool.query(query, [limit, offset, searchTerm, sortOrder]);
+            const result = await pool.query(query, [limit, offset, searchTerm, sortOrder, userId || null, startDate || null, endDate || null]);
             return result.rows;
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.searchFailed', error);
@@ -196,10 +196,10 @@ export const auditoriaSesionesQueries = {
         }
     },
 
-    countSearchFailed: async (searchTerm: string): Promise<number> => {
+    countSearchFailed: async (searchTerm: string, userId?: string, startDate?: Date, endDate?: Date): Promise<number> => {
         try {
             const query = loadSQL('auditoria-sesiones/count-search-failed.sql');
-            const result = await pool.query(query, [searchTerm]);
+            const result = await pool.query(query, [searchTerm, userId || null, startDate || null, endDate || null]);
             return parseInt(result.rows[0]?.count || '0', 10);
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.countSearchFailed', error);
