@@ -34,7 +34,8 @@ export type AuditRecordType =
   | 'caso-eliminado' | 'caso-actualizado' | 'caso-creado'
   | 'beneficiario-eliminado' | 'beneficiario-actualizado' | 'beneficiario-creado'
   | 'accion-eliminada' | 'accion-actualizada' | 'accion-creada'
-  | 'equipo-actualizado';
+  | 'equipo-actualizado'
+  | 'sesion';
 
 // Auditoría de soportes eliminados
 export interface SoporteAuditRecord {
@@ -725,7 +726,27 @@ export interface AuditCounts {
   accionesEliminadas?: number;
   // Equipo de casos
   equiposActualizados?: number;
+  // Sesiones
+  sesiones?: number;
   lastActivities?: Record<string, string | null>;
+}
+
+// Auditoría de Sesiones
+export interface SesionAuditRecord {
+  id: number;
+  id_sesion: number;
+  cedula_usuario: string;
+  fecha_inicio: string;
+  fecha_cierre: string | null;
+  ip_direccion: string | null;
+  dispositivo: string | null;
+  exitoso: boolean;
+  nombres?: string;
+  apellidos?: string;
+  nombre_usuario?: string;
+  fecha: string; // Alias para fecha_inicio
+  usuario_accion: string; // Alias for cedula_usuario
+  nombre_completo_usuario_accion?: string;
 }
 
 // Auditoría de Beneficiarios

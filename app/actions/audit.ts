@@ -117,10 +117,11 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       // Inscripciones y Asignaciones
       estudiantesInscritos, profesoresAsignados,
       beneficiariosEliminados, beneficiariosActualizados, beneficiariosCreados,
-      // Acciones
       accionesCreadas, accionesActualizadas, accionesEliminadas,
       // Equipo de casos
-      equiposActualizados
+      equiposActualizados,
+      // Sesiones
+      sesionesCount
     ] = await Promise.all([
       auditoriaEliminacionSoportesQueries.getCount(),
       auditoriaInsercionSoportesQueries.getCount().catch(() => 0),
@@ -197,6 +198,15 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       auditoriaEliminacionAccionesQueries.getCount().catch(() => 0),
       // Equipo de casos
       auditoriaActualizacionEquipoQueries.getCount().catch(() => 0),
+      // Sesiones
+      (async () => {
+        try {
+          const { auditoriaSesionesQueries } = await import('@/lib/db/queries/auditoria-sesiones.queries');
+          return await auditoriaSesionesQueries.count();
+        } catch {
+          return 0;
+        }
+      })(),
     ]);
 
     // Obtener últimas fechas de actividad
@@ -279,6 +289,8 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       accionesEliminadas: accionesEliminadas || 0,
       // Equipo de casos
       equiposActualizados: equiposActualizados || 0,
+      // Sesiones
+      sesiones: sesionesCount || 0,
       // Últimas actividades
       lastActivities: lastActivityData
     };
@@ -2197,3 +2209,90 @@ export async function getEquiposCreadosAuditAction(filters?: AuditFilters) {
   }
 }
 
+/**
+ * Obtiene registros de auditoría de sesiones (inicio y cierre de sesión)
+ */
+export async function getSesionesAuditAction(filters?: AuditFilters & { limit?: number; offset?: number; type?: 'logins' | 'logouts' | 'failed' | 'all' }) {
+  const authResult = await requireAuthInServerActionWithCode();
+
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+
+  try {
+    const { auditoriaSesionesQueries } = await import('@/lib/db/queries/auditoria-sesiones.queries');
+
+    const limit = filters?.limit || 50;
+    const offset = filters?.offset || 0;
+    const type = filters?.type || 'all';
+
+    let records;
+    let total;
+
+    if (filters?.busqueda) {
+      switch (type) {
+        case 'logins':
+          records = await auditoriaSesionesQueries.searchLogins(filters.busqueda, limit, offset);
+          total = await auditoriaSesionesQueries.countSearchLogins(filters.busqueda);
+          break;
+        case 'logouts':
+          records = await auditoriaSesionesQueries.searchLogouts(filters.busqueda, limit, offset);
+          total = await auditoriaSesionesQueries.countSearchLogouts(filters.busqueda);
+          break;
+        case 'failed':
+          records = await auditoriaSesionesQueries.searchFailed(filters.busqueda, limit, offset);
+          total = await auditoriaSesionesQueries.countSearchFailed(filters.busqueda);
+          break;
+        default:
+          records = await auditoriaSesionesQueries.search(filters.busqueda, limit, offset);
+          total = await auditoriaSesionesQueries.countSearch(filters.busqueda);
+      }
+    } else {
+      switch (type) {
+        case 'logins':
+          records = await auditoriaSesionesQueries.getLogins(limit, offset);
+          total = await auditoriaSesionesQueries.countLogins();
+          break;
+        case 'logouts':
+          records = await auditoriaSesionesQueries.getLogouts(limit, offset);
+          total = await auditoriaSesionesQueries.countLogouts();
+          break;
+        case 'failed':
+          records = await auditoriaSesionesQueries.getFailed(limit, offset);
+          total = await auditoriaSesionesQueries.countFailed();
+          break;
+        default:
+          records = await auditoriaSesionesQueries.getAll(limit, offset);
+          total = await auditoriaSesionesQueries.count();
+      }
+    }
+
+    // Mapear campos para compatibilidad con tipos
+    const mappedRecords = records.map((r) => ({
+      ...r,
+      id: r.id_sesion,
+      fecha: r.fecha_inicio?.toISOString() || new Date().toISOString(),
+      fecha_inicio: r.fecha_inicio?.toISOString() || new Date().toISOString(),
+      fecha_cierre: r.fecha_cierre?.toISOString() || null,
+      usuario_accion: r.cedula_usuario,
+      nombre_completo_usuario_accion: r.nombres && r.apellidos
+        ? `${r.nombres} ${r.apellidos}`
+        : r.nombre_usuario || r.cedula_usuario,
+    }));
+
+    return {
+      records: mappedRecords,
+      total,
+      limit,
+      offset
+    };
+  } catch (error) {
+    console.error('Error obteniendo auditoría de sesiones:', error);
+    throw new Error('Error al obtener auditoría de sesiones');
+  }
+}

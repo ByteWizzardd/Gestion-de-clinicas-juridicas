@@ -123,4 +123,40 @@ export const authQueries = {
       );
     }
   },
+
+  /**
+   * Registra el inicio de una sesión
+   */
+  registrarInicioSesion: async (data: {
+    cedula: string;
+    ipDireccion?: string;
+    dispositivo?: string;
+    exitoso: boolean;
+  }): Promise<number | null> => {
+    try {
+      const query = loadSQL('auditoria-sesiones/registrar-inicio-sesion.sql');
+      const result = await pool.query(query, [
+        data.cedula,
+        data.ipDireccion || null,
+        data.dispositivo || null,
+        data.exitoso
+      ]);
+      return result.rows[0]?.id_sesion || null;
+    } catch (error) {
+      logger.error('Error al registrar inicio de sesión', error);
+      return null;
+    }
+  },
+
+  /**
+   * Registra el cierre de una sesión
+   */
+  registrarCierreSesion: async (idSesion: number): Promise<void> => {
+    try {
+      const query = loadSQL('auditoria-sesiones/registrar-cierre-sesion.sql');
+      await pool.query(query, [idSesion]);
+    } catch (error) {
+      logger.error('Error al registrar cierre de sesión', error);
+    }
+  },
 };

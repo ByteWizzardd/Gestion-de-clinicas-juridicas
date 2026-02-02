@@ -1,6 +1,6 @@
 'use server';
 
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { authService } from '@/lib/services/auth.service';
 import { authQueries } from '@/lib/db/queries/auth.queries';
 import { jwtExpiresInToSeconds, verifyToken } from '@/lib/utils/security';
@@ -94,16 +94,23 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
       };
     }
 
+    // Obtener IP y User Agent
+    const headersList = await headers();
+    const ipDireccion = headersList.get('x-forwarded-for') || 'unknown';
+    const dispositivo = headersList.get('user-agent') || 'unknown';
+
     // Continuar con el login normal
     const result = await authService.login({
       nombreUsuario,
       password,
+      ipDireccion,
+      dispositivo,
     });
 
     // Configurar cookie HTTP-only
     const cookieStore = await cookies();
     const cookieMaxAge = jwtExpiresInToSeconds(JWT_EXPIRES_IN);
-    
+
     cookieStore.set('auth_token', result.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -111,6 +118,17 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
       maxAge: cookieMaxAge,
       path: '/',
     });
+
+    // Guardar ID de sesión en una cookie separada para el logout
+    if (result.idSesion) {
+      cookieStore.set('session_id', result.idSesion.toString(), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: cookieMaxAge,
+        path: '/',
+      });
+    }
 
     return {
       success: true,
@@ -145,7 +163,22 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
 export async function logoutAction(): Promise<{ success: boolean }> {
   try {
     const cookieStore = await cookies();
+
+    // Obtener ID de sesión para cerrar la auditoría
+    const idSesion = cookieStore.get('session_id')?.value;
+    if (idSesion) {
+      await authQueries.registrarCierreSesion(parseInt(idSesion));
+    }
+
     cookieStore.set('auth_token', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 0,
+      path: '/',
+    });
+
+    cookieStore.set('session_id', '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -195,7 +228,7 @@ export async function getCurrentUserAction(): Promise<GetCurrentUserResult> {
     // Obtener foto de perfil
     const fotoBuffer = await usuariosQueries.getFotoPerfil(user.cedula);
     let fotoPerfilBase64: string | null = null;
-    
+
     if (fotoBuffer) {
       // Convertir Buffer a base64
       fotoPerfilBase64 = `data:image/jpeg;base64,${fotoBuffer.toString('base64')}`;
@@ -593,7 +626,7 @@ export async function changePasswordAction(formData: FormData): Promise<ChangePa
     // Verificar contraseña actual
     const { comparePassword } = await import('@/lib/utils/security');
     const passwordMatch = await comparePassword(currentPassword, user.password_hash);
-    
+
     if (!passwordMatch) {
       return {
         success: false,

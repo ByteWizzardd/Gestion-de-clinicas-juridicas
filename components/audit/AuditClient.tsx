@@ -236,6 +236,21 @@ export default function AuditClient() {
           }
         ]
       },
+      {
+        title: "Sesiones",
+        description: "Registro de inicios y cierres de sesión en el sistema",
+        icon: Clock,
+        totalCount: counts.sesiones || 0,
+        href: "/dashboard/audit/sesiones",
+        lastActivity: counts.lastActivities?.sesiones,
+        operations: [
+          {
+            label: "Ver todo",
+            count: counts.sesiones || 0,
+            href: "/dashboard/audit/sesiones"
+          }
+        ]
+      },
       // Catálogos
       ...(counts.estadosEliminados !== undefined || counts.estadosActualizados !== undefined || counts.estadosInsertados !== undefined ? [{
         title: "Estados",
