@@ -281,7 +281,7 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
                 fechaInicio: filters.fechaInicio,
                 fechaFin: filters.fechaFin
             });
-            setSesiones(result.records as SesionExtended[]);
+            setSesiones(result.records as unknown as SesionExtended[]);
             setTotal(result.total);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error al cargar sesiones');
