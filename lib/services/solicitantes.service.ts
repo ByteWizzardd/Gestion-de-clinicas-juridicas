@@ -87,17 +87,30 @@ function buildTelefonoCelular(input: {
 }): string {
   const rawTelefono = (input.telefonoCelular ?? "").toString().trim();
 
-  // Si ya viene en formato internacional, usarlo tal cual (sin espacios)
+  // Si ya viene en formato con guión (+58-...), limpiarlo y reformatearlo
+  const dashMatch = rawTelefono.match(/^(\+\d{1,4})-(.*)$/);
+  if (dashMatch) {
+    const code = dashMatch[1];
+    const number = dashMatch[2].replace(/\D/g, "");
+    return `${code}-${number}`;
+  }
+
+  // Si ya viene en formato internacional sin guión, agregar el guión
   if (rawTelefono.startsWith("+")) {
-    const normalized = rawTelefono.replace(/\s+/g, "");
-    return normalized;
+    const codeMatch = rawTelefono.match(/^(\+\d{1,4})/);
+    if (codeMatch) {
+      const code = codeMatch[1];
+      const number = rawTelefono.slice(code.length).replace(/\D/g, "");
+      return `${code}-${number}`;
+    }
+    return rawTelefono;
   }
 
   // Si viene solo el número, concatenar con código país (o default +58)
   const rawCode = (input.codigoPaisCelular ?? "+58").toString().trim();
   const normalizedCode = rawCode.startsWith("+") ? rawCode : `+${rawCode}`;
   const onlyDigits = rawTelefono.replace(/\D/g, "");
-  return `${normalizedCode}${onlyDigits}`;
+  return `${normalizedCode}-${onlyDigits}`;
 }
 
 /**
@@ -289,7 +302,8 @@ export const solicitantesService = {
       if (solicitanteExistente.rows.length === 0) {
         // Verificar si el correo electrónico ya existe en otro solicitante antes de crear
         const checkEmailQuery = loadSQL('solicitantes/check-email-exists.sql');
-        const emailExistente = await client.query(checkEmailQuery, [data.correoElectronico]);
+        // Pasamos null como segundo parámetro porque es un registro nuevo
+        const emailExistente = await client.query(checkEmailQuery, [data.correoElectronico, null]);
 
         if (emailExistente.rows.length > 0) {
           await client.query('ROLLBACK');
@@ -335,7 +349,8 @@ export const solicitantesService = {
         if (solicitanteActual.correo_electronico !== data.correoElectronico) {
           // El correo está cambiando, verificar que el nuevo no exista en otro solicitante
           const checkNuevoEmailQuery = loadSQL('solicitantes/check-email-exists.sql');
-          const nuevoEmailExistente = await client.query(checkNuevoEmailQuery, [data.correoElectronico]);
+          // Pasamos null como segundo parámetro porque aquí solo queremos ver si existe
+          const nuevoEmailExistente = await client.query(checkNuevoEmailQuery, [data.correoElectronico, null]);
 
           // Si el correo existe y no es del mismo solicitante, error
           if (nuevoEmailExistente.rows.length > 0) {
@@ -511,6 +526,26 @@ export const solicitantesService = {
       today.setHours(0, 0, 0, 0);
       if (dateToCheck > today) {
         throw new AppError('La fecha de nacimiento no puede ser futura', 400, 'VALIDATION_ERROR');
+      }
+    }
+
+    // Validar formato de teléfono celular
+    const phoneValue = (data.telefonoCelular || '').trim();
+    if (phoneValue) {
+      const codeMatch = phoneValue.match(/^(\+\d{1,4})/);
+      const code = codeMatch ? codeMatch[1] : '';
+      const number = phoneValue.slice(code.length).replace(/\D/g, '');
+
+      if (code === '+58') {
+        // Para números venezolanos (+58), el número debe tener 10 dígitos y empezar con 4
+        if (number.length !== 10 || !number.startsWith('4')) {
+          throw new AppError('Número venezolano inválido. Debe tener 10 dígitos y empezar con 4 (ej: 412...)', 400, 'VALIDATION_ERROR');
+        }
+      } else if (code) {
+        // Para otros países, validar longitud mínima y máxima
+        if (number.length < 7 || number.length > 15) {
+          throw new AppError('Número de teléfono inválido', 400, 'VALIDATION_ERROR');
+        }
       }
     }
 

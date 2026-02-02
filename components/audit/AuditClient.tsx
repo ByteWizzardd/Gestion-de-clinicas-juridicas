@@ -4,11 +4,11 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
 import Spinner from '@/components/ui/feedback/Spinner';
 import Search from '@/components/CaseTools/search';
-import Filter from '@/components/CaseTools/Filter';
+
 import AuditEntityCard from './AuditEntityCard';
 import { getAuditCountsAction } from '@/app/actions/audit';
 import type { AuditCounts } from '@/types/audit';
-import { LucideIcon, FileText, Calendar, Users, User, MapPin, BookOpen, FolderTree, Building2, Home, Building, Briefcase, Activity, GraduationCap, Tag, Tags, Scale, Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { LucideIcon, FileText, Calendar, Users, User, MapPin, BookOpen, FolderTree, Building2, Home, Building, Briefcase, Activity, GraduationCap, Tag, Tags, Scale, Calendar as CalendarIcon, Clock, ArrowDown, ArrowUp } from 'lucide-react';
 
 interface AuditOperation {
   label: string;
@@ -32,7 +32,7 @@ export default function AuditClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortOrder, setSortOrder] = useState<'alphabetical' | 'recency'>('alphabetical');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
   useEffect(() => {
     async function loadCounts() {
@@ -519,16 +519,13 @@ export default function AuditClient() {
       } as AuditEntity] : []),
     ];
 
-    if (sortOrder === 'alphabetical') {
-      return list.sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
-    } else {
-      // Ordenar por recencia
-      return list.sort((a, b) => {
-        const dateA = a.lastActivity ? new Date(a.lastActivity).getTime() : 0;
-        const dateB = b.lastActivity ? new Date(b.lastActivity).getTime() : 0;
-        return dateB - dateA; // Más reciente primero
-      });
-    }
+    // Ordenar por fecha de última actividad
+    return list.sort((a, b) => {
+      const dateA = a.lastActivity ? new Date(a.lastActivity).getTime() : 0;
+      const dateB = b.lastActivity ? new Date(b.lastActivity).getTime() : 0;
+
+      return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+    });
   }, [counts, sortOrder]);
 
   // Filtrar entidades basándose en la búsqueda
@@ -582,13 +579,21 @@ export default function AuditClient() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <Filter
-              tramiteOptions={[]}
-              estatusOptions={[]}
-              showRecentActivity={true}
-              recentActivityFilter={sortOrder === 'recency'}
-              onRecentActivityChange={(isRecency) => setSortOrder(isRecency ? 'recency' : 'alphabetical')}
-            />
+            <button
+              type="button"
+              onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+              className="h-10 px-4 cursor-pointer rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors"
+              title={sortOrder === 'desc' ? 'Más reciente primero' : 'Más antiguo primero'}
+            >
+              {sortOrder === 'desc' ? (
+                <ArrowDown className="w-[18px] h-[18px] text-[#414040]" />
+              ) : (
+                <ArrowUp className="w-[18px] h-[18px] text-[#414040]" />
+              )}
+              <span className="text-base text-center">
+                {sortOrder === 'desc' ? 'Más reciente' : 'Más antiguo'}
+              </span>
+            </button>
           </div>
         </div>
       </motion.div>

@@ -12,7 +12,7 @@ export default async function AuditCasesPage({
     await authorizeRole(['coordinator']);
 
     const params = await searchParams;
-    const activeTab = params.tab || 'casos-eliminados';
+    const activeTab = params.tab || 'casos-creados';
 
     return (
         <>

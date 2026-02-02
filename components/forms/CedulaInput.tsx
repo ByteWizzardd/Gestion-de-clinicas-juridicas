@@ -307,7 +307,6 @@ export default function CedulaInput({
               text-base placeholder:text-[#717171]
               ${disabled ? 'opacity-50 cursor-not-allowed text-gray-500' : ''}
             `}
-            required={required}
           />
 
           {/* Lista de sugerencias */}

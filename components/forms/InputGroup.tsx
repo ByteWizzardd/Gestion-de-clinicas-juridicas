@@ -200,7 +200,7 @@ export default function InputGroup({
     <div className="flex flex-col gap-1" ref={containerRef}>
       {label && (
         <label className="text-base font-normal text-foreground mb-1">
-          {label.split(' *').map((part, index, array) => 
+          {label.split(' *').map((part, index, array) =>
             index < array.length - 1 ? (
               <span key={index}>
                 {part} <span className="text-danger">*</span>
@@ -319,7 +319,9 @@ export default function InputGroup({
               if (disabled) return;
               // Si numbersOnly es true, filtrar solo números y limitar a 13 dígitos
               if (numbersOnly) {
-                const soloNumeros = e.target.value.replace(/\D/g, '').slice(0, 13);
+                let soloNumeros = e.target.value.replace(/\D/g, '').slice(0, 13);
+                // Eliminar ceros al inicio (el número nunca debe empezar con 0 en formato internacional)
+                soloNumeros = soloNumeros.replace(/^0+/, '');
                 onInputChange(soloNumeros);
               } else {
                 onInputChange(e.target.value);

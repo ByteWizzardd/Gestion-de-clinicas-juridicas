@@ -15,7 +15,6 @@ SELECT
     GREATEST(
         COALESCE((SELECT MAX(fecha_creacion) FROM auditoria_insercion_usuarios), '1970-01-01'),
         COALESCE((SELECT MAX(fecha_actualizacion) FROM auditoria_actualizacion_usuarios), '1970-01-01'),
-        COALESCE((SELECT MAX(fecha) FROM auditoria_eliminacion_usuario), '1970-01-01'),
         COALESCE((SELECT MAX(fecha) FROM auditoria_eliminacion_usuario), '1970-01-01')
     ) as usuarios,
     -- Casos

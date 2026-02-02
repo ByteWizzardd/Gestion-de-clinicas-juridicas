@@ -196,15 +196,16 @@ export const solicitantesQueries = {
     /**
      * Verifica si un correo electrónico ya existe en otro solicitante
      * @param email - Correo electrónico a verificar
+     * @param excludeCedula - Cédula a excluir de la verificación (opcional)
      * @returns Objeto con cedula, nombres y apellidos si existe, null si no existe
      */
-    checkEmailExists: async (email: string): Promise<{
+    checkEmailExists: async (email: string, excludeCedula?: string): Promise<{
         cedula: string;
         nombres: string;
         apellidos: string;
     } | null> => {
         const query = loadSQL('solicitantes/check-email-exists.sql');
-        const result: QueryResult = await pool.query(query, [email]);
+        const result: QueryResult = await pool.query(query, [email, excludeCedula || null]);
         if (result.rows.length === 0) {
             return null;
         }

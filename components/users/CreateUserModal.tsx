@@ -11,7 +11,6 @@ import CedulaInput from '../forms/CedulaInput';
 import { validateEmailFormat, validateEmailDomain } from '@/lib/utils/email-validation';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
-import { useEmailVerification } from '@/hooks/useEmailVerification';
 
 interface CreateUserForm {
   cedulaTipo: string;
@@ -56,7 +55,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
   const emailCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const usernameCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
-  const { verifyEmail, isVerifying: isVerifyingEmail } = useEmailVerification();
 
   // Resetear formulario cuando se abre el modal
   useEffect(() => {
@@ -168,17 +166,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
     // Validar formato de email básico antes de verificar
     if (!validateEmailFormat(email)) {
       // No verificar si el formato es inválido, la validación de formato se hará en validateForm
-      return;
-    }
-
-    // Verificar que el email sea real y exista
-    const isEmailValid = await verifyEmail(email);
-    if (!isEmailValid) {
-      // El hook ya estableció el error, pero lo ponemos en nuestro estado de errores
-      setErrors((prev) => ({
-        ...prev,
-        correo_electronico: 'El correo electrónico no es válido o no existe',
-      }));
       return;
     }
 

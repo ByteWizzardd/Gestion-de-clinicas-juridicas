@@ -42,32 +42,46 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   disabled,
 }) => {
   // Lógica mejorada para extraer el código y el número
+  // Formato esperado: "+58-4122727981" o "+584122727981"
   let code = '+58'; // Código por defecto
-  let number = value || '';
+  let number = '';
 
-  // Buscar el código de país más largo que coincida con el inicio del valor
-  const matchingCode = phoneCodes
-    .map(pc => pc.value)
-    .sort((a, b) => b.length - a.length) // Ordenar de más largo a más corto
-    .find(c => value.startsWith(c));
+  // Primero, verificar si tiene formato con guión (+58-...)
+  const dashMatch = value.match(/^(\+\d{1,4})-(.*)$/);
+  if (dashMatch) {
+    code = dashMatch[1];
+    number = dashMatch[2].replace(/\D/g, ''); // Solo números
+  } else {
+    // Buscar el código de país más largo que coincida con el inicio del valor
+    const matchingCode = phoneCodes
+      .map(pc => pc.value)
+      .sort((a, b) => b.length - a.length) // Ordenar de más largo a más corto
+      .find(c => value.startsWith(c));
 
-  if (matchingCode) {
-    code = matchingCode;
-    number = value.substring(matchingCode.length);
-  } else if (value.startsWith('+')) {
-    // Si empieza con + pero no coincide con ningún código, asumimos que es parte del número
-    number = value;
+    if (matchingCode) {
+      code = matchingCode;
+      number = value.substring(matchingCode.length).replace(/\D/g, '');
+    } else if (value.startsWith('+')) {
+      // Si empieza con + pero no coincide con ningún código conocido
+      const codeMatch = value.match(/^(\+\d{1,4})/);
+      if (codeMatch) {
+        code = codeMatch[1];
+        number = value.substring(codeMatch[1].length).replace(/\D/g, '');
+      }
+    }
   }
 
   const handleCodeChange = (newCode: string) => {
-    const newValue = `${newCode}${number}`;
+    // Siempre guardar con guión
+    const newValue = `${newCode}-${number}`;
     onChange({
       target: { name, value: newValue },
     } as React.ChangeEvent<HTMLInputElement>);
   };
 
   const handleNumberChange = (newNumber: string) => {
-    const newValue = `${code}${newNumber}`;
+    // Siempre guardar con guión
+    const newValue = `${code}-${newNumber}`;
     onChange({
       target: { name, value: newValue },
     } as React.ChangeEvent<HTMLInputElement>);

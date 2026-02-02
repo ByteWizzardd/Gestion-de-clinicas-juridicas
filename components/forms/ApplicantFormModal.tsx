@@ -13,7 +13,6 @@ import { ArrowRight, ArrowLeft, Calendar, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
 import DatePicker from './DatePicker';
 import { validateEmailFormat } from '@/lib/utils/email-validation';
-import { useEmailVerification } from '@/hooks/useEmailVerification';
 
 interface ApplicantFormModalProps {
   isOpen: boolean;
@@ -263,6 +262,67 @@ const clearFormDataFromStorage = () => {
   }
 };
 
+// Helper para normalizar números de teléfono al formato con guión para el input
+// Entrada puede ser: "+58-4122727981", "+584122727981", "0412-2727981", "04122727981"
+// Salida siempre: "+58-4122727981" (con guión para visualizar)
+const normalizePhoneNumber = (phone: string | null | undefined): string => {
+  if (!phone) return '+58-';
+
+  // Eliminar espacios y paréntesis
+  let cleaned = phone.replace(/[\s()]/g, '');
+
+  // Si tiene formato con guión después del código (+58-...), mantenerlo
+  const dashMatch = cleaned.match(/^(\+\d{1,4})-(.*)$/);
+  if (dashMatch) {
+    const code = dashMatch[1];
+    const number = dashMatch[2].replace(/\D/g, '').replace(/^0+/, '');
+    return `${code}-${number}`;
+  }
+
+  // Eliminar guiones restantes
+  cleaned = cleaned.replace(/-/g, '');
+
+  // Si ya tiene formato internacional sin guión, agregar el guión
+  if (cleaned.startsWith('+')) {
+    const codeMatch = cleaned.match(/^(\+\d{1,4})/);
+    if (codeMatch) {
+      const code = codeMatch[1];
+      const number = cleaned.substring(code.length).replace(/^0+/, '');
+      return `${code}-${number}`;
+    }
+    return cleaned;
+  }
+
+  // Si empieza con 0 y luego 4 (formato venezolano local: 0412, 0414, etc.)
+  if (cleaned.startsWith('0') && cleaned.length >= 2 && cleaned[1] === '4') {
+    // Convertir a formato internacional: 0412... -> +58-412...
+    return '+58-' + cleaned.substring(1);
+  }
+
+  // Si solo es un número que empieza con 4 (sin el 0 inicial)
+  if (cleaned.startsWith('4') && cleaned.length >= 10) {
+    return '+58-' + cleaned;
+  }
+
+  // Por defecto, asumir que es venezolano
+  return '+58-' + cleaned.replace(/^0+/, '');
+};
+
+// Helper para formatear el teléfono para guardar en BD (con guión)
+// Entrada: "+584122727981" -> Salida: "+58-4122727981"
+const formatPhoneForStorage = (phone: string): string => {
+  if (!phone) return '';
+
+  const codeMatch = phone.match(/^(\+\d{1,4})/);
+  if (codeMatch) {
+    const code = codeMatch[1];
+    const number = phone.slice(code.length).replace(/\D/g, '');
+    return `${code}-${number}`;
+  }
+
+  return phone;
+};
+
 // Helper para mapear datos iniciales a FormData
 const mapInitialDataToFormData = (data: any): FormData => {
   const cedulaParts = (data.cedula || '').split('-');
@@ -303,7 +363,7 @@ const mapInitialDataToFormData = (data: any): FormData => {
     fechaNacimiento: data.fecha_nacimiento ? (typeof data.fecha_nacimiento === 'string' ? data.fecha_nacimiento : new Date(data.fecha_nacimiento).toISOString().split('T')[0]) : '',
     sexo: data.sexo || '',
     telefonoLocal: data.telefono_local || '',
-    telefonoCelular: data.telefono_celular || '+58',
+    telefonoCelular: normalizePhoneNumber(data.telefono_celular),
     correoElectronico: data.correo_electronico || '',
     estadoCivil: data.estado_civil || '',
     concubinato: data.concubinato ? 'si' : 'no',
@@ -407,7 +467,6 @@ export default function ApplicantFormModal({
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [cedulaCheckTimeout, setCedulaCheckTimeout] = useState<NodeJS.Timeout | null>(null);
   const [emailCheckTimeout, setEmailCheckTimeout] = useState<NodeJS.Timeout | null>(null);
-  const { verifyEmail, isVerifying: isVerifyingEmail } = useEmailVerification();
 
   // Estados para recomendaciones de cédula
   const [cedulaSuggestions, setCedulaSuggestions] = useState<Array<{
@@ -610,11 +669,20 @@ export default function ApplicantFormModal({
     }
 
     // Validar teléfono celular
-    // Nota: el valor esperado es "<codigoPais><numero>", ej: "+584143714004".
+    // Nota: el valor esperado es "<codigoPais>-<numero>", ej: "+58-4143714004".
     const phoneValue = (formData.telefonoCelular || '').trim();
-    const codeMatch = phoneValue.match(/^(\+\d{1,4})/);
-    const code = codeMatch ? codeMatch[1] : '';
-    const number = phoneValue.slice(code.length).replace(/\D/g, '');
+    // Extraer código y número considerando el guión
+    const dashMatch = phoneValue.match(/^(\+\d{1,4})-(.*)$/);
+    let code = '';
+    let number = '';
+    if (dashMatch) {
+      code = dashMatch[1];
+      number = dashMatch[2].replace(/\D/g, '');
+    } else {
+      const codeMatch = phoneValue.match(/^(\+\d{1,4})/);
+      code = codeMatch ? codeMatch[1] : '';
+      number = phoneValue.slice(code.length).replace(/\D/g, '');
+    }
 
     if (!phoneValue || !code || number.trim() === '') {
       newErrors.telefonoCelular = 'Este campo es requerido';
@@ -1461,8 +1529,10 @@ export default function ApplicantFormModal({
       // Siempre asegurar que el código de país esté presente y empiece con '+'
       const codeMatch = value.match(/^(\+\d{1,4})/);
       const code = codeMatch ? codeMatch[1] : '+58'; // Por defecto Venezuela si no hay código
+      // Permitimos el 0 temporalmente para advertir al usuario
       const number = value.replace(code, '').replace(/\D/g, '');
-      filteredValue = `${code}${number}`;
+      // SIEMPRE CON EL GUIÓN: +CODE-NUMBER
+      filteredValue = `${code}-${number}`;
     }
 
     setFormData((prev) => ({ ...prev, [field]: filteredValue }));
@@ -1473,6 +1543,52 @@ export default function ApplicantFormModal({
         delete newErrors[field];
         return newErrors;
       });
+    }
+
+    // Validar formato de teléfono celular en tiempo real
+    if (field === 'telefonoCelular') {
+      const phoneValue = filteredValue.trim();
+      // Extraer código y número considerando el guión
+      const dashMatch = phoneValue.match(/^(\+\d{1,4})-(.*)$/);
+      let code = '';
+      let number = '';
+      if (dashMatch) {
+        code = dashMatch[1];
+        number = dashMatch[2].replace(/\D/g, '');
+      } else {
+        const codeMatch = phoneValue.match(/^(\+\d{1,4})/);
+        code = codeMatch ? codeMatch[1] : '';
+        number = phoneValue.slice(code.length).replace(/\D/g, '');
+      }
+
+      // Solo validar si hay un número ingresado (no solo el código)
+      if (number.length > 0) {
+        // Advertencia de 0 al inicio
+        if (number.startsWith('0')) {
+          setErrors((prev) => ({
+            ...prev,
+            telefonoCelular: 'No debe colocar el cero al inicio.',
+          }));
+        } else if (code === '+58') {
+          // Para números venezolanos (+58), el número debe tener 10 dígitos y empezar con 4
+          if (number.length === 10 && !number.startsWith('4')) {
+            setErrors((prev) => ({
+              ...prev,
+              telefonoCelular: 'Número venezolano inválido. Debe empezar con 4 (ej: 412...)',
+            }));
+          } else if (number.length > 10) {
+            setErrors((prev) => ({
+              ...prev,
+              telefonoCelular: 'Número venezolano inválido. Debe tener 10 dígitos.',
+            }));
+          }
+        } else if (code && number.length > 15) {
+          setErrors((prev) => ({
+            ...prev,
+            telefonoCelular: 'Número de teléfono inválido. Máximo 15 dígitos.',
+          }));
+        }
+      }
     }
 
     // Verificar correo electrónico si se modificó
@@ -1681,19 +1797,11 @@ export default function ApplicantFormModal({
     // Esperar 500ms después de que el usuario deje de escribir
     const timeout = setTimeout(async () => {
       try {
-        // Primero verificar que el email sea real y exista
-        const isEmailValid = await verifyEmail(email);
-        if (!isEmailValid) {
-          setErrors((prev) => ({
-            ...prev,
-            correoElectronico: 'El correo electrónico no es válido o no existe',
-          }));
-          return;
-        }
-
-        // Si el email es válido, verificar si ya está registrado en la BD
+        // Verificar si ya está registrado en la BD
         const { checkEmailExistsAction } = await import('@/app/actions/solicitantes');
-        const result = await checkEmailExistsAction(email);
+        // Si estamos editando, excluir la cédula actual de la verificación
+        const excludeCedula = initialData?.cedula;
+        const result = await checkEmailExistsAction(email, excludeCedula);
 
         if (result.success && result.exists) {
           // El correo ya está asociado a otro solicitante

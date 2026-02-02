@@ -262,7 +262,8 @@ export async function searchSolicitantesAction(
  * Server Action para verificar si un correo electrónico ya existe en otro solicitante
  */
 export async function checkEmailExistsAction(
-  email: string
+  email: string,
+  excludeCedula?: string
 ): Promise<{ success: boolean; exists: boolean; data?: { cedula: string; nombres: string; apellidos: string } }> {
   try {
     // Verificar autenticación
@@ -281,7 +282,7 @@ export async function checkEmailExistsAction(
       };
     }
 
-    const result = await solicitantesQueries.checkEmailExists(email.trim());
+    const result = await solicitantesQueries.checkEmailExists(email.trim(), excludeCedula);
 
     return {
       success: true,

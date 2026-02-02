@@ -110,7 +110,22 @@ export default function ApplicantsClient({
         ? rec.nombre_completo
         : `${typeof rec.nombres === 'string' ? rec.nombres : ''} ${typeof rec.apellidos === 'string' ? rec.apellidos : ''}`.trim();
 
-    const telefonoCelular = typeof rec.telefono_celular === 'string' ? rec.telefono_celular : '';
+    // Formatear el teléfono celular para mostrar siempre el guión
+    let telefonoCelular = typeof rec.telefono_celular === 'string' ? rec.telefono_celular : '';
+    // Si viene sin guión (ej: +58412xxx), intentar formatearlo
+    if (telefonoCelular.startsWith('+') && !telefonoCelular.includes('-')) {
+      const codeMatch = telefonoCelular.match(/^(\+\d{1,4})/);
+      if (codeMatch) {
+        const code = codeMatch[1];
+        const number = telefonoCelular.slice(code.length);
+        telefonoCelular = `${code}-${number}`;
+      }
+    } else if (telefonoCelular.startsWith('0') && telefonoCelular.length > 4 && !telefonoCelular.includes('-')) {
+      // Caso legado 0412...
+      const code = '+58';
+      const number = telefonoCelular.substring(1);
+      telefonoCelular = `${code}-${number}`;
+    }
     const nucleo = typeof rec.nucleo === 'string' ? rec.nucleo : null;
     const fechaSolicitud = typeof rec.fecha_solicitud === 'string' ? rec.fecha_solicitud : null;
 
@@ -516,6 +531,7 @@ export default function ApplicantsClient({
           if (!selectedApplicant) {
             setShowConfirmModal(true);
           } else {
+            toast.success(`Solicitante actualizado correctamente`);
             setSelectedApplicant(null);
             setRegisteredCedula(null);
             setRegisteredNombre('');

@@ -9,7 +9,6 @@ import { getSemestres } from '@/app/actions/catalogos/semestres.actions';
 import PhoneInput from '../forms/PhoneInput';
 import { validateEmailFormat, validateEmailDomain } from '@/lib/utils/email-validation';
 import { Loader2 } from 'lucide-react';
-import { useEmailVerification } from '@/hooks/useEmailVerification';
 import { useToast } from "../ui/feedback/ToastProvider";
 
 interface Usuario {
@@ -34,7 +33,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
   const [form, setForm] = useState<Usuario | null>(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof Usuario, string>>>({});
-  const { verifyEmail, isVerifying: isVerifyingEmail } = useEmailVerification();
   const { toast } = useToast();
 
   // Sincronizar el estado local solo cuando cambia el usuario y el modal se abre
@@ -256,20 +254,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
                 name="correo_electronico"
                 value={typeof form.correo_electronico === 'string' ? form.correo_electronico : ''}
                 onChange={handleChange}
-                onBlur={async (e) => {
-                  const email = e.target.value;
-                  if (email && email.trim() && validateEmailFormat(email)) {
-                    const isValid = await verifyEmail(email);
-                    if (!isValid) {
-                      setErrors((prev) => ({
-                        ...prev,
-                        correo_electronico: 'El correo electrónico no es válido o no existe',
-                      }));
-                    }
-                  }
-                }}
                 error={errors.correo_electronico}
-                disabled={isVerifyingEmail}
               />
               <Input
                 label="Nombre(s)"

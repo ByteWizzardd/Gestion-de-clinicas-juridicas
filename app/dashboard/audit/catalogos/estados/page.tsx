@@ -11,7 +11,7 @@ export default async function EstadosAuditPage() {
       <AuditEntityDetailClient
         entityTitle="Estados"
         entityDescription="Registro completo de todas las acciones realizadas sobre los estados del sistema"
-        defaultTab="estados-eliminados"
+        defaultTab="estados-insertados"
         operations={[
           {
             label: 'Creados',

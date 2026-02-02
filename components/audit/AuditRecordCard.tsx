@@ -4646,7 +4646,9 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
       >
         <div className="flex-1">
           {renderSummary()}
-          <p className="text-xs text-gray-500 mt-2">{formatOnlyDate(getDate())}</p>
+          <p className="text-xs text-gray-500 mt-2">
+            {formatDate(getDate())}
+          </p>
         </div>
         <div className="shrink-0 p-2 hover:bg-gray-100 rounded-full transition-colors">
           {expanded ? (
