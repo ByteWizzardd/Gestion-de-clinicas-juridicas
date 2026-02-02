@@ -10,8 +10,8 @@ SELECT
     a.num_cita,
     a.id_caso,
     -- Valores anteriores
-    a.fecha_encuentro_anterior,
-    a.fecha_proxima_cita_anterior,
+    to_char(a.fecha_encuentro_anterior, 'YYYY-MM-DD') as fecha_encuentro_anterior,
+    to_char(a.fecha_proxima_cita_anterior, 'YYYY-MM-DD') as fecha_proxima_cita_anterior,
     a.orientacion_anterior,
     a.atenciones_anterior,
     -- Resolver cédulas anteriores a usuarios con nombre
@@ -27,8 +27,8 @@ SELECT
         '[]'::json
     ) AS usuarios_atenciones_anterior,
     -- Valores nuevos
-    a.fecha_encuentro_nueva,
-    a.fecha_proxima_cita_nueva,
+    to_char(a.fecha_encuentro_nueva, 'YYYY-MM-DD') as fecha_encuentro_nueva,
+    to_char(a.fecha_proxima_cita_nueva, 'YYYY-MM-DD') as fecha_proxima_cita_nueva,
     a.orientacion_nueva,
     a.atenciones_nuevo,
     -- Resolver cédulas nuevas a usuarios con nombre
@@ -49,7 +49,7 @@ SELECT
     u_actualizo.apellidos AS apellidos_usuario_actualizo,
     CONCAT(u_actualizo.nombres, ' ', u_actualizo.apellidos) AS nombre_completo_usuario_actualizo,
     u_actualizo.foto_perfil AS foto_perfil_usuario_actualizo,
-    a.fecha_actualizacion,
+    to_char(a.fecha_actualizacion, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_actualizacion,
     -- Información de usuarios que atendieron la cita
     COALESCE(
         (SELECT json_agg(
@@ -58,7 +58,7 @@ SELECT
                 'nombres', u_at.nombres,
                 'apellidos', u_at.apellidos,
                 'nombre_completo', u_at.nombres || ' ' || u_at.apellidos,
-                'fecha_registro', at.fecha_registro
+                'fecha_registro', to_char(at.fecha_registro, 'YYYY-MM-DD"T"HH24:MI:SS')
             )
             ORDER BY at.fecha_registro DESC
         )

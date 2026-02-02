@@ -46,28 +46,53 @@ export function formatDate(date: string | Date | null | undefined): string {
 
 /**
  * Formatea una fecha a formato detallado con hora (ej. 16 de enero de 2026, 07:39 a. m.)
+ * Parsea manualmente para evitar conversión de zona horaria
  * @param date - Fecha en formato string o Date
  * @returns Fecha y hora formateada o 'N/A'
  */
 export function formatDateTime(
   date: string | Date | null | undefined,
-  options?: Intl.DateTimeFormatOptions
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _options?: Intl.DateTimeFormatOptions
 ): string {
   if (!date) return 'N/A';
 
   try {
-    const d = typeof date === 'string' ? new Date(date) : date;
-    if (isNaN(d.getTime())) return 'N/A';
+    let dateStr = typeof date === 'string' ? date : date.toISOString();
+    // Normalizar: reemplazar espacio por T
+    dateStr = dateStr.replace(' ', 'T');
 
-    return d.toLocaleString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-      ...options
-    });
+    // Parsear los componentes del string (ej: "2026-02-02T04:25:11")
+    const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+    if (!match) {
+      // Solo fecha sin hora
+      const dateOnlyMatch = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+      if (dateOnlyMatch) {
+        const year = parseInt(dateOnlyMatch[1], 10);
+        const month = parseInt(dateOnlyMatch[2], 10);
+        const day = parseInt(dateOnlyMatch[3], 10);
+        const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+          'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        return `${day} de ${meses[month - 1]} de ${year}`;
+      }
+      return 'N/A';
+    }
+
+    const year = parseInt(match[1], 10);
+    const month = parseInt(match[2], 10);
+    const day = parseInt(match[3], 10);
+    let hour = parseInt(match[4], 10);
+    const minute = parseInt(match[5], 10);
+
+    const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    const monthName = meses[month - 1];
+
+    const ampm = hour >= 12 ? 'p. m.' : 'a. m.';
+    let displayHour = hour % 12;
+    displayHour = displayHour || 12;
+
+    return `${day} de ${monthName} de ${year}, ${displayHour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} ${ampm}`;
   } catch (error) {
     console.error('Error formatting date time:', error);
     return 'N/A';

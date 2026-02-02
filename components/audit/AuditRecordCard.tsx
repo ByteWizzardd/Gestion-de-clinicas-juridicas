@@ -46,106 +46,72 @@ interface AuditRecordCardProps {
 export default function AuditRecordCard({ record, type }: AuditRecordCardProps) {
   const [expanded, setExpanded] = useState(false);
 
+  // Parseamos manualmente para evitar conversión de zona horaria
   const formatDate = (dateInput: string | Date | null | undefined) => {
-    // Si es null o undefined, retornar mensaje
-    if (!dateInput) {
-      return 'Fecha no disponible';
-    }
+    if (!dateInput) return 'Fecha no disponible';
 
-    // Si ya es un objeto Date, usarlo directamente
-    let date: Date;
-    if (dateInput instanceof Date) {
-      date = dateInput;
-    } else if (typeof dateInput === 'string') {
-      // Si el string incluye 'T' o espacio (PostgreSQL), parsearlo correctamente
-      // PostgreSQL devuelve timestamps en formato "YYYY-MM-DD HH:MM:SS" o "YYYY-MM-DDTHH:MM:SS"
-      if (dateInput.includes('T') || dateInput.includes(' ')) {
-        // Es un timestamp (con T o espacio)
-        // Normalizar: reemplazar espacio por T para parsear consistentemente
-        const normalizedInput = dateInput.replace(' ', 'T');
-        const isoMatch = normalizedInput.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
-        if (isoMatch) {
-          const [, year, month, day, hour, minute] = isoMatch.map(Number);
-          // Crear fecha usando componentes
-          if (type === 'soporte-descargado') {
-            date = new Date(Date.UTC(year, month - 1, day, hour, minute));
-          } else {
-            date = new Date(year, month - 1, day, hour, minute);
-          }
-        } else {
-          date = new Date(dateInput);
+    try {
+      let dateStr = typeof dateInput === 'string' ? dateInput : dateInput.toISOString();
+      // Normalizar: reemplazar espacio por T
+      dateStr = dateStr.replace(' ', 'T');
+
+      // Parsear los componentes del string (ej: "2026-02-02T04:25:11")
+      const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+      if (!match) {
+        // Solo fecha sin hora
+        const dateOnlyMatch = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+        if (dateOnlyMatch) {
+          const year = parseInt(dateOnlyMatch[1], 10);
+          const month = parseInt(dateOnlyMatch[2], 10);
+          const day = parseInt(dateOnlyMatch[3], 10);
+          const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+            'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+          return `${day} de ${meses[month - 1]} de ${year}`;
         }
-      } else {
-        // Es solo una fecha (ej: "2026-01-02")
-        const parts = dateInput.split('-');
-        if (parts.length === 3) {
-          const [year, month, day] = parts.map(Number);
-          date = new Date(year, month - 1, day);
-        } else {
-          date = new Date(dateInput);
-        }
+        return 'Fecha inválida';
       }
-    } else {
-      return 'Fecha no disponible';
-    }
 
-    // Validar que la fecha sea válida
-    if (isNaN(date.getTime())) {
+      const year = parseInt(match[1], 10);
+      const month = parseInt(match[2], 10);
+      const day = parseInt(match[3], 10);
+      let hour = parseInt(match[4], 10);
+      const minute = parseInt(match[5], 10);
+
+      const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+      const monthName = meses[month - 1];
+
+      const ampm = hour >= 12 ? 'p. m.' : 'a. m.';
+      let displayHour = hour % 12;
+      displayHour = displayHour || 12;
+
+      return `${day} de ${monthName} de ${year}, ${displayHour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} ${ampm}`;
+    } catch {
       return 'Fecha inválida';
     }
-
-    return date.toLocaleDateString('es-VE', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-      timeZone: type === 'soporte-descargado' ? 'UTC' : 'America/Caracas', // Zona horaria de Venezuela
-    });
   };
 
   const formatOnlyDate = (dateInput: string | Date | null | undefined) => {
     if (!dateInput) return 'Fecha no disponible';
 
-    let date: Date;
-    if (dateInput instanceof Date) {
-      date = dateInput;
-    } else if (typeof dateInput === 'string') {
-      // Manejar timestamps de PostgreSQL con espacio o T
-      if (dateInput.includes('T') || dateInput.includes(' ')) {
-        const normalizedInput = dateInput.replace(' ', 'T');
-        const isoMatch = normalizedInput.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
-        if (isoMatch) {
-          const [, year, month, day] = isoMatch.map(Number);
-          date = new Date(year, month - 1, day);
-        } else {
-          date = new Date(dateInput);
-        }
-      } else {
-        // Es solo una fecha (ej: "2026-01-02")
-        // En PostgreSQL las fechas DATE a veces vienen como strings simples
-        // Si usamos new Date(str) podría interpretar UTC y cambiar el día
-        // Mejor parsear manualmente año-mes-día
-        const parts = dateInput.split('-');
-        if (parts.length === 3) {
-          const [year, month, day] = parts.map(Number);
-          date = new Date(year, month - 1, day);
-        } else {
-          date = new Date(dateInput);
-        }
-      }
-    } else {
-      return 'Fecha no disponible';
+    try {
+      let dateStr = typeof dateInput === 'string' ? dateInput : dateInput.toISOString();
+      dateStr = dateStr.replace(' ', 'T');
+
+      const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+      if (!match) return 'Fecha inválida';
+
+      const year = parseInt(match[1], 10);
+      const month = parseInt(match[2], 10);
+      const day = parseInt(match[3], 10);
+
+      const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+      return `${day} de ${meses[month - 1]} de ${year}`;
+    } catch {
+      return 'Fecha inválida';
     }
-
-    if (isNaN(date.getTime())) return 'Fecha inválida';
-
-    return date.toLocaleDateString('es-VE', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
   };
 
   const areDatesEqual = (d1: any, d2: any) => {
@@ -176,53 +142,26 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
   };
 
   const formatDateOnly = (dateInput: string | Date | null | undefined) => {
-    // Si es null o undefined, retornar mensaje
-    if (!dateInput) {
-      return 'Fecha no disponible';
-    }
+    if (!dateInput) return 'Fecha no disponible';
 
-    // Si ya es un objeto Date, usarlo directamente
-    let date: Date;
-    if (dateInput instanceof Date) {
-      date = dateInput;
-    } else if (typeof dateInput === 'string') {
-      // Si el string incluye 'T' o es un timestamp, parsearlo correctamente
-      if (dateInput.includes('T')) {
-        // Es un timestamp ISO (ej: "2026-01-02T05:24:00.000Z")
-        // Extraer los componentes de fecha sin interpretar como UTC
-        const isoMatch = dateInput.match(/^(\d{4})-(\d{2})-(\d{2})T/);
-        if (isoMatch) {
-          const [, year, month, day] = isoMatch.map(Number);
-          // Crear fecha usando componentes locales (no UTC)
-          date = new Date(year, month - 1, day);
-        } else {
-          date = new Date(dateInput);
-        }
-      } else {
-        // Es solo una fecha (ej: "2026-01-02")
-        const parts = dateInput.split('-');
-        if (parts.length === 3) {
-          const [year, month, day] = parts.map(Number);
-          date = new Date(year, month - 1, day);
-        } else {
-          date = new Date(dateInput);
-        }
-      }
-    } else {
-      return 'Fecha no disponible';
-    }
+    try {
+      let dateStr = typeof dateInput === 'string' ? dateInput : dateInput.toISOString();
+      dateStr = dateStr.replace(' ', 'T');
 
-    // Validar que la fecha sea válida
-    if (isNaN(date.getTime())) {
+      const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+      if (!match) return 'Fecha inválida';
+
+      const year = parseInt(match[1], 10);
+      const month = parseInt(match[2], 10);
+      const day = parseInt(match[3], 10);
+
+      const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+      return `${day} de ${meses[month - 1]} de ${year}`;
+    } catch {
       return 'Fecha inválida';
     }
-
-    return date.toLocaleDateString('es-VE', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      timeZone: 'America/Caracas', // Zona horaria de Venezuela
-    });
   };
 
   const formatFileSize = (bytes: number | null) => {
@@ -4729,7 +4668,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         <div className="flex-1">
           {renderSummary()}
           <p className="text-xs text-gray-500 mt-2">
-            {type === 'soporte-descargado' ? formatDateTime(getDate(), { timeZone: 'UTC' }) : formatDate(getDate())}
+            {formatDate(getDate())}
           </p>
         </div>
         <div className="shrink-0 p-2 hover:bg-gray-100 rounded-full transition-colors">

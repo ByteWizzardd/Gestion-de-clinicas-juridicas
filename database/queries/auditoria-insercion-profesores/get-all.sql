@@ -9,7 +9,7 @@ SELECT
     u.telefono_celular,
     u.tipo_usuario,
     a.tipo_profesor,
-    a.fecha_creacion,
+    to_char(a.fecha_creacion, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_creacion,
     a.id_usuario_creo,
     uc.nombres AS nombres_usuario_creo,
     uc.apellidos AS apellidos_usuario_creo,

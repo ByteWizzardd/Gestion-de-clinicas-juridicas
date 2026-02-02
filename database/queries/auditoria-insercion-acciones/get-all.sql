@@ -7,9 +7,9 @@ SELECT
     aia.detalle_accion,
     aia.comentario,
     aia.id_usuario_registra,
-    aia.fecha_registro,
+    to_char(aia.fecha_registro, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_registro,
     aia.id_usuario_creo,
-    aia.fecha_creacion,
+    to_char(aia.fecha_creacion, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_creacion,
     -- Info del caso
     c.tramite AS tramite_caso,
     n.nombre_nucleo AS nombre_nucleo,

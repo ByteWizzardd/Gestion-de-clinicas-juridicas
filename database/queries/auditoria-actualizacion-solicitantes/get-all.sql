@@ -18,7 +18,8 @@ SELECT
     ) AS nombre_completo_solicitante,
     a.nombres_anterior, a.nombres_nuevo,
     a.apellidos_anterior, a.apellidos_nuevo,
-    a.fecha_nacimiento_anterior, a.fecha_nacimiento_nuevo,
+    to_char(a.fecha_nacimiento_anterior, 'YYYY-MM-DD') as fecha_nacimiento_anterior,
+    to_char(a.fecha_nacimiento_nuevo, 'YYYY-MM-DD') as fecha_nacimiento_nuevo,
     a.telefono_local_anterior, a.telefono_local_nuevo,
     a.telefono_celular_anterior, a.telefono_celular_nuevo,
     a.correo_electronico_anterior, a.correo_electronico_nuevo,
@@ -90,7 +91,7 @@ SELECT
          WHERE id_auditoria_solicitante = a.id AND estado = 'sin_cambio'),
         '[]'::json
     ) AS artefactos_sin_cambio,
-    a.fecha_actualizacion,
+    to_char(a.fecha_actualizacion, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_actualizacion,
     a.id_usuario_actualizo,
     u.nombres AS nombres_usuario_actualizo,
     u.apellidos AS apellidos_usuario_actualizo,

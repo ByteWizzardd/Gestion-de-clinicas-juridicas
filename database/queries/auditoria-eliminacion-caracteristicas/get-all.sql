@@ -7,7 +7,7 @@ SELECT
     a.habilitado,
     t.nombre_tipo_caracteristica,
     
-    a.fecha_eliminacion,
+    to_char(a.fecha_eliminacion, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_eliminacion,
     a.id_usuario_elimino,
     u.nombres AS nombres_usuario_elimino,
     u.apellidos AS apellidos_usuario_elimino,

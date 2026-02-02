@@ -7,10 +7,10 @@ SELECT
     aea.detalle_accion,
     aea.comentario,
     aea.id_usuario_registra,
-    aea.fecha_registro,
+    to_char(aea.fecha_registro, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_registro,
     aea.eliminado_por,
     aea.motivo,
-    aea.fecha,
+    to_char(aea.fecha, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha,
     -- Info del caso (puede no existir si el caso también fue eliminado)
     c.tramite AS tramite_caso,
     n.nombre_nucleo AS nombre_nucleo,

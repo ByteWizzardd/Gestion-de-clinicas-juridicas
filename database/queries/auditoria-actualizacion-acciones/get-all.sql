@@ -8,15 +8,15 @@ SELECT
     aaa.detalle_accion_anterior,
     aaa.comentario_anterior,
     aaa.id_usuario_registra_anterior,
-    aaa.fecha_registro_anterior,
+    to_char(aaa.fecha_registro_anterior, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_registro_anterior,
     -- Valores nuevos
     aaa.detalle_accion_nuevo,
     aaa.comentario_nuevo,
     aaa.id_usuario_registra_nuevo,
-    aaa.fecha_registro_nuevo,
+    to_char(aaa.fecha_registro_nuevo, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_registro_nuevo,
     -- Auditoría
     aaa.id_usuario_actualizo,
-    aaa.fecha_actualizacion,
+    to_char(aaa.fecha_actualizacion, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_actualizacion,
     -- Ejecutores anteriores (de tabla normalizada)
     (SELECT json_agg(json_build_object(
         'cedula', aaae.id_usuario_ejecutor,

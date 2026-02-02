@@ -12,8 +12,8 @@ SELECT
     a.nombre_archivo,
     a.tipo_mime,
     a.descripcion,
-    a.fecha_consignacion,
-    a.fecha_eliminacion,
+    to_char(a.fecha_consignacion, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_consignacion,
+    to_char(a.fecha_eliminacion, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_eliminacion,
     a.tamano_bytes,
     -- Información de auditoría: usuario que subió
     a.id_usuario_subio,

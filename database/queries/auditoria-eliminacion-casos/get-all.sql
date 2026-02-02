@@ -8,9 +8,9 @@
 SELECT 
     a.id,
     a.caso_eliminado,
-    a.fecha_solicitud,
-    a.fecha_inicio_caso,
-    a.fecha_fin_caso,
+    to_char(a.fecha_solicitud, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_solicitud,
+    to_char(a.fecha_inicio_caso, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_inicio_caso,
+    to_char(a.fecha_fin_caso, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_fin_caso,
     a.tramite,
     a.observaciones,
     a.id_nucleo,
@@ -32,7 +32,7 @@ SELECT
     u.apellidos AS apellidos_usuario_elimino,
     CONCAT(u.nombres, ' ', u.apellidos) AS nombre_completo_usuario_elimino,
     a.motivo,
-    a.fecha
+    to_char(a.fecha, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha
 FROM public.auditoria_eliminacion_casos a
 LEFT JOIN public.usuarios u ON a.eliminado_por = u.cedula
 LEFT JOIN public.solicitantes s ON a.cedula_solicitante = s.cedula

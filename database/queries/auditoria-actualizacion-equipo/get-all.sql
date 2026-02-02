@@ -3,7 +3,7 @@ SELECT
     ae.id,
     ae.id_caso,
     ae.id_usuario_modifico,
-    ae.fecha_actualizacion AS fecha,
+    to_char(ae.fecha_actualizacion, 'YYYY-MM-DD"T"HH24:MI:SS') AS fecha,
     -- Usuario que modificó
     u.nombres AS nombres_usuario_modifico,
     u.apellidos AS apellidos_usuario_modifico,

@@ -9,10 +9,10 @@ SELECT
     a.id,
     a.num_cita,
     a.id_caso,
-    a.fecha_encuentro,
-    a.fecha_proxima_cita,
+    to_char(a.fecha_encuentro, 'YYYY-MM-DD') as fecha_encuentro,
+    to_char(a.fecha_proxima_cita, 'YYYY-MM-DD') as fecha_proxima_cita,
     a.orientacion,
-    a.fecha_creacion,
+    to_char(a.fecha_creacion, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_creacion,
     -- Información de auditoría: usuario que creó la cita
     a.id_usuario_creo,
     u_creo.nombres AS nombres_usuario_creo,
@@ -27,7 +27,7 @@ SELECT
                 'nombres', u_at.nombres,
                 'apellidos', u_at.apellidos,
                 'nombre_completo', u_at.nombres || ' ' || u_at.apellidos,
-                'fecha_registro', at.fecha_registro
+                'fecha_registro', to_char(at.fecha_registro, 'YYYY-MM-DD"T"HH24:MI:SS')
             )
             ORDER BY at.fecha_registro DESC
         )

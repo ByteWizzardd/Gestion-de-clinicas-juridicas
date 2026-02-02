@@ -21,7 +21,7 @@ SELECT
     -- Nombres de parroquia anterior y nuevo
     p_anterior.nombre_parroquia AS nombre_parroquia_anterior,
     p_nuevo.nombre_parroquia AS nombre_parroquia_nuevo,
-    a.fecha_actualizacion,
+    to_char(a.fecha_actualizacion, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_actualizacion,
     a.id_usuario_actualizo,
     u.nombres AS nombres_usuario_actualizo,
     u.apellidos AS apellidos_usuario_actualizo,

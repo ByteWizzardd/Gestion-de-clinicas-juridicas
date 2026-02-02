@@ -5,7 +5,7 @@ SELECT
     ads.nombre_archivo,
     ads.cedula_descargo,
     ads.ip_direccion,
-    ads.fecha_descarga,
+    to_char(ads.fecha_descarga, 'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_descarga,
     -- Usuario que descargó
     u.nombres AS nombres_usuario_descargo,
     u.apellidos AS apellidos_usuario_descargo,

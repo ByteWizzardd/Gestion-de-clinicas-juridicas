@@ -2,11 +2,11 @@
 SELECT 
     a.id,
     a.term,
-    a.fecha_inicio,
-    a.fecha_fin,
+    to_char(a.fecha_inicio, 'YYYY-MM-DD') as fecha_inicio,
+    to_char(a.fecha_fin, 'YYYY-MM-DD') as fecha_fin,
     a.habilitado,
     
-    a.fecha_eliminacion,
+    to_char(a.fecha_eliminacion, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_eliminacion,
     a.id_usuario_elimino,
     u.nombres AS nombres_usuario_elimino,
     u.apellidos AS apellidos_usuario_elimino,

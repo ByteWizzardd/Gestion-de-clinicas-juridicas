@@ -12,7 +12,7 @@ SELECT
     a.apellidos_solicitante_eliminado,
     CONCAT(a.nombres_solicitante_eliminado, ' ', a.apellidos_solicitante_eliminado) AS nombre_completo_solicitante_eliminado,
     -- Datos personales
-    a.fecha_nacimiento,
+    to_char(a.fecha_nacimiento, 'YYYY-MM-DD') as fecha_nacimiento,
     a.telefono_local,
     a.telefono_celular,
     a.correo_electronico,
@@ -49,7 +49,7 @@ SELECT
     CONCAT(u.nombres, ' ', u.apellidos) AS nombre_completo_usuario_elimino,
     encode(u.foto_perfil, 'base64') AS foto_perfil_usuario_elimino,
     a.motivo,
-    a.fecha
+    to_char(a.fecha, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha
 FROM public.auditoria_eliminacion_solicitantes a
 LEFT JOIN public.usuarios u ON a.eliminado_por = u.cedula
 WHERE 

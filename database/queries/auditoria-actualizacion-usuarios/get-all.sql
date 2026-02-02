@@ -56,7 +56,7 @@ SELECT
         ELSE NULL
     END AS nombre_completo_usuario_actualizo,
     u_actualizo.foto_perfil AS foto_perfil_usuario_actualizo,
-    a.fecha_actualizacion
+    to_char(a.fecha_actualizacion, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_actualizacion
 FROM auditoria_actualizacion_usuarios a
 LEFT JOIN usuarios u ON TRIM(a.ci_usuario) = TRIM(u.cedula)
 LEFT JOIN usuarios u_actualizo ON TRIM(a.id_usuario_actualizo) = TRIM(u_actualizo.cedula)

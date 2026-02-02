@@ -10,7 +10,7 @@ SELECT
     a.id_materia,
     a.nombre_materia,
     a.habilitado,
-    a.fecha_creacion,
+    to_char(a.fecha_creacion, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_creacion,
     a.id_usuario_creo,
     u.nombres AS nombres_usuario_creo,
     u.apellidos AS apellidos_usuario_creo,

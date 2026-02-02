@@ -33,7 +33,7 @@ SELECT
     END AS nombre_completo_eliminado_por,
     u_elimino.foto_perfil AS foto_perfil_eliminado_por,
     a.motivo,
-    a.fecha
+    to_char(a.fecha, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha
 FROM auditoria_eliminacion_usuario a
 LEFT JOIN usuarios u_elimino ON TRIM(a.eliminado_por) = TRIM(u_elimino.cedula)
 WHERE 
