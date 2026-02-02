@@ -36,7 +36,8 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
   const router = useRouter();
 
   // Extraer el ID del caso del caseDetail si estamos editando
-  const extractCaseId = (caseDetail: string): string => {
+  const extractCaseId = (caseDetail?: string | null): string => {
+    if (!caseDetail) return "";
     const match = caseDetail.match(/C-(\d+)/);
     return match ? match[1] : "";
   };
@@ -53,7 +54,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
     appointment ? extractCaseId(appointment.caseDetail) : ""
   );
   const [orientacion, setOrientacion] = useState<string>(
-    appointment ? appointment.orientation : ""
+    appointment?.orientation || ""
   );
   const [usuariosAtienden, setUsuariosAtienden] = useState<string[]>(
     appointment && appointment.attendingUsersList
@@ -78,85 +79,60 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
     usuariosAtienden: string[];
   } | null>(null);
   const [actionRegistered, setActionRegistered] = useState(false);
+  const [areOptionsLoading, setAreOptionsLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchCaseIds() {
-      // Obtener casos del usuario y todos los casos en paralelo
-      const [userCasesResult, allCasesResult] = await Promise.all([
-        getCasosByUsuarioAction(),
-        getCaseIdsAction()
-      ]);
+    async function fetchData() {
+      setAreOptionsLoading(true);
+      try {
+        const [userCasesResult, allCasesResult, usuariosResult] = await Promise.all([
+          getCasosByUsuarioAction(),
+          getCaseIdsAction(),
+          getUsuariosAction(true)
+        ]);
 
-      const options: { value: string; label: string; isDisabled?: boolean }[] = [];
-
-      // Primero agregar los casos del usuario con encabezado
-      if (userCasesResult.success && userCasesResult.data && userCasesResult.data.length > 0) {
-        const userCaseIds = new Set(userCasesResult.data.map((c: { id_caso: number }) => c.id_caso));
-
-        // Encabezado "Mis casos"
-        options.push({
-          value: '__header_mis_casos__',
-          label: 'Mis casos',
-          isDisabled: true
-        });
-
-        // Agregar casos del usuario
-        userCasesResult.data.forEach((caso: { id_caso: number }) => {
-          options.push({
-            value: caso.id_caso.toString(),
-            label: `Caso #${caso.id_caso}`,
+        // Procesar Casos
+        const options: { value: string; label: string; isDisabled?: boolean }[] = [];
+        if (userCasesResult.success && userCasesResult.data && userCasesResult.data.length > 0) {
+          const userCaseIds = new Set(userCasesResult.data.map((c: { id_caso: number }) => c.id_caso));
+          options.push({ value: '__header_mis_casos__', label: 'Mis casos', isDisabled: true });
+          userCasesResult.data.forEach((caso: { id_caso: number }) => {
+            options.push({ value: caso.id_caso.toString(), label: `Caso #${caso.id_caso}` });
           });
-        });
 
-        // Agregar encabezado "Otros casos" si hay más casos
-        if (allCasesResult.success && allCasesResult.data) {
-          const otherCases = allCasesResult.data.filter((id: number) => !userCaseIds.has(id));
-
-          if (otherCases.length > 0) {
-            options.push({
-              value: '__header_otros_casos__',
-              label: 'Otros casos',
-              isDisabled: true
-            });
-
-            otherCases.forEach((id: number) => {
-              options.push({
-                value: id.toString(),
-                label: `Caso #${id}`,
+          if (allCasesResult.success && allCasesResult.data) {
+            const otherCases = allCasesResult.data.filter((id: number) => !userCaseIds.has(id));
+            if (otherCases.length > 0) {
+              options.push({ value: '__header_otros_casos__', label: 'Otros casos', isDisabled: true });
+              otherCases.forEach((id: number) => {
+                options.push({ value: id.toString(), label: `Caso #${id}` });
               });
-            });
+            }
           }
-        }
-      } else if (allCasesResult.success && allCasesResult.data) {
-        // Si no hay casos del usuario, mostrar todos los casos sin encabezados
-        allCasesResult.data.forEach((id: number) => {
-          options.push({
-            value: id.toString(),
-            label: `Caso #${id}`,
+        } else if (allCasesResult.success && allCasesResult.data) {
+          allCasesResult.data.forEach((id: number) => {
+            options.push({ value: id.toString(), label: `Caso #${id}` });
           });
-        });
-      }
+        }
+        setCaseOptions(options);
 
-      setCaseOptions(options);
-    }
-    fetchCaseIds();
-  }, []);
-
-  useEffect(() => {
-    async function fetchUsuarios() {
-      const result = await getUsuariosAction(true);
-      if (result.success && result.data) {
-        setUsuarioOptions(
-          result.data.map((usuario) => ({
+        // Procesar Usuarios
+        if (usuariosResult.success && usuariosResult.data) {
+          setUsuarioOptions(usuariosResult.data.map((usuario) => ({
             value: usuario.cedula,
             label: usuario.nombre_completo || `${usuario.nombres} ${usuario.apellidos}`,
-          }))
-        );
-      } else {
-        setUsuarioOptions([]);
+          })));
+        } else {
+          setUsuarioOptions([]);
+        }
+      } catch (error) {
+        console.error("Error loading options", error);
+        toast.error("Error al cargar las opciones del formulario");
+      } finally {
+        setAreOptionsLoading(false);
       }
     }
-    fetchUsuarios();
+    fetchData();
   }, []);
 
   const validateForm = (): boolean => {
@@ -310,6 +286,64 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
 
     if (!validateForm()) {
       return;
+    }
+
+    if (isEditing && appointment) {
+      // Verificar si hay cambios reales
+      const initialDateStr = appointment.date instanceof Date
+        ? appointment.date.toISOString().slice(0, 10)
+        : typeof appointment.date === 'string'
+          ? (appointment.date as string).split('/').reverse().join('-') // Asumiendo DD/MM/YYYY si es string
+          : ''; // Fallback
+
+      // La fecha en el estado "date"
+      const currentDateStr = date ? date.toISOString().slice(0, 10) : '';
+
+      // Comparar Fecha Encuentro (ignorando hora si viene en Date)
+      // Ajuste: si appointment.date viene como string DD/MM/YYYY, normalizar.
+      // Si viene como Date, toISOString.
+      let hasDateChange = false;
+      if (appointment.date instanceof Date) {
+        hasDateChange = appointment.date.toISOString().slice(0, 10) !== currentDateStr;
+      } else if (typeof appointment.date === 'string') {
+        // Asumimos formato ISO YYYY-MM-DD o DD/MM/YYYY? 
+        // El componente DatePicker usa YYYY-MM-DD.
+        // Verificando cómo viene el appointment... usualmente las fechas en JS/TS pueden ser tricky.
+        // Mejor comparamos las fechas parseadas
+        const d1 = new Date(appointment.date).setHours(0, 0, 0, 0);
+        const d2 = date ? date.setHours(0, 0, 0, 0) : 0;
+        hasDateChange = d1 !== d2;
+      }
+
+      // Comparar Fecha Próxima Cita
+      let initialEndDateStr: string | null = null;
+      if (appointment.nextAppointmentDate) {
+        // nextAppointmentDate suele venir como string DD/MM/YYYY en la UI
+        const parts = appointment.nextAppointmentDate.split('/');
+        if (parts.length === 3) {
+          initialEndDateStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        } else {
+          initialEndDateStr = appointment.nextAppointmentDate;
+        }
+      }
+      const currentEndDateStr = endDate ? endDate.toISOString().slice(0, 10) : null;
+      const hasEndDateChange = initialEndDateStr !== currentEndDateStr;
+
+      // Comparar Orientación
+      const hasOrientacionChange = (appointment.orientation || '').trim() !== orientacion.trim();
+
+      // Comparar Usuarios
+      const initialUsers = (appointment.attendingUsersList || []).map(u => u.id_usuario).sort();
+      const currentUsers = [...usuariosAtienden].sort();
+      const hasUsersChange = JSON.stringify(initialUsers) !== JSON.stringify(currentUsers);
+
+      if (!hasDateChange && !hasEndDateChange && !hasOrientacionChange && !hasUsersChange) {
+        toast.info("No se han realizado cambios");
+        onClose();
+        return;
+      }
+
+      // Si hay cambios, continuamos con la lógica...
     }
 
     setLoading(true);
@@ -544,8 +578,9 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
               onChange={(e) => updateField('selectedCaseID', e.target.value)}
               error={errors.selectedCaseID}
               required={!isEditing}
-              disabled={isEditing}
+              disabled={isEditing || areOptionsLoading}
               className="w-full"
+              placeholder={areOptionsLoading ? "Cargando casos..." : "Selecciona una opción"}
             />
           </div>
           <div className="col-span-1">
@@ -611,9 +646,10 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
               options={usuarioOptions}
               value={usuariosAtienden}
               onChange={(values) => updateField('usuariosAtienden', values)}
-              placeholder="Seleccione los usuarios que atendieron la cita"
+              placeholder={areOptionsLoading ? "Cargando usuarios..." : "Seleccione los usuarios que atendieron la cita"}
               error={errors.usuariosAtienden}
               required
+              disabled={areOptionsLoading}
             />
           </div>
 
@@ -637,7 +673,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
                 <p className="text-xs text-danger mt-1">{errors.orientacion}</p>
               )}
               <div className="text-xs text-gray-500 text-right mt-1 select-none">
-                {orientacion.length}/500
+                {(orientacion || "").length}/500
               </div>
             </div>
           </div>

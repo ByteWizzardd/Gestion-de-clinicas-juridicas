@@ -330,7 +330,13 @@ export const citasService = {
 
         // 2. Actualizar registros en atienden si se proporcionaron usuarios
         if (params.usuariosAtienden !== undefined) {
-          // Primero eliminar todos los registros existentes
+          // Obtener los usuarios actuales ANTES de eliminar (para auditoría)
+          const getAtiendenQuery = loadSQL('atienden/get-usuarios-by-cita.sql');
+          const atiendenAnteriorResult = await client.query(getAtiendenQuery, [num_cita, id_caso]);
+          const usuariosAnteriores = atiendenAnteriorResult.rows.map(r => r.nombre_completo);
+          const cedulasAnteriores = atiendenAnteriorResult.rows.map(r => r.cedula).sort();
+
+          // Eliminar todos los registros existentes
           const deleteQuery = loadSQL('atienden/delete-by-cita.sql');
           await client.query(deleteQuery, [num_cita, id_caso]);
 
@@ -344,6 +350,41 @@ export const citasService = {
                 num_cita,
                 id_caso,
                 null // fecha_registro se usa CURRENT_DATE por defecto
+              ]);
+            }
+          }
+
+          // Obtener los usuarios NUEVOS (para auditoría)
+          const atiendenNuevoResult = await client.query(getAtiendenQuery, [num_cita, id_caso]);
+          const usuariosNuevos = atiendenNuevoResult.rows.map(r => r.nombre_completo);
+          const cedulasNuevas = params.usuariosAtienden.slice().sort();
+
+          // Verificar si hubo cambios en atenciones
+          const huboCambiosAtenciones = JSON.stringify(cedulasAnteriores) !== JSON.stringify(cedulasNuevas);
+
+          // Si hubo cambios en atenciones, insertar registro de auditoría
+          if (huboCambiosAtenciones) {
+            // Guardar solo las cédulas separadas por coma
+            const atencioneAnteriorStr = cedulasAnteriores.join(',') || '';
+            const atencioneNuevoStr = cedulasNuevas.join(',') || '';
+
+            // Obtener info actual de la cita para el registro de auditoría
+            const getCitaInfoQuery = loadSQL('citas/get-by-id.sql');
+            const citaInfoResult = await client.query(getCitaInfoQuery, [num_cita, id_caso]);
+
+            if (citaInfoResult.rows.length > 0) {
+              const citaInfo = citaInfoResult.rows[0];
+
+              // Insertar registro de auditoría para cambios en atenciones
+              const insertAuditQuery = loadSQL('auditoria-actualizacion-citas/create.sql');
+              await client.query(insertAuditQuery, [
+                num_cita, id_caso,
+                citaInfo.fecha_encuentro, citaInfo.fecha_proxima_cita, citaInfo.orientacion,
+                params.date ? new Date(params.date) : citaInfo.fecha_encuentro,
+                params.endDate !== undefined ? (params.endDate === null || params.endDate === 'NULL' ? null : new Date(params.endDate)) : citaInfo.fecha_proxima_cita,
+                params.orientacion || citaInfo.orientacion,
+                atencioneAnteriorStr, atencioneNuevoStr,
+                params.idUsuarioActualizo
               ]);
             }
           }
@@ -370,22 +411,8 @@ export const citasService = {
 
               const accionesResult = await client.query(findAccionesQuery, [id_caso]);
 
-              console.log('DEBUG updateAppointment - Acciones relacionadas con citas encontradas:', {
-                totalAcciones: accionesResult.rows.length,
-                acciones: accionesResult.rows.map(a => ({
-                  num_accion: a.num_accion,
-                  detalle_accion: a.detalle_accion,
-                  comentario: a.comentario
-                }))
-              });
-
               // Para cada acción de cita, verificar si corresponde a esta cita por ejecutores
               for (const accion of accionesResult.rows) {
-                console.log('DEBUG updateAppointment - Verificando acción:', {
-                  num_accion: accion.num_accion,
-                  detalle_accion: accion.detalle_accion,
-                  comentario: accion.comentario
-                });
                 // Comparar ejecutores para identificar cuál acción corresponde a esta cita
                 const ejecutoresCitaQuery = `
                   SELECT id_usuario
@@ -412,19 +439,7 @@ export const citasService = {
 
                 const ejecutoresCoinciden = JSON.stringify(ejecutoresCita) === JSON.stringify(ejecutoresAccion);
 
-                console.log('DEBUG updateAppointment - Ejecutores comparison:', {
-                  num_accion: accion.num_accion,
-                  ejecutoresCita,
-                  ejecutoresAccion,
-                  ejecutoresCoinciden
-                });
-
                 if (ejecutoresCoinciden) {
-                  console.log('DEBUG updateAppointment - ¡ACCIÓN ENCONTRADA! Se actualizará:', {
-                    num_accion: accion.num_accion,
-                    id_caso: accion.id_caso,
-                    detalle_accion: accion.detalle_accion
-                  });
                   // ¡Esta acción corresponde a la cita! Actualizarla
                   let nuevoDetalle = accion.detalle_accion;
                   let nuevoComentario = accion.comentario;

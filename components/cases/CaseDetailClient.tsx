@@ -189,14 +189,27 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
 
   const handleEditAppointment = (cita: any) => {
     console.log('DEBUG CaseDetailClient - Editing appointment:', cita);
-    // Convertir la cita al formato que espera el AppointmentModal
+    // Convertir la cita al formato que espera el AppointmentModal (Appointment interface)
     const appointmentData = {
-      id_cita: cita.num_cita,
-      id_caso: cita.id_caso,
-      fecha_encuentro: cita.fecha_encuentro,
-      fecha_proxima_cita: cita.fecha_proxima_cita,
-      orientacion: cita.orientacion,
-      atenciones: cita.atenciones || []
+      id: `cita-${cita.num_cita}-${cita.id_caso}-${new Date(cita.fecha_encuentro).getTime()}`,
+      title: `Cita #${cita.num_cita}`,
+      date: cita.fecha_encuentro ? new Date(cita.fecha_encuentro) : new Date(),
+      time: '00:00',
+      caseId: cita.id_caso,
+      caseDetail: `C-${cita.id_caso}`,
+      client: '',
+      location: '',
+      orientation: cita.orientacion || '',
+      attendingUsers: (cita.atenciones || []).map((a: any) => a.nombre_completo || `${a.nombres} ${a.apellidos}`).join(', '),
+      attendingUsersList: (cita.atenciones || []).map((a: any) => ({
+        id_usuario: a.id_usuario || a.cedula_usuario,
+        nombres: a.nombres || '',
+        apellidos: a.apellidos || '',
+        nombre_completo: a.nombre_completo || `${a.nombres || ''} ${a.apellidos || ''}`,
+        fecha_registro: a.fecha_registro || ''
+      })),
+      isMultiplePeople: (cita.atenciones || []).length > 1,
+      nextAppointmentDate: cita.fecha_proxima_cita ? new Date(cita.fecha_proxima_cita).toISOString().split('T')[0] : null
     };
 
     setEditingAppointment(appointmentData);

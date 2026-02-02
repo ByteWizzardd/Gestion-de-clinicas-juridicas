@@ -2206,9 +2206,11 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         const hasFechaEncuentroChange = !areDatesEqual(r.fecha_encuentro_anterior, r.fecha_encuentro_nueva);
         const hasFechaProximaCitaChange = !areDatesEqual(r.fecha_proxima_cita_anterior, r.fecha_proxima_cita_nueva);
         const hasOrientacionChange = r.orientacion_anterior !== r.orientacion_nueva;
+        const hasAtencionesChange = r.atenciones_anterior !== r.atenciones_nuevo &&
+          (r.atenciones_anterior || r.atenciones_nuevo);
 
         // Verificar si hay al menos un cambio para mostrar
-        const hasAnyChange = hasFechaEncuentroChange || hasFechaProximaCitaChange || hasOrientacionChange;
+        const hasAnyChange = hasFechaEncuentroChange || hasFechaProximaCitaChange || hasOrientacionChange || hasAtencionesChange;
 
         return (
           <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
@@ -2216,7 +2218,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
               <div>
                 <p className="text-sm font-semibold text-gray-700 mb-1">Cambios Realizados</p>
                 {!hasAnyChange && (
-                  <p className="text-sm text-gray-500 italic">Solo se actualizaron los usuarios que atendieron</p>
+                  <p className="text-sm text-gray-500 italic">No se detectaron cambios específicos</p>
                 )}
                 {hasFechaEncuentroChange && (
                   <div className="mb-2">
@@ -2256,6 +2258,48 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                       {' → '}
                       <span className="text-green-600">
                         {r.orientacion_nueva || 'N/A'}
+                      </span>
+                    </p>
+                  </div>
+                )}
+                {hasAtencionesChange && (
+                  <div className="mb-2">
+                    <p className="text-sm text-gray-600 mb-1">
+                      Personas que atendieron:
+                    </p>
+                    <p className="text-sm">
+                      <span className="line-through text-red-500">
+                        {r.usuarios_atenciones_anterior && Array.isArray(r.usuarios_atenciones_anterior) && r.usuarios_atenciones_anterior.length > 0
+                          ? r.usuarios_atenciones_anterior.map((u, i) => (
+                            <span key={i}>
+                              {i > 0 && ', '}
+                              <Link
+                                href={`/dashboard/users/${u.cedula}`}
+                                className="hover:underline cursor-pointer font-medium"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {u.nombre}
+                              </Link>
+                            </span>
+                          ))
+                          : 'Ninguno'}
+                      </span>
+                      {' → '}
+                      <span className="text-green-600">
+                        {r.usuarios_atenciones_nuevo && Array.isArray(r.usuarios_atenciones_nuevo) && r.usuarios_atenciones_nuevo.length > 0
+                          ? r.usuarios_atenciones_nuevo.map((u, i) => (
+                            <span key={i}>
+                              {i > 0 && ', '}
+                              <Link
+                                href={`/dashboard/users/${u.cedula}`}
+                                className="hover:underline cursor-pointer font-medium"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {u.nombre}
+                              </Link>
+                            </span>
+                          ))
+                          : 'Ninguno'}
                       </span>
                     </p>
                   </div>

@@ -315,7 +315,6 @@ CREATE TABLE citas (
     PRIMARY KEY (num_cita, id_caso),
     FOREIGN KEY (id_caso) REFERENCES casos(id_caso) 
         ON UPDATE CASCADE ON DELETE RESTRICT,
-    -- CORREGIDO: Update RESTRICT porque es campo de auditoría
     FOREIGN KEY (id_usuario_registro) REFERENCES usuarios(cedula) 
         ON UPDATE RESTRICT ON DELETE RESTRICT,
         
@@ -330,7 +329,6 @@ CREATE TABLE atienden (
     fecha_registro DATE NOT NULL DEFAULT CURRENT_DATE CHECK (fecha_registro <= CURRENT_DATE),
     
     PRIMARY KEY (num_cita, id_caso, id_usuario),
-    -- CORREGIDO: Update RESTRICT
     FOREIGN KEY (id_usuario) REFERENCES usuarios(cedula) 
         ON UPDATE RESTRICT ON DELETE RESTRICT,
     FOREIGN KEY (num_cita, id_caso) REFERENCES citas(num_cita, id_caso) 
@@ -349,7 +347,6 @@ CREATE TABLE acciones (
     PRIMARY KEY (num_accion, id_caso),
     FOREIGN KEY (id_caso) REFERENCES casos(id_caso) 
         ON UPDATE CASCADE ON DELETE RESTRICT,
-    -- CORREGIDO: Update RESTRICT
     FOREIGN KEY (id_usuario_registra) REFERENCES usuarios(cedula) 
         ON UPDATE RESTRICT ON DELETE RESTRICT
 );
@@ -362,7 +359,6 @@ CREATE TABLE ejecutan (
     fecha_ejecucion DATE NOT NULL DEFAULT CURRENT_DATE CHECK (fecha_ejecucion <= CURRENT_DATE),
     
     PRIMARY KEY (id_usuario_ejecuta, num_accion, id_caso),
-    -- CORREGIDO: Update RESTRICT
     FOREIGN KEY (id_usuario_ejecuta) REFERENCES usuarios(cedula) 
         ON UPDATE RESTRICT ON DELETE RESTRICT,
     FOREIGN KEY (num_accion, id_caso) REFERENCES acciones(num_accion, id_caso) 
@@ -381,7 +377,6 @@ CREATE TABLE cambio_estatus (
     PRIMARY KEY (num_cambio, id_caso),
     FOREIGN KEY (id_caso) REFERENCES casos(id_caso) 
         ON UPDATE CASCADE ON DELETE RESTRICT,
-    -- CORREGIDO: Update RESTRICT
     FOREIGN KEY (id_usuario_cambia) REFERENCES usuarios(cedula) 
         ON UPDATE RESTRICT ON DELETE RESTRICT
 );
@@ -403,7 +398,6 @@ CREATE TABLE soportes (
     PRIMARY KEY (num_soporte, id_caso),
     FOREIGN KEY (id_caso) REFERENCES casos(id_caso) 
         ON UPDATE CASCADE ON DELETE RESTRICT,
-    -- CORREGIDO: Update RESTRICT (Tal como lo solicitaste explícitamente)
     FOREIGN KEY (id_usuario_subio) REFERENCES usuarios(cedula) 
         ON UPDATE RESTRICT ON DELETE RESTRICT
 );

@@ -126,10 +126,15 @@ export interface CitaActualizadaAuditRecord {
   fecha_encuentro_anterior: string | null;
   fecha_proxima_cita_anterior: string | null;
   orientacion_anterior: string | null;
+  atenciones_anterior: string | null;
   // Valores nuevos
   fecha_encuentro_nueva: string | null;
   fecha_proxima_cita_nueva: string | null;
   orientacion_nueva: string | null;
+  atenciones_nuevo: string | null;
+  // Usuarios resueltos desde las cédulas
+  usuarios_atenciones_anterior: { cedula: string; nombre: string }[] | null;
+  usuarios_atenciones_nuevo: { cedula: string; nombre: string }[] | null;
   // Información de auditoría
   id_usuario_actualizo: string;
   usuario_accion: string; // Alias para id_usuario_actualizo
