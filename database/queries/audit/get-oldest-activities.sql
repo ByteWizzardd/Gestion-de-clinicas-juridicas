@@ -1,5 +1,7 @@
 -- Obtener la fecha de actividad más antigua para cada entidad de auditoría
 SELECT
+    -- Sesiones
+    COALESCE((SELECT MIN(fecha_inicio) FROM auditoria_sesiones), '9999-12-31') as sesiones,
     -- Soportes
     LEAST(
         COALESCE((SELECT MIN(fecha_creacion) FROM auditoria_insercion_soportes), '9999-12-31'),

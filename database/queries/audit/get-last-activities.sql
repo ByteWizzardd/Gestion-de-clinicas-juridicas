@@ -1,5 +1,7 @@
 -- Obtener la última fecha de actividad para cada entidad de auditoría
 SELECT
+    -- Sesiones
+    COALESCE((SELECT MAX(fecha_inicio) FROM auditoria_sesiones), '1970-01-01') as sesiones,
     -- Soportes
     GREATEST(
         COALESCE((SELECT MAX(fecha_creacion) FROM auditoria_insercion_soportes), '1970-01-01'),

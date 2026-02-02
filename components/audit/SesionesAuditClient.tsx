@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { LogIn, LogOut, ChevronDown, ChevronUp, XCircle } from 'lucide-react';
+import { LogIn, LogOut, ChevronDown, ChevronUp, XCircle, ArrowDown, ArrowUp } from 'lucide-react';
 import Spinner from '@/components/ui/feedback/Spinner';
 import Search from '@/components/CaseTools/search';
 import Tabs from '@/components/ui/Tabs';
@@ -14,46 +14,33 @@ interface SesionExtended extends SesionAuditRecord {
     nombre_completo_usuario_accion?: string;
 }
 
+// Recibe la fecha ya en hora local de Venezuela desde el backend
 function formatDate(dateInput: string | Date | null | undefined): string {
     if (!dateInput) return 'Fecha no disponible';
 
-    let date: Date;
-    if (dateInput instanceof Date) {
-        date = dateInput;
-    } else if (typeof dateInput === 'string') {
-        if (dateInput.includes('T') || dateInput.includes(' ')) {
-            const normalizedInput = dateInput.replace(' ', 'T');
-            const isoMatch = normalizedInput.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
-            if (isoMatch) {
-                const [, year, month, day, hour, minute] = isoMatch.map(Number);
-                date = new Date(year, month - 1, day, hour, minute);
-            } else {
-                date = new Date(dateInput);
-            }
-        } else {
-            const parts = dateInput.split('-');
-            if (parts.length === 3) {
-                const [year, month, day] = parts.map(Number);
-                date = new Date(year, month - 1, day);
-            } else {
-                date = new Date(dateInput);
-            }
-        }
-    } else {
-        return 'Fecha no disponible';
-    }
+    let dateStr = typeof dateInput === 'string' ? dateInput : dateInput.toISOString();
 
-    if (isNaN(date.getTime())) return 'Fecha inválida';
+    // Parsear los componentes del string (ej: "2026-02-02T02:37:00")
+    const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+    if (!match) return 'Fecha inválida';
 
-    return date.toLocaleDateString('es-VE', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-        timeZone: 'America/Caracas',
-    });
+    const year = parseInt(match[1], 10);
+    const month = parseInt(match[2], 10); // 1-12
+    const day = parseInt(match[3], 10);
+    let hour = parseInt(match[4], 10);
+    const minute = parseInt(match[5], 10);
+
+    // Nombres de meses en español
+    const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    const monthName = meses[month - 1];
+
+    // Formato 12 horas
+    const ampm = hour >= 12 ? 'p. m.' : 'a. m.';
+    let displayHour = hour % 12;
+    displayHour = displayHour || 12; // 0 -> 12
+
+    return `${day} de ${monthName} de ${year}, ${displayHour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} ${ampm}`;
 }
 
 function formatDuration(inicio: string, cierre: string | null): string {
@@ -253,6 +240,7 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [total, setTotal] = useState(0);
     const [page, setPage] = useState(1);
+    const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
     const limit = 20;
 
     useEffect(() => {
@@ -270,7 +258,8 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
                 busqueda: debouncedSearch || undefined,
                 limit,
                 offset: (page - 1) * limit,
-                type // Pasamos el tipo
+                type,
+                sortOrder
             });
             setSesiones(result.records as SesionExtended[]);
             setTotal(result.total);
@@ -280,7 +269,7 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
         } finally {
             setLoading(false);
         }
-    }, [debouncedSearch, page, type]);
+    }, [debouncedSearch, page, type, sortOrder]);
 
     useEffect(() => {
         loadSesiones();
@@ -311,6 +300,24 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
                         placeholder="Buscar por usuario, IP o dispositivo..."
                     />
                 </div>
+                <button
+                    type="button"
+                    onClick={() => {
+                        setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+                        setPage(1);
+                    }}
+                    className="h-10 px-4 cursor-pointer rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors"
+                    title={sortOrder === 'desc' ? 'Más reciente primero' : 'Más antiguo primero'}
+                >
+                    {sortOrder === 'desc' ? (
+                        <ArrowDown className="w-[18px] h-[18px] text-[#414040]" />
+                    ) : (
+                        <ArrowUp className="w-[18px] h-[18px] text-[#414040]" />
+                    )}
+                    <span className="text-base text-center">
+                        {sortOrder === 'desc' ? 'Más reciente' : 'Más antiguo'}
+                    </span>
+                </button>
             </motion.div>
 
             <motion.div

@@ -16,14 +16,16 @@ export interface SesionAuditoria {
     nombre_usuario?: string;
 }
 
+export type SortOrder = 'asc' | 'desc';
+
 export const auditoriaSesionesQueries = {
     // ==========================================
     // TODAS LAS SESIONES
     // ==========================================
-    getAll: async (limit: number = 50, offset: number = 0): Promise<SesionAuditoria[]> => {
+    getAll: async (limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc'): Promise<SesionAuditoria[]> => {
         try {
             const query = loadSQL('auditoria-sesiones/get-all.sql');
-            const result = await pool.query(query, [limit, offset]);
+            const result = await pool.query(query, [limit, offset, sortOrder]);
             return result.rows;
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.getAll', error);
@@ -42,10 +44,10 @@ export const auditoriaSesionesQueries = {
         }
     },
 
-    search: async (searchTerm: string, limit: number = 50, offset: number = 0): Promise<SesionAuditoria[]> => {
+    search: async (searchTerm: string, limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc'): Promise<SesionAuditoria[]> => {
         try {
             const query = loadSQL('auditoria-sesiones/search.sql');
-            const result = await pool.query(query, [limit, offset, searchTerm]);
+            const result = await pool.query(query, [limit, offset, searchTerm, sortOrder]);
             return result.rows;
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.search', error);
@@ -67,10 +69,10 @@ export const auditoriaSesionesQueries = {
     // ==========================================
     // INICIOS DE SESIÓN (LOGINS - EXITOSOS)
     // ==========================================
-    getLogins: async (limit: number = 50, offset: number = 0): Promise<SesionAuditoria[]> => {
+    getLogins: async (limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc'): Promise<SesionAuditoria[]> => {
         try {
             const query = loadSQL('auditoria-sesiones/get-logins.sql');
-            const result = await pool.query(query, [limit, offset]);
+            const result = await pool.query(query, [limit, offset, sortOrder]);
             return result.rows;
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.getLogins', error);
@@ -89,10 +91,10 @@ export const auditoriaSesionesQueries = {
         }
     },
 
-    searchLogins: async (searchTerm: string, limit: number = 50, offset: number = 0): Promise<SesionAuditoria[]> => {
+    searchLogins: async (searchTerm: string, limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc'): Promise<SesionAuditoria[]> => {
         try {
             const query = loadSQL('auditoria-sesiones/search-logins.sql');
-            const result = await pool.query(query, [limit, offset, searchTerm]);
+            const result = await pool.query(query, [limit, offset, searchTerm, sortOrder]);
             return result.rows;
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.searchLogins', error);
@@ -114,10 +116,10 @@ export const auditoriaSesionesQueries = {
     // ==========================================
     // CIERRES DE SESIÓN (LOGOUTS)
     // ==========================================
-    getLogouts: async (limit: number = 50, offset: number = 0): Promise<SesionAuditoria[]> => {
+    getLogouts: async (limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc'): Promise<SesionAuditoria[]> => {
         try {
             const query = loadSQL('auditoria-sesiones/get-logouts.sql');
-            const result = await pool.query(query, [limit, offset]);
+            const result = await pool.query(query, [limit, offset, sortOrder]);
             return result.rows;
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.getLogouts', error);
@@ -136,10 +138,10 @@ export const auditoriaSesionesQueries = {
         }
     },
 
-    searchLogouts: async (searchTerm: string, limit: number = 50, offset: number = 0): Promise<SesionAuditoria[]> => {
+    searchLogouts: async (searchTerm: string, limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc'): Promise<SesionAuditoria[]> => {
         try {
             const query = loadSQL('auditoria-sesiones/search-logouts.sql');
-            const result = await pool.query(query, [limit, offset, searchTerm]);
+            const result = await pool.query(query, [limit, offset, searchTerm, sortOrder]);
             return result.rows;
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.searchLogouts', error);
@@ -161,10 +163,10 @@ export const auditoriaSesionesQueries = {
     // ==========================================
     // INTENTOS FALLIDOS (FAILED)
     // ==========================================
-    getFailed: async (limit: number = 50, offset: number = 0): Promise<SesionAuditoria[]> => {
+    getFailed: async (limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc'): Promise<SesionAuditoria[]> => {
         try {
             const query = loadSQL('auditoria-sesiones/get-failed.sql');
-            const result = await pool.query(query, [limit, offset]);
+            const result = await pool.query(query, [limit, offset, sortOrder]);
             return result.rows;
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.getFailed', error);
@@ -183,10 +185,10 @@ export const auditoriaSesionesQueries = {
         }
     },
 
-    searchFailed: async (searchTerm: string, limit: number = 50, offset: number = 0): Promise<SesionAuditoria[]> => {
+    searchFailed: async (searchTerm: string, limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc'): Promise<SesionAuditoria[]> => {
         try {
             const query = loadSQL('auditoria-sesiones/search-failed.sql');
-            const result = await pool.query(query, [limit, offset, searchTerm]);
+            const result = await pool.query(query, [limit, offset, searchTerm, sortOrder]);
             return result.rows;
         } catch (error) {
             logger.error('Error en auditoriaSesionesQueries.searchFailed', error);

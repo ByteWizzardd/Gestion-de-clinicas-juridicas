@@ -2212,7 +2212,7 @@ export async function getEquiposCreadosAuditAction(filters?: AuditFilters) {
 /**
  * Obtiene registros de auditoría de sesiones (inicio y cierre de sesión)
  */
-export async function getSesionesAuditAction(filters?: AuditFilters & { limit?: number; offset?: number; type?: 'logins' | 'logouts' | 'failed' | 'all' }) {
+export async function getSesionesAuditAction(filters?: AuditFilters & { limit?: number; offset?: number; type?: 'logins' | 'logouts' | 'failed' | 'all'; sortOrder?: 'asc' | 'desc' }) {
   const authResult = await requireAuthInServerActionWithCode();
 
   if (!authResult.success || !authResult.user) {
@@ -2230,6 +2230,7 @@ export async function getSesionesAuditAction(filters?: AuditFilters & { limit?: 
     const limit = filters?.limit || 50;
     const offset = filters?.offset || 0;
     const type = filters?.type || 'all';
+    const sortOrder = filters?.sortOrder || 'desc';
 
     let records;
     let total;
@@ -2237,48 +2238,62 @@ export async function getSesionesAuditAction(filters?: AuditFilters & { limit?: 
     if (filters?.busqueda) {
       switch (type) {
         case 'logins':
-          records = await auditoriaSesionesQueries.searchLogins(filters.busqueda, limit, offset);
+          records = await auditoriaSesionesQueries.searchLogins(filters.busqueda, limit, offset, sortOrder);
           total = await auditoriaSesionesQueries.countSearchLogins(filters.busqueda);
           break;
         case 'logouts':
-          records = await auditoriaSesionesQueries.searchLogouts(filters.busqueda, limit, offset);
+          records = await auditoriaSesionesQueries.searchLogouts(filters.busqueda, limit, offset, sortOrder);
           total = await auditoriaSesionesQueries.countSearchLogouts(filters.busqueda);
           break;
         case 'failed':
-          records = await auditoriaSesionesQueries.searchFailed(filters.busqueda, limit, offset);
+          records = await auditoriaSesionesQueries.searchFailed(filters.busqueda, limit, offset, sortOrder);
           total = await auditoriaSesionesQueries.countSearchFailed(filters.busqueda);
           break;
         default:
-          records = await auditoriaSesionesQueries.search(filters.busqueda, limit, offset);
+          records = await auditoriaSesionesQueries.search(filters.busqueda, limit, offset, sortOrder);
           total = await auditoriaSesionesQueries.countSearch(filters.busqueda);
       }
     } else {
       switch (type) {
         case 'logins':
-          records = await auditoriaSesionesQueries.getLogins(limit, offset);
+          records = await auditoriaSesionesQueries.getLogins(limit, offset, sortOrder);
           total = await auditoriaSesionesQueries.countLogins();
           break;
         case 'logouts':
-          records = await auditoriaSesionesQueries.getLogouts(limit, offset);
+          records = await auditoriaSesionesQueries.getLogouts(limit, offset, sortOrder);
           total = await auditoriaSesionesQueries.countLogouts();
           break;
         case 'failed':
-          records = await auditoriaSesionesQueries.getFailed(limit, offset);
+          records = await auditoriaSesionesQueries.getFailed(limit, offset, sortOrder);
           total = await auditoriaSesionesQueries.countFailed();
           break;
         default:
-          records = await auditoriaSesionesQueries.getAll(limit, offset);
+          records = await auditoriaSesionesQueries.getAll(limit, offset, sortOrder);
           total = await auditoriaSesionesQueries.count();
       }
     }
+
+    // Función helper para serializar fechas: resta 4 horas (UTC -> Venezuela)
+    const serializeDate = (date: Date | null | undefined): string | null => {
+      if (!date) return null;
+      // La BD guarda en UTC, restamos 4 horas para obtener hora Venezuela
+      const venezuelaDate = new Date(date.getTime() - (8 * 60 * 60 * 1000));
+      const year = venezuelaDate.getUTCFullYear();
+      const month = String(venezuelaDate.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(venezuelaDate.getUTCDate()).padStart(2, '0');
+      const hours = String(venezuelaDate.getUTCHours()).padStart(2, '0');
+      const minutes = String(venezuelaDate.getUTCMinutes()).padStart(2, '0');
+      const seconds = String(venezuelaDate.getUTCSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+    };
 
     // Mapear campos para compatibilidad con tipos
     const mappedRecords = records.map((r) => ({
       ...r,
       id: r.id_sesion,
-      fecha: r.fecha_inicio?.toISOString() || new Date().toISOString(),
-      fecha_inicio: r.fecha_inicio?.toISOString() || new Date().toISOString(),
-      fecha_cierre: r.fecha_cierre?.toISOString() || null,
+      fecha: serializeDate(r.fecha_inicio) || new Date().toISOString(),
+      fecha_inicio: serializeDate(r.fecha_inicio) || new Date().toISOString(),
+      fecha_cierre: serializeDate(r.fecha_cierre),
       usuario_accion: r.cedula_usuario,
       nombre_completo_usuario_accion: r.nombres && r.apellidos
         ? `${r.nombres} ${r.apellidos}`
