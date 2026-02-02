@@ -336,11 +336,13 @@ export async function updateCitaAction(params: UpdateCitaParams): Promise<GetCit
     const usuariosAtienden = params.usuariosAtienden || [];
     // Notificar a los usuarios asignados a la cita sobre la actualización
     if (id_caso && usuariosAtienden.length > 0) {
-      const urlCitas = `/dashboard/cases/${id_caso}?tab=citas`;
+      // Extraer num_cita del appointmentId para mensaje más legible
+      const citaInfo = citasService.getCitaInfoByAppointmentId(params.appointmentId);
+      const numCitaDisplay = citaInfo ? citaInfo.num_cita : params.appointmentId;
       await notificarVariosUsuariosAction({
         cedulasReceptores: usuariosAtienden,
         titulo: 'Cita actualizada',
-        mensaje: `La cita #${params.appointmentId} del caso #${id_caso} para la fecha ${params.date || 'actualizada'} ha sido modificada. Haz clic aquí para ver la cita: ${urlCitas}`,
+        mensaje: `La cita #${numCitaDisplay} del caso #${id_caso} para la fecha ${params.date || 'actualizada'} ha sido modificada.`,
       });
       // Revalidar la caché de notificaciones y casos
       revalidatePath('/dashboard/notificaciones');

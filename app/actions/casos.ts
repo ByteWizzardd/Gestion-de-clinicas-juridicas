@@ -1162,7 +1162,7 @@ export async function asignarEquipoAction(
         await notificarVariosUsuariosAction({
           cedulasReceptores: profesoresNuevos,
           titulo: 'Asignación a caso',
-          mensaje: `Has sido asignado como profesor supervisor al caso #${idCaso} por ${nombreEmisor}. Por favor, revisa los detalles en el sistema.`,
+          mensaje: `Has sido asignado como profesor supervisor al caso #${idCaso} por ${nombreEmisor}. Haz clic aquí para ver los detalles.`,
         });
       }
 
@@ -1170,7 +1170,7 @@ export async function asignarEquipoAction(
         await notificarVariosUsuariosAction({
           cedulasReceptores: estudiantesNuevos,
           titulo: 'Asignación a caso',
-          mensaje: `Has sido asignado al caso #${idCaso} por ${nombreEmisor}. Por favor, revisa los detalles en el sistema.`,
+          mensaje: `Has sido asignado al caso #${idCaso} por ${nombreEmisor}. Haz clic aquí para ver los detalles.`,
         });
       }
 
@@ -1597,12 +1597,12 @@ export async function getInactiveCasesAction(
       };
     }
 
-    // Solo coordinadores pueden ver y archivar casos inactivos
-    if (authResult.user.rol !== 'Coordinador') {
+    // Coordinadores y Profesores pueden ver y archivar casos inactivos
+    if (authResult.user.rol !== 'Coordinador' && authResult.user.rol !== 'Profesor') {
       return {
         success: false,
         error: {
-          message: 'Solo los coordinadores pueden gestionar el archivo de casos inactivos',
+          message: 'Solo coordinadores y profesores pueden gestionar el archivo de casos inactivos',
           code: 'UNAUTHORIZED',
         },
       };
@@ -1651,12 +1651,12 @@ export async function archiveInactiveCasesAction(
       };
     }
 
-    // Solo coordinadores pueden archivar casos
-    if (authResult.user.rol !== 'Coordinador') {
+    // Coordinadores y Profesores pueden archivar casos
+    if (authResult.user.rol !== 'Coordinador' && authResult.user.rol !== 'Profesor') {
       return {
         success: false,
         error: {
-          message: 'Solo los coordinadores pueden archivar casos',
+          message: 'Solo coordinadores y profesores pueden archivar casos',
           code: 'UNAUTHORIZED',
         },
       };

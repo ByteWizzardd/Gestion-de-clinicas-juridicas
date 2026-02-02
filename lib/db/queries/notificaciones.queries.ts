@@ -78,9 +78,27 @@ export const notificacionesQueries = {
     /**
      * Obtiene receptores (usuarios habilitados) relacionados con los casos donde participa el usuario dado.
      */
-    getReceptoresPorCasosDelUsuario: async (cedulaUsuario: string): Promise<string[]> => {
+    getReceptoresPorCasosDelUsuario: async (cedulaReceptor: string): Promise<string[]> => {
         const query = loadSQL('notificaciones/get-receptores-por-casos-del-usuario.sql');
-        const result: QueryResult = await pool.query(query, [cedulaUsuario]);
+        const result: QueryResult = await pool.query(query, [cedulaReceptor]);
         return (result.rows as Array<{ cedula: string }>).map(r => r.cedula);
+    },
+
+    /**
+     * Verifica si existe una notificación (leída o no) con el mismo título y mensaje para un receptor
+     * @returns true si existe una notificación idéntica
+     */
+    existsUnread: async (data: {
+        cedulaReceptor: string;
+        titulo: string;
+        mensaje: string;
+    }): Promise<boolean> => {
+        const query = loadSQL('notificaciones/exists-unread.sql');
+        const result: QueryResult = await pool.query(query, [
+            data.cedulaReceptor,
+            data.titulo,
+            data.mensaje,
+        ]);
+        return result.rows.length > 0;
     },
 };

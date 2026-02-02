@@ -71,11 +71,22 @@ const Notification: React.FC<NotificationProps> = () => {
     </button>
   );
 
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen) {
+      notifications.forEach((notification) => {
+        if (!notification.read) {
+          markAsRead(notification.id);
+        }
+      });
+    }
+  };
+
   return (
     <DropdownMenu
       trigger={triggerButton}
       align="right"
       menuClassName="w-[90vw] max-w-lg sm:w-[32rem] md:w-[36rem] lg:w-[40rem]"
+      onOpenChange={handleOpenChange}
     >
       <AnimatePresence>
         <motion.div
@@ -100,23 +111,29 @@ const Notification: React.FC<NotificationProps> = () => {
                   className={`
                     w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0
                     ${!notification.read ? 'bg-primary-light/10' : ''}
-                    ${getNotificationHref(notification) ? 'cursor-pointer' : 'cursor-default'}
+                    ${getNotificationHref(notification) || !notification.read ? 'cursor-pointer' : 'cursor-default'}
                   `}
-                  role={getNotificationHref(notification) ? 'link' : undefined}
-                  tabIndex={getNotificationHref(notification) ? 0 : undefined}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => {
+                    if (!notification.read) {
+                      markAsRead(notification.id);
+                    }
                     const href = getNotificationHref(notification);
-                    if (!href) return;
-                    markAsRead(notification.id);
-                    router.push(href);
+                    if (href) {
+                      router.push(href);
+                    }
                   }}
                   onKeyDown={(e) => {
-                    const href = getNotificationHref(notification);
-                    if (!href) return;
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      markAsRead(notification.id);
-                      router.push(href);
+                      if (!notification.read) {
+                        markAsRead(notification.id);
+                      }
+                      const href = getNotificationHref(notification);
+                      if (href) {
+                        router.push(href);
+                      }
                     }
                   }}
                 >

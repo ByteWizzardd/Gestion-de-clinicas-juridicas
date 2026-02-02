@@ -26,10 +26,7 @@ interface CasosListProps {
 }
 
 export default function CasosList({ casos, loading, error }: CasosListProps) {
-  // Debug: ver qué datos estamos recibiendo
-  console.log('CasosList - casos recibidos:', casos);
-  console.log('CasosList - loading:', loading);
-  console.log('CasosList - error:', error);
+
 
   if (loading) {
     return (

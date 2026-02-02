@@ -90,10 +90,7 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
     setSelectedAppointment(null);
   };
 
-  useEffect(() => {
-    console.log('Casos recibidos:', casos);
-    console.log('Cantidad de casos:', casos.length);
-  }, [casos]);
+
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");

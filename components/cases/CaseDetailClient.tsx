@@ -302,54 +302,111 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {userRol && userRol !== 'Estudiante' && (
-            <button
-              onClick={() => setShowAssignTeamModal(true)}
-              className="h-10 cursor-pointer px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors"
-            >
-              {caso.equipo && caso.equipo.length > 0 ? (
-                <Pencil className="w-[18px] h-[18px] text-[#414040]" />
-              ) : (
-                <Plus className="w-[18px] h-[18px] text-[#414040]" />
-              )}
-              <span className="text-base text-center">
-                {caso.equipo && caso.equipo.length > 0 ? 'Modificar Equipo' : 'Asignar Equipo'}
-              </span>
-            </button>
-          )}
+          {(() => {
+            const isClosed = caso.estatus === 'Entregado' || caso.estatus === 'Archivado';
+            const tooltipText = isClosed ? `No disponible: Caso ${caso.estatus}` : undefined;
 
-          <button
-            onClick={() => setShowAddDocumentModal(true)}
-            className="h-10 cursor-pointer px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors"
-          >
-            <Plus className="w-[18px] h-[18px] text-[#414040]" />
-            <span className="text-base text-center">Agregar Documento</span>
-          </button>
+            return (
+              <>
+                {userRol && userRol !== 'Estudiante' && (
+                  <div className="relative group">
+                    <button
+                      onClick={() => {
+                        if (isClosed) return;
+                        setShowAssignTeamModal(true);
+                      }}
+                      className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-primary-light'}`}
+                    >
+                      {caso.equipo && caso.equipo.length > 0 ? (
+                        <Pencil className="w-[18px] h-[18px] text-[#414040]" />
+                      ) : (
+                        <Plus className="w-[18px] h-[18px] text-[#414040]" />
+                      )}
+                      <span className="text-base text-center">
+                        {caso.equipo && caso.equipo.length > 0 ? 'Modificar Equipo' : 'Asignar Equipo'}
+                      </span>
+                    </button>
+                    {isClosed && (
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-red-50 text-red-700 text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-[0px_4px_12px_rgba(0,0,0,0.1)] border border-red-100 font-medium tracking-wide">
+                        {tooltipText}
+                      </div>
+                    )}
+                  </div>
+                )}
 
-          <button
-            onClick={() => setShowAddActionModal(true)}
-            className="h-10 cursor-pointer px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors"
-          >
-            <Plus className="w-[18px] h-[18px] text-[#414040]" />
-            <span className="text-base text-center">Registrar Acción</span>
-          </button>
+                <div className="relative group">
+                  <button
+                    onClick={() => {
+                      if (isClosed) return;
+                      setShowAddDocumentModal(true);
+                    }}
+                    className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-primary-light'}`}
+                  >
+                    <Plus className="w-[18px] h-[18px] text-[#414040]" />
+                    <span className="text-base text-center">Agregar Documento</span>
+                  </button>
+                  {isClosed && (
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-red-50 text-red-700 text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-[0px_4px_12px_rgba(0,0,0,0.1)] border border-red-100 font-medium tracking-wide">
+                      {tooltipText}
+                    </div>
+                  )}
+                </div>
 
-          <button
-            onClick={() => setShowAddBeneficiaryModal(true)}
-            className="h-10 cursor-pointer px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors"
-          >
-            <Plus className="w-[18px] h-[18px] text-[#414040]" />
-            <span className="text-base text-center">Agregar Beneficiario</span>
-          </button>
+                <div className="relative group">
+                  <button
+                    onClick={() => {
+                      if (isClosed) return;
+                      setShowAddActionModal(true);
+                    }}
+                    className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-primary-light'}`}
+                  >
+                    <Plus className="w-[18px] h-[18px] text-[#414040]" />
+                    <span className="text-base text-center">Registrar Acción</span>
+                  </button>
+                  {isClosed && (
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-red-50 text-red-700 text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-[0px_4px_12px_rgba(0,0,0,0.1)] border border-red-100 font-medium tracking-wide">
+                      {tooltipText}
+                    </div>
+                  )}
+                </div>
 
-          <button
-            onClick={handleOpenStatusModal}
-            className="h-10 cursor-pointer px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors"
-          >
-            <span className="text-base text-center">Cambiar Estatus</span>
-          </button>
+                <div className="relative group">
+                  <button
+                    onClick={() => {
+                      if (isClosed) return;
+                      setShowAddBeneficiaryModal(true);
+                    }}
+                    className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-primary-light'}`}
+                  >
+                    <Plus className="w-[18px] h-[18px] text-[#414040]" />
+                    <span className="text-base text-center">Agregar Beneficiario</span>
+                  </button>
+                  {isClosed && (
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-red-50 text-red-700 text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-[0px_4px_12px_rgba(0,0,0,0.1)] border border-red-100 font-medium tracking-wide">
+                      {tooltipText}
+                    </div>
+                  )}
+                </div>
 
-
+                <div className="relative group">
+                  <button
+                    onClick={() => {
+                      if (isClosed) return;
+                      handleOpenStatusModal();
+                    }}
+                    className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-primary-light'}`}
+                  >
+                    <span className="text-base text-center">Cambiar Estatus</span>
+                  </button>
+                  {isClosed && (
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-red-50 text-red-700 text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-[0px_4px_12px_rgba(0,0,0,0.1)] border border-red-100 font-medium tracking-wide">
+                      {tooltipText}
+                    </div>
+                  )}
+                </div>
+              </>
+            );
+          })()}
         </div>
       </motion.div>
       <motion.div

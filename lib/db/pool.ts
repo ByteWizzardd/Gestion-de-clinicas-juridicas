@@ -23,8 +23,14 @@ const config: PoolConfig = {
   ssl: process.env.DATABASE_URL?.includes('neon.tech') ? { rejectUnauthorized: false } : undefined,
 };
 
-// Crear el pool de conexiones
-export const pool = new Pool(config);
+// Crear el pool de conexiones usando singleton para evitar múltiples conexiones en desarrollo
+const globalForPool = global as unknown as { pool: Pool };
+
+export const pool = globalForPool.pool || new Pool(config);
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForPool.pool = pool;
+}
 
 // Manejo de errores del pool
 pool.on('error', (err: Error) => {

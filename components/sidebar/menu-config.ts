@@ -20,11 +20,7 @@ export const fullMenu: MenuItem[] = [
     href: '/dashboard',
     icon: LayoutGrid,
     roles: ['coordinator', 'professor', 'student'],
-    labelByRole: {
-      coordinator: 'Dashboard',
-      professor: 'Mi Panel',
-      student: 'Mi Panel',
-    },
+
   },
   {
     label: 'Casos',

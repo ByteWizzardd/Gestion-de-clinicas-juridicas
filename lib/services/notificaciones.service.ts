@@ -16,6 +16,7 @@ export interface NotificarVariosUsuariosResult {
 
 /**
  * Notifica a varios usuarios, validando que existan antes de insertar.
+ * Evita duplicados verificando si ya existe una notificación idéntica sin leer.
  */
 export async function notificarVariosUsuariosService(input: NotificarVariosUsuariosInput): Promise<NotificarVariosUsuariosResult> {
   try {
@@ -35,16 +36,28 @@ export async function notificarVariosUsuariosService(input: NotificarVariosUsuar
       return { success: false, error: { message: 'Ningún receptor válido', code: 'RECEPTORES_INVALIDOS' } };
     }
 
-    // Insertar notificación para cada receptor válido
+    // Insertar notificación para cada receptor válido (evitando duplicados)
+    const notificados: string[] = [];
     for (const cedulaReceptor of validos) {
-      await notificacionesQueries.create({
+      // Verificar si ya existe una notificación idéntica sin leer
+      const existeDuplicada = await notificacionesQueries.existsUnread({
         cedulaReceptor,
-        cedulaEmisor: input.cedulaEmisor,
         titulo: input.titulo,
         mensaje: input.mensaje,
       });
+
+      // Solo crear si no existe una idéntica
+      if (!existeDuplicada) {
+        await notificacionesQueries.create({
+          cedulaReceptor,
+          cedulaEmisor: input.cedulaEmisor,
+          titulo: input.titulo,
+          mensaje: input.mensaje,
+        });
+        notificados.push(cedulaReceptor);
+      }
     }
-    return { success: true, data: validos.map(cedulaReceptor => ({ cedulaReceptor })) };
+    return { success: true, data: notificados.map(cedulaReceptor => ({ cedulaReceptor })) };
   } catch (error) {
     return { success: false, error: { message: error instanceof Error ? error.message : 'Error al notificar', code: 'NOTIFICACION_ERROR' } };
   }
@@ -92,7 +105,7 @@ export async function notificarDeshabilitacionUsuarioEnCasosService(
     }
 
     const titulo = 'Usuario deshabilitado';
-    const mensaje = `El usuario ${usuario.nombre_completo} (${usuario.cedula}) fue deshabilitado del sistema. Revisa los casos relacionados para reasignación/seguimiento.`;
+    const mensaje = `El usuario ${usuario.nombre_completo}, con quien compartes casos, ha sido deshabilitado.`;
 
     for (const cedulaReceptor of receptoresFiltrados) {
       await notificacionesQueries.create({
