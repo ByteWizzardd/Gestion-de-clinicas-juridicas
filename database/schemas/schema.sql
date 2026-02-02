@@ -1278,6 +1278,17 @@ CREATE TABLE auditoria_eliminacion_soportes (
     fecha_eliminacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
 );
 
+-- 26.3) AUDITORÍA DE DESCARGA DE SOPORTES
+CREATE TABLE auditoria_descarga_soportes (
+    id SERIAL PRIMARY KEY,
+    num_soporte INTEGER NOT NULL,
+    id_caso INTEGER NOT NULL,
+    nombre_archivo VARCHAR(150) NOT NULL,
+    cedula_descargo VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    ip_direccion VARCHAR(45), -- Soporta IPv4 e IPv6
+    fecha_descarga TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+);
+
 -- 27) BENEFICIARIOS (PARENTESCO LIBRE)
 CREATE TABLE beneficiarios (
     num_beneficiario INTEGER NOT NULL,

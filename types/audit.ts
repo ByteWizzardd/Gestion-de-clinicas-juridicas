@@ -12,7 +12,7 @@ export interface AuditRecord {
 
 // Tipo unificado para registros de auditoría
 export type AuditRecordType =
-  | 'soporte' | 'soporte-creado'
+  | 'soporte' | 'soporte-creado' | 'soporte-descargado'
   | 'cita-eliminada' | 'cita-actualizada' | 'cita-creada'
   | 'usuario-eliminado' | 'usuario-habilitado' | 'usuario-actualizado-campos' | 'usuario-creado'
   | 'solicitante-eliminado' | 'solicitante-actualizado' | 'solicitante-creado'
@@ -655,6 +655,7 @@ export interface AuditFilters {
 export interface AuditCounts {
   soportes: number;
   soportesCreados: number;
+  soportesDescargados?: number;
   citasEliminadas: number;
   citasActualizadas: number;
   citasCreadas: number;
@@ -922,3 +923,22 @@ export interface EquipoActualizadoAuditRecord extends AuditRecord {
   nombre_nucleo: string | null;
   nombre_completo_solicitante: string | null;
 }
+
+// Auditoría de Descargas de Soportes
+export interface SoporteDescargadoAuditRecord {
+  id: number;
+  num_soporte: number;
+  id_caso: number;
+  nombre_archivo: string;
+  cedula_descargo: string;
+  ip_direccion: string | null;
+  fecha_descarga: string;
+  fecha: string; // Alias para fecha_descarga
+  usuario_accion: string; // Alias para cedula_descargo
+  nombre_completo_usuario_accion?: string;
+  nombres_usuario_descargo: string | null;
+  apellidos_usuario_descargo: string | null;
+  nombre_completo_usuario_descargo: string | null;
+  foto_perfil_usuario_descargo: string | null;
+}
+

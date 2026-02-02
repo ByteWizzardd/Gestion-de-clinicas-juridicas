@@ -10,7 +10,7 @@ import AuditRecordCard from '../AuditRecordCard';
 import Spinner from '@/components/ui/feedback/Spinner';
 import type { AuditFilters, AuditRecordType } from '@/types/audit';
 
-type AuditType = 'soportes' | 'soportes-creados' | 'citas-eliminadas' | 'citas-actualizadas' | 'citas-creadas' | 'usuarios-eliminados' | 'usuarios-habilitados' | 'usuarios-actualizados-campos' | 'usuarios-creados'
+type AuditType = 'soportes' | 'soportes-creados' | 'soportes-descargados' | 'citas-eliminadas' | 'citas-actualizadas' | 'citas-creadas' | 'usuarios-eliminados' | 'usuarios-habilitados' | 'usuarios-actualizados-campos' | 'usuarios-creados'
   | 'solicitantes-eliminados' | 'solicitantes-actualizados' | 'solicitantes-creados'
   | 'estudiantes-inscritos' | 'profesores-asignados'
   | 'estados-eliminados' | 'estados-actualizados' | 'estados-insertados'
@@ -57,6 +57,7 @@ export default function AuditDetailClient({
   const recordTypeMap: Record<AuditType, AuditRecordType> = {
     'soportes': 'soporte',
     'soportes-creados': 'soporte-creado',
+    'soportes-descargados': 'soporte-descargado',
     'citas-eliminadas': 'cita-eliminada',
     'citas-actualizadas': 'cita-actualizada',
     'citas-creadas': 'cita-creada',
@@ -235,6 +236,11 @@ export default function AuditDetailClient({
             break;
           case 'soportes-creados':
             data = await getSoportesCreadosAuditAction(filters);
+            break;
+          case 'soportes-descargados':
+            const { getDescargasSoportesAuditAction } = await import('@/app/actions/audit');
+            const descargasResult = await getDescargasSoportesAuditAction(filters);
+            data = descargasResult.records;
             break;
           case 'citas-eliminadas':
             data = await getCitasEliminadasAuditAction(filters);

@@ -121,7 +121,9 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       // Equipo de casos
       equiposActualizados,
       // Sesiones
-      sesionesCount
+      sesionesCount,
+      // Descargas de soportes
+      soportesDescargados
     ] = await Promise.all([
       auditoriaEliminacionSoportesQueries.getCount(),
       auditoriaInsercionSoportesQueries.getCount().catch(() => 0),
@@ -207,6 +209,15 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
           return 0;
         }
       })(),
+      // Descargas de soportes
+      (async () => {
+        try {
+          const { auditoriaDescargaSoportesQueries } = await import('@/lib/db/queries/auditoria-descarga-soportes.queries');
+          return await auditoriaDescargaSoportesQueries.count();
+        } catch {
+          return 0;
+        }
+      })(),
     ]);
 
     // Obtener últimas fechas de actividad
@@ -218,6 +229,7 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
     return {
       soportes: soportesEliminados,
       soportesCreados: soportesCreados || 0,
+      soportesDescargados: soportesDescargados || 0,
       citasEliminadas,
       citasActualizadas,
       citasCreadas: citasCreadas || 0,
@@ -2318,5 +2330,75 @@ export async function getSesionesAuditAction(filters?: AuditFilters & { limit?: 
   } catch (error) {
     console.error('Error obteniendo auditoría de sesiones:', error);
     throw new Error('Error al obtener auditoría de sesiones');
+  }
+}
+
+/**
+ * Obtiene registros de auditoría de descargas de soportes
+ */
+export async function getDescargasSoportesAuditAction(filters?: AuditFilters & { limit?: number; offset?: number; sortOrder?: 'asc' | 'desc' }) {
+  const authResult = await requireAuthInServerActionWithCode();
+
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+
+  try {
+    const { auditoriaDescargaSoportesQueries } = await import('@/lib/db/queries/auditoria-descarga-soportes.queries');
+
+    const limit = filters?.limit || 50;
+    const offset = filters?.offset || 0;
+    const sortOrder = filters?.sortOrder || 'desc';
+    const startDate = filters?.fechaInicio ? new Date(filters.fechaInicio) : undefined;
+    const endDate = filters?.fechaFin ? new Date(filters.fechaFin) : undefined;
+    const userId = filters?.idUsuario;
+
+    // Si hay fecha fin, ajustarla al final del día para incluir todos los registros de ese día
+    if (endDate) {
+      endDate.setUTCHours(23, 59, 59, 999);
+    }
+
+    let records;
+    let total;
+
+    if (filters?.busqueda) {
+      records = await auditoriaDescargaSoportesQueries.search(filters.busqueda, limit, offset, sortOrder, userId, startDate, endDate);
+      total = await auditoriaDescargaSoportesQueries.countSearch(filters.busqueda, userId, startDate, endDate);
+    } else {
+      records = await auditoriaDescargaSoportesQueries.getAll(limit, offset, sortOrder, userId, startDate, endDate);
+      total = await auditoriaDescargaSoportesQueries.count(userId, startDate, endDate);
+    }
+
+    // Función helper para serializar fechas: resta 4 horas (UTC -> Venezuela)
+    const serializeDate = (date: Date | null | undefined): string | null => {
+      if (!date) return null;
+      // La BD guarda en UTC, restamos 4 horas para obtener hora Venezuela
+      const venezuelaDate = new Date(date.getTime() - (8 * 60 * 60 * 1000));
+      return venezuelaDate.toISOString().replace('Z', '');
+    };
+
+    // Mapear registros para serialización
+    const mappedRecords = records.map((r) => ({
+      ...r,
+      fecha: serializeDate(r.fecha_descarga) || new Date().toISOString(),
+      fecha_descarga: serializeDate(r.fecha_descarga) || new Date().toISOString(),
+      usuario_accion: r.cedula_descargo,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_descargo || r.cedula_descargo,
+    }));
+
+    return {
+      records: mappedRecords,
+      total,
+      limit,
+      offset
+    };
+  } catch (error) {
+    console.error('Error obteniendo auditoría de descargas de soportes:', error);
+    throw new Error('Error al obtener auditoría de descargas de soportes');
   }
 }

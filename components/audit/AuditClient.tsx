@@ -60,7 +60,7 @@ export default function AuditClient() {
         title: "Soportes",
         description: "Documentos y archivos del sistema",
         icon: FileText,
-        totalCount: counts.soportes + (counts.soportesCreados || 0),
+        totalCount: counts.soportes + (counts.soportesCreados || 0) + (counts.soportesDescargados || 0),
         href: "/dashboard/audit/soportes",
         lastActivity: counts.lastActivities?.soportes,
         operations: [
@@ -73,6 +73,11 @@ export default function AuditClient() {
             label: "Creados",
             count: counts.soportesCreados || 0,
             href: "/dashboard/audit/soportes?tab=soportes-creados"
+          },
+          {
+            label: "Descargados",
+            count: counts.soportesDescargados || 0,
+            href: "/dashboard/audit/soportes?tab=soportes-descargados"
           }
         ]
       },

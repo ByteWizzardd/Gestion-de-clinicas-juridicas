@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, ChevronUp, FileText, Calendar, User, X, Check, BookOpen, GraduationCap, Building, Briefcase, Activity, Tag, Tags, Scale, MapPin, Building2, Home, FolderTree, FolderOpen, UserCircle, Users, ArrowRight, UserX } from 'lucide-react';
+import { ChevronDown, ChevronUp, FileText, Calendar, User, X, Check, BookOpen, GraduationCap, Building, Briefcase, Activity, Tag, Tags, Scale, MapPin, Building2, Home, FolderTree, FolderOpen, UserCircle, Users, ArrowRight, UserX, ArrowDown } from 'lucide-react';
 import Link from 'next/link';
 import UserAvatar from '@/components/ui/UserAvatar';
 import { formatDateTime } from '@/lib/utils/date-formatter';
 import type {
   SoporteAuditRecord,
   SoporteCreadoAuditRecord,
+  SoporteDescargadoAuditRecord,
   CitaEliminadaAuditRecord,
   CitaActualizadaAuditRecord,
   CitaCreadaAuditRecord,
@@ -33,7 +34,7 @@ import type {
   MiembroEquipoAudit
 } from '@/types/audit';
 
-type AuditRecord = SoporteAuditRecord | SoporteCreadoAuditRecord | CitaEliminadaAuditRecord | CitaActualizadaAuditRecord | CitaCreadaAuditRecord | UsuarioEliminadoAuditRecord | UsuarioHabilitadoAuditRecord | UsuarioActualizadoCamposAuditRecord | UsuarioCreadoAuditRecord | CasoEliminadoAuditRecord | CasoActualizadoAuditRecord | CasoCreadoAuditRecord | SolicitanteEliminadoAuditRecord | SolicitanteActualizadoAuditRecord | SolicitanteCreadoAuditRecord | EstudianteInscritoAuditRecord | BeneficiarioEliminadoAuditRecord | BeneficiarioActualizadoAuditRecord | BeneficiarioInscritoAuditRecord | AccionCreadaAuditRecord | AccionActualizadaAuditRecord | AccionEliminadaAuditRecord | EquipoActualizadoAuditRecord | any;
+type AuditRecord = SoporteAuditRecord | SoporteCreadoAuditRecord | SoporteDescargadoAuditRecord | CitaEliminadaAuditRecord | CitaActualizadaAuditRecord | CitaCreadaAuditRecord | UsuarioEliminadoAuditRecord | UsuarioHabilitadoAuditRecord | UsuarioActualizadoCamposAuditRecord | UsuarioCreadoAuditRecord | CasoEliminadoAuditRecord | CasoActualizadoAuditRecord | CasoCreadoAuditRecord | SolicitanteEliminadoAuditRecord | SolicitanteActualizadoAuditRecord | SolicitanteCreadoAuditRecord | EstudianteInscritoAuditRecord | BeneficiarioEliminadoAuditRecord | BeneficiarioActualizadoAuditRecord | BeneficiarioInscritoAuditRecord | AccionCreadaAuditRecord | AccionActualizadaAuditRecord | AccionEliminadaAuditRecord | EquipoActualizadoAuditRecord | any;
 
 import type { AuditRecordType } from '@/types/audit';
 
@@ -415,12 +416,44 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
             <div className="flex-1">
               <p className="font-semibold text-gray-900">{r.nombre_archivo}</p>
               <p className="text-sm text-gray-600">
-                Caso #{r.id_caso} • Subido por:{' '}
+                <Link
+                  href={`/dashboard/cases/${r.id_caso}`}
+                  className="text-primary hover:underline font-medium transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Caso #{r.id_caso}
+                </Link> • Subido por:{' '}
                 {renderUserLink(
                   r.nombre_completo_usuario_subio,
                   r.nombres_usuario_subio,
                   r.apellidos_usuario_subio,
                   r.id_usuario_subio
+                )}
+              </p>
+            </div>
+          </div>
+        );
+      }
+      case 'soporte-descargado': {
+        const r = record as SoporteDescargadoAuditRecord;
+        return (
+          <div className="flex items-center gap-3">
+            <ArrowDown className="w-5 h-5 text-gray-600" />
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">{r.nombre_archivo}</p>
+              <p className="text-sm text-gray-600">
+                <Link
+                  href={`/dashboard/cases/${r.id_caso}`}
+                  className="text-primary hover:underline font-medium transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Caso #{r.id_caso}
+                </Link> • Descargado por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_descargo,
+                  r.nombres_usuario_descargo,
+                  r.apellidos_usuario_descargo,
+                  r.cedula_descargo
                 )}
               </p>
             </div>
@@ -1848,6 +1881,49 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                     r.nombres_usuario_subio,
                     r.apellidos_usuario_subio,
                     r.id_usuario_subio
+                  )
+                ) : (
+                  <span className="text-gray-600">N/A</span>
+                )}
+              </p>
+            </div>
+            <div className="pt-2" onClick={(e) => e.stopPropagation()}>
+              <Link
+                href={`/dashboard/cases/${r.id_caso}`}
+                className="text-sm text-primary hover:underline"
+              >
+                Ver caso #{r.id_caso} →
+              </Link>
+            </div>
+          </div>
+        );
+      }
+      case 'soporte-descargado': {
+        const r = record as SoporteDescargadoAuditRecord;
+        return (
+          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">Información del Documento</p>
+                <p className="text-sm text-gray-600">Nombre: {r.nombre_archivo}</p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">Fecha</p>
+                <p className="text-sm text-gray-600">Descarga: {formatDateTime(r.fecha_descarga)}</p>
+                {r.ip_direccion && (
+                  <p className="text-sm text-gray-600">IP: {r.ip_direccion}</p>
+                )}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Descargado por</p>
+              <p className="text-sm text-gray-600">
+                {r.cedula_descargo ? (
+                  renderUserLink(
+                    r.nombre_completo_usuario_descargo,
+                    r.nombres_usuario_descargo,
+                    r.apellidos_usuario_descargo,
+                    r.cedula_descargo
                   )
                 ) : (
                   <span className="text-gray-600">N/A</span>
@@ -4543,6 +4619,8 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         return (record as SoporteAuditRecord).fecha_eliminacion;
       case 'soporte-creado':
         return (record as SoporteCreadoAuditRecord).fecha_creacion;
+      case 'soporte-descargado':
+        return (record as SoporteDescargadoAuditRecord).fecha_descarga;
       case 'cita-eliminada':
         return (record as CitaEliminadaAuditRecord).fecha_eliminacion;
       case 'cita-creada':

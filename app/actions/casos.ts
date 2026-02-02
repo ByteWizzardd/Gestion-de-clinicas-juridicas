@@ -11,6 +11,7 @@ import { estudiantesQueries } from '@/lib/db/queries/estudiantes.queries';
 import { semestresQueries } from '@/lib/db/queries/semestres.queries';
 import { usuariosQueries } from '@/lib/db/queries/usuarios.queries';
 import { casosQueries } from '@/lib/db/queries/casos.queries';
+import { auditoriaDescargaSoportesQueries } from '@/lib/db/queries/auditoria-descarga-soportes.queries';
 import { pool } from '@/lib/db/pool';
 import { loadSQL } from '@/lib/db/sql-loader';
 import { AppError } from '@/lib/utils/errors';
@@ -304,6 +305,20 @@ export async function downloadSoporteAction(
           code: 'NOT_FOUND',
         },
       };
+    }
+
+    // Registrar la descarga en auditoría (sin bloquear la respuesta si falla)
+    try {
+      await auditoriaDescargaSoportesQueries.registrarDescarga(
+        numSoporte,
+        idCaso,
+        documento.nombre_archivo,
+        authResult.user.cedula,
+        null // IP address - se podría obtener del request si estuviéramos en un API route
+      );
+    } catch (auditError) {
+      // Log el error pero no bloquear la descarga
+      console.error('Error al registrar descarga en auditoría:', auditError);
     }
 
     // Convertir el Buffer a base64

@@ -21,6 +21,13 @@ export default async function SoportesAuditPage() {
             emptyMessage: 'No se encontraron soportes creados'
           },
           {
+            label: 'Descargados',
+            auditType: 'soportes-descargados',
+            title: 'Descargas de Soportes',
+            description: 'Registro de todas las descargas de documentos y archivos del sistema',
+            emptyMessage: 'No se encontraron descargas de soportes'
+          },
+          {
             label: 'Eliminados',
             auditType: 'soportes',
             title: 'Soportes Eliminados',

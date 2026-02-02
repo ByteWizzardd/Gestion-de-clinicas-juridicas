@@ -5,7 +5,8 @@ SELECT
     -- Soportes
     GREATEST(
         COALESCE((SELECT MAX(fecha_creacion) FROM auditoria_insercion_soportes), '1970-01-01'),
-        COALESCE((SELECT MAX(fecha_eliminacion) FROM auditoria_eliminacion_soportes), '1970-01-01')
+        COALESCE((SELECT MAX(fecha_eliminacion) FROM auditoria_eliminacion_soportes), '1970-01-01'),
+        COALESCE((SELECT MAX(fecha_descarga) FROM auditoria_descarga_soportes), '1970-01-01')
     ) as soportes,
     -- Citas
     GREATEST(
