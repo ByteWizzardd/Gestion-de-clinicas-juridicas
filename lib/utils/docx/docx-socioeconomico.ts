@@ -236,7 +236,11 @@ export async function generateSocioeconomicoDOCX(
             if (values.length === 0 || values.every(v => v === 0)) continue;
 
             // Colores
-            const colors = BAR_CHART_COLORS.slice(0, labels.length);
+            let colors = BAR_CHART_COLORS.slice(0, labels.length);
+
+            if (section.key === 'genero') {
+                colors = labels.map(label => label === 'Femenino' ? '#ff928a' : '#8979ff');
+            }
 
             // Generar imagen
             const chartBase64 = await generateGenericBarChartImage(labels, values, colors);

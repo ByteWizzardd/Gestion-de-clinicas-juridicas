@@ -9,28 +9,6 @@ import { CasosGroupedData, SocioeconomicoData } from '../../app/actions/reports'
 import InformeSocioeconomicoPDF from '../../components/reports/InformeSocioeconomicoPDF';
 import { generateBarChartImage } from './bar-chart-generator';
 
-
-
-// Interfaces moved to report-types.ts, but keeping re-exports or local aliases if needed by existing code in this file.
-// However, looking at the code, these interfaces were defined here.
-// We should import them from report-types if they are used by OTHER functions in this file.
-// But wait, `generateTiposCasosPDFReact` uses `CasosGroupedData`. 
-// `SolicitanteFichaData` and `CasoHistorialData` were definitions used by the moved functions.
-// If any other function here uses them, we should import them. 
-// It seems only the moved functions used them.
-// Let's check remaining functions.
-// generateTiposCasosPDFReact -> CasosGroupedData (imported from actions)
-// generateEstatusCasosPDFReact -> EstatusGroupedData (imported from components)
-// generateInformeResumenPDFReact -> InformeResumenData (imported from components)
-// generateInformeSocioeconomicoPDF -> SocioeconomicoData (imported from actions)
-
-// So `Solicitante`, `Caso`, `SolicitanteFichaData`, `CasoHistorialData` can be removed from here?
-// `excel-generator` imported them from here. But `excel-generator` is cleared.
-// The new files import them from `report-types`.
-// So we can safely remove these interfaces from here.
-
-
-// Colores exactos del diseño de Figma
 export const CHART_COLORS = [
   '#8979ff', // Solicitud de Naturalización
   '#ff928a', // Justificativo de Soltería
@@ -753,7 +731,7 @@ export async function generateInformeResumenPDFReact(
 
       const labels = data.solicitantesPorGenero.map(item => item.genero === 'M' ? 'Masculino' : 'Femenino');
       const values = data.solicitantesPorGenero.map(item => item.cantidad_solicitantes);
-      const colors = BAR_COLORS.slice(0, labels.length);
+      const colors = data.solicitantesPorGenero.map(item => item.genero === 'F' ? '#ff928a' : '#8979ff');
       chartImages.solicitantesPorGenero = generateBarChartImage(labels, values, colors);
     }
 
@@ -966,15 +944,14 @@ export async function generateInformeSocioeconomicoPDF(
 
     // 2. Gráfico de Género
     if (data.distribucionPorGenero?.length > 0) {
-      const formattedData = data.distribucionPorGenero.map(item => ({
-        genero: item.genero === 'M' ? 'Masculino' : 'Femenino',
-        cantidad_solicitantes: item.cantidad_solicitantes
-      }));
-      chartImages.genero = await generateSocioeconomicoChartImage(
-        formattedData,
-        'Género',
-        'genero',
-        'cantidad_solicitantes'
+      const labels = data.distribucionPorGenero.map(item => item.genero === 'M' ? 'Masculino' : 'Femenino');
+      const values = data.distribucionPorGenero.map(item => Number(item.cantidad_solicitantes));
+      const colors = data.distribucionPorGenero.map(item => item.genero === 'F' ? '#ff928a' : '#8979ff');
+
+      chartImages.genero = generateBarChartImage(
+        labels,
+        values,
+        colors
       );
     }
     await yieldToUI();

@@ -366,7 +366,11 @@ export async function generateResumenCasosDOCX(
                 continue;
             }
 
-            const colors = BAR_CHART_COLORS.slice(0, labels.length);
+            let colors = BAR_CHART_COLORS.slice(0, labels.length);
+
+            if (chart.title === 'Solicitantes por Género') {
+                colors = labels.map(label => label === 'Femenino' ? '#ff928a' : '#8979ff');
+            }
 
             const chartBase64 = await generateGenericBarChartImage(labels, values as number[], colors);
             const chartUint8 = base64ToUint8Array(chartBase64.split(',')[1]);
