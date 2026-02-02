@@ -66,8 +66,12 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         const isoMatch = normalizedInput.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
         if (isoMatch) {
           const [, year, month, day, hour, minute] = isoMatch.map(Number);
-          // Crear fecha usando componentes locales (no UTC)
-          date = new Date(year, month - 1, day, hour, minute);
+          // Crear fecha usando componentes
+          if (type === 'soporte-descargado') {
+            date = new Date(Date.UTC(year, month - 1, day, hour, minute));
+          } else {
+            date = new Date(year, month - 1, day, hour, minute);
+          }
         } else {
           date = new Date(dateInput);
         }
@@ -97,7 +101,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
       hour: '2-digit',
       minute: '2-digit',
       hour12: true,
-      timeZone: 'America/Caracas', // Zona horaria de Venezuela
+      timeZone: type === 'soporte-descargado' ? 'UTC' : 'America/Caracas', // Zona horaria de Venezuela
     });
   };
 
@@ -1909,7 +1913,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-700 mb-1">Fecha</p>
-                <p className="text-sm text-gray-600">Descarga: {formatDateTime(r.fecha_descarga)}</p>
+                <p className="text-sm text-gray-600">Descarga: {formatDateTime(r.fecha_descarga, { timeZone: 'UTC' })}</p>
                 {r.ip_direccion && (
                   <p className="text-sm text-gray-600">IP: {r.ip_direccion}</p>
                 )}
@@ -4725,7 +4729,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         <div className="flex-1">
           {renderSummary()}
           <p className="text-xs text-gray-500 mt-2">
-            {formatDate(getDate())}
+            {type === 'soporte-descargado' ? formatDateTime(getDate(), { timeZone: 'UTC' }) : formatDate(getDate())}
           </p>
         </div>
         <div className="shrink-0 p-2 hover:bg-gray-100 rounded-full transition-colors">

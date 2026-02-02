@@ -17,32 +17,26 @@ interface SesionExtended extends SesionAuditRecord {
 }
 
 // Recibe la fecha ya en hora local de Venezuela desde el backend
+// Usamos UTC para evitar que el navegador aplique conversión de zona horaria
 function formatDate(dateInput: string | Date | null | undefined): string {
     if (!dateInput) return 'Fecha no disponible';
 
-    let dateStr = typeof dateInput === 'string' ? dateInput : dateInput.toISOString();
+    try {
+        const d = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+        if (isNaN(d.getTime())) return 'Fecha inválida';
 
-    // Parsear los componentes del string (ej: "2026-02-02T02:37:00")
-    const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
-    if (!match) return 'Fecha inválida';
-
-    const year = parseInt(match[1], 10);
-    const month = parseInt(match[2], 10); // 1-12
-    const day = parseInt(match[3], 10);
-    let hour = parseInt(match[4], 10);
-    const minute = parseInt(match[5], 10);
-
-    // Nombres de meses en español
-    const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-    const monthName = meses[month - 1];
-
-    // Formato 12 horas
-    const ampm = hour >= 12 ? 'p. m.' : 'a. m.';
-    let displayHour = hour % 12;
-    displayHour = displayHour || 12; // 0 -> 12
-
-    return `${day} de ${monthName} de ${year}, ${displayHour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} ${ampm}`;
+        return d.toLocaleString('es-VE', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true,
+            timeZone: 'UTC' // Mostrar la hora exacta sin conversión
+        });
+    } catch {
+        return 'Fecha inválida';
+    }
 }
 
 function formatDuration(inicio: string, cierre: string | null): string {

@@ -49,7 +49,10 @@ export function formatDate(date: string | Date | null | undefined): string {
  * @param date - Fecha en formato string o Date
  * @returns Fecha y hora formateada o 'N/A'
  */
-export function formatDateTime(date: string | Date | null | undefined): string {
+export function formatDateTime(
+  date: string | Date | null | undefined,
+  options?: Intl.DateTimeFormatOptions
+): string {
   if (!date) return 'N/A';
 
   try {
@@ -62,7 +65,8 @@ export function formatDateTime(date: string | Date | null | undefined): string {
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      hour12: true
+      hour12: true,
+      ...options
     });
   } catch (error) {
     console.error('Error formatting date time:', error);
