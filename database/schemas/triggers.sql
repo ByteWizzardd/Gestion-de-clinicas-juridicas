@@ -73,6 +73,10 @@ DECLARE
 BEGIN
     BEGIN
         v_usuario := current_setting('app.usuario_actualiza_accion', true);
+        -- Convertir cadena vacía a NULL
+        IF v_usuario = '' THEN
+            v_usuario := NULL;
+        END IF;
     EXCEPTION
         WHEN OTHERS THEN
             v_usuario := NULL;

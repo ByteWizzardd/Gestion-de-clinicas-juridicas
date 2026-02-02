@@ -587,8 +587,6 @@ export const casosService = {
         idUsuarioActualizo: string;
         ejecutores?: Array<{ idUsuario: string; fechaEjecucion: string }>;
     }) => {
-        console.log('DEBUG updateAccion - Updating action with params:', params);
-
         return await withTransaction(async (client) => {
             // Establecer variable de sesión para auditoría
             const cedulaEscapada = params.idUsuarioActualizo.replace(/'/g, "''");
@@ -616,23 +614,17 @@ export const casosService = {
             const currentEjecutoresResult = await client.query(currentEjecutoresQuery, [params.numAccion, params.idCaso]);
             const ejecutoresAnteriores = currentEjecutoresResult.rows;
 
-            console.log('DEBUG updateAccion - Existing action before update:', existingAction.rows[0]);
-
             // Actualizar la acción usando client de la transacción (el trigger crea el registro de auditoría base)
             const updateAccionQuery = loadSQL('acciones/update.sql');
             await client.query(updateAccionQuery, [params.numAccion, params.idCaso, params.detalleAccion, params.comentario]);
-            console.log('DEBUG updateAccion - Action updated in database');
 
             // Si se proporcionan ejecutores, actualizarlos
             let ejecutoresNuevos: Array<{ cedula: string; nombres: string; apellidos: string; fecha_ejecucion: string }> = [];
 
             if (params.ejecutores !== undefined) {
-                console.log('DEBUG updateAccion - Updating ejecutores:', params.ejecutores);
-
                 // Eliminar ejecutores existentes usando client
                 const deleteEjecutanQuery = loadSQL('ejecutan/delete-by-accion.sql');
                 await client.query(deleteEjecutanQuery, [params.numAccion, params.idCaso]);
-                console.log('DEBUG updateAccion - Existing ejecutores deleted');
 
                 // Crear nuevos ejecutores si hay usuarios
                 if (params.ejecutores.length > 0) {
@@ -659,7 +651,6 @@ export const casosService = {
                             fecha_ejecucion: ejecutor.fechaEjecucion
                         });
                     }
-                    console.log('DEBUG updateAccion - New ejecutores created:', params.ejecutores.length);
                 }
             } else {
                 // Si no se modifican los ejecutores, los nuevos son igual a los anteriores
@@ -709,7 +700,6 @@ export const casosService = {
 
             // Verificar que la acción se actualizó correctamente
             const updatedAction = await client.query(checkQuery, [params.numAccion, params.idCaso]);
-            console.log('DEBUG updateAccion - Action after update:', updatedAction.rows[0]);
 
             return {
                 num_accion: params.numAccion,

@@ -5,7 +5,7 @@ import Modal from '@/components/ui/feedback/Modal';
 import Button from '@/components/ui/Button';
 import MultiSelect from '@/components/forms/MultiSelect';
 import { getEquipoDisponibleAction, asignarEquipoAction } from '@/app/actions/casos';
-import { Users } from 'lucide-react';
+import { useToast } from "@/components/ui/feedback/ToastProvider";
 
 interface AssignTeamModalProps {
   isOpen: boolean;
@@ -30,6 +30,8 @@ export default function AssignTeamModal({
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+
   const [profesoresDisponibles, setProfesoresDisponibles] = useState<Array<{
     cedula: string;
     nombre_completo: string;
@@ -123,6 +125,29 @@ export default function AssignTeamModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // Detección de cambios
+    const initialProfesores = equipoActual
+      .filter(m => m.tipo === 'profesor' && m.habilitado)
+      .map(m => m.cedula)
+      .sort();
+
+    const initialEstudiantes = equipoActual
+      .filter(m => m.tipo === 'estudiante' && m.habilitado)
+      .map(m => m.cedula)
+      .sort();
+
+    const currentProfesores = [...profesoresSeleccionados].sort();
+    const currentEstudiantes = [...estudiantesSeleccionados].sort();
+
+    const hasProfesoresChanged = JSON.stringify(initialProfesores) !== JSON.stringify(currentProfesores);
+    const hasEstudiantesChanged = JSON.stringify(initialEstudiantes) !== JSON.stringify(currentEstudiantes);
+
+    if (!hasProfesoresChanged && !hasEstudiantesChanged) {
+      toast.info("No se han realizado cambios en el equipo");
+      onClose();
+      return;
+    }
 
     setLoading(true);
     try {

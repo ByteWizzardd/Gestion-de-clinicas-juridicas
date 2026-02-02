@@ -9,6 +9,7 @@ import MultiSelect from '@/components/forms/MultiSelect';
 import { createAccionAction, updateAccionAction } from '@/app/actions/casos';
 import { getUsuariosAction } from '@/app/actions/usuarios';
 import { X, Users, Calendar } from 'lucide-react';
+import { useToast } from "@/components/ui/feedback/ToastProvider";
 
 interface AddActionModalProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ detalleAccion?: string; ejecutores?: string; fechaEjecucion?: string }>({});
+  const { toast } = useToast();
 
   // Determinar si es una acción de cita (no se puede cambiar caso ni fecha)
   const isCitaAction = editingAction?.detalle_accion?.startsWith('Cita realizada el');
@@ -46,23 +48,13 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
   // Cargar usuarios disponibles al abrir el modal y datos de edición
   useEffect(() => {
     if (isOpen) {
-      console.log('DEBUG AddActionModal - Modal opened, editingAction:', editingAction);
       loadUsuarios();
       if (editingAction) {
-        console.log('DEBUG AddActionModal - Loading edit data:', {
-          detalle_accion: editingAction.detalle_accion,
-          comentario: editingAction.comentario,
-          ejecutores: editingAction.ejecutores
-        });
         // Cargar datos para edición
         setDetalleAccion(editingAction.detalle_accion || '');
         setComentario(editingAction.comentario || '');
         const ejecutoresIds = editingAction.ejecutores?.map(e => e.id_usuario_ejecuta) || [];
         const fechaEjec = editingAction.ejecutores?.[0]?.fecha_ejecucion || '';
-        console.log('DEBUG AddActionModal - Setting form data:', {
-          ejecutoresIds,
-          fechaEjec
-        });
         setUsuariosSeleccionados(ejecutoresIds);
         setFechaEjecucion(fechaEjec);
       } else {
@@ -113,14 +105,6 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
     setError(null);
     setErrors({});
 
-    console.log('DEBUG AddActionModal - handleSubmit called at', new Date().toISOString(), {
-      editingAction: !!editingAction,
-      detalleAccion,
-      comentario,
-      fechaEjecucion,
-      usuariosSeleccionados
-    });
-
     // Validar detalle de acción
     if (!detalleAccion.trim()) {
       setErrors(prev => ({ ...prev, detalleAccion: 'Este campo es requerido' }));
@@ -139,14 +123,35 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
       return;
     }
 
-    // Validar que la fecha no sea futura (solo al registrar, no al editar)
-    if (!editingAction && !isCitaAction && fechaEjecucion) {
+    // Validar que la fecha no sea futura (aplica tanto al registrar como al editar)
+    if (!isCitaAction && fechaEjecucion) {
       const fechaSeleccionada = new Date(fechaEjecucion + 'T00:00:00');
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
 
       if (fechaSeleccionada > hoy) {
         setErrors(prev => ({ ...prev, fechaEjecucion: 'La fecha de ejecución no puede ser futura' }));
+        return;
+      }
+    }
+
+    // Detección de cambios en modo edición
+    if (editingAction) {
+      const initialDetalle = editingAction.detalle_accion || '';
+      const initialComentario = editingAction.comentario || '';
+      const initialEjecutores = (editingAction.ejecutores || []).map(e => e.id_usuario_ejecuta).sort();
+      const initialFecha = editingAction.ejecutores?.[0]?.fecha_ejecucion || '';
+
+      const currentEjecutores = [...usuariosSeleccionados].sort();
+
+      const hasDetalleChange = initialDetalle.trim() !== detalleAccion.trim();
+      const hasComentarioChange = initialComentario.trim() !== comentario.trim();
+      const hasEjecutoresChange = JSON.stringify(initialEjecutores) !== JSON.stringify(currentEjecutores);
+      const hasFechaChange = initialFecha !== fechaEjecucion;
+
+      if (!hasDetalleChange && !hasComentarioChange && !hasEjecutoresChange && !hasFechaChange) {
+        toast.info("No se han realizado cambios");
+        onClose();
         return;
       }
     }
@@ -168,14 +173,6 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
 
       let result;
       if (editingAction) {
-        console.log('DEBUG AddActionModal - Updating action', {
-          numAccion: editingAction.num_accion,
-          idCaso,
-          detalleAccion: detalleAccion.trim(),
-          comentario: comentario.trim() || undefined,
-          ejecutoresData
-        });
-
         // Modo edición
         result = await updateAccionAction({
           numAccion: editingAction.num_accion,
@@ -213,12 +210,10 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
         setFechaEjecucion('');
       }
       setErrors({});
-      console.log('DEBUG AddActionModal - handleSubmit completed successfully');
       onSuccess?.();
       onActionAdded?.();
       onClose();
     } catch (err) {
-      console.log('DEBUG AddActionModal - handleSubmit failed:', err);
       setError(err instanceof Error ? err.message : 'Error al crear la acción');
     } finally {
       setLoading(false);
@@ -301,10 +296,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
               {/* Grid de formulario */}
               <form
                 id="add-action-form"
-                onSubmit={(e) => {
-                  console.log('DEBUG AddActionModal - Form onSubmit triggered');
-                  handleSubmit(e);
-                }}
+                onSubmit={handleSubmit}
                 noValidate
                 className="grid grid-cols-2 gap-x-8 gap-y-4"
               >
