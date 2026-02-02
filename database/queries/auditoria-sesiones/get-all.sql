@@ -1,5 +1,11 @@
 SELECT 
-    ses.*,
+    ses.id_sesion,
+    ses.cedula_usuario,
+    to_char(ses.fecha_inicio, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_inicio,
+    to_char(ses.fecha_cierre, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_cierre,
+    ses.ip_direccion,
+    ses.dispositivo,
+    ses.exitoso,
     u.nombres,
     u.apellidos,
     u.nombre_usuario

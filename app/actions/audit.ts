@@ -2294,27 +2294,14 @@ export async function getSesionesAuditAction(filters?: AuditFilters & { limit?: 
       }
     }
 
-    // Función helper para serializar fechas: resta 4 horas (UTC -> Venezuela)
-    const serializeDate = (date: Date | null | undefined): string | null => {
-      if (!date) return null;
-      // La BD guarda en UTC, restamos 4 horas para obtener hora Venezuela
-      const venezuelaDate = new Date(date.getTime() - (8 * 60 * 60 * 1000));
-      const year = venezuelaDate.getUTCFullYear();
-      const month = String(venezuelaDate.getUTCMonth() + 1).padStart(2, '0');
-      const day = String(venezuelaDate.getUTCDate()).padStart(2, '0');
-      const hours = String(venezuelaDate.getUTCHours()).padStart(2, '0');
-      const minutes = String(venezuelaDate.getUTCMinutes()).padStart(2, '0');
-      const seconds = String(venezuelaDate.getUTCSeconds()).padStart(2, '0');
-      return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-    };
-
+    // Las fechas ya vienen como strings formateados desde el SQL (to_char)
     // Mapear campos para compatibilidad con tipos
     const mappedRecords = records.map((r) => ({
       ...r,
       id: r.id_sesion,
-      fecha: serializeDate(r.fecha_inicio) || new Date().toISOString(),
-      fecha_inicio: serializeDate(r.fecha_inicio) || new Date().toISOString(),
-      fecha_cierre: serializeDate(r.fecha_cierre),
+      fecha: r.fecha_inicio || new Date().toISOString(),
+      fecha_inicio: r.fecha_inicio || new Date().toISOString(),
+      fecha_cierre: r.fecha_cierre || null,
       usuario_accion: r.cedula_usuario,
       nombre_completo_usuario_accion: r.nombres && r.apellidos
         ? `${r.nombres} ${r.apellidos}`
