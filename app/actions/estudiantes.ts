@@ -200,3 +200,61 @@ export async function bulkCreateEstudiantesAction(
   }
 }
 
+import { usuariosQueries } from '@/lib/db/queries/usuarios.queries';
+
+export interface DeshabilitarUsuariosResult {
+  success: boolean;
+  data?: {
+    estudiantes_deshabilitados: number;
+    profesores_deshabilitados: number;
+  };
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+/**
+ * Server Action para deshabilitar usuarios de semestres que ya finalizaron
+ * Solo puede ser ejecutada por Coordinadores
+ */
+export async function deshabilitarUsuariosSemestreFinalizadoAction(): Promise<DeshabilitarUsuariosResult> {
+  try {
+    // Verificar autenticación
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return {
+        success: false,
+        error: authResult.error!,
+      };
+    }
+
+    // Solo coordinadores pueden ejecutar esta acción
+    if (authResult.user.rol !== 'Coordinador') {
+      return {
+        success: false,
+        error: {
+          message: 'Solo los coordinadores pueden ejecutar esta acción',
+          code: 'UNAUTHORIZED',
+        },
+      };
+    }
+
+    // Ejecutar la deshabilitación usando la función de queries
+    const result = await usuariosQueries.disableFinishedTermUsers();
+
+    // Revalidar páginas afectadas
+    revalidatePath('/dashboard/users');
+    revalidatePath('/dashboard/students');
+
+    return {
+      success: true,
+      data: {
+        estudiantes_deshabilitados: result.estudiantes,
+        profesores_deshabilitados: result.profesores,
+      },
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'deshabilitarUsuariosSemestreFinalizadoAction', 'DESHABILITACION_ERROR');
+  }
+}

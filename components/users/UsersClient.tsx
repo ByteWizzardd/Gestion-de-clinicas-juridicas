@@ -3,13 +3,13 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
-import { UserPlus, Users, UserX } from 'lucide-react';
+import { UserPlus, Users, UserX, CalendarX2 } from 'lucide-react';
 import ConfirmModal from '../ui/feedback/ConfirmModal';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import BulkUploadModal from './BulkUploadModal';
 import { getUsuariosAction, deleteUsuarioFisicoAction, getUsuarioInfoByCedulaAction, toggleHabilitadoUsuarioAction, disableUsuariosLoteAction, enableUsuariosLoteAction } from '@/app/actions/usuarios';
-import { getSemestresAction, getCurrentTermAction } from '@/app/actions/estudiantes';
+import { getSemestresAction, getCurrentTermAction, deshabilitarUsuariosSemestreFinalizadoAction } from '@/app/actions/estudiantes';
 import EditUserModal from './EditUserModal';
 import CreateUserModal from './CreateUserModal';
 import DropdownMenu from '@/components/ui/navigation/DropdownMenu';
@@ -56,6 +56,10 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
   const [isBatchEnabling, setIsBatchEnabling] = useState(false);
   const [showBatchEnableConfirm, setShowBatchEnableConfirm] = useState(false);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+
+  // Cerrar semestre (deshabilitar usuarios de semestres finalizados)
+  const [showCerrarSemestreConfirm, setShowCerrarSemestreConfirm] = useState(false);
+  const [isCerrandoSemestre, setIsCerrandoSemestre] = useState(false);
 
   const router = useRouter();
 
@@ -367,6 +371,26 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
     loadUsuarios();
   };
 
+  const handleCerrarSemestre = async () => {
+    setIsCerrandoSemestre(true);
+    try {
+      const result = await deshabilitarUsuariosSemestreFinalizadoAction();
+
+      if (result.success) {
+        const total = (result.data?.estudiantes_deshabilitados || 0) + (result.data?.profesores_deshabilitados || 0);
+        alert(`Semestre cerrado exitosamente.\n\nUsuarios deshabilitados:\n- Estudiantes: ${result.data?.estudiantes_deshabilitados || 0}\n- Profesores: ${result.data?.profesores_deshabilitados || 0}\n\nTotal: ${total}`);
+        loadUsuarios(); // Recargar la lista
+      } else {
+        alert(result.error?.message || 'Error al cerrar el semestre');
+      }
+    } catch (error) {
+      console.error('Error al cerrar semestre:', error);
+      alert('Error inesperado al cerrar el semestre');
+    } finally {
+      setIsCerrandoSemestre(false);
+      setShowCerrarSemestreConfirm(false);
+    }
+  };
   const isMotivoValido = deleteMotivo.trim().length > 0;
 
   const getCurrentUserCedula = (): string => {
@@ -467,15 +491,59 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
                 )}
               </div>
             ) : (
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setIsSelectionMode(true)}
-                className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-white text-gray-700 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors font-medium whitespace-nowrap"
+              <DropdownMenu
+                trigger={(isOpen) => (
+                  <motion.button
+                    type="button"
+                    className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-white text-gray-700 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors font-medium whitespace-nowrap"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <UserX className="w-5 h-5 text-gray-500" />
+                    <span>Gestión en lote</span>
+                    <svg
+                      className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </motion.button>
+                )}
+                align="left"
+                className="relative"
+                menuClassName="bg-white border border-gray-300 rounded-2xl shadow-xl min-w-[220px] overflow-hidden py-2"
               >
-                <UserX className="w-5 h-5 text-gray-500" />
-                <span>Gestión en lote</span>
-              </motion.button>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setIsSelectionMode(true);
+                    }}
+                    className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 cursor-pointer"
+                  >
+                    <Users className="w-5 h-5 text-gray-500" />
+                    <span>Seleccionar usuarios</span>
+                  </button>
+                  <div className="border-t border-gray-200 my-1"></div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setShowCerrarSemestreConfirm(true);
+                    }}
+                    className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-3 cursor-pointer"
+                  >
+                    <CalendarX2 className="w-5 h-5 text-red-500" />
+                    <span>Cerrar Semestre</span>
+                  </button>
+                </div>
+              </DropdownMenu>
             )}
 
             <DropdownMenu
@@ -743,6 +811,24 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         confirmLabel={deleteLoading ? 'Eliminando...' : 'Eliminar'}
         cancelLabel="Cancelar"
         disabled={deleteLoading || !isMotivoValido}
+        confirmVariant="danger"
+      />
+
+      {/* Modal de confirmación para cerrar semestre */}
+      <ConfirmModal
+        isOpen={showCerrarSemestreConfirm}
+        onClose={() => setShowCerrarSemestreConfirm(false)}
+        onConfirm={handleCerrarSemestre}
+        title="Cerrar Semestre"
+        message={
+          <div className="space-y-4">
+            <p>Esta acción deshabilitará las inscripciones de <strong>estudiantes y profesores</strong> de semestres que ya finalizaron.</p>
+            <p className="text-sm text-gray-600">Solo afecta a semestres cuya fecha de fin ya pasó.</p>
+          </div>
+        }
+        confirmLabel={isCerrandoSemestre ? 'Procesando...' : 'Cerrar Semestre'}
+        cancelLabel="Cancelar"
+        disabled={isCerrandoSemestre}
         confirmVariant="danger"
       />
     </>
