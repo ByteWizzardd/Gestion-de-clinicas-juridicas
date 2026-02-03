@@ -52,7 +52,7 @@ export default function CondicionesTrabajoPage() {
   };
 
   const handleDelete = async (item: any, motivo?: string) => {
-    const result = await deleteCondicionTrabajo(item.id_condicion_trabajo, motivo);
+    const result = await deleteCondicionTrabajo(item.id_trabajo, motivo);
     if (result.success) await loadCondiciones();
     else toast.error(result.error === 'HAS_ASSOCIATIONS' ? (result.message || 'No se puede eliminar') : (result.error || 'Error al eliminar'));
   };

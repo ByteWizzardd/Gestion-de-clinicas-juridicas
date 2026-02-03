@@ -129,3 +129,12 @@ GRANT EXECUTE ON FUNCTION eliminar_caso_fisico(INTEGER, VARCHAR, TEXT) TO rol_co
 -- Solo coordinador gestiona usuarios
 GRANT EXECUTE ON FUNCTION eliminar_usuario_fisico(VARCHAR, VARCHAR, TEXT) TO rol_coordinador;
 GRANT EXECUTE ON FUNCTION toggle_habilitado_usuario(VARCHAR, VARCHAR) TO rol_coordinador;
+GRANT EXECUTE ON PROCEDURE update_all_by_cedula(VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO rol_coordinador;
+
+-- Permisos para auditoría de usuarios
+GRANT ALL PRIVILEGES ON auditoria_insercion_usuarios TO rol_coordinador;
+GRANT ALL PRIVILEGES ON auditoria_actualizacion_usuarios TO rol_coordinador;
+GRANT ALL PRIVILEGES ON auditoria_eliminacion_usuario TO rol_coordinador;
+GRANT USAGE, SELECT ON SEQUENCE auditoria_insercion_usuarios_id_seq TO rol_coordinador;
+GRANT USAGE, SELECT ON SEQUENCE auditoria_actualizacion_usuarios_id_seq TO rol_coordinador;
+GRANT USAGE, SELECT ON SEQUENCE auditoria_eliminacion_usuario_id_seq TO rol_coordinador;

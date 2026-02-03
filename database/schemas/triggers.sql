@@ -546,7 +546,38 @@ $function$
 CREATE OR REPLACE FUNCTION public.trigger_auditoria_actualizacion_semestre()
  RETURNS trigger
  LANGUAGE plpgsql
-AS $function$ DECLARE v_usuario VARCHAR(20); BEGIN v_usuario := current_setting('app.usuario_actualiza_catalogo', true); IF OLD.fecha_inicio IS DISTINCT FROM NEW.fecha_inicio OR OLD.fecha_fin IS DISTINCT FROM NEW.fecha_fin OR OLD.habilitado IS DISTINCT FROM NEW.habilitado THEN INSERT INTO auditoria_actualizacion_semestres (term, fecha_inicio_anterior, fecha_inicio_nuevo, fecha_fin_anterior, fecha_fin_nuevo, habilitado_anterior, habilitado_nuevo, id_usuario_actualizo) VALUES (NEW.term, OLD.fecha_inicio, NEW.fecha_inicio, OLD.fecha_fin, NEW.fecha_fin, OLD.habilitado, NEW.habilitado, v_usuario); END IF; RETURN NEW; END; $function$
+AS $function$
+DECLARE 
+    v_usuario VARCHAR(20); 
+BEGIN 
+    BEGIN
+        v_usuario := current_setting('app.usuario_actualiza_catalogo', true);
+    EXCEPTION
+        WHEN OTHERS THEN v_usuario := NULL;
+    END;
+
+    IF OLD.fecha_inicio IS DISTINCT FROM NEW.fecha_inicio OR 
+       OLD.fecha_fin IS DISTINCT FROM NEW.fecha_fin OR 
+       OLD.habilitado IS DISTINCT FROM NEW.habilitado OR
+       OLD.term IS DISTINCT FROM NEW.term THEN 
+       
+       INSERT INTO auditoria_actualizacion_semestres (
+           term, term_anterior, 
+           fecha_inicio_anterior, fecha_inicio_nuevo, 
+           fecha_fin_anterior, fecha_fin_nuevo, 
+           habilitado_anterior, habilitado_nuevo, 
+           id_usuario_actualizo
+       ) VALUES (
+           NEW.term, OLD.term,
+           OLD.fecha_inicio, NEW.fecha_inicio, 
+           OLD.fecha_fin, NEW.fecha_fin, 
+           OLD.habilitado, NEW.habilitado, 
+           v_usuario
+       ); 
+    END IF; 
+    RETURN NEW; 
+END; 
+$function$
 ;
 
 -- Función: trigger_auditoria_actualizacion_solicitante

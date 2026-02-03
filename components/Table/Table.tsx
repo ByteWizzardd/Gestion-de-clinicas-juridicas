@@ -65,7 +65,7 @@ export default function Table<T extends Record<string, unknown>>({
   };
 
   // Manejar selección de todos los elementos de la página actual
-  const allInPageSelected = pageData.length > 0 && pageData.every(row => 
+  const allInPageSelected = pageData.length > 0 && pageData.every(row =>
     selectedIds.includes(String(row[idKey]))
   );
 
@@ -104,8 +104,8 @@ export default function Table<T extends Record<string, unknown>>({
   return (
     <>
       <TableContainer>
-        <TableHeader 
-          title={columns} 
+        <TableHeader
+          title={columns}
           selectable={selectable}
           onSelectAll={handleSelectAll}
           allSelected={allInPageSelected}
@@ -130,8 +130,8 @@ export default function Table<T extends Record<string, unknown>>({
               />
             ))
           ) : (
-            <tr>
-              <td colSpan={columns.length + (selectable ? 2 : 1)} className="text-center py-8 text-gray-500">
+            <tr className="border-none flex items-center justify-center w-full">
+              <td className="text-center py-8 text-gray-500 w-full">
                 No se encontraron casos que coincidan con los filtros
               </td>
             </tr>

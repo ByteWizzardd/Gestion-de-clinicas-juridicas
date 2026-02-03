@@ -232,6 +232,10 @@ CREATE TABLE auditoria_actualizacion_caracteristicas (
     num_caracteristica INTEGER NOT NULL,
     descripcion_anterior VARCHAR(200),
     descripcion_nuevo VARCHAR(200),
+    id_tipo_caracteristica_anterior INTEGER,
+    id_tipo_caracteristica_nuevo INTEGER,
+    num_caracteristica_anterior INTEGER,
+    num_caracteristica_nuevo INTEGER,
     habilitado_anterior BOOLEAN,
     habilitado_nuevo BOOLEAN,
     id_usuario_actualizo VARCHAR(20),
@@ -313,6 +317,7 @@ CREATE TABLE auditoria_insercion_semestres (
 CREATE TABLE auditoria_actualizacion_semestres (
     id SERIAL PRIMARY KEY,
     term VARCHAR(20) NOT NULL,
+    term_anterior VARCHAR(20),
     fecha_inicio_anterior DATE,
     fecha_inicio_nuevo DATE,
     fecha_fin_anterior DATE,
@@ -369,7 +374,7 @@ CREATE TABLE auditoria_insercion_usuarios (
 -- 8.2) AUDITORÍA DE ACTUALIZACIÓN DE USUARIOS
 CREATE TABLE auditoria_actualizacion_usuarios (
     id SERIAL PRIMARY KEY,
-    ci_usuario VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    ci_usuario VARCHAR(20) NOT NULL,
     -- Valores anteriores (antes de la actualización)
     nombres_anterior VARCHAR(100),
     apellidos_anterior VARCHAR(100),
@@ -391,7 +396,7 @@ CREATE TABLE auditoria_actualizacion_usuarios (
     tipo_estudiante_nuevo VARCHAR(50),
     tipo_profesor_nuevo VARCHAR(20),
     -- Información de auditoría
-    id_usuario_actualizo VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    id_usuario_actualizo VARCHAR(20) NOT NULL,
     fecha_actualizacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
 );
 
@@ -441,6 +446,8 @@ CREATE TABLE auditoria_actualizacion_municipios (
     nombre_municipio_nuevo VARCHAR(100),
     habilitado_anterior BOOLEAN,
     habilitado_nuevo BOOLEAN,
+    id_estado_anterior INTEGER,
+    num_municipio_anterior INTEGER,
     id_usuario_actualizo VARCHAR(20),
     fecha_actualizacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
 );
@@ -879,6 +886,8 @@ CREATE TABLE auditoria_actualizacion_categorias (
     nombre_categoria_nuevo VARCHAR(100),
     id_materia_anterior INTEGER,
     id_materia_nuevo INTEGER,
+    num_categoria_anterior INTEGER,
+    num_categoria_nuevo INTEGER,
     habilitado_anterior BOOLEAN,
     habilitado_nuevo BOOLEAN,
     id_usuario_actualizo VARCHAR(20),
@@ -931,6 +940,8 @@ CREATE TABLE auditoria_actualizacion_subcategorias (
     id_materia_nuevo INTEGER,
     num_categoria_anterior INTEGER,
     num_categoria_nuevo INTEGER,
+    num_subcategoria_anterior INTEGER,
+    num_subcategoria_nuevo INTEGER,
     habilitado_anterior BOOLEAN,
     habilitado_nuevo BOOLEAN,
     id_usuario_actualizo VARCHAR(20),
@@ -990,6 +1001,8 @@ CREATE TABLE auditoria_actualizacion_ambitos_legales (
     num_categoria_nuevo INTEGER,
     num_subcategoria_anterior INTEGER,
     num_subcategoria_nuevo INTEGER,
+    num_ambito_legal_anterior INTEGER,
+    num_ambito_legal_nuevo INTEGER,
     habilitado_anterior BOOLEAN,
     habilitado_nuevo BOOLEAN,
     id_usuario_actualizo VARCHAR(20),
@@ -1417,8 +1430,8 @@ CREATE TABLE auditoria_eliminacion_soportes (
     descripcion TEXT,
     fecha_consignacion DATE NOT NULL,
     tamano_bytes INTEGER, -- Tamaño del archivo en bytes (sin guardar el archivo)
-    id_usuario_subio VARCHAR(20) REFERENCES usuarios(cedula),
-    id_usuario_elimino VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    id_usuario_subio VARCHAR(20),
+    id_usuario_elimino VARCHAR(20) NOT NULL,
     motivo TEXT, -- Motivo de la eliminación
     fecha_eliminacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
 );
@@ -1429,7 +1442,7 @@ CREATE TABLE auditoria_descarga_soportes (
     num_soporte INTEGER NOT NULL,
     id_caso INTEGER NOT NULL,
     nombre_archivo VARCHAR(150) NOT NULL,
-    cedula_descargo VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    cedula_descargo VARCHAR(20) NOT NULL,
     ip_direccion VARCHAR(45), -- Soporta IPv4 e IPv6
     fecha_descarga TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
 );
@@ -1564,8 +1577,7 @@ CREATE TABLE auditoria_sesiones (
     dispositivo TEXT,
     exitoso BOOLEAN DEFAULT TRUE,
     fecha_inicio TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas'),
-    fecha_cierre TIMESTAMP,
-    FOREIGN KEY (cedula_usuario) REFERENCES usuarios(cedula) ON DELETE SET NULL
+    fecha_cierre TIMESTAMP
 );
 
 

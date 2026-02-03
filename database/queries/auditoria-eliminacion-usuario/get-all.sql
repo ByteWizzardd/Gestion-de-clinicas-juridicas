@@ -20,15 +20,15 @@ SELECT
         ELSE NULL
     END AS nombre_completo_usuario_eliminado,
     a.eliminado_por,
-    u_elimino.nombres AS nombres_eliminado_por,
-    u_elimino.apellidos AS apellidos_eliminado_por,
+    COALESCE(u_elimino.nombres, au_actor.nombres) AS nombres_eliminado_por,
+    COALESCE(u_elimino.apellidos, au_actor.apellidos) AS apellidos_eliminado_por,
     CASE 
-        WHEN u_elimino.nombres IS NOT NULL AND u_elimino.apellidos IS NOT NULL 
-        THEN u_elimino.nombres || ' ' || u_elimino.apellidos
-        WHEN u_elimino.nombres IS NOT NULL 
-        THEN u_elimino.nombres
-        WHEN u_elimino.apellidos IS NOT NULL 
-        THEN u_elimino.apellidos
+        WHEN COALESCE(u_elimino.nombres, au_actor.nombres) IS NOT NULL AND COALESCE(u_elimino.apellidos, au_actor.apellidos) IS NOT NULL 
+        THEN COALESCE(u_elimino.nombres, au_actor.nombres) || ' ' || COALESCE(u_elimino.apellidos, au_actor.apellidos)
+        WHEN COALESCE(u_elimino.nombres, au_actor.nombres) IS NOT NULL 
+        THEN COALESCE(u_elimino.nombres, au_actor.nombres)
+        WHEN COALESCE(u_elimino.apellidos, au_actor.apellidos) IS NOT NULL 
+        THEN COALESCE(u_elimino.apellidos, au_actor.apellidos)
         ELSE NULL
     END AS nombre_completo_eliminado_por,
     u_elimino.foto_perfil AS foto_perfil_eliminado_por,
@@ -36,6 +36,11 @@ SELECT
     to_char(a.fecha, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha
 FROM auditoria_eliminacion_usuario a
 LEFT JOIN usuarios u_elimino ON TRIM(a.eliminado_por) = TRIM(u_elimino.cedula)
+LEFT JOIN (
+    SELECT DISTINCT ON (cedula) cedula, nombres, apellidos
+    FROM public.auditoria_insercion_usuarios
+    ORDER BY cedula, fecha_creacion DESC
+) au_actor ON TRIM(a.eliminado_por) = TRIM(au_actor.cedula)
 WHERE 
     ($1::DATE IS NULL OR a.fecha::DATE >= $1)
     AND ($2::DATE IS NULL OR a.fecha::DATE <= $2)

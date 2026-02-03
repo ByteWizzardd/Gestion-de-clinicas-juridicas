@@ -29,17 +29,17 @@ export const UpdateUserSchema = z.object({
     if (!val || val.trim() === '' || val.trim() === '+58') {
       return true;
     }
-    
+
     // Extraer código de país y número
     const codeMatch = val.match(/^(\+\d{1,3})/);
     const code = codeMatch ? codeMatch[1] : '';
-    const number = val.replace(code, '').trim();
-    
+    const number = val.replace(code, '').replace(/^-/, '').trim();
+
     // Si solo tiene el código sin número, es válido (se enviará como null)
     if (number === '') {
       return true;
     }
-    
+
     // Para números venezolanos (+58), el número debe tener 10 dígitos y empezar con 4
     if (code === '+58') {
       if (number.length !== 10 || !number.startsWith('4')) {
@@ -51,7 +51,7 @@ export const UpdateUserSchema = z.object({
         return false;
       }
     }
-    
+
     return true;
   }, {
     message: 'Número de teléfono inválido. Para Venezuela (+58) debe tener 10 dígitos y empezar con 4 (ej: 412...). Para otros países, entre 7 y 15 dígitos.'

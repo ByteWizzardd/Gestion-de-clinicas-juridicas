@@ -2,6 +2,7 @@
 SELECT 
     a.id,
     a.term,
+    a.term_anterior,
     to_char(a.fecha_inicio_anterior, 'YYYY-MM-DD') as fecha_inicio_anterior,
     to_char(a.fecha_inicio_nuevo, 'YYYY-MM-DD') as fecha_inicio_nuevo,
     to_char(a.fecha_fin_anterior, 'YYYY-MM-DD') as fecha_fin_anterior,

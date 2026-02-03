@@ -48,7 +48,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
   const [loading, setLoading] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  
+
   // Selección por lotes
   const [selectedCedulas, setSelectedCedulas] = useState<string[]>([]);
   const [isBatchDisabling, setIsBatchDisabling] = useState(false);
@@ -92,8 +92,8 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
 
     const checkBodyOverflow = () => {
       if (document.body.style.overflow === 'hidden') {
-        const modal = document.querySelector('[role="dialog"]') || 
-                      document.querySelector('[aria-modal="true"]');
+        const modal = document.querySelector('[role="dialog"]') ||
+          document.querySelector('[aria-modal="true"]');
         if (modal) {
           setIsDropdownOpen(false);
         }
@@ -117,11 +117,11 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setPrefersReducedMotion(mediaQuery.matches);
-    
+
     const handleChange = (e: MediaQueryListEvent) => {
       setPrefersReducedMotion(e.matches);
     };
-    
+
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
@@ -163,7 +163,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
       setLoading(false);
     }
   };
-  
+
   const handleDelete = (data: Record<string, unknown>) => {
     const usuario = data as Usuario;
     setItemToDelete(usuario);
@@ -205,20 +205,20 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
 
     return usuarios.filter((usuario) => {
       const normalizedSearch = normalizeText(searchValue);
-      const matchesSearch = 
+      const matchesSearch =
         !searchValue ||
         usuario.cedula.includes(searchValue) ||
         normalizeText((usuario.nombres || '') + ' ' + (usuario.apellidos || '')).includes(normalizedSearch) ||
         normalizeText(usuario.nombre_usuario || '').includes(normalizedSearch);
 
       const matchesTipo = !tipoFilter || usuario.tipo_usuario === tipoFilter;
-      
-      const matchesEstado = !estadoFilter || 
+
+      const matchesEstado = !estadoFilter ||
         (estadoFilter === 'Habilitado' && usuario.habilitado_sistema) ||
         (estadoFilter === 'Deshabilitado' && !usuario.habilitado_sistema);
 
       // Filtrar por semestre: buscar en info_estudiante, info_profesor o info_coordinador
-      const matchesSemestre = !semestreFilter || 
+      const matchesSemestre = !semestreFilter ||
         ((usuario as any).info_estudiante && (usuario as any).info_estudiante.includes(semestreFilter)) ||
         ((usuario as any).info_profesor && (usuario as any).info_profesor.includes(semestreFilter)) ||
         ((usuario as any).info_coordinador && (usuario as any).info_coordinador.includes(semestreFilter));
@@ -264,6 +264,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         ...usuario,
         correo_electronico: result.data.correo_electronico,
         telefono: result.data.telefono_celular,
+        nombre_usuario: result.data.nombre_usuario || usuario.nombre_usuario || '',
         term:
           result.data.estudiante?.term ||
           result.data.profesor?.term ||
@@ -304,16 +305,16 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
 
   const handleBatchDisable = async () => {
     if (selectedCedulas.length === 0) return;
-    
+
     setIsBatchDisabling(true);
     try {
       const result = await disableUsuariosLoteAction(selectedCedulas);
-      
+
       if (result.success) {
         // Actualizar lista local
-        setUsuarios(prev => prev.map(u => 
-          selectedCedulas.includes(u.cedula) 
-            ? { ...u, habilitado_sistema: false } 
+        setUsuarios(prev => prev.map(u =>
+          selectedCedulas.includes(u.cedula)
+            ? { ...u, habilitado_sistema: false }
             : u
         ));
         setSelectedCedulas([]);
@@ -332,16 +333,16 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
 
   const handleBatchEnable = async () => {
     if (selectedCedulas.length === 0) return;
-    
+
     setIsBatchEnabling(true);
     try {
       const result = await enableUsuariosLoteAction(selectedCedulas);
-      
+
       if (result.success) {
         // Actualizar lista local
-        setUsuarios(prev => prev.map(u => 
-          selectedCedulas.includes(u.cedula) 
-            ? { ...u, habilitado_sistema: true } 
+        setUsuarios(prev => prev.map(u =>
+          selectedCedulas.includes(u.cedula)
+            ? { ...u, habilitado_sistema: true }
             : u
         ));
         setSelectedCedulas([]);
@@ -365,7 +366,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
   const handleCreateUserSuccess = () => {
     loadUsuarios();
   };
-  
+
   const isMotivoValido = deleteMotivo.trim().length > 0;
 
   const getCurrentUserCedula = (): string => {
@@ -379,7 +380,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
 
   return (
     <>
-      <motion.div 
+      <motion.div
         className="mb-4 md:mb-6 mt-4"
         initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -390,7 +391,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
           Administración de usuarios del sistema: estudiantes, profesores y coordinadores
         </p>
       </motion.div>
-      
+
       <motion.div
         initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -398,7 +399,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
       >
         <div className="flex flex-col md:flex-row md:items-center gap-3 sm:gap-4 w-full px-3">
           <div className="flex-1 min-w-0">
-            <CaseTools 
+            <CaseTools
               searchValue={searchValue}
               onSearchChange={setSearchValue}
               searchPlaceholder="Buscar usuario..."
@@ -489,11 +490,11 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                   </svg>
                   <span>Registrar Usuario</span>
-                  <svg 
-                    className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2.5" 
+                  <svg
+                    className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
                     viewBox="0 0 24 24"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -541,7 +542,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
           </div>
         </div>
       </motion.div>
-      
+
       <div className="mt-10"></div>
 
       {loading ? (

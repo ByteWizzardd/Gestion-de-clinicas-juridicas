@@ -4239,6 +4239,20 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
               {/* Campos específicos para semestres */}
               {type === 'semestre-actualizado' && (
                 <>
+                  {r.term_anterior && r.term_anterior !== r.term && (
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-600">
+                        TERM:{' '}
+                        <span className="line-through text-red-500">
+                          {r.term_anterior}
+                        </span>
+                        {' → '}
+                        <span className="text-green-600">
+                          {r.term}
+                        </span>
+                      </p>
+                    </div>
+                  )}
                   {!areDatesEqual(r.fecha_inicio_anterior, r.fecha_inicio_nuevo) && (
                     <div className="mb-2">
                       <p className="text-sm text-gray-600">

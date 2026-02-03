@@ -54,9 +54,12 @@ export async function createSemestre(data: { term: string; fecha_inicio: string;
         await client.query('COMMIT');
         revalidatePath('/dashboard/administration/semestres');
         return { success: true, data: result.rows[0] };
-    } catch (error) {
+    } catch (error: any) {
         await client.query('ROLLBACK');
         console.error('Error creating semestre:', error);
+        if (error.code === '23505') {
+            return { success: false, error: 'Este semestre ya existe' };
+        }
         const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
         return { success: false, error: `Error al crear semestre: ${errorMessage}` };
     } finally {
@@ -64,9 +67,15 @@ export async function createSemestre(data: { term: string; fecha_inicio: string;
     }
 }
 
-export async function updateSemestre(term: string, data: { fecha_inicio: string; fecha_fin: string }) {
+export async function updateSemestre(term: string, data: { fecha_inicio: string; fecha_fin: string; new_term?: string }) {
     const client = await pool.connect();
     try {
+        if (data.new_term && data.new_term !== term) {
+            if (!/^\d{4}-(15|25)$/.test(data.new_term)) {
+                return { success: false, error: 'El formato del semestre debe ser YYYY-15 o YYYY-25' };
+            }
+        }
+
         await client.query('BEGIN');
 
         const authResult = await requireAuthInServerActionWithCode();
@@ -77,9 +86,11 @@ export async function updateSemestre(term: string, data: { fecha_inicio: string;
 
         await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
 
+        const targetTerm = data.new_term || term;
+
         const result = await client.query(
-            'UPDATE semestres SET fecha_inicio = $2, fecha_fin = $3 WHERE term = $1 RETURNING *',
-            [term, data.fecha_inicio, data.fecha_fin]
+            'UPDATE semestres SET fecha_inicio = $2, fecha_fin = $3, term = $4 WHERE term = $1 RETURNING *',
+            [term, data.fecha_inicio, data.fecha_fin, targetTerm]
         );
         if (result.rows.length === 0) {
             await client.query('ROLLBACK');
@@ -89,9 +100,17 @@ export async function updateSemestre(term: string, data: { fecha_inicio: string;
         await client.query('COMMIT');
         revalidatePath('/dashboard/administration/semestres');
         return { success: true, data: result.rows[0] };
-    } catch (error) {
+    } catch (error: any) {
         await client.query('ROLLBACK');
         console.error('Error updating semestre:', error);
+
+        if (error.code === '23505') {
+            return { success: false, error: 'Este semestre ya existe' };
+        }
+        if (error.code === '23503') {
+            return { success: false, error: 'No se puede cambiar el nombre del semestre porque tiene registros asociados' };
+        }
+
         return { success: false, error: 'Error al actualizar semestre' };
     } finally {
         client.release();

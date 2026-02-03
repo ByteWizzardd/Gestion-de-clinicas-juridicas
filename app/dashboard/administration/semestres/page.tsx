@@ -52,7 +52,11 @@ export default function SemestresPage() {
 
   const handleUpdate = async (data: Record<string, string>) => {
     if (!editingItem) return;
-    const result = await updateSemestre(editingItem.term, { fecha_inicio: data.fecha_inicio, fecha_fin: data.fecha_fin });
+    const result = await updateSemestre(editingItem.term, {
+      fecha_inicio: data.fecha_inicio,
+      fecha_fin: data.fecha_fin,
+      new_term: data.term
+    });
     if (result.success) {
       setIsModalOpen(false);
       setIsEditMode(false);
@@ -117,7 +121,7 @@ export default function SemestresPage() {
           {
             name: 'term',
             label: 'TERM (ej: 2026-15)',
-            required: !isEditMode,
+            required: true,
             defaultValue: isEditMode ? editingItem?.term : undefined,
             validate: (value: string, formData: Record<string, string>) => {
               if (!/^\d{4}-(15|25)$/.test(value)) return 'Formato inválido. Use YYYY-15 o YYYY-25';
@@ -136,11 +140,21 @@ export default function SemestresPage() {
             type: 'date',
             required: true,
             defaultValue: isEditMode ? editingItem?.fecha_inicio : undefined,
-            validate: (value: string, formData: Record<string, string>) => {
+            validate: (value: string | Date, formData: Record<string, string>) => {
+              if (!value) return undefined;
+              // Ensure value is treated as string for validation
+              const strValue = value instanceof Date
+                ? value.toISOString().split('T')[0]
+                : String(value);
+
               if (formData.term && /^\d{4}-(15|25)$/.test(formData.term)) {
                 const termYear = formData.term.substring(0, 4);
-                const startYear = value.split('-')[0];
-                if (startYear !== termYear) return `El año de inicio (${startYear}) debe coincidir con el término (${termYear})`;
+                // Extract year safely
+                const startYear = strValue.includes('-') ? strValue.split('-')[0] : '';
+
+                if (startYear && startYear !== termYear) {
+                  return `El año de inicio (${startYear}) debe coincidir con el término (${termYear})`;
+                }
               }
               return undefined;
             }
@@ -166,8 +180,8 @@ export default function SemestresPage() {
         title="Detalles del Semestre"
         fields={[
           { label: "Semestre (TERM)", value: viewItem?.term, icon: Hash, fullWidth: true },
-          { label: "Fecha de Inicio", value: viewItem?.fecha_inicio, icon: Calendar },
-          { label: "Fecha de Fin", value: viewItem?.fecha_fin, icon: Calendar },
+          { label: "Fecha de Inicio", value: viewItem?.fecha_inicio ? new Date(viewItem.fecha_inicio).toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '', icon: Calendar },
+          { label: "Fecha de Fin", value: viewItem?.fecha_fin ? new Date(viewItem.fecha_fin).toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '', icon: Calendar },
           { label: "Habilitado", value: viewItem?.habilitado, icon: CheckCircle2 }
         ]}
       />

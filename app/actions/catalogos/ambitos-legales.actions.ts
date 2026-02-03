@@ -133,9 +133,22 @@ export async function updateAmbitoLegal(
                         id_materia, num_categoria, num_subcategoria, num_ambito_legal]
                 );
 
+                // Get the destination hierarchy names for the audit reason
+                const destHierarchy = await client.query(
+                    `SELECT m.nombre_materia, c.nombre_categoria, s.nombre_subcategoria
+                     FROM materias m
+                     LEFT JOIN categorias c ON c.id_materia = $1 AND c.num_categoria = $2
+                     LEFT JOIN subcategorias s ON s.id_materia = $1 AND s.num_categoria = $2 AND s.num_subcategoria = $3
+                     WHERE m.id_materia = $1`,
+                    [target_id_materia, target_num_categoria, target_num_subcategoria]
+                );
+                const nombreMateria = destHierarchy.rows[0]?.nombre_materia || `Materia ID: ${target_id_materia}`;
+                const nombreCategoria = destHierarchy.rows[0]?.nombre_categoria || `Categoría #${target_num_categoria}`;
+                const nombreSubcategoria = destHierarchy.rows[0]?.nombre_subcategoria || `Subcategoría #${target_num_subcategoria}`;
+
                 // 4. Delete old record (set session variables for audit trigger)
                 await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
-                await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", ['Movido a nueva jerarquía']);
+                await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [`Movido a: ${nombreMateria} > ${nombreCategoria} > ${nombreSubcategoria}`]);
                 await client.query(
                     'DELETE FROM ambitos_legales WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3 AND num_ambito_legal = $4',
                     [id_materia, num_categoria, num_subcategoria, num_ambito_legal]

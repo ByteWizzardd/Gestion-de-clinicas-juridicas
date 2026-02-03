@@ -101,7 +101,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
       const telefonoTrimmed = form.telefono.trim();
       const codeMatch = telefonoTrimmed.match(/^(\+\d{1,3})/);
       const code = codeMatch ? codeMatch[1] : '';
-      const number = telefonoTrimmed.replace(code, '').trim();
+      const number = telefonoTrimmed.replace(code, '').replace(/^-/, '').trim();
 
       // Si solo tiene el código sin número, es válido (se enviará como null)
       if (number !== '') {
@@ -273,7 +273,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
               <Input
                 label="Nombre de usuario"
                 name="nombre_usuario"
-                value={form.nombre_usuario as string}
+                value={(form.nombre_usuario as string) || ''}
                 onChange={handleChange}
                 error={errors.nombre_usuario}
               />

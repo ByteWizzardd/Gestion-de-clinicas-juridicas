@@ -54,7 +54,7 @@ export async function createParroquia(data: { id_estado: string; id_municipio: s
     }
 }
 
-export async function updateParroquia(id_estado: number, num_municipio: number, num_parroquia: number, data: { 
+export async function updateParroquia(id_estado: number, num_municipio: number, num_parroquia: number, data: {
     nombre_parroquia?: string;
     id_estado?: string;
     id_municipio?: string;
@@ -69,44 +69,109 @@ export async function updateParroquia(id_estado: number, num_municipio: number, 
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+        const target_id_estado = data.id_estado ? parseInt(data.id_estado) : id_estado;
+        const target_num_municipio = data.id_municipio ? parseInt(data.id_municipio) : num_municipio;
+        const nombre_parroquia = data.nombre_parroquia;
 
-        // Construir la query dinámicamente basada en los campos proporcionados
-        const updates: string[] = [];
-        const values: any[] = [];
-        let paramIndex = 1;
+        // Check if hierarchy changed
+        const hierarchyChanged = (
+            target_id_estado !== id_estado ||
+            target_num_municipio !== num_municipio
+        );
 
-        if (data.nombre_parroquia !== undefined) {
-            updates.push(`nombre_parroquia = $${paramIndex++}`);
-            values.push(data.nombre_parroquia);
-        }
-        if (data.id_estado !== undefined) {
-            updates.push(`id_estado = $${paramIndex++}`);
-            values.push(parseInt(data.id_estado));
-        }
-        if (data.id_municipio !== undefined) {
-            updates.push(`num_municipio = $${paramIndex++}`);
-            values.push(parseInt(data.id_municipio));
-        }
+        if (!hierarchyChanged) {
+            // Simple update (just name) - triggers update audit
+            if (!nombre_parroquia) {
+                await client.query('ROLLBACK');
+                return { success: false, error: 'No se proporcionaron campos para actualizar' };
+            }
 
-        if (updates.length === 0) {
-            await client.query('ROLLBACK');
-            return { success: false, error: 'No se proporcionaron campos para actualizar' };
-        }
+            await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
 
-        // Usar los valores antiguos para encontrar la parroquia
-        values.push(id_estado, num_municipio, num_parroquia);
-        const query = `UPDATE parroquias SET ${updates.join(', ')} WHERE id_estado = $${paramIndex} AND num_municipio = $${paramIndex + 1} AND num_parroquia = $${paramIndex + 2} RETURNING *`;
-        
-        const result = await client.query(query, values);
-        if (result.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return { success: false, error: 'Parroquia no encontrada' };
-        }
+            const result = await client.query(
+                'UPDATE parroquias SET nombre_parroquia = $4 WHERE id_estado = $1 AND num_municipio = $2 AND num_parroquia = $3 RETURNING *',
+                [id_estado, num_municipio, num_parroquia, nombre_parroquia]
+            );
+            if (result.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return { success: false, error: 'Parroquia no encontrada' };
+            }
 
-        await client.query('COMMIT');
-        revalidatePath('/dashboard/administration/parroquias');
-        return { success: true, data: result.rows[0] };
+            await client.query('COMMIT');
+            revalidatePath('/dashboard/administration/parroquias');
+            return { success: true, data: result.rows[0] };
+        } else {
+            // Moving to a different state/municipio: Delete from old + Insert into new
+
+            // Check for associations that would prevent the move
+            const checkResult = await client.query(
+                `SELECT EXISTS (
+                    SELECT 1 FROM nucleos WHERE id_estado = $1 AND num_municipio = $2 AND num_parroquia = $3
+                    UNION
+                    SELECT 1 FROM solicitantes WHERE id_estado = $1 AND num_municipio = $2 AND num_parroquia = $3
+                ) AS has_associations`,
+                [id_estado, num_municipio, num_parroquia]
+            );
+            if (checkResult.rows[0]?.has_associations === true) {
+                await client.query('ROLLBACK');
+                return {
+                    success: false,
+                    error: 'HAS_ASSOCIATIONS',
+                    message: 'No se puede mover la parroquia porque tiene núcleos o solicitantes asociados.'
+                };
+            }
+
+            // Get the original record data before deletion
+            const originalRecord = await client.query(
+                'SELECT * FROM parroquias WHERE id_estado = $1 AND num_municipio = $2 AND num_parroquia = $3',
+                [id_estado, num_municipio, num_parroquia]
+            );
+            if (originalRecord.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return { success: false, error: 'Parroquia no encontrada' };
+            }
+
+            const finalNombre = nombre_parroquia || originalRecord.rows[0].nombre_parroquia;
+
+            // Get the destination state and municipio names for the audit reason
+            const destLocation = await client.query(
+                `SELECT e.nombre_estado, m.nombre_municipio 
+                 FROM estados e 
+                 LEFT JOIN municipios m ON m.id_estado = $1 AND m.num_municipio = $2
+                 WHERE e.id_estado = $1`,
+                [target_id_estado, target_num_municipio]
+            );
+            const nombreEstado = destLocation.rows[0]?.nombre_estado || `Estado ID: ${target_id_estado}`;
+            const nombreMunicipio = destLocation.rows[0]?.nombre_municipio || `Municipio #${target_num_municipio}`;
+
+            // 1. Delete from original location (triggers deletion audit)
+            await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
+            await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [`Movido a: ${nombreEstado} - ${nombreMunicipio}`]);
+
+            await client.query(
+                'DELETE FROM parroquias WHERE id_estado = $1 AND num_municipio = $2 AND num_parroquia = $3',
+                [id_estado, num_municipio, num_parroquia]
+            );
+
+            // 2. Get next num_parroquia for the new location
+            const maxResult = await client.query(
+                'SELECT COALESCE(MAX(num_parroquia), 0) + 1 as next_num FROM parroquias WHERE id_estado = $1 AND num_municipio = $2',
+                [target_id_estado, target_num_municipio]
+            );
+            const nextNum = maxResult.rows[0].next_num;
+
+            // 3. Insert into new location (triggers insertion audit)
+            await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+
+            const result = await client.query(
+                'INSERT INTO parroquias (id_estado, num_municipio, num_parroquia, nombre_parroquia, habilitado) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+                [target_id_estado, target_num_municipio, nextNum, finalNombre, originalRecord.rows[0].habilitado]
+            );
+
+            await client.query('COMMIT');
+            revalidatePath('/dashboard/administration/parroquias');
+            return { success: true, data: result.rows[0] };
+        }
     } catch (error) {
         await client.query('ROLLBACK');
         console.error('Error updating parroquia:', error);

@@ -89,9 +89,16 @@ export async function updateCategoria(
                 );
                 const newCategory = insertResult.rows[0];
 
+                // Get target materia name for audit reason
+                const targetMateriaResult = await client.query(
+                    'SELECT nombre_materia FROM materias WHERE id_materia = $1',
+                    [target_id_materia]
+                );
+                const nombreMateriaDestino = targetMateriaResult.rows[0]?.nombre_materia || `Materia ID: ${target_id_materia}`;
+
                 // Set session variables for deletions
                 await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
-                await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", ['Movido a nueva jerarquía']);
+                await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [`Movido a: ${nombreMateriaDestino}`]);
 
                 // 3. Move Subcategories
                 const subcategorias = await client.query(
