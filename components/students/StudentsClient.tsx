@@ -228,14 +228,24 @@ export default function StudentsClient({ initialEstudiantes = [] }: StudentsClie
                     transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
                 >
                     <Table
-                        data={filteredUsuarios.map((u) => ({
-                            cedula: u.cedula,
-                            nombre_completo: `${u.nombres || ''} ${u.apellidos || ''}`.trim(),
-                            nombre_usuario: u.nombre_usuario,
-                            info_estudiante: u.info_estudiante || 'Sin información',
-                            estado: u.habilitado_sistema ? 'Habilitado' : 'Deshabilitado',
-                        }))}
-                        columns={["Cédula", "Nombre Completo", "Usuario", "Tipo", "Estado"]}
+                        data={filteredUsuarios.map((u) => {
+                            // Extraer el semestre más reciente de info_estudiante (formato: "2024-52 - Tipo (NRC: xxx)")
+                            let semestreActual = 'Sin semestre';
+                            if (u.info_estudiante) {
+                                const match = u.info_estudiante.match(/^(\d{4}-\d{2})/);
+                                if (match) {
+                                    semestreActual = match[1];
+                                }
+                            }
+                            return {
+                                cedula: u.cedula,
+                                nombre_completo: `${u.nombres || ''} ${u.apellidos || ''}`.trim(),
+                                info_estudiante: u.info_estudiante || 'Sin información',
+                                semestre: semestreActual,
+                                estado: u.habilitado_sistema ? 'Habilitado' : 'Deshabilitado',
+                            };
+                        })}
+                        columns={["Cédula", "Nombre Completo", "Tipo", "Semestre", "Estado"]}
                         onView={handleView}
                         idKey="cedula"
                     />

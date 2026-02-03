@@ -1013,6 +1013,7 @@ CREATE TABLE auditoria_eliminacion_ambitos_legales (
 CREATE TABLE coordinadores (
     id_coordinador VARCHAR(20) PRIMARY KEY,
     term VARCHAR(20) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     FOREIGN KEY (term) REFERENCES semestres(term),
     FOREIGN KEY (id_coordinador) REFERENCES usuarios(cedula)
 );
@@ -1023,6 +1024,7 @@ CREATE TABLE estudiantes (
     cedula_estudiante VARCHAR(20) NOT NULL,
     tipo_estudiante VARCHAR(50) NOT NULL CHECK (tipo_estudiante IN ('Voluntario', 'Inscrito', 'Egresado', 'Servicio Comunitario')),
     nrc VARCHAR(20) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (term, cedula_estudiante),
     FOREIGN KEY (term) REFERENCES semestres(term),
     FOREIGN KEY (cedula_estudiante) REFERENCES usuarios(cedula)
@@ -1044,6 +1046,7 @@ CREATE TABLE profesores (
     term VARCHAR(20) NOT NULL,
     cedula_profesor VARCHAR(20) NOT NULL,
     tipo_profesor VARCHAR(50) NOT NULL CHECK (tipo_profesor IN ('Voluntario', 'Asesor')),
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (term, cedula_profesor),
     FOREIGN KEY (term) REFERENCES semestres(term),
     FOREIGN KEY (cedula_profesor) REFERENCES usuarios(cedula)
