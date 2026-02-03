@@ -78,8 +78,9 @@ export const casosService = {
      * Valida los datos y verifica que el solicitante exista
      * @param data Datos del caso a crear (incluye cedula del solicitante)
      * @param cedulaUsuario Cédula del usuario (estudiante/profesor) que registra el caso
+     * @param client Cliente de base de datos opcional para transacción
      */
-    createCaso: async (data: unknown, cedulaUsuario: string) => {
+    createCaso: async (data: unknown, cedulaUsuario: string, client?: import('pg').PoolClient) => {
         try {
             // Validar datos con Zod
             const validatedData = CreateCasoSchema.parse(data) as CreateCasoInput;
@@ -142,7 +143,7 @@ export const casosService = {
             };
 
             // Crear el caso - el trigger automáticamente creará el cambio_estatus inicial
-            const nuevoCaso = await casosQueries.create(casoData);
+            const nuevoCaso = await casosQueries.create(casoData, client);
 
             // El cambio de estatus se crea automáticamente mediante el trigger
             // con estatus 'Asesoría' y motivo 'Registro del caso'
@@ -182,8 +183,9 @@ export const casosService = {
      * @param idCaso ID del caso a actualizar
      * @param data Datos a actualizar
      * @param cedulaUsuario Cédula del usuario que realiza la actualización
+     * @param externalClient Cliente de base de datos opcional para transacción externa
      */
-    updateCaso: async (idCaso: number, data: unknown, cedulaUsuario: string) => {
+    updateCaso: async (idCaso: number, data: unknown, cedulaUsuario: string, externalClient?: import('pg').PoolClient) => {
         try {
             const { UpdateCasoSchema } = await import('@/lib/validations/casos.schema');
             const validatedData = UpdateCasoSchema.parse({ ...(data as any), id_caso: idCaso });
@@ -245,8 +247,8 @@ export const casosService = {
                 fecha_solicitud: validatedData.fecha_solicitud,
             };
 
-            // Realizar actualización
-            return await withTransaction(async (client) => {
+            // Lógica de actualización (abstraída para reutilizar)
+            const performUpdate = async (client: import('pg').PoolClient) => {
                 // Establecer variable de sesión para auditoría
                 // Validar cédula
                 if (!/^[A-Za-z0-9.\-]+$/.test(cedulaUsuario)) {
@@ -257,25 +259,34 @@ export const casosService = {
                 // Ejecutar SET LOCAL y UPDATE en la misma transacción y cliente
                 await client.query(`SET LOCAL app.usuario_actualiza_caso = '${cedulaEscapada}'`);
 
-                // (Opcional/Debug) Verificar que se estableció correctamente
-                // const check = await client.query("SELECT current_setting('app.usuario_actualiza_caso', true)");
-                // console.log('DEBUG: app.usuario_actualiza_caso establecido a:', check.rows[0].current_setting);
+                // Usar casosQueries.update que ahora acepta client
+                // Nota: antes se usaba client.query directo aquí con loadSQL, ahora delegamos en casosQueries.update
+                // pero casosQueries.update espera los datos ya procesados.
+                // Como casosQueries.update ya está adaptado y hace loadSQL, lo llamamos directamente.
+                // Sin embargo, el código original hacía la query inline aquí.
+                // Para mantener la lógica exacta (y aprovechar que ya edité casosQueries.update), lo invoco.
 
-                const updateQuery = loadSQL('casos/update.sql');
-                const result = await client.query(updateQuery, [
-                    idCaso,
-                    updateData.tramite || (existingCaso as any).tramite,
-                    updateData.observaciones !== undefined ? updateData.observaciones : (existingCaso as any).observaciones,
-                    updateData.fecha_fin_caso !== undefined ? updateData.fecha_fin_caso : (existingCaso as any).fecha_fin_caso,
-                    updateData.id_nucleo || (existingCaso as any).id_nucleo,
-                    updateData.id_materia || (existingCaso as any).id_materia,
-                    updateData.num_categoria ?? (existingCaso as any).num_categoria,
-                    updateData.num_subcategoria ?? (existingCaso as any).num_subcategoria,
-                    updateData.num_ambito_legal || (existingCaso as any).num_ambito_legal,
-                    updateData.fecha_solicitud ? (typeof updateData.fecha_solicitud === 'string' ? updateData.fecha_solicitud : updateData.fecha_solicitud) : (existingCaso as any).fecha_solicitud,
-                ]);
+                return await casosQueries.update(idCaso, {
+                    tramite: updateData.tramite || (existingCaso as any).tramite,
+                    observaciones: updateData.observaciones !== undefined ? updateData.observaciones : (existingCaso as any).observaciones,
+                    fecha_fin_caso: updateData.fecha_fin_caso !== undefined ? updateData.fecha_fin_caso : (existingCaso as any).fecha_fin_caso,
+                    id_nucleo: updateData.id_nucleo || (existingCaso as any).id_nucleo,
+                    id_materia: updateData.id_materia || (existingCaso as any).id_materia,
+                    num_categoria: updateData.num_categoria ?? (existingCaso as any).num_categoria,
+                    num_subcategoria: updateData.num_subcategoria ?? (existingCaso as any).num_subcategoria,
+                    num_ambito_legal: updateData.num_ambito_legal || (existingCaso as any).num_ambito_legal,
+                    fecha_solicitud: updateData.fecha_solicitud ? (typeof updateData.fecha_solicitud === 'string' ? updateData.fecha_solicitud : updateData.fecha_solicitud) : (existingCaso as any).fecha_solicitud,
+                }, client);
+            };
 
-                return result.rows[0];
+            // Si viene un cliente externo, usarlo directamente
+            if (externalClient) {
+                return await performUpdate(externalClient);
+            }
+
+            // Si no, usar transacción local (legacy safe)
+            return await withTransaction(async (client) => {
+                return await performUpdate(client);
             });
 
         } catch (error) {
@@ -284,8 +295,6 @@ export const casosService = {
             }
             // Si es un error de Zod
             if (error && typeof error === 'object' && 'issues' in error) {
-                // ... transformar error de zod ...
-                // (Simplificado para brevedad, idealmente usar helper)
                 throw new ValidationError('Error de validación', {});
             }
 

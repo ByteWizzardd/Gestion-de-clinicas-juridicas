@@ -109,23 +109,20 @@ export const casosQueries = {
     fecha_solicitud?: string | Date;
     fecha_inicio_caso: string | Date;
     cedulaUsuarioRegistra?: string;
-  }): Promise<unknown> => {
-    const client = await pool.connect();
+  }, client?: import('pg').PoolClient): Promise<unknown> => {
+    const shouldRelease = !client;
+    const db = client || await pool.connect();
+
     try {
-      await client.query('BEGIN');
+      if (shouldRelease) await db.query('BEGIN');
 
       // Establecer la variable de sesión con la cédula del usuario que registra el caso
-      // Nota: SET LOCAL no acepta parámetros preparados, así que validamos y escapamos el valor
-      // Esta variable es usada por el trigger para crear el cambio_estatus inicial
       if (data.cedulaUsuarioRegistra) {
-        // Validar que la cédula solo contenga caracteres alfanuméricos, guiones y puntos
         if (!/^[A-Za-z0-9.\-]+$/.test(data.cedulaUsuarioRegistra)) {
           throw new Error('Formato de cédula inválido');
         }
-        // Escapar comillas simples para prevenir SQL injection
         const cedulaEscapada = data.cedulaUsuarioRegistra.replace(/'/g, "''");
-        // Usar SET LOCAL dentro de la transacción para que esté disponible en el trigger
-        await client.query(`SET LOCAL app.usuario_registra = '${cedulaEscapada}'`);
+        await db.query(`SET LOCAL app.usuario_registra = '${cedulaEscapada}'`);
       }
 
       const query = loadSQL('casos/create.sql');
@@ -136,26 +133,26 @@ export const casosQueries = {
         ? data.fecha_inicio_caso
         : data.fecha_inicio_caso.toISOString().split('T')[0];
 
-      const result: QueryResult = await client.query(query, [
+      const result: QueryResult = await db.query(query, [
         data.tramite,
         data.observaciones || null,
         data.cedula,
         data.id_nucleo,
         data.id_materia,
-        data.num_categoria ?? 0, // Usar 0 si es null/undefined
-        data.num_subcategoria ?? 0, // Usar 0 si es null/undefined
+        data.num_categoria ?? 0,
+        data.num_subcategoria ?? 0,
         data.num_ambito_legal,
         fechaSolicitudStr,
         fechaInicioStr,
       ]);
 
-      await client.query('COMMIT');
+      if (shouldRelease) await db.query('COMMIT');
       return result.rows[0];
     } catch (error) {
-      await client.query('ROLLBACK');
+      if (shouldRelease) await db.query('ROLLBACK');
       throw error;
     } finally {
-      client.release();
+      if (shouldRelease) db.release();
     }
   },
 
@@ -190,10 +187,12 @@ export const casosQueries = {
       num_subcategoria?: number;
       num_ambito_legal?: number;
       fecha_solicitud?: string | Date;
-    }
+    },
+    client?: import('pg').PoolClient
   ): Promise<unknown> => {
+    const db = client || pool;
     const query = loadSQL('casos/update.sql');
-    const result: QueryResult = await pool.query(query, [
+    const result: QueryResult = await db.query(query, [
       id,
       data.tramite || null,
       data.observaciones || null,
@@ -493,10 +492,12 @@ export const casosQueries = {
   deleteFisico: async (
     idCaso: number,
     cedulaActor: string,
-    motivo: string
+    motivo: string,
+    client?: import('pg').PoolClient
   ): Promise<void> => {
     // Llama a la función que ya realiza la auditoría internamente
-    await pool.query("SELECT eliminar_caso_fisico($1, $2, $3)", [
+    const executor = client || pool;
+    await executor.query("SELECT eliminar_caso_fisico($1, $2, $3)", [
       idCaso,
       cedulaActor,
       motivo,

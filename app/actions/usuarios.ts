@@ -9,6 +9,7 @@ import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 import { getCurrentUserAction } from "./auth";
 import { revalidatePath } from 'next/cache';
 import { notificarDeshabilitacionUsuarioEnCasosService } from '@/lib/services/notificaciones.service';
+import { withSecureTransaction } from '@/lib/db/secure-transactions';
 export interface GetUsuarioCompleteByCedulaResult {
   success: boolean;
   data?: {
@@ -193,12 +194,17 @@ export async function toggleHabilitadoUsuarioAction(
       };
     }
 
+
     const cedula_actor = userResult.data.cedula;
 
     const estadoAntes = await usuariosQueries.getHabilitadoSistema(cedula);
-    const toggleResult = await usuariosQueries.toggleHabilitado(cedula, cedula_actor);
-    if (!toggleResult.success) return toggleResult;
 
+    // Usar transacción segura
+    await withSecureTransaction(userResult.data.rol!, async (client) => {
+      await usuariosQueries.toggleHabilitado(cedula, cedula_actor, client);
+    });
+
+    // Verificamos el estado después (fuera de la tx segura, lectura simple)
     const estadoDespues = await usuariosQueries.getHabilitadoSistema(cedula);
 
     // Si pasó a deshabilitado, notificar a usuarios relacionados con sus casos
@@ -258,12 +264,15 @@ export async function deleteUsuarioFisicoAction(
   }
 
   try {
-    // 3. Ejecutar la eliminación física
-    await usuariosQueries.deleteFisico(
-      cedula_usuario,
-      userResult.data.cedula,
-      motivo
-    );
+    // 3. Ejecutar la eliminación física con transacción segura
+    await withSecureTransaction(userResult.data!.rol!, async (client) => {
+      await usuariosQueries.deleteFisico(
+        cedula_usuario,
+        userResult.data!.cedula,
+        motivo,
+        client
+      );
+    });
     return { success: true };
   } catch (error) {
     return {
@@ -591,26 +600,29 @@ export async function updateUsuarioByCedulaAction(
       }
     }
 
-    await usuariosQueries.updateUsuarioByCedulaAction({
-      cedula,
-      nombres: updates.nombre ?? "",
-      apellidos: updates.apellidos ?? "",
-      correo_electronico: updates.correo_electronico ?? "",
-      nombre_usuario: updates.nombre_usuario ?? "",
-      telefono_celular: updates.telefono ?? null,
-      tipo_usuario: (updates.tipo_usuario && updates.tipo_usuario.trim() !== '') ? updates.tipo_usuario : (tipoUsuarioActual || ""),
-      nrc: tipoUsuarioParaValores === "Estudiante" ? updates.estudiante?.nrc ?? null : null,
-      term:
-        tipoUsuarioParaValores === "Estudiante"
-          ? updates.estudiante?.term ?? null
-          : tipoUsuarioParaValores === "Profesor"
-            ? updates.profesor?.term ?? null
-            : tipoUsuarioParaValores === "Coordinador"
-              ? updates.coordinador?.term ?? null
-              : null,
-      tipo_estudiante: tipoUsuarioParaValores === "Estudiante" ? (updates.estudiante?.tipo_estudiante ?? null) : null,
-      tipo_profesor: tipoUsuarioParaValores === "Profesor" ? (updates.profesor?.tipo_profesor ?? null) : null,
-      cedula_actor,
+    // Ejecutar actualización con transacción segura
+    await withSecureTransaction(userResult.data.rol!, async (client) => {
+      await usuariosQueries.updateUsuarioByCedulaAction({
+        cedula,
+        nombres: updates.nombre ?? "",
+        apellidos: updates.apellidos ?? "",
+        correo_electronico: updates.correo_electronico ?? "",
+        nombre_usuario: updates.nombre_usuario ?? "",
+        telefono_celular: updates.telefono ?? null,
+        tipo_usuario: (updates.tipo_usuario && updates.tipo_usuario.trim() !== '') ? updates.tipo_usuario : (tipoUsuarioActual || ""),
+        nrc: tipoUsuarioParaValores === "Estudiante" ? updates.estudiante?.nrc ?? null : null,
+        term:
+          tipoUsuarioParaValores === "Estudiante"
+            ? updates.estudiante?.term ?? null
+            : tipoUsuarioParaValores === "Profesor"
+              ? updates.profesor?.term ?? null
+              : tipoUsuarioParaValores === "Coordinador"
+                ? updates.coordinador?.term ?? null
+                : null,
+        tipo_estudiante: tipoUsuarioParaValores === "Estudiante" ? (updates.estudiante?.tipo_estudiante ?? null) : null,
+        tipo_profesor: tipoUsuarioParaValores === "Profesor" ? (updates.profesor?.tipo_profesor ?? null) : null,
+        cedula_actor,
+      }, client);
     });
 
     // Sincronizar cambios con solicitantes y beneficiarios si aplica
@@ -750,19 +762,22 @@ export async function createUsuarioAction(
     const passwordHash = await hashPassword(data.contrasena);
 
     // 3. Crear el usuario
-    await usuariosQueries.createUser({
-      cedula: data.cedula,
-      nombres: data.nombres,
-      apellidos: data.apellidos,
-      correo_electronico: data.correo_electronico,
-      nombre_usuario: data.nombre_usuario,
-      contrasena: passwordHash,
-      telefono_celular: data.telefono,
-      tipo_usuario: data.tipo_usuario,
-      estudiante: data.estudiante,
-      profesor: data.profesor,
-      coordinador: data.coordinador,
-      cedula_actor,
+    // 3. Crear el usuario con transacción segura
+    await withSecureTransaction(userResult.data.rol!, async (client) => {
+      await usuariosQueries.createUser({
+        cedula: data.cedula,
+        nombres: data.nombres,
+        apellidos: data.apellidos,
+        correo_electronico: data.correo_electronico,
+        nombre_usuario: data.nombre_usuario,
+        contrasena: passwordHash,
+        telefono_celular: data.telefono,
+        tipo_usuario: data.tipo_usuario,
+        estudiante: data.estudiante,
+        profesor: data.profesor,
+        coordinador: data.coordinador,
+        cedula_actor,
+      }, client);
     });
 
     return { success: true };

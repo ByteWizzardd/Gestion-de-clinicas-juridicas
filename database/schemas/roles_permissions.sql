@@ -7,6 +7,11 @@ BEGIN
 END
 $$;
 
+-- Permitir al usuario owner/conexión cambiar a estos roles
+GRANT rol_coordinador TO current_user;
+GRANT rol_profesor TO current_user;
+GRANT rol_estudiante TO current_user;
+
 GRANT USAGE ON SCHEMA public TO rol_coordinador, rol_profesor, rol_estudiante;
 
 -- Permisos sobre catálogos
@@ -45,7 +50,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
 TO rol_profesor, rol_estudiante;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE viviendas, familias_y_hogares, asignadas_a TO rol_profesor, rol_estudiante;
-GRANT SELECT, INSERT ON TABLE cambio_estatus TO rol_profesor, rol_estudiante;
+GRANT SELECT, INSERT, DELETE ON TABLE cambio_estatus TO rol_profesor, rol_estudiante;
 
 -- Tablas de asignación de equipo: La app asigna/desasigna profesores y estudiantes a casos
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE supervisa, se_le_asigna TO rol_profesor, rol_estudiante;
