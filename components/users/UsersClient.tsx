@@ -9,6 +9,7 @@ import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import BulkUploadModal from './BulkUploadModal';
 import { getUsuariosAction, deleteUsuarioFisicoAction, getUsuarioInfoByCedulaAction, toggleHabilitadoUsuarioAction, disableUsuariosLoteAction, enableUsuariosLoteAction } from '@/app/actions/usuarios';
+import { getSemestresAction, getCurrentTermAction } from '@/app/actions/estudiantes';
 import EditUserModal from './EditUserModal';
 import CreateUserModal from './CreateUserModal';
 import DropdownMenu from '@/components/ui/navigation/DropdownMenu';
@@ -42,6 +43,8 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
   const [searchValue, setSearchValue] = useState('');
   const [tipoFilter, setTipoFilter] = useState('');
   const [estadoFilter, setEstadoFilter] = useState('');
+  const [semestreFilter, setSemestreFilter] = useState('');
+  const [semestres, setSemestres] = useState<Array<{ term: string; fecha_inicio: Date; fecha_fin: Date }>>([]);
   const [loading, setLoading] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -127,7 +130,25 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
     if (initialUsuarios.length === 0) {
       loadUsuarios();
     }
+    // Cargar semestres para el filtro
+    loadSemestres();
   }, [initialUsuarios.length]);
+
+  const loadSemestres = async () => {
+    try {
+      const result = await getSemestresAction();
+      if (result.success && result.data) {
+        setSemestres(result.data);
+      }
+      // Cargar el semestre actual como valor predeterminado
+      const currentTermResult = await getCurrentTermAction();
+      if (currentTermResult.success && currentTermResult.data) {
+        setSemestreFilter(currentTermResult.data.term);
+      }
+    } catch (error) {
+      console.error('Error al cargar semestres:', error);
+    }
+  };
 
   const loadUsuarios = async () => {
     setLoading(true);
@@ -162,6 +183,14 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
     }));
   }, [usuarios]);
 
+  // Opciones de semestres para el filtro
+  const semestreOptions = useMemo(() => {
+    return semestres.map(s => ({
+      value: s.term,
+      label: s.term
+    }));
+  }, [semestres]);
+
   const normalizeText = (text: string): string => {
     return text
       .normalize('NFD')
@@ -170,7 +199,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
   };
 
   const filteredUsuarios = useMemo(() => {
-    if (!searchValue && !tipoFilter && !estadoFilter) {
+    if (!searchValue && !tipoFilter && !estadoFilter && !semestreFilter) {
       return usuarios;
     }
 
@@ -188,9 +217,15 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         (estadoFilter === 'Habilitado' && usuario.habilitado_sistema) ||
         (estadoFilter === 'Deshabilitado' && !usuario.habilitado_sistema);
 
-      return matchesSearch && matchesTipo && matchesEstado;
+      // Filtrar por semestre: buscar en info_estudiante, info_profesor o info_coordinador
+      const matchesSemestre = !semestreFilter || 
+        ((usuario as any).info_estudiante && (usuario as any).info_estudiante.includes(semestreFilter)) ||
+        ((usuario as any).info_profesor && (usuario as any).info_profesor.includes(semestreFilter)) ||
+        ((usuario as any).info_coordinador && (usuario as any).info_coordinador.includes(semestreFilter));
+
+      return matchesSearch && matchesTipo && matchesEstado && matchesSemestre;
     });
-  }, [usuarios, searchValue, tipoFilter, estadoFilter]);
+  }, [usuarios, searchValue, tipoFilter, estadoFilter, semestreFilter]);
 
   const handleView = (data: Record<string, unknown>) => {
     const usuario = data as Usuario;
@@ -376,6 +411,11 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
                 { value: 'Habilitado', label: 'Habilitados' },
                 { value: 'Deshabilitado', label: 'Deshabilitados' }
               ]}
+              nucleoFilter={semestreFilter}
+              onNucleoChange={setSemestreFilter}
+              nucleoLabel="Semestre"
+              nucleoAllLabel="Todos los semestres"
+              nucleoOptions={semestreOptions}
             />
           </div>
           <div className="flex gap-3 sm:gap-4 items-center shrink-0">
