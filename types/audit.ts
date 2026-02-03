@@ -129,9 +129,9 @@ export interface CitaActualizadaAuditRecord {
   orientacion_anterior: string | null;
   atenciones_anterior: string | null;
   // Valores nuevos
-  fecha_encuentro_nueva: string | null;
-  fecha_proxima_cita_nueva: string | null;
-  orientacion_nueva: string | null;
+  fecha_encuentro_nuevo: string | null;
+  fecha_proxima_cita_nuevo: string | null;
+  orientacion_nuevo: string | null;
   atenciones_nuevo: string | null;
   // Usuarios resueltos desde las cédulas
   usuarios_atenciones_anterior: { cedula: string; nombre: string }[] | null;
@@ -585,9 +585,9 @@ export interface SolicitanteActualizadoAuditRecord {
   cant_ninos_nuevo: number | null;
   cant_ninos_estudiando_anterior: number | null;
   cant_ninos_estudiando_nuevo: number | null;
-  artefactos_eliminados: string[]; // Artefactos que tenía antes pero ya no
-  artefactos_agregados: string[]; // Artefactos nuevos que no tenía antes
-  artefactos_sin_cambio: string[]; // Artefactos que tenía y sigue teniendo
+  // Artefactos domésticos (comma-separated strings)
+  artefactos_domesticos_anteriores: string | null;
+  artefactos_domesticos_nuevos: string | null;
   id_usuario_actualizo: string | null;
   nombres_usuario_actualizo: string | null;
   apellidos_usuario_actualizo: string | null;

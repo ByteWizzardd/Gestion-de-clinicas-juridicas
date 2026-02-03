@@ -11,12 +11,6 @@ SELECT
     u_registro.nombres AS nombres_usuario_registro,
     u_registro.apellidos AS apellidos_usuario_registro,
     CONCAT(u_registro.nombres, ' ', u_registro.apellidos) AS nombre_completo_usuario_registro,
-    -- Información de auditoría: usuario que actualizó la cita
-    c.id_usuario_actualizo,
-    u_actualizo.nombres AS nombres_usuario_actualizo,
-    u_actualizo.apellidos AS apellidos_usuario_actualizo,
-    CONCAT(u_actualizo.nombres, ' ', u_actualizo.apellidos) AS nombre_completo_usuario_actualizo,
-    c.fecha_actualizacion,
     -- Información de usuarios que atendieron
     COALESCE(
         (SELECT json_agg(
@@ -35,7 +29,6 @@ SELECT
     ) AS atenciones
 FROM citas c
 LEFT JOIN usuarios u_registro ON c.id_usuario_registro = u_registro.cedula
-LEFT JOIN usuarios u_actualizo ON c.id_usuario_actualizo = u_actualizo.cedula
 WHERE c.id_caso = $1
 ORDER BY c.fecha_encuentro DESC;
 

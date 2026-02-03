@@ -201,22 +201,39 @@ export const beneficiariosQueries = {
     sexo: string;
     tipo_beneficiario: string;
     parentesco: string;
-    id_usuario_actualizo?: string;
+    id_usuario_actualizo?: string; // Corregido: snake_case para coincidir con la llamada
   }): Promise<any> => {
-    const query = loadSQL('beneficiarios/update.sql');
-    const result = await pool.query(query, [
-      data.id_caso,
-      data.num_beneficiario,
-      data.cedula || null,
-      data.nombres,
-      data.apellidos,
-      data.fecha_nac,
-      data.sexo,
-      data.tipo_beneficiario,
-      data.parentesco,
-      data.id_usuario_actualizo || null
-    ]);
-    return result.rows[0];
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Si se proporciona el usuario, establecer variable de sesión para auditoría
+      // Si se proporciona el usuario, establecer variable de sesión para auditoría
+      if (data.id_usuario_actualizo) {
+        await client.query(`SELECT set_config('app.current_user_id', $1, true)`, [data.id_usuario_actualizo]);
+      }
+
+      const query = loadSQL('beneficiarios/update.sql');
+      const result = await client.query(query, [
+        data.id_caso,
+        data.num_beneficiario,
+        data.cedula || null,
+        data.nombres,
+        data.apellidos,
+        data.fecha_nac,
+        data.sexo,
+        data.tipo_beneficiario,
+        data.parentesco
+      ]);
+
+      await client.query('COMMIT');
+      return result.rows[0];
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
   },
 
   /**

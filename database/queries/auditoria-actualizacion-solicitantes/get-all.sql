@@ -72,25 +72,9 @@ SELECT
     a.agua_potable_anterior, a.agua_potable_nuevo,
     a.eliminacion_aguas_negras_anterior, a.eliminacion_aguas_negras_nuevo,
     a.aseo_anterior, a.aseo_nuevo,
-    -- Artefactos agregados por estado
-    COALESCE(
-        (SELECT json_agg(artefacto ORDER BY artefacto)
-         FROM auditoria_artefactos_domesticos
-         WHERE id_auditoria_solicitante = a.id AND estado = 'anterior'),
-        '[]'::json
-    ) AS artefactos_eliminados,
-    COALESCE(
-        (SELECT json_agg(artefacto ORDER BY artefacto)
-         FROM auditoria_artefactos_domesticos
-         WHERE id_auditoria_solicitante = a.id AND estado = 'nuevo'),
-        '[]'::json
-    ) AS artefactos_agregados,
-    COALESCE(
-        (SELECT json_agg(artefacto ORDER BY artefacto)
-         FROM auditoria_artefactos_domesticos
-         WHERE id_auditoria_solicitante = a.id AND estado = 'sin_cambio'),
-        '[]'::json
-    ) AS artefactos_sin_cambio,
+    -- Artefactos domésticos (almacenados como texto separado por comas)
+    a.artefactos_domesticos_anteriores,
+    a.artefactos_domesticos_nuevos,
     to_char(a.fecha_actualizacion, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_actualizacion,
     a.id_usuario_actualizo,
     u.nombres AS nombres_usuario_actualizo,

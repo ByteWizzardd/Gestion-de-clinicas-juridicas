@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Calendar, Clock, Users, FileText, Trash2, Pencil } from 'lucide-react';
+import Link from 'next/link';
 import { formatDate } from '@/lib/utils/date-formatter';
 import { deleteCitaAction } from '@/app/actions/citas';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
@@ -205,7 +206,12 @@ export default function AppointmentsTab({ citas, onRefresh, onEditAppointment }:
                 <div className="space-y-2">
                   {cita.atenciones.map((atencion, index) => (
                     <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                      <p className="text-sm text-gray-900 font-medium">{atencion.nombre_completo}</p>
+                      <Link
+                        href={`/dashboard/users/${atencion.id_usuario}`}
+                        className="text-sm text-primary hover:underline font-medium"
+                      >
+                        {atencion.nombre_completo}
+                      </Link>
                       <p className="text-xs text-gray-500 mt-1">
                         Fecha de registro: {formatDate(atencion.fecha_registro)}
                       </p>

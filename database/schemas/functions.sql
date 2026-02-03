@@ -442,3 +442,16 @@ AS $$
         END IF;
     END;
 $$;
+
+-- =========================================================
+-- FUNCION: obtener_siguiente_num_cita
+-- Obtiene el siguiente numero de cita para un caso especifico
+-- Parametros:
+--   p_id_caso INTEGER: ID del caso
+--
+CREATE OR REPLACE FUNCTION obtener_siguiente_num_cita(p_id_caso INTEGER)
+RETURNS INTEGER AS c:\Users\Samis\Desktop\uni\7mo semestre\bd\proyecto\clinicas juridicas\Gestion-de-clinicas-juridicas
+BEGIN
+    RETURN COALESCE((SELECT MAX(num_cita) FROM citas WHERE id_caso = p_id_caso), 0) + 1;
+END;
+c:\Users\Samis\Desktop\uni\7mo semestre\bd\proyecto\clinicas juridicas\Gestion-de-clinicas-juridicas LANGUAGE plpgsql;

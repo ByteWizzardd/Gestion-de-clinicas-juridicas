@@ -1979,8 +1979,8 @@ export async function getBeneficiariosInscritosAuditAction(filters?: AuditFilter
     // TODO: Implementar filtros en queries si es necesario
     return records.map((r) => ({
       ...r,
-      fecha: r.fecha_registro.toISOString(),
-      fecha_creacion: r.fecha_registro.toISOString(),
+      fecha: typeof r.fecha_registro === 'string' ? r.fecha_registro : r.fecha_registro.toISOString(),
+      fecha_creacion: typeof r.fecha_registro === 'string' ? r.fecha_registro : r.fecha_registro.toISOString(),
       usuario_accion: r.id_usuario_registro || '',
       nombre_completo_usuario_accion: r.usuario_nombre_completo || undefined,
       fecha_nacimiento: typeof r.fecha_nacimiento === 'string' ? r.fecha_nacimiento : r.fecha_nacimiento.toISOString().split('T')[0],
@@ -2013,8 +2013,8 @@ export async function getBeneficiariosActualizadosAuditAction(filters?: AuditFil
     const records = await auditoriaActualizacionBeneficiariosQueries.getAll(filters);
     return records.map((r) => ({
       ...r,
-      fecha: r.fecha_actualizacion.toISOString(),
-      fecha_actualizacion: r.fecha_actualizacion.toISOString(),
+      fecha: typeof r.fecha_actualizacion === 'string' ? r.fecha_actualizacion : r.fecha_actualizacion.toISOString(),
+      fecha_actualizacion: typeof r.fecha_actualizacion === 'string' ? r.fecha_actualizacion : r.fecha_actualizacion.toISOString(),
       usuario_accion: r.id_usuario_actualizo || '',
       nombre_completo_usuario_accion: r.usuario_nombre_completo || undefined,
       fecha_nacimiento_anterior: typeof r.fecha_nacimiento_anterior === 'string' ? r.fecha_nacimiento_anterior : r.fecha_nacimiento_anterior.toISOString().split('T')[0],
@@ -2045,8 +2045,8 @@ export async function getBeneficiariosEliminadosAuditAction(filters?: AuditFilte
     const records = await auditoriaEliminacionBeneficiariosQueries.getAll(filters);
     return records.map((r) => ({
       ...r,
-      fecha: r.fecha_eliminacion.toISOString(),
-      fecha_eliminacion: r.fecha_eliminacion.toISOString(),
+      fecha: typeof r.fecha_eliminacion === 'string' ? r.fecha_eliminacion : r.fecha_eliminacion.toISOString(),
+      fecha_eliminacion: typeof r.fecha_eliminacion === 'string' ? r.fecha_eliminacion : r.fecha_eliminacion.toISOString(),
       usuario_accion: r.id_usuario_elimino || '',
       nombre_completo_usuario_accion: r.usuario_nombre_completo || undefined,
     }));
@@ -2361,19 +2361,12 @@ export async function getDescargasSoportesAuditAction(filters?: AuditFilters & {
       total = await auditoriaDescargaSoportesQueries.count(userId, startDate, endDate);
     }
 
-    // Función helper para serializar fechas: resta 4 horas (UTC -> Venezuela)
-    const serializeDate = (date: Date | null | undefined): string | null => {
-      if (!date) return null;
-      // La BD guarda en UTC, restamos 4 horas para obtener hora Venezuela
-      const venezuelaDate = new Date(date.getTime() - (8 * 60 * 60 * 1000));
-      return venezuelaDate.toISOString().replace('Z', '');
-    };
-
     // Mapear registros para serialización
+    // Nota: fecha_descarga ya viene como string formateado desde el SQL (to_char)
     const mappedRecords = records.map((r) => ({
       ...r,
-      fecha: serializeDate(r.fecha_descarga) || new Date().toISOString(),
-      fecha_descarga: serializeDate(r.fecha_descarga) || new Date().toISOString(),
+      fecha: r.fecha_descarga || new Date().toISOString(),
+      fecha_descarga: r.fecha_descarga || new Date().toISOString(),
       usuario_accion: r.cedula_descargo,
       nombre_completo_usuario_accion: r.nombre_completo_usuario_descargo || r.cedula_descargo,
     }));

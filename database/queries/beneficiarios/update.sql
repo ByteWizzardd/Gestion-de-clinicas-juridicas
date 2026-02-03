@@ -9,7 +9,6 @@
 -- $7: sexo
 -- $8: tipo_beneficiario
 -- $9: parentesco
--- $10: id_usuario_actualizo
 
 UPDATE beneficiarios
 SET 
@@ -19,7 +18,6 @@ SET
     fecha_nac = $6,
     sexo = $7,
     tipo_beneficiario = $8,
-    parentesco = $9,
-    id_usuario_actualizo = $10
+    parentesco = $9
 WHERE id_caso = $1 AND num_beneficiario = $2
 RETURNING *;

@@ -145,7 +145,7 @@ BEGIN
             NEW.num_beneficiario, NEW.id_caso,
             OLD.cedula, OLD.nombres, OLD.apellidos, OLD.fecha_nac, OLD.sexo, OLD.tipo_beneficiario, OLD.parentesco,
             NEW.cedula, NEW.nombres, NEW.apellidos, NEW.fecha_nac, NEW.sexo, NEW.tipo_beneficiario, NEW.parentesco,
-            COALESCE(NEW.id_usuario_actualizo, v_usuario)
+            v_usuario
         );
     END IF;
     
@@ -182,42 +182,58 @@ CREATE OR REPLACE FUNCTION public.trigger_auditoria_actualizacion_cita()
 AS $function$
 DECLARE
     cedula_usuario VARCHAR(20);
+    skip_audit TEXT;
 BEGIN
     BEGIN
+        -- Permitir saltar la auditoría si la aplicación lo solicita
+        skip_audit := current_setting('app.skip_audit_trigger', true);
+        IF skip_audit = 'true' THEN
+            RETURN NEW;
+        END IF;
+
+        -- Intentar obtener de app.usuario_actualiza_cita primero (usado por la actualización de citas)
         cedula_usuario := current_setting('app.usuario_actualiza_cita', true);
-    EXCEPTION
-        WHEN OTHERS THEN
-            cedula_usuario := NULL;
+        -- Si está vacío, intentar con app.current_user_id
+        IF cedula_usuario IS NULL OR cedula_usuario = '' THEN
+            cedula_usuario := current_setting('app.current_user_id', true);
+        END IF;
+    EXCEPTION WHEN OTHERS THEN
+        cedula_usuario := NULL;
     END;
     
-    IF cedula_usuario IS NOT NULL AND cedula_usuario != '' THEN
-        IF (OLD.fecha_encuentro IS DISTINCT FROM NEW.fecha_encuentro) OR
-           (OLD.fecha_proxima_cita IS DISTINCT FROM NEW.fecha_proxima_cita) OR
-           (OLD.orientacion IS DISTINCT FROM NEW.orientacion) THEN
-            
-            INSERT INTO auditoria_actualizacion_citas (
-                num_cita,
-                id_caso,
-                fecha_encuentro_anterior,
-                fecha_proxima_cita_anterior,
-                orientacion_anterior,
-                fecha_encuentro_nueva,
-                fecha_proxima_cita_nueva,
-                orientacion_nueva,
-                id_usuario_actualizo,
-                fecha_actualizacion
-            ) VALUES (
-                NEW.num_cita,
-                NEW.id_caso,
-                OLD.fecha_encuentro,
-                OLD.fecha_proxima_cita,
-                OLD.orientacion,
-                NEW.fecha_encuentro,
-                NEW.fecha_proxima_cita,
-                NEW.orientacion,
-                cedula_usuario,
-                (NOW() AT TIME ZONE 'America/Caracas')
-            );
+    IF OLD.fecha_encuentro IS DISTINCT FROM NEW.fecha_encuentro OR
+       OLD.fecha_proxima_cita IS DISTINCT FROM NEW.fecha_proxima_cita OR
+       OLD.orientacion IS DISTINCT FROM NEW.orientacion THEN
+       
+        INSERT INTO auditoria_actualizacion_citas (
+            num_cita,
+            id_caso,
+            fecha_encuentro_anterior,
+            fecha_proxima_cita_anterior,
+            orientacion_anterior,
+            fecha_encuentro_nuevo,
+            fecha_proxima_cita_nuevo,
+            orientacion_nuevo,
+            id_usuario_actualizo,
+            fecha_actualizacion
+        ) VALUES (
+            NEW.num_cita,
+            NEW.id_caso,
+            OLD.fecha_encuentro,
+            OLD.fecha_proxima_cita,
+            OLD.orientacion,
+            NEW.fecha_encuentro,
+            NEW.fecha_proxima_cita,
+            NEW.orientacion,
+            cedula_usuario,
+            (NOW() AT TIME ZONE 'America/Caracas')
+        );
+    END IF;
+    
+    RETURN NEW;
+END;
+$function$
+;
         END IF;
     END IF;
     
@@ -1439,7 +1455,7 @@ AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := c
 CREATE OR REPLACE FUNCTION public.trigger_auditoria_eliminacion_caso()
  RETURNS trigger
  LANGUAGE plpgsql
-AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN BEGIN v_usuario := current_setting('app.usuario_elimina_caso', true); v_motivo := current_setting('app.motivo_eliminacion_caso', true); EXCEPTION WHEN OTHERS THEN v_usuario := NULL; v_motivo := NULL; END; IF v_motivo IS NULL OR v_motivo = '' THEN v_motivo := 'Sin motivo especificado'; END IF; INSERT INTO auditoria_eliminacion_casos (id_caso, cedula_solicitante, tramite, fecha_solicitud, id_usuario_elimino, motivo) VALUES (OLD.id_caso, OLD.cedula, OLD.tramite, OLD.fecha_solicitud, v_usuario, v_motivo); RETURN OLD; END; $function$
+AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN BEGIN v_usuario := current_setting('app.usuario_elimina_caso', true); v_motivo := current_setting('app.motivo_eliminacion_caso', true); EXCEPTION WHEN OTHERS THEN v_usuario := NULL; v_motivo := NULL; END; IF v_motivo IS NULL OR v_motivo = '' THEN v_motivo := 'Sin motivo especificado'; END IF; INSERT INTO auditoria_eliminacion_casos (caso_eliminado, cedula_solicitante, tramite, fecha_solicitud, eliminado_por, motivo, fecha) VALUES (OLD.id_caso, OLD.cedula, OLD.tramite, OLD.fecha_solicitud, v_usuario, v_motivo, (NOW() AT TIME ZONE 'America/Caracas')); RETURN OLD; END; $function$
 ;
 
 -- Función: trigger_auditoria_eliminacion_categoria
@@ -2924,3 +2940,101 @@ CREATE TRIGGER trigger_auditoria_insercion_usuario AFTER INSERT ON public.usuari
 DROP TRIGGER IF EXISTS trigger_auditoria_actualizacion_vivienda ON viviendas;
 CREATE TRIGGER trigger_auditoria_actualizacion_vivienda AFTER UPDATE ON public.viviendas FOR EACH ROW EXECUTE FUNCTION trigger_auditoria_actualizacion_vivienda();
 
+
+-- Función: trigger_auditoria_eliminacion_caso
+CREATE OR REPLACE FUNCTION public.trigger_auditoria_eliminacion_caso()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$ 
+DECLARE 
+    v_usuario VARCHAR(20); 
+    v_motivo TEXT; 
+BEGIN 
+    BEGIN 
+        v_usuario := current_setting('app.usuario_elimina_caso', true); 
+        v_motivo := current_setting('app.motivo_eliminacion_caso', true); 
+    EXCEPTION WHEN OTHERS THEN 
+        v_usuario := NULL; 
+        v_motivo := NULL; 
+    END; 
+    
+    IF v_motivo IS NULL OR v_motivo = '' THEN 
+        v_motivo := 'Sin motivo especificado'; 
+    END IF; 
+    
+    INSERT INTO auditoria_eliminacion_casos (
+        caso_eliminado, 
+        cedula_solicitante, 
+        tramite, 
+        fecha_solicitud, 
+        eliminado_por, 
+        motivo,
+        fecha
+    ) VALUES (
+        OLD.id_caso, 
+        OLD.cedula, 
+        OLD.tramite, 
+        OLD.fecha_solicitud, 
+        v_usuario, 
+        v_motivo,
+        (NOW() AT TIME ZONE 'America/Caracas')
+    ); 
+    
+    RETURN OLD; 
+END; 
+$function$
+;
+
+DROP TRIGGER IF EXISTS trigger_auditoria_eliminacion_caso ON casos;
+CREATE TRIGGER trigger_auditoria_eliminacion_caso BEFORE DELETE ON public.casos FOR EACH ROW EXECUTE FUNCTION trigger_auditoria_eliminacion_caso();
+
+-- Función: trigger_auditoria_eliminacion_beneficiario
+CREATE OR REPLACE FUNCTION public.trigger_auditoria_eliminacion_beneficiario()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+    v_usuario VARCHAR(20);
+    v_motivo TEXT;
+BEGIN
+    BEGIN
+        v_usuario := current_setting('app.current_user_id', true);
+        v_motivo := current_setting('app.motivo_eliminacion_beneficiario', true);
+    EXCEPTION WHEN OTHERS THEN
+        v_usuario := NULL;
+        v_motivo := NULL;
+    END;
+    
+    INSERT INTO auditoria_eliminacion_beneficiarios (
+        num_beneficiario, 
+        id_caso, 
+        nombres, 
+        apellidos, 
+        cedula, 
+        fecha_nacimiento,
+        sexo,
+        tipo_beneficiario,
+        parentesco,
+        id_usuario_elimino, 
+        motivo
+    ) VALUES (
+        OLD.num_beneficiario, 
+        OLD.id_caso, 
+        OLD.nombres, 
+        OLD.apellidos, 
+        OLD.cedula,
+        OLD.fecha_nac,
+        OLD.sexo,
+        OLD.tipo_beneficiario,
+        OLD.parentesco,
+        v_usuario, 
+        v_motivo
+    );
+    
+    RETURN OLD;
+END;
+$function$
+;
+
+DROP TRIGGER IF EXISTS trigger_auditoria_eliminacion_beneficiario ON beneficiarios;
+CREATE TRIGGER trigger_auditoria_eliminacion_beneficiario BEFORE DELETE ON public.beneficiarios FOR EACH ROW EXECUTE FUNCTION trigger_auditoria_eliminacion_beneficiario();

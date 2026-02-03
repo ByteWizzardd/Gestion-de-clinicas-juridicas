@@ -12,7 +12,7 @@ export interface DescargaSoporteAuditoria {
     nombre_archivo: string;
     cedula_descargo: string;
     ip_direccion: string | null;
-    fecha_descarga: Date;
+    fecha_descarga: string; // Returned as string from SQL via to_char
     nombres_usuario_descargo: string | null;
     apellidos_usuario_descargo: string | null;
     nombre_completo_usuario_descargo: string | null;

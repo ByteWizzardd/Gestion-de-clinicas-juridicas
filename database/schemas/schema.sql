@@ -1458,7 +1458,10 @@ CREATE TABLE beneficiarios (
     
     sexo VARCHAR(20) NOT NULL CHECK (sexo IN ('M', 'F')),
     tipo_beneficiario VARCHAR(50) NOT NULL CHECK (tipo_beneficiario IN ('Directo', 'Indirecto')),
-    parentesco VARCHAR(50) NOT NULL, 
+    parentesco VARCHAR(50) NOT NULL,
+    
+    id_usuario_registro VARCHAR(20) REFERENCES usuarios(cedula) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    
     PRIMARY KEY (num_beneficiario, id_caso)
 );
 

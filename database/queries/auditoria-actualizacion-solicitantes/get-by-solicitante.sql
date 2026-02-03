@@ -45,6 +45,8 @@ SELECT
     a.agua_potable_anterior, a.agua_potable_nuevo,
     a.eliminacion_aguas_negras_anterior, a.eliminacion_aguas_negras_nuevo,
     a.aseo_anterior, a.aseo_nuevo,
+    -- Artefactos domésticos
+    a.artefactos_domesticos_anteriores, a.artefactos_domesticos_nuevos,
     a.fecha_actualizacion,
     a.id_usuario_actualizo,
     u.nombres AS nombres_usuario_actualizo,

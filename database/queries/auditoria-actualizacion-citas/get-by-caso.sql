@@ -22,9 +22,9 @@ SELECT
         '[]'::json
     ) AS usuarios_atenciones_anterior,
     -- Valores nuevos
-    a.fecha_encuentro_nueva,
-    a.fecha_proxima_cita_nueva,
-    a.orientacion_nueva,
+    a.fecha_encuentro_nuevo,
+    a.fecha_proxima_cita_nuevo,
+    a.orientacion_nuevo,
     a.atenciones_nuevo,
     -- Resolver cédulas nuevas a usuarios con nombre
     COALESCE(

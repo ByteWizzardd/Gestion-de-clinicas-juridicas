@@ -19,9 +19,9 @@ export const auditoriaActualizacionCitasQueries = {
     fecha_proxima_cita_anterior: string | null;
     orientacion_anterior: string | null;
     // Valores nuevos
-    fecha_encuentro_nueva: string | null;
-    fecha_proxima_cita_nueva: string | null;
-    orientacion_nueva: string | null;
+    fecha_encuentro_nuevo: string | null;
+    fecha_proxima_cita_nuevo: string | null;
+    orientacion_nuevo: string | null;
     // Información de auditoría
     id_usuario_actualizo: string;
     nombres_usuario_actualizo: string | null;
@@ -46,9 +46,9 @@ export const auditoriaActualizacionCitasQueries = {
     fecha_proxima_cita_anterior: string | null;
     orientacion_anterior: string | null;
     // Valores nuevos
-    fecha_encuentro_nueva: string | null;
-    fecha_proxima_cita_nueva: string | null;
-    orientacion_nueva: string | null;
+    fecha_encuentro_nuevo: string | null;
+    fecha_proxima_cita_nuevo: string | null;
+    orientacion_nuevo: string | null;
     // Información de auditoría
     id_usuario_actualizo: string;
     nombres_usuario_actualizo: string | null;
@@ -86,9 +86,9 @@ export const auditoriaActualizacionCitasQueries = {
     fecha_encuentro_anterior: string | null;
     fecha_proxima_cita_anterior: string | null;
     orientacion_anterior: string | null;
-    fecha_encuentro_nueva: string | null;
-    fecha_proxima_cita_nueva: string | null;
-    orientacion_nueva: string | null;
+    fecha_encuentro_nuevo: string | null;
+    fecha_proxima_cita_nuevo: string | null;
+    orientacion_nuevo: string | null;
     id_usuario_actualizo: string;
     nombres_usuario_actualizo: string | null;
     apellidos_usuario_actualizo: string | null;
@@ -114,11 +114,11 @@ export const auditoriaActualizacionCitasQueries = {
     // Convertir foto_perfil de Buffer a base64 y parsear usuarios_atendieron
     return result.rows.map(row => ({
       ...row,
-      foto_perfil_usuario_actualizo: row.foto_perfil_usuario_actualizo 
+      foto_perfil_usuario_actualizo: row.foto_perfil_usuario_actualizo
         ? `data:image/jpeg;base64,${(row.foto_perfil_usuario_actualizo as Buffer).toString('base64')}`
         : null,
-      usuarios_atendieron: row.usuarios_atendieron ? (typeof row.usuarios_atendieron === 'string' 
-        ? JSON.parse(row.usuarios_atendieron) 
+      usuarios_atendieron: row.usuarios_atendieron ? (typeof row.usuarios_atendieron === 'string'
+        ? JSON.parse(row.usuarios_atendieron)
         : row.usuarios_atendieron) : [],
     }));
   },

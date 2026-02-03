@@ -11,7 +11,7 @@ export default async function EquipoAuditPage() {
             <AuditEntityDetailClient
                 entityTitle="Equipo de Casos"
                 entityDescription="Registro completo de cambios en la asignación de estudiantes y profesores a casos"
-                defaultTab="equipos-actualizados"
+                defaultTab="equipos-creados"
                 operations={[
                     {
                         label: 'Creados',

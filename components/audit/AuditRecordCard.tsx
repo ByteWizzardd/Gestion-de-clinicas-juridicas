@@ -2222,9 +2222,9 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         const r = record as CitaActualizadaAuditRecord;
 
         // Verificar si realmente hubo cambios en cada campo
-        const hasFechaEncuentroChange = !areDatesEqual(r.fecha_encuentro_anterior, r.fecha_encuentro_nueva);
-        const hasFechaProximaCitaChange = !areDatesEqual(r.fecha_proxima_cita_anterior, r.fecha_proxima_cita_nueva);
-        const hasOrientacionChange = r.orientacion_anterior !== r.orientacion_nueva;
+        const hasFechaEncuentroChange = !areDatesEqual(r.fecha_encuentro_anterior, r.fecha_encuentro_nuevo);
+        const hasFechaProximaCitaChange = !areDatesEqual(r.fecha_proxima_cita_anterior, r.fecha_proxima_cita_nuevo);
+        const hasOrientacionChange = r.orientacion_anterior !== r.orientacion_nuevo;
         const hasAtencionesChange = r.atenciones_anterior !== r.atenciones_nuevo &&
           (r.atenciones_anterior || r.atenciones_nuevo);
 
@@ -2248,7 +2248,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                       </span>
                       {' → '}
                       <span className="text-green-600">
-                        {r.fecha_encuentro_nueva ? formatDateOnly(r.fecha_encuentro_nueva) : 'N/A'}
+                        {r.fecha_encuentro_nuevo ? formatDateOnly(r.fecha_encuentro_nuevo) : 'N/A'}
                       </span>
                     </p>
                   </div>
@@ -2262,7 +2262,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                       </span>
                       {' → '}
                       <span className="text-green-600">
-                        {r.fecha_proxima_cita_nueva ? formatDateOnly(r.fecha_proxima_cita_nueva) : 'N/A'}
+                        {r.fecha_proxima_cita_nuevo ? formatDateOnly(r.fecha_proxima_cita_nuevo) : 'N/A'}
                       </span>
                     </p>
                   </div>
@@ -2276,7 +2276,7 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                       </span>
                       {' → '}
                       <span className="text-green-600">
-                        {r.orientacion_nueva || 'N/A'}
+                        {r.orientacion_nuevo || 'N/A'}
                       </span>
                     </p>
                   </div>
@@ -3675,28 +3675,47 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
             )}
 
             {/* Artefactos Domésticos */}
-            {(r.artefactos_eliminados?.length > 0 || r.artefactos_agregados?.length > 0) && (
-              <div className="mb-2">
-                <p className="text-sm font-semibold text-gray-700 mb-1">Artefactos Domésticos:</p>
-                {r.artefactos_eliminados?.length > 0 && (
-                  <p className="text-sm text-gray-600 ml-2">
-                    <span className="text-red-500 font-medium">Eliminados:</span>{' '}
-                    {r.artefactos_eliminados.join(', ')}
-                  </p>
-                )}
-                {r.artefactos_agregados?.length > 0 && (
-                  <p className="text-sm text-gray-600 ml-2">
-                    <span className="text-green-600 font-medium">Agregados:</span>{' '}
-                    {r.artefactos_agregados.join(', ')}
-                  </p>
-                )}
-                {r.artefactos_sin_cambio?.length > 0 && (
-                  <p className="text-sm text-gray-500 ml-2">
-                    Sin cambio: {r.artefactos_sin_cambio.join(', ')}
-                  </p>
-                )}
-              </div>
-            )}
+            {(() => {
+              // Parse the comma-separated strings into arrays
+              const anteriores = r.artefactos_domesticos_anteriores
+                ? r.artefactos_domesticos_anteriores.split(', ').filter(Boolean).sort()
+                : [];
+              const nuevos = r.artefactos_domesticos_nuevos
+                ? r.artefactos_domesticos_nuevos.split(', ').filter(Boolean).sort()
+                : [];
+
+              // Compute differences
+              const setAnteriores = new Set(anteriores);
+              const setNuevos = new Set(nuevos);
+              const eliminados = anteriores.filter(a => !setNuevos.has(a));
+              const agregados = nuevos.filter(a => !setAnteriores.has(a));
+              const sinCambio = nuevos.filter(a => setAnteriores.has(a));
+
+              if (eliminados.length === 0 && agregados.length === 0) return null;
+
+              return (
+                <div className="mb-2">
+                  <p className="text-sm font-semibold text-gray-700 mb-1">Artefactos Domésticos:</p>
+                  {eliminados.length > 0 && (
+                    <p className="text-sm text-gray-600 ml-2">
+                      <span className="text-red-500 font-medium">Eliminados:</span>{' '}
+                      {eliminados.join(', ')}
+                    </p>
+                  )}
+                  {agregados.length > 0 && (
+                    <p className="text-sm text-gray-600 ml-2">
+                      <span className="text-green-600 font-medium">Agregados:</span>{' '}
+                      {agregados.join(', ')}
+                    </p>
+                  )}
+                  {sinCambio.length > 0 && (
+                    <p className="text-sm text-gray-500 ml-2">
+                      Sin cambio: {sinCambio.join(', ')}
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
 
             <div>
               <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
@@ -3834,7 +3853,13 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                         {profesoresAnteriores.length > 0 ? (
                           profesoresAnteriores.map((m: MiembroEquipoAudit, i: number) => (
                             <span key={i}>
-                              {m.nombre_completo}
+                              <Link
+                                href={`/dashboard/users/${m.cedula}`}
+                                className="text-red-500 hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {m.nombre_completo}
+                              </Link>
                               {i < profesoresAnteriores.length - 1 && ', '}
                             </span>
                           ))
@@ -3870,7 +3895,13 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                         {estudiantesAnteriores.length > 0 ? (
                           estudiantesAnteriores.map((m: MiembroEquipoAudit, i: number) => (
                             <span key={i}>
-                              {m.nombre_completo}
+                              <Link
+                                href={`/dashboard/users/${m.cedula}`}
+                                className="text-red-500 hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {m.nombre_completo}
+                              </Link>
                               {i < estudiantesAnteriores.length - 1 && ', '}
                             </span>
                           ))
@@ -4483,7 +4514,13 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                       {profesoresAnteriores.length > 0 ? (
                         profesoresAnteriores.map((m: MiembroEquipoAudit, i: number) => (
                           <span key={i}>
-                            {m.nombre_completo}
+                            <Link
+                              href={`/dashboard/users/${m.cedula}`}
+                              className="text-red-500 hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {m.nombre_completo}
+                            </Link>
                             {i < profesoresAnteriores.length - 1 && ', '}
                           </span>
                         ))
@@ -4519,7 +4556,13 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                       {estudiantesAnteriores.length > 0 ? (
                         estudiantesAnteriores.map((m: MiembroEquipoAudit, i: number) => (
                           <span key={i}>
-                            {m.nombre_completo}
+                            <Link
+                              href={`/dashboard/users/${m.cedula}`}
+                              className="text-red-500 hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {m.nombre_completo}
+                            </Link>
                             {i < estudiantesAnteriores.length - 1 && ', '}
                           </span>
                         ))

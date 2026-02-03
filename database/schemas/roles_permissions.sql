@@ -138,3 +138,8 @@ GRANT ALL PRIVILEGES ON auditoria_eliminacion_usuario TO rol_coordinador;
 GRANT USAGE, SELECT ON SEQUENCE auditoria_insercion_usuarios_id_seq TO rol_coordinador;
 GRANT USAGE, SELECT ON SEQUENCE auditoria_actualizacion_usuarios_id_seq TO rol_coordinador;
 GRANT USAGE, SELECT ON SEQUENCE auditoria_eliminacion_usuario_id_seq TO rol_coordinador;
+
+-- Garantizar permisos completos sobre auditoría de eliminación de casos
+GRANT ALL PRIVILEGES ON TABLE auditoria_eliminacion_casos TO rol_coordinador;
+GRANT INSERT, SELECT ON TABLE auditoria_eliminacion_casos TO rol_profesor, rol_estudiante;
+GRANT USAGE, SELECT ON SEQUENCE auditoria_eliminacion_casos_id_seq TO rol_coordinador, rol_profesor, rol_estudiante;

@@ -296,25 +296,36 @@ export const citasService = {
 
       // Usar transacción para actualizar cita y registros en atienden de forma atómica
       return await withTransaction(async (client) => {
-        // 1. Actualizar la cita si hay cambios
+        // 0. Recolectar estado inicial para comparar
+        const getCitaInfoQuery = loadSQL('citas/get-by-id.sql');
+        const citaInfoResult = await client.query(getCitaInfoQuery, [num_cita, id_caso]);
+        if (citaInfoResult.rows.length === 0) {
+          throw new AppError("No se encontró la cita", 404);
+        }
+        const citaInfo = citaInfoResult.rows[0];
+
+        const getAtiendenQuery = loadSQL('atienden/get-usuarios-by-cita.sql');
+        const atiendenAnteriorResult = await client.query(getAtiendenQuery, [num_cita, id_caso]);
+        const cedulasAnteriores = atiendenAnteriorResult.rows.map(r => r.cedula).sort();
+        const atencioneAnteriorStr = cedulasAnteriores.join(',') || '';
+
+        // 1. Actualizar la cita si hay cambios en campos básicos
+        let updateCitaSuccess = false;
         if (params.date || params.endDate !== undefined || params.orientacion) {
-          // Establecer la variable de sesión para el trigger de auditoría
-          await client.query("SELECT set_config('app.usuario_actualiza_cita', $1, true)", [params.idUsuarioActualizo]);
+          // Desactivar trigger de auditoría para evitar duplicados, lo haremos manual
+          await client.query("SELECT set_config('app.skip_audit_trigger', 'true', true)");
 
           const updateQuery = loadSQL('citas/update.sql');
 
-          // Manejar fecha_proxima_cita: si es null explícitamente, enviar 'NULL' como string
-          // Si es undefined, enviar null para no actualizar
           let endDateParam: string | null;
           if (params.endDate === null) {
-            endDateParam = 'NULL'; // String especial para establecer como NULL
+            endDateParam = 'NULL';
           } else if (params.endDate !== undefined) {
             endDateParam = params.endDate;
           } else {
-            endDateParam = null; // No actualizar
+            endDateParam = null;
           }
 
-          // La query update.sql ya no necesita el parámetro de usuario porque se establece antes
           const citaResult = await client.query(updateQuery, [
             num_cita,
             id_caso,
@@ -323,19 +334,14 @@ export const citasService = {
             params.orientacion || null
           ]);
 
-          if (!citaResult.rows || citaResult.rows.length === 0) {
-            throw new AppError("No se pudo actualizar la cita. Verifique que la cita existe.", 404);
-          }
+          updateCitaSuccess = (citaResult.rowCount ?? 0) > 0;
         }
 
         // 2. Actualizar registros en atienden si se proporcionaron usuarios
-        if (params.usuariosAtienden !== undefined) {
-          // Obtener los usuarios actuales ANTES de eliminar (para auditoría)
-          const getAtiendenQuery = loadSQL('atienden/get-usuarios-by-cita.sql');
-          const atiendenAnteriorResult = await client.query(getAtiendenQuery, [num_cita, id_caso]);
-          const usuariosAnteriores = atiendenAnteriorResult.rows.map(r => r.nombre_completo);
-          const cedulasAnteriores = atiendenAnteriorResult.rows.map(r => r.cedula).sort();
+        let huboCambiosAtenciones = false;
+        let cedulasNuevas = cedulasAnteriores;
 
+        if (params.usuariosAtienden !== undefined) {
           // Eliminar todos los registros existentes
           const deleteQuery = loadSQL('atienden/delete-by-cita.sql');
           await client.query(deleteQuery, [num_cita, id_caso]);
@@ -343,51 +349,50 @@ export const citasService = {
           // Luego crear los nuevos registros si hay usuarios seleccionados
           if (params.usuariosAtienden.length > 0) {
             const createQuery = loadSQL('atienden/create.sql');
-
             for (const usuarioCedula of params.usuariosAtienden) {
               await client.query(createQuery, [
                 usuarioCedula,
                 num_cita,
                 id_caso,
-                null // fecha_registro se usa CURRENT_DATE por defecto
+                null
               ]);
             }
           }
 
-          // Obtener los usuarios NUEVOS (para auditoría)
-          const atiendenNuevoResult = await client.query(getAtiendenQuery, [num_cita, id_caso]);
-          const usuariosNuevos = atiendenNuevoResult.rows.map(r => r.nombre_completo);
-          const cedulasNuevas = params.usuariosAtienden.slice().sort();
+          cedulasNuevas = params.usuariosAtienden.slice().sort();
+          huboCambiosAtenciones = JSON.stringify(cedulasAnteriores) !== JSON.stringify(cedulasNuevas);
+        }
 
-          // Verificar si hubo cambios en atenciones
-          const huboCambiosAtenciones = JSON.stringify(cedulasAnteriores) !== JSON.stringify(cedulasNuevas);
+        // 3. Auditoría Manual Centralizada
+        // Verificar si hubo cambios en los campos de la cita O en las atenciones
+        const nuevaFecha = params.date ? new Date(params.date) : new Date(citaInfo.fecha_encuentro);
+        const nuevaProxima = params.endDate !== undefined
+          ? (params.endDate === null || params.endDate === 'NULL' ? null : new Date(params.endDate))
+          : (citaInfo.fecha_proxima_cita ? new Date(citaInfo.fecha_proxima_cita) : null);
+        const nuevaOrientacion = params.orientacion !== undefined ? params.orientacion : citaInfo.orientacion;
 
-          // Si hubo cambios en atenciones, insertar registro de auditoría
-          if (huboCambiosAtenciones) {
-            // Guardar solo las cédulas separadas por coma
-            const atencioneAnteriorStr = cedulasAnteriores.join(',') || '';
-            const atencioneNuevoStr = cedulasNuevas.join(',') || '';
+        const huboCambiosCita =
+          (params.date && new Date(citaInfo.fecha_encuentro).getTime() !== new Date(params.date).getTime()) ||
+          (params.endDate !== undefined && (
+            (citaInfo.fecha_proxima_cita === null && params.endDate !== null && params.endDate !== 'NULL') ||
+            (citaInfo.fecha_proxima_cita !== null && (params.endDate === null || params.endDate === 'NULL')) ||
+            (citaInfo.fecha_proxima_cita !== null && params.endDate !== null && params.endDate !== 'NULL' && new Date(citaInfo.fecha_proxima_cita).getTime() !== new Date(params.endDate).getTime())
+          )) ||
+          (params.orientacion !== undefined && citaInfo.orientacion !== params.orientacion);
 
-            // Obtener info actual de la cita para el registro de auditoría
-            const getCitaInfoQuery = loadSQL('citas/get-by-id.sql');
-            const citaInfoResult = await client.query(getCitaInfoQuery, [num_cita, id_caso]);
+        if (huboCambiosCita || huboCambiosAtenciones) {
+          const atencioneNuevoStr = cedulasNuevas.join(',') || '';
 
-            if (citaInfoResult.rows.length > 0) {
-              const citaInfo = citaInfoResult.rows[0];
-
-              // Insertar registro de auditoría para cambios en atenciones
-              const insertAuditQuery = loadSQL('auditoria-actualizacion-citas/create.sql');
-              await client.query(insertAuditQuery, [
-                num_cita, id_caso,
-                citaInfo.fecha_encuentro, citaInfo.fecha_proxima_cita, citaInfo.orientacion,
-                params.date ? new Date(params.date) : citaInfo.fecha_encuentro,
-                params.endDate !== undefined ? (params.endDate === null || params.endDate === 'NULL' ? null : new Date(params.endDate)) : citaInfo.fecha_proxima_cita,
-                params.orientacion || citaInfo.orientacion,
-                atencioneAnteriorStr, atencioneNuevoStr,
-                params.idUsuarioActualizo
-              ]);
-            }
-          }
+          const insertAuditQuery = loadSQL('auditoria-actualizacion-citas/create.sql');
+          await client.query(insertAuditQuery, [
+            num_cita, id_caso,
+            citaInfo.fecha_encuentro, citaInfo.fecha_proxima_cita, citaInfo.orientacion,
+            nuevaFecha,
+            nuevaProxima,
+            nuevaOrientacion,
+            atencioneAnteriorStr, atencioneNuevoStr,
+            params.idUsuarioActualizo
+          ]);
         }
 
         // 3. Sincronización bidireccional: Si la cita está registrada como acción, actualizarla también

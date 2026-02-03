@@ -224,7 +224,12 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
                 <div className="space-y-2">
                   {accion.ejecutores.map((ejecutor, index) => (
                     <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                      <p className="text-sm text-gray-900 font-medium">{ejecutor.nombre_completo}</p>
+                      <Link
+                        href={`/dashboard/users/${ejecutor.id_usuario}`}
+                        className="text-sm text-primary hover:underline font-medium"
+                      >
+                        {ejecutor.nombre_completo}
+                      </Link>
                     </div>
                   ))}
                 </div>

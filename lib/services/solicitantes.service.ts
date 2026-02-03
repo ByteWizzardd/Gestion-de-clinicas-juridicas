@@ -622,6 +622,17 @@ export const solicitantesService = {
       datosAnteriores.aseo = caracteristicasMap[6] || null;
       datosAnteriores.eliminacion_aguas_negras = caracteristicasMap[7] || null;
 
+      // Obtener artefactos domésticos anteriores (tipo 8)
+      const artefactosAnterioresResult = await client.query(`
+        SELECT c.descripcion
+        FROM asignadas_a a
+        JOIN caracteristicas c ON a.id_tipo_caracteristica = c.id_tipo_caracteristica AND a.num_caracteristica = c.num_caracteristica
+        WHERE a.cedula_solicitante = $1 AND c.id_tipo_caracteristica = 8
+        ORDER BY c.descripcion
+      `, [cedulaOriginal]);
+      const artefactosAnteriores = artefactosAnterioresResult.rows.map(r => r.descripcion);
+      datosAnteriores.artefactos_domesticos = artefactosAnteriores.join(', ') || null;
+
       // 1. Preparar datos básicos
       // Nota: No permitimos cambiar la cédula en la edición por ahora
       const cedula = cedulaOriginal;
@@ -826,6 +837,8 @@ export const solicitantesService = {
           agua_potable_anterior, agua_potable_nuevo,
           eliminacion_aguas_negras_anterior, eliminacion_aguas_negras_nuevo,
           aseo_anterior, aseo_nuevo,
+          -- Artefactos domésticos
+          artefactos_domesticos_anteriores, artefactos_domesticos_nuevos,
           -- Meta
           id_usuario_actualizo
         ) VALUES (
@@ -852,8 +865,10 @@ export const solicitantesService = {
           $72, $73,
           $74, $75,
           $76, $77,
+          -- Artefactos domésticos
+          $78, $79,
           -- Meta
-          $78
+          $80
         )
       `, [
         cedula,
@@ -895,6 +910,9 @@ export const solicitantesService = {
         datosAnteriores.agua_potable, data.aguaPotable,
         datosAnteriores.eliminacion_aguas_negras, data.eliminacionAguasN,
         datosAnteriores.aseo, data.aseo,
+        // Artefactos domésticos
+        datosAnteriores.artefactos_domesticos,
+        data.artefactosDomesticos ? data.artefactosDomesticos.sort().join(', ') : null,
         // Meta
         usuarioActualizo
       ]);

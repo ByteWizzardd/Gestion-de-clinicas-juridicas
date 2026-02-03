@@ -5,9 +5,9 @@
 -- $3 = fecha_encuentro_anterior (DATE)
 -- $4 = fecha_proxima_cita_anterior (DATE)
 -- $5 = orientacion_anterior (TEXT)
--- $6 = fecha_encuentro_nueva (DATE)
--- $7 = fecha_proxima_cita_nueva (DATE)
--- $8 = orientacion_nueva (TEXT)
+-- $6 = fecha_encuentro_nuevo (DATE)
+-- $7 = fecha_proxima_cita_nuevo (DATE)
+-- $8 = orientacion_nuevo (TEXT)
 -- $9 = atenciones_anterior (TEXT)
 -- $10 = atenciones_nuevo (TEXT)
 -- $11 = id_usuario_actualizo (VARCHAR)
@@ -17,9 +17,9 @@ INSERT INTO auditoria_actualizacion_citas (
     fecha_encuentro_anterior, 
     fecha_proxima_cita_anterior, 
     orientacion_anterior,
-    fecha_encuentro_nueva, 
-    fecha_proxima_cita_nueva, 
-    orientacion_nueva,
+    fecha_encuentro_nuevo, 
+    fecha_proxima_cita_nuevo, 
+    orientacion_nuevo,
     atenciones_anterior, 
     atenciones_nuevo,
     id_usuario_actualizo, 

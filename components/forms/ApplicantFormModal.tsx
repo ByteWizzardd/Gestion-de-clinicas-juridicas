@@ -2278,7 +2278,7 @@ export default function ApplicantFormModal({
           placeholder="Ingrese correo electrónico"
           error={errors.correoElectronico}
           required
-          disabled={lockedFields.size > 0}
+          disabled={lockedFields.has('correoElectronico')}
         />
       </div>
       <div className="col-span-1">
