@@ -748,6 +748,28 @@ export const usuariosQueries = {
     const query = loadSQL('usuarios/update-contact-info.sql');
     await pool.query(query, [cedula, nombres, apellidos, correo, telefono, cedulaActor]);
   },
+
+  /**
+   * Deshabilita automáticamente estudiantes y profesores
+   * de semestres que ya finalizaron (fecha_fin < fecha actual)
+   */
+  disableFinishedTermUsers: async (): Promise<{
+    estudiantes: number;
+    profesores: number;
+  }> => {
+    // Deshabilitar estudiantes
+    const estudiantesQuery = loadSQL('usuarios/disable-students-finished-term.sql');
+    const estudiantesResult = await pool.query(estudiantesQuery);
+
+    // Deshabilitar profesores
+    const profesoresQuery = loadSQL('usuarios/disable-professors-finished-term.sql');
+    const profesoresResult = await pool.query(profesoresQuery);
+
+    return {
+      estudiantes: estudiantesResult.rowCount || 0,
+      profesores: profesoresResult.rowCount || 0,
+    };
+  },
 };
 
 
