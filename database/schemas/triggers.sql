@@ -73,10 +73,6 @@ DECLARE
 BEGIN
     BEGIN
         v_usuario := current_setting('app.usuario_actualiza_accion', true);
-        -- Convertir cadena vacía a NULL
-        IF v_usuario = '' THEN
-            v_usuario := NULL;
-        END IF;
     EXCEPTION
         WHEN OTHERS THEN
             v_usuario := NULL;
@@ -1373,7 +1369,7 @@ $function$
 CREATE OR REPLACE FUNCTION public.trigger_auditoria_eliminacion_ambito_legal()
  RETURNS trigger
  LANGUAGE plpgsql
-AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_ambitos_legales (id_materia, num_categoria, num_subcategoria, num_ambito_legal, nombre_ambito_legal, habilitado, id_usuario_elimino, motivo) VALUES (OLD.id_materia, OLD.num_categoria, OLD.num_subcategoria, OLD.num_ambito_legal, OLD.nombre_ambito_legal, OLD.habilitado, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
+AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_ambitos_legales (id_materia, num_categoria, num_subcategoria, num_ambito_legal, nombre_ambito_legal, id_usuario_elimino, motivo) VALUES (OLD.id_materia, OLD.num_categoria, OLD.num_subcategoria, OLD.num_ambito_legal, OLD.nombre_ambito_legal, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
 ;
 
 -- Función: trigger_auditoria_eliminacion_beneficiario
@@ -1391,11 +1387,9 @@ BEGIN
     END;
     
     INSERT INTO auditoria_eliminacion_beneficiarios (
-        num_beneficiario, cedula, nombres, apellidos, id_caso, id_usuario_elimino,
-        fecha_nacimiento, sexo, tipo_beneficiario, parentesco
+        num_beneficiario, id_caso, nombres, apellidos, cedula, id_usuario_elimino, motivo
     ) VALUES (
-        OLD.num_beneficiario, OLD.cedula, OLD.nombres, OLD.apellidos, OLD.id_caso, v_usuario,
-        OLD.fecha_nac, OLD.sexo, OLD.tipo_beneficiario, OLD.parentesco
+        OLD.num_beneficiario, OLD.id_caso, OLD.nombres, OLD.apellidos, OLD.cedula, v_usuario, current_setting('app.motivo_eliminacion_beneficiario', true)
     );
     
     RETURN OLD;
@@ -1407,21 +1401,21 @@ $function$
 CREATE OR REPLACE FUNCTION public.trigger_auditoria_eliminacion_caracteristica()
  RETURNS trigger
  LANGUAGE plpgsql
-AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_caracteristicas (id_tipo_caracteristica, num_caracteristica, descripcion, habilitado, id_usuario_elimino, motivo) VALUES (OLD.id_tipo_caracteristica, OLD.num_caracteristica, OLD.descripcion, OLD.habilitado, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
+AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_caracteristicas (id_tipo_caracteristica, num_caracteristica, descripcion, id_usuario_elimino, motivo) VALUES (OLD.id_tipo_caracteristica, OLD.num_caracteristica, OLD.descripcion, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
 ;
 
 -- Función: trigger_auditoria_eliminacion_caso
 CREATE OR REPLACE FUNCTION public.trigger_auditoria_eliminacion_caso()
  RETURNS trigger
  LANGUAGE plpgsql
-AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN BEGIN v_usuario := current_setting('app.usuario_elimina_caso', true); v_motivo := current_setting('app.motivo_eliminacion_caso', true); EXCEPTION WHEN OTHERS THEN v_usuario := NULL; v_motivo := NULL; END; IF v_motivo IS NULL OR v_motivo = '' THEN v_motivo := 'Sin motivo especificado'; END IF; INSERT INTO auditoria_eliminacion_casos (caso_eliminado, fecha_solicitud, fecha_inicio_caso, fecha_fin_caso, tramite, observaciones, id_nucleo, cedula_solicitante, id_materia, num_categoria, num_subcategoria, num_ambito_legal, eliminado_por, motivo) VALUES (OLD.id_caso, OLD.fecha_solicitud, OLD.fecha_inicio_caso, OLD.fecha_fin_caso, OLD.tramite, OLD.observaciones, OLD.id_nucleo, OLD.cedula, OLD.id_materia, OLD.num_categoria, OLD.num_subcategoria, OLD.num_ambito_legal, v_usuario, v_motivo); RETURN OLD; END; $function$
+AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN BEGIN v_usuario := current_setting('app.usuario_elimina_caso', true); v_motivo := current_setting('app.motivo_eliminacion_caso', true); EXCEPTION WHEN OTHERS THEN v_usuario := NULL; v_motivo := NULL; END; IF v_motivo IS NULL OR v_motivo = '' THEN v_motivo := 'Sin motivo especificado'; END IF; INSERT INTO auditoria_eliminacion_casos (id_caso, cedula_solicitante, tramite, fecha_solicitud, id_usuario_elimino, motivo) VALUES (OLD.id_caso, OLD.cedula, OLD.tramite, OLD.fecha_solicitud, v_usuario, v_motivo); RETURN OLD; END; $function$
 ;
 
 -- Función: trigger_auditoria_eliminacion_categoria
 CREATE OR REPLACE FUNCTION public.trigger_auditoria_eliminacion_categoria()
  RETURNS trigger
  LANGUAGE plpgsql
-AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_categorias (id_materia, num_categoria, nombre_categoria, habilitado, id_usuario_elimino, motivo) VALUES (OLD.id_materia, OLD.num_categoria, OLD.nombre_categoria, OLD.habilitado, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
+AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_categorias (id_materia, num_categoria, nombre_categoria, id_usuario_elimino, motivo) VALUES (OLD.id_materia, OLD.num_categoria, OLD.nombre_categoria, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
 ;
 
 -- Función: trigger_auditoria_eliminacion_cita
@@ -1475,63 +1469,63 @@ $function$
 CREATE OR REPLACE FUNCTION public.trigger_auditoria_eliminacion_condicion_actividad()
  RETURNS trigger
  LANGUAGE plpgsql
-AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_condiciones_actividad (id_actividad, nombre_actividad, habilitado, id_usuario_elimino, motivo) VALUES (OLD.id_actividad, OLD.nombre_actividad, OLD.habilitado, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
+AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_condiciones_actividad (id_actividad, nombre_actividad, id_usuario_elimino, motivo) VALUES (OLD.id_actividad, OLD.nombre_actividad, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
 ;
 
 -- Función: trigger_auditoria_eliminacion_condicion_trabajo
 CREATE OR REPLACE FUNCTION public.trigger_auditoria_eliminacion_condicion_trabajo()
  RETURNS trigger
  LANGUAGE plpgsql
-AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_condiciones_trabajo (id_trabajo, nombre_trabajo, habilitado, id_usuario_elimino, motivo) VALUES (OLD.id_trabajo, OLD.nombre_trabajo, OLD.habilitado, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
+AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_condiciones_trabajo (id_trabajo, nombre_trabajo, id_usuario_elimino, motivo) VALUES (OLD.id_trabajo, OLD.nombre_trabajo, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
 ;
 
 -- Función: trigger_auditoria_eliminacion_estado
 CREATE OR REPLACE FUNCTION public.trigger_auditoria_eliminacion_estado()
  RETURNS trigger
  LANGUAGE plpgsql
-AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_estados (id_estado, nombre_estado, habilitado, id_usuario_elimino, motivo) VALUES (OLD.id_estado, OLD.nombre_estado, OLD.habilitado, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
+AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_estados (id_estado, nombre_estado, id_usuario_elimino, motivo) VALUES (OLD.id_estado, OLD.nombre_estado, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
 ;
 
 -- Función: trigger_auditoria_eliminacion_materia
 CREATE OR REPLACE FUNCTION public.trigger_auditoria_eliminacion_materia()
  RETURNS trigger
  LANGUAGE plpgsql
-AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_materias (id_materia, nombre_materia, habilitado, id_usuario_elimino, motivo) VALUES (OLD.id_materia, OLD.nombre_materia, OLD.habilitado, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
+AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_materias (id_materia, nombre_materia, id_usuario_elimino, motivo) VALUES (OLD.id_materia, OLD.nombre_materia, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
 ;
 
 -- Función: trigger_auditoria_eliminacion_municipio
 CREATE OR REPLACE FUNCTION public.trigger_auditoria_eliminacion_municipio()
  RETURNS trigger
  LANGUAGE plpgsql
-AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_municipios (id_estado, num_municipio, nombre_municipio, habilitado, id_usuario_elimino, motivo) VALUES (OLD.id_estado, OLD.num_municipio, OLD.nombre_municipio, OLD.habilitado, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
+AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_municipios (id_estado, num_municipio, nombre_municipio, id_usuario_elimino, motivo) VALUES (OLD.id_estado, OLD.num_municipio, OLD.nombre_municipio, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
 ;
 
 -- Función: trigger_auditoria_eliminacion_nivel_educativo
 CREATE OR REPLACE FUNCTION public.trigger_auditoria_eliminacion_nivel_educativo()
  RETURNS trigger
  LANGUAGE plpgsql
-AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_niveles_educativos (id_nivel_educativo, descripcion, habilitado, id_usuario_elimino, motivo) VALUES (OLD.id_nivel_educativo, OLD.descripcion, OLD.habilitado, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
+AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_niveles_educativos (id_nivel_educativo, descripcion, id_usuario_elimino, motivo) VALUES (OLD.id_nivel_educativo, OLD.descripcion, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
 ;
 
 -- Función: trigger_auditoria_eliminacion_nucleo
 CREATE OR REPLACE FUNCTION public.trigger_auditoria_eliminacion_nucleo()
  RETURNS trigger
  LANGUAGE plpgsql
-AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_nucleos (id_nucleo, nombre_nucleo, habilitado, id_estado, num_municipio, num_parroquia, id_usuario_elimino, motivo) VALUES (OLD.id_nucleo, OLD.nombre_nucleo, OLD.habilitado, OLD.id_estado, OLD.num_municipio, OLD.num_parroquia, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
+AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_nucleos (id_nucleo, nombre_nucleo, id_estado, num_municipio, num_parroquia, id_usuario_elimino, motivo) VALUES (OLD.id_nucleo, OLD.nombre_nucleo, OLD.id_estado, OLD.num_municipio, OLD.num_parroquia, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
 ;
 
 -- Función: trigger_auditoria_eliminacion_parroquia
 CREATE OR REPLACE FUNCTION public.trigger_auditoria_eliminacion_parroquia()
  RETURNS trigger
  LANGUAGE plpgsql
-AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_parroquias (id_estado, num_municipio, num_parroquia, nombre_parroquia, habilitado, id_usuario_elimino, motivo) VALUES (OLD.id_estado, OLD.num_municipio, OLD.num_parroquia, OLD.nombre_parroquia, OLD.habilitado, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
+AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_parroquias (id_estado, num_municipio, num_parroquia, nombre_parroquia, id_usuario_elimino, motivo) VALUES (OLD.id_estado, OLD.num_municipio, OLD.num_parroquia, OLD.nombre_parroquia, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
 ;
 
 -- Función: trigger_auditoria_eliminacion_semestre
 CREATE OR REPLACE FUNCTION public.trigger_auditoria_eliminacion_semestre()
  RETURNS trigger
  LANGUAGE plpgsql
-AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_semestres (term, fecha_inicio, fecha_fin, habilitado, id_usuario_elimino, motivo) VALUES (OLD.term, OLD.fecha_inicio, OLD.fecha_fin, OLD.habilitado, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
+AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_semestres (term, fecha_inicio, fecha_fin, id_usuario_elimino, motivo) VALUES (OLD.term, OLD.fecha_inicio, OLD.fecha_fin, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
 ;
 
 -- Función: trigger_auditoria_eliminacion_solicitante
@@ -1778,14 +1772,14 @@ $function$
 CREATE OR REPLACE FUNCTION public.trigger_auditoria_eliminacion_subcategoria()
  RETURNS trigger
  LANGUAGE plpgsql
-AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_subcategorias (id_materia, num_categoria, num_subcategoria, nombre_subcategoria, habilitado, id_usuario_elimino, motivo) VALUES (OLD.id_materia, OLD.num_categoria, OLD.num_subcategoria, OLD.nombre_subcategoria, OLD.habilitado, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
+AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_subcategorias (id_materia, num_categoria, num_subcategoria, nombre_subcategoria, id_usuario_elimino, motivo) VALUES (OLD.id_materia, OLD.num_categoria, OLD.num_subcategoria, OLD.nombre_subcategoria, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
 ;
 
 -- Función: trigger_auditoria_eliminacion_tipo_caracteristica
 CREATE OR REPLACE FUNCTION public.trigger_auditoria_eliminacion_tipo_caracteristica()
  RETURNS trigger
  LANGUAGE plpgsql
-AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_tipos_caracteristicas (id_tipo, nombre_tipo_caracteristica, habilitado, id_usuario_elimino, motivo) VALUES (OLD.id_tipo, OLD.nombre_tipo_caracteristica, OLD.habilitado, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
+AS $function$ DECLARE v_usuario VARCHAR(20); v_motivo TEXT; BEGIN v_usuario := current_setting('app.usuario_elimina_catalogo', true); v_motivo := current_setting('app.motivo_eliminacion_catalogo', true); INSERT INTO auditoria_eliminacion_tipos_caracteristicas (id_tipo, nombre_tipo_caracteristica, id_usuario_elimino, motivo) VALUES (OLD.id_tipo, OLD.nombre_tipo_caracteristica, v_usuario, COALESCE(v_motivo, '')); RETURN OLD; END; $function$
 ;
 
 -- Función: trigger_auditoria_insercion_accion
@@ -2370,9 +2364,9 @@ BEGIN
     END IF;
 
     INSERT INTO auditoria_insercion_profesores (
-        cedula_profesor, tipo_profesor, id_usuario_creo, fecha_creacion
+        term, cedula_profesor, tipo_profesor, id_usuario_creo, fecha_creacion
     ) VALUES (
-        NEW.cedula_profesor, NEW.tipo_profesor, v_usuario, (NOW() AT TIME ZONE 'America/Caracas')
+        NEW.term, NEW.cedula_profesor, NEW.tipo_profesor, v_usuario, (NOW() AT TIME ZONE 'America/Caracas')
     );
     
     RETURN NEW;
@@ -2495,7 +2489,6 @@ BEGIN
         tipo_mime,
         descripcion,
         fecha_consignacion,
-        tamano_bytes,
         id_usuario_subio
     ) VALUES (
         NEW.num_soporte,
@@ -2504,7 +2497,6 @@ BEGIN
         NEW.tipo_mime,
         NEW.descripcion,
         NEW.fecha_consignacion,
-        LENGTH(NEW.documento_data), -- Calcular tamaño del archivo
         NEW.id_usuario_subio
     );
     
@@ -2598,12 +2590,11 @@ BEGIN
 
     INSERT INTO auditoria_insercion_usuarios (
         cedula, nombres, apellidos, correo_electronico, nombre_usuario,
-        telefono_celular, habilitado_sistema, tipo_usuario,
-        tipo_estudiante, tipo_profesor, id_usuario_creo
+        telefono_celular, tipo_usuario, id_usuario_creo
     ) VALUES (
         NEW.cedula, NEW.nombres, NEW.apellidos, NEW.correo_electronico,
-        NEW.nombre_usuario, NEW.telefono_celular, NEW.habilitado_sistema,
-        NEW.tipo_usuario, NULL, NULL, v_usuario
+        NEW.nombre_usuario, NEW.telefono_celular,
+        NEW.tipo_usuario, v_usuario
     );
     
     RETURN NEW;

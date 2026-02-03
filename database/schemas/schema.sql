@@ -1,3 +1,12 @@
+-- =========================================================
+-- EXTENSIONES REQUERIDAS
+-- =========================================================
+CREATE EXTENSION IF NOT EXISTS unaccent;
+
+-- =========================================================
+-- BLOQUE 1: CATÁLOGOS BASE
+-- =========================================================
+
 -- 1) ESTADOS
 CREATE TABLE estados (
     id_estado SERIAL PRIMARY KEY,
@@ -195,6 +204,51 @@ CREATE TABLE auditoria_eliminacion_tipos_caracteristicas (
 -- Tipos: tipo_vivienda, material_piso, material_paredes, material_techo, 
 --        agua_potable, aseo, eliminacion_aguas_n, artefactos_domesticos
 
+-- 5.4) CARACTERÍSTICAS (hija de tipo_caracteristicas)
+CREATE TABLE caracteristicas (
+    id_tipo_caracteristica INTEGER NOT NULL,
+    num_caracteristica INTEGER NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
+    descripcion VARCHAR(200) NOT NULL,
+    PRIMARY KEY (id_tipo_caracteristica, num_caracteristica),
+    FOREIGN KEY (id_tipo_caracteristica) REFERENCES tipo_caracteristicas(id_tipo)
+);
+
+-- 5.5) AUDITORÍA DE INSERCIÓN DE CARACTERÍSTICAS
+CREATE TABLE auditoria_insercion_caracteristicas (
+    id SERIAL PRIMARY KEY,
+    id_tipo_caracteristica INTEGER NOT NULL,
+    num_caracteristica INTEGER NOT NULL,
+    descripcion VARCHAR(200),
+    habilitado BOOLEAN,
+    id_usuario_creo VARCHAR(20),
+    fecha_creacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+);
+
+-- 5.6) AUDITORÍA DE ACTUALIZACIÓN DE CARACTERÍSTICAS
+CREATE TABLE auditoria_actualizacion_caracteristicas (
+    id SERIAL PRIMARY KEY,
+    id_tipo_caracteristica INTEGER NOT NULL,
+    num_caracteristica INTEGER NOT NULL,
+    descripcion_anterior VARCHAR(200),
+    descripcion_nuevo VARCHAR(200),
+    habilitado_anterior BOOLEAN,
+    habilitado_nuevo BOOLEAN,
+    id_usuario_actualizo VARCHAR(20),
+    fecha_actualizacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+);
+
+-- 5.7) AUDITORÍA DE ELIMINACIÓN DE CARACTERÍSTICAS
+CREATE TABLE auditoria_eliminacion_caracteristicas (
+    id SERIAL PRIMARY KEY,
+    id_tipo_caracteristica INTEGER,
+    num_caracteristica INTEGER,
+    descripcion VARCHAR(200),
+    id_usuario_elimino VARCHAR(20),
+    motivo TEXT,
+    fecha_eliminacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+);
+
 -- 6) MATERIAS
 CREATE TABLE materias (
     id_materia SERIAL PRIMARY KEY,
@@ -273,6 +327,9 @@ CREATE TABLE auditoria_actualizacion_semestres (
 CREATE TABLE auditoria_eliminacion_semestres (
     id SERIAL PRIMARY KEY,
     term VARCHAR(20),
+    fecha_inicio DATE,
+    fecha_fin DATE,
+    habilitado BOOLEAN,
     id_usuario_elimino VARCHAR(20),
     motivo TEXT,
     fecha_eliminacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
@@ -287,6 +344,7 @@ CREATE TABLE usuarios (
     nombre_usuario VARCHAR(50) NOT NULL UNIQUE,
     contrasena VARCHAR(255) NOT NULL,
     telefono_celular VARCHAR(20),
+    foto_perfil BYTEA,
     habilitado_sistema BOOLEAN NOT NULL DEFAULT TRUE,
     tipo_usuario VARCHAR(20) NOT NULL CHECK (tipo_usuario IN ('Estudiante', 'Profesor', 'Coordinador'))
 );
@@ -299,9 +357,13 @@ CREATE TABLE auditoria_insercion_usuarios (
     apellidos VARCHAR(100),
     correo_electronico VARCHAR(100),
     nombre_usuario VARCHAR(50),
+    telefono_celular VARCHAR(20),
     tipo_usuario VARCHAR(20),
-    id_usuario_registro VARCHAR(20),
-    fecha_registro TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+    tipo_estudiante VARCHAR(50),
+    tipo_profesor VARCHAR(50),
+    habilitado_sistema BOOLEAN DEFAULT TRUE,
+    id_usuario_creo VARCHAR(20),
+    fecha_creacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
 );
 
 -- 8.2) AUDITORÍA DE ACTUALIZACIÓN DE USUARIOS
@@ -426,6 +488,10 @@ CREATE TABLE auditoria_actualizacion_parroquias (
     num_parroquia INTEGER NOT NULL,
     nombre_parroquia_anterior VARCHAR(100),
     nombre_parroquia_nuevo VARCHAR(100),
+    id_estado_anterior INTEGER,
+    id_estado_nuevo INTEGER,
+    num_municipio_anterior INTEGER,
+    num_municipio_nuevo INTEGER,
     habilitado_anterior BOOLEAN,
     habilitado_nuevo BOOLEAN,
     id_usuario_actualizo VARCHAR(20),
@@ -494,6 +560,10 @@ CREATE TABLE auditoria_eliminacion_nucleos (
     id SERIAL PRIMARY KEY,
     id_nucleo INTEGER,
     nombre_nucleo VARCHAR(100),
+    habilitado BOOLEAN,
+    id_estado INTEGER,
+    num_municipio INTEGER,
+    num_parroquia INTEGER,
     id_usuario_elimino VARCHAR(20),
     motivo TEXT,
     fecha_eliminacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
@@ -542,9 +612,47 @@ CREATE TABLE auditoria_insercion_solicitantes (
     apellidos VARCHAR(100),
     fecha_nacimiento DATE,
     telefono_celular VARCHAR(20),
+    telefono_local VARCHAR(20),
     correo_electronico VARCHAR(100),
-    id_usuario_registro VARCHAR(20),
-    fecha_registro TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+    sexo VARCHAR(20),
+    nacionalidad VARCHAR(20),
+    estado_civil VARCHAR(20),
+    concubinato BOOLEAN,
+    tipo_tiempo_estudio VARCHAR(20),
+    tiempo_estudio INTEGER,
+    id_nivel_educativo INTEGER,
+    id_trabajo INTEGER,
+    id_actividad INTEGER,
+    
+    -- Dirección
+    id_estado INTEGER,
+    num_municipio INTEGER,
+    num_parroquia INTEGER,
+    direccion_habitacion VARCHAR(500),
+    
+    -- Datos socioeconómicos y vivienda
+    jefe_hogar BOOLEAN, 
+    nivel_educativo_jefe VARCHAR(100),
+    ingresos_mensuales DECIMAL(10,2),
+    cant_habitaciones INTEGER,
+    cant_banos INTEGER,
+    cant_personas INTEGER,
+    cant_trabajadores INTEGER,
+    cant_no_trabajadores INTEGER,
+    cant_ninos INTEGER,
+    cant_ninos_estudiando INTEGER,
+    tipo_tiempo_estudio_jefe VARCHAR(20),
+    tiempo_estudio_jefe INTEGER,
+    tipo_vivienda VARCHAR(100),
+    material_piso VARCHAR(100),
+    material_paredes VARCHAR(100),
+    material_techo VARCHAR(100),
+    agua_potable VARCHAR(100),
+    eliminacion_aguas_negras VARCHAR(100),
+    aseo VARCHAR(100),
+    
+    id_usuario_creo VARCHAR(20),
+    fecha_creacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
 );
 
 -- 12.2) AUDITORÍA DE ACTUALIZACIÓN DE SOLICITANTES
@@ -640,15 +748,58 @@ CREATE TABLE auditoria_actualizacion_solicitantes (
     fecha_actualizacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
 );
 
+-- 12.2.1) AUDITORÍA DE ARTEFACTOS DOMÉSTICOS (Detalle de actualización)
+CREATE TABLE auditoria_artefactos_domesticos (
+    id SERIAL PRIMARY KEY,
+    id_auditoria_solicitante INTEGER NOT NULL REFERENCES auditoria_actualizacion_solicitantes(id) ON DELETE CASCADE,
+    artefacto VARCHAR(100) NOT NULL,
+    estado VARCHAR(20) NOT NULL CHECK (estado IN ('anterior', 'nuevo', 'sin_cambio'))
+);
+
+-- 12.3) AUDITORÍA DE ELIMINACIÓN DE SOLICITANTES
 -- 12.3) AUDITORÍA DE ELIMINACIÓN DE SOLICITANTES
 CREATE TABLE auditoria_eliminacion_solicitantes (
     id SERIAL PRIMARY KEY,
-    cedula VARCHAR(20) NOT NULL,
-    nombres VARCHAR(100),
-    apellidos VARCHAR(100),
-    id_usuario_elimino VARCHAR(20),
+    solicitante_eliminado VARCHAR(20) NOT NULL,
+    nombres_solicitante_eliminado VARCHAR(100),
+    apellidos_solicitante_eliminado VARCHAR(100),
+    
+    -- Datos personales
+    fecha_nacimiento DATE,
+    telefono_local VARCHAR(20),
+    telefono_celular VARCHAR(20),
+    correo_electronico VARCHAR(100),
+    sexo VARCHAR(20),
+    nacionalidad VARCHAR(20),
+    estado_civil VARCHAR(20),
+    concubinato BOOLEAN,
+    tipo_tiempo_estudio VARCHAR(20),
+    tiempo_estudio INTEGER,
+    nivel_educativo VARCHAR(100),
+    condicion_trabajo VARCHAR(100),
+    condicion_actividad VARCHAR(100),
+    
+    -- Ubicación
+    estado VARCHAR(100),
+    municipio VARCHAR(100),
+    parroquia VARCHAR(100),
+    
+    -- Vivienda y Hogar
+    cant_habitaciones INTEGER,
+    cant_banos INTEGER,
+    caracteristicas_vivienda TEXT,
+    cant_personas INTEGER,
+    cant_trabajadores INTEGER,
+    cant_no_trabajadores INTEGER,
+    cant_ninos INTEGER,
+    cant_ninos_estudiando INTEGER,
+    jefe_hogar BOOLEAN,
+    ingresos_mensuales DECIMAL(10,2),
+    nivel_educativo_jefe VARCHAR(100),
+    
+    eliminado_por VARCHAR(20),
     motivo TEXT,
-    fecha_eliminacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+    fecha TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
 );
 
 -- 13) VIVIENDAS
@@ -698,51 +849,6 @@ CREATE TABLE familias_y_hogares (
 -- BLOQUE 4: ACADÉMICO Y LEGAL (Jerarquías - 7 Tablas)
 -- =========================================================
 
--- 15) CARACTERÍSTICAS
-CREATE TABLE caracteristicas (
-    id_tipo_caracteristica INTEGER NOT NULL,
-    num_caracteristica INTEGER NOT NULL,
-    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
-    descripcion VARCHAR(200) NOT NULL,
-    PRIMARY KEY (id_tipo_caracteristica, num_caracteristica),
-    FOREIGN KEY (id_tipo_caracteristica) REFERENCES tipo_caracteristicas(id_tipo)
-);
-
--- 15.1) AUDITORÍA DE INSERCIÓN DE CARACTERÍSTICAS
-CREATE TABLE auditoria_insercion_caracteristicas (
-    id SERIAL PRIMARY KEY,
-    id_tipo_caracteristica INTEGER NOT NULL,
-    num_caracteristica INTEGER NOT NULL,
-    descripcion VARCHAR(200),
-    habilitado BOOLEAN,
-    id_usuario_creo VARCHAR(20),
-    fecha_creacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
-);
-
--- 15.2) AUDITORÍA DE ACTUALIZACIÓN DE CARACTERÍSTICAS
-CREATE TABLE auditoria_actualizacion_caracteristicas (
-    id SERIAL PRIMARY KEY,
-    id_tipo_caracteristica INTEGER NOT NULL,
-    num_caracteristica INTEGER NOT NULL,
-    descripcion_anterior VARCHAR(200),
-    descripcion_nuevo VARCHAR(200),
-    habilitado_anterior BOOLEAN,
-    habilitado_nuevo BOOLEAN,
-    id_usuario_actualizo VARCHAR(20),
-    fecha_actualizacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
-);
-
--- 15.3) AUDITORÍA DE ELIMINACIÓN DE CARACTERÍSTICAS
-CREATE TABLE auditoria_eliminacion_caracteristicas (
-    id SERIAL PRIMARY KEY,
-    id_tipo_caracteristica INTEGER,
-    num_caracteristica INTEGER,
-    descripcion VARCHAR(200),
-    id_usuario_elimino VARCHAR(20),
-    motivo TEXT,
-    fecha_eliminacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
-);
-
 -- 16) CATEGORÍAS
 CREATE TABLE categorias (
     id_materia INTEGER NOT NULL,
@@ -771,6 +877,8 @@ CREATE TABLE auditoria_actualizacion_categorias (
     num_categoria INTEGER NOT NULL,
     nombre_categoria_anterior VARCHAR(100),
     nombre_categoria_nuevo VARCHAR(100),
+    id_materia_anterior INTEGER,
+    id_materia_nuevo INTEGER,
     habilitado_anterior BOOLEAN,
     habilitado_nuevo BOOLEAN,
     id_usuario_actualizo VARCHAR(20),
@@ -819,6 +927,10 @@ CREATE TABLE auditoria_actualizacion_subcategorias (
     num_subcategoria INTEGER NOT NULL,
     nombre_subcategoria_anterior VARCHAR(100),
     nombre_subcategoria_nuevo VARCHAR(100),
+    id_materia_anterior INTEGER,
+    id_materia_nuevo INTEGER,
+    num_categoria_anterior INTEGER,
+    num_categoria_nuevo INTEGER,
     habilitado_anterior BOOLEAN,
     habilitado_nuevo BOOLEAN,
     id_usuario_actualizo VARCHAR(20),
@@ -872,6 +984,12 @@ CREATE TABLE auditoria_actualizacion_ambitos_legales (
     num_ambito_legal INTEGER NOT NULL,
     nombre_ambito_legal_anterior VARCHAR(200),
     nombre_ambito_legal_nuevo VARCHAR(200),
+    id_materia_anterior INTEGER,
+    id_materia_nuevo INTEGER,
+    num_categoria_anterior INTEGER,
+    num_categoria_nuevo INTEGER,
+    num_subcategoria_anterior INTEGER,
+    num_subcategoria_nuevo INTEGER,
     habilitado_anterior BOOLEAN,
     habilitado_nuevo BOOLEAN,
     id_usuario_actualizo VARCHAR(20),
@@ -965,6 +1083,7 @@ CREATE TABLE casos (
     num_ambito_legal INTEGER NOT NULL,
     
     FOREIGN KEY (id_materia, num_categoria, num_subcategoria, num_ambito_legal)
+        REFERENCES ambitos_legales(id_materia, num_categoria, num_subcategoria, num_ambito_legal),
     CONSTRAINT chk_casos_inicio_post_solicitud CHECK (fecha_inicio_caso >= fecha_solicitud),
     CONSTRAINT chk_casos_fin_post_inicio CHECK (fecha_fin_caso IS NULL OR fecha_fin_caso >= fecha_inicio_caso)
 );
@@ -982,8 +1101,10 @@ CREATE TABLE auditoria_insercion_casos (
     num_categoria INTEGER,
     num_subcategoria INTEGER,
     num_ambito_legal INTEGER,
-    id_usuario_registro VARCHAR(20),
-    fecha_registro TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+    fecha_inicio_caso DATE,
+    fecha_fin_caso DATE,
+    id_usuario_creo VARCHAR(20),
+    fecha_creacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
 );
 
 -- 22.2) AUDITORÍA DE ACTUALIZACIÓN DE CASOS
@@ -992,6 +1113,8 @@ CREATE TABLE auditoria_actualizacion_casos (
     id_caso INTEGER NOT NULL,
     -- Valores anteriores
     fecha_solicitud_anterior DATE,
+    fecha_inicio_caso_anterior DATE,
+    fecha_fin_caso_anterior DATE,
     tramite_anterior VARCHAR(200),
     observaciones_anterior TEXT,
     id_nucleo_anterior INTEGER,
@@ -1002,6 +1125,8 @@ CREATE TABLE auditoria_actualizacion_casos (
     num_ambito_legal_anterior INTEGER,
     -- Valores nuevos
     fecha_solicitud_nuevo DATE,
+    fecha_inicio_caso_nuevo DATE,
+    fecha_fin_caso_nuevo DATE,
     tramite_nuevo VARCHAR(200),
     observaciones_nuevo TEXT,
     id_nucleo_nuevo INTEGER,
@@ -1018,37 +1143,51 @@ CREATE TABLE auditoria_actualizacion_casos (
 -- 22.3) AUDITORÍA DE ELIMINACIÓN DE CASOS
 CREATE TABLE auditoria_eliminacion_casos (
     id SERIAL PRIMARY KEY,
-    id_caso INTEGER NOT NULL,
+    caso_eliminado INTEGER NOT NULL,
     cedula_solicitante VARCHAR(20),
     tramite VARCHAR(200),
     fecha_solicitud DATE,
-    id_usuario_elimino VARCHAR(20),
+    fecha_inicio_caso DATE,
+    fecha_fin_caso DATE,
+    observaciones TEXT,
+    id_nucleo INTEGER,
+    id_materia INTEGER,
+    num_categoria INTEGER,
+    num_subcategoria INTEGER,
+    num_ambito_legal INTEGER,
+    eliminado_por VARCHAR(20),
     motivo TEXT,
-    fecha_eliminacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+    fecha TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
 );
 
 -- 22.4) AUDITORÍA DE INSERCIÓN/ACTUALIZACIÓN EQUIPO Y MIEMBROS
 CREATE TABLE auditoria_actualizacion_equipo (
     id SERIAL PRIMARY KEY,
     id_caso INTEGER NOT NULL,
-    id_usuario_responsable VARCHAR(20),
-    fecha_cambio TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas'),
+    id_usuario_modifico VARCHAR(20),
+    fecha_actualizacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas'),
     tipo_cambio VARCHAR(50) -- 'equipo-actualizado'
 );
 
 -- Tablas hijas para detalle de equipo
 CREATE TABLE auditoria_actualizacion_equipo_anterior (
     id SERIAL PRIMARY KEY,
-    id_auditoria INTEGER REFERENCES auditoria_actualizacion_equipo(id) ON DELETE CASCADE,
-    id_miembro VARCHAR(20),
-    rol VARCHAR(50) -- 'estudiante', 'profesor'
+    id_auditoria_actualizacion INTEGER REFERENCES auditoria_actualizacion_equipo(id) ON DELETE CASCADE,
+    cedula VARCHAR(20),
+    tipo VARCHAR(50), -- 'estudiante', 'profesor'
+    nombres VARCHAR(100),
+    apellidos VARCHAR(100),
+    term VARCHAR(20)
 );
 
 CREATE TABLE auditoria_actualizacion_equipo_nuevo (
     id SERIAL PRIMARY KEY,
-    id_auditoria INTEGER REFERENCES auditoria_actualizacion_equipo(id) ON DELETE CASCADE,
-    id_miembro VARCHAR(20),
-    rol VARCHAR(50)
+    id_auditoria_actualizacion INTEGER REFERENCES auditoria_actualizacion_equipo(id) ON DELETE CASCADE,
+    cedula VARCHAR(20),
+    tipo VARCHAR(50), -- 'estudiante', 'profesor'
+    nombres VARCHAR(100),
+    apellidos VARCHAR(100),
+    term VARCHAR(20)
 );
 
 -- 23) CITAS
@@ -1071,7 +1210,7 @@ CREATE TABLE auditoria_insercion_citas (
     fecha_encuentro DATE NOT NULL,
     fecha_proxima_cita DATE,
     orientacion TEXT,
-    id_usuario_registro VARCHAR(20),
+    id_usuario_creo VARCHAR(20),
     fecha_creacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
 );
 
@@ -1084,10 +1223,12 @@ CREATE TABLE auditoria_actualizacion_citas (
     fecha_encuentro_anterior DATE,
     fecha_proxima_cita_anterior DATE,
     orientacion_anterior TEXT,
+    atenciones_anterior TEXT,
     -- Valores nuevos (después de la actualización)
-    fecha_encuentro_nueva DATE,
-    fecha_proxima_cita_nueva DATE,
-    orientacion_nueva TEXT,
+    fecha_encuentro_nuevo DATE,
+    fecha_proxima_cita_nuevo DATE,
+    orientacion_nuevo TEXT,
+    atenciones_nuevo TEXT,
     -- Información de auditoría
     id_usuario_actualizo VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
     fecha_actualizacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
@@ -1258,8 +1399,9 @@ CREATE TABLE auditoria_insercion_soportes (
     tipo_mime VARCHAR(100),
     descripcion TEXT,
     id_usuario_subio VARCHAR(20),
+    tamano_bytes BIGINT,
     fecha_consignacion DATE NOT NULL,
-    fecha_registro TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+    fecha_creacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
 );
 
 -- 26.2) AUDITORÍA DE ELIMINACIÓN DE SOPORTES
@@ -1312,6 +1454,9 @@ CREATE TABLE auditoria_insercion_beneficiarios (
     cedula VARCHAR(20),
     nombres VARCHAR(100),
     apellidos VARCHAR(100),
+    fecha_nacimiento DATE,
+    sexo VARCHAR(20),
+    tipo_beneficiario VARCHAR(50),
     parentesco VARCHAR(50),
     id_usuario_registro VARCHAR(20),
     fecha_registro TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
@@ -1326,7 +1471,7 @@ CREATE TABLE auditoria_actualizacion_beneficiarios (
     cedula_anterior VARCHAR(20),
     nombres_anterior VARCHAR(100),
     apellidos_anterior VARCHAR(100),
-    fecha_nac_anterior DATE,
+    fecha_nacimiento_anterior DATE,
     sexo_anterior VARCHAR(20),
     tipo_beneficiario_anterior VARCHAR(50),
     parentesco_anterior VARCHAR(50),
@@ -1334,7 +1479,7 @@ CREATE TABLE auditoria_actualizacion_beneficiarios (
     cedula_nuevo VARCHAR(20),
     nombres_nuevo VARCHAR(100),
     apellidos_nuevo VARCHAR(100),
-    fecha_nac_nuevo DATE,
+    fecha_nacimiento_nuevo DATE,
     sexo_nuevo VARCHAR(20),
     tipo_beneficiario_nuevo VARCHAR(50),
     parentesco_nuevo VARCHAR(50),
@@ -1351,6 +1496,10 @@ CREATE TABLE auditoria_eliminacion_beneficiarios (
     nombres VARCHAR(100),
     apellidos VARCHAR(100),
     cedula VARCHAR(20),
+    fecha_nacimiento DATE,
+    sexo VARCHAR(20),
+    tipo_beneficiario VARCHAR(50),
+    parentesco VARCHAR(50),
     id_usuario_elimino VARCHAR(20),
     motivo TEXT,
     fecha_eliminacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
@@ -1405,7 +1554,7 @@ CREATE TABLE notificaciones (
     FOREIGN KEY (cedula_emisor) REFERENCES usuarios(cedula) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS auditoria_sesiones (
+CREATE TABLE auditoria_sesiones (
     id_sesion SERIAL PRIMARY KEY,
     cedula_usuario VARCHAR(20),
     ip_direccion VARCHAR(50),

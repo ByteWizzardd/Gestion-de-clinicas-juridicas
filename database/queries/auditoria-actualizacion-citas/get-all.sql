@@ -27,9 +27,9 @@ SELECT
         '[]'::json
     ) AS usuarios_atenciones_anterior,
     -- Valores nuevos
-    to_char(a.fecha_encuentro_nueva, 'YYYY-MM-DD') as fecha_encuentro_nueva,
-    to_char(a.fecha_proxima_cita_nueva, 'YYYY-MM-DD') as fecha_proxima_cita_nueva,
-    a.orientacion_nueva,
+    to_char(a.fecha_encuentro_nuevo, 'YYYY-MM-DD') as fecha_encuentro_nuevo,
+    to_char(a.fecha_proxima_cita_nuevo, 'YYYY-MM-DD') as fecha_proxima_cita_nuevo,
+    a.orientacion_nuevo,
     a.atenciones_nuevo,
     -- Resolver cédulas nuevas a usuarios con nombre
     COALESCE(

@@ -41,7 +41,7 @@ WITH actualizaciones_combinadas AS (
         ce.num_cambio AS id,
         ce.id_caso,
         'cambio_estatus'::TEXT AS tipo_cambio,
-        ce.fecha_registro AS fecha_actualizacion,
+        ce.fecha AS fecha_actualizacion,
 
         ce.id_usuario_cambia AS id_usuario_actualizo,
         -- Campos de actualización de caso (NULL para cambios de estatus)
