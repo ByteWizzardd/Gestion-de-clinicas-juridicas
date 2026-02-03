@@ -895,6 +895,7 @@ CREATE TABLE auditoria_eliminacion_ambitos_legales (
 CREATE TABLE coordinadores (
     id_coordinador VARCHAR(20) PRIMARY KEY,
     term VARCHAR(20) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     FOREIGN KEY (term) REFERENCES semestres(term),
     FOREIGN KEY (id_coordinador) REFERENCES usuarios(cedula)
 );
@@ -905,6 +906,7 @@ CREATE TABLE estudiantes (
     cedula_estudiante VARCHAR(20) NOT NULL,
     tipo_estudiante VARCHAR(50) NOT NULL CHECK (tipo_estudiante IN ('Voluntario', 'Inscrito', 'Egresado', 'Servicio Comunitario')),
     nrc VARCHAR(20) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (term, cedula_estudiante),
     FOREIGN KEY (term) REFERENCES semestres(term),
     FOREIGN KEY (cedula_estudiante) REFERENCES usuarios(cedula)
@@ -926,6 +928,7 @@ CREATE TABLE profesores (
     term VARCHAR(20) NOT NULL,
     cedula_profesor VARCHAR(20) NOT NULL,
     tipo_profesor VARCHAR(50) NOT NULL CHECK (tipo_profesor IN ('Voluntario', 'Asesor')),
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (term, cedula_profesor),
     FOREIGN KEY (term) REFERENCES semestres(term),
     FOREIGN KEY (cedula_profesor) REFERENCES usuarios(cedula)
@@ -1404,3 +1407,16 @@ CREATE TABLE notificaciones (
     FOREIGN KEY (cedula_receptor) REFERENCES usuarios(cedula) ON DELETE CASCADE,
     FOREIGN KEY (cedula_emisor) REFERENCES usuarios(cedula) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS auditoria_sesiones (
+    id_sesion SERIAL PRIMARY KEY,
+    cedula_usuario VARCHAR(20),
+    ip_direccion VARCHAR(50),
+    dispositivo TEXT,
+    exitoso BOOLEAN DEFAULT TRUE,
+    fecha_inicio TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas'),
+    fecha_cierre TIMESTAMP,
+    FOREIGN KEY (cedula_usuario) REFERENCES usuarios(cedula) ON DELETE SET NULL
+);
+
+

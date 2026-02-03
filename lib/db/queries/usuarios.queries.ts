@@ -161,49 +161,51 @@ export const usuariosQueries = {
       term?: string | null;
     };
     cedula_actor?: string;
-  }): Promise<void> => {
-    const client = await pool.connect();
+  }, client?: import('pg').PoolClient): Promise<void> => {
+    const shouldRelease = !client;
+    const db = client || await pool.connect();
+
     try {
-      await client.query('BEGIN');
+      if (shouldRelease) await db.query('BEGIN');
 
       // Verificar que el usuario no exista
-      const existingUser = await client.query(
+      const existingUser = await db.query(
         'SELECT 1 FROM usuarios WHERE cedula = $1',
         [data.cedula]
       );
       if (existingUser.rows.length > 0) {
-        await client.query('ROLLBACK');
+        if (shouldRelease) await db.query('ROLLBACK');
         throw new Error(`El usuario con cédula ${data.cedula} ya existe`);
       }
 
       // Verificar que el correo no esté en uso
-      const existingEmail = await client.query(
+      const existingEmail = await db.query(
         'SELECT 1 FROM usuarios WHERE correo_electronico = $1',
         [data.correo_electronico]
       );
       if (existingEmail.rows.length > 0) {
-        await client.query('ROLLBACK');
+        if (shouldRelease) await db.query('ROLLBACK');
         throw new Error(`El correo electrónico ${data.correo_electronico} ya está en uso`);
       }
 
       // Verificar que el nombre_usuario no esté en uso
-      const existingUsername = await client.query(
+      const existingUsername = await db.query(
         'SELECT 1 FROM usuarios WHERE nombre_usuario = $1',
         [data.nombre_usuario]
       );
       if (existingUsername.rows.length > 0) {
-        await client.query('ROLLBACK');
+        if (shouldRelease) await db.query('ROLLBACK');
         throw new Error(`El nombre de usuario ${data.nombre_usuario} ya está en uso`);
       }
 
       // Establecer variable de sesión para el trigger de auditoría
       if (data.cedula_actor) {
-        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [data.cedula_actor]);
+        await db.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [data.cedula_actor]);
       }
 
       // Insertar en tabla usuarios (el trigger capturará la auditoría automáticamente)
       const insertQuery = loadSQL('usuarios/create.sql');
-      await client.query(insertQuery, [
+      await db.query(insertQuery, [
         data.cedula,
         data.nombres,
         data.apellidos,
@@ -217,12 +219,12 @@ export const usuariosQueries = {
       // Insertar en la tabla correspondiente según el tipo
       if (data.tipo_usuario === 'Estudiante') {
         if (!data.estudiante?.term || !data.estudiante?.tipo_estudiante || !data.estudiante?.nrc) {
-          await client.query('ROLLBACK');
+          if (shouldRelease) await db.query('ROLLBACK');
           throw new Error('Para crear un estudiante se requiere term, tipo_estudiante y nrc');
         }
         // Usar el client de la transacción en lugar de pool.query
         const insertEstudianteQuery = loadSQL('estudiantes/create-or-update.sql');
-        await client.query(insertEstudianteQuery, [
+        await db.query(insertEstudianteQuery, [
           data.estudiante.term,
           data.cedula,
           data.estudiante.tipo_estudiante,
@@ -230,34 +232,34 @@ export const usuariosQueries = {
         ]);
       } else if (data.tipo_usuario === 'Profesor') {
         if (!data.profesor?.term || !data.profesor?.tipo_profesor) {
-          await client.query('ROLLBACK');
+          if (shouldRelease) await db.query('ROLLBACK');
           throw new Error('Para crear un profesor se requiere term y tipo_profesor');
         }
         // Usar el client de la transacción en lugar de pool.query
         const insertProfesorQuery = loadSQL('profesores/create.sql');
-        await client.query(insertProfesorQuery, [
+        await db.query(insertProfesorQuery, [
           data.cedula,
           data.profesor.term,
           data.profesor.tipo_profesor,
         ]);
       } else if (data.tipo_usuario === 'Coordinador') {
         if (!data.coordinador?.term) {
-          await client.query('ROLLBACK');
+          if (shouldRelease) await db.query('ROLLBACK');
           throw new Error('Para crear un coordinador se requiere term');
         }
         const insertCoordinadorQuery = loadSQL('coordinadores/create.sql');
-        await client.query(insertCoordinadorQuery, [
+        await db.query(insertCoordinadorQuery, [
           data.cedula,
           data.coordinador.term,
         ]);
       }
 
-      await client.query('COMMIT');
+      if (shouldRelease) await db.query('COMMIT');
     } catch (error) {
-      await client.query('ROLLBACK');
+      if (shouldRelease) await db.query('ROLLBACK');
       throw error;
     } finally {
-      client.release();
+      if (shouldRelease) db.release();
     }
   },
 
@@ -331,13 +333,15 @@ export const usuariosQueries = {
    */
   toggleHabilitado: async (
     cedula: string,
-    cedula_actor: string
+    cedula_actor: string,
+    client?: import('pg').PoolClient
   ): Promise<{
     success: boolean;
     error?: { message: string; code?: string };
   }> => {
     try {
-      await pool.query("SELECT toggle_habilitado_usuario($1, $2)", [cedula, cedula_actor]);
+      const executor = client || pool;
+      await executor.query("SELECT toggle_habilitado_usuario($1, $2)", [cedula, cedula_actor]);
       return { success: true };
     } catch (error: unknown) {
       return {
@@ -367,10 +371,12 @@ export const usuariosQueries = {
   deleteFisico: async (
     cedula_usuario: string,
     cedula_actor: string,
-    motivo: string
+    motivo: string,
+    client?: import('pg').PoolClient
   ): Promise<void> => {
     // Llama a la función que ya realiza la auditoría internamente
-    await pool.query("SELECT eliminar_usuario_fisico($1, $2, $3)", [
+    const executor = client || pool;
+    await executor.query("SELECT eliminar_usuario_fisico($1, $2, $3)", [
       cedula_usuario,
       cedula_actor,
       motivo,
@@ -503,17 +509,19 @@ export const usuariosQueries = {
     | null;
     tipo_profesor?: string | null;
     cedula_actor?: string;
-  }): Promise<void> => {
+  }, client?: import('pg').PoolClient): Promise<void> => {
     // Se espera que la cédula del usuario autenticado llegue como data.cedula_actor
     if (!data.cedula_actor) {
       throw new Error('No se recibió la cédula del usuario autenticado');
     }
-    const client = await pool.connect();
+    const shouldRelease = !client;
+    const db = client || await pool.connect();
+
     try {
-      await client.query('BEGIN');
+      if (shouldRelease) await db.query('BEGIN');
 
       // Obtener el tipo_usuario actual del usuario para determinar qué valores pasar
-      const tipoUsuarioResult = await client.query(
+      const tipoUsuarioResult = await db.query(
         'SELECT tipo_usuario FROM usuarios WHERE cedula = $1',
         [data.cedula]
       );
@@ -524,7 +532,7 @@ export const usuariosQueries = {
         ? data.tipo_usuario
         : tipoUsuarioActual;
 
-      await client.query(
+      await db.query(
         `CALL update_all_by_cedula(
             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
           )`,
@@ -549,12 +557,12 @@ export const usuariosQueries = {
           data.cedula_actor
         ]
       );
-      await client.query('COMMIT');
+      if (shouldRelease) await db.query('COMMIT');
     } catch (err) {
-      await client.query('ROLLBACK');
+      if (shouldRelease) await db.query('ROLLBACK');
       throw err;
     } finally {
-      client.release();
+      if (shouldRelease) db.release();
     }
   },
 

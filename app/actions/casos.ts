@@ -17,6 +17,7 @@ import { loadSQL } from '@/lib/db/sql-loader';
 import { AppError } from '@/lib/utils/errors';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { handleServerActionError } from '@/lib/utils/server-action-helpers';
+import { withSecureTransaction } from '@/lib/db/secure-transactions';
 import { notificarVariosUsuariosAction } from './notificaciones';
 
 export interface CreateCasoResult {
@@ -122,16 +123,20 @@ export async function createCasoAction(data: unknown): Promise<CreateCasoResult>
     }
 
     const cedulaUsuario = authResult.user.cedula;
-    const nuevoCaso = await casosService.createCaso(data, cedulaUsuario);
+    const rolUsuario = authResult.user.rol;
 
-    // Revalidar cache de la página de casos
-    revalidatePath('/dashboard/cases');
-    revalidatePath('/dashboard/notificaciones');
+    return await withSecureTransaction(rolUsuario, async (client) => {
+      const nuevoCaso = await casosService.createCaso(data, cedulaUsuario, client);
 
-    return {
-      success: true,
-      data: nuevoCaso,
-    };
+      // Revalidar cache de la página de casos
+      revalidatePath('/dashboard/cases');
+      revalidatePath('/dashboard/notificaciones');
+
+      return {
+        success: true,
+        data: nuevoCaso,
+      };
+    });
   } catch (error) {
     return handleServerActionError(error, 'createCasoAction', 'CASO_ERROR');
   }
@@ -155,16 +160,20 @@ export async function updateCasoAction(
     }
 
     const cedulaUsuario = authResult.user.cedula;
-    const casoActualizado = await casosService.updateCaso(idCaso, data, cedulaUsuario);
+    const rolUsuario = authResult.user.rol;
 
-    // Revalidar cache de la página de casos
-    revalidatePath('/dashboard/cases');
-    revalidatePath(`/dashboard/cases/${idCaso}`);
+    return await withSecureTransaction(rolUsuario, async (client) => {
+      const casoActualizado = await casosService.updateCaso(idCaso, data, cedulaUsuario, client);
 
-    return {
-      success: true,
-      data: casoActualizado,
-    };
+      // Revalidar cache de la página de casos
+      revalidatePath('/dashboard/cases');
+      revalidatePath(`/dashboard/cases/${idCaso}`);
+
+      return {
+        success: true,
+        data: casoActualizado,
+      };
+    });
   } catch (error) {
     return handleServerActionError(error, 'updateCasoAction', 'CASO_ERROR');
   }
@@ -1526,11 +1535,15 @@ export async function deleteCasoAction(
     // if (authResult.user.rol !== 'Coordinador') { ... } // Restricción eliminada
 
     // Eliminar el caso (la función maneja todas las referencias y la auditoría)
-    await casosQueries.deleteFisico(
-      idCaso,
-      authResult.user.cedula,
-      motivo.trim()
-    );
+    // Usamos una transacción segura asumiendo el rol de BD del usuario para que funcionen los permisos granulares
+    await withSecureTransaction(authResult.user.rol!, async (client) => {
+      await casosQueries.deleteFisico(
+        idCaso,
+        authResult.user!.cedula,
+        motivo.trim(),
+        client
+      );
+    });
 
     // Revalidar cache de las páginas relacionadas
     revalidatePath('/dashboard/cases');

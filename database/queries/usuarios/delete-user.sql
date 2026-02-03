@@ -59,7 +59,7 @@ BEGIN
         
         -- Actualizar referencias en soportes
         UPDATE soportes SET id_usuario_subio = NULL WHERE id_usuario_subio = p_cedula_usuario;
-        UPDATE soportes SET id_usuario_elimino = NULL WHERE id_usuario_elimino = p_cedula_usuario;
+
 
         -- Auditoría de eliminación (guardar antes de eliminar)
         INSERT INTO auditoria_eliminacion_usuario (
