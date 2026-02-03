@@ -555,14 +555,25 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
           transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
         >
           <Table
-            data={filteredUsuarios.map((u) => ({
-              cedula: u.cedula,
-              nombre_completo: `${u.nombres || ''} ${u.apellidos || ''}`.trim(),
-              nombre_usuario: u.nombre_usuario,
-              tipo_usuario: u.tipo_usuario,
-              estado: u.habilitado_sistema ? 'Habilitado' : 'Deshabilitado',
-            }))}
-            columns={["Cédula", "Nombre Completo", "Usuario", "Tipo", "Estado"]}
+            data={filteredUsuarios.map((u) => {
+              // Extraer el semestre más reciente según el tipo de usuario
+              let semestreActual = 'Sin semestre';
+              const infoField = (u as any).info_estudiante || (u as any).info_profesor || (u as any).info_coordinador;
+              if (infoField) {
+                const match = infoField.match(/(\d{4}-\d{2})/);
+                if (match) {
+                  semestreActual = match[1];
+                }
+              }
+              return {
+                cedula: u.cedula,
+                nombre_completo: `${u.nombres || ''} ${u.apellidos || ''}`.trim(),
+                tipo_usuario: u.tipo_usuario,
+                semestre: semestreActual,
+                estado: u.habilitado_sistema ? 'Habilitado' : 'Deshabilitado',
+              };
+            })}
+            columns={["Cédula", "Nombre Completo", "Tipo", "Semestre", "Estado"]}
             onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDelete}
