@@ -391,18 +391,12 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
                 <div className="relative group">
                   <button
                     onClick={() => {
-                      if (isClosed) return;
                       handleOpenStatusModal();
                     }}
-                    className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-primary-light'}`}
+                    className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer hover:bg-primary-light`}
                   >
                     <span className="text-base text-center">Cambiar Estatus</span>
                   </button>
-                  {isClosed && (
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-red-50 text-red-700 text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-[0px_4px_12px_rgba(0,0,0,0.1)] border border-red-100 font-medium tracking-wide">
-                      {tooltipText}
-                    </div>
-                  )}
                 </div>
               </>
             );

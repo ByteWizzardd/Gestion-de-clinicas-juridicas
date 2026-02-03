@@ -1522,16 +1522,8 @@ export async function deleteCasoAction(
       };
     }
 
-    // Validar que el usuario sea coordinador (solo coordinadores pueden eliminar casos)
-    if (authResult.user.rol !== 'Coordinador') {
-      return {
-        success: false,
-        error: {
-          message: 'Solo los coordinadores pueden eliminar casos permanentemente',
-          code: 'UNAUTHORIZED',
-        },
-      };
-    }
+    // Validar autenticación básica (cualquier rol puede eliminar si está autenticado)
+    // if (authResult.user.rol !== 'Coordinador') { ... } // Restricción eliminada
 
     // Eliminar el caso (la función maneja todas las referencias y la auditoría)
     await casosQueries.deleteFisico(

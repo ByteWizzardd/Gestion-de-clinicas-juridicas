@@ -102,6 +102,31 @@ const CODIGOS_PAIS = [
   { value: '+34', label: '+34' }, // España
 ];
 
+/**
+ * Extrae el código de país de un número telefónico internacional.
+ * Usa una lista de códigos conocidos ordenados por longitud (más largos primero).
+ */
+function extractCountryCode(phoneNumber: string): string {
+  // Códigos de país comunes ordenados por longitud descendente (más largos primero para evitar conflictos)
+  const knownCodes = [
+    '+1787', '+1809', '+1829', '+1849', // Puerto Rico, Rep. Dominicana
+    '+598', '+595', '+593', '+592', '+591', '+507', '+506', '+505', '+504', '+503', '+502', '+501', // Latinoamérica 3 dígitos
+    '+58', '+57', '+56', '+55', '+54', '+53', '+52', '+51', // Venezuela, Colombia, Chile, Brasil, Argentina, Cuba, México, Perú
+    '+34', '+33', '+31', '+30', // España, Francia, etc.
+    '+44', '+49', '+39', '+1', // UK, Alemania, Italia, USA/Canadá
+  ];
+
+  for (const code of knownCodes) {
+    if (phoneNumber.startsWith(code)) {
+      return code;
+    }
+  }
+
+  // Fallback: tomar los primeros 3 caracteres (+XX) si no se reconoce
+  const fallbackMatch = phoneNumber.match(/^(\+\d{1,3})/);
+  return fallbackMatch ? fallbackMatch[1] : '+58';
+}
+
 // Tipos de educación
 const TIPOS_EDUCACION = [
   { value: 'sin_nivel', label: 'Sin Nivel' },
@@ -1527,10 +1552,9 @@ export default function ApplicantFormModal({
       filteredValue = filterOnlyNumbers(value);
     } else if (field === 'telefonoCelular') {
       // Siempre asegurar que el código de país esté presente y empiece con '+'
-      const codeMatch = value.match(/^(\+\d{1,4})/);
-      const code = codeMatch ? codeMatch[1] : '+58'; // Por defecto Venezuela si no hay código
+      const code = value.startsWith('+') ? extractCountryCode(value) : '+58';
       // Permitimos el 0 temporalmente para advertir al usuario
-      const number = value.replace(code, '').replace(/\D/g, '');
+      const number = value.startsWith('+') ? value.slice(code.length).replace(/\D/g, '') : value.replace(/\D/g, '');
       // SIEMPRE CON EL GUIÓN: +CODE-NUMBER
       filteredValue = `${code}-${number}`;
     }
@@ -1556,8 +1580,7 @@ export default function ApplicantFormModal({
         code = dashMatch[1];
         number = dashMatch[2].replace(/\D/g, '');
       } else {
-        const codeMatch = phoneValue.match(/^(\+\d{1,4})/);
-        code = codeMatch ? codeMatch[1] : '';
+        code = extractCountryCode(phoneValue);
         number = phoneValue.slice(code.length).replace(/\D/g, '');
       }
 

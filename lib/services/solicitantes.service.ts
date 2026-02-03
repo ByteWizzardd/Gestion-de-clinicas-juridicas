@@ -97,13 +97,10 @@ function buildTelefonoCelular(input: {
 
   // Si ya viene en formato internacional sin guión, agregar el guión
   if (rawTelefono.startsWith("+")) {
-    const codeMatch = rawTelefono.match(/^(\+\d{1,4})/);
-    if (codeMatch) {
-      const code = codeMatch[1];
-      const number = rawTelefono.slice(code.length).replace(/\D/g, "");
-      return `${code}-${number}`;
-    }
-    return rawTelefono;
+    // Extraer el código de país usando códigos conocidos
+    const countryCode = extractCountryCode(rawTelefono);
+    const number = rawTelefono.slice(countryCode.length).replace(/\D/g, "");
+    return `${countryCode}-${number}`;
   }
 
   // Si viene solo el número, concatenar con código país (o default +58)
@@ -114,13 +111,38 @@ function buildTelefonoCelular(input: {
 }
 
 /**
- * Busca o crea un nivel educativo por su descripción
+ * Extrae el código de país de un número telefónico internacional.
+ * Usa una lista de códigos conocidos ordenados por longitud (más largos primero).
+ */
+function extractCountryCode(phoneNumber: string): string {
+  // Códigos de país comunes en Latinoamérica y otros, ordenados por longitud descendente
+  const knownCodes = [
+    '+1787', '+1809', '+1829', '+1849', // Puerto Rico, Rep. Dominicana
+    '+598', '+595', '+593', '+592', '+591', '+507', '+506', '+505', '+504', '+503', '+502', '+501', // Latinoamérica 3 dígitos
+    '+58', '+57', '+56', '+55', '+54', '+53', '+52', '+51', // Venezuela, Colombia, Chile, Brasil, Argentina, Cuba, México, Perú
+    '+34', '+33', '+31', '+30', // España, Francia, etc.
+    '+44', '+49', '+39', '+1', // UK, Alemania, Italia, USA/Canadá
+  ];
+
+  for (const code of knownCodes) {
+    if (phoneNumber.startsWith(code)) {
+      return code;
+    }
+  }
+
+  // Fallback: tomar los primeros 3 caracteres (+XX) si no se reconoce
+  const fallbackMatch = phoneNumber.match(/^(\+\d{1,3})/);
+  return fallbackMatch ? fallbackMatch[1] : '+58';
+}
+
+/**
+ * Busca un nivel educativo por su descripción
  * @param client - Cliente de base de datos
  * @param descripcion - Descripción del nivel educativo
- * @returns Nivel educativo encontrado o creado
+ * @returns Nivel educativo encontrado
+ * @throws {AppError} - Si el nivel educativo no existe en el catálogo
  */
-async function findOrCreateNivelEducativo(client: PoolClient, descripcion: string): Promise<Record<string, unknown>> {
-  // Primero intentar buscar
+async function findNivelEducativo(client: PoolClient, descripcion: string): Promise<Record<string, unknown>> {
   const findResult: QueryResult = await client.query(
     'SELECT * FROM niveles_educativos WHERE descripcion = $1 LIMIT 1',
     [descripcion]
@@ -130,10 +152,12 @@ async function findOrCreateNivelEducativo(client: PoolClient, descripcion: strin
     return findResult.rows[0] as Record<string, unknown>;
   }
 
-  // Si no existe, crearlo
-  const createNivelEducativoQuery = loadSQL('niveles-educativos/create.sql');
-  const createResult: QueryResult = await client.query(createNivelEducativoQuery, [descripcion]);
-  return createResult.rows[0] as Record<string, unknown>;
+  // Si no existe, lanzar error (los niveles educativos son un catálogo pre-definido)
+  throw new AppError(
+    `El nivel educativo "${descripcion}" no existe en el catálogo. Contacte al coordinador.`,
+    400,
+    'NIVEL_EDUCATIVO_NO_EXISTE'
+  );
 }
 
 export class SolicitantesService {
@@ -293,7 +317,7 @@ export const solicitantesService = {
       // 2. Buscar o crear nivel educativo del solicitante
       // Usar directamente la descripción del nivel educativo seleccionado
       const descripcionNivelSolicitante = data.nivelEducativoSolicitante || getNivelEducativoDescripcion(data.numeroEducativoSolicitante || '0');
-      const nivelEducativoSolicitante = await findOrCreateNivelEducativo(client, descripcionNivelSolicitante);
+      const nivelEducativoSolicitante = await findNivelEducativo(client, descripcionNivelSolicitante);
 
       // 3. Verificar si el solicitante ya existe
       const checkSolicitanteQuery = loadSQL('solicitantes/check-exists.sql');
@@ -387,7 +411,7 @@ export const solicitantesService = {
       if (data.jefeHogar === 'no' && (data.nivelEducativo || data.numeroEducativo)) {
         // Usar directamente la descripción del nivel educativo seleccionado, o calcularla desde número si existe
         const descripcionNivelJefe = data.nivelEducativo || getNivelEducativoDescripcion(data.numeroEducativo || '0');
-        nivelEducativoJefeHogar = await findOrCreateNivelEducativo(client, descripcionNivelJefe);
+        nivelEducativoJefeHogar = await findNivelEducativo(client, descripcionNivelJefe);
       }
 
       // 6. Actualizar nivel educativo del solicitante
@@ -636,7 +660,7 @@ export const solicitantesService = {
 
       // 3. Nivel educativo solicitante
       const descripcionNivelSolicitante = data.nivelEducativoSolicitante || getNivelEducativoDescripcion(data.numeroEducativoSolicitante || '0');
-      const nivelEducativoSolicitante = await findOrCreateNivelEducativo(client, descripcionNivelSolicitante);
+      const nivelEducativoSolicitante = await findNivelEducativo(client, descripcionNivelSolicitante);
 
       // 4. Actualizar datos básicos (Update Full)
       const updateFullQuery = loadSQL('solicitantes/update-full.sql');
@@ -687,7 +711,7 @@ export const solicitantesService = {
       let nivelEducativoJefeHogar = null;
       if (data.jefeHogar === 'no' && (data.nivelEducativo || data.numeroEducativo)) {
         const descripcionNivelJefe = data.nivelEducativo || getNivelEducativoDescripcion(data.numeroEducativo || '0');
-        nivelEducativoJefeHogar = await findOrCreateNivelEducativo(client, descripcionNivelJefe);
+        nivelEducativoJefeHogar = await findNivelEducativo(client, descripcionNivelJefe);
       }
 
       // 7. Familia/Hogar (Upsert)
