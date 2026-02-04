@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, ChevronUp, FileText, Calendar, User, X, Check, BookOpen, GraduationCap, Building, Briefcase, Activity, Tag, Tags, Scale, MapPin, Building2, Home, FolderTree, FolderOpen, UserCircle, Users, ArrowRight, UserX, ArrowDown } from 'lucide-react';
+import { ChevronDown, ChevronUp, FileText, Calendar, User, X, Check, BookOpen, GraduationCap, Building, Briefcase, Activity, Tag, Tags, Scale, MapPin, Building2, Home, FolderTree, FolderOpen, UserCircle, Users, ArrowRight, UserX, ArrowDown, FileBarChart } from 'lucide-react';
 import Link from 'next/link';
 import UserAvatar from '@/components/ui/UserAvatar';
 import { formatDateTime } from '@/lib/utils/date-formatter';
@@ -31,7 +31,8 @@ import type {
   AccionActualizadaAuditRecord,
   AccionEliminadaAuditRecord,
   EquipoActualizadoAuditRecord,
-  MiembroEquipoAudit
+  MiembroEquipoAudit,
+  ReporteGeneradoAuditRecord
 } from '@/types/audit';
 
 type AuditRecord = SoporteAuditRecord | SoporteCreadoAuditRecord | SoporteDescargadoAuditRecord | CitaEliminadaAuditRecord | CitaActualizadaAuditRecord | CitaCreadaAuditRecord | UsuarioEliminadoAuditRecord | UsuarioHabilitadoAuditRecord | UsuarioActualizadoCamposAuditRecord | UsuarioCreadoAuditRecord | CasoEliminadoAuditRecord | CasoActualizadoAuditRecord | CasoCreadoAuditRecord | SolicitanteEliminadoAuditRecord | SolicitanteActualizadoAuditRecord | SolicitanteCreadoAuditRecord | EstudianteInscritoAuditRecord | BeneficiarioEliminadoAuditRecord | BeneficiarioActualizadoAuditRecord | BeneficiarioInscritoAuditRecord | AccionCreadaAuditRecord | AccionActualizadaAuditRecord | AccionEliminadaAuditRecord | EquipoActualizadoAuditRecord | any;
@@ -1374,6 +1375,59 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                   r.nombres_usuario_modifico,
                   r.apellidos_usuario_modifico,
                   r.id_usuario_modifico
+                )}
+              </p>
+            </div>
+          </div>
+        );
+      }
+
+      // Reportes Generados
+      case 'reporte-generado': {
+        const r = record as ReporteGeneradoAuditRecord;
+        // Parsear el tipo de reporte a formato legible
+        const formatTipoReporte = (tipo: string) => {
+          const map: Record<string, string> = {
+            'informe-socioeconomico': 'Informe Socioeconómico',
+            'informe-resumen': 'Informe Resumen',
+            'listado-casos': 'Listado de Casos',
+            'estadisticas-globales': 'Estadísticas Globales',
+            'distribucion-tramite': 'Tipos de Caso',
+            'historial-solicitante': 'Historial de Casos',
+            'expediente-solicitante': 'Ficha Resumen del Solicitante'
+          };
+          return map[tipo] || tipo
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+        };
+        return (
+          <div className="flex items-center gap-3">
+            <FileBarChart className="w-5 h-5 text-gray-600" />
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900 flex flex-wrap items-center gap-x-2">
+                {formatTipoReporte(r.tipo_reporte)}
+                {r.cedula_solicitante && (
+                  <span className="font-normal text-gray-500 flex items-center gap-1">
+                    -
+                    <Link
+                      href={`/dashboard/applicants/${r.cedula_solicitante}`}
+                      className="text-primary hover:underline font-medium transition-colors"
+                      onClick={(e: any) => e.stopPropagation()}
+                    >
+                      {r.nombre_completo_solicitante || r.cedula_solicitante}
+                    </Link>
+                  </span>
+                )}
+              </p>
+              <p className="text-sm text-gray-600">
+                Formato: {r.formato || 'PDF'}
+                {' • Generado por: '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_genero,
+                  r.nombres_usuario_genero,
+                  r.apellidos_usuario_genero,
+                  r.id_usuario_genero
                 )}
               </p>
             </div>
@@ -4608,6 +4662,125 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           </div>
         );
       }
+      case 'reporte-generado': {
+        const r = record as ReporteGeneradoAuditRecord;
+        // Parsear el tipo de reporte a formato legible
+        const formatTipoReporte = (tipo: string) => {
+          const map: Record<string, string> = {
+            'informe-socioeconomico': 'Informe Socioeconómico',
+            'informe-resumen': 'Informe Resumen',
+            'listado-casos': 'Listado de Casos',
+            'estadisticas-globales': 'Estadísticas Globales',
+            'distribucion-tramite': 'Tipos de Caso',
+            'historial-solicitante': 'Historial de Casos',
+            'expediente-solicitante': 'Ficha Resumen del Solicitante'
+          };
+          return map[tipo] || tipo
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+        };
+        return (
+          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-1">Información del Reporte</p>
+                  <p className="text-sm text-gray-600">Tipo: {formatTipoReporte(r.tipo_reporte)}</p>
+                  <p className="text-sm text-gray-600">Formato: {r.formato || 'PDF'}</p>
+                  {/* Descripción eliminada por redundancia */}
+                  {r.cedula_solicitante && (
+                    <p className="text-sm text-gray-600">
+                      Solicitante:{' '}
+                      <Link
+                        href={`/dashboard/applicants/${r.cedula_solicitante}`}
+                        className="text-primary hover:underline font-medium transition-colors"
+                        onClick={(e: any) => e.stopPropagation()}
+                      >
+                        {r.nombre_completo_solicitante || r.cedula_solicitante}
+                      </Link>
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-1">Fecha</p>
+                  <p className="text-sm text-gray-600">{formatDateTime(r.fecha_generacion)}</p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">Filtros Aplicados</p>
+                {r.filtros_aplicados && Object.keys(r.filtros_aplicados).length > 0 ? (
+                  <div className="space-y-1">
+                    {(() => {
+                      const f = r.filtros_aplicados as Record<string, unknown>;
+                      const formatFilterLabel = (key: string): string => {
+                        const labels: Record<string, string> = {
+                          dateRange: 'Período',
+                          fechaInicio: 'Fecha Inicio',
+                          fechaFin: 'Fecha Fin',
+                          nucleo: 'Núcleo',
+                          term: 'Período Académico',
+                          solicitanteId: 'Solicitante',
+                          casoId: 'Caso',
+                          formato: 'Formato',
+                          tipoReporte: 'Tipo de Reporte',
+                          estado: 'Estado',
+                          materia: 'Materia',
+                          categoria: 'Categoría',
+                          subcategoria: 'Subcategoría'
+                        };
+                        return labels[key] || key.split(/(?=[A-Z])/).join(' ').replace(/^./, c => c.toUpperCase());
+                      };
+                      const formatFilterValue = (key: string, value: unknown): string => {
+                        if (value === null || value === undefined || value === '' || value === 'all') {
+                          return 'Todos';
+                        }
+                        if (key === 'dateRange') {
+                          const ranges: Record<string, string> = {
+                            today: 'Hoy',
+                            week: 'Última semana',
+                            month: 'Último mes',
+                            semester: 'Este semestre',
+                            year: 'Este año',
+                            all: 'Todo el tiempo'
+                          };
+                          return ranges[value as string] || String(value);
+                        }
+                        if (typeof value === 'boolean') {
+                          return value ? 'Sí' : 'No';
+                        }
+                        return String(value);
+                      };
+                      return Object.entries(f).filter(([key, v]) => v !== null && v !== undefined && v !== '' && key !== 'cantidadCasos').map(([key, value]) => (
+                        <p key={key} className="text-sm text-gray-600">
+                          <span className="font-medium">{formatFilterLabel(key)}:</span>{' '}
+                          {formatFilterValue(key, value)}
+                        </p>
+                      ));
+                    })()}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">Sin filtros específicos</p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Generado por</p>
+              <p className="text-sm text-gray-600">
+                {renderUserLink(
+                  r.nombre_completo_usuario_genero,
+                  r.nombres_usuario_genero,
+                  r.apellidos_usuario_genero,
+                  r.id_usuario_genero
+                )}
+
+              </p>
+            </div>
+          </div>
+        );
+      }
     }
   };
 
@@ -4713,6 +4886,9 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
       // Equipo actualizado
       case 'equipo-actualizado':
         return (record as EquipoActualizadoAuditRecord).fecha;
+      // Reportes
+      case 'reporte-generado':
+        return (record as ReporteGeneradoAuditRecord).fecha_generacion;
     }
   };
 

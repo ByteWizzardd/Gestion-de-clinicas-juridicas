@@ -30,7 +30,8 @@ type AuditType = 'soportes' | 'soportes-creados' | 'soportes-descargados' | 'cit
   | 'casos-eliminados' | 'casos-actualizados' | 'casos-creados'
   | 'beneficiarios-eliminados' | 'beneficiarios-actualizados' | 'beneficiarios-creados'
   | 'acciones-creadas' | 'acciones-actualizadas' | 'acciones-eliminadas'
-  | 'equipos-actualizados' | 'equipos-creados';
+  | 'equipos-actualizados' | 'equipos-creados'
+  | 'reportes-generados';
 
 interface AuditDetailClientProps {
   title: string;
@@ -128,6 +129,7 @@ export default function AuditDetailClient({
     'acciones-eliminadas': 'accion-eliminada',
     'equipos-actualizados': 'equipo-actualizado',
     'equipos-creados': 'equipo-actualizado', // Se reutiliza el tipo ya que la estructura es la misma
+    'reportes-generados': 'reporte-generado',
   };
 
   // Cargar opciones de usuarios
@@ -226,7 +228,8 @@ export default function AuditDetailClient({
           getAccionesActualizadasAuditAction,
           getAccionesEliminadasAuditAction,
           getEquiposActualizadosAuditAction,
-          getEquiposCreadosAuditAction
+          getEquiposCreadosAuditAction,
+          getReportesGeneradosAuditAction
         } = await import('@/app/actions/audit');
 
         let data: any[];
@@ -445,6 +448,9 @@ export default function AuditDetailClient({
             break;
           case 'equipos-creados':
             data = await getEquiposCreadosAuditAction(filters);
+            break;
+          case 'reportes-generados':
+            data = await getReportesGeneradosAuditAction(filters);
             break;
           default:
             throw new Error('Tipo de auditoría no válido');

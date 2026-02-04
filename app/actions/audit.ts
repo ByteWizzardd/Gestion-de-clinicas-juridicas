@@ -68,6 +68,7 @@ import { auditoriaInsercionAccionesQueries } from '@/lib/db/queries/auditoria-in
 import { auditoriaActualizacionAccionesQueries } from '@/lib/db/queries/auditoria-actualizacion-acciones.queries';
 import { auditoriaEliminacionAccionesQueries } from '@/lib/db/queries/auditoria-eliminacion-acciones.queries';
 import * as auditoriaActualizacionEquipoQueries from '@/lib/db/queries/auditoria-actualizacion-equipo.queries';
+import { auditoriaReportesQueries } from '@/lib/db/queries/auditoria-reportes.queries';
 import type { AuditFilters, AuditCounts } from '@/types/audit';
 import { loadSQL } from '@/lib/db/sql-loader';
 
@@ -123,7 +124,9 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       // Sesiones
       sesionesCount,
       // Descargas de soportes
-      soportesDescargados
+      soportesDescargados,
+      // Reportes
+      reportesGenerados
     ] = await Promise.all([
       auditoriaEliminacionSoportesQueries.getCount(),
       auditoriaInsercionSoportesQueries.getCount().catch(() => 0),
@@ -218,18 +221,41 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
           return 0;
         }
       })(),
+      // Reportes generados
+      auditoriaReportesQueries.getCount().catch(() => 0),
     ]);
 
     // Obtener últimas fechas de actividad
     const lastActivityQuery = loadSQL('audit/get-last-activities.sql');
     const { pool } = await import('@/lib/db/pool');
     const lastActivityRes = await pool.query(lastActivityQuery);
-    const lastActivityData = lastActivityRes.rows[0];
+    const rawActivityData = lastActivityRes.rows[0];
+
+    // Convertir Date objects a ISO strings para consistencia en el frontend
+    const lastActivityData: Record<string, string | null> = {};
+
+    for (const [key, value] of Object.entries(rawActivityData)) {
+      if (value instanceof Date) {
+        // HACK: 'reportes' parece venir con hora local mientras que los demás vienen con UTC (+4h).
+        // Ajustamos manualmente para que coincidan y el ordenamiento funcione.
+        if (key === 'reportes') {
+          const adjustedDate = new Date(value.getTime() + 4 * 60 * 60 * 1000);
+          lastActivityData[key] = adjustedDate.toISOString();
+        } else {
+          lastActivityData[key] = value.toISOString();
+        }
+      } else if (typeof value === 'string') {
+        lastActivityData[key] = value;
+      } else {
+        lastActivityData[key] = value ? String(value) : null;
+      }
+    }
 
     return {
       soportes: soportesEliminados,
       soportesCreados: soportesCreados || 0,
       soportesDescargados: soportesDescargados || 0,
+      reportesGenerados: reportesGenerados || 0,
       citasEliminadas,
       citasActualizadas,
       citasCreadas: citasCreadas || 0,
@@ -303,6 +329,7 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       equiposActualizados: equiposActualizados || 0,
       // Sesiones
       sesiones: sesionesCount || 0,
+
       // Últimas actividades
       lastActivities: lastActivityData
     };
@@ -2380,5 +2407,40 @@ export async function getDescargasSoportesAuditAction(filters?: AuditFilters & {
   } catch (error) {
     console.error('Error obteniendo auditoría de descargas de soportes:', error);
     throw new Error('Error al obtener auditoría de descargas de soportes');
+  }
+}
+
+/**
+ * Obtiene reportes generados con filtros
+ */
+export async function getReportesGeneradosAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+
+  try {
+    const records = await auditoriaReportesQueries.getAll({
+      fechaInicio: filters?.fechaInicio,
+      fechaFin: filters?.fechaFin,
+      idUsuario: filters?.idUsuario,
+      tipoReporte: filters?.tipoReporte,
+      orden: filters?.orden,
+    });
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_generacion,
+      usuario_accion: r.id_usuario_genero,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_genero || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de reportes generados:', error);
+    throw new Error('Error al obtener auditoría de reportes generados');
   }
 }

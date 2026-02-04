@@ -81,7 +81,8 @@ GRANT INSERT ON TABLE
     auditoria_actualizacion_acciones, auditoria_actualizacion_acciones_ejecutores,
     auditoria_eliminacion_acciones, auditoria_eliminacion_acciones_ejecutores,
     auditoria_insercion_soportes, auditoria_eliminacion_soportes, auditoria_descarga_soportes,
-    auditoria_insercion_beneficiarios, auditoria_actualizacion_beneficiarios, auditoria_eliminacion_beneficiarios
+    auditoria_insercion_beneficiarios, auditoria_actualizacion_beneficiarios, auditoria_eliminacion_beneficiarios,
+    auditoria_reportes
 TO rol_coordinador, rol_profesor, rol_estudiante;
 
 GRANT SELECT ON TABLE 
@@ -109,7 +110,8 @@ GRANT SELECT ON TABLE
     auditoria_actualizacion_acciones, auditoria_actualizacion_acciones_ejecutores,
     auditoria_eliminacion_acciones, auditoria_eliminacion_acciones_ejecutores,
     auditoria_insercion_soportes, auditoria_eliminacion_soportes, auditoria_descarga_soportes,
-    auditoria_insercion_beneficiarios, auditoria_actualizacion_beneficiarios, auditoria_eliminacion_beneficiarios
+    auditoria_insercion_beneficiarios, auditoria_actualizacion_beneficiarios, auditoria_eliminacion_beneficiarios,
+    auditoria_reportes
 TO rol_coordinador;
 
 -- Accesos generales

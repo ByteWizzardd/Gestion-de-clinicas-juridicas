@@ -24,8 +24,10 @@ import {
     getDistributionByNucleo,
     getTopCases,
     getDistributionByStatus,
-    getDistributionByTramite
+    getDistributionByTramite,
+    registrarAuditoriaReporteAction
 } from '@/app/actions/reports';
+import { TIPOS_REPORTE, DESCRIPCIONES_REPORTE } from '@/lib/constants/reports';
 
 export default function ReportsPage() {
 
@@ -289,6 +291,20 @@ export default function ReportsPage() {
                         // 2. Generar ZIP
                         const { generateHistorialSolicitanteZIP } = await import('@/lib/utils/case-history-pdf-generator');
                         await generateHistorialSolicitanteZIP(result.data as CasoHistorialData[], selectedSolicitante.nombre_completo || `${selectedSolicitante.nombres} ${selectedSolicitante.apellidos}`);
+
+                        // 3. Registrar auditoría
+                        await registrarAuditoriaReporteAction({
+                            tipoReporte: TIPOS_REPORTE.HISTORIAL_SOLICITANTE,
+                            descripcion: DESCRIPCIONES_REPORTE[TIPOS_REPORTE.HISTORIAL_SOLICITANTE],
+                            filtrosAplicados: {
+                                cedulaSolicitante: selectedSolicitante.cedula,
+                                nombreSolicitante: selectedSolicitante.nombre_completo,
+                                fechaInicio,
+                                fechaFin,
+                            },
+                            formato: 'ZIP',
+                            cedulaSolicitante: selectedSolicitante.cedula
+                        });
                     } else {
                         if (result.success && (!result.data || result.data.length === 0)) {
                             alert('No se encontraron casos para el solicitante en el rango de fechas seleccionado.');
@@ -320,6 +336,20 @@ export default function ReportsPage() {
                             historialResult.data as CasoHistorialData[],
                             selectedSolicitante.nombre_completo || `${selectedSolicitante.nombres} ${selectedSolicitante.apellidos}`
                         );
+
+                        // 4. Registrar auditoría
+                        await registrarAuditoriaReporteAction({
+                            tipoReporte: TIPOS_REPORTE.EXPEDIENTE_SOLICITANTE,
+                            descripcion: DESCRIPCIONES_REPORTE[TIPOS_REPORTE.EXPEDIENTE_SOLICITANTE],
+                            filtrosAplicados: {
+                                cedulaSolicitante: selectedSolicitante.cedula,
+                                nombreSolicitante: selectedSolicitante.nombre_completo,
+                                fechaInicio,
+                                fechaFin,
+                            },
+                            formato: 'ZIP',
+                            cedulaSolicitante: selectedSolicitante.cedula
+                        });
                     } else {
                         const errorMsg = fichaResult.error || historialResult.error || 'Error desconocido al obtener datos';
                         alert('Error al generar el expediente: ' + errorMsg);
@@ -366,6 +396,18 @@ export default function ReportsPage() {
                                 term
                             );
                         }
+
+                        // Registrar auditoría
+                        await registrarAuditoriaReporteAction({
+                            tipoReporte: TIPOS_REPORTE.INFORME_RESUMEN,
+                            descripcion: DESCRIPCIONES_REPORTE[TIPOS_REPORTE.INFORME_RESUMEN],
+                            filtrosAplicados: {
+                                fechaInicio,
+                                fechaFin,
+                                semestre: term
+                            },
+                            formato: formatoReporte === 'word' ? 'DOCX' : 'PDF'
+                        });
                     } else {
                         alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
                     }
@@ -408,6 +450,18 @@ export default function ReportsPage() {
                                 term
                             );
                         }
+
+                        // Registrar auditoría
+                        await registrarAuditoriaReporteAction({
+                            tipoReporte: TIPOS_REPORTE.DISTRIBUCION_ESTATUS,
+                            descripcion: DESCRIPCIONES_REPORTE[TIPOS_REPORTE.DISTRIBUCION_ESTATUS],
+                            filtrosAplicados: {
+                                fechaInicio,
+                                fechaFin,
+                                semestre: term
+                            },
+                            formato: formatoReporte === 'word' ? 'DOCX' : 'PDF'
+                        });
                     } else {
                         alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
                     }
@@ -440,6 +494,18 @@ export default function ReportsPage() {
                                 term
                             );
                         }
+
+                        // Registrar auditoría
+                        await registrarAuditoriaReporteAction({
+                            tipoReporte: TIPOS_REPORTE.INFORME_SOCIOECONOMICO,
+                            descripcion: DESCRIPCIONES_REPORTE[TIPOS_REPORTE.INFORME_SOCIOECONOMICO],
+                            filtrosAplicados: {
+                                fechaInicio,
+                                fechaFin,
+                                semestre: term
+                            },
+                            formato: formatoReporte === 'word' ? 'DOCX' : 'PDF'
+                        });
                     } else {
                         alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
                     }
@@ -482,6 +548,18 @@ export default function ReportsPage() {
                                 term
                             );
                         }
+
+                        // Registrar auditoría - Tipos de Caso
+                        await registrarAuditoriaReporteAction({
+                            tipoReporte: TIPOS_REPORTE.DISTRIBUCION_TRAMITE,
+                            descripcion: 'Tipos de Caso',
+                            filtrosAplicados: {
+                                fechaInicio,
+                                fechaFin,
+                                semestre: term
+                            },
+                            formato: formatoReporte === 'word' ? 'DOCX' : 'PDF'
+                        });
                     } else {
                         alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
                     }

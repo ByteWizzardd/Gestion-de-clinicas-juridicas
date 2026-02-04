@@ -1,10 +1,12 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { casosQueries } from '@/lib/db/queries/casos.queries';
 import { solicitantesQueries } from '@/lib/db/queries/solicitantes.queries';
 import { estudiantesQueries } from '@/lib/db/queries/estudiantes.queries';
 import { profesoresQueries } from '@/lib/db/queries/profesores.queries';
 import { beneficiariosQueries } from '@/lib/db/queries/beneficiarios.queries';
+import { auditoriaReportesQueries } from '@/lib/db/queries/auditoria-reportes.queries';
 import { pool } from '@/lib/db/pool';
 import {
   mapCaseLoadTrendData,
@@ -12,61 +14,18 @@ import {
   mapStatusDistributionData,
   mapTopCasesData,
 } from '@/lib/utils/reports-data-mapper';
-import { requireAuthInServerAction } from '@/lib/utils/server-auth';
+import { requireAuthInServerAction, requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { SolicitantesService } from '@/lib/services/solicitantes.service';
 import { casosService } from '@/lib/services/casos.service';
 import { resolveDateRange, handleReportError } from '@/lib/utils/reports-helpers';
+import type {
+  CasosGroupedData,
+  EstatusGroupedData,
+  BeneficiariosGroupedData,
+  SocioeconomicoData
+} from '@/types/reports';
 
-export interface CasosGroupedData {
-  id_materia: number;
-  num_categoria: number;
-  num_subcategoria: number;
-  num_ambito_legal: number;
-  nombre_materia: string;
-  nombre_categoria: string;
-  nombre_subcategoria: string;
-  nombre_ambito_legal: string;
-  cantidad_casos: number;
-}
 
-export interface EstatusGroupedData {
-  nombre_estatus: string;
-  cantidad_casos: number;
-}
-
-export interface BeneficiariosGroupedData {
-  tipo_beneficiario: string;
-  id_materia: number;
-  num_categoria: number;
-  num_subcategoria: number;
-  nombre_materia: string;
-  nombre_categoria: string;
-  nombre_subcategoria: string;
-  cantidad_beneficiarios: number;
-}
-
-export interface SocioeconomicoData {
-  distribucionPorTipoVivienda: Array<{ tipo_vivienda: string; cantidad_solicitantes: number }>;
-  distribucionPorGenero: Array<{ genero: string; cantidad_solicitantes: number }>;
-  distribucionPorEdad: Array<{ rango_edad: string; cantidad_solicitantes: number }>;
-  distribucionPorEstadoCivil: Array<{ estado_civil: string; cantidad_solicitantes: number }>;
-  distribucionPorNivelEducativo: Array<{ nivel_educativo: string; cantidad_solicitantes: number }>;
-  distribucionLaboralFusionada: Array<{ categoria: string; cantidad_solicitantes: number }>;
-  distribucionPorCondicionTrabajo: Array<{ condicion_trabajo: string; cantidad_solicitantes: number }>;
-  distribucionPorCondicionActividad: Array<{ condicion_actividad: string; cantidad_solicitantes: number }>;
-  distribucionPorIngresos: Array<{ rango_ingresos: string; cantidad_solicitantes: number }>;
-  distribucionPorTamanoHogar: Array<{ tamano_hogar: string; cantidad_solicitantes: number }>;
-  distribucionPorTrabajadoresHogar: Array<{ trabajadores_hogar: string; cantidad_solicitantes: number }>;
-  distribucionPorDependientes: Array<{ cantidad_dependientes: string; cantidad_solicitantes: number }>;
-  distribucionPorNinosHogar: Array<{ ninos_hogar: string; cantidad_solicitantes: number }>;
-  distribucionPorHabitaciones: Array<{ cant_habitaciones: string; cantidad_solicitantes: number }>;
-  distribucionPorBanos: Array<{ cant_banos: string; cantidad_solicitantes: number }>;
-  distribucionPorCaracteristicasVivienda: Array<{
-    nombre_tipo_caracteristica: string;
-    caracteristica: string;
-    cantidad_solicitantes: number
-  }>;
-}
 
 /**
  * Obtiene distribución de casos por Tipo de Trámite (Ámbito Legal)
@@ -753,9 +712,6 @@ export async function getHistorialCasosBySolicitante(
       return { success: false, error: authResult.error };
     }
 
-    // Resolver fechas (aunque para este específico podríamos querer usar null si están vacías, le pasamos las fechas tal cual)
-    // El SQL ya maneja NULLs, así que pasamos las fechas directamente si existen
-
     // 1. Obtener los casos básicos filtrados
     const casosBasicos = await casosQueries.getHistorialBySolicitante(cedula, fechaInicio, fechaFin);
 
@@ -823,3 +779,43 @@ export async function getHistorialCasosBySolicitante(
     };
   }
 }
+
+/**
+ * Registra la generación de un reporte en la tabla de auditoría
+ */
+export async function registrarAuditoriaReporteAction(params: {
+  tipoReporte: string;
+  descripcion?: string;
+  filtrosAplicados?: Record<string, unknown>;
+  formato?: string;
+  cedulaSolicitante?: string;
+  idCaso?: number;
+}): Promise<{ success: boolean; id?: number; error?: string }> {
+  try {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return { success: false, error: 'No autorizado' };
+    }
+
+    const id = await auditoriaReportesQueries.insert({
+      tipoReporte: params.tipoReporte,
+      filtrosAplicados: params.filtrosAplicados,
+      idUsuarioGenero: authResult.user.cedula,
+      formato: params.formato || 'PDF',
+      cedulaSolicitante: params.cedulaSolicitante,
+    });
+
+    revalidatePath('/dashboard/audit/reportes');
+    revalidatePath('/dashboard/audit');
+    revalidatePath('/dashboard');
+    return { success: true, id };
+  } catch (error) {
+    console.error('Error al registrar auditoría de reporte:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error al registrar auditoría'
+    };
+  }
+}
+
+

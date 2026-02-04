@@ -1,0 +1,29 @@
+export const TIPOS_REPORTE = {
+    FICHA_SOLICITANTE: 'ficha-solicitante',
+    HISTORIAL_CASO: 'historial-caso',
+    HISTORIAL_SOLICITANTE: 'historial-solicitante',
+    EXPEDIENTE_SOLICITANTE: 'expediente-solicitante',
+    INFORME_RESUMEN: 'informe-resumen',
+    INFORME_SOCIOECONOMICO: 'informe-socioeconomico',
+    DISTRIBUCION_GENERO: 'distribucion-genero',
+    DISTRIBUCION_TRAMITE: 'distribucion-tramite',
+    DISTRIBUCION_NUCLEO: 'distribucion-nucleo',
+    DISTRIBUCION_ESTATUS: 'distribucion-estatus',
+    TENDENCIA_CASOS: 'tendencia-casos',
+    TOP_CASOS: 'top-casos',
+} as const;
+
+export const DESCRIPCIONES_REPORTE: Record<string, string> = {
+    'ficha-solicitante': 'Ficha de Solicitante',
+    'historial-caso': 'Historial de Caso',
+    'historial-solicitante': 'Historial de Casos',
+    'expediente-solicitante': 'Ficha Resumen del Solicitante',
+    'informe-resumen': 'Informe Resumen de Casos',
+    'informe-socioeconomico': 'Informe Socioeconómico',
+    'distribucion-genero': 'Distribución por Género',
+    'distribucion-tramite': 'Tipos de Caso',
+    'distribucion-nucleo': 'Distribución por Núcleo',
+    'distribucion-estatus': 'Distribución por Estatus',
+    'tendencia-casos': 'Tendencia de Carga de Casos',
+    'top-casos': 'Casos Más Frecuentes',
+};

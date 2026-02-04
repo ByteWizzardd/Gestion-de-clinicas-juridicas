@@ -35,7 +35,8 @@ export type AuditRecordType =
   | 'beneficiario-eliminado' | 'beneficiario-actualizado' | 'beneficiario-creado'
   | 'accion-eliminada' | 'accion-actualizada' | 'accion-creada'
   | 'equipo-actualizado'
-  | 'sesion';
+  | 'sesion'
+  | 'reporte-generado';
 
 // Auditoría de soportes eliminados
 export interface SoporteAuditRecord {
@@ -638,6 +639,29 @@ export interface SolicitanteCreadoAuditRecord {
   foto_perfil_usuario_creo: string | null;
 }
 
+// Auditoría de reportes generados
+export interface ReporteGeneradoAuditRecord {
+  id: number;
+  tipo_reporte: string;
+  descripcion: string | null;
+  filtros_aplicados: Record<string, unknown> | null;
+  formato: string;
+  cedula_solicitante: string | null;
+  id_caso: number | null;
+  fecha_generacion: string;
+  fecha: string; // Alias para fecha_generacion
+  id_usuario_genero: string;
+  usuario_accion: string; // Alias para id_usuario_genero
+  nombres_usuario_genero: string | null;
+  apellidos_usuario_genero: string | null;
+  nombre_completo_usuario_genero: string | null;
+  nombre_completo_usuario_accion?: string; // Alias para nombre_completo_usuario_genero
+  foto_perfil_usuario_genero: string | null;
+  nombres_solicitante: string | null;
+  apellidos_solicitante: string | null;
+  nombre_completo_solicitante: string | null;
+}
+
 // Filtros para consultas de auditoría
 export interface AuditFilters {
   fechaInicio?: string;
@@ -649,6 +673,7 @@ export interface AuditFilters {
   idCaso?: number; // Para casos
   eliminadoPor?: string; // Para eliminaciones
   tipoRegistro?: string; // Para filtrar por tipo (ej: usuario-creado, estudiante-inscrito)
+  tipoReporte?: string; // Para filtrar por tipo de reporte generado
 }
 
 // Contadores de auditoría
@@ -656,6 +681,7 @@ export interface AuditCounts {
   soportes: number;
   soportesCreados: number;
   soportesDescargados?: number;
+  reportesGenerados?: number;
   citasEliminadas: number;
   citasActualizadas: number;
   citasCreadas: number;
@@ -942,3 +968,21 @@ export interface SoporteDescargadoAuditRecord {
   foto_perfil_usuario_descargo: string | null;
 }
 
+// Auditoría de Reportes Generados
+export interface ReporteGeneradoAuditRecord extends AuditRecord {
+  tipo_reporte: string;
+  descripcion: string | null;
+  filtros_aplicados: Record<string, unknown> | null;
+  formato: string;
+  cedula_solicitante: string | null;
+  id_caso: number | null;
+  fecha_generacion: string;
+  id_usuario_genero: string;
+  nombres_usuario_genero: string | null;
+  apellidos_usuario_genero: string | null;
+  nombre_completo_usuario_genero: string | null;
+  foto_perfil_usuario_genero: string | null;
+  nombres_solicitante: string | null;
+  apellidos_solicitante: string | null;
+  nombre_completo_solicitante: string | null;
+}

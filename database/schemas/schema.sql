@@ -1573,6 +1573,7 @@ CREATE TABLE notificaciones (
     FOREIGN KEY (cedula_emisor) REFERENCES usuarios(cedula) ON DELETE CASCADE
 );
 
+-- 35) AUDITORÍA DE SESIONES
 CREATE TABLE auditoria_sesiones (
     id_sesion SERIAL PRIMARY KEY,
     cedula_usuario VARCHAR(20),
@@ -1581,6 +1582,17 @@ CREATE TABLE auditoria_sesiones (
     exitoso BOOLEAN DEFAULT TRUE,
     fecha_inicio TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas'),
     fecha_cierre TIMESTAMP
+);
+
+-- 36) AUDITORÍA DE REPORTES GENERADOS
+CREATE TABLE auditoria_reportes (
+    id SERIAL PRIMARY KEY,
+    tipo_reporte VARCHAR(100) NOT NULL,
+    filtros_aplicados TEXT, -- JSON almacenado como texto
+    id_usuario_genero VARCHAR(20),
+    formato VARCHAR(20),
+    cedula_solicitante VARCHAR(20),
+    fecha_generacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
 );
 
 

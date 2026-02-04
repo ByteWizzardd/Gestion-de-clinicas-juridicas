@@ -28,7 +28,8 @@ interface AuditOperation {
   | 'caracteristicas-eliminadas' | 'caracteristicas-actualizadas' | 'caracteristicas-insertadas'
   | 'beneficiarios-eliminados' | 'beneficiarios-actualizados' | 'beneficiarios-creados'
   | 'acciones-creadas' | 'acciones-actualizadas' | 'acciones-eliminadas'
-  | 'equipos-actualizados' | 'equipos-creados';
+  | 'equipos-actualizados' | 'equipos-creados'
+  | 'reportes-generados';
   title: string;
   description: string;
   emptyMessage: string;

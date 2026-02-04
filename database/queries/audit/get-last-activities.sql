@@ -116,4 +116,6 @@ SELECT
         COALESCE((SELECT MAX(fecha_creacion) FROM auditoria_insercion_tipos_caracteristicas), '1970-01-01'),
         COALESCE((SELECT MAX(fecha_actualizacion) FROM auditoria_actualizacion_tipos_caracteristicas), '1970-01-01'),
         COALESCE((SELECT MAX(fecha_eliminacion) FROM auditoria_eliminacion_tipos_caracteristicas), '1970-01-01')
-    ) as tipos_caracteristicas;
+    ) as tipos_caracteristicas,
+    -- Reportes
+    COALESCE((SELECT MAX(fecha_generacion) FROM auditoria_reportes), '1970-01-01') as reportes;

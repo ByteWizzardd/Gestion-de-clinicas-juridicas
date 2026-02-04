@@ -18,7 +18,7 @@ import {
     TextRun
 } from 'docx';
 import { saveAs } from 'file-saver';
-import { SocioeconomicoData } from '@/app/actions/reports';
+import { SocioeconomicoData } from '@/types/reports';
 import {
     imageToBase64
 } from '../pdf-generator-react';

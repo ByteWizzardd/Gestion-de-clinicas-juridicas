@@ -1,7 +1,7 @@
 import React from 'react';
 // @ts-ignore - React PDF types issue with React 19
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
-import { CasosGroupedData } from '@/app/actions/reports';
+import { CasosGroupedData } from '@/types/reports';
 
 // Registrar League Spartan desde archivos locales
 try {

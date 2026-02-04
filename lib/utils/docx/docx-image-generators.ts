@@ -2,7 +2,7 @@
  * Generadores de imágenes para documentos Word (.docx)
  */
 
-import { CasosGroupedData } from '@/app/actions/reports';
+import { CasosGroupedData } from '@/types/reports';
 import { EstatusGroupedData } from '@/components/reports/EstatusCasosPDF';
 import {
     CHART_COLORS,

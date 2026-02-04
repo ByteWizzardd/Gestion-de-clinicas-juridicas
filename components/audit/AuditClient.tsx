@@ -8,7 +8,7 @@ import Search from '@/components/CaseTools/search';
 import AuditEntityCard from './AuditEntityCard';
 import { getAuditCountsAction } from '@/app/actions/audit';
 import type { AuditCounts } from '@/types/audit';
-import { LucideIcon, FileText, Calendar, Users, User, MapPin, BookOpen, FolderTree, Building2, Home, Building, Briefcase, Activity, GraduationCap, Tag, Tags, Scale, Calendar as CalendarIcon, Clock, ArrowDown, ArrowUp } from 'lucide-react';
+import { LucideIcon, FileText, Calendar, Users, User, MapPin, BookOpen, FolderTree, Building2, Home, Building, Briefcase, Activity, GraduationCap, Tag, Tags, Scale, Calendar as CalendarIcon, Clock, ArrowDown, ArrowUp, FileBarChart } from 'lucide-react';
 
 interface AuditOperation {
   label: string;
@@ -55,6 +55,7 @@ export default function AuditClient() {
     if (!counts) {
       return [];
     }
+
     const list: AuditEntity[] = [
       {
         title: "Soportes",
@@ -78,6 +79,21 @@ export default function AuditClient() {
             label: "Descargados",
             count: counts.soportesDescargados || 0,
             href: "/dashboard/audit/soportes?tab=soportes-descargados"
+          }
+        ]
+      },
+      {
+        title: "Reportes",
+        description: "Registro de reportes generados en el sistema",
+        icon: FileBarChart,
+        totalCount: counts.reportesGenerados || 0,
+        href: "/dashboard/audit/reportes",
+        lastActivity: counts.lastActivities?.reportes,
+        operations: [
+          {
+            label: "Generados",
+            count: counts.reportesGenerados || 0,
+            href: "/dashboard/audit/reportes"
           }
         ]
       },
@@ -540,9 +556,22 @@ export default function AuditClient() {
     ];
 
     // Ordenar por fecha de última actividad
+    // Helper para parsear fechas de PostgreSQL correctamente
+    const parseDate = (dateStr: string | null | undefined): number => {
+      if (!dateStr) return 0;
+      // PostgreSQL devuelve "2026-02-03 21:32:53.167599+00" pero JS espera ISO con "T"
+      // Convertir a formato ISO: reemplazar espacio por T y normalizar timezone
+      const normalized = dateStr
+        .replace(' ', 'T')
+        .replace(/\+00$/, 'Z')
+        .replace(/\+00:00$/, 'Z');
+      const timestamp = new Date(normalized).getTime();
+      return isNaN(timestamp) ? 0 : timestamp;
+    };
+
     return list.sort((a, b) => {
-      const dateA = a.lastActivity ? new Date(a.lastActivity).getTime() : 0;
-      const dateB = b.lastActivity ? new Date(b.lastActivity).getTime() : 0;
+      const dateA = parseDate(a.lastActivity);
+      const dateB = parseDate(b.lastActivity);
 
       return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
     });

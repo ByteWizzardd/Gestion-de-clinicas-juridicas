@@ -17,7 +17,7 @@ import {
     BorderStyle
 } from 'docx';
 import { saveAs } from 'file-saver';
-import { CasosGroupedData } from '@/app/actions/reports';
+import { CasosGroupedData } from '@/types/reports';
 import {
     groupDataByMateriaSubcategoria,
     imageToBase64,

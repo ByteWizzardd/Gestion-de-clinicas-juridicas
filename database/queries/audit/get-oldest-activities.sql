@@ -116,4 +116,6 @@ SELECT
         COALESCE((SELECT MIN(fecha_creacion) FROM auditoria_insercion_tipos_caracteristicas), '9999-12-31'),
         COALESCE((SELECT MIN(fecha_actualizacion) FROM auditoria_actualizacion_tipos_caracteristicas), '9999-12-31'),
         COALESCE((SELECT MIN(fecha_eliminacion) FROM auditoria_eliminacion_tipos_caracteristicas), '9999-12-31')
-    ) as tipos_caracteristicas;
+    ) as tipos_caracteristicas,
+    -- Reportes
+    COALESCE((SELECT MIN(fecha_generacion) FROM auditoria_reportes), '9999-12-31') as reportes;
