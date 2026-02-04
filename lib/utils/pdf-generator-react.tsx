@@ -5,7 +5,7 @@ import { pdf } from '@react-pdf/renderer/lib/react-pdf.browser';
 import { TiposCasosPDF } from '../../components/reports/TiposCasosPDF';
 import { EstatusCasosPDF, EstatusGroupedData } from '../../components/reports/EstatusCasosPDF';
 import { InformeResumenPDF, InformeResumenData } from '../../components/reports/InformeResumenPDF';
-import { CasosGroupedData, SocioeconomicoData } from '../../app/actions/reports';
+import { CasosGroupedData, SocioeconomicoData } from '../../types/reports';
 import InformeSocioeconomicoPDF from '../../components/reports/InformeSocioeconomicoPDF';
 import { generateBarChartImage } from './bar-chart-generator';
 
