@@ -49,7 +49,6 @@ export interface SoporteAuditRecord {
   fecha_consignacion: string | null;
   fecha_eliminacion: string;
   fecha: string; // Alias para fecha_eliminacion
-  tamano_bytes: number | null;
   usuario_accion: string; // Alias para id_usuario_elimino
   nombre_completo_usuario_accion?: string; // Alias para nombre_completo_usuario_elimino
   id_usuario_subio: string | null;
@@ -73,7 +72,6 @@ export interface SoporteCreadoAuditRecord {
   tipo_mime: string;
   descripcion: string | null;
   fecha_consignacion: string;
-  tamano_bytes: number | null;
   fecha_creacion: string;
   fecha: string; // Alias para fecha_creacion
   usuario_accion: string; // Alias para id_usuario_subio
@@ -220,6 +218,7 @@ export interface UsuarioActualizadoCamposAuditRecord {
   tipo_usuario_anterior: string | null;
   tipo_estudiante_anterior: string | null;
   tipo_profesor_anterior: string | null;
+  foto_perfil_anterior: string | null;
   // Valores nuevos
   nombres_nuevo: string | null;
   apellidos_nuevo: string | null;
@@ -230,6 +229,7 @@ export interface UsuarioActualizadoCamposAuditRecord {
   tipo_usuario_nuevo: string | null;
   tipo_estudiante_nuevo: string | null;
   tipo_profesor_nuevo: string | null;
+  foto_perfil_nuevo: string | null;
   // Información de auditoría
   id_usuario_actualizo: string;
   usuario_accion: string; // Alias para id_usuario_actualizo

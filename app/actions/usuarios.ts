@@ -10,6 +10,7 @@ import { getCurrentUserAction } from "./auth";
 import { revalidatePath } from 'next/cache';
 import { notificarDeshabilitacionUsuarioEnCasosService } from '@/lib/services/notificaciones.service';
 import { withSecureTransaction } from '@/lib/db/secure-transactions';
+import { uploadProfilePhoto, deleteFile } from '@/lib/services/storage.service';
 export interface GetUsuarioCompleteByCedulaResult {
   success: boolean;
   data?: {
@@ -870,8 +871,33 @@ export async function uploadFotoPerfilAction(
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Actualizar foto de perfil en la base de datos
-    await usuariosQueries.updateFotoPerfil(cedula, buffer);
+    // Subir a Vercel Blob
+    const uploadResult = await uploadProfilePhoto(buffer, cedula, file.name);
+
+    if (!uploadResult.success || !uploadResult.url) {
+      return {
+        success: false,
+        error: {
+          message: uploadResult.error || 'Error al subir la imagen',
+          code: 'UPLOAD_ERROR',
+        },
+      };
+    }
+
+    // Obtener URL anterior para eliminarla después
+    const urlAnterior = await usuariosQueries.getFotoPerfil(cedula);
+
+    // Guardar URL en la base de datos
+    await usuariosQueries.updateFotoPerfil(cedula, uploadResult.url, cedula);
+
+    // Eliminar foto anterior de Vercel Blob si existía
+    if (urlAnterior) {
+      try {
+        await deleteFile(urlAnterior);
+      } catch (e) {
+        console.error('Error al eliminar foto anterior:', e);
+      }
+    }
 
     return {
       success: true,
@@ -897,8 +923,20 @@ export async function deleteFotoPerfilAction(): Promise<DeleteFotoPerfilResult> 
 
     const cedula = authResult.user.cedula;
 
-    // Eliminar foto de perfil (establecer a NULL)
-    await usuariosQueries.deleteFotoPerfil(cedula);
+    // Obtener URL de la foto para eliminarla de Vercel Blob
+    const urlFoto = await usuariosQueries.getFotoPerfil(cedula);
+
+    // Eliminar foto de perfil de la base de datos (establecer a NULL)
+    await usuariosQueries.deleteFotoPerfil(cedula, cedula);
+
+    // Eliminar de Vercel Blob si existía
+    if (urlFoto) {
+      try {
+        await deleteFile(urlFoto);
+      } catch (e) {
+        console.error('Error al eliminar foto de Vercel Blob:', e);
+      }
+    }
 
     return {
       success: true,
@@ -987,8 +1025,33 @@ export async function uploadFotoPerfilUsuarioAction(
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Actualizar foto de perfil en la base de datos
-    await usuariosQueries.updateFotoPerfil(cedula, buffer);
+    // Subir a Vercel Blob
+    const uploadResult = await uploadProfilePhoto(buffer, cedula, file.name);
+
+    if (!uploadResult.success || !uploadResult.url) {
+      return {
+        success: false,
+        error: {
+          message: uploadResult.error || 'Error al subir la imagen',
+          code: 'UPLOAD_ERROR',
+        },
+      };
+    }
+
+    // Obtener URL anterior para eliminarla después
+    const urlAnterior = await usuariosQueries.getFotoPerfil(cedula);
+
+    // Guardar URL en la base de datos
+    await usuariosQueries.updateFotoPerfil(cedula, uploadResult.url, userResult.data!.cedula);
+
+    // Eliminar foto anterior de Vercel Blob si existía
+    if (urlAnterior) {
+      try {
+        await deleteFile(urlAnterior);
+      } catch (e) {
+        console.error('Error al eliminar foto anterior:', e);
+      }
+    }
 
     return {
       success: true,
@@ -1045,7 +1108,7 @@ export async function deleteFotoPerfilUsuarioAction(
     }
 
     // Eliminar foto de perfil (establecer a NULL)
-    await usuariosQueries.deleteFotoPerfil(cedula);
+    await usuariosQueries.deleteFotoPerfil(cedula, userResult.data!.cedula);
 
     return {
       success: true,

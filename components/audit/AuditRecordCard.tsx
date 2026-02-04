@@ -1457,6 +1457,49 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
 
   const renderDetails = () => {
     switch (type) {
+      case 'profesor-asignado': {
+        const r = record as any;
+        const nombreCompleto = r.nombres && r.apellidos
+          ? `${r.nombres} ${r.apellidos}`.trim()
+          : (r.nombres || r.apellidos || '-');
+
+        return (
+          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Información del Profesor</p>
+              <div className="flex flex-col text-sm text-gray-600 space-y-0.5">
+                <p>
+                  <span className="font-medium">Nombre:</span>{' '}
+                  <Link
+                    href={`/dashboard/users/${r.cedula}`}
+                    className="text-primary hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {nombreCompleto}
+                  </Link>
+                </p>
+                <p><span className="font-medium">Cédula:</span> {r.cedula}</p>
+                <p><span className="font-medium">Correo:</span> {r.correo_electronico || '-'}</p>
+                <p><span className="font-medium">Tipo:</span> {r.tipo_profesor || '-'}</p>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
+              <p className="text-sm text-gray-600">Fecha de asignación: {formatDateTime(r.fecha_creacion)}</p>
+              <p className="text-sm text-gray-600">
+                Asignado por:{' '}
+                {renderUserLink(
+                  r.nombre_completo_usuario_creo,
+                  r.nombres_usuario_creo,
+                  r.apellidos_usuario_creo,
+                  r.id_usuario_creo
+                )}
+              </p>
+            </div>
+          </div>
+        );
+      }
       case 'accion-creada': {
         const r = record as AccionCreadaAuditRecord;
         // Parsear ejecutores si vienen como JSON string (depende del driver de PostgreSQL)
@@ -1791,7 +1834,6 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 <p className="text-sm font-semibold text-gray-700 mb-1">Información del Documento</p>
                 <p className="text-sm text-gray-600">Nombre: {r.nombre_archivo}</p>
                 <p className="text-sm text-gray-600">Tipo: {r.tipo_mime || 'N/A'}</p>
-                <p className="text-sm text-gray-600">Tamaño: {formatFileSize(r.tamano_bytes)}</p>
                 {r.descripcion && (
                   <p className="text-sm text-gray-600">Descripción: {r.descripcion}</p>
                 )}
@@ -1859,7 +1901,6 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                 <p className="text-sm font-semibold text-gray-700 mb-1">Información del Documento</p>
                 <p className="text-sm text-gray-600">Nombre: {r.nombre_archivo}</p>
                 <p className="text-sm text-gray-600">Tipo: {r.tipo_mime || 'N/A'}</p>
-                <p className="text-sm text-gray-600">Tamaño: {formatFileSize(r.tamano_bytes)}</p>
                 {r.descripcion && (
                   <p className="text-sm text-gray-600">Descripción: {r.descripcion}</p>
                 )}
@@ -2790,6 +2831,45 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
                       {r.tipo_profesor_nuevo || 'N/A'}
                     </span>
                   </p>
+                </div>
+              )}
+
+              {(r.foto_perfil_anterior !== r.foto_perfil_nuevo) && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-600 mb-2">
+                    Foto de perfil:
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <div className="flex flex-col items-center">
+                      <span className="text-xs text-gray-500 mb-1">Anterior</span>
+                      {r.foto_perfil_anterior ? (
+                        <img
+                          src={r.foto_perfil_anterior}
+                          alt="Foto anterior"
+                          className="w-16 h-16 rounded-full object-cover border-2 border-red-200 opacity-75"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs border border-gray-200">
+                          Sin foto
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-gray-400 text-xl">→</span>
+                    <div className="flex flex-col items-center">
+                      <span className="text-xs text-gray-500 mb-1">Nueva</span>
+                      {r.foto_perfil_nuevo ? (
+                        <img
+                          src={r.foto_perfil_nuevo}
+                          alt="Foto nueva"
+                          className="w-16 h-16 rounded-full object-cover border-2 border-green-500"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs border border-gray-200">
+                          Sin foto
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

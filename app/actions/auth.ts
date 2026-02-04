@@ -225,14 +225,8 @@ export async function getCurrentUserAction(): Promise<GetCurrentUserResult> {
       };
     }
 
-    // Obtener foto de perfil
-    const fotoBuffer = await usuariosQueries.getFotoPerfil(user.cedula);
-    let fotoPerfilBase64: string | null = null;
-
-    if (fotoBuffer) {
-      // Convertir Buffer a base64
-      fotoPerfilBase64 = `data:image/jpeg;base64,${fotoBuffer.toString('base64')}`;
-    }
+    // Obtener foto de perfil (ahora es una URL directa de Vercel Blob)
+    const fotoPerfilUrl = await usuariosQueries.getFotoPerfil(user.cedula);
 
     return {
       success: true,
@@ -242,7 +236,7 @@ export async function getCurrentUserAction(): Promise<GetCurrentUserResult> {
         apellidos: user.apellidos,
         correo: user.correo_electronico,
         rol: user.rol_sistema || authResult.user.rol,
-        fotoPerfil: fotoPerfilBase64,
+        fotoPerfil: fotoPerfilUrl,
       },
     };
   } catch (error) {

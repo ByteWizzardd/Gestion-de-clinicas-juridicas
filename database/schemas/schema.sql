@@ -349,7 +349,7 @@ CREATE TABLE usuarios (
     nombre_usuario VARCHAR(50) NOT NULL UNIQUE,
     contrasena VARCHAR(255) NOT NULL,
     telefono_celular VARCHAR(20),
-    foto_perfil BYTEA,
+    foto_perfil VARCHAR(500), -- URL de la foto de perfil en Vercel Blob
     habilitado_sistema BOOLEAN NOT NULL DEFAULT TRUE,
     tipo_usuario VARCHAR(20) NOT NULL CHECK (tipo_usuario IN ('Estudiante', 'Profesor', 'Coordinador'))
 );
@@ -385,6 +385,7 @@ CREATE TABLE auditoria_actualizacion_usuarios (
     tipo_usuario_anterior VARCHAR(20),
     tipo_estudiante_anterior VARCHAR(50),
     tipo_profesor_anterior VARCHAR(20),
+    foto_perfil_anterior VARCHAR(500),
     -- Valores nuevos (después de la actualización)
     nombres_nuevo VARCHAR(100),
     apellidos_nuevo VARCHAR(100),
@@ -395,6 +396,7 @@ CREATE TABLE auditoria_actualizacion_usuarios (
     tipo_usuario_nuevo VARCHAR(20),
     tipo_estudiante_nuevo VARCHAR(50),
     tipo_profesor_nuevo VARCHAR(20),
+    foto_perfil_nuevo VARCHAR(500),
     -- Información de auditoría
     id_usuario_actualizo VARCHAR(20) NOT NULL,
     fecha_actualizacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
@@ -1393,7 +1395,7 @@ CREATE TABLE soportes (
     num_soporte INTEGER NOT NULL,
     id_caso INTEGER NOT NULL REFERENCES casos(id_caso),
     
-    documento_data BYTEA, -- Almacena el archivo directamente en la base de datos
+    url_documento VARCHAR(500), -- URL del documento en Vercel Blob
     nombre_archivo VARCHAR(150) NOT NULL,
     tipo_mime VARCHAR(100) NOT NULL,
     descripcion TEXT,
@@ -1415,7 +1417,6 @@ CREATE TABLE auditoria_insercion_soportes (
     tipo_mime VARCHAR(100),
     descripcion TEXT,
     id_usuario_subio VARCHAR(20),
-    tamano_bytes BIGINT,
     fecha_consignacion DATE NOT NULL,
     fecha_creacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
 );
@@ -1429,7 +1430,6 @@ CREATE TABLE auditoria_eliminacion_soportes (
     tipo_mime VARCHAR(100) NOT NULL,
     descripcion TEXT,
     fecha_consignacion DATE NOT NULL,
-    tamano_bytes INTEGER, -- Tamaño del archivo en bytes (sin guardar el archivo)
     id_usuario_subio VARCHAR(20),
     id_usuario_elimino VARCHAR(20) NOT NULL,
     motivo TEXT, -- Motivo de la eliminación

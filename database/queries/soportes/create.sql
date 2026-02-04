@@ -1,7 +1,7 @@
 -- Crear un nuevo soporte para un caso
 -- Parámetros:
 --   $1 = id_caso
---   $2 = documento_data (BYTEA)
+--   $2 = url_documento (VARCHAR - URL de Vercel Blob)
 --   $3 = nombre_archivo
 --   $4 = tipo_mime
 --   $5 = descripcion (opcional, puede ser NULL)
@@ -12,7 +12,7 @@
 INSERT INTO soportes (
     num_soporte,
     id_caso,
-    documento_data,
+    url_documento,
     nombre_archivo,
     tipo_mime,
     descripcion,
@@ -31,4 +31,3 @@ SELECT
 FROM soportes
 WHERE id_caso = $1
 RETURNING *;
-

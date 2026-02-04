@@ -13,7 +13,7 @@ SELECT
     a.tipo_mime,
     a.descripcion,
     to_char(a.fecha_consignacion, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_consignacion,
-    a.tamano_bytes,
+
     to_char(a.fecha_creacion, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_creacion,
     a.id_usuario_subio,
     u.nombres AS nombres_usuario_subio,

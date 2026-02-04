@@ -24,7 +24,7 @@ export const auditoriaInsercionSoportesQueries = {
     tipo_mime: string;
     descripcion: string | null;
     fecha_consignacion: string;
-    tamano_bytes: number | null;
+
     fecha_creacion: string;
     id_usuario_subio: string | null;
     nombres_usuario_subio: string | null;
@@ -43,7 +43,7 @@ export const auditoriaInsercionSoportesQueries = {
     // Convertir foto_perfil de Buffer a base64
     return result.rows.map(row => ({
       ...row,
-      foto_perfil_usuario_subio: row.foto_perfil_usuario_subio 
+      foto_perfil_usuario_subio: row.foto_perfil_usuario_subio
         ? `data:image/jpeg;base64,${(row.foto_perfil_usuario_subio as Buffer).toString('base64')}`
         : null,
     }));
@@ -69,7 +69,7 @@ export const auditoriaInsercionSoportesQueries = {
     tipo_mime: string;
     descripcion: string | null;
     fecha_consignacion: string;
-    tamano_bytes: number | null;
+
     fecha_creacion: string;
     id_usuario_subio: string | null;
     nombres_usuario_subio: string | null;
@@ -82,7 +82,7 @@ export const auditoriaInsercionSoportesQueries = {
     // Convertir foto_perfil de Buffer a base64
     return result.rows.map(row => ({
       ...row,
-      foto_perfil_usuario_subio: row.foto_perfil_usuario_subio 
+      foto_perfil_usuario_subio: row.foto_perfil_usuario_subio
         ? `data:image/jpeg;base64,${(row.foto_perfil_usuario_subio as Buffer).toString('base64')}`
         : null,
     }));

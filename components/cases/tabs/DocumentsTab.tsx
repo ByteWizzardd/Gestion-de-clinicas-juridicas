@@ -14,7 +14,6 @@ interface DocumentsTabProps {
     tipo_mime: string;
     descripcion: string | null;
     fecha_consignacion: string;
-    tamano_bytes: number;
     // Información de auditoría: usuario que subió
     id_usuario_subio: string | null;
     nombres_usuario_subio: string | null;
@@ -36,13 +35,6 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
     setSoportesState(soportes || []);
   }, [soportes]);
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-  };
 
   const handleDownload = async (idCaso: number, numSoporte: number, nombreArchivo: string) => {
     setDownloading({ idCaso, numSoporte });
@@ -54,24 +46,16 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
         return;
       }
 
-      // Convertir base64 a blob
-      const byteCharacters = atob(result.data.documento_data);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: result.data.tipo_mime });
-
-      // Crear URL del blob y descargar
-      const url = window.URL.createObjectURL(blob);
+      // Ahora el resultado contiene la URL directa del archivo en Vercel Blob
+      // Abrir la URL en una nueva pestaña para descargar
       const link = document.createElement('a');
-      link.href = url;
+      link.href = result.data.url_documento;
       link.download = result.data.nombre_archivo;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error al descargar:', error);
       alert('Error al descargar el archivo');
@@ -237,14 +221,10 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
               </div>
 
               <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label className="text-sm font-medium text-gray-500">Tipo de Archivo</label>
                     <p className="text-base text-gray-900 mt-1">{soporte.tipo_mime.replace(/^application\//, '')}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Tamaño</label>
-                    <p className="text-base text-gray-900 mt-1">{formatFileSize(soporte.tamano_bytes)}</p>
                   </div>
                 </div>
 

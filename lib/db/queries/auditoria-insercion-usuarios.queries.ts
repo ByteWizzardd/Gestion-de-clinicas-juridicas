@@ -47,9 +47,6 @@ export const auditoriaInsercionUsuariosQueries = {
     // Convertir foto_perfil de Buffer a base64
     return result.rows.map(row => ({
       ...row,
-      foto_perfil_usuario_creo: row.foto_perfil_usuario_creo
-        ? `data:image/jpeg;base64,${(row.foto_perfil_usuario_creo as Buffer).toString('base64')}`
-        : null,
     }));
   },
 
@@ -82,12 +79,6 @@ export const auditoriaInsercionUsuariosQueries = {
 
     return result.rows.map(row => ({
       ...row,
-      foto_perfil_usuario_creo: row.foto_perfil_usuario_creo
-        ? `data:image/jpeg;base64,${(row.foto_perfil_usuario_creo as Buffer).toString('base64')}`
-        : null,
-      foto_perfil_usuario: row.foto_perfil_usuario
-        ? `data:image/jpeg;base64,${(row.foto_perfil_usuario as Buffer).toString('base64')}`
-        : null,
     }));
   },
 };

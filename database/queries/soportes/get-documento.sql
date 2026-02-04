@@ -1,7 +1,7 @@
--- Obtener el documento_data de un soporte específico
+-- Obtener la URL del documento de un soporte específico
 -- Parámetros: $1 = id_caso, $2 = num_soporte
 SELECT 
-    s.documento_data,
+    s.url_documento,
     s.nombre_archivo,
     s.tipo_mime
 FROM soportes s

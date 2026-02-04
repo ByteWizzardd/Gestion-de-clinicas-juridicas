@@ -26,6 +26,7 @@ export const auditoriaActualizacionUsuariosQueries = {
     tipo_usuario_anterior: string | null;
     tipo_estudiante_anterior: string | null;
     tipo_profesor_anterior: string | null;
+    foto_perfil_anterior: string | null;
     nombres_nuevo: string | null;
     apellidos_nuevo: string | null;
     correo_electronico_nuevo: string | null;
@@ -35,6 +36,7 @@ export const auditoriaActualizacionUsuariosQueries = {
     tipo_usuario_nuevo: string | null;
     tipo_estudiante_nuevo: string | null;
     tipo_profesor_nuevo: string | null;
+    foto_perfil_nuevo: string | null;
     id_usuario_actualizo: string;
     nombres_usuario_actualizo: string | null;
     apellidos_usuario_actualizo: string | null;
@@ -47,12 +49,7 @@ export const auditoriaActualizacionUsuariosQueries = {
     // Convertir foto_perfil de Buffer a base64
     return result.rows.map(row => ({
       ...row,
-      foto_perfil_usuario: row.foto_perfil_usuario 
-        ? `data:image/jpeg;base64,${(row.foto_perfil_usuario as Buffer).toString('base64')}`
-        : null,
-      foto_perfil_usuario_actualizo: row.foto_perfil_usuario_actualizo 
-        ? `data:image/jpeg;base64,${(row.foto_perfil_usuario_actualizo as Buffer).toString('base64')}`
-        : null,
+      // Las fotos ya son URLs, no requieren conversión
     }));
   },
 
@@ -90,6 +87,7 @@ export const auditoriaActualizacionUsuariosQueries = {
     tipo_usuario_anterior: string | null;
     tipo_estudiante_anterior: string | null;
     tipo_profesor_anterior: string | null;
+    foto_perfil_anterior: string | null;
     nombres_nuevo: string | null;
     apellidos_nuevo: string | null;
     correo_electronico_nuevo: string | null;
@@ -99,6 +97,7 @@ export const auditoriaActualizacionUsuariosQueries = {
     tipo_usuario_nuevo: string | null;
     tipo_estudiante_nuevo: string | null;
     tipo_profesor_nuevo: string | null;
+    foto_perfil_nuevo: string | null;
     id_usuario_actualizo: string;
     nombres_usuario_actualizo: string | null;
     apellidos_usuario_actualizo: string | null;
@@ -117,12 +116,7 @@ export const auditoriaActualizacionUsuariosQueries = {
     // Convertir foto_perfil de Buffer a base64
     return result.rows.map(row => ({
       ...row,
-      foto_perfil_usuario: row.foto_perfil_usuario 
-        ? `data:image/jpeg;base64,${(row.foto_perfil_usuario as Buffer).toString('base64')}`
-        : null,
-      foto_perfil_usuario_actualizo: row.foto_perfil_usuario_actualizo 
-        ? `data:image/jpeg;base64,${(row.foto_perfil_usuario_actualizo as Buffer).toString('base64')}`
-        : null,
+      // Las fotos ya son URLs, no requieren conversión
     }));
   },
 

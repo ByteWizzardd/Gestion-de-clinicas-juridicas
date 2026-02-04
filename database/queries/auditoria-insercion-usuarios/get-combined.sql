@@ -26,7 +26,7 @@ SELECT * FROM (
         COALESCE(uc.apellidos, au_actor.apellidos) AS apellidos_usuario_creo,
         COALESCE(CONCAT(uc.nombres, ' ', uc.apellidos), CONCAT(au_actor.nombres, ' ', au_actor.apellidos)) AS nombre_completo_usuario_creo,
         uc.foto_perfil AS foto_perfil_usuario_creo,
-        NULL::bytea AS foto_perfil_usuario
+        NULL::varchar AS foto_perfil_usuario
     FROM public.auditoria_insercion_usuarios au
     LEFT JOIN public.usuarios uc ON au.id_usuario_creo = uc.cedula
     LEFT JOIN (

@@ -10,59 +10,6 @@ CREATE OR REPLACE FUNCTION public.assign_nombre_usuario_from_email()
 AS $function$ DECLARE nombre_usuario_extracted VARCHAR(100); BEGIN IF NEW.nombre_usuario IS NOT NULL AND NEW.nombre_usuario != '' THEN RETURN NEW; END IF; IF NEW.correo_electronico IS NULL OR NEW.correo_electronico = '' THEN RAISE EXCEPTION 'No se puede asignar nombre_usuario: el usuario con cédula % no tiene correo electrónico', NEW.cedula; END IF; nombre_usuario_extracted := SPLIT_PART(NEW.correo_electronico, '@', 1); IF nombre_usuario_extracted IS NULL OR nombre_usuario_extracted = '' THEN RAISE EXCEPTION 'No se puede extraer nombre_usuario del correo: %', NEW.correo_electronico; END IF; NEW.nombre_usuario := nombre_usuario_extracted; RETURN NEW; END; $function$
 ;
 
--- Función: trigger_auditar_eliminacion_soporte
-CREATE OR REPLACE FUNCTION public.trigger_auditar_eliminacion_soporte()
- RETURNS trigger
- LANGUAGE plpgsql
-AS $function$
-DECLARE
-    cedula_usuario VARCHAR(20);
-BEGIN
-    -- Obtener la cédula del usuario desde la variable de sesión
-    -- Esta variable se establece antes de eliminar el soporte
-    BEGIN
-        cedula_usuario := current_setting('app.usuario_elimina_soporte', true);
-    EXCEPTION
-        WHEN OTHERS THEN
-            -- Si no se puede leer la variable, lanzar warning para que se sepa que falta configurar
-            RAISE WARNING 'No se pudo leer app.usuario_elimina_soporte: %', SQLERRM;
-            -- Permitir eliminación pero sin auditoría
-            RETURN OLD;
-    END;
-    
-    -- Si no hay variable de sesión, no registrar en auditoría pero permitir la eliminación
-    IF cedula_usuario IS NULL OR cedula_usuario = '' THEN
-        RAISE WARNING 'Variable app.usuario_elimina_soporte está vacía o es NULL';
-        RETURN OLD;
-    END IF;
-    
-    -- Insertar en la tabla de auditoría antes de eliminar
-    BEGIN
-        INSERT INTO auditoria_eliminacion_soporte (
-            num_soporte,
-            id_caso,
-            nombre_archivo,
-            eliminado_por,
-            fecha
-        ) VALUES (
-            OLD.num_soporte,
-            OLD.id_caso,
-            OLD.nombre_archivo,
-            cedula_usuario,
-            CURRENT_TIMESTAMP
-        );
-    EXCEPTION
-        WHEN OTHERS THEN
-            -- Si falla la inserción, lanzar warning pero permitir la eliminación
-            RAISE WARNING 'Error al insertar en auditoría: %', SQLERRM;
-            RETURN OLD;
-    END;
-    
-    RETURN OLD;
-END;
-$function$
-;
-
 -- Función: trigger_auditoria_actualizacion_accion
 CREATE OR REPLACE FUNCTION public.trigger_auditoria_actualizacion_accion()
  RETURNS trigger
@@ -777,14 +724,15 @@ BEGIN
     
     -- Registrar la auditoría solo si hay cambios reales y hay usuario
     IF cedula_usuario IS NOT NULL AND cedula_usuario != '' THEN
-        -- Registrar si hubo cambios en cualquier campo (incluyendo tipo_usuario)
+        -- Registrar si hubo cambios en cualquier campo (incluyendo foto_perfil y tipo_usuario)
         IF (OLD.nombres IS DISTINCT FROM NEW.nombres) OR
            (OLD.apellidos IS DISTINCT FROM NEW.apellidos) OR
            (OLD.correo_electronico IS DISTINCT FROM NEW.correo_electronico) OR
            (OLD.nombre_usuario IS DISTINCT FROM NEW.nombre_usuario) OR
            (OLD.telefono_celular IS DISTINCT FROM NEW.telefono_celular) OR
            (OLD.habilitado_sistema IS DISTINCT FROM NEW.habilitado_sistema) OR
-           (OLD.tipo_usuario IS DISTINCT FROM NEW.tipo_usuario) THEN
+           (OLD.tipo_usuario IS DISTINCT FROM NEW.tipo_usuario) OR
+           (OLD.foto_perfil IS DISTINCT FROM NEW.foto_perfil) THEN
             
             INSERT INTO auditoria_actualizacion_usuarios (
                 ci_usuario,
@@ -795,6 +743,7 @@ BEGIN
                 telefono_celular_anterior,
                 habilitado_sistema_anterior,
                 tipo_usuario_anterior,
+                foto_perfil_anterior,
                 nombres_nuevo,
                 apellidos_nuevo,
                 correo_electronico_nuevo,
@@ -802,6 +751,7 @@ BEGIN
                 telefono_celular_nuevo,
                 habilitado_sistema_nuevo,
                 tipo_usuario_nuevo,
+                foto_perfil_nuevo,
                 id_usuario_actualizo,
                 fecha_actualizacion
             ) VALUES (
@@ -813,6 +763,7 @@ BEGIN
                 OLD.telefono_celular,
                 OLD.habilitado_sistema,
                 OLD.tipo_usuario,
+                OLD.foto_perfil,
                 NEW.nombres,
                 NEW.apellidos,
                 NEW.correo_electronico,
@@ -820,6 +771,7 @@ BEGIN
                 NEW.telefono_celular,
                 NEW.habilitado_sistema,
                 NEW.tipo_usuario,
+                NEW.foto_perfil,
                 cedula_usuario,
                 (NOW() AT TIME ZONE 'America/Caracas')
             );
@@ -1790,7 +1742,6 @@ BEGIN
             tipo_mime,
             descripcion,
             fecha_consignacion,
-            tamano_bytes,
             id_usuario_subio,
             id_usuario_elimino,
             motivo,
@@ -1802,7 +1753,6 @@ BEGIN
             OLD.tipo_mime,
             OLD.descripcion,
             OLD.fecha_consignacion,
-            LENGTH(OLD.documento_data),
             OLD.id_usuario_subio,
             cedula_usuario,
             current_setting('app.motivo_eliminacion_soporte', true),

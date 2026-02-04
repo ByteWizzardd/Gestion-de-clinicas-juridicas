@@ -19,6 +19,7 @@ import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 import { withSecureTransaction } from '@/lib/db/secure-transactions';
 import { notificarVariosUsuariosAction } from './notificaciones';
+import { uploadSoporte, deleteFile } from '@/lib/services/storage.service';
 
 export interface CreateCasoResult {
   success: boolean;
@@ -48,7 +49,7 @@ export interface UploadSoportesResult {
 export interface DownloadSoporteResult {
   success: boolean;
   data?: {
-    documento_data: string; // Base64
+    url_documento: string; // URL de Vercel Blob
     nombre_archivo: string;
     tipo_mime: string;
   };
@@ -244,15 +245,28 @@ export async function uploadSoportesAction(
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
-      // Crear el soporte en la base de datos
+      // Subir archivo a Vercel Blob
+      const uploadResult = await uploadSoporte(buffer, idCaso, file.name);
+
+      if (!uploadResult.success || !uploadResult.url) {
+        return {
+          success: false,
+          error: {
+            message: `Error al subir el archivo "${file.name}": ${uploadResult.error || 'Error desconocido'}`,
+            code: 'UPLOAD_ERROR',
+          },
+        };
+      }
+
+      // Crear el soporte en la base de datos con la URL
       const soporte = await soportesQueries.create({
         id_caso: idCaso,
-        documento_data: buffer,
+        url_documento: uploadResult.url,
         nombre_archivo: file.name,
         tipo_mime: file.type || 'application/octet-stream',
         descripcion: undefined,
         fecha_consignacion: new Date(),
-        id_usuario_subio: authResult.user.cedula, // Registrar quién subió el archivo
+        id_usuario_subio: authResult.user.cedula,
       });
 
       resultados.push({
@@ -330,13 +344,11 @@ export async function downloadSoporteAction(
       console.error('Error al registrar descarga en auditoría:', auditError);
     }
 
-    // Convertir el Buffer a base64
-    const base64Data = documento.documento_data.toString('base64');
-
+    // Ahora el documento contiene la URL directamente
     return {
       success: true,
       data: {
-        documento_data: base64Data,
+        url_documento: documento.url_documento,
         nombre_archivo: documento.nombre_archivo,
         tipo_mime: documento.tipo_mime,
       },
@@ -395,6 +407,9 @@ export async function deleteSoporteAction(
       };
     }
 
+    // Obtener la URL del documento antes de eliminar (para poder eliminarlo de Vercel Blob)
+    const urlDocumento = await soportesQueries.getUrlForDelete(idCaso, numSoporte);
+
     // Eliminar el soporte de la base de datos (registra auditoría antes de eliminar)
     const deleted = await soportesQueries.delete(idCaso, numSoporte, authResult.user.cedula, motivo.trim());
 
@@ -406,6 +421,16 @@ export async function deleteSoporteAction(
           code: 'NOT_FOUND',
         },
       };
+    }
+
+    // Eliminar el archivo de Vercel Blob (si existe URL)
+    if (urlDocumento) {
+      try {
+        await deleteFile(urlDocumento);
+      } catch (blobError) {
+        // Log el error pero no fallar la operación (el registro en DB ya fue eliminado)
+        console.error('Error al eliminar archivo de Vercel Blob:', blobError);
+      }
     }
 
     // Revalidar cache de la página de casos

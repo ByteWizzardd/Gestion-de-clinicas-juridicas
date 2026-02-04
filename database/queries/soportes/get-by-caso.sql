@@ -7,8 +7,7 @@ SELECT
     s.tipo_mime,
     s.descripcion,
     s.fecha_consignacion,
-    -- No incluir documento_data para evitar cargar archivos grandes innecesariamente
-    LENGTH(s.documento_data) AS tamano_bytes,
+    s.url_documento,
     -- Información de auditoría: usuario que subió
     s.id_usuario_subio,
     u_subio.nombres AS nombres_usuario_subio,

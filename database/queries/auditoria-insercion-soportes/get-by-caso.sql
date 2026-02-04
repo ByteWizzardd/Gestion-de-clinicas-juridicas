@@ -8,7 +8,7 @@ SELECT
     a.tipo_mime,
     a.descripcion,
     a.fecha_consignacion,
-    a.tamano_bytes,
+
     a.fecha_creacion,
     a.id_usuario_subio,
     u.nombres AS nombres_usuario_subio,

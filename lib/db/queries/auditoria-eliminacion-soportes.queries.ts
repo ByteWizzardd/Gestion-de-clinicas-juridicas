@@ -19,7 +19,6 @@ export const auditoriaEliminacionSoportesQueries = {
     descripcion: string | null;
     fecha_consignacion: string;
     fecha_eliminacion: string;
-    tamano_bytes: number;
     // Información de auditoría: usuario que subió
     id_usuario_subio: string | null;
     nombres_usuario_subio: string | null;
@@ -45,7 +44,6 @@ export const auditoriaEliminacionSoportesQueries = {
   getDocumento: async (idCaso: number, numSoporte: number): Promise<{
     nombre_archivo: string;
     tipo_mime: string;
-    tamano_bytes: number;
     motivo: string | null;
     fecha_eliminacion: string;
   } | null> => {
@@ -57,7 +55,6 @@ export const auditoriaEliminacionSoportesQueries = {
     return {
       nombre_archivo: result.rows[0].nombre_archivo,
       tipo_mime: result.rows[0].tipo_mime,
-      tamano_bytes: result.rows[0].tamano_bytes,
       motivo: result.rows[0].motivo,
       fecha_eliminacion: result.rows[0].fecha_eliminacion,
     };
@@ -90,7 +87,6 @@ export const auditoriaEliminacionSoportesQueries = {
     descripcion: string | null;
     fecha_consignacion: string | null;
     fecha_eliminacion: string;
-    tamano_bytes: number | null;
     id_usuario_subio: string | null;
     nombres_usuario_subio: string | null;
     apellidos_usuario_subio: string | null;
@@ -113,7 +109,7 @@ export const auditoriaEliminacionSoportesQueries = {
     // Convertir foto_perfil de Buffer a base64
     return result.rows.map(row => ({
       ...row,
-      foto_perfil_usuario_elimino: row.foto_perfil_usuario_elimino 
+      foto_perfil_usuario_elimino: row.foto_perfil_usuario_elimino
         ? `data:image/jpeg;base64,${(row.foto_perfil_usuario_elimino as Buffer).toString('base64')}`
         : null,
     }));

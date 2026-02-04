@@ -9,8 +9,7 @@ SELECT
     a.descripcion,
     a.fecha_consignacion,
     a.fecha_eliminacion,
-    -- Tamaño del documento (guardado al momento de eliminación)
-    a.tamano_bytes,
+
     -- Información de auditoría: usuario que subió
     a.id_usuario_subio,
     u_subio.nombres AS nombres_usuario_subio,

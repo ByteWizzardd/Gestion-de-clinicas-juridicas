@@ -5,15 +5,18 @@ import { QueryResult } from 'pg';
 /**
  * Queries para la entidad Soportes
  * Todas las queries SQL están en database/queries/soportes/
+ * 
+ * NOTA: Los archivos ahora se almacenan en Vercel Blob y solo
+ * se guarda la URL en la base de datos.
  */
 export const soportesQueries = {
   /**
    * Crea un nuevo soporte para un caso
-   * @param data Datos del soporte incluyendo el archivo como Buffer
+   * @param data Datos del soporte incluyendo la URL del archivo
    */
   create: async (data: {
     id_caso: number;
-    documento_data: Buffer;
+    url_documento: string; // URL de Vercel Blob
     nombre_archivo: string;
     tipo_mime: string;
     descripcion?: string;
@@ -24,12 +27,12 @@ export const soportesQueries = {
     const fechaConsignacionStr = data.fecha_consignacion
       ? (typeof data.fecha_consignacion === 'string'
         ? data.fecha_consignacion
-        : data.fecha_consignacion.toISOString()) // Preservar timestamp completo
+        : data.fecha_consignacion.toISOString())
       : null;
 
     const result: QueryResult = await pool.query(query, [
       data.id_caso,
-      data.documento_data,
+      data.url_documento,
       data.nombre_archivo,
       data.tipo_mime,
       data.descripcion || null,
@@ -49,7 +52,7 @@ export const soportesQueries = {
     tipo_mime: string;
     descripcion: string | null;
     fecha_consignacion: string;
-    tamano_bytes: number;
+    url_documento: string | null;
     // Información de auditoría: usuario que subió
     id_usuario_subio: string | null;
     nombres_usuario_subio: string | null;
@@ -62,10 +65,10 @@ export const soportesQueries = {
   },
 
   /**
-   * Obtiene el documento_data de un soporte específico para descarga
+   * Obtiene la URL del documento de un soporte específico para descarga/visualización
    */
   getDocumento: async (idCaso: number, numSoporte: number): Promise<{
-    documento_data: Buffer;
+    url_documento: string;
     nombre_archivo: string;
     tipo_mime: string;
   } | null> => {
@@ -75,10 +78,22 @@ export const soportesQueries = {
       return null;
     }
     return {
-      documento_data: result.rows[0].documento_data,
+      url_documento: result.rows[0].url_documento,
       nombre_archivo: result.rows[0].nombre_archivo,
       tipo_mime: result.rows[0].tipo_mime,
     };
+  },
+
+  /**
+   * Obtiene la URL del documento para poder eliminarlo de Vercel Blob
+   */
+  getUrlForDelete: async (idCaso: number, numSoporte: number): Promise<string | null> => {
+    const query = loadSQL('soportes/get-documento.sql');
+    const result: QueryResult = await pool.query(query, [idCaso, numSoporte]);
+    if (result.rows.length === 0) {
+      return null;
+    }
+    return result.rows[0].url_documento;
   },
 
   /**
@@ -92,6 +107,7 @@ export const soportesQueries = {
     num_soporte: number;
     id_caso: number;
     nombre_archivo: string;
+    url_documento: string | null;
   } | null> => {
     // Usar transacción para establecer las variables de sesión y ejecutar el DELETE
     const client = await pool.connect();
@@ -121,4 +137,3 @@ export const soportesQueries = {
     }
   },
 };
-

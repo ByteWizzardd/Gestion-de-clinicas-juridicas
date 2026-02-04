@@ -27,6 +27,7 @@ SELECT
     a.tipo_usuario_anterior,
     a.tipo_estudiante_anterior,
     a.tipo_profesor_anterior,
+    a.foto_perfil_anterior,
     -- Valores nuevos
     a.nombres_nuevo,
     a.apellidos_nuevo,
@@ -37,6 +38,7 @@ SELECT
     a.tipo_usuario_nuevo,
     a.tipo_estudiante_nuevo,
     a.tipo_profesor_nuevo,
+    a.foto_perfil_nuevo,
     -- Información de auditoría
     a.id_usuario_actualizo,
     u_actualizo.nombres AS nombres_usuario_actualizo,

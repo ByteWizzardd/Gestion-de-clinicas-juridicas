@@ -433,13 +433,9 @@ export const usuariosQueries = {
     const row = result.rows[0];
     if (!row) return null;
 
-    // Obtener foto de perfil
-    const fotoBuffer = await usuariosQueries.getFotoPerfil(cedula);
-    let fotoPerfilBase64: string | null = null;
-
-    if (fotoBuffer) {
-      fotoPerfilBase64 = `data:image/jpeg;base64,${fotoBuffer.toString('base64')}`;
-    }
+    // Obtener foto de perfil (ahora es una URL directa de Vercel Blob)
+    const fotoPerfilUrl = await usuariosQueries.getFotoPerfil(cedula);
+    const fotoPerfilBase64: string | null = fotoPerfilUrl; // Ya es URL, no necesita conversión
 
     // Parsear arrays de JSON
     const estudiantes = row.estudiantes || null;
@@ -567,28 +563,56 @@ export const usuariosQueries = {
   },
 
   /**
-   * Obtiene la foto de perfil de un usuario
+   * Obtiene la foto de perfil de un usuario (URL)
    */
-  getFotoPerfil: async (cedula: string): Promise<Buffer | null> => {
+  getFotoPerfil: async (cedula: string): Promise<string | null> => {
     const query = loadSQL('usuarios/get-foto-perfil.sql');
     const result: QueryResult = await pool.query(query, [cedula]);
     return result.rows[0]?.foto_perfil || null;
   },
 
   /**
-   * Actualiza la foto de perfil de un usuario
+   * Actualiza la foto de perfil de un usuario (URL de Vercel Blob)
    */
-  updateFotoPerfil: async (cedula: string, fotoPerfil: Buffer): Promise<void> => {
-    const query = loadSQL('usuarios/update-foto-perfil.sql');
-    await pool.query(query, [cedula, fotoPerfil]);
+  updateFotoPerfil: async (cedula: string, fotoPerfilUrl: string, cedulaActor: string): Promise<void> => {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      // Establecer variable de sesión para auditoría
+      await client.query("SELECT set_config('app.usuario_actualiza_usuario', $1, true)", [cedulaActor]);
+
+      const query = loadSQL('usuarios/update-foto-perfil.sql');
+      await client.query(query, [cedula, fotoPerfilUrl]);
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   },
 
   /**
    * Elimina la foto de perfil de un usuario (establece a NULL)
    */
-  deleteFotoPerfil: async (cedula: string): Promise<void> => {
-    const query = loadSQL('usuarios/delete-foto-perfil.sql');
-    await pool.query(query, [cedula]);
+  deleteFotoPerfil: async (cedula: string, cedulaActor: string): Promise<void> => {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      // Establecer variable de sesión para auditoría
+      await client.query("SELECT set_config('app.usuario_actualiza_usuario', $1, true)", [cedulaActor]);
+
+      const query = loadSQL('usuarios/delete-foto-perfil.sql');
+      await client.query(query, [cedula]);
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   },
 
   /**
