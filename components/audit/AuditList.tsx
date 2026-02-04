@@ -73,7 +73,7 @@ export default function AuditList({
         ))}
       </div>
 
-      {totalPages > 1 && (
+      {records.length > 0 && (
         <TablePagination
           currentPage={currentPage}
           totalPages={totalPages}

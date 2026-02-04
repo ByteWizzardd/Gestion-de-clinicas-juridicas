@@ -7,6 +7,7 @@ import Spinner from '@/components/ui/feedback/Spinner';
 import Search from '@/components/CaseTools/search';
 import Tabs from '@/components/ui/Tabs';
 import Filter from '@/components/CaseTools/Filter';
+import { TablePagination } from '@/components/Table/TablePagination';
 import { getSesionesAuditAction } from '@/app/actions/audit';
 import { getUsuariosAction } from '@/app/actions/usuarios';
 import type { SesionAuditRecord, AuditFilters } from '@/types/audit';
@@ -249,7 +250,7 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
     const [page, setPage] = useState(1);
     const [filters, setFilters] = useState<AuditFilters>({ orden: 'desc' });
     const [usuarioOptions, setUsuarioOptions] = useState<Array<{ value: string; label: string }>>([]);
-    const limit = 20;
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     // Cargar opciones de usuarios
     useEffect(() => {
@@ -284,8 +285,8 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
             setLoading(true);
             const result = await getSesionesAuditAction({
                 busqueda: debouncedSearch || undefined,
-                limit,
-                offset: (page - 1) * limit,
+                limit: rowsPerPage,
+                offset: (page - 1) * rowsPerPage,
                 type,
                 sortOrder: filters.orden || 'desc',
                 idUsuario: filters.idUsuario,
@@ -300,7 +301,7 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
         } finally {
             setLoading(false);
         }
-    }, [debouncedSearch, page, type, filters]);
+    }, [debouncedSearch, page, type, filters, rowsPerPage]);
 
     useEffect(() => {
         loadSesiones();
@@ -323,7 +324,7 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
         handleFilterChange('orden', nuevoOrden);
     };
 
-    const totalPages = Math.ceil(total / limit);
+    const totalPages = Math.ceil(total / rowsPerPage);
 
     if (error) {
         return (
@@ -404,26 +405,17 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
                     </div>
                 )}
 
-                {totalPages > 1 && (
-                    <div className="flex justify-center items-center gap-2 mt-6">
-                        <button
-                            onClick={() => setPage(Math.max(1, page - 1))}
-                            disabled={page === 1}
-                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                            Anterior
-                        </button>
-                        <span className="text-sm text-gray-600">
-                            Página {page} de {totalPages}
-                        </span>
-                        <button
-                            onClick={() => setPage(Math.min(totalPages, page + 1))}
-                            disabled={page === totalPages}
-                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                            Siguiente
-                        </button>
-                    </div>
+                {(totalPages > 1 || sesiones.length > 0) && (
+                    <TablePagination
+                        currentPage={page}
+                        totalPages={totalPages}
+                        rowsPerPage={rowsPerPage}
+                        onPageChange={setPage}
+                        onRowsPerPageChange={(rows) => {
+                            setRowsPerPage(rows);
+                            setPage(1);
+                        }}
+                    />
                 )}
             </motion.div>
         </div>
