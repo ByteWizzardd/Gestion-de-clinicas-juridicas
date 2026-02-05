@@ -36,7 +36,13 @@ SELECT
           AND s.habilitado = true
         ORDER BY sem.fecha_inicio DESC, s.term DESC
         LIMIT 1
-    ) AS nombre_responsable
+    ) AS nombre_responsable,
+    -- Obtener lista de semestres donde ocurre el caso
+    (
+        SELECT array_agg(oe.term ORDER BY oe.term DESC)
+        FROM ocurren_en oe
+        WHERE oe.id_caso = vc.id_caso
+    ) AS semestres
 FROM view_casos_detalle vc
 ORDER BY vc.id_caso DESC;
 

@@ -19,6 +19,7 @@ import { getMateriasAction } from '@/app/actions/materias';
 import { descargarHistorialCasoAction } from '@/app/actions/reports';
 import { generateCasoHistorialZip } from '@/lib/utils/case-history-pdf-generator';
 import type { CasoHistorialData } from '@/lib/types/report-types';
+import { getSemestres } from '@/app/actions/catalogos/semestres.actions';
 
 interface Caso {
   id_caso: number;
@@ -43,6 +44,7 @@ interface Caso {
   nombre_categoria: string;
   nombre_subcategoria: string;
   nombre_responsable: string | null;
+  semestres?: string[]; // Array of terms, e.g. ["2024-15", "2024-25"]
 }
 
 interface TableRow extends Record<string, unknown> {
@@ -51,6 +53,7 @@ interface TableRow extends Record<string, unknown> {
   materia: string;
   estatus: string;
   responsable: string;
+  semestres: string; // Joined string for display if needed
 }
 
 interface CasesClientProps {
@@ -72,6 +75,8 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   const [estatusFilter, setEstatusFilter] = useState('');
   const [casosAsignadosFilter, setCasosAsignadosFilter] = useState(false);
   const [materias, setMaterias] = useState<{ id_materia: number; nombre_materia: string }[]>([]);
+  const [semestresOptions, setSemestresOptions] = useState<{ value: string; label: string }[]>([]);
+  const [termFilter, setTermFilter] = useState('');
   const [materiaFilter, setMateriaFilter] = useState('');
   const [fechaInicioFilter, setFechaInicioFilter] = useState('');
   const [fechaFinFilter, setFechaFinFilter] = useState('');
@@ -109,19 +114,31 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       setPrefersReducedMotion(e.matches);
     };
 
-    // Cargar materias
-    const fetchMaterias = async () => {
+    // Cargar materias y semestres
+    const fetchData = async () => {
       try {
-        const result = await getMateriasAction();
-        if (result.success && result.data) {
-          setMaterias(result.data);
+        const [materiasResult, semestresResult] = await Promise.all([
+          getMateriasAction(),
+          getSemestres()
+        ]);
+
+        if (materiasResult.success && materiasResult.data) {
+          setMaterias(materiasResult.data);
+        }
+
+        if (semestresResult.success && semestresResult.data) {
+          // Ordenar semestres descendente (más recientes primero)
+          const sortedTerms = [...semestresResult.data]
+            .sort((a, b) => b.term.localeCompare(a.term))
+            .map(s => ({ value: s.term, label: s.term }));
+          setSemestresOptions(sortedTerms);
         }
       } catch (error) {
-        console.error('Error cargando materias:', error);
+        console.error('Error cargando datos de catálogo:', error);
       }
     };
 
-    fetchMaterias();
+    fetchData();
 
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
@@ -397,7 +414,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   };
 
   const filteredCasos = useMemo(() => {
-    if (!searchValue && !nucleoFilter && !tramiteFilter && !estatusFilter && !casosAsignadosFilter && !materiaFilter && !fechaInicioFilter && !fechaFinFilter) {
+    if (!searchValue && !nucleoFilter && !tramiteFilter && !estatusFilter && !casosAsignadosFilter && !materiaFilter && !fechaInicioFilter && !fechaFinFilter && !termFilter) {
       return casos;
     }
 
@@ -431,10 +448,12 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       const matchesTramite = !tramiteFilter || caso.tramite === tramiteFilter;
       const matchesEstatus = !estatusFilter || caso.estatus === estatusFilter;
       const matchesMateria = !materiaFilter || (caso.id_materia && String(caso.id_materia) === materiaFilter);
+      // Check if the case is active in the selected term (matches any in the semestres array)
+      const matchesTerm = !termFilter || (caso.semestres && caso.semestres.includes(termFilter));
 
-      return matchesSearch && matchesNucleo && matchesTramite && matchesEstatus && matchesMateria;
+      return matchesSearch && matchesNucleo && matchesTramite && matchesEstatus && matchesMateria && matchesTerm;
     });
-  }, [casos, searchValue, nucleoFilter, tramiteFilter, estatusFilter, casosAsignadosFilter, materiaFilter, fechaInicioFilter, fechaFinFilter]);
+  }, [casos, searchValue, nucleoFilter, tramiteFilter, estatusFilter, casosAsignadosFilter, materiaFilter, fechaInicioFilter, fechaFinFilter, termFilter]);
 
   const handleView = (data: Record<string, unknown>) => {
     const caso = data as TableRow;
@@ -734,6 +753,10 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
           fechaFin={fechaFinFilter}
           onFechaInicioChange={handleFechaInicioChange}
           onFechaFinChange={handleFechaFinChange}
+
+          termFilter={termFilter}
+          onTermChange={setTermFilter}
+          termOptions={semestresOptions}
         />
       </motion.div>
       <div className="mt-10"></div>

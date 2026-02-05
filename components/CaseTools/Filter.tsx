@@ -50,6 +50,9 @@ interface FilterProps {
   fechaFin?: string;
   onFechaInicioChange?: (value: string) => void;
   onFechaFinChange?: (value: string) => void;
+  termFilter?: string;
+  onTermChange?: (value: string) => void;
+  termOptions?: { value: string; label: string }[];
   showDateRange?: boolean;
   recentActivityFilter?: boolean;
   onRecentActivityChange?: (value: boolean) => void;
@@ -95,6 +98,9 @@ function Filter({
   fechaFin,
   onFechaInicioChange,
   onFechaFinChange,
+  termFilter,
+  onTermChange,
+  termOptions,
   showDateRange = false,
   recentActivityFilter,
   onRecentActivityChange,
@@ -102,7 +108,7 @@ function Filter({
 }: FilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<
-    'nucleo' | 'materia' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas' | null
+    'nucleo' | 'materia' | 'term' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas' | null
   >(null);
   const [nucleos, setNucleos] = useState<Array<{ id_nucleo: number; nombre_nucleo: string; habilitado?: boolean }>>([]);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 });
@@ -165,7 +171,7 @@ function Filter({
 
   // Eliminar useEffect de posicionamiento automático y usar el evento de click
   const handleSubmenuToggle = (
-    type: 'nucleo' | 'materia' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas',
+    type: 'nucleo' | 'materia' | 'term' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas',
     e: React.MouseEvent<HTMLButtonElement>
   ) => {
     if (activeSubmenu === type) {
@@ -274,7 +280,9 @@ function Filter({
     (estadoCivilFilter ? 1 : 0) +
     (nacionalidadFilter ? 1 : 0) +
     (casosAsignadosFilter ? 1 : 0) +
+    (casosAsignadosFilter ? 1 : 0) +
     (materiaFilter ? 1 : 0) +
+    (termFilter ? 1 : 0) +
     ((fechaInicio || fechaFin) ? 1 : 0) +
     (recentActivityFilter ? 1 : 0);
 
@@ -291,6 +299,7 @@ function Filter({
         if (onEstadoCivilChange) onEstadoCivilChange('');
         if (onNacionalidadChange) onNacionalidadChange('');
         if (onMateriaChange) onMateriaChange('');
+        if (onTermChange) onTermChange('');
         if (onCasosAsignadosChange) onCasosAsignadosChange(false);
         if (onFechaInicioChange) onFechaInicioChange('');
         if (onFechaFinChange) onFechaFinChange('');
@@ -342,6 +351,11 @@ function Filter({
           handler = onMateriaChange || (() => { });
           allLabel = 'Todas las materias';
           break;
+        case 'term':
+          options = termOptions || [];
+          handler = onTermChange || (() => { });
+          allLabel = 'Todos los semestres';
+          break;
         case 'estatus':
           options = estatusOptions;
           handler = onEstatusChange || (() => { });
@@ -367,6 +381,9 @@ function Filter({
         break;
       case 'materia':
         filterValue = materiaFilter || '';
+        break;
+      case 'term':
+        filterValue = termFilter || '';
         break;
       case 'tramite':
         filterValue = tramiteFilter || '';
@@ -744,6 +761,31 @@ function Filter({
                       <div className="flex-1" />
                       <span>Materia</span>
                       <BookOpen className="w-4 h-4" />
+                    </motion.button>
+                    <div className="border-t border-gray-200 my-2"></div>
+                  </>
+                )}
+
+                {/* Opción: Semestre */}
+                {onTermChange && (
+                  <>
+                    <motion.button
+                      ref={activeSubmenu === 'term' ? activeButtonRef : undefined}
+                      type="button"
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      onClick={(e) => handleSubmenuToggle('term', e)}
+                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'term'
+                        ? 'bg-primary-light text-primary'
+                        : termFilter
+                          ? 'text-primary hover:bg-gray-100'
+                          : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                    >
+                      <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'term' ? '-rotate-90' : ''}`} />
+                      <div className="flex-1" />
+                      <span>Semestre</span>
+                      <Calendar className="w-4 h-4" />
                     </motion.button>
                     <div className="border-t border-gray-200 my-2"></div>
                   </>

@@ -43,6 +43,11 @@ type CaseToolsProps = {
     fechaFin?: string;
     onFechaInicioChange?: (value: string) => void;
     onFechaFinChange?: (value: string) => void;
+
+    // Semestre filter
+    termFilter?: string;
+    onTermChange?: (value: string) => void;
+    termOptions?: { value: string; label: string }[];
 };
 
 function CaseTools({
@@ -81,7 +86,10 @@ function CaseTools({
     fechaInicio,
     fechaFin,
     onFechaInicioChange,
-    onFechaFinChange
+    onFechaFinChange,
+    termFilter = '',
+    onTermChange,
+    termOptions
 }: CaseToolsProps) {
     const hasSearch = onSearchChange !== undefined;
     const hasAdd = Boolean(addLabel || onAddClick);
@@ -94,7 +102,8 @@ function CaseTools({
         onEstadoCivilChange !== undefined ||
         onNacionalidadChange !== undefined ||
         onFechaInicioChange !== undefined ||
-        onFechaFinChange !== undefined;
+        onFechaFinChange !== undefined ||
+        onTermChange !== undefined;
 
     const handleClearFilters = async () => {
         if (onClearFilters) {
@@ -121,7 +130,10 @@ function CaseTools({
         await call(onNacionalidadChange, '');
         await call(onCasosAsignadosChange, false);
         await call(onFechaInicioChange, '');
+        await call(onCasosAsignadosChange, false);
+        await call(onFechaInicioChange, '');
         await call(onFechaFinChange, '');
+        await call(onTermChange, '');
     };
 
     return (
@@ -172,6 +184,9 @@ function CaseTools({
                         fechaFin={fechaFin}
                         onFechaInicioChange={onFechaInicioChange}
                         onFechaFinChange={onFechaFinChange}
+                        termFilter={termFilter}
+                        onTermChange={onTermChange}
+                        termOptions={termOptions}
                     />
                 )}
                 {hasAdd && <Add label={addLabel} onClick={onAddClick} />}
