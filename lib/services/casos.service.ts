@@ -718,5 +718,42 @@ export const casosService = {
             };
         });
     },
+
+    /**
+     * Agrega un semestre a un caso
+     */
+    addOcurrencia: async (idCaso: number, term: string): Promise<void> => {
+        const query = loadSQL('casos/add-ocurrencia.sql');
+        return await withTransaction(async (client) => {
+            await client.query(query, [idCaso, term]);
+        });
+    },
+
+    /**
+     * Elimina un semestre de un caso
+     */
+    removeOcurrencia: async (idCaso: number, term: string): Promise<void> => {
+        const query = loadSQL('casos/remove-ocurrencia.sql');
+        return await withTransaction(async (client) => {
+            await client.query(query, [idCaso, term]);
+        });
+    },
+
+    /**
+     * Obtiene los semestres de un caso
+     */
+    getSemestresByCaso: async (idCaso: number): Promise<Array<{ term: string; fecha_inicio: string; fecha_fin: string }>> => {
+        const query = loadSQL('semestres/get-case-semesters.sql');
+        // Usa withTransaction para lectura o pool directo
+        // withTransaction provee un cliente, es seguro
+        return await withTransaction(async (client) => {
+            const result = await client.query(query, [idCaso]);
+            return result.rows.map(row => ({
+                term: row.term,
+                fecha_inicio: row.fecha_inicio.toISOString().split('T')[0],
+                fecha_fin: row.fecha_fin.toISOString().split('T')[0]
+            }));
+        });
+    },
 };
 

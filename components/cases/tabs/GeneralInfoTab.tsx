@@ -9,6 +9,12 @@ import EditBeneficiaryModal from '../modals/EditBeneficiaryModal';
 import { deleteBeneficiarioAction } from '@/app/actions/beneficiarios';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
+import { getCaseSemestersAction, addCaseToSemesterAction, removeCaseFromSemesterAction } from '@/app/actions/casos';
+import { getSemestres } from '@/app/actions/catalogos/semestres.actions';
+import Modal from '@/components/ui/feedback/Modal';
+import Select from '@/components/forms/Select';
+import Button from '@/components/ui/Button';
+import { useEffect } from 'react';
 
 interface GeneralInfoTabProps {
   caso: {
@@ -51,6 +57,98 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [beneficiaryToDelete, setBeneficiaryToDelete] = useState<{ num: number, nombre: string } | null>(null);
   const [deleteMotivo, setDeleteMotivo] = useState('');
+
+  // Confirm delete semester state
+  const [deleteSemesterConfirmOpen, setDeleteSemesterConfirmOpen] = useState(false);
+  const [semesterToDelete, setSemesterToDelete] = useState<string | null>(null);
+
+
+  // Semesters State
+  const [semesters, setSemesters] = useState<Array<{ term: string, fecha_inicio: string, fecha_fin: string }>>([]);
+  const [availableSemesters, setAvailableSemesters] = useState<Array<{ term: string }>>([]);
+  const [addSemesterModalOpen, setAddSemesterModalOpen] = useState(false);
+  const [selectedSemesterToAdd, setSelectedSemesterToAdd] = useState('');
+  const [isAddingSemester, setIsAddingSemester] = useState(false);
+  const [loadingSemesters, setLoadingSemesters] = useState(false);
+
+  useEffect(() => {
+    fetchSemesters();
+  }, [caso.id_caso]);
+
+  const fetchSemesters = async () => {
+    setLoadingSemesters(true);
+    try {
+      const result = await getCaseSemestersAction(caso.id_caso);
+      if (result.success && result.data) {
+        setSemesters(result.data);
+      }
+    } catch (error) {
+      console.error('Error fetching semesters:', error);
+    } finally {
+      setLoadingSemesters(false);
+    }
+  };
+
+  const handleOpenAddSemester = async () => {
+    try {
+      const result = await getSemestres();
+      if (result.success && result.data) {
+          // Filter out semesters already assigned
+          const currentTerms = new Set(semesters.map(s => s.term));
+          const available = result.data.filter((s:any) => !currentTerms.has(s.term));
+          setAvailableSemesters(available);
+      }
+      setAddSemesterModalOpen(true);
+    } catch (error) {
+        toast.error('Error al cargar lista de semestres');
+    }
+  };
+
+  const handleAddSemester = async () => {
+    if (!selectedSemesterToAdd) return;
+    setIsAddingSemester(true);
+    try {
+      const result = await addCaseToSemesterAction(caso.id_caso, selectedSemesterToAdd);
+      if (result.success) {
+        toast.success('Semestre agregado correctamente');
+        setAddSemesterModalOpen(false);
+        setSelectedSemesterToAdd('');
+        fetchSemesters();
+        if (onRefresh) onRefresh();
+      } else {
+        toast.error(result.error?.message || 'Error al agregar semestre');
+      }
+    } catch (error) {
+        toast.error('Error inesperado');
+    } finally {
+      setIsAddingSemester(false);
+    }
+  };
+
+  const handleRemoveSemester = (term: string) => {
+    setSemesterToDelete(term);
+    setDeleteSemesterConfirmOpen(true);
+  };
+
+  const confirmRemoveSemester = async () => {
+    if (!semesterToDelete) return;
+    
+    try {
+      const result = await removeCaseFromSemesterAction(caso.id_caso, semesterToDelete);
+      if (result.success) {
+          toast.success('Semestre eliminado correctamente');
+          fetchSemesters();
+          if (onRefresh) onRefresh();
+      } else {
+          toast.error(result.error?.message || 'Error al eliminar semestre');
+      }
+    } catch (error) {
+        toast.error('Error inesperado');
+    } finally {
+        setDeleteSemesterConfirmOpen(false);
+        setSemesterToDelete(null);
+    }
+  };
 
   const formatSexo = (sexo: string | null) => {
     if (!sexo) return 'No especificado';
@@ -283,6 +381,93 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
           <p className="text-gray-500 text-lg">No hay beneficiarios registrados para este caso</p>
         </div>
       )}
+
+      {/* Semestres de Actividad */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-primary" />
+            Semestres de Actividad ({semesters.length})
+          </h3>
+          <button
+              onClick={handleOpenAddSemester}
+              className="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+          >
+              + Agregar Semestre
+          </button>
+        </div>
+        
+        {loadingSemesters ? (
+            <p className="text-gray-500">Cargando semestres...</p>
+        ) : (
+            <div className="space-y-3">
+                {semesters.length === 0 ? (
+                    <p className="text-gray-500 italic">No hay semestres asociados a este caso.</p>
+                ) : (
+                    semesters.map((sem) => (
+                        <div key={sem.term} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg bg-gray-50/50 hover:bg-gray-50 transition-colors group">
+                            <div className="flex flex-col">
+                                <span className="font-medium text-gray-900">Semestre {sem.term}</span>
+                                <span className="text-xs text-gray-500">
+                                    {formatDate(sem.fecha_inicio)} - {formatDate(sem.fecha_fin)}
+                                </span>
+                            </div>
+                            <button
+                                onClick={() => handleRemoveSemester(sem.term)}
+                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                title="Eliminar asociación"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ))
+                )}
+            </div>
+        )}
+      </div>
+
+      {/* Modal Agregar Semestre */}
+      <Modal
+          isOpen={addSemesterModalOpen}
+          onClose={() => setAddSemesterModalOpen(false)}
+          title="Asociar Semestre"
+          size="sm"
+      >
+          <div className="p-6">
+              <p className="mb-4 text-sm text-gray-600">
+                  Selecciona el semestre que deseas asociar a este caso.
+              </p>
+              
+              <div className="mb-6">
+                  <Select
+                      label="Semestre"
+                      value={selectedSemesterToAdd}
+                      onChange={(e) => setSelectedSemesterToAdd(e.target.value)}
+                      options={availableSemesters.map(s => ({ value: s.term, label: s.term }))}
+                      placeholder="Seleccionar semestre..."
+                      disabled={isAddingSemester}
+                  />
+              </div>
+
+              <div className="flex justify-end gap-3">
+                  <Button
+                      variant="outline"
+                      onClick={() => setAddSemesterModalOpen(false)}
+                      disabled={isAddingSemester}
+                  >
+                      Cancelar
+                  </Button>
+                  <Button
+                      variant="primary"
+                      onClick={handleAddSemester}
+                      disabled={!selectedSemesterToAdd || isAddingSemester}
+                      isLoading={isAddingSemester}
+                  >
+                      Agregar
+                  </Button>
+              </div>
+          </div>
+      </Modal>
       <EditBeneficiaryModal
         isOpen={editModalOpen}
         onClose={() => {
@@ -315,6 +500,20 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
         onMotiveChange={setDeleteMotivo}
         motivePlaceholder="Describe el motivo de la eliminación..."
         motiveRequired={true}
+      />
+
+      <ConfirmModal
+        isOpen={deleteSemesterConfirmOpen}
+        onClose={() => {
+            setDeleteSemesterConfirmOpen(false);
+            setSemesterToDelete(null);
+        }}
+        onConfirm={confirmRemoveSemester}
+        title="Eliminar Semestre"
+        message={`¿Estás seguro de que deseas eliminar la asociación con el semestre ${semesterToDelete}?`}
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        confirmVariant="danger"
       />
     </div>
   );

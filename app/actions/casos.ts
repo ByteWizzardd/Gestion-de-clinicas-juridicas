@@ -1740,3 +1740,70 @@ export async function archiveInactiveCasesAction(
     return handleServerActionError(error, 'archiveInactiveCasesAction', 'ARCHIVE_ERROR');
   }
 }
+
+export interface SemesterActionResut {
+  success: boolean;
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+export interface GetCaseSemestersResult {
+  success: boolean;
+  data?: Array<{ term: string; fecha_inicio: string; fecha_fin: string }>;
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+export async function addCaseToSemesterAction(idCaso: number, term: string): Promise<SemesterActionResut> {
+  try {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return { success: false, error: authResult.error! };
+    }
+
+    await withSecureTransaction(authResult.user.rol, async (client) => {
+      await casosService.addOcurrencia(idCaso, term);
+    });
+
+    revalidatePath(`/dashboard/cases/${idCaso}`);
+    return { success: true };
+  } catch (error) {
+    return handleServerActionError(error, 'addCaseToSemesterAction', 'SEMESTER_ERROR');
+  }
+}
+
+export async function removeCaseFromSemesterAction(idCaso: number, term: string): Promise<SemesterActionResut> {
+  try {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return { success: false, error: authResult.error! };
+    }
+
+    await withSecureTransaction(authResult.user.rol, async () => {
+       await casosService.removeOcurrencia(idCaso, term);
+    });
+
+    revalidatePath(`/dashboard/cases/${idCaso}`);
+    return { success: true };
+  } catch (error) {
+    return handleServerActionError(error, 'removeCaseFromSemesterAction', 'SEMESTER_ERROR');
+  }
+}
+
+export async function getCaseSemestersAction(idCaso: number): Promise<GetCaseSemestersResult> {
+  try {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success) {
+      return { success: false, error: authResult.error! };
+    }
+
+    const semestres = await casosService.getSemestresByCaso(idCaso);
+    return { success: true, data: semestres };
+  } catch (error) {
+    return handleServerActionError(error, 'getCaseSemestersAction', 'SEMESTER_ERROR');
+  }
+}

@@ -453,3 +453,15 @@ CREATE TABLE se_le_asigna (
     FOREIGN KEY (id_caso) REFERENCES casos(id_caso) 
         ON UPDATE CASCADE ON DELETE RESTRICT
 );
+
+-- 33) OCURREN_EN
+CREATE TABLE ocurren_en (
+    id_caso INTEGER NOT NULL,
+    term VARCHAR(20) NOT NULL,
+    
+    PRIMARY KEY (id_caso, term),
+    FOREIGN KEY (id_caso) REFERENCES casos(id_caso) 
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (term) REFERENCES semestres(term) 
+        ON UPDATE CASCADE ON DELETE RESTRICT
+);

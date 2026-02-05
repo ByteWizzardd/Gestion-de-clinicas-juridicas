@@ -1595,4 +1595,11 @@ CREATE TABLE auditoria_reportes (
     fecha_generacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
 );
 
-
+-- 37) RELACIÓN CASOS - SEMESTRES (ocurren_en)
+CREATE TABLE ocurren_en (
+    id_caso INTEGER NOT NULL REFERENCES casos(id_caso) ON UPDATE CASCADE ON DELETE CASCADE,
+    term VARCHAR(20) NOT NULL,
+    
+    PRIMARY KEY (id_caso, term),
+    FOREIGN KEY (term) REFERENCES semestres(term) ON UPDATE CASCADE ON DELETE RESTRICT
+);

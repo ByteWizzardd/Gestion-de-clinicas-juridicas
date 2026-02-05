@@ -2653,6 +2653,128 @@ END;
 $function$
 ;
 
+
+-- Función Auxiliar: ensure_case_semester
+-- Busca el semestre para una fecha y lo asocia al caso si no existe
+CREATE OR REPLACE FUNCTION public.ensure_case_semester_func(p_id_caso INT, p_fecha DATE)
+ RETURNS void
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+    v_term VARCHAR(20);
+BEGIN
+    IF p_fecha IS NULL THEN RETURN; END IF;
+
+    -- Buscar semestre que incluya la fecha
+    SELECT term INTO v_term
+    FROM semestres
+    WHERE p_fecha BETWEEN fecha_inicio AND fecha_fin
+    LIMIT 1;
+
+    -- Si existe un semestre para esa fecha, asociarlo
+    IF v_term IS NOT NULL THEN
+        INSERT INTO ocurren_en (id_caso, term)
+        VALUES (p_id_caso, v_term)
+        ON CONFLICT (id_caso, term) DO NOTHING;
+    END IF;
+END;
+$function$
+;
+
+-- Trigger Function: sync_ocurren_en_asignacion
+-- Para tablas se_le_asigna y supervisa que ya tienen 'term'
+CREATE OR REPLACE FUNCTION public.trigger_sync_ocurren_en_asignacion()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+    -- Insertar directorio el term especificado
+    INSERT INTO ocurren_en (id_caso, term)
+    VALUES (NEW.id_caso, NEW.term)
+    ON CONFLICT (id_caso, term) DO NOTHING;
+    RETURN NEW;
+END;
+$function$
+;
+
+-- Trigger Function: sync_ocurren_en_caso
+-- Para tabla casos (fecha_inicio_caso)
+CREATE OR REPLACE FUNCTION public.trigger_sync_ocurren_en_caso()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+    PERFORM public.ensure_case_semester_func(NEW.id_caso, NEW.fecha_inicio_caso);
+    RETURN NEW;
+END;
+$function$
+;
+
+-- Trigger Function: sync_ocurren_en_accion
+-- Para tabla acciones (fecha_registro)
+CREATE OR REPLACE FUNCTION public.trigger_sync_ocurren_en_accion()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+    PERFORM public.ensure_case_semester_func(NEW.id_caso, NEW.fecha_registro::DATE);
+    RETURN NEW;
+END;
+$function$
+;
+
+-- Trigger Function: sync_ocurren_en_cita
+-- Para tabla citas (fecha_encuentro)
+CREATE OR REPLACE FUNCTION public.trigger_sync_ocurren_en_cita()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+    PERFORM public.ensure_case_semester_func(NEW.id_caso, NEW.fecha_encuentro::DATE);
+    RETURN NEW;
+END;
+$function$
+;
+
+-- Trigger Function: sync_ocurren_en_estatus
+-- Para tabla cambio_estatus (fecha)
+CREATE OR REPLACE FUNCTION public.trigger_sync_ocurren_en_estatus()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+    PERFORM public.ensure_case_semester_func(NEW.id_caso, NEW.fecha::DATE);
+    RETURN NEW;
+END;
+$function$
+;
+
+-- Trigger Function: sync_ocurren_en_soporte
+-- Para tabla soportes (fecha_consignacion)
+CREATE OR REPLACE FUNCTION public.trigger_sync_ocurren_en_soporte()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+    PERFORM public.ensure_case_semester_func(NEW.id_caso, NEW.fecha_consignacion);
+    RETURN NEW;
+END;
+$function$
+;
+
+-- Trigger Function: sync_ocurren_en_beneficiario
+-- Para tabla beneficiarios (no tiene fecha registro, usamos CURRENT_DATE)
+CREATE OR REPLACE FUNCTION public.trigger_sync_ocurren_en_beneficiario()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+    PERFORM public.ensure_case_semester_func(NEW.id_caso, CURRENT_DATE);
+    RETURN NEW;
+END;
+$function$
+;
+
 -- =========================================================
 -- TRIGGERS
 -- =========================================================
@@ -2988,3 +3110,55 @@ $function$
 
 DROP TRIGGER IF EXISTS trigger_auditoria_eliminacion_beneficiario ON beneficiarios;
 CREATE TRIGGER trigger_auditoria_eliminacion_beneficiario BEFORE DELETE ON public.beneficiarios FOR EACH ROW EXECUTE FUNCTION trigger_auditoria_eliminacion_beneficiario();
+
+-- =========================================================
+-- TRIGGERS DE SINCRONIZACIÓN (OCURREN_EN)
+-- =========================================================
+
+-- 1. Asignaciones (Estudiantes)
+DROP TRIGGER IF EXISTS trigger_sync_semestre_asignacion ON se_le_asigna;
+CREATE TRIGGER trigger_sync_semestre_asignacion
+AFTER INSERT ON se_le_asigna
+FOR EACH ROW EXECUTE FUNCTION trigger_sync_ocurren_en_asignacion();
+
+-- 2. Supervisiones (Profesores)
+DROP TRIGGER IF EXISTS trigger_sync_semestre_supervision ON supervisa;
+CREATE TRIGGER trigger_sync_semestre_supervision
+AFTER INSERT ON supervisa
+FOR EACH ROW EXECUTE FUNCTION trigger_sync_ocurren_en_asignacion();
+
+-- 3. Casos (Fecha Inicio)
+DROP TRIGGER IF EXISTS trigger_sync_semestre_caso ON casos;
+CREATE TRIGGER trigger_sync_semestre_caso
+AFTER INSERT OR UPDATE OF fecha_inicio_caso ON casos
+FOR EACH ROW EXECUTE FUNCTION trigger_sync_ocurren_en_caso();
+
+-- 4. Acciones
+DROP TRIGGER IF EXISTS trigger_sync_semestre_accion ON acciones;
+CREATE TRIGGER trigger_sync_semestre_accion
+AFTER INSERT ON acciones
+FOR EACH ROW EXECUTE FUNCTION trigger_sync_ocurren_en_accion();
+
+-- 5. Citas
+DROP TRIGGER IF EXISTS trigger_sync_semestre_cita ON citas;
+CREATE TRIGGER trigger_sync_semestre_cita
+AFTER INSERT OR UPDATE OF fecha_encuentro ON citas
+FOR EACH ROW EXECUTE FUNCTION trigger_sync_ocurren_en_cita();
+
+-- 6. Cambios de Estatus
+DROP TRIGGER IF EXISTS trigger_sync_semestre_estatus ON cambio_estatus;
+CREATE TRIGGER trigger_sync_semestre_estatus
+AFTER INSERT ON cambio_estatus
+FOR EACH ROW EXECUTE FUNCTION trigger_sync_ocurren_en_estatus();
+
+-- 7. Soportes
+DROP TRIGGER IF EXISTS trigger_sync_semestre_soporte ON soportes;
+CREATE TRIGGER trigger_sync_semestre_soporte
+AFTER INSERT ON soportes
+FOR EACH ROW EXECUTE FUNCTION trigger_sync_ocurren_en_soporte();
+
+-- 8. Beneficiarios
+DROP TRIGGER IF EXISTS trigger_sync_semestre_beneficiario ON beneficiarios;
+CREATE TRIGGER trigger_sync_semestre_beneficiario
+AFTER INSERT ON beneficiarios
+FOR EACH ROW EXECUTE FUNCTION trigger_sync_ocurren_en_beneficiario();
