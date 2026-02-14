@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
-import Spinner from '@/components/ui/feedback/Spinner';
+import AuditEntityCardSkeleton from '@/components/ui/skeletons/AuditEntityCardSkeleton';
 import Search from '@/components/CaseTools/search';
 
 import AuditEntityCard from './AuditEntityCard';
@@ -592,8 +592,22 @@ export default function AuditClient() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <Spinner />
+      <div className="w-full">
+        {/* Skeleton de la barra de búsqueda */}
+        <div className="mb-6">
+          <div className="w-full flex items-center gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="skeleton-shimmer h-10 rounded-full" style={{ width: '100%' }} />
+            </div>
+            <div className="skeleton-shimmer h-10 rounded-full" style={{ width: 150 }} />
+          </div>
+        </div>
+        {/* Skeleton de las cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <AuditEntityCardSkeleton key={i} />
+          ))}
+        </div>
       </div>
     );
   }

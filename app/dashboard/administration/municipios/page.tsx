@@ -19,14 +19,17 @@ export default function MunicipiosPage() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewItem, setViewItem] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
+    setLoading(true);
     const [municipiosResult, estadosResult] = await Promise.all([getMunicipios(), getEstados()]);
     if (municipiosResult.success && municipiosResult.data) setMunicipios(municipiosResult.data);
     if (estadosResult.success && estadosResult.data) setEstados(estadosResult.data);
+    setLoading(false);
   };
 
   const handleAdd = async (data: Record<string, string>) => {
@@ -77,6 +80,7 @@ export default function MunicipiosPage() {
         columns={["ID Estado", "ID Municipio", "Municipio", "Estado", "Habilitado"]}
         addLabel="Añadir Municipio"
         onAddClick={() => setIsModalOpen(true)}
+        loading={loading}
         filterField="nombre_estado"
         filterLabel="Estado"
         autoGenerateFilter={true}

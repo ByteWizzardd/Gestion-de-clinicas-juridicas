@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import DashboardAppointmentCard from './DashboardAppointmentCard';
 import type { Appointment } from '@/types/appointment';
+import AppointmentListSkeleton from '@/components/ui/skeletons/AppointmentListSkeleton';
 
 interface DashboardAppointment {
   appointment: Appointment;
@@ -59,13 +60,7 @@ export default function DashboardAppointmentList({
 
   // Estados de carga y error
   if (loading) {
-    return (
-      <div className="flex flex-col gap-2 md:gap-2.5 h-full">
-        <div className="text-xs md:text-sm text-gray-500 text-center py-4">
-          Cargando citas...
-        </div>
-      </div>
-    );
+    return <AppointmentListSkeleton count={3} />;
   }
 
   if (error) {

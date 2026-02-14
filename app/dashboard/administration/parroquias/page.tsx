@@ -22,17 +22,20 @@ export default function ParroquiasPage() {
     const [editingItem, setEditingItem] = useState<any>(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [viewItem, setViewItem] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
     const { toast } = useToast();
 
     useEffect(() => { loadData(); }, []);
 
     const loadData = async () => {
+        setLoading(true);
         const [parroquiasResult, estadosResult, municipiosResult] = await Promise.all([
             getParroquias(), getEstados(), getMunicipios()
         ]);
         if (parroquiasResult.success && parroquiasResult.data) setParroquias(parroquiasResult.data);
         if (estadosResult.success && estadosResult.data) setEstados(estadosResult.data);
         if (municipiosResult.success && municipiosResult.data) setMunicipios(municipiosResult.data);
+        setLoading(false);
     };
 
     const handleFieldChange = (fieldName: string, value: string) => {
@@ -109,11 +112,12 @@ export default function ParroquiasPage() {
         <>
             <h1 className="text-4xl m-3 font-semibold font-primary">Parroquias</h1>
             <p className="mb-6 ml-3">Parroquias de Venezuela</p>
-            <CatalogDetailClient
+          <CatalogDetailClient
                 data={parroquias}
                 columns={["ID Parroquia", "Parroquia", "ID Estado", "ID Municipio", "Estado", "Municipio", "Habilitado"]}
                 addLabel="Añadir Parroquia"
                 onAddClick={() => setIsModalOpen(true)}
+                loading={loading}
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}

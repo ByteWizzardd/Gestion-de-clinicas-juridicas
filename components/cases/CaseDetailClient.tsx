@@ -24,6 +24,7 @@ import ChangeStatusModal from '@/components/cases/modals/ChangeStatusModal';
 import { AppointmentModal } from '@/components/appointmentModal/AppointmentModal';
 import { ChevronDown, Plus, Pencil } from 'lucide-react';
 import { getCurrentUserAction } from '@/app/actions/auth';
+import DetailPageSkeleton from '@/components/ui/skeletons/DetailPageSkeleton';
 
 interface CaseDetailClientProps {
   id?: string;
@@ -109,13 +110,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
   }, []);
 
   if (loading) {
-    return (
-      <div className="p-8">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-lg text-gray-600">Cargando información del caso...</div>
-        </div>
-      </div>
-    );
+    return <DetailPageSkeleton showBadge tabsCount={6} />;
   }
 
   if (error || !caso) {

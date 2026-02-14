@@ -23,17 +23,20 @@ export default function SubcategoriasPage() {
     const [selectedMateria, setSelectedMateria] = useState('');
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [viewItem, setViewItem] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
     const { toast } = useToast();
 
     useEffect(() => { loadData(); }, []);
 
     const loadData = async () => {
+        setLoading(true);
         const [subResult, matResult, catResult] = await Promise.all([
             getSubcategorias(), getMaterias(), getCategorias()
         ]);
         if (subResult.success && subResult.data) setSubcategorias(subResult.data);
         if (matResult.success && matResult.data) setMaterias(matResult.data);
         if (catResult.success && catResult.data) setCategorias(catResult.data);
+        setLoading(false);
     };
 
     const handleMateriaChange = (materiaId: string) => {
@@ -134,6 +137,7 @@ export default function SubcategoriasPage() {
                 filterField="nombre_materia"
                 filterTarget="materia"
                 autoGenerateFilter={true}
+                loading={loading}
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}

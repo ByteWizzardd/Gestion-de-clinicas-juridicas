@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
@@ -16,13 +16,16 @@ export default function CondicionesActividadPage() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewItem, setViewItem] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => { loadCondiciones(); }, []);
 
   const loadCondiciones = async () => {
+    setLoading(true);
     const result = await getCondicionesActividad();
     if (result.success && result.data) setCondiciones(result.data);
+    setLoading(false);
   };
 
   const handleAdd = async (data: Record<string, string>) => {
@@ -66,6 +69,7 @@ export default function CondicionesActividadPage() {
         columns={["ID Actividad", "Condición Actividad", "Habilitado"]}
         addLabel="Añadir Condición"
         onAddClick={() => setIsModalOpen(true)}
+        loading={loading}
         renderActions={(item: any) => (
           <CatalogActionsMenu
             item={item}

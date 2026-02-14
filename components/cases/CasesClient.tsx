@@ -8,7 +8,7 @@ import { Download } from 'lucide-react';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import CaseFormModal from '@/components/forms/CaseFormModal';
-import Spinner from '@/components/ui/feedback/Spinner';
+import TableSkeleton from '@/components/ui/skeletons/TableSkeleton';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 import ArchiveInactiveCasesModal from '@/components/cases/modals/ArchiveInactiveCasesModal';
 import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
@@ -368,7 +368,13 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   };
 
   // Aplicar filtro por rango de fechas cuando cambie.
+  const isDateFilterMounted = useRef(false);
   useEffect(() => {
+    // Evitar flash del skeleton en el render inicial cuando los filtros están vacíos
+    if (!isDateFilterMounted.current) {
+      isDateFilterMounted.current = true;
+      return;
+    }
     setLoading(true);
     applyFechaSolicitudFilter({
       fechaInicio: fechaInicioFilter,
@@ -762,9 +768,8 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       <div className="mt-10"></div>
 
       {loading && (
-        <div className="flex flex-col justify-center items-center py-12 min-h-[400px]">
-          <Spinner />
-          <p className="text-on-border mt-4">Cargando casos...</p>
+        <div className="min-h-[400px] px-3">
+          <TableSkeleton columns={6} rows={8} />
         </div>
       )}
 

@@ -26,11 +26,13 @@ export default function AmbitosLegalesPage() {
     const [editingItem, setEditingItem] = useState<any>(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [viewItem, setViewItem] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
     const { toast } = useToast();
 
     useEffect(() => { loadData(); }, []);
 
     const loadData = async () => {
+        setLoading(true);
         const [ambitosResult, materiasResult, categoriasResult, subcategoriasResult] = await Promise.all([
             getAmbitosLegales(), getMaterias(), getCategorias(), getSubcategorias()
         ]);
@@ -38,6 +40,7 @@ export default function AmbitosLegalesPage() {
         if (materiasResult.success && materiasResult.data) setMaterias(materiasResult.data);
         if (categoriasResult.success && categoriasResult.data) setCategorias(categoriasResult.data);
         if (subcategoriasResult.success && subcategoriasResult.data) setSubcategorias(subcategoriasResult.data);
+        setLoading(false);
     };
 
     const handleMateriaChange = (materiaId: string) => {
@@ -151,6 +154,7 @@ export default function AmbitosLegalesPage() {
                 columns={["ID Materia", "ID Categoría", "ID Subcategoría", "ID Ámbito", "Ámbito", "Materia", "Categoría", "Subcategoría", "Habilitado"]}
                 addLabel="Añadir Ámbito Legal"
                 onAddClick={() => setIsModalOpen(true)}
+                loading={loading}
                 filterField="nombre_materia"
                 filterTarget="materia"
                 autoGenerateFilter={true}

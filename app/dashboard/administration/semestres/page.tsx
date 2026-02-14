@@ -16,6 +16,7 @@ export default function SemestresPage() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewItem, setViewItem] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -23,10 +24,12 @@ export default function SemestresPage() {
   }, []);
 
   const loadSemestres = async () => {
+    setLoading(true);
     const result = await getSemestres();
     if (result.success && result.data) {
       setSemestres(result.data);
     }
+    setLoading(false);
   };
 
   const handleAdd = async (data: Record<string, string>) => {
@@ -101,6 +104,7 @@ export default function SemestresPage() {
         columns={["Semestre", "Fecha Inicio", "Fecha Fin", "Habilitado"]}
         addLabel="Añadir Semestre"
         onAddClick={() => setIsModalOpen(true)}
+        loading={loading}
         renderActions={(item: any) => (
           <CatalogActionsMenu
             item={item}

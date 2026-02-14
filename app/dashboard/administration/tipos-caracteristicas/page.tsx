@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
@@ -17,13 +17,16 @@ export default function TiposCaracteristicasPage() {
 
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewItem, setViewItem] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => { loadTipos(); }, []);
 
   const loadTipos = async () => {
+    setLoading(true);
     const result = await getTiposCaracteristicas();
     if (result.success && result.data) setTipos(result.data);
+    setLoading(false);
   };
 
   const handleAdd = async (data: Record<string, string>) => {
@@ -67,6 +70,7 @@ export default function TiposCaracteristicasPage() {
         columns={["ID Tipo", "Tipo Característica", "Habilitado"]}
         addLabel="Añadir Tipo"
         onAddClick={() => setIsModalOpen(true)}
+        loading={loading}
         renderActions={(item: any) => (
           <CatalogActionsMenu
             item={item}

@@ -13,6 +13,7 @@ import { getSemestresAction, getCurrentTermAction, deshabilitarUsuariosSemestreF
 import EditUserModal from './EditUserModal';
 import CreateUserModal from './CreateUserModal';
 import DropdownMenu from '@/components/ui/navigation/DropdownMenu';
+import TableSkeleton from '@/components/ui/skeletons/TableSkeleton';
 
 interface Usuario extends Record<string, unknown> {
   cedula: string;
@@ -614,8 +615,8 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
       <div className="mt-10"></div>
 
       {loading ? (
-        <div className="m-3 p-4 text-center">
-          <p className="text-gray-600">Cargando usuarios...</p>
+        <div className="m-3">
+          <TableSkeleton columns={5} rows={8} />
         </div>
       ) : (
         <motion.div

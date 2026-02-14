@@ -6,6 +6,7 @@ import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import PhotoUploadHeader from '@/components/profile/PhotoUploadHeader';
 import GeneralInfoTab from '@/components/profile/tabs/GeneralInfoTab';
 import { getCurrentUserAction } from '@/app/actions/auth';
+import DetailPageSkeleton from '@/components/ui/skeletons/DetailPageSkeleton';
 
 interface User {
   cedula: string;
@@ -52,13 +53,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   };
 
   if (loading) {
-    return (
-      <div className="p-8">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-lg text-gray-600">Cargando información del perfil...</div>
-        </div>
-      </div>
-    );
+    return <DetailPageSkeleton showAvatar tabsCount={1} />;
   }
 
   if (!user) {
@@ -88,7 +83,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
         />
       </motion.div>
 
-      <motion.div 
+      <motion.div
         className="mb-6 sm:mb-8 relative"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -110,7 +105,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
             </p>
           </div>
         </div>
-        
+
         {/* Notificación de éxito centrada abajo de la sección */}
         <AnimatePresence>
           {showSuccess && (

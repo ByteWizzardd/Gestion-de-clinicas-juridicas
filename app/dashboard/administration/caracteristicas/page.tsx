@@ -19,16 +19,19 @@ export default function CaracteristicasPage() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewItem, setViewItem] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
+    setLoading(true);
     const [caracResult, tiposResult] = await Promise.all([
       getCaracteristicas(), getTiposCaracteristicas()
     ]);
     if (caracResult.success && caracResult.data) setCaracteristicas(caracResult.data);
     if (tiposResult.success && tiposResult.data) setTipos(tiposResult.data);
+    setLoading(false);
   };
 
   const handleAdd = async (data: Record<string, string>) => {
@@ -97,6 +100,7 @@ export default function CaracteristicasPage() {
         columns={["ID Tipo", "ID Característica", "Descripción", "Habilitado", "Tipo"]}
         addLabel="Añadir Característica"
         onAddClick={() => setIsModalOpen(true)}
+        loading={loading}
         filterField="nombre_tipo_caracteristica"
         filterLabel="Tipo"
         autoGenerateFilter={true}

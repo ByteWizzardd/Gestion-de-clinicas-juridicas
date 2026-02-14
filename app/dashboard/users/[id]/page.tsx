@@ -12,7 +12,8 @@ import EditableAvatar from "@/components/users/EditableAvatar";
 import { getUsuarioInfoByCedulaAction } from "@/app/actions/usuarios";
 import { getCurrentUserAction } from "@/app/actions/auth";
 import { getCasosByUsuarioCedulaAction } from "@/app/actions/casos"; // Importar acción para casos
-import UserCasesTab from "@/components/users/tabs/UserCasesTab"; // Importar el componente de la pestaña
+import UserCasesTab from "@/components/users/tabs/UserCasesTab";
+import DetailPageSkeleton from '@/components/ui/skeletons/DetailPageSkeleton'; // Importar el componente de la pestaña
 
 interface Usuario {
   cedula: string;
@@ -87,13 +88,7 @@ export default function UserDetailPage() {
   }, [id]);
 
   if (loading) {
-    return (
-      <div className="p-8">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-lg text-gray-600">Cargando información del usuario...</div>
-        </div>
-      </div>
-    );
+    return <DetailPageSkeleton showAvatar tabsCount={3} />;
   }
 
   if (error || !usuario) {

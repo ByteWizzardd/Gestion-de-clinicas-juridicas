@@ -29,11 +29,13 @@ export default function NucleosPage() {
     const [editingItem, setEditingItem] = useState<any>(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [viewItem, setViewItem] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
     const { toast } = useToast();
 
     useEffect(() => { loadData(); }, []);
 
     const loadData = async () => {
+        setLoading(true);
         const [nucleosResult, parroquiasResult, estadosResult, municipiosResult] = await Promise.all([
             getNucleos(), getParroquias(), getEstados(), getMunicipios()
         ]);
@@ -41,6 +43,7 @@ export default function NucleosPage() {
         if (parroquiasResult.success && parroquiasResult.data) setParroquias(parroquiasResult.data);
         if (estadosResult.success && estadosResult.data) setEstados(estadosResult.data);
         if (municipiosResult.success && municipiosResult.data) setMunicipios(municipiosResult.data);
+        setLoading(false);
     };
 
     const handleFieldChange = (fieldName: string, value: string) => {
@@ -140,11 +143,12 @@ export default function NucleosPage() {
         <>
             <h1 className="text-4xl m-3 font-semibold font-primary">Núcleos</h1>
             <p className="mb-6 ml-3">Núcleos universitarios</p>
-            <CatalogDetailClient
+          <CatalogDetailClient
                 data={nucleos}
                 columns={["ID Núcleo", "Núcleo", "ID Estado", "ID Municipio", "ID Parroquia", "Estado", "Municipio", "Parroquia", "Habilitado"]}
                 addLabel="Añadir Núcleo"
                 onAddClick={() => setIsModalOpen(true)}
+                loading={loading}
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}

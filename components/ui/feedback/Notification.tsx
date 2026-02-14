@@ -5,6 +5,7 @@ import DropdownMenu from '../navigation/DropdownMenu';
 import { AnimatePresence, motion } from 'motion/react';
 import { useNotifications } from '../../../lib/hook/useNotifications';
 import { useRouter } from 'next/navigation';
+import NotificationSkeleton from '@/components/ui/skeletons/NotificationSkeleton';
 
 interface NotificationProps {
   count?: number;
@@ -101,7 +102,7 @@ const Notification: React.FC<NotificationProps> = () => {
           </div>
           <div className="overflow-y-auto flex-1 min-h-0">
             {loading ? (
-              <div className="px-4 py-8 text-base text-gray-500 text-center">Cargando notificaciones...</div>
+              <NotificationSkeleton count={3} />
             ) : error ? (
               <div className="px-4 py-8 text-base text-red-500 text-center">{error}</div>
             ) : notifications.length > 0 ? (

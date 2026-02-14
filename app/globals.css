@@ -4,7 +4,7 @@
 :root {
   --background: #fbfbfb;
   --foreground: #232222;
-  
+
   --primary: #9C2327;
   --primary-light: #DAAFB1;
   --primary-dark: #731A1D;
@@ -14,7 +14,7 @@
 
   --on-border: #3E3E3E;
   --primary-hover: #f59094;
-  
+
   --on-primary-dots: #6d6d6dbf;
 
   --secondary: #F47E1F;
@@ -42,7 +42,7 @@
   --color-secondary-dark: var(--secondary-dark);
   --color-primary-dark: var(--primary-dark);
   --font-primary: var(--font-league-spartan);
-  --font-secondary: var(--font-urbanist); 
+  --font-secondary: var(--font-urbanist);
   --color-danger: var(--danger);
   --color-danger-light: var(--danger-light);
   --color-danger-dark: var(--danger-dark);
@@ -66,4 +66,24 @@ body {
   color: var(--foreground);
   box-sizing: border-box;
   overflow-x: hidden;
+}
+
+/* Skeleton shimmer animation */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg,
+      #e5e7eb 0%,
+      #f3f4f6 40%,
+      #e5e7eb 80%);
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
 }

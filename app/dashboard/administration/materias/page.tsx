@@ -16,6 +16,7 @@ export default function MateriasPage() {
     const [editingItem, setEditingItem] = useState<any>(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [viewItem, setViewItem] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -23,10 +24,12 @@ export default function MateriasPage() {
     }, []);
 
     const loadMaterias = async () => {
+        setLoading(true);
         const result = await getMaterias();
         if (result.success && result.data) {
             setMaterias(result.data);
         }
+        setLoading(false);
     };
 
     const handleAdd = async (data: Record<string, string>) => {
@@ -104,11 +107,12 @@ export default function MateriasPage() {
             <h1 className="text-4xl m-3 font-semibold font-primary">Materias</h1>
             <p className="mb-6 ml-3">Áreas principales del derecho que se manejan en el sistema</p>
 
-            <CatalogDetailClient
+          <CatalogDetailClient
                 data={materias}
                 columns={["ID Materia", "Materia", "Habilitado"]}
                 addLabel="Añadir Materia"
                 onAddClick={() => setIsModalOpen(true)}
+                loading={loading}
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LogIn, LogOut, ChevronDown, ChevronUp, XCircle, ArrowDown, ArrowUp } from 'lucide-react';
-import Spinner from '@/components/ui/feedback/Spinner';
+import AuditRecordCardSkeleton from '@/components/ui/skeletons/AuditRecordCardSkeleton';
 import Search from '@/components/CaseTools/search';
 import Tabs from '@/components/ui/Tabs';
 import Filter from '@/components/CaseTools/Filter';
@@ -389,8 +389,10 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
                 className="mx-3"
             >
                 {loading ? (
-                    <div className="flex justify-center py-12">
-                        <Spinner size="lg" />
+                    <div className="space-y-3">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <AuditRecordCardSkeleton key={i} />
+                        ))}
                     </div>
                 ) : sesiones.length === 0 ? (
                     <div className="text-center py-12 bg-white rounded-lg border border-gray-200">

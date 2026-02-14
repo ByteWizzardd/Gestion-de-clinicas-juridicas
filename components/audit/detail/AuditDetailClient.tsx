@@ -7,7 +7,7 @@ import Search from '@/components/CaseTools/search';
 import Filter from '@/components/CaseTools/Filter';
 import AuditList from '../AuditList';
 import AuditRecordCard from '../AuditRecordCard';
-import Spinner from '@/components/ui/feedback/Spinner';
+import AuditRecordCardSkeleton from '@/components/ui/skeletons/AuditRecordCardSkeleton';
 import type { AuditFilters, AuditRecordType } from '@/types/audit';
 
 type AuditType = 'soportes' | 'soportes-creados' | 'soportes-descargados' | 'citas-eliminadas' | 'citas-actualizadas' | 'citas-creadas' | 'usuarios-eliminados' | 'usuarios-habilitados' | 'usuarios-actualizados-campos' | 'usuarios-creados'
@@ -552,8 +552,10 @@ export default function AuditDetailClient({
 
       {/* Contenido */}
       {loading ? (
-        <div className="flex justify-center items-center min-h-[400px]">
-          <Spinner />
+        <div className="space-y-3 px-3 min-h-[400px]">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <AuditRecordCardSkeleton key={i} />
+          ))}
         </div>
       ) : error ? (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">

@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
+import TableSkeleton from '@/components/ui/skeletons/TableSkeleton';
 import {
     getEstudiantesAction,
 } from '@/app/actions/usuarios';
@@ -218,8 +219,8 @@ export default function StudentsClient({ initialEstudiantes = [] }: StudentsClie
             <div className="mt-10"></div>
 
             {loading ? (
-                <div className="m-3 p-4 text-center">
-                    <p className="text-gray-600">Cargando estudiantes...</p>
+                <div className="m-3">
+                    <TableSkeleton columns={5} rows={8} />
                 </div>
             ) : (
                 <motion.div

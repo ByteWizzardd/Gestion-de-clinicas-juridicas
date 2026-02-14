@@ -3,12 +3,14 @@
 import { useState, useMemo } from 'react';
 import CaseTools from "@/components/CaseTools/CaseTools";
 import Table from "@/components/Table/Table";
+import TableSkeleton from "@/components/ui/skeletons/TableSkeleton";
 
 interface CatalogDetailClientProps {
     data: any[];
     columns: string[];
     addLabel: string;
     searchPlaceholder?: string;
+    loading?: boolean;
     onAddClick?: () => void; // Handler for add button click
     // Filter options - can be provided or auto-generated
     filterField?: string; // Campo por el cual filtrar (ej: 'habilitado', 'nombre_estado')
@@ -30,6 +32,7 @@ export default function CatalogDetailClient({
     addLabel,
     searchPlaceholder = "Buscar...",
     onAddClick,
+    loading = false,
     filterField,
     filterOptions,
     filterLabel = "Filtro",
@@ -151,11 +154,15 @@ export default function CatalogDetailClient({
                 })}
             />
             <div className="mt-10"></div>
-            <Table
-                data={filteredData}
-                columns={columns}
-                renderRowActions={renderActions ? (item) => renderActions(item) : undefined}
-            />
+            {loading ? (
+                <TableSkeleton columns={columns.length} rows={8} />
+            ) : (
+                <Table
+                    data={filteredData}
+                    columns={columns}
+                    renderRowActions={renderActions ? (item) => renderActions(item) : undefined}
+                />
+            )}
         </>
     );
 }

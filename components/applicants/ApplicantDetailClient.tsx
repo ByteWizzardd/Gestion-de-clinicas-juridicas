@@ -11,6 +11,7 @@ import ContactInfoTab from '@/components/solicitantes/tabs/ContactInfoTab';
 import SocioeconomicInfoTab from '@/components/solicitantes/tabs/SocioeconomicInfoTab';
 import LocationHousingTab from '@/components/solicitantes/tabs/LocationHousingTab';
 import CasesTab from '@/components/solicitantes/tabs/CasesTab';
+import DetailPageSkeleton from '@/components/ui/skeletons/DetailPageSkeleton';
 
 type GetSolicitanteByIdAction = typeof import('@/app/actions/solicitantes').getSolicitanteByIdAction;
 type GetSolicitanteByIdResult = Awaited<ReturnType<GetSolicitanteByIdAction>>;
@@ -102,13 +103,7 @@ export default function ApplicantDetailClient() {
   }, [cedula, fetchSolicitante]);
 
   if (loading) {
-    return (
-      <div className="p-8">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-lg text-gray-600">Cargando información del solicitante...</div>
-        </div>
-      </div>
-    );
+    return <DetailPageSkeleton tabsCount={5} />;
   }
 
   if (error || !solicitante) {

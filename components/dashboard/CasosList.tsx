@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import Link from 'next/link';
 import { Briefcase, Calendar, User, MapPin } from 'lucide-react';
 import EmptyState from '@/components/ui/EmptyState';
+import CasosListSkeleton from '@/components/ui/skeletons/CasosListSkeleton';
 
 interface Caso {
   id_caso: number;
@@ -29,11 +30,7 @@ export default function CasosList({ casos, loading, error }: CasosListProps) {
 
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Cargando casos...</div>
-      </div>
-    );
+    return <CasosListSkeleton count={4} />;
   }
 
   if (error) {

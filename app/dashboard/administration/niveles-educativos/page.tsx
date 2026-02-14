@@ -16,6 +16,7 @@ export default function NivelesEducativosPage() {
     const [editingItem, setEditingItem] = useState<any>(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [viewItem, setViewItem] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -23,10 +24,12 @@ export default function NivelesEducativosPage() {
     }, []);
 
     const loadNivelesEducativos = async () => {
+        setLoading(true);
         const result = await getNivelesEducativos();
         if (result.success && result.data) {
             setNivelesEducativos(result.data);
         }
+        setLoading(false);
     };
 
     const handleAdd = async (data: Record<string, string>) => {
@@ -97,11 +100,12 @@ export default function NivelesEducativosPage() {
         <>
             <h1 className="text-4xl m-3 font-semibold font-primary">Niveles Educativos</h1>
             <p className="mb-6 ml-3">Niveles educativos registrados en el sistema</p>
-            <CatalogDetailClient
+          <CatalogDetailClient
                 data={nivelesEducativos}
                 columns={["ID Nivel", "Descripción", "Habilitado"]}
                 addLabel="Añadir Nivel Educativo"
                 onAddClick={() => setIsModalOpen(true)}
+                loading={loading}
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}

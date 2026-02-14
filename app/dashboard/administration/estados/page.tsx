@@ -16,6 +16,7 @@ export default function EstadosPage() {
     const [editingItem, setEditingItem] = useState<any>(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [viewItem, setViewItem] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -23,10 +24,12 @@ export default function EstadosPage() {
     }, []);
 
     const loadEstados = async () => {
+        setLoading(true);
         const result = await getEstados();
         if (result.success && result.data) {
             setEstados(result.data);
         }
+        setLoading(false);
     };
 
     const handleAdd = async (data: Record<string, string>) => {
@@ -97,11 +100,12 @@ export default function EstadosPage() {
         <>
             <h1 className="text-4xl m-3 font-semibold font-primary">Estados</h1>
             <p className="mb-6 ml-3">Estados del país registrados en el sistema</p>
-            <CatalogDetailClient
+          <CatalogDetailClient
                 data={estados}
                 columns={["ID Estado", "Estado", "Habilitado"]}
                 addLabel="Añadir Estado"
                 onAddClick={() => setIsModalOpen(true)}
+                loading={loading}
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}

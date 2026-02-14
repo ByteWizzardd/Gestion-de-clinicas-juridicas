@@ -6,6 +6,7 @@ import { motion } from 'motion/react';
 import { Download } from 'lucide-react';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
+import TableSkeleton from '@/components/ui/skeletons/TableSkeleton';
 import ApplicantFormModal from '@/components/forms/ApplicantFormModal';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 import {
@@ -466,7 +467,9 @@ export default function ApplicantsClient({
       <div className="mt-10"></div>
 
       {isFiltering && (
-        <div className="px-3 py-2 text-sm text-gray-500">Cargando solicitantes...</div>
+        <div className="px-3">
+          <TableSkeleton columns={5} rows={6} />
+        </div>
       )}
 
       <motion.div
