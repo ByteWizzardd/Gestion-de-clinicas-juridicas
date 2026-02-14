@@ -41,12 +41,12 @@ GRANT SELECT ON TABLE estudiantes, profesores TO rol_estudiante;
 GRANT ALL PRIVILEGES ON TABLE 
     casos, solicitantes, viviendas, familias_y_hogares, asignadas_a,
     beneficiarios, citas, atienden, acciones, ejecutan, soportes, cambio_estatus,
-    supervisa, se_le_asigna
+    supervisa, se_le_asigna, ocurren_en
 TO rol_coordinador;
 
 -- Estudiantes y Profesores: CRUD en operativa (sujeto a FK)
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE 
-    casos, solicitantes, beneficiarios, citas, atienden, acciones, ejecutan, soportes
+    casos, solicitantes, beneficiarios, citas, atienden, acciones, ejecutan, soportes, ocurren_en
 TO rol_profesor, rol_estudiante;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE viviendas, familias_y_hogares, asignadas_a TO rol_profesor, rol_estudiante;

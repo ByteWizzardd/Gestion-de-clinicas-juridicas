@@ -115,6 +115,7 @@ interface InformeResumenPDFProps {
   logoBase64?: string;
   portadaBase64?: string;
   term?: string;
+  isWordFormat?: boolean;
 }
 
 // Colores para gráficos de barras
@@ -409,7 +410,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
   chartImages,
   logoBase64,
   portadaBase64,
-  term
+  term,
+  isWordFormat = false
 }) => {
   // Componente reutilizable para el encabezado con logo
   const ReportHeader = () => (
@@ -486,6 +488,12 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
             </View>
           </View>
         </Page>
+      )}
+
+      {/* Página en blanco vertical después de la portada (solo para formato Word) */}
+      {isWordFormat && (
+        // @ts-ignore
+        <Page size="A4" orientation="portrait" style={{ backgroundColor: '#FFFFFF' }} />
       )}
 
       {/* PRIMERO: Páginas de Tipos de Caso (igual que el reporte de tipos de caso) */}

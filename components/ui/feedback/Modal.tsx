@@ -102,7 +102,7 @@ export default function Modal({
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
               className={`
-                bg-white rounded-xl shadow-xl w-full ${sizeStyles[size]} 
+                bg-white rounded-xl shadow-xl w-full relative ${sizeStyles[size]} 
                 pointer-events-auto flex flex-col max-h-[90vh] overflow-hidden
                 ${className}
               `}
@@ -114,7 +114,7 @@ export default function Modal({
               {showCloseButton && !title && (
                 <button
                   onClick={onClose}
-                  className="absolute top-6 right-6 p-2 text-gray-400 hover:text-primary hover:bg-red-100 rounded-md transition-colors z-10"
+                  className="absolute top-6 right-6 p-2 text-gray-400 hover:text-primary hover:bg-red-100 rounded-md transition-colors z-50"
                   style={{ cursor: 'pointer' }}
                   aria-label="Cerrar modal"
                   type="button"

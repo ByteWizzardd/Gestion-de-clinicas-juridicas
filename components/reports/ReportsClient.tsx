@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { FileBarChart, Clock, User, Briefcase, X, Calendar, Home, History, Users, Scale } from 'lucide-react';
 import ReportCard from '@/components/cards/ReportCard';
@@ -10,15 +10,18 @@ import DistributionChart from '@/components/reports/charts/DistributionChart';
 import TopCasesChart from '@/components/reports/charts/TopCasesChart';
 import StatusDistributionChart from '@/components/reports/charts/StatusDistributionChart';
 import TramiteDistributionChart from '@/components/reports/charts/TramiteDistributionChart'; // New Import
+import ReportPreview from '@/components/reports/ReportPreview';
 
 import Select from '@/components/forms/Select';
 import Modal from '@/components/ui/feedback/Modal';
 import DatePicker from '@/components/forms/DatePicker';
 import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/feedback/Spinner';
+import { useCallback } from 'react';
 import { saveAs } from 'file-saver';
 import type { DistributionData, TopCasesData, StatusDistributionData, CaseLoadTrendData } from '@/lib/utils/reports-data-mapper';
 import type { CasoHistorialData, SolicitanteFichaData } from '@/lib/types/report-types';
+import { useToast } from '@/components/ui/feedback/ToastProvider';
 
 import {
     getDistributionByNucleo,
@@ -37,6 +40,7 @@ export default function ReportsPage() {
         term: 'all'
     });
     const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+    const { toast } = useToast();
 
     // Estados para el modal de fechas del reporte "Tipos de Caso" y "Estatus de Casos"
     const [showDateModal, setShowDateModal] = useState(false);
@@ -65,6 +69,9 @@ export default function ReportsPage() {
     const [solicitanteSearch, setSolicitanteSearch] = useState('');
     const [isLoadingSolicitantes, setIsLoadingSolicitantes] = useState(false);
     const [showSolicitanteDropdown, setShowSolicitanteDropdown] = useState(false);
+
+    // Ref para cancelar operaciones en curso al cerrar el modal
+    const reportAbortRef = useRef<AbortController | null>(null);
 
     useEffect(() => {
         const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -231,6 +238,101 @@ export default function ReportsPage() {
         }
     };
 
+    // Determine if current report type supports preview (NOW ALL SUPPORT IT)
+    const supportsPreview = tipoReporteActual !== '';
+
+    // Generate a PDF blob for preview (used by the ReportPreview component)
+    // Accepts an AbortSignal from ReportPreview so it can be cancelled
+    const generatePreviewBlob = useCallback(async (signal: AbortSignal): Promise<Blob | null> => {
+        const fechaInicio = fechaInicioReporte || undefined;
+        const fechaFin = fechaFinReporte || undefined;
+        const term = selectedTermReporte !== 'all' ? selectedTermReporte : undefined;
+
+        try {
+            if (tipoReporteActual === 'Resumen de Casos') {
+                const { getInformeResumenData } = await import('@/app/actions/reports');
+                const result = await getInformeResumenData(fechaInicio, fechaFin, term);
+                if (signal.aborted) return null;
+                if (result.success && result.data) {
+                    const { generateInformeResumenPDFBlob } = await import('@/lib/utils/pdf-preview-generators');
+                    if (signal.aborted) return null;
+                    return await generateInformeResumenPDFBlob(result.data, fechaInicio, fechaFin, term, formatoReporte === 'word');
+                }
+            } else if (tipoReporteActual === 'Reporte de Estatus de Casos') {
+                const { getCasosGroupedByEstatus } = await import('@/app/actions/reports');
+                const result = await getCasosGroupedByEstatus(fechaInicio, fechaFin, term);
+                if (signal.aborted) return null;
+                if (result.success && result.data && result.data.length > 0) {
+                    const { generateEstatusCasosPDFBlob } = await import('@/lib/utils/pdf-preview-generators');
+                    if (signal.aborted) return null;
+                    return await generateEstatusCasosPDFBlob(result.data, fechaInicio, fechaFin, term, formatoReporte === 'word');
+                }
+            } else if (tipoReporteActual === 'Reporte Socioeconómico') {
+                const { getInformeSocioeconomicoData } = await import('@/app/actions/reports');
+                const result = await getInformeSocioeconomicoData(fechaInicio, fechaFin, term);
+                if (signal.aborted) return null;
+                if (result.success && result.data) {
+                    const { generateSocioeconomicoPDFBlob } = await import('@/lib/utils/pdf-preview-generators');
+                    if (signal.aborted) return null;
+                    return await generateSocioeconomicoPDFBlob(result.data, fechaInicio, fechaFin, term, formatoReporte === 'word');
+                }
+            } else if (tipoReporteActual === 'Historial de Casos del Solicitante') {
+                if (!selectedSolicitante) return null;
+                const { getHistorialCasosBySolicitante } = await import('@/app/actions/reports');
+                const result = await getHistorialCasosBySolicitante(selectedSolicitante.cedula, fechaInicio, fechaFin);
+                if (signal.aborted) return null;
+
+                if (result.success && result.data && result.data.length > 0) {
+                    const { generateCasoHistorialPDFBlob } = await import('@/lib/utils/pdf-preview-generators');
+                    if (signal.aborted) return null;
+                    // Mostrar vista previa de TODOS los casos encontrados (MultiPage PDF)
+                    return await generateCasoHistorialPDFBlob(result.data as any[]);
+                }
+            } else if (tipoReporteActual === 'Ficha Resumen del Solicitante') {
+                if (!selectedSolicitante) return null;
+                const { getSolicitanteFichaData } = await import('@/app/actions/reports');
+                const result = await getSolicitanteFichaData(selectedSolicitante.cedula);
+                if (signal.aborted) return null;
+
+                if (result.success && result.data) {
+                    const { generateSolicitanteFichaPDFBlob } = await import('@/lib/utils/pdf-preview-generators');
+                    if (signal.aborted) return null;
+                    return await generateSolicitanteFichaPDFBlob(result.data as any);
+                }
+            } else {
+                // Default: Tipos de Caso
+                const { getCasosGroupedByAmbitoLegal } = await import('@/app/actions/reports');
+                const result = await getCasosGroupedByAmbitoLegal(fechaInicio, fechaFin, term);
+                if (signal.aborted) return null;
+                if (result.success && result.data && result.data.length > 0) {
+                    const { generateTiposCasosPDFBlob } = await import('@/lib/utils/pdf-preview-generators');
+                    if (signal.aborted) return null;
+                    return await generateTiposCasosPDFBlob(result.data, fechaInicio, fechaFin, term, formatoReporte === 'word');
+                }
+            }
+            return null;
+        } catch (error) {
+            if (signal.aborted) return null;
+            console.error('Error generating preview blob:', error);
+            return null;
+        }
+    }, [tipoReporteActual, fechaInicioReporte, fechaFinReporte, selectedTermReporte, selectedSolicitante, formatoReporte]);
+
+    // Helper: abort any in-flight report generation
+    const abortReportGeneration = useCallback(() => {
+        if (reportAbortRef.current) {
+            reportAbortRef.current.abort();
+            reportAbortRef.current = null;
+        }
+    }, []);
+
+    // Helper: close modal and abort everything
+    const handleCloseModal = useCallback(() => {
+        setShowDateModal(false);
+        setDateError(null);
+        abortReportGeneration();
+    }, [abortReportGeneration]);
+
     const handleGenerateTiposCasosReport = async () => {
         // Validacion especifica para historial solicitante y ficha resumen
         if (tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante') {
@@ -268,9 +370,16 @@ export default function ReportsPage() {
         setShowDateModal(false);
         setIsGeneratingReport(true);
 
+        // Crear AbortController para esta generación
+        abortReportGeneration();
+        const controller = new AbortController();
+        reportAbortRef.current = controller;
+
         // Aumentar el tiempo de espera inicial para que el Spinner se asiente
         setTimeout(async () => {
             try {
+                // Verificar si fue cancelado antes de empezar
+                if (controller.signal.aborted) { setIsGeneratingReport(false); return; }
                 // Convertir fechas vacías a undefined para reporte histórico
                 const fechaInicio = fechaInicioReporte || undefined;
                 const fechaFin = fechaFinReporte || undefined;
@@ -284,13 +393,16 @@ export default function ReportsPage() {
                         fechaInicio,
                         fechaFin
                     );
+                    if (controller.signal.aborted) { setIsGeneratingReport(false); return; }
 
 
 
                     if (result.success && result.data && result.data.length > 0) {
                         // 2. Generar ZIP
                         const { generateHistorialSolicitanteZIP } = await import('@/lib/utils/case-history-pdf-generator');
+                        if (controller.signal.aborted) { setIsGeneratingReport(false); return; }
                         await generateHistorialSolicitanteZIP(result.data as CasoHistorialData[], selectedSolicitante.nombre_completo || `${selectedSolicitante.nombres} ${selectedSolicitante.apellidos}`);
+                        if (controller.signal.aborted) { setIsGeneratingReport(false); return; }
 
                         // 3. Registrar auditoría
                         await registrarAuditoriaReporteAction({
@@ -307,9 +419,9 @@ export default function ReportsPage() {
                         });
                     } else {
                         if (result.success && (!result.data || result.data.length === 0)) {
-                            alert('No se encontraron casos para el solicitante en el rango de fechas seleccionado.');
+                            toast.warning('No se encontraron casos para el solicitante en el rango de fechas seleccionado.');
                         } else {
-                            alert('Error al obtener el historial: ' + (result.error || 'Error desconocido'));
+                            toast.error('Error al obtener el historial: ' + (result.error || 'Error desconocido'));
                         }
                     }
 
@@ -317,6 +429,7 @@ export default function ReportsPage() {
                     // 1. Obtener datos del Solicitante (Ficha)
                     const { getSolicitanteFichaData } = await import('@/app/actions/reports');
                     const fichaResult = await getSolicitanteFichaData(selectedSolicitante.cedula);
+                    if (controller.signal.aborted) { setIsGeneratingReport(false); return; }
 
                     // 2. Obtener datos del Historial (Casos)
                     const { getHistorialCasosBySolicitante } = await import('@/app/actions/reports');
@@ -327,6 +440,7 @@ export default function ReportsPage() {
                         fechaInicio,
                         fechaFin
                     );
+                    if (controller.signal.aborted) { setIsGeneratingReport(false); return; }
 
                     if (fichaResult.success && fichaResult.data && historialResult.success && historialResult.data) {
                         // 3. Generar ZIP Completo
@@ -336,6 +450,7 @@ export default function ReportsPage() {
                             historialResult.data as CasoHistorialData[],
                             selectedSolicitante.nombre_completo || `${selectedSolicitante.nombres} ${selectedSolicitante.apellidos}`
                         );
+                        if (controller.signal.aborted) { setIsGeneratingReport(false); return; }
 
                         // 4. Registrar auditoría
                         await registrarAuditoriaReporteAction({
@@ -352,7 +467,7 @@ export default function ReportsPage() {
                         });
                     } else {
                         const errorMsg = fichaResult.error || historialResult.error || 'Error desconocido al obtener datos';
-                        alert('Error al generar el expediente: ' + errorMsg);
+                        toast.error('Error al generar el expediente: ' + errorMsg);
                     }
 
                 } else if (tipoReporteActual === 'Resumen de Casos') {
@@ -363,7 +478,7 @@ export default function ReportsPage() {
                         fechaFin,
                         term
                     );
-
+                    if (controller.signal.aborted) { setIsGeneratingReport(false); return; }
                     if (result.success && result.data) {
                         // Verificar si hay datos principales
                         const hasData = result.data.tiposDeCaso && result.data.tiposDeCaso.length > 0 &&
@@ -373,7 +488,7 @@ export default function ReportsPage() {
                             const msg = term
                                 ? `No hay casos registrados para el semestre ${term}.`
                                 : 'No hay casos registrados para el periodo seleccionado.';
-                            alert(msg);
+                            toast.warning(msg);
                             setIsGeneratingReport(false);
                             return;
                         }
@@ -396,6 +511,7 @@ export default function ReportsPage() {
                                 term
                             );
                         }
+                        if (controller.signal.aborted) { setIsGeneratingReport(false); return; }
 
                         // Registrar auditoría
                         await registrarAuditoriaReporteAction({
@@ -409,7 +525,7 @@ export default function ReportsPage() {
                             formato: formatoReporte === 'word' ? 'DOCX' : 'PDF'
                         });
                     } else {
-                        alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
+                        toast.error('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
                     }
                 } else if (tipoReporteActual === 'Reporte de Estatus de Casos') {
                     // Generar reporte de estatus de casos
@@ -419,14 +535,14 @@ export default function ReportsPage() {
                         fechaFin,
                         term
                     );
-
+                    if (controller.signal.aborted) { setIsGeneratingReport(false); return; }
                     if (result.success && result.data) {
                         // Verificar si hay datos para el reporte
                         if (result.data.length === 0 || result.data.every(item => item.cantidad_casos === 0)) {
                             const msg = term
                                 ? `No hay casos registrados para el semestre ${term}.`
                                 : 'No hay casos registrados para el periodo seleccionado.';
-                            alert(msg);
+                            toast.warning(msg);
                             setIsGeneratingReport(false);
                             return;
                         }
@@ -450,6 +566,7 @@ export default function ReportsPage() {
                                 term
                             );
                         }
+                        if (controller.signal.aborted) { setIsGeneratingReport(false); return; }
 
                         // Registrar auditoría
                         await registrarAuditoriaReporteAction({
@@ -463,7 +580,7 @@ export default function ReportsPage() {
                             formato: formatoReporte === 'word' ? 'DOCX' : 'PDF'
                         });
                     } else {
-                        alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
+                        toast.error('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
                     }
                 } else if (tipoReporteActual === 'Reporte Socioeconómico') {
                     // Generar reporte socioeconómico (paso a paso)
@@ -473,7 +590,7 @@ export default function ReportsPage() {
                         fechaFin,
                         term
                     );
-
+                    if (controller.signal.aborted) { setIsGeneratingReport(false); return; }
                     if (result.success && result.data) {
                         if (formatoReporte === 'word') {
                             // Importar y usar la función de generación de DOCX
@@ -494,7 +611,7 @@ export default function ReportsPage() {
                                 term
                             );
                         }
-
+                        if (controller.signal.aborted) { setIsGeneratingReport(false); return; }
                         // Registrar auditoría
                         await registrarAuditoriaReporteAction({
                             tipoReporte: TIPOS_REPORTE.INFORME_SOCIOECONOMICO,
@@ -507,7 +624,7 @@ export default function ReportsPage() {
                             formato: formatoReporte === 'word' ? 'DOCX' : 'PDF'
                         });
                     } else {
-                        alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
+                        toast.error('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
                     }
                 } else {
                     // Generar reporte de tipos de caso (comportamiento original)
@@ -517,14 +634,14 @@ export default function ReportsPage() {
                         fechaFin,
                         term
                     );
-
+                    if (controller.signal.aborted) { setIsGeneratingReport(false); return; }
                     if (result.success && result.data) {
                         // Verificar si hay datos para el reporte
                         if (result.data.length === 0 || result.data.every(item => item.cantidad_casos === 0)) {
                             const msg = term
                                 ? `No hay casos registrados para el semestre ${term}.`
                                 : 'No hay casos registrados para el periodo seleccionado.';
-                            alert(msg);
+                            toast.warning(msg);
                             setIsGeneratingReport(false);
                             return;
                         }
@@ -548,7 +665,7 @@ export default function ReportsPage() {
                                 term
                             );
                         }
-
+                        if (controller.signal.aborted) { setIsGeneratingReport(false); return; }
                         // Registrar auditoría - Tipos de Caso
                         await registrarAuditoriaReporteAction({
                             tipoReporte: TIPOS_REPORTE.DISTRIBUCION_TRAMITE,
@@ -561,12 +678,12 @@ export default function ReportsPage() {
                             formato: formatoReporte === 'word' ? 'DOCX' : 'PDF'
                         });
                     } else {
-                        alert('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
+                        toast.error('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
                     }
                 }
             } catch (error) {
                 console.error('Error al generar reporte:', error);
-                alert('Error al generar el reporte. Por favor, intente nuevamente.');
+                toast.error('Error al generar el reporte. Por favor, intente nuevamente.');
             } finally {
                 setIsGeneratingReport(false);
             }
@@ -720,251 +837,256 @@ export default function ReportsPage() {
                 )}
             </motion.div>
 
-            {/* Modal para seleccionar rango de fechas del reporte "Tipos de Caso" */}
+            {/* Modal para seleccionar rango de fechas del reporte */}
             <Modal
                 isOpen={showDateModal}
-                onClose={() => {
-                    setShowDateModal(false);
-                    setDateError(null);
-                }}
-                size="md"
-                showCloseButton={false}
+                onClose={handleCloseModal}
+                size={supportsPreview ? 'custom' : 'md'}
+                className={supportsPreview ? 'max-w-6xl' : ''}
+                showCloseButton={true}
             >
-                <div className="p-6 relative">
-                    {/* Botón de cerrar */}
-                    <button
-                        onClick={() => {
-                            setShowDateModal(false);
-                            setDateError(null);
-                        }}
-                        className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
-                        aria-label="Cerrar modal"
-                    >
-                        <X className="w-6 h-6" />
-                    </button>
+                <div className={`relative flex flex-col ${supportsPreview ? 'lg:flex-row' : ''} h-full`}>
 
-                    {/* Título */}
-                    <h2 className="text-xl font-normal text-foreground mb-4">
-                        {tipoReporteActual === 'Reporte de Estatus de Casos'
-                            ? 'Rango de Fechas - Estatus de Casos'
-                            : tipoReporteActual === 'Resumen de Casos'
-                                ? 'Rango de Fechas - Resumen de Casos'
-                                : tipoReporteActual === 'Historial de Casos del Solicitante'
-                                    ? 'Generar Historial del Solicitante'
-                                    : tipoReporteActual === 'Ficha Resumen del Solicitante'
-                                        ? 'Generar Ficha Resumen'
-                                        : 'Rango de Fechas - Tipos de Caso'}
-                    </h2>
+                    {/* Left Column: Form */}
+                    <div className={`flex-shrink-0 p-6 ${supportsPreview ? 'lg:w-[380px] lg:border-r border-gray-100' : 'w-full'}`}>
 
-                    {/* Grid de formulario */}
-                    <div className="grid grid-cols-1 gap-4 mb-4">
-                        {/* Selector de Solicitante (Solo visible para Historial de Solicitante y Ficha Resumen) */}
-                        {(tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante') && (
-                            <div className="mb-4 relative">
-                                <label className="text-base font-normal text-foreground mb-1 block">
-                                    Buscar Solicitante <span className="text-red-500">*</span>
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        placeholder="Buscar por nombre, apellido o cédula..."
-                                        className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent pr-10"
-                                        value={solicitanteSearch}
-                                        onChange={(e) => {
-                                            setSolicitanteSearch(e.target.value);
-                                            setShowSolicitanteDropdown(true);
-                                            if (!e.target.value && selectedSolicitante) {
-                                                setSelectedSolicitante(null);
-                                            }
-                                        }}
-                                        onClick={() => setShowSolicitanteDropdown(true)}
-                                    />
-                                    {isLoadingSolicitantes && (
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                                            <Spinner size="sm" className="w-4 h-4 text-gray-400 border-gray-300" />
+
+                        {/* Título */}
+                        <h2 className="text-xl font-normal text-foreground mb-4">
+                            {tipoReporteActual === 'Reporte de Estatus de Casos'
+                                ? 'Rango de Fechas - Estatus de Casos'
+                                : tipoReporteActual === 'Resumen de Casos'
+                                    ? 'Rango de Fechas - Resumen de Casos'
+                                    : tipoReporteActual === 'Historial de Casos del Solicitante'
+                                        ? 'Generar Historial del Solicitante'
+                                        : tipoReporteActual === 'Ficha Resumen del Solicitante'
+                                            ? 'Generar Ficha Resumen'
+                                            : tipoReporteActual === 'Reporte Socioeconómico'
+                                                ? 'Rango de Fechas - Socioeconómico'
+                                                : 'Rango de Fechas - Tipos de Caso'}
+                        </h2>
+
+                        {/* Grid de formulario */}
+                        <div className="grid grid-cols-1 gap-4 mb-4">
+                            {/* Selector de Solicitante (Solo visible para Historial de Solicitante y Ficha Resumen) */}
+                            {(tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante') && (
+                                <div className="mb-4 relative">
+                                    <label className="text-base font-normal text-foreground mb-1 block">
+                                        Buscar Solicitante <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            placeholder="Buscar por nombre, apellido o cédula..."
+                                            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent pr-10"
+                                            value={solicitanteSearch}
+                                            onChange={(e) => {
+                                                setSolicitanteSearch(e.target.value);
+                                                setShowSolicitanteDropdown(true);
+                                                if (!e.target.value && selectedSolicitante) {
+                                                    setSelectedSolicitante(null);
+                                                }
+                                            }}
+                                            onClick={() => setShowSolicitanteDropdown(true)}
+                                        />
+                                        {isLoadingSolicitantes && (
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                                                <Spinner size="sm" className="w-4 h-4 text-gray-400 border-gray-300" />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {showSolicitanteDropdown && filteredSolicitantes.length > 0 && (
+                                        <div className="absolute z-100 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                            {filteredSolicitantes.map((solicitante) => (
+                                                <div
+                                                    key={solicitante.cedula}
+                                                    className="p-2 hover:bg-gray-50 cursor-pointer flex flex-col border-b border-gray-100 last:border-0"
+                                                    onClick={() => {
+                                                        setSelectedSolicitante(solicitante);
+                                                        setSolicitanteSearch(`${solicitante.nombre_completo} (${solicitante.cedula})`);
+                                                        setShowSolicitanteDropdown(false);
+                                                    }}
+                                                >
+                                                    <span className="font-medium text-gray-800">{solicitante.nombre_completo}</span>
+                                                    <span className="text-xs text-gray-500">{solicitante.cedula}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {showSolicitanteDropdown && filteredSolicitantes.length === 0 && !isLoadingSolicitantes && (
+                                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg p-2 text-center text-gray-500 text-sm">
+                                            No se encontraron resultados
                                         </div>
                                     )}
                                 </div>
+                            )}
 
-                                {showSolicitanteDropdown && filteredSolicitantes.length > 0 && (
-                                    <div className="absolute z-100 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                                        {filteredSolicitantes.map((solicitante) => (
-                                            <div
-                                                key={solicitante.cedula}
-                                                className="p-2 hover:bg-gray-50 cursor-pointer flex flex-col border-b border-gray-100 last:border-0"
-                                                onClick={() => {
-                                                    setSelectedSolicitante(solicitante);
-                                                    setSolicitanteSearch(`${solicitante.nombre_completo} (${solicitante.cedula})`);
-                                                    setShowSolicitanteDropdown(false);
-                                                }}
-                                            >
-                                                <span className="font-medium text-gray-800">{solicitante.nombre_completo}</span>
-                                                <span className="text-xs text-gray-500">{solicitante.cedula}</span>
-                                            </div>
-                                        ))}
+                            {/* Opción por Semestre - Ocultar para historial de solicitante y ficha resumen */}
+                            {tipoReporteActual !== 'Historial de Casos del Solicitante' && tipoReporteActual !== 'Ficha Resumen del Solicitante' && (
+                                <div>
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-base font-normal text-foreground mb-1">
+                                            Por Semestre (Periodo)
+                                        </label>
+                                        <Select
+                                            options={termOptions}
+                                            value={selectedTermReporte}
+                                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                                                setSelectedTermReporte(e.target.value);
+                                                if (e.target.value !== 'all') {
+                                                    setFechaInicioReporte('');
+                                                    setFechaFinReporte('');
+                                                }
+                                                setDateError(null);
+                                            }}
+                                            placeholder="Seleccionar Semestre"
+                                        />
                                     </div>
-                                )}
-                                {showSolicitanteDropdown && filteredSolicitantes.length === 0 && !isLoadingSolicitantes && (
-                                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg p-2 text-center text-gray-500 text-sm">
-                                        No se encontraron resultados
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                                </div>
+                            )}
 
-                        {/* Opción por Semestre - Ocultar para historial de solicitante y ficha resumen */}
-                        {tipoReporteActual !== 'Historial de Casos del Solicitante' && tipoReporteActual !== 'Ficha Resumen del Solicitante' && (
+                            {tipoReporteActual !== 'Historial de Casos del Solicitante' && tipoReporteActual !== 'Ficha Resumen del Solicitante' && (
+                                <div className="relative py-2 flex items-center">
+                                    <div className="grow border-t border-gray-200"></div>
+                                    <span className="shrink mx-4 text-gray-400 text-sm">O por rango de fechas</span>
+                                    <div className="grow border-t border-gray-200"></div>
+                                </div>
+                            )}
+
+                            {(tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante') && (
+                                <div className="text-gray-500 text-sm mb-2 font-medium">Filtrar por fechas (Opcional):</div>
+                            )}
+
+                            {/* Fecha de Inicio */}
                             <div>
                                 <div className="flex flex-col gap-1">
                                     <label className="text-base font-normal text-foreground mb-1">
-                                        Por Semestre (Periodo)
+                                        Fecha de Inicio
                                     </label>
-                                    <Select
-                                        options={termOptions}
-                                        value={selectedTermReporte}
-                                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                                            setSelectedTermReporte(e.target.value);
-                                            if (e.target.value !== 'all') {
-                                                setFechaInicioReporte('');
-                                                setFechaFinReporte('');
-                                            }
-                                            setDateError(null);
-                                        }}
-                                        placeholder="Seleccionar Semestre"
-                                    />
+                                    <div className="relative">
+                                        <DatePicker
+                                            value={fechaInicioReporte}
+                                            onChange={(value) => {
+                                                setFechaInicioReporte(value);
+                                                setSelectedTermReporte('all');
+                                                setDateError(null);
+                                            }}
+                                        />
+                                    </div>
                                 </div>
                             </div>
-                        )}
 
+                            {/* Fecha de Fin */}
+                            <div>
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-base font-normal text-foreground mb-1">
+                                        Fecha de Fin
+                                    </label>
+                                    <div className="relative">
+                                        <DatePicker
+                                            value={fechaFinReporte}
+                                            onChange={(value) => {
+                                                setFechaFinReporte(value);
+                                                setSelectedTermReporte('all');
+                                                setDateError(null);
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Selector de Formato - Ocultar para Historial y Ficha Resumen ya que siempre es ZIP */}
                         {tipoReporteActual !== 'Historial de Casos del Solicitante' && tipoReporteActual !== 'Ficha Resumen del Solicitante' && (
-                            <div className="relative py-2 flex items-center">
-                                <div className="grow border-t border-gray-200"></div>
-                                <span className="shrink mx-4 text-gray-400 text-sm">O por rango de fechas</span>
-                                <div className="grow border-t border-gray-200"></div>
+                            <div className="mb-6">
+                                <label className="text-base font-normal text-foreground mb-3 block">
+                                    Formato de descarga
+                                </label>
+                                <div className="flex gap-6">
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <div className="relative flex items-center justify-center">
+                                            <input
+                                                type="radio"
+                                                name="formato"
+                                                value="pdf"
+                                                checked={formatoReporte === 'pdf'}
+                                                onChange={() => setFormatoReporte('pdf')}
+                                                className="appearance-none w-5 h-5 rounded-full border-2 border-gray-300 checked:border-primary transition-all cursor-pointer"
+                                            />
+                                            {formatoReporte === 'pdf' && (
+                                                <div className="absolute w-2.5 h-2.5 rounded-full bg-primary" />
+                                            )}
+                                        </div>
+                                        <span className={`text-sm ${formatoReporte === 'pdf' ? 'text-primary font-medium' : 'text-gray-600'}`}>PDF (.pdf)</span>
+                                    </label>
+
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <div className="relative flex items-center justify-center">
+                                            <input
+                                                type="radio"
+                                                name="formato"
+                                                value="word"
+                                                checked={formatoReporte === 'word'}
+                                                onChange={() => setFormatoReporte('word')}
+                                                className="appearance-none w-5 h-5 rounded-full border-2 border-gray-300 checked:border-primary transition-all cursor-pointer"
+                                            />
+                                            {formatoReporte === 'word' && (
+                                                <div className="absolute w-2.5 h-2.5 rounded-full bg-primary" />
+                                            )}
+                                        </div>
+                                        <span className={`text-sm ${formatoReporte === 'word' ? 'text-primary font-medium' : 'text-gray-600'}`}>Word (.docx)</span>
+                                    </label>
+                                </div>
                             </div>
                         )}
 
-                        {(tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante') && (
-                            <div className="text-gray-500 text-sm mb-2 font-medium">Filtrar por fechas (Opcional):</div>
+                        {/* Mensaje informativo sobre histórico */}
+                        <p className="text-sm text-gray-500 mb-4">
+                            {tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante'
+                                ? 'Si no selecciona fechas, se descargará el historial completo de todos los casos del solicitante en formato ZIP.'
+                                : 'Si no selecciona semestre ni fechas, se generará un reporte histórico con todos los casos.'}
+                        </p>
+
+                        {/* Mensaje de error */}
+                        {dateError && (
+                            <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+                                {dateError}
+                            </div>
                         )}
 
-                        {/* Fecha de Inicio */}
-                        <div>
-                            <div className="flex flex-col gap-1">
-                                <label className="text-base font-normal text-foreground mb-1">
-                                    Fecha de Inicio
-                                </label>
-                                <div className="relative">
-                                    <DatePicker
-                                        value={fechaInicioReporte}
-                                        onChange={(value) => {
-                                            setFechaInicioReporte(value);
-                                            setSelectedTermReporte('all');
-                                            setDateError(null);
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Fecha de Fin */}
-                        <div>
-                            <div className="flex flex-col gap-1">
-                                <label className="text-base font-normal text-foreground mb-1">
-                                    Fecha de Fin
-                                </label>
-                                <div className="relative">
-                                    <DatePicker
-                                        value={fechaFinReporte}
-                                        onChange={(value) => {
-                                            setFechaFinReporte(value);
-                                            setSelectedTermReporte('all');
-                                            setDateError(null);
-                                        }}
-                                    />
-                                </div>
+                        {/* Footer con botón */}
+                        <div className="flex flex-col border-t border-gray-200 pt-4">
+                            <div className="flex justify-end gap-3">
+                                <Button
+                                    onClick={handleCloseModal}
+                                    variant="outline"
+                                >
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    onClick={handleGenerateTiposCasosReport}
+                                    variant="primary"
+                                >
+                                    {tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante' ? 'Descargar Expediente' : 'Generar Reporte'}
+                                </Button>
                             </div>
                         </div>
                     </div>
 
-                    {/* Selector de Formato - Ocultar para Historial y Ficha Resumen ya que siempre es ZIP */}
-                    {tipoReporteActual !== 'Historial de Casos del Solicitante' && tipoReporteActual !== 'Ficha Resumen del Solicitante' && (
-                        <div className="mb-6">
-                            <label className="text-base font-normal text-foreground mb-3 block">
-                                Formato de descarga
-                            </label>
-                            <div className="flex gap-6">
-                                <label className="flex items-center gap-2 cursor-pointer group">
-                                    <div className="relative flex items-center justify-center">
-                                        <input
-                                            type="radio"
-                                            name="formato"
-                                            value="pdf"
-                                            checked={formatoReporte === 'pdf'}
-                                            onChange={() => setFormatoReporte('pdf')}
-                                            className="appearance-none w-5 h-5 rounded-full border-2 border-gray-300 checked:border-primary transition-all cursor-pointer"
-                                        />
-                                        {formatoReporte === 'pdf' && (
-                                            <div className="absolute w-2.5 h-2.5 rounded-full bg-primary" />
-                                        )}
-                                    </div>
-                                    <span className={`text-sm ${formatoReporte === 'pdf' ? 'text-primary font-medium' : 'text-gray-600'}`}>PDF (.pdf)</span>
-                                </label>
+                    {/* Right Column: Real PDF Preview (only for supported report types) */}
+                    {supportsPreview && (
+                        <div className="hidden lg:flex flex-col flex-1 min-w-0 rounded-r-xl overflow-hidden border-l border-gray-200/50 relative">
 
-                                <label className="flex items-center gap-2 cursor-pointer group">
-                                    <div className="relative flex items-center justify-center">
-                                        <input
-                                            type="radio"
-                                            name="formato"
-                                            value="word"
-                                            checked={formatoReporte === 'word'}
-                                            onChange={() => setFormatoReporte('word')}
-                                            className="appearance-none w-5 h-5 rounded-full border-2 border-gray-300 checked:border-primary transition-all cursor-pointer"
-                                        />
-                                        {formatoReporte === 'word' && (
-                                            <div className="absolute w-2.5 h-2.5 rounded-full bg-primary" />
-                                        )}
-                                    </div>
-                                    <span className={`text-sm ${formatoReporte === 'word' ? 'text-primary font-medium' : 'text-gray-600'}`}>Word (.docx)</span>
-                                </label>
-                            </div>
+
+                            <ReportPreview
+                                generatePreviewBlob={generatePreviewBlob}
+                                previewKey={`${tipoReporteActual}-${selectedTermReporte}-${fechaInicioReporte}-${fechaFinReporte}-${formatoReporte}`}
+                                reportType={tipoReporteActual}
+                                accentColor="#9c2327"
+                            />
                         </div>
                     )}
-
-                    {/* Mensaje informativo sobre histórico */}
-                    <p className="text-sm text-gray-500 mb-4">
-                        {tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante'
-                            ? 'Si no selecciona fechas, se descargará el historial completo de todos los casos del solicitante en formato ZIP.'
-                            : 'Si no selecciona semestre ni fechas, se generará un reporte histórico con todos los casos.'}
-                    </p>
-
-                    {/* Mensaje de error */}
-                    {dateError && (
-                        <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
-                            {dateError}
-                        </div>
-                    )}
-
-                    {/* Footer con botón */}
-                    <div className="flex flex-col border-t border-gray-200 pt-4">
-                        <div className="flex justify-end gap-3">
-                            <Button
-                                onClick={() => {
-                                    setShowDateModal(false);
-                                    setDateError(null);
-                                }}
-                                variant="outline"
-                            >
-                                Cancelar
-                            </Button>
-                            <Button
-                                onClick={handleGenerateTiposCasosReport}
-                                variant="primary"
-                            >
-                                {tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante' ? 'Descargar Expediente' : 'Generar Reporte'}
-                            </Button>
-                        </div>
-                    </div>
                 </div>
             </Modal>
 

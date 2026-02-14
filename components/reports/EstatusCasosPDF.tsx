@@ -50,6 +50,7 @@ interface EstatusCasosPDFProps {
   chartImage?: string;
   logoBase64?: string;
   term?: string;
+  isWordFormat?: boolean;
 }
 
 // Colores para los estatus (debe coincidir con pdf-generator-react.ts)
@@ -186,7 +187,8 @@ export const EstatusCasosPDF: React.FC<EstatusCasosPDFProps> = ({
   fechaFin,
   chartImage,
   logoBase64,
-  term
+  term,
+  isWordFormat = false
 }) => {
   // Obtener colores para cada estatus
   const pieData = {
@@ -198,6 +200,12 @@ export const EstatusCasosPDF: React.FC<EstatusCasosPDFProps> = ({
   return (
     // @ts-ignore - React PDF types issue
     <Document>
+      {/* Página en blanco vertical (solo para formato Word) */}
+      {isWordFormat && (
+        // @ts-ignore
+        <Page size="A4" orientation="portrait" style={{ backgroundColor: '#FFFFFF' }} />
+      )}
+
       {/* @ts-ignore */}
       <Page size="A4" orientation="landscape" style={styles.page}>
         {/* Header con logo */}

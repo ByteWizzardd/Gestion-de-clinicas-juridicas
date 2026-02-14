@@ -52,6 +52,7 @@ interface InformeSocioeconomicoPDFProps {
     chartImages?: Record<string, string>;
     logoBase64?: string;
     term?: string;
+    isWordFormat?: boolean;
 }
 
 // Estilos del PDF - Ajustados para A4 landscape (842x595 puntos) - IGUAL QUE TiposCasosPDF
@@ -170,7 +171,8 @@ const InformeSocioeconomicoPDF: React.FC<InformeSocioeconomicoPDFProps> = ({
     fechaFin,
     chartImages = {},
     logoBase64,
-    term
+    term,
+    isWordFormat = false
 }) => {
     // 1. Definir secciones base (Demográfico -> Económico -> Hogar)
     const baseSections = [
@@ -264,6 +266,12 @@ const InformeSocioeconomicoPDF: React.FC<InformeSocioeconomicoPDFProps> = ({
     return (
         // @ts-ignore
         <Document title="Informe Socioeconómico">
+            {/* Página en blanco vertical (solo para formato Word) */}
+            {isWordFormat && (
+                // @ts-ignore
+                <Page size="A4" orientation="portrait" style={{ backgroundColor: '#FFFFFF' }} />
+            )}
+
             {activeSections.map((section, index) => {
                 const isFirstPage = index === 0;
 

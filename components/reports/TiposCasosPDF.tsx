@@ -50,6 +50,7 @@ interface TiposCasosPDFProps {
   chartImages?: Record<string, string>;
   logoBase64?: string; // Logo en base64 para preservar transparencia
   term?: string;
+  isWordFormat?: boolean; // Si true, incluye página en blanco antes de las gráficas
 }
 
 // Colores exactos del diseño de Figma (debe coincidir con pdf-generator-react.ts)
@@ -271,13 +272,20 @@ export const TiposCasosPDF: React.FC<TiposCasosPDFProps> = ({
   fechaFin,
   chartImages = {},
   logoBase64,
-  term
+  term,
+  isWordFormat = false
 }) => {
   const groupedData = groupDataByMateriaSubcategoria(data);
 
   return (
     // @ts-ignore - React PDF types issue
     <Document>
+      {/* Página en blanco vertical (solo para formato Word) */}
+      {isWordFormat && (
+        // @ts-ignore
+        <Page size="A4" orientation="portrait" style={{ backgroundColor: '#FFFFFF' }} />
+      )}
+
       {Object.entries(groupedData).map(([key, groupData], pageIndex) => {
         const pieData = {
           labels: groupData.map(item => item.nombre_ambito_legal),

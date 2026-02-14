@@ -425,26 +425,39 @@ export async function getInformeResumenData(
 
     const { start, end } = await resolveDateRange(fechaInicio, fechaFin, term);
 
-    // Obtener todos los datos en paralelo
+    // Obtener datos en lotes para no agotar el pool de conexiones
+    // (10 queries en paralelo pueden agotar las 20 conexiones si hay concurrencia)
+
+    // Lote 1: Casos y solicitantes
     const [
       casosPorMateria,
       solicitantesPorGenero,
       solicitantesPorEstado,
       solicitantesPorParroquia,
-      casosPorAmbitoLegal,
-      estudiantesPorMateria,
-      profesoresPorMateria,
-      tiposDeCaso,
-      beneficiariosPorTipo,
-      beneficiariosPorParentesco,
     ] = await Promise.all([
       casosQueries.getByMateriaGrouped(start, end),
       solicitantesQueries.getByGenero(start, end),
       solicitantesQueries.getByEstado(start, end),
       solicitantesQueries.getByParroquia(start, end),
+    ]);
+
+    // Lote 2: Ámbito legal, estudiantes, profesores
+    const [
+      casosPorAmbitoLegal,
+      estudiantesPorMateria,
+      profesoresPorMateria,
+    ] = await Promise.all([
       casosQueries.getByAmbitoLegalTotal(start, end),
       estudiantesQueries.getByMateria(start, end),
       profesoresQueries.getByMateria(start, end),
+    ]);
+
+    // Lote 3: Tipos de caso, beneficiarios
+    const [
+      tiposDeCaso,
+      beneficiariosPorTipo,
+      beneficiariosPorParentesco,
+    ] = await Promise.all([
       casosQueries.getGroupedByAmbitoLegal(start, end),
       beneficiariosQueries.getByTipoGrouped(start, end),
       beneficiariosQueries.getByParentesco(start, end),
@@ -494,37 +507,55 @@ export async function getInformeSocioeconomicoData(
 
     const { start, end } = await resolveDateRange(fechaInicio, fechaFin, term);
 
-    // Obtener distribuciones socioeconómicas
+    // Obtener distribuciones socioeconómicas en lotes para no agotar el pool de conexiones
+    // (16 queries en paralelo agotaban las 20 conexiones del pool, causando ETIMEDOUT)
+
+    // Lote 1: Vivienda, género, edad, estado civil
     const [
       distribucionPorTipoVivienda,
       distribucionPorGenero,
       distribucionPorEdad,
       distribucionPorEstadoCivil,
-      distribucionPorNivelEducativo,
-      distribucionLaboralFusionada,
-      distribucionPorCondicionTrabajo,
-      distribucionPorCondicionActividad,
-      distribucionPorIngresos,
-      distribucionPorTamanoHogar,
-      distribucionPorTrabajadoresHogar,
-      distribucionPorDependientes,
-      distribucionPorNinosHogar,
-      distribucionPorHabitaciones,
-      distribucionPorBanos,
-      distribucionPorCaracteristicasVivienda
     ] = await Promise.all([
       solicitantesQueries.getByTipoVivienda(start, end),
       solicitantesQueries.getDistribucionGenero(start, end),
       solicitantesQueries.getDistribucionEdad(start, end),
       solicitantesQueries.getDistribucionEstadoCivil(start, end),
+    ]);
+
+    // Lote 2: Educación, laboral fusionada, condición trabajo, condición actividad
+    const [
+      distribucionPorNivelEducativo,
+      distribucionLaboralFusionada,
+      distribucionPorCondicionTrabajo,
+      distribucionPorCondicionActividad,
+    ] = await Promise.all([
       solicitantesQueries.getDistribucionNivelEducativo(start, end),
       solicitantesQueries.getDistribucionLaboralFusionada(start, end),
       solicitantesQueries.getDistribucionCondicionTrabajo(start, end),
       solicitantesQueries.getDistribucionCondicionActividad(start, end),
+    ]);
+
+    // Lote 3: Ingresos, tamaño hogar, trabajadores hogar, dependientes
+    const [
+      distribucionPorIngresos,
+      distribucionPorTamanoHogar,
+      distribucionPorTrabajadoresHogar,
+      distribucionPorDependientes,
+    ] = await Promise.all([
       solicitantesQueries.getDistribucionIngresos(start, end),
       solicitantesQueries.getDistribucionTamanoHogar(start, end),
       solicitantesQueries.getDistribucionTrabajadoresHogar(start, end),
       solicitantesQueries.getDistribucionDependientes(start, end),
+    ]);
+
+    // Lote 4: Niños hogar, habitaciones, baños, características vivienda
+    const [
+      distribucionPorNinosHogar,
+      distribucionPorHabitaciones,
+      distribucionPorBanos,
+      distribucionPorCaracteristicasVivienda,
+    ] = await Promise.all([
       solicitantesQueries.getDistribucionNinosHogar(start, end),
       solicitantesQueries.getDistribucionHabitaciones(start, end),
       solicitantesQueries.getDistribucionBanos(start, end),

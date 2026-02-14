@@ -67,7 +67,7 @@ export function groupDataByMateriaSubcategoria(
 /**
  * Agrupa beneficiarios por materia y subcategoría (igual que tipos de caso)
  */
-function groupBeneficiariosByMateriaSubcategoria(
+export function groupBeneficiariosByMateriaSubcategoria(
   data: Array<{
     tipo_beneficiario: string;
     id_materia: number;
@@ -109,7 +109,7 @@ function groupBeneficiariosByMateriaSubcategoria(
 /**
  * Agrupa casos por materia y subcategoría (igual que beneficiarios)
  */
-function groupCasosByMateriaSubcategoria(
+export function groupCasosByMateriaSubcategoria(
   data: Array<{
     id_materia: number;
     num_categoria: number;
