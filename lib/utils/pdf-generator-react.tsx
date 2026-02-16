@@ -654,7 +654,8 @@ export async function generateInformeResumenPDFReact(
   data: InformeResumenData,
   fechaInicio?: string,
   fechaFin?: string,
-  term?: string
+  term?: string,
+  selectedSections?: Record<string, boolean>
 ): Promise<void> {
   try {
     // Cargar el logo y la portada como base64
@@ -682,10 +683,25 @@ export async function generateInformeResumenPDFReact(
       beneficiariosPorParentesco?: string;
     } = {};
 
+    // Helper to check if a section is selected (default true if undefined)
+    const isSelected = (key: string) => !selectedSections || selectedSections[key];
+
+    // Filter data based on selection to ensure pages/sections are not rendered if disabled
+    const filteredData = { ...data };
+    if (!isSelected('tiposDeCaso')) filteredData.tiposDeCaso = [];
+    if (!isSelected('casosPorMateria')) filteredData.casosPorMateria = [];
+    if (!isSelected('solicitantesPorGenero')) filteredData.solicitantesPorGenero = [];
+    if (!isSelected('solicitantesPorEstado')) filteredData.solicitantesPorEstado = [];
+    if (!isSelected('solicitantesPorParroquia')) filteredData.solicitantesPorParroquia = [];
+    if (!isSelected('estudiantesPorMateria')) filteredData.estudiantesPorMateria = [];
+    if (!isSelected('profesoresPorMateria')) filteredData.profesoresPorMateria = [];
+    if (!isSelected('beneficiariosPorTipo')) filteredData.beneficiariosPorTipo = [];
+    if (!isSelected('beneficiariosPorParentesco')) filteredData.beneficiariosPorParentesco = [];
+
     // 1. PRIMERO: Tipos de Caso (pie charts agrupados, igual que el reporte de tipos de caso)
-    if (data.tiposDeCaso && data.tiposDeCaso.length > 0) {
+    if (filteredData.tiposDeCaso && filteredData.tiposDeCaso.length > 0) {
       // Usar la misma función groupDataByMateriaSubcategoria que usa generateTiposCasosPDFReact
-      const groupedData = groupDataByMateriaSubcategoria(data.tiposDeCaso);
+      const groupedData = groupDataByMateriaSubcategoria(filteredData.tiposDeCaso);
 
       // Generar imágenes de gráficas para cada grupo (igual que generateTiposCasosPDFReact)
       chartImages.tiposDeCaso = {};
@@ -705,11 +721,11 @@ export async function generateInformeResumenPDFReact(
     }
 
     // 2. Casos por Materia (barras agrupadas por materia, categoría y subcategoría)
-    if (data.casosPorMateria && data.casosPorMateria.length > 0) {
+    if (filteredData.casosPorMateria && filteredData.casosPorMateria.length > 0) {
       await yieldToUI();
 
       // Agrupar por materia, categoría y subcategoría (igual que beneficiarios)
-      const groupedCasos = groupCasosByMateriaSubcategoria(data.casosPorMateria);
+      const groupedCasos = groupCasosByMateriaSubcategoria(filteredData.casosPorMateria);
       const labels: string[] = [];
       const values: number[] = [];
 
@@ -726,42 +742,42 @@ export async function generateInformeResumenPDFReact(
     }
 
     // 3. Solicitantes por Género (barras)
-    if (data.solicitantesPorGenero && data.solicitantesPorGenero.length > 0) {
+    if (filteredData.solicitantesPorGenero && filteredData.solicitantesPorGenero.length > 0) {
       await yieldToUI();
 
-      const labels = data.solicitantesPorGenero.map(item => item.genero === 'M' ? 'Masculino' : 'Femenino');
-      const values = data.solicitantesPorGenero.map(item => item.cantidad_solicitantes);
-      const colors = data.solicitantesPorGenero.map(item => item.genero === 'F' ? '#ff928a' : '#8979ff');
+      const labels = filteredData.solicitantesPorGenero.map(item => item.genero === 'M' ? 'Masculino' : 'Femenino');
+      const values = filteredData.solicitantesPorGenero.map(item => item.cantidad_solicitantes);
+      const colors = filteredData.solicitantesPorGenero.map(item => item.genero === 'F' ? '#ff928a' : '#8979ff');
       chartImages.solicitantesPorGenero = generateBarChartImage(labels, values, colors);
     }
 
     // 3.5. Solicitantes por Estado (barras)
-    if (data.solicitantesPorEstado && data.solicitantesPorEstado.length > 0) {
+    if (filteredData.solicitantesPorEstado && filteredData.solicitantesPorEstado.length > 0) {
       await yieldToUI();
 
-      const labels = data.solicitantesPorEstado.map(item => item.nombre_estado);
-      const values = data.solicitantesPorEstado.map(item => item.cantidad_solicitantes);
+      const labels = filteredData.solicitantesPorEstado.map(item => item.nombre_estado);
+      const values = filteredData.solicitantesPorEstado.map(item => item.cantidad_solicitantes);
       const colors = BAR_COLORS.slice(0, labels.length);
       chartImages.solicitantesPorEstado = generateBarChartImage(labels, values, colors);
     }
 
     // 4. Solicitantes por Parroquia (barras)
-    if (data.solicitantesPorParroquia && data.solicitantesPorParroquia.length > 0) {
+    if (filteredData.solicitantesPorParroquia && filteredData.solicitantesPorParroquia.length > 0) {
       await yieldToUI();
 
-      const labels = data.solicitantesPorParroquia.map(item => item.nombre_parroquia);
-      const values = data.solicitantesPorParroquia.map(item => item.cantidad_solicitantes);
+      const labels = filteredData.solicitantesPorParroquia.map(item => item.nombre_parroquia);
+      const values = filteredData.solicitantesPorParroquia.map(item => item.cantidad_solicitantes);
       const colors = BAR_COLORS.slice(0, labels.length);
       chartImages.solicitantesPorParroquia = generateBarChartImage(labels, values, colors);
     }
 
     // 5. Estudiantes por Materia (un solo diagrama de barras con todas las materias)
-    if (data.estudiantesPorMateria && data.estudiantesPorMateria.length > 0) {
+    if (filteredData.estudiantesPorMateria && filteredData.estudiantesPorMateria.length > 0) {
       await yieldToUI();
 
       // Agrupar solo por materia (sumando todos los estudiantes de cada materia)
       const groupedByMateria: Record<string, number> = {};
-      for (const item of data.estudiantesPorMateria) {
+      for (const item of filteredData.estudiantesPorMateria) {
         const materia = item.nombre_materia;
         if (!groupedByMateria[materia]) {
           groupedByMateria[materia] = 0;
@@ -779,12 +795,12 @@ export async function generateInformeResumenPDFReact(
     }
 
     // 6. Profesores por Materia (un solo diagrama de barras con todas las materias)
-    if (data.profesoresPorMateria && data.profesoresPorMateria.length > 0) {
+    if (filteredData.profesoresPorMateria && filteredData.profesoresPorMateria.length > 0) {
       await yieldToUI();
 
       // Agrupar solo por materia (sumando todos los profesores de cada materia)
       const groupedByMateria: Record<string, number> = {};
-      for (const item of data.profesoresPorMateria) {
+      for (const item of filteredData.profesoresPorMateria) {
         const materia = item.nombre_materia;
         if (!groupedByMateria[materia]) {
           groupedByMateria[materia] = 0;
@@ -801,69 +817,52 @@ export async function generateInformeResumenPDFReact(
       };
     }
 
-    // 7. Beneficiarios Directos (un solo diagrama de barras con todas las combinaciones materia-categoría-subcategoría)
-    if (data.beneficiariosPorTipo && data.beneficiariosPorTipo.length > 0) {
+    // 7. Beneficiarios Directos e Indirectos (Agrupados por 'beneficiariosPorTipo')
+    if (filteredData.beneficiariosPorTipo && filteredData.beneficiariosPorTipo.length > 0) {
+      // Beneficiarios Directos
       await yieldToUI();
-
-      const directos = data.beneficiariosPorTipo.filter(item => item.tipo_beneficiario === 'Directo');
+      const directos = filteredData.beneficiariosPorTipo.filter(item => item.tipo_beneficiario === 'Directo');
       if (directos.length > 0) {
-        // Agrupar por materia, categoría y subcategoría y sumar cantidades
         const groupedDirectos = groupBeneficiariosByMateriaSubcategoria(directos);
         const labels: string[] = [];
         const values: number[] = [];
-
         for (const [key, groupData] of Object.entries(groupedDirectos)) {
-          // El key ya tiene el formato "Materia - Categoría Subcategoría"
           labels.push(key);
-          // Sumar todas las cantidades del grupo
-          const total = groupData.reduce((sum, item) => sum + Number(item.cantidad_beneficiarios || 0), 0);
-          values.push(total);
+          values.push(groupData.reduce((sum, item) => sum + Number(item.cantidad_beneficiarios || 0), 0));
         }
-
-        const colors = BAR_COLORS.slice(0, labels.length);
-        chartImages.beneficiariosDirectos = generateBarChartImage(labels, values, colors);
+        chartImages.beneficiariosDirectos = generateBarChartImage(labels, values, BAR_COLORS.slice(0, labels.length));
       }
-    }
 
-    // 8. Beneficiarios Indirectos (un solo diagrama de barras con todas las combinaciones materia-categoría-subcategoría)
-    if (data.beneficiariosPorTipo && data.beneficiariosPorTipo.length > 0) {
+      // Beneficiarios Indirectos
       await yieldToUI();
-
-      const indirectos = data.beneficiariosPorTipo.filter(item => item.tipo_beneficiario === 'Indirecto');
+      const indirectos = filteredData.beneficiariosPorTipo.filter(item => item.tipo_beneficiario === 'Indirecto');
       if (indirectos.length > 0) {
-        // Agrupar por materia, categoría y subcategoría y sumar cantidades
         const groupedIndirectos = groupBeneficiariosByMateriaSubcategoria(indirectos);
         const labels: string[] = [];
         const values: number[] = [];
-
         for (const [key, groupData] of Object.entries(groupedIndirectos)) {
-          // El key ya tiene el formato "Materia - Categoría Subcategoría"
           labels.push(key);
-          // Sumar todas las cantidades del grupo
-          const total = groupData.reduce((sum, item) => sum + Number(item.cantidad_beneficiarios || 0), 0);
-          values.push(total);
+          values.push(groupData.reduce((sum, item) => sum + Number(item.cantidad_beneficiarios || 0), 0));
         }
-
-        const colors = BAR_COLORS.slice(0, labels.length);
-        chartImages.beneficiariosIndirectos = generateBarChartImage(labels, values, colors);
+        chartImages.beneficiariosIndirectos = generateBarChartImage(labels, values, BAR_COLORS.slice(0, labels.length));
       }
     }
 
-    // 9. Beneficiarios por Parentesco
-    if (data.beneficiariosPorParentesco && data.beneficiariosPorParentesco.length > 0) {
+    // 8. Beneficiarios por Parentesco (barras)
+    if (filteredData.beneficiariosPorParentesco && filteredData.beneficiariosPorParentesco.length > 0) {
       await yieldToUI();
 
-      const labels = data.beneficiariosPorParentesco.map(item => item.parentesco);
-      const values = data.beneficiariosPorParentesco.map(item => Number(item.cantidad_beneficiarios));
+      const labels = filteredData.beneficiariosPorParentesco.map(item => item.parentesco);
+      const values = filteredData.beneficiariosPorParentesco.map(item => Number(item.cantidad_beneficiarios));
       const colors = BAR_COLORS.slice(0, labels.length);
       chartImages.beneficiariosPorParentesco = generateBarChartImage(labels, values, colors);
     }
 
-    await yieldToUI(100);
+    await new Promise(resolve => setTimeout(resolve, 0));
 
     // Generar el documento PDF
     const doc = React.createElement(InformeResumenPDF, {
-      data,
+      data: filteredData,
       fechaInicio,
       fechaFin,
       chartImages,
@@ -897,7 +896,7 @@ export async function generateInformeResumenPDFReact(
 
 /**
  * Genera imagen de gráfico de barras para datos socioeconómicos
- */
+        */
 async function generateSocioeconomicoChartImage(
   data: Array<{ [key: string]: string | number }>,
   title: string,

@@ -154,11 +154,27 @@ export async function generateResumenCasosDOCX(
     data: InformeResumenData,
     fechaInicio?: string,
     fechaFin?: string,
-    term?: string
+    term?: string,
+    selectedSections?: Record<string, boolean>
 ): Promise<void> {
     try {
         const logoBase64 = await imageToBase64('/logo clinica juridica.png');
         const logoUint8 = base64ToUint8Array(logoBase64.split(',')[1]);
+
+        // Helper para verificar si una sección está seleccionada (por defecto true)
+        const isSectionSelected = (key: string) => !selectedSections || selectedSections[key];
+
+        // Filtrar datos según selección
+        const filteredData = { ...data };
+        if (!isSectionSelected('tiposDeCaso')) filteredData.tiposDeCaso = [];
+        if (!isSectionSelected('casosPorMateria')) filteredData.casosPorMateria = [];
+        if (!isSectionSelected('solicitantesPorGenero')) filteredData.solicitantesPorGenero = [];
+        if (!isSectionSelected('solicitantesPorEstado')) filteredData.solicitantesPorEstado = [];
+        if (!isSectionSelected('solicitantesPorParroquia')) filteredData.solicitantesPorParroquia = [];
+        if (!isSectionSelected('estudiantesPorMateria')) filteredData.estudiantesPorMateria = [];
+        if (!isSectionSelected('profesoresPorMateria')) filteredData.profesoresPorMateria = [];
+        if (!isSectionSelected('beneficiariosPorTipo')) filteredData.beneficiariosPorTipo = [];
+        if (!isSectionSelected('beneficiariosPorParentesco')) filteredData.beneficiariosPorParentesco = [];
 
         const sections: any[] = [];
         const reportTitle = `Informe Resumen de Casos${term ? ` Semestre ${term}` : (fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : ' Histórico')}`;
@@ -227,7 +243,7 @@ export async function generateResumenCasosDOCX(
         }
 
         // 2. Tipos de Caso (Pie Charts agrupados)
-        const groupedTiposCasos = groupDataByMateriaSubcategoria(data.tiposDeCaso);
+        const groupedTiposCasos = groupDataByMateriaSubcategoria(filteredData.tiposDeCaso);
         let isFirstPage = true;
 
         for (const [key, groupData] of Object.entries(groupedTiposCasos)) {
@@ -282,10 +298,10 @@ export async function generateResumenCasosDOCX(
         const barCharts = [
             {
                 title: 'Casos por Materia',
-                labels: Array.from(new Set(data.casosPorMateria.map(item => item.nombre_materia))),
+                labels: Array.from(new Set(filteredData.casosPorMateria.map(item => item.nombre_materia))),
                 getValues: () => {
                     const map = new Map();
-                    data.casosPorMateria.forEach(item => {
+                    filteredData.casosPorMateria.forEach(item => {
                         map.set(item.nombre_materia, (map.get(item.nombre_materia) || 0) + Number(item.cantidad_casos));
                     });
                     return Array.from(map.values());
@@ -293,25 +309,25 @@ export async function generateResumenCasosDOCX(
             },
             {
                 title: 'Solicitantes por Género',
-                labels: data.solicitantesPorGenero.map(item => item.genero === 'M' ? 'Masculino' : 'Femenino'),
-                values: data.solicitantesPorGenero.map(item => item.cantidad_solicitantes)
+                labels: filteredData.solicitantesPorGenero.map(item => item.genero === 'M' ? 'Masculino' : 'Femenino'),
+                values: filteredData.solicitantesPorGenero.map(item => item.cantidad_solicitantes)
             },
             {
                 title: 'Solicitantes por Estado',
-                labels: data.solicitantesPorEstado.map(item => item.nombre_estado),
-                values: data.solicitantesPorEstado.map(item => item.cantidad_solicitantes)
+                labels: filteredData.solicitantesPorEstado.map(item => item.nombre_estado),
+                values: filteredData.solicitantesPorEstado.map(item => item.cantidad_solicitantes)
             },
             {
                 title: 'Solicitantes por Parroquia',
-                labels: data.solicitantesPorParroquia.map(item => item.nombre_parroquia),
-                values: data.solicitantesPorParroquia.map(item => item.cantidad_solicitantes)
+                labels: filteredData.solicitantesPorParroquia.map(item => item.nombre_parroquia),
+                values: filteredData.solicitantesPorParroquia.map(item => item.cantidad_solicitantes)
             },
             {
                 title: 'Beneficiarios Directos',
-                labels: Array.from(new Set(data.beneficiariosPorTipo.filter(i => i.tipo_beneficiario === 'Directo').map(i => i.nombre_materia))),
+                labels: Array.from(new Set(filteredData.beneficiariosPorTipo.filter(i => i.tipo_beneficiario === 'Directo').map(i => i.nombre_materia))),
                 getValues: () => {
                     const map = new Map();
-                    data.beneficiariosPorTipo.filter(i => i.tipo_beneficiario === 'Directo').forEach(item => {
+                    filteredData.beneficiariosPorTipo.filter(i => i.tipo_beneficiario === 'Directo').forEach(item => {
                         map.set(item.nombre_materia, (map.get(item.nombre_materia) || 0) + Number(item.cantidad_beneficiarios));
                     });
                     return Array.from(map.values());
@@ -319,10 +335,10 @@ export async function generateResumenCasosDOCX(
             },
             {
                 title: 'Beneficiarios Indirectos',
-                labels: Array.from(new Set(data.beneficiariosPorTipo.filter(i => i.tipo_beneficiario === 'Indirecto').map(i => i.nombre_materia))),
+                labels: Array.from(new Set(filteredData.beneficiariosPorTipo.filter(i => i.tipo_beneficiario === 'Indirecto').map(i => i.nombre_materia))),
                 getValues: () => {
                     const map = new Map();
-                    data.beneficiariosPorTipo.filter(i => i.tipo_beneficiario === 'Indirecto').forEach(item => {
+                    filteredData.beneficiariosPorTipo.filter(i => i.tipo_beneficiario === 'Indirecto').forEach(item => {
                         map.set(item.nombre_materia, (map.get(item.nombre_materia) || 0) + Number(item.cantidad_beneficiarios));
                     });
                     return Array.from(map.values());
@@ -330,15 +346,15 @@ export async function generateResumenCasosDOCX(
             },
             {
                 title: 'Beneficiarios por Parentesco',
-                labels: data.beneficiariosPorParentesco.map(item => item.parentesco),
-                values: data.beneficiariosPorParentesco.map(item => item.cantidad_beneficiarios)
+                labels: filteredData.beneficiariosPorParentesco.map(item => item.parentesco),
+                values: filteredData.beneficiariosPorParentesco.map(item => item.cantidad_beneficiarios)
             },
             {
                 title: 'Estudiantes Involucrados',
-                labels: Array.from(new Set(data.estudiantesPorMateria.map(item => item.nombre_materia))),
+                labels: Array.from(new Set(filteredData.estudiantesPorMateria.map(item => item.nombre_materia))),
                 getValues: () => {
                     const map = new Map();
-                    data.estudiantesPorMateria.forEach(item => {
+                    filteredData.estudiantesPorMateria.forEach(item => {
                         map.set(item.nombre_materia, (map.get(item.nombre_materia) || 0) + Number(item.cantidad_estudiantes));
                     });
                     return Array.from(map.values());
@@ -346,10 +362,10 @@ export async function generateResumenCasosDOCX(
             },
             {
                 title: 'Profesores Involucrados',
-                labels: Array.from(new Set(data.profesoresPorMateria.map(item => item.nombre_materia))),
+                labels: Array.from(new Set(filteredData.profesoresPorMateria.map(item => item.nombre_materia))),
                 getValues: () => {
                     const map = new Map();
-                    data.profesoresPorMateria.forEach(item => {
+                    filteredData.profesoresPorMateria.forEach(item => {
                         map.set(item.nombre_materia, (map.get(item.nombre_materia) || 0) + Number(item.cantidad_profesores));
                     });
                     return Array.from(map.values());
@@ -383,6 +399,17 @@ export async function generateResumenCasosDOCX(
                 indent: { left: 200 },
                 children: [new ImageRun({ data: logoUint8, transformation: { width: 260, height: 45.5 } } as any)],
             }));
+
+            // Banner (solo primera pág de contenido)
+            if (isFirstPage) {
+                const bannerBase64 = await generateBannerImage(reportTitle);
+                topContent.push(new Paragraph({
+                    alignment: AlignmentType.CENTER,
+                    spacing: { after: 60 },
+                    children: [new ImageRun({ data: base64ToUint8Array(bannerBase64.split(',')[1]), transformation: { width: 830, height: 34 } } as any)],
+                }));
+                isFirstPage = false;
+            }
 
             // Título Sección
             const titleImg = await generateTitleImage(chart.title);

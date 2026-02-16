@@ -19,7 +19,7 @@ interface ReportPreviewProps {
     accentColor?: string;
 }
 
-type PreviewState = 'idle' | 'loading' | 'ready' | 'error';
+type PreviewState = 'idle' | 'loading' | 'ready' | 'error' | 'empty' | 'no_sections';
 
 export default function ReportPreview({
     generatePreviewBlob,
@@ -56,14 +56,20 @@ export default function ReportPreview({
 
     // Reset preview when the key changes (parameters changed)
     useEffect(() => {
-        if (state === 'ready' || state === 'loading') {
-            cancelGeneration();
+        // Always reset to idle when parameters change so user can generate again
+        // or auto-generate if we implement that logic later.
+        cancelGeneration();
+
+        if (blobUrlRef.current) {
+            URL.revokeObjectURL(blobUrlRef.current);
+            blobUrlRef.current = null;
+            setBlobUrl(null);
+        }
+
+        // If we are already idle, no need to set state, but if we are in any other state
+        // (including error, empty, no_sections), we should reset to idle.
+        if (state !== 'idle') {
             setState('idle');
-            if (blobUrlRef.current) {
-                URL.revokeObjectURL(blobUrlRef.current);
-                blobUrlRef.current = null;
-                setBlobUrl(null);
-            }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [previewKey]);
@@ -91,9 +97,13 @@ export default function ReportPreview({
             // Check if aborted after awaiting
             if (controller.signal.aborted) return;
 
-            if (!blob) {
-                setState('error');
-                setErrorMsg('No se pudo generar la vista previa. No hay datos disponibles.');
+            if (blob?.type === 'application/no-sections') {
+                setState('no_sections');
+                return;
+            }
+
+            if (!blob || blob.size === 0) {
+                setState('empty');
                 return;
             }
 
@@ -102,7 +112,7 @@ export default function ReportPreview({
             setBlobUrl(url);
             setState('ready');
 
-        } catch (err) {
+        } catch (err: any) {
             // If aborted, silently ignore (user closed modal or changed params)
             if (controller.signal.aborted) return;
 
@@ -295,6 +305,56 @@ export default function ReportPreview({
                                 <RefreshCw className="w-4 h-4 mr-2" />
                                 Intentar de Nuevo
                             </Button>
+                        </motion.div>
+                    )}
+
+                    {/* Empty State (No Data) */}
+                    {state === 'empty' && (
+                        <motion.div
+                            key="empty"
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center"
+                        >
+                            <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mb-6 border border-gray-100">
+                                <FileText className="w-8 h-8 text-gray-400" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-800 mb-2 font-primary">
+                                Sin resultados
+                            </h3>
+                            <p className="text-sm text-gray-500 mb-6 max-w-[300px]">
+                                No se encontraron datos para los filtros seleccionados. Intente con otros criterios.
+                            </p>
+                            <Button
+                                onClick={handleGeneratePreview}
+                                className="shadow-md hover:shadow-lg transition-all active:scale-95 text-white"
+                                style={{ backgroundColor: accentColor, borderColor: accentColor }}
+                            >
+                                <RefreshCw className="w-4 h-4 mr-2" />
+                                Actualizar
+                            </Button>
+                        </motion.div>
+                    )}
+
+                    {/* No Sections Selected State */}
+                    {state === 'no_sections' && (
+                        <motion.div
+                            key="no_sections"
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center"
+                        >
+                            <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mb-6 border border-red-100">
+                                <AlertCircle className="w-8 h-8" style={{ color: '#9c2327' }} />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-800 mb-2 font-primary">
+                                Sin secciones seleccionadas
+                            </h3>
+                            <p className="text-sm text-gray-500 mb-6 max-w-[300px]">
+                                Por favor seleccione al menos una sección para generar la vista previa.
+                            </p>
                         </motion.div>
                     )}
                 </AnimatePresence>

@@ -32,6 +32,30 @@ import {
 } from '@/app/actions/reports';
 import { TIPOS_REPORTE, DESCRIPCIONES_REPORTE } from '@/lib/constants/reports';
 
+interface ResumenSectionsData {
+    casosPorMateria: boolean;
+    solicitantesPorGenero: boolean;
+    solicitantesPorEstado: boolean;
+    solicitantesPorParroquia: boolean;
+    estudiantesPorMateria: boolean;
+    profesoresPorMateria: boolean;
+    tiposDeCaso: boolean;
+    beneficiariosPorTipo: boolean;
+    beneficiariosPorParentesco: boolean;
+}
+
+const RESUMEN_SECCIONES_LABELS: Record<keyof ResumenSectionsData, string> = {
+    tiposDeCaso: "Tipos de Caso",
+    casosPorMateria: "Casos por Materia",
+    solicitantesPorGenero: "Solicitantes por Género",
+    solicitantesPorEstado: "Solicitantes por Estado",
+    solicitantesPorParroquia: "Solicitantes por Parroquia",
+    estudiantesPorMateria: "Estudiantes por Materia",
+    profesoresPorMateria: "Profesores por Materia",
+    beneficiariosPorTipo: "Beneficiarios Directos/Indirectos",
+    beneficiariosPorParentesco: "Beneficiarios por Parentesco"
+};
+
 export default function ReportsPage() {
 
     const [filters, setFilters] = useState<ReportFilters>({
@@ -52,6 +76,79 @@ export default function ReportsPage() {
     const [isGeneratingReport, setIsGeneratingReport] = useState(false);
     const [termOptions, setTermOptions] = useState<{ value: string; label: string }[]>([]);
     const [selectedTermReporte, setSelectedTermReporte] = useState('all');
+
+    // Estado para secciones del reporte de resumen
+    const [selectedResumenSections, setSelectedResumenSections] = useState<ResumenSectionsData>({
+        casosPorMateria: true,
+        solicitantesPorGenero: true,
+        solicitantesPorEstado: true,
+        solicitantesPorParroquia: true,
+        estudiantesPorMateria: true,
+        profesoresPorMateria: true,
+        tiposDeCaso: true,
+        beneficiariosPorTipo: true,
+        beneficiariosPorParentesco: true
+    });
+
+    // Interface y Estado para secciones del reporte socioeconómico
+    interface SocioeconomicoSectionsData {
+        genero: boolean;
+        edad: boolean;
+        estadoCivil: boolean;
+        nivelEducativo: boolean;
+        condicionTrabajo: boolean;
+        condicionActividad: boolean;
+        ingresos: boolean;
+        tamanoHogar: boolean;
+        ninosHogar: boolean;
+        trabajadoresHogar: boolean;
+        dependientes: boolean;
+        habitaciones: boolean;
+        banos: boolean;
+        tipoVivienda: boolean; // Agrupa características de vivienda tipo
+        aguaPotable: boolean;
+        aseoUrbano: boolean;
+        aguasNegras: boolean;
+        artefactosHogar: boolean;
+        materialParedes: boolean;
+        materialPiso: boolean;
+        materialTecho: boolean;
+    }
+
+    const [selectedSocioeconomicoSections, setSelectedSocioeconomicoSections] = useState<SocioeconomicoSectionsData>({
+        genero: true,
+        edad: true,
+        estadoCivil: true,
+        nivelEducativo: true,
+        condicionTrabajo: true,
+        condicionActividad: true,
+        ingresos: true,
+        tamanoHogar: true,
+        ninosHogar: true,
+        trabajadoresHogar: true,
+        dependientes: true,
+        habitaciones: true,
+        banos: true,
+        tipoVivienda: true,
+        aguaPotable: true,
+        aseoUrbano: true,
+        aguasNegras: true,
+        artefactosHogar: true,
+        materialParedes: true,
+        materialPiso: true,
+        materialTecho: true
+    });
+
+    const toggleResumenSection = (key: keyof ResumenSectionsData) => {
+        setSelectedResumenSections(prev => ({ ...prev, [key]: !prev[key] }));
+    };
+
+    const toggleSocioeconomicoSection = (key: keyof SocioeconomicoSectionsData) => {
+        setSelectedSocioeconomicoSections(prev => ({ ...prev, [key]: !prev[key] }));
+    };
+
+    // Tab state for modal
+    const [activeTab, setActiveTab] = useState<'filtros' | 'secciones'>('filtros');
 
     // Data states
     const [distributionData, setDistributionData] = useState<DistributionData[]>([]);
@@ -223,6 +320,7 @@ export default function ReportsPage() {
             setShowDateModal(true);
 
             // Reset states
+            setActiveTab('filtros');
             setFechaInicioReporte('');
             setFechaFinReporte('');
             setSelectedTermReporte('all');
@@ -250,13 +348,26 @@ export default function ReportsPage() {
 
         try {
             if (tipoReporteActual === 'Resumen de Casos') {
+                // Verificar si hay al menos una sección seleccionada
+                const hasSelectedSections = Object.values(selectedResumenSections as unknown as Record<string, boolean>).some(Boolean);
+                if (!hasSelectedSections) {
+                    return new Blob([], { type: 'application/no-sections' });
+                }
+
                 const { getInformeResumenData } = await import('@/app/actions/reports');
                 const result = await getInformeResumenData(fechaInicio, fechaFin, term);
                 if (signal.aborted) return null;
                 if (result.success && result.data) {
                     const { generateInformeResumenPDFBlob } = await import('@/lib/utils/pdf-preview-generators');
                     if (signal.aborted) return null;
-                    return await generateInformeResumenPDFBlob(result.data, fechaInicio, fechaFin, term, formatoReporte === 'word');
+                    return await generateInformeResumenPDFBlob(
+                        result.data,
+                        fechaInicio,
+                        fechaFin,
+                        term,
+                        formatoReporte === 'word',
+                        selectedResumenSections as unknown as Record<string, boolean>
+                    );
                 }
             } else if (tipoReporteActual === 'Reporte de Estatus de Casos') {
                 const { getCasosGroupedByEstatus } = await import('@/app/actions/reports');
@@ -268,13 +379,26 @@ export default function ReportsPage() {
                     return await generateEstatusCasosPDFBlob(result.data, fechaInicio, fechaFin, term, formatoReporte === 'word');
                 }
             } else if (tipoReporteActual === 'Reporte Socioeconómico') {
+                // Verificar si hay al menos una sección seleccionada
+                const hasSelectedSections = Object.values(selectedSocioeconomicoSections as unknown as Record<string, boolean>).some(Boolean);
+                if (!hasSelectedSections) {
+                    return new Blob([], { type: 'application/no-sections' });
+                }
+
                 const { getInformeSocioeconomicoData } = await import('@/app/actions/reports');
                 const result = await getInformeSocioeconomicoData(fechaInicio, fechaFin, term);
                 if (signal.aborted) return null;
                 if (result.success && result.data) {
                     const { generateSocioeconomicoPDFBlob } = await import('@/lib/utils/pdf-preview-generators');
                     if (signal.aborted) return null;
-                    return await generateSocioeconomicoPDFBlob(result.data, fechaInicio, fechaFin, term, formatoReporte === 'word');
+                    return await generateSocioeconomicoPDFBlob(
+                        result.data,
+                        fechaInicio,
+                        fechaFin,
+                        term,
+                        formatoReporte === 'word',
+                        selectedSocioeconomicoSections as unknown as Record<string, boolean>
+                    );
                 }
             } else if (tipoReporteActual === 'Historial de Casos del Solicitante') {
                 if (!selectedSolicitante) return null;
@@ -316,7 +440,7 @@ export default function ReportsPage() {
             console.error('Error generating preview blob:', error);
             return null;
         }
-    }, [tipoReporteActual, fechaInicioReporte, fechaFinReporte, selectedTermReporte, selectedSolicitante, formatoReporte]);
+    }, [tipoReporteActual, fechaInicioReporte, fechaFinReporte, selectedTermReporte, selectedSolicitante, formatoReporte, selectedResumenSections, selectedSocioeconomicoSections]);
 
     // Helper: abort any in-flight report generation
     const abortReportGeneration = useCallback(() => {
@@ -363,6 +487,24 @@ export default function ReportsPage() {
         if (fechaInicioReporte && fechaFinReporte && new Date(fechaInicioReporte) > new Date(fechaFinReporte)) {
             setDateError('La fecha de fin debe ser mayor o igual a la fecha de inicio');
             return;
+        }
+
+        // Validar que se haya seleccionado al menos una sección para el Resumen de Casos
+        if (tipoReporteActual === 'Resumen de Casos') {
+            const hasSelectedSections = Object.values(selectedResumenSections as unknown as Record<string, boolean>).some(Boolean);
+            if (!hasSelectedSections) {
+                toast.warning('Debe seleccionar al menos una sección para generar el reporte.');
+                return;
+            }
+        }
+
+        // Validar para el Reporte Socioeconómico
+        if (tipoReporteActual === 'Reporte Socioeconómico') {
+            const hasSelectedSections = Object.values(selectedSocioeconomicoSections as unknown as Record<string, boolean>).some(Boolean);
+            if (!hasSelectedSections) {
+                toast.warning('Debe seleccionar al menos una sección para generar el reporte.');
+                return;
+            }
         }
 
         setDateError(null);
@@ -499,7 +641,8 @@ export default function ReportsPage() {
                                 result.data,
                                 fechaInicio,
                                 fechaFin,
-                                term
+                                term,
+                                selectedResumenSections as unknown as Record<string, boolean>
                             );
                         } else {
                             // Importar y usar la función de generación de PDF con React PDF
@@ -508,7 +651,8 @@ export default function ReportsPage() {
                                 result.data,
                                 fechaInicio,
                                 fechaFin,
-                                term
+                                term,
+                                selectedResumenSections as unknown as Record<string, boolean>
                             );
                         }
                         if (controller.signal.aborted) { setIsGeneratingReport(false); return; }
@@ -866,8 +1010,40 @@ export default function ReportsPage() {
                                                 : 'Rango de Fechas - Tipos de Caso'}
                         </h2>
 
+                        {/* Tabs para Resumen de Casos y Reporte Socioeconómico */}
+                        {(tipoReporteActual === 'Resumen de Casos' || tipoReporteActual === 'Reporte Socioeconómico') && (
+                            <div className="border-b border-gray-200 mb-6">
+                                <div className="flex gap-1 w-full">
+                                    <button
+                                        onClick={() => setActiveTab('filtros')}
+                                        className={`
+                                            flex-1 px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors duration-200 text-center cursor-pointer
+                                            ${activeTab === 'filtros'
+                                                ? 'border-primary text-primary'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                            }
+                                        `}
+                                    >
+                                        Filtros
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('secciones')}
+                                        className={`
+                                            flex-1 px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors duration-200 text-center cursor-pointer
+                                            ${activeTab === 'secciones'
+                                                ? 'border-primary text-primary'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                            }
+                                        `}
+                                    >
+                                        Secciones
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Grid de formulario */}
-                        <div className="grid grid-cols-1 gap-4 mb-4">
+                        <div className={`grid-cols-1 gap-4 mb-4 ${activeTab === 'filtros' || (tipoReporteActual !== 'Resumen de Casos' && tipoReporteActual !== 'Reporte Socioeconómico') ? 'grid' : 'hidden'}`}>
                             {/* Selector de Solicitante (Solo visible para Historial de Solicitante y Ficha Resumen) */}
                             {(tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante') && (
                                 <div className="mb-4 relative">
@@ -997,8 +1173,210 @@ export default function ReportsPage() {
                             </div>
                         </div>
 
-                        {/* Selector de Formato - Ocultar para Historial y Ficha Resumen ya que siempre es ZIP */}
-                        {tipoReporteActual !== 'Historial de Casos del Solicitante' && tipoReporteActual !== 'Ficha Resumen del Solicitante' && (
+                        {/* Configuración de Secciones para Resumen de Casos */}
+                        {tipoReporteActual === 'Resumen de Casos' && activeTab === 'secciones' && (
+                            <div className="mb-6">
+                                <label className="text-base font-normal text-foreground mb-3 block">
+                                    Secciones a incluir en el reporte
+                                </label>
+                                <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto p-1">
+                                    {Object.entries(RESUMEN_SECCIONES_LABELS).map(([key, label]) => {
+                                        const isChecked = selectedResumenSections[key as keyof ResumenSectionsData];
+                                        return (
+                                            <label key={key} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-50 rounded-md border border-gray-100 transition-colors select-none group">
+                                                <div className="relative flex items-center justify-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isChecked}
+                                                        onChange={() => toggleResumenSection(key as keyof ResumenSectionsData)}
+                                                        className="sr-only"
+                                                    />
+                                                    <div className={`
+                                                        w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
+                                                        ${isChecked
+                                                            ? 'bg-primary border-primary'
+                                                            : 'bg-white border-gray-300 group-hover:border-gray-400'
+                                                        }
+                                                    `}>
+                                                        {isChecked && (
+                                                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <span className={`text-sm transition-colors ${isChecked ? 'text-gray-900 font-medium' : 'text-gray-700 group-hover:text-gray-900'}`}>{label}</span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                                <div className="flex gap-3 mt-3 text-xs font-medium px-1">
+                                    <span
+                                        className="text-primary hover:text-red-700 cursor-pointer"
+                                        onClick={() => setSelectedResumenSections(Object.keys(RESUMEN_SECCIONES_LABELS).reduce((acc, key) => ({ ...acc, [key]: true }), {} as ResumenSectionsData))}
+                                    >
+                                        Marcar todas
+                                    </span>
+                                    <span className="text-gray-300">|</span>
+                                    <span
+                                        className="text-gray-500 hover:text-gray-700 cursor-pointer"
+                                        onClick={() => setSelectedResumenSections(Object.keys(RESUMEN_SECCIONES_LABELS).reduce((acc, key) => ({ ...acc, [key]: false }), {} as ResumenSectionsData))}
+                                    >
+                                        Desmarcar todas
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Configuración de Secciones para Reporte Socioeconómico */}
+                        {tipoReporteActual === 'Reporte Socioeconómico' && activeTab === 'secciones' && (
+                            <div className="mb-6">
+                                <label className="text-base font-normal text-foreground mb-3 block">
+                                    Secciones a incluir en el reporte
+                                </label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-2">
+                                    <div className="md:col-span-2 pb-2 mb-2 border-b border-gray-100">
+                                        <h4 className="font-semibold text-gray-800">Datos Demográficos</h4>
+                                    </div>
+                                    {[
+                                        { key: 'genero', label: 'Género' },
+                                        { key: 'edad', label: 'Rango de Edad' },
+                                        { key: 'estadoCivil', label: 'Estado Civil' },
+                                        { key: 'nivelEducativo', label: 'Nivel Educativo' }
+                                    ].map(({ key, label }) => {
+                                        const isChecked = selectedSocioeconomicoSections[key as keyof SocioeconomicoSectionsData];
+                                        return (
+                                            <label key={key} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-50 rounded-md border border-gray-100 transition-colors select-none group">
+                                                <div className="relative flex items-center justify-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isChecked}
+                                                        onChange={() => toggleSocioeconomicoSection(key as keyof SocioeconomicoSectionsData)}
+                                                        className="sr-only"
+                                                    />
+                                                    <div className={`
+                                                        w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
+                                                        ${isChecked
+                                                            ? 'bg-primary border-primary'
+                                                            : 'bg-white border-gray-300 group-hover:border-gray-400'
+                                                        }
+                                                    `}>
+                                                        {isChecked && (
+                                                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <span className={`text-sm transition-colors ${isChecked ? 'text-gray-900 font-medium' : 'text-gray-700 group-hover:text-gray-900'}`}>{label}</span>
+                                            </label>
+                                        );
+                                    })}
+
+                                    <div className="md:col-span-2 pb-2 mb-2 mt-4 border-b border-gray-100">
+                                        <h4 className="font-semibold text-gray-800">Situación Económica</h4>
+                                    </div>
+                                    {[
+                                        { key: 'condicionTrabajo', label: 'Condición de Trabajo' },
+                                        { key: 'ingresos', label: 'Rangos de Ingresos' }
+                                    ].map(({ key, label }) => {
+                                        const isChecked = selectedSocioeconomicoSections[key as keyof SocioeconomicoSectionsData];
+                                        return (
+                                            <label key={key} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-50 rounded-md border border-gray-100 transition-colors select-none group">
+                                                <div className="relative flex items-center justify-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isChecked}
+                                                        onChange={() => toggleSocioeconomicoSection(key as keyof SocioeconomicoSectionsData)}
+                                                        className="sr-only"
+                                                    />
+                                                    <div className={`
+                                                        w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
+                                                        ${isChecked
+                                                            ? 'bg-primary border-primary'
+                                                            : 'bg-white border-gray-300 group-hover:border-gray-400'
+                                                        }
+                                                    `}>
+                                                        {isChecked && (
+                                                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <span className={`text-sm transition-colors ${isChecked ? 'text-gray-900 font-medium' : 'text-gray-700 group-hover:text-gray-900'}`}>{label}</span>
+                                            </label>
+                                        );
+                                    })}
+
+                                    <div className="md:col-span-2 pb-2 mb-2 mt-4 border-b border-gray-100">
+                                        <h4 className="font-semibold text-gray-800">Vivienda y Hogar</h4>
+                                    </div>
+                                    {[
+                                        { key: 'tamanoHogar', label: 'Tamaño del Hogar' },
+                                        { key: 'ninosHogar', label: 'Niños en el Hogar' },
+                                        { key: 'trabajadoresHogar', label: 'Trabajadores en el Hogar' },
+                                        { key: 'dependientes', label: 'Dependientes en el Hogar' },
+                                        { key: 'habitaciones', label: 'Cantidad de Habitaciones' },
+                                        { key: 'banos', label: 'Cantidad de Baños' },
+                                        { key: 'aguaPotable', label: 'Agua Potable' },
+                                        { key: 'aseoUrbano', label: 'Aseo' },
+                                        { key: 'aguasNegras', label: 'Eliminación Aguas Negras' },
+                                        { key: 'artefactosHogar', label: 'Artefactos Domésticos' },
+                                        { key: 'materialParedes', label: 'Material Paredes' },
+                                        { key: 'materialPiso', label: 'Material Piso' },
+                                        { key: 'materialTecho', label: 'Material Techo' },
+                                        { key: 'tipoVivienda', label: 'Tipo Vivienda' }
+                                    ].map(({ key, label }) => {
+                                        const isChecked = selectedSocioeconomicoSections[key as keyof SocioeconomicoSectionsData];
+                                        return (
+                                            <label key={key} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-50 rounded-md border border-gray-100 transition-colors select-none group">
+                                                <div className="relative flex items-center justify-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isChecked}
+                                                        onChange={() => toggleSocioeconomicoSection(key as keyof SocioeconomicoSectionsData)}
+                                                        className="sr-only"
+                                                    />
+                                                    <div className={`
+                                                        w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
+                                                        ${isChecked
+                                                            ? 'bg-primary border-primary'
+                                                            : 'bg-white border-gray-300 group-hover:border-gray-400'
+                                                        }
+                                                    `}>
+                                                        {isChecked && (
+                                                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <span className={`text-sm transition-colors ${isChecked ? 'text-gray-900 font-medium' : 'text-gray-700 group-hover:text-gray-900'}`}>{label}</span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                                <div className="flex gap-3 mt-3 text-xs font-medium px-1">
+                                    <span
+                                        className="text-primary hover:text-red-700 cursor-pointer"
+                                        onClick={() => setSelectedSocioeconomicoSections(Object.keys(selectedSocioeconomicoSections).reduce((acc, key) => ({ ...acc, [key]: true }), {} as SocioeconomicoSectionsData))}
+                                    >
+                                        Marcar todas
+                                    </span>
+                                    <span className="text-gray-300">|</span>
+                                    <span
+                                        className="text-gray-500 hover:text-gray-700 cursor-pointer"
+                                        onClick={() => setSelectedSocioeconomicoSections(Object.keys(selectedSocioeconomicoSections).reduce((acc, key) => ({ ...acc, [key]: false }), {} as SocioeconomicoSectionsData))}
+                                    >
+                                        Desmarcar todas
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Selector de Formato - Ocultar para Historial, Ficha Resumen y Pestañas de Secciones */}
+                        {tipoReporteActual !== 'Historial de Casos del Solicitante' && tipoReporteActual !== 'Ficha Resumen del Solicitante' && ((activeTab === 'filtros' && (tipoReporteActual === 'Resumen de Casos' || tipoReporteActual === 'Reporte Socioeconómico')) || (tipoReporteActual !== 'Resumen de Casos' && tipoReporteActual !== 'Reporte Socioeconómico')) && (
                             <div className="mb-6">
                                 <label className="text-base font-normal text-foreground mb-3 block">
                                     Formato de descarga
@@ -1042,14 +1420,16 @@ export default function ReportsPage() {
                         )}
 
                         {/* Mensaje informativo sobre histórico */}
-                        <p className="text-sm text-gray-500 mb-4">
-                            {tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante'
-                                ? 'Si no selecciona fechas, se descargará el historial completo de todos los casos del solicitante en formato ZIP.'
-                                : 'Si no selecciona semestre ni fechas, se generará un reporte histórico con todos los casos.'}
-                        </p>
+                        {((activeTab === 'filtros' && (tipoReporteActual === 'Resumen de Casos' || tipoReporteActual === 'Reporte Socioeconómico')) || (tipoReporteActual !== 'Resumen de Casos' && tipoReporteActual !== 'Reporte Socioeconómico')) && (
+                            <p className="text-sm text-gray-500 mb-4">
+                                {tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante'
+                                    ? 'Si no selecciona fechas, se descargará el historial completo de todos los casos del solicitante en formato ZIP.'
+                                    : 'Si no selecciona semestre ni fechas, se generará un reporte histórico con todos los casos.'}
+                            </p>
+                        )}
 
                         {/* Mensaje de error */}
-                        {dateError && (
+                        {dateError && ((activeTab === 'filtros' && (tipoReporteActual === 'Resumen de Casos' || tipoReporteActual === 'Reporte Socioeconómico')) || (tipoReporteActual !== 'Resumen de Casos' && tipoReporteActual !== 'Reporte Socioeconómico')) && (
                             <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
                                 {dateError}
                             </div>
@@ -1081,7 +1461,7 @@ export default function ReportsPage() {
 
                             <ReportPreview
                                 generatePreviewBlob={generatePreviewBlob}
-                                previewKey={`${tipoReporteActual}-${selectedTermReporte}-${fechaInicioReporte}-${fechaFinReporte}-${formatoReporte}`}
+                                previewKey={`${tipoReporteActual}-${selectedTermReporte}-${fechaInicioReporte}-${fechaFinReporte}-${formatoReporte}-${JSON.stringify(selectedResumenSections)}-${JSON.stringify(selectedSocioeconomicoSections)}`}
                                 reportType={tipoReporteActual}
                                 accentColor="#9c2327"
                             />

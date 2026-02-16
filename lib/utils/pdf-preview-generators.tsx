@@ -96,7 +96,8 @@ export async function generateInformeResumenPDFBlob(
     fechaInicio?: string,
     fechaFin?: string,
     term?: string,
-    isWordFormat?: boolean
+    isWordFormat?: boolean,
+    selectedSections?: Record<string, boolean>
 ): Promise<Blob> {
     const logoBase64 = await imageToBase64('/logo clinica juridica.png');
     const portadaBase64 = await imageToBase64('/portada reporte.png');
@@ -120,9 +121,40 @@ export async function generateInformeResumenPDFBlob(
         beneficiariosPorParentesco?: string;
     } = {};
 
+    // Helper to check if a section is selected (default true if undefined)
+    const isSelected = (key: string) => !selectedSections || selectedSections[key];
+
+    // Filter data based on selection to ensure pages/sections are not rendered if disabled
+    const filteredData = { ...data };
+    if (!isSelected('tiposDeCaso')) filteredData.tiposDeCaso = [];
+    if (!isSelected('casosPorMateria')) filteredData.casosPorMateria = [];
+    if (!isSelected('solicitantesPorGenero')) filteredData.solicitantesPorGenero = [];
+    if (!isSelected('solicitantesPorEstado')) filteredData.solicitantesPorEstado = [];
+    if (!isSelected('solicitantesPorParroquia')) filteredData.solicitantesPorParroquia = [];
+    if (!isSelected('estudiantesPorMateria')) filteredData.estudiantesPorMateria = [];
+    if (!isSelected('profesoresPorMateria')) filteredData.profesoresPorMateria = [];
+    if (!isSelected('beneficiariosPorTipo')) filteredData.beneficiariosPorTipo = [];
+    if (!isSelected('beneficiariosPorParentesco')) filteredData.beneficiariosPorParentesco = [];
+
+    // Check if any data remains after filtering
+    const hasData =
+        (filteredData.tiposDeCaso && filteredData.tiposDeCaso.length > 0) ||
+        (filteredData.casosPorMateria && filteredData.casosPorMateria.length > 0) ||
+        (filteredData.solicitantesPorGenero && filteredData.solicitantesPorGenero.length > 0) ||
+        (filteredData.solicitantesPorEstado && filteredData.solicitantesPorEstado.length > 0) ||
+        (filteredData.solicitantesPorParroquia && filteredData.solicitantesPorParroquia.length > 0) ||
+        (filteredData.estudiantesPorMateria && filteredData.estudiantesPorMateria.length > 0) ||
+        (filteredData.profesoresPorMateria && filteredData.profesoresPorMateria.length > 0) ||
+        (filteredData.beneficiariosPorTipo && filteredData.beneficiariosPorTipo.length > 0) ||
+        (filteredData.beneficiariosPorParentesco && filteredData.beneficiariosPorParentesco.length > 0);
+
+    if (!hasData) {
+        return new Blob([], { type: 'application/pdf' }); // Return empty blob to signal no data
+    }
+
     // Tipos de Caso
-    if (data.tiposDeCaso?.length > 0) {
-        const groupedData = groupDataByMateriaSubcategoria(data.tiposDeCaso);
+    if (filteredData.tiposDeCaso?.length > 0) {
+        const groupedData = groupDataByMateriaSubcategoria(filteredData.tiposDeCaso);
         chartImages.tiposDeCaso = {};
         for (const [key, groupData] of Object.entries(groupedData)) {
             await yieldToUI();
@@ -136,9 +168,9 @@ export async function generateInformeResumenPDFBlob(
     }
 
     // Casos por Materia
-    if (data.casosPorMateria?.length > 0) {
+    if (filteredData.casosPorMateria?.length > 0) {
         await yieldToUI();
-        const groupedCasos = groupCasosByMateriaSubcategoria(data.casosPorMateria);
+        const groupedCasos = groupCasosByMateriaSubcategoria(filteredData.casosPorMateria);
         const labels: string[] = [];
         const values: number[] = [];
         for (const [key, groupData] of Object.entries(groupedCasos)) {
@@ -149,40 +181,40 @@ export async function generateInformeResumenPDFBlob(
     }
 
     // Solicitantes por Género
-    if (data.solicitantesPorGenero?.length > 0) {
+    if (filteredData.solicitantesPorGenero?.length > 0) {
         await yieldToUI();
         chartImages.solicitantesPorGenero = generateBarChartImage(
-            data.solicitantesPorGenero.map(item => item.genero === 'M' ? 'Masculino' : 'Femenino'),
-            data.solicitantesPorGenero.map(item => item.cantidad_solicitantes),
-            data.solicitantesPorGenero.map(item => item.genero === 'F' ? '#ff928a' : '#8979ff')
+            filteredData.solicitantesPorGenero.map(item => item.genero === 'M' ? 'Masculino' : 'Femenino'),
+            filteredData.solicitantesPorGenero.map(item => item.cantidad_solicitantes),
+            filteredData.solicitantesPorGenero.map(item => item.genero === 'F' ? '#ff928a' : '#8979ff')
         );
     }
 
     // Solicitantes por Estado
-    if (data.solicitantesPorEstado?.length > 0) {
+    if (filteredData.solicitantesPorEstado?.length > 0) {
         await yieldToUI();
         chartImages.solicitantesPorEstado = generateBarChartImage(
-            data.solicitantesPorEstado.map(item => item.nombre_estado),
-            data.solicitantesPorEstado.map(item => item.cantidad_solicitantes),
-            BAR_COLORS.slice(0, data.solicitantesPorEstado.length)
+            filteredData.solicitantesPorEstado.map(item => item.nombre_estado),
+            filteredData.solicitantesPorEstado.map(item => item.cantidad_solicitantes),
+            BAR_COLORS.slice(0, filteredData.solicitantesPorEstado.length)
         );
     }
 
     // Solicitantes por Parroquia
-    if (data.solicitantesPorParroquia?.length > 0) {
+    if (filteredData.solicitantesPorParroquia?.length > 0) {
         await yieldToUI();
         chartImages.solicitantesPorParroquia = generateBarChartImage(
-            data.solicitantesPorParroquia.map(item => item.nombre_parroquia),
-            data.solicitantesPorParroquia.map(item => item.cantidad_solicitantes),
-            BAR_COLORS.slice(0, data.solicitantesPorParroquia.length)
+            filteredData.solicitantesPorParroquia.map(item => item.nombre_parroquia),
+            filteredData.solicitantesPorParroquia.map(item => item.cantidad_solicitantes),
+            BAR_COLORS.slice(0, filteredData.solicitantesPorParroquia.length)
         );
     }
 
     // Estudiantes por Materia
-    if (data.estudiantesPorMateria?.length > 0) {
+    if (filteredData.estudiantesPorMateria?.length > 0) {
         await yieldToUI();
         const groupedByMateria: Record<string, number> = {};
-        for (const item of data.estudiantesPorMateria) {
+        for (const item of filteredData.estudiantesPorMateria) {
             groupedByMateria[item.nombre_materia] = (groupedByMateria[item.nombre_materia] || 0) + item.cantidad_estudiantes;
         }
         chartImages.estudiantesPorMateria = {
@@ -191,10 +223,10 @@ export async function generateInformeResumenPDFBlob(
     }
 
     // Profesores por Materia
-    if (data.profesoresPorMateria?.length > 0) {
+    if (filteredData.profesoresPorMateria?.length > 0) {
         await yieldToUI();
         const groupedByMateria: Record<string, number> = {};
-        for (const item of data.profesoresPorMateria) {
+        for (const item of filteredData.profesoresPorMateria) {
             groupedByMateria[item.nombre_materia] = (groupedByMateria[item.nombre_materia] || 0) + item.cantidad_profesores;
         }
         chartImages.profesoresPorMateria = {
@@ -202,10 +234,11 @@ export async function generateInformeResumenPDFBlob(
         };
     }
 
-    // Beneficiarios Directos
-    if (data.beneficiariosPorTipo?.length > 0) {
+    // Beneficiarios Directos e Indirectos (Agrupados por 'beneficiariosPorTipo')
+    if (filteredData.beneficiariosPorTipo?.length > 0) {
+        // Beneficiarios Directos
         await yieldToUI();
-        const directos = data.beneficiariosPorTipo.filter(item => item.tipo_beneficiario === 'Directo');
+        const directos = filteredData.beneficiariosPorTipo.filter(item => item.tipo_beneficiario === 'Directo');
         if (directos.length > 0) {
             const groupedDirectos = groupBeneficiariosByMateriaSubcategoria(directos);
             const labels: string[] = [];
@@ -219,7 +252,7 @@ export async function generateInformeResumenPDFBlob(
 
         // Beneficiarios Indirectos
         await yieldToUI();
-        const indirectos = data.beneficiariosPorTipo.filter(item => item.tipo_beneficiario === 'Indirecto');
+        const indirectos = filteredData.beneficiariosPorTipo.filter(item => item.tipo_beneficiario === 'Indirecto');
         if (indirectos.length > 0) {
             const groupedIndirectos = groupBeneficiariosByMateriaSubcategoria(indirectos);
             const labels: string[] = [];
@@ -233,17 +266,17 @@ export async function generateInformeResumenPDFBlob(
     }
 
     // Beneficiarios por Parentesco
-    if (data.beneficiariosPorParentesco?.length > 0) {
+    if (filteredData.beneficiariosPorParentesco?.length > 0) {
         await yieldToUI();
         chartImages.beneficiariosPorParentesco = generateBarChartImage(
-            data.beneficiariosPorParentesco.map(item => item.parentesco),
-            data.beneficiariosPorParentesco.map(item => Number(item.cantidad_beneficiarios)),
-            BAR_COLORS.slice(0, data.beneficiariosPorParentesco.length)
+            filteredData.beneficiariosPorParentesco.map(item => item.parentesco),
+            filteredData.beneficiariosPorParentesco.map(item => Number(item.cantidad_beneficiarios)),
+            BAR_COLORS.slice(0, filteredData.beneficiariosPorParentesco.length)
         );
     }
 
     await yieldToUI(100);
-    const doc = React.createElement(InformeResumenPDF, { data, fechaInicio, fechaFin, chartImages, logoBase64, portadaBase64, term, isWordFormat });
+    const doc = React.createElement(InformeResumenPDF, { data: filteredData, fechaInicio, fechaFin, chartImages, logoBase64, portadaBase64, term, isWordFormat });
     await yieldToUI(100);
     // @ts-ignore - React PDF types issue with React 19
     return await pdf(doc).toBlob();
@@ -257,41 +290,93 @@ export async function generateSocioeconomicoPDFBlob(
     fechaInicio?: string,
     fechaFin?: string,
     term?: string,
-    isWordFormat?: boolean
+    isWordFormat?: boolean,
+    selectedSections?: Record<string, boolean>
 ): Promise<Blob> {
     await yieldToUI();
+
+    // Helper to check selection
+    const isSelected = (key: string) => !selectedSections || selectedSections[key];
+
+    // Filter data
+    const filteredData = { ...data };
+    if (!isSelected('genero')) filteredData.distribucionPorGenero = [];
+    if (!isSelected('edad')) filteredData.distribucionPorEdad = [];
+    if (!isSelected('estadoCivil')) filteredData.distribucionPorEstadoCivil = [];
+    if (!isSelected('nivelEducativo')) filteredData.distribucionPorNivelEducativo = [];
+    if (!isSelected('condicionTrabajo')) filteredData.distribucionPorCondicionTrabajo = [];
+    if (!isSelected('condicionActividad')) filteredData.distribucionPorCondicionActividad = [];
+    if (!isSelected('ingresos')) filteredData.distribucionPorIngresos = [];
+    if (!isSelected('tamanoHogar')) filteredData.distribucionPorTamanoHogar = [];
+    if (!isSelected('ninosHogar')) filteredData.distribucionPorNinosHogar = [];
+    if (!isSelected('trabajadoresHogar')) filteredData.distribucionPorTrabajadoresHogar = [];
+    if (!isSelected('dependientes')) filteredData.distribucionPorDependientes = [];
+    if (!isSelected('habitaciones')) filteredData.distribucionPorHabitaciones = [];
+    if (!isSelected('banos')) filteredData.distribucionPorBanos = [];
+
+    // Filter Characteristics manually
+    if (filteredData.distribucionPorCaracteristicasVivienda) {
+        filteredData.distribucionPorCaracteristicasVivienda = filteredData.distribucionPorCaracteristicasVivienda.filter(item => {
+            const name = item.nombre_tipo_caracteristica.toLowerCase();
+
+            // Housing Type
+            if (name.includes('tipo de vivienda') || name.includes('tipo_vivienda') || name.includes('tipo vivienda')) {
+                return isSelected('tipoVivienda');
+            }
+
+            // Specific Services
+            if (name.includes('agua')) return isSelected('aguaPotable');
+            if (name.includes('aseo') || name.includes('basura') || name.includes('desechos')) return isSelected('aseoUrbano');
+            if (name.includes('negra') || name.includes('servida') || name.includes('residual') || name.includes('cloaca')) return isSelected('aguasNegras');
+            if (name.includes('artefact') || name.includes('bienes') || name.includes('electro') || name.includes('enseres') || name.includes('dom')) return isSelected('artefactosHogar');
+            if (name.includes('piso')) return isSelected('materialPiso');
+            if (name.includes('techo') || name.includes('cubierta')) return isSelected('materialTecho');
+            if (name.includes('pared')) return isSelected('materialParedes');
+
+            // Do not show anything else by default
+            return false;
+        });
+    }
+
+    // Check if any data remains
+    const hasData = Object.values(filteredData).some(arr => Array.isArray(arr) && arr.length > 0);
+    if (!hasData) {
+        return new Blob([], { type: 'application/pdf' });
+    }
+
     const chartImages: Record<string, string> = {};
     const BAR_COLORS_SOCIO = ['#8979ff', '#ff928a', '#3cc3df', '#ffae4c', '#537ff1', '#6fd195', '#8c63da', '#2bb7dc', '#1f94ff', '#f4cf3b'];
 
-    if (data.distribucionPorTipoVivienda?.length > 0) {
-        const labels = data.distribucionPorTipoVivienda.map((item: any) => item.tipo_vivienda as string);
-        const values = data.distribucionPorTipoVivienda.map((item: any) => Number(item.cantidad_solicitantes));
+    if (filteredData.distribucionPorTipoVivienda?.length > 0 && isSelected('tipoVivienda')) {
+        // Legacy field, usually empty if using CaracteristicasVivienda, but keeping logic
+        const labels = filteredData.distribucionPorTipoVivienda.map((item: any) => item.tipo_vivienda as string);
+        const values = filteredData.distribucionPorTipoVivienda.map((item: any) => Number(item.cantidad_solicitantes));
         chartImages.tipoVivienda = generateBarChartImage(labels, values, BAR_COLORS_SOCIO.slice(0, labels.length));
     }
     await yieldToUI();
 
-    if (data.distribucionPorGenero?.length > 0) {
+    if (filteredData.distribucionPorGenero?.length > 0) {
         chartImages.genero = generateBarChartImage(
-            data.distribucionPorGenero.map(item => item.genero === 'M' ? 'Masculino' : 'Femenino'),
-            data.distribucionPorGenero.map(item => Number(item.cantidad_solicitantes)),
-            data.distribucionPorGenero.map(item => item.genero === 'F' ? '#ff928a' : '#8979ff')
+            filteredData.distribucionPorGenero.map(item => item.genero === 'M' ? 'Masculino' : 'Femenino'),
+            filteredData.distribucionPorGenero.map(item => Number(item.cantidad_solicitantes)),
+            filteredData.distribucionPorGenero.map(item => item.genero === 'F' ? '#ff928a' : '#8979ff')
         );
     }
     await yieldToUI();
 
     const socioFields = [
-        { key: 'edad', data: data.distribucionPorEdad, cat: 'rango_edad' },
-        { key: 'estadoCivil', data: data.distribucionPorEstadoCivil, cat: 'estado_civil' },
-        { key: 'nivelEducativo', data: data.distribucionPorNivelEducativo, cat: 'nivel_educativo' },
-        { key: 'condicionTrabajo', data: data.distribucionPorCondicionTrabajo, cat: 'condicion_trabajo' },
-        { key: 'condicionActividad', data: data.distribucionPorCondicionActividad, cat: 'condicion_actividad' },
-        { key: 'ingresos', data: data.distribucionPorIngresos, cat: 'rango_ingresos' },
-        { key: 'tamanoHogar', data: data.distribucionPorTamanoHogar, cat: 'tamano_hogar' },
-        { key: 'trabajadoresHogar', data: data.distribucionPorTrabajadoresHogar, cat: 'trabajadores_hogar' },
-        { key: 'dependientes', data: data.distribucionPorDependientes, cat: 'cantidad_dependientes' },
-        { key: 'ninosHogar', data: data.distribucionPorNinosHogar, cat: 'ninos_hogar' },
-        { key: 'habitaciones', data: data.distribucionPorHabitaciones, cat: 'cant_habitaciones' },
-        { key: 'banos', data: data.distribucionPorBanos, cat: 'cant_banos' },
+        { key: 'edad', data: filteredData.distribucionPorEdad, cat: 'rango_edad' },
+        { key: 'estadoCivil', data: filteredData.distribucionPorEstadoCivil, cat: 'estado_civil' },
+        { key: 'nivelEducativo', data: filteredData.distribucionPorNivelEducativo, cat: 'nivel_educativo' },
+        { key: 'condicionTrabajo', data: filteredData.distribucionPorCondicionTrabajo, cat: 'condicion_trabajo' },
+        { key: 'condicionActividad', data: filteredData.distribucionPorCondicionActividad, cat: 'condicion_actividad' },
+        { key: 'ingresos', data: filteredData.distribucionPorIngresos, cat: 'rango_ingresos' },
+        { key: 'tamanoHogar', data: filteredData.distribucionPorTamanoHogar, cat: 'tamano_hogar' },
+        { key: 'trabajadoresHogar', data: filteredData.distribucionPorTrabajadoresHogar, cat: 'trabajadores_hogar' },
+        { key: 'dependientes', data: filteredData.distribucionPorDependientes, cat: 'cantidad_dependientes' },
+        { key: 'ninosHogar', data: filteredData.distribucionPorNinosHogar, cat: 'ninos_hogar' },
+        { key: 'habitaciones', data: filteredData.distribucionPorHabitaciones, cat: 'cant_habitaciones' },
+        { key: 'banos', data: filteredData.distribucionPorBanos, cat: 'cant_banos' },
     ];
 
     for (const field of socioFields) {
@@ -303,9 +388,9 @@ export async function generateSocioeconomicoPDFBlob(
         }
     }
 
-    if (data.distribucionPorCaracteristicasVivienda?.length > 0) {
+    if (filteredData.distribucionPorCaracteristicasVivienda?.length > 0) {
         const grouped: Record<string, any[]> = {};
-        data.distribucionPorCaracteristicasVivienda.forEach(item => {
+        filteredData.distribucionPorCaracteristicasVivienda.forEach(item => {
             const type = item.nombre_tipo_caracteristica;
             if (!grouped[type]) grouped[type] = [];
             grouped[type].push(item);
@@ -320,7 +405,8 @@ export async function generateSocioeconomicoPDFBlob(
     }
 
     const logoBase64 = await imageToBase64('/logo clinica juridica.png');
-    const doc = React.createElement(InformeSocioeconomicoPDF, { data, fechaInicio, fechaFin, chartImages, logoBase64, term, isWordFormat });
+    // Also pass filtered data to PDF
+    const doc = React.createElement(InformeSocioeconomicoPDF, { data: filteredData, fechaInicio, fechaFin, chartImages, logoBase64, term, isWordFormat });
     // @ts-ignore - React PDF types issue with React 19
     return await pdf(doc).toBlob();
 }

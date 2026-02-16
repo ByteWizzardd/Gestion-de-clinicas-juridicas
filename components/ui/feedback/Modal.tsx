@@ -80,81 +80,78 @@ export default function Modal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          {/* Overlay con backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6"
+          onClick={handleOverlayClick}
+          aria-hidden="true"
+        >
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed top-0 left-0 right-0 bottom-0 w-full h-full bg-black/50 z-40"
-            style={{ minHeight: '100vh', height: '100%' }}
-            onClick={handleOverlayClick}
-            aria-hidden="true"
-          />
-
-          {/* Modal */}
-          <div className="fixed top-0 left-0 right-0 bottom-0 w-full h-full z-50 flex items-center justify-center p-4 pointer-events-none" style={{ minHeight: '100vh' }}>
-            <motion.div
-              ref={modalRef}
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className={`
+            ref={modalRef}
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className={`
                 bg-white rounded-xl shadow-xl w-full relative ${sizeStyles[size]} 
-                pointer-events-auto flex flex-col max-h-[90vh] overflow-hidden
+                flex flex-col my-auto
                 ${className}
               `}
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby={title ? 'modal-title' : undefined}
-            >
-              {/* Botón de cerrar flotante */}
-              {showCloseButton && !title && (
-                <button
-                  onClick={onClose}
-                  className="absolute top-6 right-6 p-2 text-gray-400 hover:text-primary hover:bg-red-100 rounded-md transition-colors z-50"
-                  style={{ cursor: 'pointer' }}
-                  aria-label="Cerrar modal"
-                  type="button"
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={title ? 'modal-title' : undefined}
+          >
+            {/* Botón de cerrar flotante */}
+            {showCloseButton && !title && (
+              <button
+                onClick={onClose}
+                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-primary hover:bg-red-50 rounded-full transition-colors z-50"
+                aria-label="Cerrar modal"
+                type="button"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+
+            {/* Header con título (solo si se proporciona title) */}
+            {title && (
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white rounded-t-xl sticky top-0 z-20">
+                <h2
+                  id="modal-title"
+                  className="text-lg font-semibold text-gray-900"
                 >
-                  <X className="w-6 h-6" style={{ pointerEvents: 'none' }} />
-                </button>
-              )}
-              {/* Header con título (solo si se proporciona title) */}
-              {title && (
-                <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                  <h2
-                    id="modal-title"
-                    className="text-xl font-semibold text-foreground"
+                  {title}
+                </h2>
+                {showCloseButton && (
+                  <button
+                    onClick={onClose}
+                    className="p-2 text-gray-400 hover:text-primary hover:bg-red-50 rounded-full transition-colors"
+                    aria-label="Cerrar modal"
+                    type="button"
                   >
-                    {title}
-                  </h2>
-                  {showCloseButton && (
-                    <button
-                      onClick={onClose}
-                      className="p-2 text-gray-400 hover:text-primary hover:bg-red-100 rounded-md transition-colors"
-                      style={{ cursor: 'pointer' }}
-                      aria-label="Cerrar modal"
-                      type="button"
-                    >
-                      <X className="w-6 h-6" style={{ pointerEvents: 'none' }} />
-                    </button>
-                  )}
-                </div>
-              )}
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            )}
 
-              {/* Content */}
-              <div className={`flex-1 ${title ? '' : 'p-6'} flex flex-col min-h-0`}>{children}</div>
+            {/* Content */}
+            <div className={`flex-1 ${title ? '' : 'p-6'} flex flex-col min-h-0`}>
+              {children}
+            </div>
 
-              {/* Footer */}
-              {footer && (
-                <div className="border-t border-gray-200 p-6">{footer}</div>
-              )}
-            </motion.div>
-          </div>
-        </>
+            {/* Footer */}
+            {footer && (
+              <div className="border-t border-gray-100 px-6 py-4 bg-gray-50 rounded-b-xl sticky bottom-0 z-20">
+                {footer}
+              </div>
+            )}
+          </motion.div>
+        </motion.div>
       )}
     </AnimatePresence>
   );

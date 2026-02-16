@@ -425,10 +425,49 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
     </View>
   );
 
-  // PRIMERO: Tipos de Caso (igual que el reporte de tipos de caso)
   const tiposDeCasoGrouped = data.tiposDeCaso && data.tiposDeCaso.length > 0
     ? groupDataByMateriaSubcategoria(data.tiposDeCaso)
     : {};
+
+  // Determinar cuál es la primera sección visible para mostrar el título allí
+  let firstVisibleSection: string | null = null;
+
+  if (Object.keys(tiposDeCasoGrouped).length > 0) {
+    firstVisibleSection = 'tiposDeCaso';
+  } else if (chartImages.casosPorMateria && data.casosPorMateria && data.casosPorMateria.length > 0) {
+    firstVisibleSection = 'casosPorMateria';
+  } else if (chartImages.solicitantesPorGenero && data.solicitantesPorGenero && data.solicitantesPorGenero.length > 0) {
+    firstVisibleSection = 'solicitantesPorGenero';
+  } else if (chartImages.solicitantesPorEstado && data.solicitantesPorEstado && data.solicitantesPorEstado.length > 0) {
+    firstVisibleSection = 'solicitantesPorEstado';
+  } else if (chartImages.solicitantesPorParroquia && data.solicitantesPorParroquia && data.solicitantesPorParroquia.length > 0) {
+    firstVisibleSection = 'solicitantesPorParroquia';
+  } else if (chartImages.beneficiariosDirectos && data.beneficiariosPorTipo) {
+    firstVisibleSection = 'beneficiariosDirectos';
+  } else if (chartImages.beneficiariosIndirectos && data.beneficiariosPorTipo) {
+    firstVisibleSection = 'beneficiariosIndirectos';
+  } else if (chartImages.beneficiariosPorParentesco && data.beneficiariosPorParentesco && data.beneficiariosPorParentesco.length > 0) {
+    firstVisibleSection = 'beneficiariosPorParentesco';
+  } else if (Object.keys(chartImages.estudiantesPorMateria || {}).length > 0) {
+    firstVisibleSection = 'estudiantesPorMateria';
+  } else if (Object.keys(chartImages.profesoresPorMateria || {}).length > 0) {
+    firstVisibleSection = 'profesoresPorMateria';
+  }
+
+  // Componente del Banner de Título
+  const TitleBanner = () => (
+    // @ts-ignore
+    <View style={styles.titleBanner}>
+      {/* @ts-ignore */}
+      <Text style={styles.titleText}>
+        Informe Resumen de Casos{term
+          ? ` Semestre ${term}`
+          : (fechaInicio && fechaFin
+            ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}`
+            : ' Histórico')}
+      </Text>
+    </View>
+  );
 
   return (
     // @ts-ignore - React PDF types issue
@@ -514,18 +553,10 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
                 {/* Header con logo */}
                 <ReportHeader />
 
-                {/* Banner rojo con título - Solo en la primera página */}
-                {/* @ts-ignore */}
-                <View style={styles.titleBanner}>
-                  {/* @ts-ignore */}
-                  <Text style={styles.titleText}>
-                    Informe Resumen de Casos{term
-                      ? ` Semestre ${term}`
-                      : (fechaInicio && fechaFin
-                        ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}`
-                        : ' Histórico')}
-                  </Text>
-                </View>
+                {/* Banner rojo con título - Solo en la primera página de la primera sección */}
+                {isFirstPage && firstVisibleSection === 'tiposDeCaso' && (
+                  <TitleBanner />
+                )}
 
                 {/* Subtítulo (Materia - Categoría - Subcategoría) */}
                 {/* @ts-ignore */}
@@ -625,6 +656,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
           <ReportHeader />
+          {/* Banner si es la primera sección */}
+          {firstVisibleSection === 'casosPorMateria' && <TitleBanner />}
           {/* @ts-ignore */}
           <View style={styles.centeredContent}>
             {/* @ts-ignore */}
@@ -650,6 +683,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
           <ReportHeader />
+          {/* Banner si es la primera sección */}
+          {firstVisibleSection === 'solicitantesPorGenero' && <TitleBanner />}
           {/* @ts-ignore */}
           <View style={styles.centeredContent}>
             {/* @ts-ignore */}
@@ -675,6 +710,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
           <ReportHeader />
+          {/* Banner si es la primera sección */}
+          {firstVisibleSection === 'solicitantesPorEstado' && <TitleBanner />}
           {/* @ts-ignore */}
           <View style={styles.centeredContent}>
             {/* @ts-ignore */}
@@ -700,6 +737,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
           <ReportHeader />
+          {/* Banner si es la primera sección */}
+          {firstVisibleSection === 'solicitantesPorParroquia' && <TitleBanner />}
           {/* @ts-ignore */}
           <View style={styles.centeredContent}>
             {/* @ts-ignore */}
@@ -725,6 +764,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
           <ReportHeader />
+          {/* Banner si es la primera sección */}
+          {firstVisibleSection === 'beneficiariosDirectos' && <TitleBanner />}
           {/* @ts-ignore */}
           <View style={styles.centeredContent}>
             {/* @ts-ignore */}
@@ -752,6 +793,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
           <ReportHeader />
+          {/* Banner si es la primera sección */}
+          {firstVisibleSection === 'beneficiariosIndirectos' && <TitleBanner />}
           {/* @ts-ignore */}
           <View style={styles.centeredContent}>
             {/* @ts-ignore */}
@@ -779,6 +822,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
           <ReportHeader />
+          {/* Banner si es la primera sección */}
+          {firstVisibleSection === 'beneficiariosPorParentesco' && <TitleBanner />}
           {/* @ts-ignore */}
           <View style={styles.centeredContent}>
             {/* @ts-ignore */}
@@ -804,6 +849,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
           <ReportHeader />
+          {/* Banner si es la primera sección */}
+          {firstVisibleSection === 'estudiantesPorMateria' && <TitleBanner />}
           {/* @ts-ignore */}
           <View style={styles.centeredContent}>
             {/* @ts-ignore */}
@@ -829,6 +876,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
           <ReportHeader />
+          {/* Banner si es la primera sección */}
+          {firstVisibleSection === 'profesoresPorMateria' && <TitleBanner />}
           {/* @ts-ignore */}
           <View style={styles.centeredContent}>
             {/* @ts-ignore */}
