@@ -7,7 +7,7 @@
  * @param birthDate The birth date as a Date object or string.
  * @returns The calculated age in years.
  */
-export function calculateAge(birthDate: Date | string): number {
+export function calculateAge(birthDate: Date | string | null | undefined): number {
     if (!birthDate) return 0;
 
     const birth = new Date(birthDate);
@@ -28,7 +28,7 @@ export function calculateAge(birthDate: Date | string): number {
  * @param date The date to format.
  * @returns The formatted date string.
  */
-export function formatDate(date: Date | string): string {
+export function formatDate(date: Date | string | null | undefined): string {
     if (!date) return '';
     const d = new Date(date);
     return d.toLocaleDateString('es-VE'); // Use Venezuelan locale or default
@@ -40,7 +40,7 @@ export function formatDate(date: Date | string): string {
  * @param options Optional Intl.DateTimeFormatOptions.
  * @returns The formatted date and time string.
  */
-export function formatDateTime(date: Date | string, options?: Intl.DateTimeFormatOptions): string {
+export function formatDateTime(date: Date | string | null | undefined, options?: Intl.DateTimeFormatOptions): string {
     if (!date) return '';
 
     const d = new Date(date);
