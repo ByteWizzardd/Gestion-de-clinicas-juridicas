@@ -37,9 +37,10 @@ export function formatDate(date: Date | string): string {
 /**
  * Formats a date to include time (e.g., "DD/MM/YYYY hh:mm a").
  * @param date The date to format.
+ * @param options Optional Intl.DateTimeFormatOptions.
  * @returns The formatted date and time string.
  */
-export function formatDateTime(date: Date | string): string {
+export function formatDateTime(date: Date | string, options?: Intl.DateTimeFormatOptions): string {
     if (!date) return '';
 
     const d = new Date(date);
@@ -51,6 +52,7 @@ export function formatDateTime(date: Date | string): string {
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-        hour12: true
+        hour12: true,
+        ...options
     }).format(d);
 }
