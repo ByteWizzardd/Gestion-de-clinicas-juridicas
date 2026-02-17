@@ -35,6 +35,7 @@ interface FilterProps {
   onCasosAsignadosChange?: (value: boolean) => void;
   nucleoOptions?: { value: string; label: string }[];
   estadoCivilOptions?: { value: string; label: string }[];
+  estadoCivilLabel?: string;
   nacionalidadOptions?: { value: string; label: string }[];
   tramiteOptions: { value: string; label: string }[];
   estatusOptions: { value: string; label: string }[];
@@ -80,6 +81,7 @@ function Filter({
     { value: 'Divorciado', label: 'Divorciado' },
     { value: 'Viudo', label: 'Viudo' },
   ],
+  estadoCivilLabel = 'Estado civil',
   nacionalidadOptions = [
     { value: 'V', label: 'Venezolano (V)' },
     { value: 'E', label: 'Extranjero (E)' },
@@ -364,7 +366,7 @@ function Filter({
         case 'estadoCivil':
           options = estadoCivilOptions;
           handler = onEstadoCivilChange || (() => { });
-          allLabel = 'Todos los estados civiles';
+          allLabel = `Todos los ${estadoCivilLabel.toLowerCase()}`;
           break;
         case 'nacionalidad':
           options = nacionalidadOptions;
@@ -709,7 +711,7 @@ function Filter({
                     >
                       <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'estadoCivil' ? '-rotate-90' : ''}`} />
                       <div className="flex-1" />
-                      <span>Estado civil</span>
+                      <span>{estadoCivilLabel}</span>
                       <User className="w-4 h-4" />
                     </motion.button>
                     <div className="border-t border-gray-200 my-2"></div>

@@ -30,6 +30,7 @@ type CaseToolsProps = {
     estadoCivilFilter?: string;
     onEstadoCivilChange?: (value: string) => void;
     estadoCivilOptions?: { value: string; label: string }[];
+    estadoCivilLabel?: string;
     nacionalidadFilter?: string;
     onNacionalidadChange?: (value: string) => void;
     nacionalidadOptions?: { value: string; label: string }[];
@@ -78,6 +79,7 @@ function CaseTools({
     estadoCivilFilter = '',
     onEstadoCivilChange,
     estadoCivilOptions,
+    estadoCivilLabel,
     nacionalidadFilter = '',
     onNacionalidadChange,
     nacionalidadOptions,
@@ -175,6 +177,7 @@ function CaseTools({
                         estadoCivilFilter={estadoCivilFilter}
                         onEstadoCivilChange={onEstadoCivilChange}
                         estadoCivilOptions={estadoCivilOptions}
+                        estadoCivilLabel={estadoCivilLabel}
                         nacionalidadFilter={nacionalidadFilter}
                         onNacionalidadChange={onNacionalidadChange}
                         nacionalidadOptions={nacionalidadOptions}

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -42,9 +42,27 @@ import type { AuditRecordType } from '@/types/audit';
 interface AuditRecordCardProps {
   record: AuditRecord;
   type: AuditRecordType;
+  moduleName?: string;
 }
 
-export default function AuditRecordCard({ record, type }: AuditRecordCardProps) {
+const moduleColors: Record<string, string> = {
+  'Caso': 'text-blue-600',
+  'Usuario': 'text-violet-600',
+  'Solicitante': 'text-amber-600',
+  'Beneficiario': 'text-teal-600',
+  'Cita': 'text-cyan-600',
+  'Acción': 'text-orange-600',
+  'Soporte': 'text-indigo-600',
+  'Reporte': 'text-emerald-600',
+  'Equipo': 'text-pink-600',
+  'Sesión': 'text-slate-600',
+};
+
+const getModuleColor = (name: string) => {
+  return moduleColors[name] || 'text-gray-600';
+};
+
+export default function AuditRecordCard({ record, type, moduleName }: AuditRecordCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   // Parseamos manualmente para evitar conversión de zona horaria
@@ -238,324 +256,293 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
     return <span className="text-gray-900">{nombre}</span>;
   };
 
+  const renderRow = (iconNode: React.ReactNode, title: React.ReactNode, subtitle: React.ReactNode) => (
+    <div className="flex items-start gap-3">
+      <div className="mt-0.5 text-gray-600">{iconNode}</div>
+      <div className="flex-1">
+        <div className="flex flex-wrap items-center gap-x-1 font-semibold text-gray-900">
+          <span>{title}</span>
+          {moduleName && <span className="font-semibold">• {moduleName}</span>}
+        </div>
+        <div className="text-sm text-gray-600">
+          {subtitle}
+        </div>
+      </div>
+    </div>
+  );
+
   const renderSummary = () => {
     switch (type) {
       // Acciones
       case 'accion-creada': {
         const r = record as AccionCreadaAuditRecord;
-        return (
-          <div className="flex items-center gap-3">
-            <Activity className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                Acción #{r.num_accion} -{' '}
-                <Link
-                  href={`/dashboard/cases/${r.id_caso}`}
-                  className="text-primary hover:underline font-medium transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Caso #{r.id_caso}
-                </Link>
-              </p>
-              <p className="text-sm text-gray-600">
-                Creada por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_creo,
-                  r.nombres_usuario_creo,
-                  r.apellidos_usuario_creo,
-                  r.id_usuario_creo
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <Activity className="w-5 h-5 text-gray-600" />,
+          <>
+            Acción #{r.num_accion} -{' '}
+            <Link
+              href={`/dashboard/cases/${r.id_caso}`}
+              className="text-primary hover:underline font-medium transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Caso #{r.id_caso}
+            </Link>
+          </>,
+          <>
+            Creada por:{' '}
+            {renderUserLink(
+              r.nombre_completo_usuario_creo,
+              r.nombres_usuario_creo,
+              r.apellidos_usuario_creo,
+              r.id_usuario_creo
+            )}
+          </>
         );
       }
       case 'accion-actualizada': {
         const r = record as AccionActualizadaAuditRecord;
-        return (
-          <div className="flex items-center gap-3">
-            <Check className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                Acción #{r.num_accion} -{' '}
-                <Link
-                  href={`/dashboard/cases/${r.id_caso}`}
-                  className="text-primary hover:underline font-medium transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Caso #{r.id_caso}
-                </Link>
-              </p>
-              <p className="text-sm text-gray-600">
-                Actualizada por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_actualizo,
-                  r.nombres_usuario_actualizo,
-                  r.apellidos_usuario_actualizo,
-                  r.id_usuario_actualizo
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <Check className="w-5 h-5 text-gray-600" />,
+          <>
+            Acción #{r.num_accion} -{' '}
+            <Link
+              href={`/dashboard/cases/${r.id_caso}`}
+              className="text-primary hover:underline font-medium transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Caso #{r.id_caso}
+            </Link>
+          </>,
+          <>
+            Actualizada por:{' '}
+            {renderUserLink(
+              r.nombre_completo_usuario_actualizo,
+              r.nombres_usuario_actualizo,
+              r.apellidos_usuario_actualizo,
+              r.id_usuario_actualizo
+            )}
+          </>
         );
       }
       case 'accion-eliminada': {
         const r = record as AccionEliminadaAuditRecord;
-        return (
-          <div className="flex items-center gap-3">
-            <Activity className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                Acción #{r.num_accion} -{' '}
-                {r.motivo?.includes('Eliminado por eliminación del caso') ? (
-                  <span className="text-gray-700">Caso #{r.id_caso}</span>
-                ) : (
-                  <Link
-                    href={`/dashboard/cases/${r.id_caso}`}
-                    className="text-primary hover:underline font-medium transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Caso #{r.id_caso}
-                  </Link>
-                )}
-              </p>
-              <p className="text-sm text-gray-600">
-                Eliminada por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_eliminado_por,
-                  r.nombres_eliminado_por,
-                  r.apellidos_eliminado_por,
-                  r.eliminado_por
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <Activity className="w-5 h-5 text-gray-600" />,
+          <>
+            Acción #{r.num_accion} -{' '}
+            {r.motivo?.includes('Eliminado por eliminación del caso') ? (
+              <span className="text-gray-700">Caso #{r.id_caso}</span>
+            ) : (
+              <Link
+                href={`/dashboard/cases/${r.id_caso}`}
+                className="text-primary hover:underline font-medium transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Caso #{r.id_caso}
+              </Link>
+            )}
+          </>,
+          <>
+            Eliminada por:{' '}
+            {renderUserLink(
+              r.nombre_completo_eliminado_por,
+              r.nombres_eliminado_por,
+              r.apellidos_eliminado_por,
+              r.eliminado_por
+            )}
+          </>
         );
       }
       case 'soporte': {
         const r = record as SoporteAuditRecord;
-        return (
-          <div className="flex items-center gap-3">
-            <FileText className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">{r.nombre_archivo}</p>
-              <p className="text-sm text-gray-600">
-                Caso #{r.id_caso} • Eliminado por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_elimino,
-                  r.nombres_usuario_elimino,
-                  r.apellidos_usuario_elimino,
-                  r.id_usuario_elimino
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <FileText className="w-5 h-5 text-gray-600" />,
+          <>{r.nombre_archivo}</>,
+          <>
+            Caso #{r.id_caso} • Eliminado por:{' '}
+            {renderUserLink(
+              r.nombre_completo_usuario_elimino,
+              r.nombres_usuario_elimino,
+              r.apellidos_usuario_elimino,
+              r.id_usuario_elimino
+            )}
+          </>
         );
       }
       case 'soporte-creado': {
         const r = record as SoporteCreadoAuditRecord;
-        return (
-          <div className="flex items-center gap-3">
-            <FileText className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">{r.nombre_archivo}</p>
-              <p className="text-sm text-gray-600">
-                <Link
-                  href={`/dashboard/cases/${r.id_caso}`}
-                  className="text-primary hover:underline font-medium transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Caso #{r.id_caso}
-                </Link> • Subido por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_subio,
-                  r.nombres_usuario_subio,
-                  r.apellidos_usuario_subio,
-                  r.id_usuario_subio
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <FileText className="w-5 h-5 text-gray-600" />,
+          <>{r.nombre_archivo}</>,
+          <>
+            <Link
+              href={`/dashboard/cases/${r.id_caso}`}
+              className="text-primary hover:underline font-medium transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Caso #{r.id_caso}
+            </Link> • Subido por:{' '}
+            {renderUserLink(
+              r.nombre_completo_usuario_subio,
+              r.nombres_usuario_subio,
+              r.apellidos_usuario_subio,
+              r.id_usuario_subio
+            )}
+          </>
         );
       }
       case 'soporte-descargado': {
         const r = record as SoporteDescargadoAuditRecord;
-        return (
-          <div className="flex items-center gap-3">
-            <ArrowDown className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">{r.nombre_archivo}</p>
-              <p className="text-sm text-gray-600">
-                <Link
-                  href={`/dashboard/cases/${r.id_caso}`}
-                  className="text-primary hover:underline font-medium transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Caso #{r.id_caso}
-                </Link> • Descargado por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_descargo,
-                  r.nombres_usuario_descargo,
-                  r.apellidos_usuario_descargo,
-                  r.cedula_descargo
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <ArrowDown className="w-5 h-5 text-gray-600" />,
+          <>{r.nombre_archivo}</>,
+          <>
+            <Link
+              href={`/dashboard/cases/${r.id_caso}`}
+              className="text-primary hover:underline font-medium transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Caso #{r.id_caso}
+            </Link> • Descargado por:{' '}
+            {renderUserLink(
+              r.nombre_completo_usuario_descargo,
+              r.nombres_usuario_descargo,
+              r.apellidos_usuario_descargo,
+              r.cedula_descargo
+            )}
+          </>
         );
       }
       case 'cita-eliminada': {
         const r = record as CitaEliminadaAuditRecord;
-        return (
-          <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                Cita #{r.num_cita} -{' '}
-                {r.motivo?.includes('Eliminado por eliminación del caso') ? (
-                  <span className="text-gray-700">Caso #{r.id_caso}</span>
-                ) : (
-                  <Link
-                    href={`/dashboard/cases/${r.id_caso}`}
-                    className="text-primary hover:underline font-medium transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Caso #{r.id_caso}
-                  </Link>
-                )}
-              </p>
-              <p className="text-sm text-gray-600">
-                Eliminado por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_elimino,
-                  r.nombres_usuario_elimino,
-                  r.apellidos_usuario_elimino,
-                  r.id_usuario_elimino
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <Calendar className="w-5 h-5 text-gray-600" />,
+          <>
+            Cita #{r.num_cita} -{' '}
+            {r.motivo?.includes('Eliminado por eliminación del caso') ? (
+              <span className="text-gray-700">Caso #{r.id_caso}</span>
+            ) : (
+              <Link
+                href={`/dashboard/cases/${r.id_caso}`}
+                className="text-primary hover:underline font-medium transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Caso #{r.id_caso}
+              </Link>
+            )}
+          </>,
+          <>
+            Eliminado por:{' '}
+            {renderUserLink(
+              r.nombre_completo_usuario_elimino,
+              r.nombres_usuario_elimino,
+              r.apellidos_usuario_elimino,
+              r.id_usuario_elimino
+            )}
+          </>
         );
       }
       case 'cita-creada': {
         const r = record as CitaCreadaAuditRecord;
-        return (
-          <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                Cita #{r.num_cita} -{' '}
-                <Link
-                  href={`/dashboard/cases/${r.id_caso}`}
-                  className="text-primary hover:underline font-medium transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Caso #{r.id_caso}
-                </Link>
-              </p>
-              <p className="text-sm text-gray-600">
-                Creado por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_creo,
-                  r.nombres_usuario_creo,
-                  r.apellidos_usuario_creo,
-                  r.id_usuario_creo
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <Calendar className="w-5 h-5 text-gray-600" />,
+          <>
+            Cita #{r.num_cita} -{' '}
+            <Link
+              href={`/dashboard/cases/${r.id_caso}`}
+              className="text-primary hover:underline font-medium transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Caso #{r.id_caso}
+            </Link>
+          </>,
+          <>
+            Creado por:{' '}
+            {renderUserLink(
+              r.nombre_completo_usuario_creo,
+              r.nombres_usuario_creo,
+              r.apellidos_usuario_creo,
+              r.id_usuario_creo
+            )}
+          </>
         );
       }
       case 'cita-actualizada': {
         const r = record as CitaActualizadaAuditRecord;
-        return (
-          <div className="flex items-center gap-3">
-            <Check className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                Cita #{r.num_cita} -{' '}
-                <Link
-                  href={`/dashboard/cases/${r.id_caso}`}
-                  className="text-primary hover:underline font-medium transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Caso #{r.id_caso}
-                </Link>
-              </p>
-              <p className="text-sm text-gray-600">
-                Actualizado por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_actualizo,
-                  r.nombres_usuario_actualizo,
-                  r.apellidos_usuario_actualizo,
-                  r.id_usuario_actualizo
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <Check className="w-5 h-5 text-gray-600" />,
+          <>
+            Cita #{r.num_cita} -{' '}
+            <Link
+              href={`/dashboard/cases/${r.id_caso}`}
+              className="text-primary hover:underline font-medium transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Caso #{r.id_caso}
+            </Link>
+          </>,
+          <>
+            Actualizado por:{' '}
+            {renderUserLink(
+              r.nombre_completo_usuario_actualizo,
+              r.nombres_usuario_actualizo,
+              r.apellidos_usuario_actualizo,
+              r.id_usuario_actualizo
+            )}
+          </>
         );
       }
       case 'usuario-eliminado': {
         const r = record as UsuarioEliminadoAuditRecord;
-        return (
-          <div className="flex items-start gap-3">
-            <UserAvatar
-              fotoPerfil={null}
-              nombre={r.nombre_completo_usuario_eliminado || `${r.nombres_usuario_eliminado || ''} ${r.apellidos_usuario_eliminado || ''}`.trim() || 'Usuario Eliminado'}
-              size={25}
-            />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                {renderDeletedUser(
-                  r.nombre_completo_usuario_eliminado,
-                  r.nombres_usuario_eliminado,
-                  r.apellidos_usuario_eliminado,
-                  undefined
-                )}
-              </p>
-              <p className="text-sm text-gray-600">
-                Cédula: {r.usuario_eliminado} • Eliminado por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_eliminado_por,
-                  r.nombres_eliminado_por,
-                  r.apellidos_eliminado_por,
-                  r.eliminado_por
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <UserAvatar
+            fotoPerfil={null}
+            nombre={r.nombre_completo_usuario_eliminado || `${r.nombres_usuario_eliminado || ''} ${r.apellidos_usuario_eliminado || ''}`.trim() || 'Usuario Eliminado'}
+            size={25}
+          />,
+          <>{renderDeletedUser(
+            r.nombre_completo_usuario_eliminado,
+            r.nombres_usuario_eliminado,
+            r.apellidos_usuario_eliminado,
+            undefined
+          )}</>,
+          <>
+            Cédula: {r.usuario_eliminado} • Eliminado por:{' '}
+            {renderUserLink(
+              r.nombre_completo_eliminado_por,
+              r.nombres_eliminado_por,
+              r.apellidos_eliminado_por,
+              r.eliminado_por
+            )}
+          </>
         );
       }
       case 'usuario-habilitado': {
         const r = record as UsuarioHabilitadoAuditRecord;
-        return (
-          <div className="flex items-center gap-3">
-            <UserCircle className="w-5 h-5 text-green-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                {r.usuario_habilitado ? (
-                  <Link
-                    href={`/dashboard/users/${r.usuario_habilitado}`}
-                    className="text-primary hover:underline font-medium transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {r.nombre_completo_usuario_habilitado || `${r.nombres_usuario_habilitado} ${r.apellidos_usuario_habilitado}`}
-                  </Link>
-                ) : (
-                  r.nombre_completo_usuario_habilitado || `${r.nombres_usuario_habilitado} ${r.apellidos_usuario_habilitado}`
-                )}
-              </p>
-              <p className="text-sm text-gray-600">
-                Reactivado por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_habilitado_por,
-                  r.nombres_habilitado_por,
-                  r.apellidos_habilitado_por,
-                  r.habilitado_por
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <UserCircle className="w-5 h-5 text-green-600" />,
+          <>
+            {r.usuario_habilitado ? (
+              <Link
+                href={`/dashboard/users/${r.usuario_habilitado}`}
+                className="text-primary hover:underline font-medium transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {r.nombre_completo_usuario_habilitado || `${r.nombres_usuario_habilitado} ${r.apellidos_usuario_habilitado}`}
+              </Link>
+            ) : (
+              r.nombre_completo_usuario_habilitado || `${r.nombres_usuario_habilitado} ${r.apellidos_usuario_habilitado}`
+            )}
+          </>,
+          <>
+            Reactivado por:{' '}
+            {renderUserLink(
+              r.nombre_completo_habilitado_por,
+              r.nombres_habilitado_por,
+              r.apellidos_habilitado_por,
+              r.habilitado_por
+            )}
+          </>
         );
       }
       case 'usuario-creado': {
@@ -566,34 +553,30 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           nombreCompleto = 'Usuario desconocido';
         }
 
-        return (
-          <div className="flex items-start gap-3">
-            <UserAvatar fotoPerfil={r.foto_perfil_usuario} nombre={nombreCompleto} size={25} />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                {r.cedula ? (
-                  <Link
-                    href={`/dashboard/users/${r.cedula}`}
-                    className="text-primary hover:underline font-medium transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {nombreCompleto}
-                  </Link>
-                ) : (
-                  nombreCompleto
-                )}
-              </p>
-              <p className="text-sm text-gray-600">
-                Cédula: {r.cedula} • Creado por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_creo,
-                  r.nombres_usuario_creo,
-                  r.apellidos_usuario_creo,
-                  r.id_usuario_creo
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <UserAvatar fotoPerfil={r.foto_perfil_usuario} nombre={nombreCompleto} size={25} />,
+          <>
+            {r.cedula ? (
+              <Link
+                href={`/dashboard/users/${r.cedula}`}
+                className="text-primary hover:underline font-medium transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {nombreCompleto}
+              </Link>
+            ) : (
+              nombreCompleto
+            )}
+          </>,
+          <>
+            Cédula: {r.cedula} • Creado por:{' '}
+            {renderUserLink(
+              r.nombre_completo_usuario_creo,
+              r.nombres_usuario_creo,
+              r.apellidos_usuario_creo,
+              r.id_usuario_creo
+            )}
+          </>
         );
       }
       case 'usuario-actualizado-campos': {
@@ -607,111 +590,99 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           nombreCompleto = 'Usuario desconocido';
         }
 
-        return (
-          <div className="flex items-start gap-3">
-            <UserAvatar fotoPerfil={r.foto_perfil_usuario} nombre={nombreCompleto} size={25} />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                {r.ci_usuario ? (
-                  <Link
-                    href={`/dashboard/users/${r.ci_usuario}`}
-                    className="text-primary hover:underline font-medium transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {nombreCompleto}
-                  </Link>
-                ) : (
-                  nombreCompleto
-                )}
-              </p>
-              <p className="text-sm text-gray-600">
-                Cédula: {r.ci_usuario}
-                {r.tipo_usuario_anterior !== r.tipo_usuario_nuevo && (
-                  <> • {r.tipo_usuario_anterior} → {r.tipo_usuario_nuevo}</>
-                )}
-                {' • '}Actualizado por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_actualizo,
-                  r.nombres_usuario_actualizo,
-                  r.apellidos_usuario_actualizo,
-                  r.id_usuario_actualizo
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <UserAvatar fotoPerfil={r.foto_perfil_usuario} nombre={nombreCompleto} size={25} />,
+          <>
+            {r.ci_usuario ? (
+              <Link
+                href={`/dashboard/users/${r.ci_usuario}`}
+                className="text-primary hover:underline font-medium transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {nombreCompleto}
+              </Link>
+            ) : (
+              nombreCompleto
+            )}
+          </>,
+          <>
+            Cédula: {r.ci_usuario}
+            {r.tipo_usuario_anterior !== r.tipo_usuario_nuevo && (
+              <> • {r.tipo_usuario_anterior} → {r.tipo_usuario_nuevo}</>
+            )}
+            {' • '}Actualizado por:{' '}
+            {renderUserLink(
+              r.nombre_completo_usuario_actualizo,
+              r.nombres_usuario_actualizo,
+              r.apellidos_usuario_actualizo,
+              r.id_usuario_actualizo
+            )}
+          </>
         );
       }
       case 'caso-eliminado': {
         const r = record as CasoEliminadoAuditRecord;
-        return (
-          <div className="flex items-center gap-3">
-            <Briefcase className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                Caso #{r.caso_eliminado} -{' '}
-                <span className="text-gray-600">
-                  {r.cedula_solicitante ? (
-                    <Link
-                      href={`/dashboard/applicants/${r.cedula_solicitante}`}
-                      className="text-primary hover:underline font-medium transition-colors"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {r.nombre_completo_solicitante || r.cedula_solicitante}
-                    </Link>
-                  ) : <span className="italic">Solicitante desconocido</span>}
-                </span>
-              </p>
-              <p className="text-sm text-gray-600">
-                Eliminado por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_elimino,
-                  r.nombres_usuario_elimino,
-                  r.apellidos_usuario_elimino,
-                  r.eliminado_por
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <Briefcase className="w-5 h-5 text-gray-600" />,
+          <>
+            Caso #{r.caso_eliminado} -{' '}
+            <span className="text-gray-600">
+              {r.cedula_solicitante ? (
+                <Link
+                  href={`/dashboard/applicants/${r.cedula_solicitante}`}
+                  className="text-primary hover:underline font-medium transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {r.nombre_completo_solicitante || r.cedula_solicitante}
+                </Link>
+              ) : <span className="italic">Solicitante desconocido</span>}
+            </span>
+          </>,
+          <>
+            Eliminado por:{' '}
+            {renderUserLink(
+              r.nombre_completo_usuario_elimino,
+              r.nombres_usuario_elimino,
+              r.apellidos_usuario_elimino,
+              r.eliminado_por
+            )}
+          </>
         );
       }
       case 'caso-creado': {
         const r = record as CasoCreadoAuditRecord;
-        return (
-          <div className="flex items-center gap-3">
-            <Briefcase className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
+        return renderRow(
+          <Briefcase className="w-5 h-5 text-gray-600" />,
+          <>
+            <Link
+              href={`/dashboard/cases/${r.id_caso}`}
+              className="text-primary hover:underline transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Caso #{r.id_caso}
+            </Link>
+            {' '}-{' '}
+            <span className="text-gray-600">
+              {r.cedula_solicitante ? (
                 <Link
-                  href={`/dashboard/cases/${r.id_caso}`}
-                  className="text-primary hover:underline transition-colors"
+                  href={`/dashboard/applicants/${r.cedula_solicitante}`}
+                  className="text-primary hover:underline font-medium transition-colors"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  Caso #{r.id_caso}
+                  {r.nombre_completo_solicitante || r.cedula_solicitante}
                 </Link>
-                {' '}-{' '}
-                <span className="text-gray-600">
-                  {r.cedula_solicitante ? (
-                    <Link
-                      href={`/dashboard/applicants/${r.cedula_solicitante}`}
-                      className="text-primary hover:underline font-medium transition-colors"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {r.nombre_completo_solicitante || r.cedula_solicitante}
-                    </Link>
-                  ) : <span className="italic">Solicitante desconocido</span>}
-                </span>
-              </p>
-              <p className="text-sm text-gray-600">
-                Creado por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_creo,
-                  r.nombres_usuario_creo,
-                  r.apellidos_usuario_creo,
-                  r.id_usuario_creo
-                )}
-              </p>
-            </div>
-          </div>
+              ) : <span className="italic">Solicitante desconocido</span>}
+            </span>
+          </>,
+          <>
+            Creado por:{' '}
+            {renderUserLink(
+              r.nombre_completo_usuario_creo,
+              r.nombres_usuario_creo,
+              r.apellidos_usuario_creo,
+              r.id_usuario_creo
+            )}
+          </>
         );
       }
       case 'estudiante-inscrito': {
@@ -720,30 +691,26 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           ? `${r.nombres} ${r.apellidos}`.trim()
           : (r.nombres || r.apellidos || 'Estudiante desconocido');
 
-        return (
-          <div className="flex items-start gap-3">
-            <UserAvatar fotoPerfil={r.foto_perfil_usuario} nombre={nombreCompleto} size={25} />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                <Link
-                  href={`/dashboard/users/${r.cedula}`}
-                  className="text-primary hover:underline transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {nombreCompleto}
-                </Link>
-              </p>
-              <p className="text-sm text-gray-600">
-                Cédula: {r.cedula} • Inscrito por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_creo,
-                  r.nombres_usuario_creo,
-                  r.apellidos_usuario_creo,
-                  r.id_usuario_creo
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <UserAvatar fotoPerfil={r.foto_perfil_usuario} nombre={nombreCompleto} size={25} />,
+          <>
+            <Link
+              href={`/dashboard/users/${r.cedula}`}
+              className="text-primary hover:underline transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {nombreCompleto}
+            </Link>
+          </>,
+          <>
+            Cédula: {r.cedula} • Inscrito por:{' '}
+            {renderUserLink(
+              r.nombre_completo_usuario_creo,
+              r.nombres_usuario_creo,
+              r.apellidos_usuario_creo,
+              r.id_usuario_creo
+            )}
+          </>
         );
       }
       case 'profesor-asignado': {
@@ -752,30 +719,26 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           ? `${r.nombres} ${r.apellidos}`.trim()
           : (r.nombres || r.apellidos || 'Profesor desconocido');
 
-        return (
-          <div className="flex items-start gap-3">
-            <UserAvatar fotoPerfil={r.foto_perfil_usuario} nombre={nombreCompleto} size={25} />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                <Link
-                  href={`/dashboard/users/${r.cedula}`}
-                  className="text-primary hover:underline transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {nombreCompleto}
-                </Link>
-              </p>
-              <p className="text-sm text-gray-600">
-                Cédula: {r.cedula} • Asignado por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_creo,
-                  r.nombres_usuario_creo,
-                  r.apellidos_usuario_creo,
-                  r.id_usuario_creo
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <UserAvatar fotoPerfil={r.foto_perfil_usuario} nombre={nombreCompleto} size={25} />,
+          <>
+            <Link
+              href={`/dashboard/users/${r.cedula}`}
+              className="text-primary hover:underline transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {nombreCompleto}
+            </Link>
+          </>,
+          <>
+            Cédula: {r.cedula} • Asignado por:{' '}
+            {renderUserLink(
+              r.nombre_completo_usuario_creo,
+              r.nombres_usuario_creo,
+              r.apellidos_usuario_creo,
+              r.id_usuario_creo
+            )}
+          </>
         );
       }
       case 'beneficiario-actualizado': {
@@ -786,24 +749,18 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         const apellidos = r.apellidos_nuevo || r.apellidos_anterior || '';
         const nombreCompleto = `${nombres} ${apellidos}`.trim() || 'Beneficiario desconocido';
 
-        return (
-          <div className="flex items-center gap-3">
-            <Check className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                {nombreCompleto}
-              </p>
-              <p className="text-sm text-gray-600">
-                Caso #{r.id_caso} • Actualizado por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_accion || r.usuario_nombre_completo,
-                  null,
-                  null,
-                  r.id_usuario_actualizo
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <Check className="w-5 h-5 text-gray-600" />,
+          <>{nombreCompleto}</>,
+          <>
+            Caso #{r.id_caso} • Actualizado por:{' '}
+            {renderUserLink(
+              r.nombre_completo_usuario_accion || r.usuario_nombre_completo,
+              null,
+              null,
+              r.id_usuario_actualizo
+            )}
+          </>
         );
       }
 
@@ -811,27 +768,23 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
 
       case 'solicitante-eliminado': {
         const r = record as SolicitanteEliminadoAuditRecord;
-        return (
-          <div className="flex items-center gap-3">
-            <User className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                {r.nombres_solicitante_eliminado || 'N/A'} {r.apellidos_solicitante_eliminado || ''}
-                {r.solicitante_eliminado && (
-                  <span className="text-gray-600 font-normal"> (Cédula: {r.solicitante_eliminado})</span>
-                )}
-              </p>
-              <p className="text-sm text-gray-600">
-                Eliminado por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_elimino,
-                  r.nombres_usuario_elimino,
-                  r.apellidos_usuario_elimino,
-                  r.eliminado_por
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <User className="w-5 h-5 text-gray-600" />,
+          <>
+            {r.nombres_solicitante_eliminado || 'N/A'} {r.apellidos_solicitante_eliminado || ''}
+            {r.solicitante_eliminado && (
+              <span className="text-gray-600 font-normal"> (Cédula: {r.solicitante_eliminado})</span>
+            )}
+          </>,
+          <>
+            Eliminado por:{' '}
+            {renderUserLink(
+              r.nombre_completo_usuario_elimino,
+              r.nombres_usuario_elimino,
+              r.apellidos_usuario_elimino,
+              r.eliminado_por
+            )}
+          </>
         );
       }
       case 'solicitante-creado': {
@@ -839,33 +792,29 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         const nombreCompleto = r.nombres && r.apellidos
           ? `${r.nombres} ${r.apellidos}`.trim()
           : (r.nombres || r.apellidos || 'Solicitante desconocido');
-        return (
-          <div className="flex items-center gap-3">
-            <User className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                <Link
-                  href={`/dashboard/applicants/${r.cedula}`}
-                  className="text-primary hover:underline transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {nombreCompleto}
-                </Link>
-                {r.cedula && (
-                  <span className="text-gray-600 font-normal"> (Cédula: {r.cedula})</span>
-                )}
-              </p>
-              <p className="text-sm text-gray-600">
-                Creado por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_creo,
-                  r.nombres_usuario_creo,
-                  r.apellidos_usuario_creo,
-                  r.id_usuario_creo
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <User className="w-5 h-5 text-gray-600" />,
+          <>
+            <Link
+              href={`/dashboard/applicants/${r.cedula}`}
+              className="text-primary hover:underline transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {nombreCompleto}
+            </Link>
+            {r.cedula && (
+              <span className="text-gray-600 font-normal"> (Cédula: {r.cedula})</span>
+            )}
+          </>,
+          <>
+            Creado por:{' '}
+            {renderUserLink(
+              r.nombre_completo_usuario_creo,
+              r.nombres_usuario_creo,
+              r.apellidos_usuario_creo,
+              r.id_usuario_creo
+            )}
+          </>
         );
       }
       case 'solicitante-actualizado': {
@@ -873,33 +822,29 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         const nombreCompleto = r.nombres_solicitante && r.apellidos_solicitante
           ? `${r.nombres_solicitante} ${r.apellidos_solicitante}`.trim()
           : (r.nombres_solicitante || r.apellidos_solicitante || 'Solicitante desconocido');
-        return (
-          <div className="flex items-center gap-3">
-            <Check className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                <Link
-                  href={`/dashboard/applicants/${r.cedula_solicitante}`}
-                  className="text-primary hover:underline transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {nombreCompleto}
-                </Link>
-                {r.cedula_solicitante && (
-                  <span className="text-gray-600 font-normal"> (Cédula: {r.cedula_solicitante})</span>
-                )}
-              </p>
-              <p className="text-sm text-gray-600">
-                Actualizado por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_actualizo,
-                  r.nombres_usuario_actualizo,
-                  r.apellidos_usuario_actualizo,
-                  r.id_usuario_actualizo
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <Check className="w-5 h-5 text-gray-600" />,
+          <>
+            <Link
+              href={`/dashboard/applicants/${r.cedula_solicitante}`}
+              className="text-primary hover:underline transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {nombreCompleto}
+            </Link>
+            {r.cedula_solicitante && (
+              <span className="text-gray-600 font-normal"> (Cédula: {r.cedula_solicitante})</span>
+            )}
+          </>,
+          <>
+            Actualizado por:{' '}
+            {renderUserLink(
+              r.nombre_completo_usuario_actualizo,
+              r.nombres_usuario_actualizo,
+              r.apellidos_usuario_actualizo,
+              r.id_usuario_actualizo
+            )}
+          </>
         );
       }
       // Catálogos - casos genéricos para eliminados
@@ -1061,36 +1006,38 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           ? r.nombre_estado
           : null;
 
-        return (
-          <div className="flex items-center gap-3">
-            <Icon className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                {nameField}
-                {tipoCaracteristica && (
-                  <span className="text-gray-500 font-normal ml-2">({tipoCaracteristica})</span>
-                )}
-                {materiaCategoria && (
-                  <span className="text-gray-500 font-normal ml-2">({materiaCategoria})</span>
-                )}
-                {categoriaSubcategoria && (
-                  <span className="text-gray-500 font-normal ml-2">({categoriaSubcategoria})</span>
-                )}
-                {subcategoriaAmbito && (
-                  <span className="text-gray-500 font-normal ml-2">({subcategoriaAmbito})</span>
-                )}
-              </p>
-              <p className="text-sm text-gray-600">
-                ID: {idField} • {actionText}:{' '}
-                {renderUserLink(
-                  usuarioField.nombre,
-                  usuarioField.nombres,
-                  usuarioField.apellidos,
-                  usuarioField.id
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <Icon className="w-5 h-5 text-gray-600" />,
+          <>
+            {nameField}
+            {tipoCaracteristica && (
+              <span className="text-gray-500 font-normal ml-2">({tipoCaracteristica})</span>
+            )}
+            {materiaCategoria && (
+              <span className="text-gray-500 font-normal ml-2">({materiaCategoria})</span>
+            )}
+            {categoriaSubcategoria && (
+              <span className="text-gray-500 font-normal ml-2">({categoriaSubcategoria})</span>
+            )}
+            {subcategoriaAmbito && (
+              <span className="text-gray-500 font-normal ml-2">({subcategoriaAmbito})</span>
+            )}
+            {estadoMunicipio && (
+              <span className="text-gray-500 font-normal ml-2">({estadoMunicipio})</span>
+            )}
+            {municipioParroquia && estadoParroquia && (
+              <span className="text-gray-500 font-normal ml-2">({municipioParroquia}, {estadoParroquia})</span>
+            )}
+          </>,
+          <>
+            ID: {idField} • {actionText}:{' '}
+            {renderUserLink(
+              usuarioField.nombre,
+              usuarioField.nombres,
+              usuarioField.apellidos,
+              usuarioField.id
+            )}
+          </>
         );
       }
       // Catálogos - casos genéricos para actualizados
@@ -1207,72 +1154,64 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           ? r.nombre_estado
           : null;
 
-        return (
-          <div className="flex items-center gap-3">
-            <Check className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                {nameField}
-                {tipoCaracteristica && (
-                  <span className="text-gray-500 font-normal ml-2">({tipoCaracteristica})</span>
-                )}
-                {materiaCategoria && (
-                  <span className="text-gray-500 font-normal ml-2">({materiaCategoria})</span>
-                )}
-                {categoriaSubcategoria && (
-                  <span className="text-gray-500 font-normal ml-2">({categoriaSubcategoria})</span>
-                )}
-                {subcategoriaAmbito && (
-                  <span className="text-gray-500 font-normal ml-2">({subcategoriaAmbito})</span>
-                )}
-                {estadoMunicipioActualizado && (
-                  <span className="text-gray-500 font-normal ml-2">({estadoMunicipioActualizado})</span>
-                )}
-                {municipioParroquiaActualizada && estadoParroquiaActualizada && (
-                  <span className="text-gray-500 font-normal ml-2">({municipioParroquiaActualizada}, {estadoParroquiaActualizada})</span>
-                )}
-              </p>
-              <p className="text-sm text-gray-600">
-                ID: {idField} • Actualizado por:{' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_actualizo,
-                  r.nombres_usuario_actualizo,
-                  r.apellidos_usuario_actualizo,
-                  r.id_usuario_actualizo
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <Check className="w-5 h-5 text-gray-600" />,
+          <>
+            {nameField}
+            {tipoCaracteristica && (
+              <span className="text-gray-500 font-normal ml-2">({tipoCaracteristica})</span>
+            )}
+            {materiaCategoria && (
+              <span className="text-gray-500 font-normal ml-2">({materiaCategoria})</span>
+            )}
+            {categoriaSubcategoria && (
+              <span className="text-gray-500 font-normal ml-2">({categoriaSubcategoria})</span>
+            )}
+            {subcategoriaAmbito && (
+              <span className="text-gray-500 font-normal ml-2">({subcategoriaAmbito})</span>
+            )}
+            {estadoMunicipioActualizado && (
+              <span className="text-gray-500 font-normal ml-2">({estadoMunicipioActualizado})</span>
+            )}
+            {municipioParroquiaActualizada && estadoParroquiaActualizada && (
+              <span className="text-gray-500 font-normal ml-2">({municipioParroquiaActualizada}, {estadoParroquiaActualizada})</span>
+            )}
+          </>,
+          <>
+            ID: {idField} • Actualizado por:{' '}
+            {renderUserLink(
+              r.nombre_completo_usuario_actualizo,
+              r.nombres_usuario_actualizo,
+              r.apellidos_usuario_actualizo,
+              r.id_usuario_actualizo
+            )}
+          </>
         );
       }
       case 'caso-actualizado': {
         const r = record as CasoActualizadoAuditRecord;
         const isEquipoUpdate = (record as any).tipo_cambio === 'equipo-actualizado';
 
-        return (
-          <div className="flex items-center gap-3">
-            {isEquipoUpdate ? <Users className="w-5 h-5 text-gray-600" /> : <Briefcase className="w-5 h-5 text-gray-600" />}
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                <Link
-                  href={`/dashboard/cases/${r.id_caso}`}
-                  className="text-primary hover:underline font-medium transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Caso #{r.id_caso}
-                </Link>
-              </p>
-              <p className="text-sm text-gray-600">
-                {isEquipoUpdate ? 'Equipo actualizado por:' : 'Actualizado por:'}{' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_actualizo,
-                  r.nombres_usuario_actualizo,
-                  r.apellidos_usuario_actualizo,
-                  r.id_usuario_actualizo
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          isEquipoUpdate ? <Users className="w-5 h-5 text-gray-600" /> : <Briefcase className="w-5 h-5 text-gray-600" />,
+          <>
+            <Link
+              href={`/dashboard/cases/${r.id_caso}`}
+              className="text-primary hover:underline font-medium transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Caso #{r.id_caso}
+            </Link>
+          </>,
+          <>
+            {isEquipoUpdate ? 'Equipo actualizado por:' : 'Actualizado por:'}{' '}
+            {renderUserLink(
+              r.nombre_completo_usuario_actualizo,
+              r.nombres_usuario_actualizo,
+              r.apellidos_usuario_actualizo,
+              r.id_usuario_actualizo
+            )}
+          </>
         );
       }
 
@@ -1283,102 +1222,66 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
           ? `${r.nombres} ${r.apellidos}`.trim()
           : (r.nombres || r.apellidos || 'Beneficiario desconocido');
 
-        return (
-          <div className="flex items-start gap-3">
-            <Users className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                {nombreCompleto}
-                {r.cedula && <span className="text-gray-600 font-normal"> (Cédula: {r.cedula})</span>}
-              </p>
-              <p className="text-sm text-gray-600">
-                Caso #{r.id_caso} • Inscrito por:{' '}
-                {renderUserLink(
-                  r.usuario_nombre_completo || null,
-                  null,
-                  null,
-                  r.id_usuario_registro
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <Users className="w-5 h-5 text-gray-600" />,
+          <>
+            {nombreCompleto}
+            {r.cedula && <span className="text-gray-600 font-normal"> (Cédula: {r.cedula})</span>}
+          </>,
+          <>
+            Caso #{r.id_caso} • Inscrito por:{' '}
+            {renderUserLink(
+              r.usuario_nombre_completo || null,
+              null,
+              null,
+              r.id_usuario_registro
+            )}
+          </>
         );
       }
-      case 'beneficiario-actualizado': {
-        const r = record as BeneficiarioActualizadoAuditRecord;
-        const nombreCompleto = r.nombres || 'Beneficiario desconocido';
 
-        return (
-          <div className="flex items-start gap-3">
-            <Check className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                {nombreCompleto}
-                {r.cedula_anterior && <span className="text-gray-600 font-normal"> (Cédula: {r.cedula_anterior})</span>}
-              </p>
-              <p className="text-sm text-gray-600">
-                Caso #{r.id_caso} • Actualizado por:{' '}
-                {renderUserLink(
-                  r.usuario_nombre_completo || null,
-                  null,
-                  null,
-                  r.id_usuario_actualizo
-                )}
-              </p>
-            </div>
-          </div>
-        );
-      }
       case 'beneficiario-eliminado': {
         const r = record as BeneficiarioEliminadoAuditRecord;
         const nombreCompleto = r.nombres || 'Beneficiario desconocido';
 
-        return (
-          <div className="flex items-start gap-3">
-            <Users className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                {nombreCompleto}
-                {r.cedula && <span className="text-gray-600 font-normal"> (Cédula: {r.cedula})</span>}
-              </p>
-              <p className="text-sm text-gray-600">
-                Caso #{r.id_caso} • Eliminado por:{' '}
-                {renderUserLink(
-                  r.usuario_nombre_completo || null,
-                  null,
-                  null,
-                  r.id_usuario_elimino
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <Users className="w-5 h-5 text-gray-600" />,
+          <>
+            {nombreCompleto}
+            {r.cedula && <span className="text-gray-600 font-normal"> (Cédula: {r.cedula})</span>}
+          </>,
+          <>
+            Caso #{r.id_caso} • Eliminado por:{' '}
+            {renderUserLink(
+              r.usuario_nombre_completo || null,
+              null,
+              null,
+              r.id_usuario_elimino
+            )}
+          </>
         );
       }
       case 'equipo-actualizado': {
         const r = record as EquipoActualizadoAuditRecord;
 
-        return (
-          <div className="flex items-start gap-3">
-            <Users className="w-5 h-5 text-gray-500" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                <Link href={`/dashboard/cases/${r.id_caso}`} className="hover:underline text-primary">
-                  Caso #{r.id_caso}
-                </Link>
-                {' - '}
-                {r.miembros_anteriores.length === 0 ? 'Equipo asignado' : 'Equipo actualizado'}
-              </p>
-              <p className="text-sm text-gray-600">
-                Modificado por: {' '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_modifico || null,
-                  r.nombres_usuario_modifico,
-                  r.apellidos_usuario_modifico,
-                  r.id_usuario_modifico
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <Users className="w-5 h-5 text-gray-500" />,
+          <>
+            <Link href={`/dashboard/cases/${r.id_caso}`} className="hover:underline text-primary">
+              Caso #{r.id_caso}
+            </Link>
+            {' - '}
+            {r.miembros_anteriores.length === 0 ? 'Equipo asignado' : 'Equipo actualizado'}
+          </>,
+          <>
+            Modificado por: {' '}
+            {renderUserLink(
+              r.nombre_completo_usuario_modifico || null,
+              r.nombres_usuario_modifico,
+              r.apellidos_usuario_modifico,
+              r.id_usuario_modifico
+            )}
+          </>
         );
       }
 
@@ -1401,55 +1304,42 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
         };
-        return (
-          <div className="flex items-center gap-3">
-            <FileBarChart className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900 flex flex-wrap items-center gap-x-2">
-                {formatTipoReporte(r.tipo_reporte)}
-                {r.cedula_solicitante && (
-                  <span className="font-normal text-gray-500 flex items-center gap-1">
-                    -
-                    <Link
-                      href={`/dashboard/applicants/${r.cedula_solicitante}`}
-                      className="text-primary hover:underline font-medium transition-colors"
-                      onClick={(e: any) => e.stopPropagation()}
-                    >
-                      {r.nombre_completo_solicitante || r.cedula_solicitante}
-                    </Link>
-                  </span>
-                )}
-              </p>
-              <p className="text-sm text-gray-600">
-                Formato: {r.formato || 'PDF'}
-                {' • Generado por: '}
-                {renderUserLink(
-                  r.nombre_completo_usuario_genero,
-                  r.nombres_usuario_genero,
-                  r.apellidos_usuario_genero,
-                  r.id_usuario_genero
-                )}
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <FileBarChart className="w-5 h-5 text-gray-600" />,
+          <span className="flex flex-wrap items-center gap-x-2">
+            {formatTipoReporte(r.tipo_reporte)}
+            {r.cedula_solicitante && (
+              <span className="font-normal text-gray-500 flex items-center gap-1">
+                -
+                <Link
+                  href={`/dashboard/applicants/${r.cedula_solicitante}`}
+                  className="text-primary hover:underline font-medium transition-colors"
+                  onClick={(e: any) => e.stopPropagation()}
+                >
+                  {r.nombre_completo_solicitante || r.cedula_solicitante}
+                </Link>
+              </span>
+            )}
+          </span>,
+          <>
+            Formato: {r.formato || 'PDF'}
+            {' • Generado por: '}
+            {renderUserLink(
+              r.nombre_completo_usuario_genero,
+              r.nombres_usuario_genero,
+              r.apellidos_usuario_genero,
+              r.id_usuario_genero
+            )}
+          </>
         );
       }
 
       default:
         console.warn('Tipo de auditoría no reconocido en renderSummary:', type);
-        return (
-          <div className="flex items-center gap-3">
-            <FileText className="w-5 h-5 text-gray-600" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-500 mb-1">Registro de Auditoría</p>
-              <p className="font-semibold text-gray-900">
-                Tipo: {type}
-              </p>
-              <p className="text-sm text-gray-600">
-                No se pudo renderizar el resumen para este tipo de registro
-              </p>
-            </div>
-          </div>
+        return renderRow(
+          <FileText className="w-5 h-5 text-gray-600" />,
+          <>Tipo: {type}</>,
+          <span className="italic">Registro de auditoría (Sin detalle)</span>
         );
     }
   };
@@ -4979,7 +4869,9 @@ export default function AuditRecordCard({ record, type }: AuditRecordCardProps) 
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex-1">
-          {renderSummary()}
+          <div>
+            {renderSummary()}
+          </div>
           <p className="text-xs text-gray-500 mt-2">
             {formatDate(getDate())}
           </p>

@@ -47,7 +47,7 @@ SELECT
     u.nombres AS nombres_usuario_elimino,
     u.apellidos AS apellidos_usuario_elimino,
     CONCAT(u.nombres, ' ', u.apellidos) AS nombre_completo_usuario_elimino,
-    encode(u.foto_perfil, 'base64') AS foto_perfil_usuario_elimino,
+    u.foto_perfil AS foto_perfil_usuario_elimino,
     a.motivo,
     to_char(a.fecha, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha
 FROM public.auditoria_eliminacion_solicitantes a
