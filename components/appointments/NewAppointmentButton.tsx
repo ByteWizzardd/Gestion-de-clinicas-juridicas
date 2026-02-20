@@ -56,8 +56,8 @@ export default function NewAppointmentButton({
     // También verificar cuando el body se bloquea (indicador de modal)
     const checkBodyOverflow = () => {
       if (document.body.style.overflow === 'hidden') {
-        const modal = document.querySelector('[role="dialog"]') || 
-                      document.querySelector('[aria-modal="true"]');
+        const modal = document.querySelector('[role="dialog"]') ||
+          document.querySelector('[aria-modal="true"]');
         if (modal) {
           setIsOpen(false);
         }
@@ -126,7 +126,7 @@ export default function NewAppointmentButton({
               onSchedule();
             });
           }}
-          className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3"
+          className="w-full px-4 py-3 text-left text-sm text-gray-700 cursor-pointer hover:bg-gray-50 transition-colors flex items-center gap-3"
         >
           <Calendar className="w-5 h-5 text-primary" />
           <span>Programar cita</span>
@@ -143,7 +143,7 @@ export default function NewAppointmentButton({
               onRegister();
             });
           }}
-          className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3"
+          className="w-full px-4 py-3 text-left text-sm text-gray-700 cursor-pointer hover:bg-gray-50 transition-colors flex items-center gap-3"
         >
           <FileText className="w-5 h-5 text-primary" />
           <span>Registrar cita</span>
