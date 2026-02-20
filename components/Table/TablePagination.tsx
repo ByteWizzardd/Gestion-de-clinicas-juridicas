@@ -76,11 +76,18 @@ export function TablePagination({ currentPage, totalPages, rowsPerPage, onPageCh
 
                 {/* Números de página */}
                 <div className="flex items-center gap-1 p-1 bg-white border border-gray-100 shadow-sm rounded-2xl">
-                    {pageNumbers.map((page, index) =>
-                        page === '...' ? (
+                    {pageNumbers.map((page, index) => {
+                        const isActive = page === currentPage;
+                        // En móviles muy pequeños, ocultar casi todo excepto la actual y las adyacentes si es posible
+                        const isHiddenOnMobile = typeof page === 'number' &&
+                            Math.abs(page - currentPage) > 1 &&
+                            page !== 1 &&
+                            page !== totalPages;
+
+                        return page === '...' ? (
                             <span
                                 key={`dots-${index}`}
-                                className="w-8 sm:w-10 h-8 sm:h-10 flex items-center justify-center text-neutral-400 text-sm font-bold"
+                                className="w-8 sm:w-10 h-8 sm:h-10 hidden sm:flex items-center justify-center text-neutral-400 text-sm font-bold"
                             >
                                 ···
                             </span>
@@ -89,15 +96,17 @@ export function TablePagination({ currentPage, totalPages, rowsPerPage, onPageCh
                                 key={page}
                                 onClick={() => onPageChange(page)}
                                 className={`w-8 sm:w-10 h-8 sm:h-10 flex items-center justify-center text-xs sm:text-sm rounded-xl transition-all duration-300 cursor-pointer
-                                    ${page === currentPage
+                                    ${isActive
                                         ? 'bg-primary text-white font-bold shadow-lg shadow-primary/30 scale-105'
                                         : 'text-neutral-500 hover:bg-primary-light hover:text-primary font-medium'
-                                    }`}
+                                    }
+                                    ${isHiddenOnMobile ? 'hidden sm:flex' : 'flex'}
+                                `}
                             >
                                 {page}
                             </button>
-                        )
-                    )}
+                        );
+                    })}
                 </div>
 
                 {/* Botón siguiente */}

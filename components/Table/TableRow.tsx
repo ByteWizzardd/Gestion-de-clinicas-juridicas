@@ -78,10 +78,12 @@ export function TableRow<T extends Record<string, unknown>>({
         : Object.values(data);
     const shouldHideEdit = hideEdit ? hideEdit(data) : false;
     const shouldHideDelete = hideDelete ? hideDelete(data) : false;
+    const rowBgClass = isSelected ? 'bg-primary/5' : rowIndex % 2 === 1 ? 'bg-on-primary-light' : '';
+
     return (
-        <tr className={`border-none ${rowIndex % 2 === 1 ? 'bg-on-primary-light' : ''} ${isSelected ? 'bg-primary/5' : ''}`}>
+        <tr className="border-none">
             {selectable && (
-                <td className={`py-4 sm:py-5 text-center px-3 w-12 ${rowIndex % 2 === 1 ? 'rounded-l-xl' : ''}`}>
+                <td className={`py-4 sm:py-5 text-center px-3 w-12 ${rowBgClass} ${rowIndex % 2 === 1 ? 'rounded-l-xl' : ''}`}>
                     <input
                         type="checkbox"
                         className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
@@ -90,18 +92,21 @@ export function TableRow<T extends Record<string, unknown>>({
                     />
                 </td>
             )}
-            {cells.map((cell, index) => (
-                <td
-                    key={index}
-                    className={`py-4 sm:py-5 text-center text-base px-3 min-w-0
-                        ${rowIndex % 2 === 1 && index === 0 && !selectable ? 'rounded-l-xl' : ''}
-                    `}
-                >
-                    <span className="truncate block" title={formatCellValue(cell)}>{formatCellValue(cell)}</span>
-                </td>
-            ))}
+            {cells.map((cell, index) => {
+                const isFirstCell = index === 0 && !selectable;
+                return (
+                    <td
+                        key={index}
+                        className={`py-4 sm:py-5 text-center text-base px-3 min-w-0 ${rowBgClass}
+                            ${rowIndex % 2 === 1 && isFirstCell ? 'rounded-l-xl' : ''}
+                        `}
+                    >
+                        <span className="truncate block" title={formatCellValue(cell)}>{formatCellValue(cell)}</span>
+                    </td>
+                );
+            })}
             <td
-                className={`py-4 sm:py-5 text-center px-3
+                className={`py-4 sm:py-5 text-center px-3 ${rowBgClass}
                     ${rowIndex % 2 === 1 ? 'rounded-r-xl' : ''}
                 `}
             >

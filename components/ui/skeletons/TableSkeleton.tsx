@@ -20,7 +20,7 @@ const CELL_WIDTHS = ['45%', '70%', '55%', '60%', '50%', '65%', '40%', '75%'];
 export default function TableSkeleton({ columns, rows = 10 }: TableSkeletonProps) {
     return (
         <div className="w-full overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-            <table className="w-full font-secondary border-separate border-spacing-y-2 min-w-[800px]">
+            <table className="w-full font-secondary border-separate border-spacing-x-0 border-spacing-y-2 min-w-[800px]">
                 {/* ─── Header ─────────────────────────────── */}
                 <thead>
                     <tr>
@@ -63,10 +63,11 @@ export default function TableSkeleton({ columns, rows = 10 }: TableSkeletonProps
                 <tbody className="border-t-2 border-t-transparent">
                     {Array.from({ length: rows }).map((_, rowIdx) => {
                         const isOdd = rowIdx % 2 === 1;
+                        const rowBgClass = isOdd ? 'bg-on-primary-light' : '';
                         return (
                             <tr
                                 key={rowIdx}
-                                className={`${isOdd ? 'bg-on-primary-light' : ''}`}
+                                className="border-none"
                             >
                                 {Array.from({ length: columns }).map((_, colIdx) => {
                                     // Variar el ancho de cada celda para que se vea orgánico
@@ -74,7 +75,7 @@ export default function TableSkeleton({ columns, rows = 10 }: TableSkeletonProps
                                     return (
                                         <td
                                             key={colIdx}
-                                            className={`py-4 sm:py-5 px-3 ${isOdd && colIdx === 0 ? 'rounded-l-xl' : ''}`}
+                                            className={`py-4 sm:py-5 px-3 ${rowBgClass} ${isOdd && colIdx === 0 ? 'rounded-l-xl' : ''}`}
                                         >
                                             <div className="flex justify-center">
                                                 <Skeleton
@@ -87,7 +88,7 @@ export default function TableSkeleton({ columns, rows = 10 }: TableSkeletonProps
                                     );
                                 })}
                                 {/* Columna de acciones — 3 dot icon */}
-                                <td className={`py-4 sm:py-5 px-3 ${isOdd ? 'rounded-r-xl' : ''}`}>
+                                <td className={`py-4 sm:py-5 px-3 ${rowBgClass} ${isOdd ? 'rounded-r-xl' : ''}`}>
                                     <div className="flex justify-center">
                                         <div className="flex items-center gap-[3px]">
                                             {[0, 1, 2].map((d) => (

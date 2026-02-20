@@ -86,7 +86,7 @@ export default function DashboardLayoutClient({ user, children, initialSidebarCo
       <div className="flex-1 flex flex-col w-full min-w-0 overflow-x-hidden">
         {/* Header móvil (reserva espacio arriba para no tapar títulos) */}
         <div className="md:hidden sticky top-0 z-30 bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60">
-          <div className="px-4 pt-[env(safe-area-inset-top)]">
+          <div className="px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-1">
             <div className="h-14 flex items-center justify-between gap-3">
               <button
                 type="button"
