@@ -5,12 +5,7 @@ import Search from '@/components/CaseTools/search';
 
 export default function AdministrationLoading() {
     return (
-        <div className="w-full space-y-6 overflow-x-hidden max-w-full">
-            {/* Header */}
-            <div className="mb-4 md:mb-6 mt-4">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl m-3 font-semibold font-primary">Administración</h1>
-                <p className="mb-6 ml-3 text-base text-gray-500">Mantenimiento de los catálogos del sistema</p>
-            </div>
+        <div className="space-y-6 animate-pulse">
 
             {/* Buscador (real) */}
             <div className="mb-6">

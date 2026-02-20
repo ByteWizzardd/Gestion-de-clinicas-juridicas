@@ -405,12 +405,6 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
 
   return (
     <>
-      <div className="mb-4 md:mb-6 mt-4">
-        <h1 className="text-4xl m-3 font-semibold font-primary">Usuarios</h1>
-        <p className="mb-6 ml-3">
-          Administración de usuarios del sistema: estudiantes, profesores y coordinadores
-        </p>
-      </div>
 
       <div className="flex flex-col lg:flex-row lg:items-center gap-4 w-full px-3">
         <div className="flex-1 min-w-0">

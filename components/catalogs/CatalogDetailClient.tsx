@@ -43,8 +43,9 @@ export default function CatalogDetailClient({
     disableFilter = false,
     renderActions,
     filterTarget = 'estatus', // Default to estatus
-    keys
-}: CatalogDetailClientProps & { filterAllLabel?: string }) {
+    keys,
+    hideHeader = false
+}: CatalogDetailClientProps & { filterAllLabel?: string; hideHeader?: boolean }) {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterValue, setFilterValue] = useState('');
@@ -102,7 +103,7 @@ export default function CatalogDetailClient({
         return result;
     }, [data, searchQuery, filterValue, filterField, estatusFilterValue]);
 
-    const hasFilter = !disableFilter && generatedFilterOptions.length > 0 && filterField;
+    const hasFilter = !disableFilter && (generatedFilterOptions.length > 0 || (loading && (autoGenerateFilter || filterOptions))) && filterField;
 
     return (
         <div>

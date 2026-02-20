@@ -98,8 +98,6 @@ export default function EstadosPage() {
 
     return (
         <>
-            <h1 className="text-4xl m-3 font-semibold font-primary">Estados</h1>
-            <p className="mb-6 ml-3">Estados del país registrados en el sistema</p>
             <CatalogDetailClient
                 data={estados}
                 columns={["Estado", "Habilitado"]}
@@ -107,6 +105,7 @@ export default function EstadosPage() {
                 addLabel="Añadir Estado"
                 onAddClick={() => setIsModalOpen(true)}
                 loading={loading}
+                hideHeader={true}
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}

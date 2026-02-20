@@ -27,13 +27,7 @@ export default function CatalogsClient({ counts }: CatalogsClientProps) {
     }, []);
 
     return (
-        <div className="pt-2 px-6 pb-6 space-y-6 overflow-x-hidden max-w-full">
-            {/* Header */}
-            <div className="mb-4 md:mb-6">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl m-3 font-semibold font-primary">Administración</h1>
-                <p className="mb-6 ml-3 text-base">Mantenimiento de los catálogos del sistema</p>
-            </div>
-
+        <div className="space-y-6">
             {/* Buscador */}
             <div className="mb-6">
                 <Search

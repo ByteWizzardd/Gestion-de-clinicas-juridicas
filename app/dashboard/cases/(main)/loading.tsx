@@ -5,14 +5,7 @@ import CaseTools from '@/components/CaseTools/CaseTools';
 
 export default function CasesLoading() {
     return (
-        <>
-            <div className="mb-4 md:mb-6 mt-4">
-                <div>
-                    <h1 className="text-4xl m-3 font-semibold font-primary">Casos</h1>
-                    <p className="mb-6 ml-3">Listado y gestión de todos los casos registrados.</p>
-                </div>
-            </div>
-
+        <div>
             <div className="px-1">
                 <CaseTools
                     addLabel="Añadir Caso"
@@ -29,9 +22,9 @@ export default function CasesLoading() {
             </div>
             <div className="mt-10"></div>
 
-            <div className="min-h-[400px] px-3">
+            <div className="min-h-[400px] px-3 animate-pulse">
                 <TableSkeleton columns={6} rows={10} />
             </div>
-        </>
+        </div>
     );
 }

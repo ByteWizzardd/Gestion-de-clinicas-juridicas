@@ -5,13 +5,7 @@ import CaseTools from '@/components/CaseTools/CaseTools';
 
 export default function UsersLoading() {
     return (
-        <>
-            <div className="mb-4 md:mb-6 mt-4">
-                <h1 className="text-4xl m-3 font-semibold font-primary">Usuarios</h1>
-                <p className="mb-6 ml-3">
-                    Administración de usuarios del sistema: estudiantes, profesores y coordinadores
-                </p>
-            </div>
+        <div className="animate-pulse">
 
             <div className="flex flex-col md:flex-row md:items-center gap-3 sm:gap-4 w-full px-3">
                 <div className="flex-1 min-w-0">
@@ -67,6 +61,6 @@ export default function UsersLoading() {
             <div className="px-3">
                 <TableSkeleton columns={5} rows={10} />
             </div>
-        </>
+        </div>
     );
 }

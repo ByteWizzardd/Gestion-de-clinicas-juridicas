@@ -147,8 +147,6 @@ export default function AmbitosLegalesPage() {
 
     return (
         <>
-            <h1 className="text-4xl m-3 font-semibold font-primary">Ámbitos Legales</h1>
-            <p className="mb-6 ml-3">Ámbitos legales específicos dentro de cada subcategoría</p>
             <CatalogDetailClient
                 data={ambitos}
                 columns={["Ámbito", "Materia", "Categoría", "Subcategoría", "Habilitado"]}
@@ -159,6 +157,7 @@ export default function AmbitosLegalesPage() {
                 filterField="nombre_materia"
                 filterTarget="materia"
                 autoGenerateFilter={true}
+                hideHeader={true}
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}

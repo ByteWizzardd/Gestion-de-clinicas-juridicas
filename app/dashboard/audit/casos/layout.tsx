@@ -1,0 +1,13 @@
+import { ReactNode } from 'react';
+
+export default function AuditCasesLayout({ children }: { children: ReactNode }) {
+    return (
+        <div className="w-full">
+            <div className="mb-4 md:mb-6 mt-4">
+                <h1 className="text-4xl m-3 font-semibold font-primary">Auditoría de Casos</h1>
+                <p className="mb-6 ml-3">Historial de movimientos de casos</p>
+            </div>
+            {children}
+        </div>
+    );
+}

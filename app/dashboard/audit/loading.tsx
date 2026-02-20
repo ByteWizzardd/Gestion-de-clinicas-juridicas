@@ -7,17 +7,7 @@ import { ArrowDown } from 'lucide-react';
 
 export default function GenericAuditLoading() {
     return (
-        <div className="w-full">
-            {/* Header Skeleton */}
-            <div className="mb-4 md:mb-6 mt-4">
-                <div className="m-3">
-                    <Skeleton width="45%" height={40} borderRadius="8px" />
-                </div>
-                <div className="mb-6 ml-3">
-                    <Skeleton width="65%" height={20} borderRadius="4px" />
-                </div>
-            </div>
-
+        <div className="w-full animate-pulse">
             {/* Tabs Skeleton */}
             <div className="px-0">
                 <div className="flex items-center border-b border-gray-200 mb-4 sm:mb-6">

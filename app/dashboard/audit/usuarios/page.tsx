@@ -12,6 +12,7 @@ export default async function UsuariosAuditPage() {
         entityTitle="Usuarios"
         entityDescription="Registro completo de todas las acciones realizadas sobre los usuarios del sistema"
         defaultTab="usuarios-creados"
+        hideMainHeader={true}
         operations={[
           {
             label: 'Creados',

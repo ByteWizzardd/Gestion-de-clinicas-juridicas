@@ -12,6 +12,7 @@ export default async function CitasAuditPage() {
         entityTitle="Citas"
         entityDescription="Registro completo de todas las acciones realizadas sobre las citas del sistema"
         defaultTab="citas-creadas"
+        hideMainHeader={true}
         operations={[
           {
             label: 'Creadas',

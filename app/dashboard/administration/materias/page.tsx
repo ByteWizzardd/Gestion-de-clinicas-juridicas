@@ -104,9 +104,6 @@ export default function MateriasPage() {
 
     return (
         <>
-            <h1 className="text-4xl m-3 font-semibold font-primary">Materias</h1>
-            <p className="mb-6 ml-3">Áreas principales del derecho que se manejan en el sistema</p>
-
             <CatalogDetailClient
                 data={materias}
                 columns={["Materia", "Habilitado"]}
@@ -114,6 +111,7 @@ export default function MateriasPage() {
                 addLabel="Añadir Materia"
                 onAddClick={() => setIsModalOpen(true)}
                 loading={loading}
+                hideHeader={true}
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}

@@ -40,13 +40,15 @@ interface AuditEntityDetailClientProps {
   entityDescription: string;
   operations: AuditOperation[];
   defaultTab?: string;
+  hideMainHeader?: boolean;
 }
 
 export default function AuditEntityDetailClient({
   entityTitle,
   entityDescription,
   operations,
-  defaultTab
+  defaultTab,
+  hideMainHeader = false
 }: AuditEntityDetailClientProps) {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<string>(() => {
@@ -81,15 +83,12 @@ export default function AuditEntityDetailClient({
   return (
     <div className="w-full">
       {/* Encabezado de la entidad */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.2 }}
-        className="mb-4 md:mb-6 mt-4"
-      >
-        <h1 className="text-4xl m-3 font-semibold font-primary">{entityTitle}</h1>
-        <p className="mb-6 ml-3">{entityDescription}</p>
-      </motion.div>
+      {!hideMainHeader && (
+        <div className="mb-4 md:mb-6 mt-4">
+          <h1 className="text-4xl m-3 font-semibold font-primary">{entityTitle}</h1>
+          <p className="mb-6 ml-3">{entityDescription}</p>
+        </div>
+      )}
 
       {/* Tabs con las operaciones */}
       <motion.div
