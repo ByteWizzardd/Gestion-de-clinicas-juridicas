@@ -18,9 +18,9 @@ export default async function DashboardLayout({
     redirect('/auth/login?invalid_token=true');
   }
 
-  // Obtener preferencia del sidebar desde la cookie
+  // Obtener preferencia del sidebar desde la cookie (específica del usuario)
   const cookieStore = await cookies();
-  const isSidebarCollapsed = cookieStore.get('sidebar_collapsed')?.value === 'true';
+  const isSidebarCollapsed = cookieStore.get(`sidebar_collapsed_${result.data.cedula}`)?.value === 'true';
 
   return (
     <DashboardLayoutClient user={result.data} initialSidebarCollapsed={isSidebarCollapsed}>

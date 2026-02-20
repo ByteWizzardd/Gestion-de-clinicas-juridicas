@@ -15,9 +15,10 @@ interface SidebarProps {
   userName?: string;
   onNavigate?: () => void;
   initialCollapsed?: boolean;
+  userCedula?: string;
 }
 
-const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNavigate, initialCollapsed = false }: SidebarProps) {
+const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNavigate, initialCollapsed = false, userCedula }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const menu = getMenuByRole(role);
@@ -40,11 +41,14 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
     const newState = !isCollapsed;
     setIsCollapsed(newState);
     try {
+      // Usar llave específica del usuario si la cédula está disponible
+      const storageKey = userCedula ? `sidebar_collapsed_${userCedula}` : 'sidebar_collapsed';
+
       // Guardar en localStorage para compatibilidad
-      localStorage.setItem('sidebar_collapsed', JSON.stringify(newState));
+      localStorage.setItem(storageKey, JSON.stringify(newState));
 
       // Guardar en cookie para que el servidor lo sepa en la próxima carga
-      document.cookie = `sidebar_collapsed=${newState}; path=/; max-age=31536000`; // 1 año
+      document.cookie = `${storageKey}=${newState}; path=/; max-age=31536000`; // 1 año
     } catch (error) {
       console.error('Error al guardar preferencia del sidebar:', error);
     }

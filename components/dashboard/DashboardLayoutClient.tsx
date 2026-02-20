@@ -57,7 +57,7 @@ export default function DashboardLayoutClient({ user, children, initialSidebarCo
     <div className="flex h-screen bg-background relative overflow-x-hidden">
       {/* Sidebar escritorio */}
       <div className="shrink-0 hidden md:block">
-        <Sidebar role={userRole} userName={userName} initialCollapsed={initialSidebarCollapsed} />
+        <Sidebar role={userRole} userName={userName} initialCollapsed={initialSidebarCollapsed} userCedula={user.cedula} />
       </div>
 
       {/* Sidebar móvil (off-canvas) */}
@@ -79,7 +79,7 @@ export default function DashboardLayoutClient({ user, children, initialSidebarCo
           }
           aria-hidden={!isMobileSidebarOpen}
         >
-          <Sidebar role={userRole} userName={userName} initialCollapsed={initialSidebarCollapsed} onNavigate={() => setIsMobileSidebarOpen(false)} />
+          <Sidebar role={userRole} userName={userName} initialCollapsed={initialSidebarCollapsed} userCedula={user.cedula} onNavigate={() => setIsMobileSidebarOpen(false)} />
         </div>
       </div>
 
