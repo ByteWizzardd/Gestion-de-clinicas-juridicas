@@ -580,7 +580,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
               required={!isEditing}
               disabled={isEditing || areOptionsLoading}
               className="w-full"
-              placeholder={areOptionsLoading ? "Cargando casos..." : "Selecciona una opción"}
+              placeholder={areOptionsLoading ? "Cargando casos..." : "Seleccione el caso relacionado"}
             />
           </div>
           <div className="col-span-1">

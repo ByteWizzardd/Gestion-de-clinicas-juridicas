@@ -262,6 +262,7 @@ export function AppointmentScheduleModal({
               error={errors.selectedCaseID}
               required
               className="w-full"
+              placeholder="Seleccione el caso relacionado"
             />
           </div>
           <div className="col-span-1">
@@ -299,7 +300,7 @@ export function AppointmentScheduleModal({
               value={usuariosInvitados}
               onChange={(values) => updateField('usuariosInvitados', values)}
               error={errors.usuariosInvitados}
-              placeholder="Selecciona usuarios..."
+              placeholder="Seleccione las personas que atenderán la cita"
               required
               className="w-full"
             />

@@ -533,6 +533,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
                 }
               }}
               error={errors.cedulaNumero}
+              placeholder="Ingrese cédula"
               required
               disableSuggestions={true}
             />
@@ -542,6 +543,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
               type="email"
               value={form.correo_electronico}
               onChange={handleChange}
+              placeholder="Ingrese correo electrónico"
               error={errors.correo_electronico}
             />
             <Input
@@ -549,6 +551,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
               name="nombres"
               value={form.nombres}
               onChange={handleChange}
+              placeholder="Ingrese nombre(s)"
               error={errors.nombres}
             />
             <Input
@@ -556,6 +559,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
               name="apellidos"
               value={form.apellidos}
               onChange={handleChange}
+              placeholder="Ingrese apellido(s)"
               error={errors.apellidos}
             />
             <Input
@@ -563,6 +567,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
               name="nombre_usuario"
               value={form.nombre_usuario}
               onChange={handleChange}
+              placeholder="Ingrese nombre de usuario"
               error={errors.nombre_usuario}
             />
             <PhoneInput
@@ -570,7 +575,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
               name="telefono"
               value={form.telefono}
               onChange={handleChange}
-              placeholder="4121234567"
+              placeholder="Ingrese número de teléfono"
               error={errors.telefono}
             />
             <Select
@@ -602,6 +607,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
                 { value: 'Profesor', label: 'Profesor' },
                 { value: 'Estudiante', label: 'Estudiante' },
               ]}
+              placeholder="Seleccione tipo de usuario"
               error={errors.tipo_usuario}
             />
             {form.tipo_usuario && (
@@ -618,7 +624,8 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
                     });
                   }
                 }}
-                options={[{ value: '', label: 'Seleccione...' }, ...semesters]}
+                options={semesters}
+                placeholder="Seleccione término"
                 error={errors.term}
               />
             )}
@@ -631,6 +638,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
                   name="nrc"
                   value={form.nrc || ''}
                   onChange={handleChange}
+                  placeholder="Ingrese NRC"
                   error={errors.nrc}
                 />
                 <Select
@@ -647,12 +655,12 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
                     }
                   }}
                   options={[
-                    { value: '', label: 'Seleccione...' },
                     { value: 'Voluntario', label: 'Voluntario' },
                     { value: 'Inscrito', label: 'Inscrito' },
                     { value: 'Egresado', label: 'Egresado' },
                     { value: 'Servicio Comunitario', label: 'Servicio Comunitario' },
                   ]}
+                  placeholder="Seleccione tipo de estudiante"
                   error={errors.tipo_estudiante}
                 />
               </>
@@ -672,10 +680,10 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
                   }
                 }}
                 options={[
-                  { value: '', label: 'Seleccione...' },
                   { value: 'Voluntario', label: 'Voluntario' },
                   { value: 'Asesor', label: 'Asesor' },
                 ]}
+                placeholder="Seleccione tipo de profesor"
                 error={errors.tipo_profesor}
               />
             )}
