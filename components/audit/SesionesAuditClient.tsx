@@ -72,11 +72,11 @@ function parseUserAgent(ua: string | null): { browser: string; os: string } {
     let browser = 'Desconocido';
     let os = 'Desconocido';
 
-    if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
-    else if (ua.includes('Firefox')) browser = 'Firefox';
-    else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+    if (ua.includes('Opera') || ua.includes('OPR')) browser = 'Opera';
     else if (ua.includes('Edg')) browser = 'Edge';
-    else if (ua.includes('Opera') || ua.includes('OPR')) browser = 'Opera';
+    else if (ua.includes('Chrome')) browser = 'Chrome';
+    else if (ua.includes('Firefox')) browser = 'Firefox';
+    else if (ua.includes('Safari')) browser = 'Safari';
 
     if (ua.includes('Windows NT 10')) os = 'Windows 10/11';
     else if (ua.includes('Windows')) os = 'Windows';
