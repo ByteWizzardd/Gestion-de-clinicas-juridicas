@@ -2,55 +2,64 @@
 
 import { Skeleton } from '@/components/ui/Skeleton';
 import AuditRecordCardSkeleton from '@/components/ui/skeletons/AuditRecordCardSkeleton';
-import CaseTools from '@/components/CaseTools/CaseTools';
-import { Layers } from 'lucide-react';
+import Search from '@/components/CaseTools/search';
+import { ArrowDown } from 'lucide-react';
 
-export default function AuditLoading() {
+export default function GenericAuditLoading() {
     return (
-        <div className="p-4">
-            {/* Título */}
-            <h1 className="text-4xl m-3 font-semibold font-primary">Auditoría del Sistema</h1>
-            <p className="mb-6 ml-3">Registro completo de todas las acciones realizadas en el sistema</p>
-
-            {/* Barra de búsqueda y filtros (real) */}
-            <div className="mb-6">
-                <CaseTools
-                    searchValue=""
-                    onSearchChange={() => { }}
-                    searchPlaceholder="Buscar en logs..."
-                    nucleoFilter=""
-                    onNucleoChange={() => { }}
-                    nucleoLabel="Módulo"
-                    nucleoAllLabel="Todos los módulos"
-                    nucleoOptions={[]}
-                    nucleoIcon={Layers}
-                    operacionFilter=""
-                    onOperacionChange={() => { }}
-                    operacionOptions={[]}
-                    estadoCivilFilter=""
-                    onEstadoCivilChange={() => { }}
-                    estadoCivilLabel="Usuarios"
-                    estadoCivilOptions={[]}
-                    showDateRange={true}
-                    fechaInicio=""
-                    fechaFin=""
-                    onFechaInicioChange={() => { }}
-                    onFechaFinChange={() => { }}
-                    sortFilter="desc"
-                    onSortChange={() => { }}
-                    sortLabel="Orden"
-                    sortOptions={[
-                        { value: 'desc', label: 'Más reciente' },
-                        { value: 'asc', label: 'Más antiguo' }
-                    ]}
-                />
+        <div className="w-full">
+            {/* Header Skeleton */}
+            <div className="mb-4 md:mb-6 mt-4">
+                <div className="m-3">
+                    <Skeleton width="45%" height={40} borderRadius="8px" />
+                </div>
+                <div className="mb-6 ml-3">
+                    <Skeleton width="65%" height={20} borderRadius="4px" />
+                </div>
             </div>
 
-            {/* Cards skeleton (misma estructura que los módulos de auditoría) */}
-            <div className="m-3 space-y-3">
-                {Array.from({ length: 8 }).map((_, i) => (
-                    <AuditRecordCardSkeleton key={i} />
-                ))}
+            {/* Tabs Skeleton */}
+            <div className="px-0">
+                <div className="flex items-center border-b border-gray-200 mb-4 sm:mb-6">
+                    <div className="flex gap-1 w-full min-w-max">
+                        <div className="px-4 sm:px-4 md:px-6 py-2 sm:py-3 border-b-2 border-primary">
+                            <Skeleton width={80} height={20} borderRadius="4px" />
+                        </div>
+                        <div className="px-4 sm:px-4 md:px-6 py-2 sm:py-3 border-b-2 border-transparent">
+                            <Skeleton width={80} height={20} borderRadius="4px" />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Filters Toolbar Skeleton */}
+                <div className="flex flex-wrap gap-3 sm:gap-4 items-center w-full px-3 mb-4 md:mb-6">
+                    <div className="w-full sm:flex-1 sm:min-w-0">
+                        <Search
+                            value=""
+                            onChange={() => { }}
+                            placeholder="Cargando..."
+                        />
+                    </div>
+                    <div className="flex w-full sm:w-auto gap-3 sm:gap-4 items-center shrink-0 justify-start sm:justify-end">
+                        <button
+                            type="button"
+                            className="h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap opacity-50 cursor-not-allowed"
+                        >
+                            <ArrowDown className="w-4 h-4 text-[#414040]" />
+                            <span className="text-base">Más reciente</span>
+                        </button>
+                        <div className="h-10 w-24 rounded-full border border-primary opacity-50 flex items-center justify-center">
+                            <Skeleton width={40} height={16} borderRadius="4px" />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Audit Cards Skeleton list */}
+                <div className="space-y-3 px-3">
+                    {Array.from({ length: 10 }).map((_, i) => (
+                        <AuditRecordCardSkeleton key={i} />
+                    ))}
+                </div>
             </div>
         </div>
     );

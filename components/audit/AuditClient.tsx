@@ -41,7 +41,7 @@ export default function AuditClient() {
       </div>
 
       {/* Contenido principal */}
-      <div className="mt-4">
+      <div>
         {activeTab === 'general' ? (
           <AuditGeneralView />
         ) : (

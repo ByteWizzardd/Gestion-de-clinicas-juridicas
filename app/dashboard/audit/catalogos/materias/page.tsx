@@ -7,7 +7,7 @@ export default async function MateriaAuditPage() {
   await authorizeRole(['coordinator']);
 
   return (
-    <div className="m-3">
+    <div>
       <AuditEntityDetailClient
         entityTitle="Materias"
         entityDescription="Registro completo de todas las acciones realizadas sobre los materias del sistema"

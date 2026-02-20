@@ -7,7 +7,7 @@ export default async function ParroquiaAuditPage() {
   await authorizeRole(['coordinator']);
 
   return (
-    <div className="m-3">
+    <div>
       <AuditEntityDetailClient
         entityTitle="Parroquias"
         entityDescription="Registro completo de todas las acciones realizadas sobre los parroquias del sistema"

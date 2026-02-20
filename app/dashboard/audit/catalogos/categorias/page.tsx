@@ -7,7 +7,7 @@ export default async function CategoríaAuditPage() {
   await authorizeRole(['coordinator']);
 
   return (
-    <div className="m-3">
+    <div>
       <AuditEntityDetailClient
         entityTitle="Categorías"
         entityDescription="Registro completo de todas las acciones realizadas sobre los categorias del sistema"

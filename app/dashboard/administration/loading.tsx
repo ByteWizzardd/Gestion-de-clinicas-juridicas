@@ -1,31 +1,40 @@
 'use client';
 
-import AuditEntityCardSkeleton from '@/components/ui/skeletons/AuditEntityCardSkeleton';
-import Search from '@/components/CaseTools/search';
+import { Skeleton } from "@/components/ui/Skeleton";
+import TableSkeleton from "@/components/ui/skeletons/TableSkeleton";
 
-export default function AdministrationLoading() {
+export default function CatalogLoading() {
     return (
-        <div className="pt-2 px-6 pb-6 space-y-6 overflow-x-hidden max-w-full">
-            {/* Header */}
-            <div className="mb-4 md:mb-6">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl m-3 font-semibold font-primary">Administración</h1>
-                <p className="mb-6 ml-3 text-base">Mantenimiento de los catálogos del sistema</p>
+        <div className="w-full">
+            {/* Header Skeleton */}
+            <div className="mb-4 md:mb-6 mt-4">
+                <div className="m-3">
+                    <Skeleton width="40%" height={40} borderRadius="8px" />
+                </div>
+                <div className="mb-6 ml-3">
+                    <Skeleton width="60%" height={20} borderRadius="4px" />
+                </div>
             </div>
 
-            {/* Buscador (real) */}
-            <div className="mb-6">
-                <Search
-                    value=""
-                    onChange={() => { }}
-                    placeholder="Buscar catálogo..."
-                />
+            {/* Back button skeleton if applicable, but generic is fine */}
+            <div className="mb-4 px-3">
+                <Skeleton width={150} height={32} borderRadius="8px" />
             </div>
 
-            {/* Grid de cards skeleton */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                {Array.from({ length: 12 }).map((_, i) => (
-                    <AuditEntityCardSkeleton key={i} />
-                ))}
+            {/* Search and Filters toolbar skeleton */}
+            <div className="flex flex-wrap gap-3 sm:gap-4 items-center w-full px-3 mb-6">
+                <div className="flex-1 min-w-0">
+                    <Skeleton width="100%" height={40} borderRadius="999px" />
+                </div>
+                <div className="flex gap-3">
+                    <Skeleton width={120} height={40} borderRadius="999px" />
+                    <Skeleton width={150} height={40} borderRadius="999px" />
+                </div>
+            </div>
+
+            {/* Table Skeleton */}
+            <div className="px-1">
+                <TableSkeleton columns={5} rows={10} />
             </div>
         </div>
     );

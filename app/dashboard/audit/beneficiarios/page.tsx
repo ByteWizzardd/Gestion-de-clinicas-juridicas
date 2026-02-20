@@ -7,7 +7,7 @@ export default async function BeneficiariosAuditPage() {
     await authorizeRole(['coordinator']);
 
     return (
-        <div className="m-3">
+        <div>
             <AuditEntityDetailClient
                 entityTitle="Beneficiarios"
                 entityDescription="Registro completo de todas las acciones realizadas sobre los beneficiarios de los casos"

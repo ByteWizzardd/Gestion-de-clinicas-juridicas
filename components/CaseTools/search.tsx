@@ -5,9 +5,10 @@ interface SearchProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  disabled?: boolean;
 }
 
-function Search({ value, onChange, placeholder = 'Buscar caso...' }: SearchProps) {
+function Search({ value, onChange, placeholder = 'Buscar caso...', disabled = false }: SearchProps) {
   return (
     <search className="flex items-center">
       <form

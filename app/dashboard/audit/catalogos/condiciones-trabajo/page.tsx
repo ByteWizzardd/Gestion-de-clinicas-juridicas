@@ -7,7 +7,7 @@ export default async function CondiciónTrabajoAuditPage() {
   await authorizeRole(['coordinator']);
 
   return (
-    <div className="m-3">
+    <div>
       <AuditEntityDetailClient
         entityTitle="Condiciones Trabajo"
         entityDescription="Registro completo de todas las acciones realizadas sobre los condiciones trabajo del sistema"

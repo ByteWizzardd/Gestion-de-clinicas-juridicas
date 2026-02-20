@@ -85,6 +85,7 @@ export default function AuditEntityDetailClient({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2 }}
+        className="mb-4 md:mb-6 mt-4"
       >
         <h1 className="text-4xl m-3 font-semibold font-primary">{entityTitle}</h1>
         <p className="mb-6 ml-3">{entityDescription}</p>
@@ -95,6 +96,7 @@ export default function AuditEntityDetailClient({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2 }}
+        className="px-0"
       >
         <Tabs tabs={tabs} defaultTab={activeTab} onTabChange={setActiveTab} />
       </motion.div>

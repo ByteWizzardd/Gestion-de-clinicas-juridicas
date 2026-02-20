@@ -7,7 +7,7 @@ export default async function NivelEducativoAuditPage() {
   await authorizeRole(['coordinator']);
 
   return (
-    <div className="m-3">
+    <div>
       <AuditEntityDetailClient
         entityTitle="Niveles Educativos"
         entityDescription="Registro completo de todas las acciones realizadas sobre los niveles educativos del sistema"

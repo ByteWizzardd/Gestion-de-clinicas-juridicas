@@ -7,7 +7,7 @@ export default async function SoportesAuditPage() {
   await authorizeRole(['coordinator']);
 
   return (
-    <div className="m-3">
+    <div>
       <AuditEntityDetailClient
         entityTitle="Soportes"
         entityDescription="Registro completo de todas las acciones realizadas sobre los documentos y archivos del sistema"

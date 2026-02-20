@@ -7,7 +7,7 @@ export default async function UsuariosActualizadosCamposAuditPage() {
   await authorizeRole(['coordinator']);
 
   return (
-    <div className="m-3">
+    <div>
       <AuditDetailClient
         title="Usuarios Actualizados"
         description="Registro completo de todos los cambios en los campos de usuarios"

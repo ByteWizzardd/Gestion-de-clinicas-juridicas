@@ -590,38 +590,12 @@ export default function AuditClient() {
     );
   }, [searchQuery, entities]);
 
-  if (loading) {
-    return (
-      <div className="w-full">
-        {/* Skeleton de la barra de búsqueda */}
-        <div className="mb-6">
-          <div className="w-full flex items-center gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="skeleton-shimmer h-10 rounded-full" style={{ width: '100%' }} />
-            </div>
-            <div className="skeleton-shimmer h-10 rounded-full" style={{ width: 150 }} />
-          </div>
-        </div>
-        {/* Skeleton de las cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <AuditEntityCardSkeleton key={i} />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
         <p>Error: {error}</p>
       </div>
     );
-  }
-
-  if (!counts) {
-    return null;
   }
 
   return (
@@ -656,8 +630,13 @@ export default function AuditClient() {
         </div>
       </div>
 
-      {/* Cards de entidades filtradas */}
-      {filteredEntities.length === 0 ? (
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <AuditEntityCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : filteredEntities.length === 0 ? (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
           <p className="text-gray-500 text-lg">No se encontraron resultados para "{searchQuery}"</p>
         </div>

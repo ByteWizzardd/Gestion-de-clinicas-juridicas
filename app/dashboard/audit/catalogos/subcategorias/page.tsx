@@ -7,7 +7,7 @@ export default async function SubcategoríaAuditPage() {
   await authorizeRole(['coordinator']);
 
   return (
-    <div className="m-3">
+    <div>
       <AuditEntityDetailClient
         entityTitle="Subcategorías"
         entityDescription="Registro completo de todas las acciones realizadas sobre los subcategorias del sistema"

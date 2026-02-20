@@ -7,7 +7,7 @@ export default async function SemestreAuditPage() {
   await authorizeRole(['coordinator']);
 
   return (
-    <div className="m-3">
+    <div>
       <AuditEntityDetailClient
         entityTitle="Semestres"
         entityDescription="Registro completo de todas las acciones realizadas sobre los semestres del sistema"

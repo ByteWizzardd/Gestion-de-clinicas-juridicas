@@ -7,7 +7,7 @@ export default async function CitasEliminadasAuditPage() {
   await authorizeRole(['coordinator']);
 
   return (
-    <div className="m-3">
+    <div>
       <AuditDetailClient
         title="Citas Eliminadas"
         description="Registro completo de todas las citas eliminadas del sistema"

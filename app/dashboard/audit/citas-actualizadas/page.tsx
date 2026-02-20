@@ -7,7 +7,7 @@ export default async function CitasActualizadasAuditPage() {
   await authorizeRole(['coordinator']);
 
   return (
-    <div className="m-3">
+    <div>
       <AuditDetailClient
         title="Citas Actualizadas"
         description="Registro completo de todos los cambios realizados en las citas"

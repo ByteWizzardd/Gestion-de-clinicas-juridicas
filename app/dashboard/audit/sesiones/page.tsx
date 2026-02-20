@@ -7,7 +7,7 @@ export default async function SesionesAuditPage() {
     await authorizeRole(['coordinator']);
 
     return (
-        <div className="m-3">
+        <div>
             <SesionesAuditClient />
         </div>
     );

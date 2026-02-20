@@ -7,7 +7,7 @@ export default async function CitasAuditPage() {
   await authorizeRole(['coordinator']);
 
   return (
-    <div className="m-3">
+    <div>
       <AuditEntityDetailClient
         entityTitle="Citas"
         entityDescription="Registro completo de todas las acciones realizadas sobre las citas del sistema"

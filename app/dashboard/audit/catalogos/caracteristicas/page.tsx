@@ -7,7 +7,7 @@ export default async function CaracterísticaAuditPage() {
   await authorizeRole(['coordinator']);
 
   return (
-    <div className="m-3">
+    <div>
       <AuditEntityDetailClient
         entityTitle="Características"
         entityDescription="Registro completo de todas las acciones realizadas sobre los caracteristicas del sistema"

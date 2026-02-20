@@ -7,7 +7,7 @@ export default async function NúcleoAuditPage() {
   await authorizeRole(['coordinator']);
 
   return (
-    <div className="m-3">
+    <div>
       <AuditEntityDetailClient
         entityTitle="Núcleos"
         entityDescription="Registro completo de todas las acciones realizadas sobre los nucleos del sistema"

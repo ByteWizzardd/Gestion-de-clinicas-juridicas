@@ -501,12 +501,7 @@ export default function AuditDetailClient({
       )}
 
       {/* Filtros */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
-        className="flex flex-wrap gap-3 sm:gap-4 items-center w-full px-3 mb-4 md:mb-6 mt-4"
-      >
+      <div className="flex flex-wrap gap-3 sm:gap-4 items-center w-full px-3 mb-4 md:mb-6">
         <div className="w-full sm:flex-1 sm:min-w-0">
           <Search
             value={filters.busqueda || ''}
@@ -548,7 +543,7 @@ export default function AuditDetailClient({
             estatusLabel={auditType === 'usuarios-creados' ? "Tipo de Registro" : undefined}
           />
         </div>
-      </motion.div>
+      </div>
 
       {/* Contenido */}
       {loading ? (

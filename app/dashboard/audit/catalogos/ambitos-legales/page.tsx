@@ -7,7 +7,7 @@ export default async function ÁmbitoLegalAuditPage() {
   await authorizeRole(['coordinator']);
 
   return (
-    <div className="m-3">
+    <div>
       <AuditEntityDetailClient
         entityTitle="Ámbitos Legales"
         entityDescription="Registro completo de todas las acciones realizadas sobre los ambitos legales del sistema"

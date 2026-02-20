@@ -338,12 +338,7 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
 
     return (
         <div className="w-full">
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="flex flex-wrap gap-3 sm:gap-4 items-center w-full px-3 mb-4 md:mb-6 mt-4"
-            >
+            <div className="flex flex-wrap gap-3 sm:gap-4 items-center w-full px-3 mb-4 md:mb-6">
                 <div className="w-full sm:flex-1 sm:min-w-0">
                     <Search
                         value={searchQuery}
@@ -382,7 +377,7 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
                         showDateRange={true}
                     />
                 </div>
-            </motion.div>
+            </div>
 
             <motion.div
                 initial={{ opacity: 0 }}
@@ -447,6 +442,7 @@ export default function SesionesAuditClient() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.2 }}
+                className="mb-4 md:mb-6 mt-4"
             >
                 <h1 className="text-4xl m-3 font-semibold font-primary">Auditoría de Sesiones</h1>
                 <p className="mb-6 ml-3 text-gray-600">
@@ -458,6 +454,7 @@ export default function SesionesAuditClient() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.2 }}
+                className="px-0"
             >
                 <Tabs tabs={tabs} defaultTab="logins" />
             </motion.div>

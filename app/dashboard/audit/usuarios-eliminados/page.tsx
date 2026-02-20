@@ -7,7 +7,7 @@ export default async function UsuariosEliminadosAuditPage() {
   await authorizeRole(['coordinator']);
 
   return (
-    <div className="m-3">
+    <div>
       <AuditDetailClient
         title="Usuarios Deshabilitados"
         description="Registro completo de todos los usuarios deshabilitados del sistema"

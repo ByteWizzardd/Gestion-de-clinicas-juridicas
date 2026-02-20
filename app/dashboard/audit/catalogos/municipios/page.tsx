@@ -7,7 +7,7 @@ export default async function MunicipioAuditPage() {
   await authorizeRole(['coordinator']);
 
   return (
-    <div className="m-3">
+    <div>
       <AuditEntityDetailClient
         entityTitle="Municipios"
         entityDescription="Registro completo de todas las acciones realizadas sobre los municipios del sistema"
