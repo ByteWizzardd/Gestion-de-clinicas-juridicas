@@ -633,7 +633,7 @@ export default function AuditClient() {
             <Search
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="Buscar por entidad..."
+              placeholder="Buscar por módulo..."
             />
           </div>
           <div className="flex items-center gap-2">

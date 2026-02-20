@@ -47,7 +47,7 @@ export default function AuditGeneralView() {
             setTotalCount(count);
         } catch (error) {
             console.error(error);
-            toast.error('Error al cargar logs de auditoría');
+            toast.error('Error al cargar los registros de auditoría');
         } finally {
             setLoading(false);
         }
@@ -280,7 +280,7 @@ export default function AuditGeneralView() {
                 <CaseTools
                     searchValue={searchTerm}
                     onSearchChange={setSearchTerm}
-                    searchPlaceholder="Buscar en logs..."
+                    searchPlaceholder="Buscar por usuario, acción o detalle..."
 
                     // Filtro de Módulo (usando nucleoFilter)
                     nucleoFilter={selectedEntity}
