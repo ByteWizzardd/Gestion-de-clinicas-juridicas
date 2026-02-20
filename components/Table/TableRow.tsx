@@ -79,9 +79,9 @@ export function TableRow<T extends Record<string, unknown>>({
     const shouldHideEdit = hideEdit ? hideEdit(data) : false;
     const shouldHideDelete = hideDelete ? hideDelete(data) : false;
     return (
-        <tr className={`border-none flex items-center ${rowIndex % 2 === 1 ? 'bg-on-primary-light' : ''} ${isSelected ? 'bg-primary/5' : ''}`}>
+        <tr className={`border-none ${rowIndex % 2 === 1 ? 'bg-on-primary-light' : ''} ${isSelected ? 'bg-primary/5' : ''}`}>
             {selectable && (
-                <td className={`py-4 sm:py-5 text-center px-3 w-12 flex justify-center items-center ${rowIndex % 2 === 1 ? 'rounded-l-xl' : ''}`}>
+                <td className={`py-4 sm:py-5 text-center px-3 w-12 ${rowIndex % 2 === 1 ? 'rounded-l-xl' : ''}`}>
                     <input
                         type="checkbox"
                         className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
@@ -93,7 +93,7 @@ export function TableRow<T extends Record<string, unknown>>({
             {cells.map((cell, index) => (
                 <td
                     key={index}
-                    className={`py-4 sm:py-5 text-center flex-1 text-base px-3 min-w-0
+                    className={`py-4 sm:py-5 text-center text-base px-3 min-w-0
                         ${rowIndex % 2 === 1 && index === 0 && !selectable ? 'rounded-l-xl' : ''}
                     `}
                 >
@@ -101,7 +101,7 @@ export function TableRow<T extends Record<string, unknown>>({
                 </td>
             ))}
             <td
-                className={`py-4 sm:py-5 text-center flex-1 px-3
+                className={`py-4 sm:py-5 text-center px-3
                     ${rowIndex % 2 === 1 ? 'rounded-r-xl' : ''}
                 `}
             >

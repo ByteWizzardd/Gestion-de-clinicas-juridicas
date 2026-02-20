@@ -133,8 +133,8 @@ export default function Table<T extends Record<string, unknown>>({
               />
             ))
           ) : (
-            <tr className="border-none flex items-center justify-center w-full">
-              <td className="text-center py-8 text-gray-500 w-full">
+            <tr className="border-none">
+              <td colSpan={columns.length + (selectable ? 2 : 1)} className="text-center py-8 text-gray-500">
                 No se encontraron casos que coincidan con los filtros
               </td>
             </tr>
