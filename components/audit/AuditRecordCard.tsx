@@ -1372,7 +1372,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         return renderRow(
           icon,
           <>
-            {exitoso ? (isActive ? 'Inicio de sesión' : 'Sesión cerrada') : (r.detalle || 'Intento de acceso fallido')}
+            {exitoso ? (isActive ? 'Inicio de sesión' : 'Sesión cerrada') : 'Intento de acceso fallido'}
             {' - '}
             {r.cedula_usuario ? (
               <Link

@@ -125,7 +125,7 @@ function SesionCard({ sesion }: { sesion: SesionExtended }) {
                                 {sesion.exitoso ? (
                                     isActive ? 'Inicio de sesión' : 'Sesión cerrada'
                                 ) : (
-                                    sesion.detalle || 'Intento de acceso fallido'
+                                    'Intento de acceso fallido'
                                 )}
                                 {' - '}
                                 {sesion.cedula_usuario ? (
