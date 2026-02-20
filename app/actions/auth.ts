@@ -78,7 +78,7 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
       return {
         success: false,
         error: {
-          message: 'Usuario no encontrado',
+          message: 'Credenciales inválidas',
           code: 'NOT_FOUND',
         },
       };
@@ -88,7 +88,7 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
       return {
         success: false,
         error: {
-          message: 'El usuario está deshabilitado. Contacte al coordinador.',
+          message: 'Usuario deshabilitado. Contacte al administrador',
           code: 'USER_DISABLED',
         },
       };
@@ -150,7 +150,7 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : 'Error al iniciar sesión',
+        message: 'Credenciales inválidas',
         code: 'UNKNOWN_ERROR',
       },
     };

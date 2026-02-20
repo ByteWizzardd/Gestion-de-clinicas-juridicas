@@ -23,11 +23,11 @@ function VerifyCodeContent() {
     useEffect(() => {
         const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
         setPrefersReducedMotion(mediaQuery.matches);
-        
+
         const handleChange = (e: MediaQueryListEvent) => {
             setPrefersReducedMotion(e.matches);
         };
-        
+
         mediaQuery.addEventListener("change", handleChange);
         return () => mediaQuery.removeEventListener("change", handleChange);
     }, []);
@@ -102,7 +102,7 @@ function VerifyCodeContent() {
         }
     };
 
-    return(
+    return (
         <div className="bg-background relative overflow-hidden min-h-svh">
             <AnimatePresence>
                 {!isExiting && (
@@ -120,74 +120,74 @@ function VerifyCodeContent() {
                     </motion.div>
                 )}
             </AnimatePresence>
-            
+
             {/* Contenedor principal con layout flex */}
             <div className="flex min-h-svh items-center justify-center sm:justify-start px-4 sm:px-12 relative">
                 <AnimatePresence>
                     {!isExiting && (
-                        <motion.div 
+                        <motion.div
                             key="verify-code-form"
                             className="w-full max-w-md mx-auto sm:mx-0 sm:pl-15"
                             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}>
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-6 w-full">
-                        <div className="mb-5">
-                            <h1 className="text-3xl sm:text-5xl font-normal text-foreground mb-2 text-center font-primary">Verificar Código</h1>
-                            <div className="w-full h-0.5 bg-secondary mt-5"/>
-                        </div>
-                        <p className="text-sm sm:text-base text-gray-600 text-center mb-2 wrap-break-word">
-                            {email ? `Ingrese el código de 6 dígitos enviado a ${email}` : 'Ingrese el código de 6 dígitos enviado a su correo electrónico'}
-                        </p>
-                        {error && (
-                            <div className="bg-danger-light border border-danger rounded-lg p-3 text-danger text-sm">
-                                {error}
-                            </div>
-                        )}
-                        {success && (
-                            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-green-700 text-sm">
-                                Código verificado correctamente. Redirigiendo...
-                            </div>
-                        )}
-                        <div className="flex flex-col gap-4 font-urbanist!">
-                            <Input 
-                                label="Código de verificación" 
-                                placeholder="000000" 
-                                className="bg-gray-100 text-center text-xl sm:text-2xl tracking-widest font-mono"
-                                name="codigo"
-                                type="text"
-                                inputMode="numeric"
-                                maxLength={6}
-                                value={formData.codigo}
-                                onChange={handleInputChange}
-                                required
-                                disabled={success}
-                            />
-                        </div>
-                        <div className="flex flex-col gap-2 mt-4 font-urbanist!">
-                            <Button 
-                                children={success ? "Verificando..." : "Verificar código"} 
-                                variant="primary" 
-                                size="lg" 
-                                isLoading={isLoading}  
-                                className="rounded-3xl! text-xl! w-full" 
-                                type="submit"
-                                disabled={isLoading || success}
-                            />
-                        </div>
-                        <p className="text-sm text-gray-500 text-center">
-                            ¿No recibiste el código? <Link href="/auth/forgot-password" className="text-primary hover:underline">Solicitar uno nuevo</Link>
-                        </p>
-                    </form>
-                    </motion.div>
+                            <form onSubmit={handleSubmit} className="flex flex-col gap-6 w-full">
+                                <div className="mb-5">
+                                    <h1 className="text-3xl sm:text-5xl font-normal text-foreground mb-2 text-center font-primary">Verificar Código</h1>
+                                    <div className="w-full h-0.5 bg-secondary mt-5" />
+                                </div>
+                                <p className="text-sm sm:text-base text-gray-600 text-center mb-2 wrap-break-word">
+                                    {email ? `Ingrese el código de 6 dígitos enviado a ${email}` : 'Ingrese el código de 6 dígitos enviado a su correo electrónico'}
+                                </p>
+                                {error && (
+                                    <div className="bg-danger/11 border border-danger/20 rounded-lg p-3 text-danger text-sm font-medium">
+                                        {error}
+                                    </div>
+                                )}
+                                {success && (
+                                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-green-700 text-sm">
+                                        Código verificado correctamente. Redirigiendo...
+                                    </div>
+                                )}
+                                <div className="flex flex-col gap-4 font-urbanist!">
+                                    <Input
+                                        label="Código de verificación"
+                                        placeholder="000000"
+                                        className="bg-gray-100 text-center text-xl sm:text-2xl tracking-widest font-mono"
+                                        name="codigo"
+                                        type="text"
+                                        inputMode="numeric"
+                                        maxLength={6}
+                                        value={formData.codigo}
+                                        onChange={handleInputChange}
+                                        required
+                                        disabled={success}
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2 mt-4 font-urbanist!">
+                                    <Button
+                                        children={success ? "Verificando..." : "Verificar código"}
+                                        variant="primary"
+                                        size="lg"
+                                        isLoading={isLoading}
+                                        className="rounded-3xl! text-xl! w-full"
+                                        type="submit"
+                                        disabled={isLoading || success}
+                                    />
+                                </div>
+                                <p className="text-sm text-gray-500 text-center">
+                                    ¿No recibiste el código? <Link href="/auth/forgot-password" className="text-primary hover:underline">Solicitar uno nuevo</Link>
+                                </p>
+                            </form>
+                        </motion.div>
                     )}
                 </AnimatePresence>
-                
+
                 {/* Círculo con información y decoración - Derecha */}
                 <AnimatePresence>
                     {!isExiting && (
-                        <motion.div 
+                        <motion.div
                             key="circle"
                             className="hidden lg:block absolute right-5 top-1/2 -translate-y-1/2 translate-x-1/2 font-primary"
                             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}

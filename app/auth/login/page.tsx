@@ -54,7 +54,7 @@ export default function LoginPage() {
         setError(null);
 
         if (!formData.nombreUsuario || !formData.password) {
-            setError("Por favor complete todos los campos");
+            setError("Credenciales inválidas");
             return;
         }
 
@@ -124,7 +124,7 @@ export default function LoginPage() {
                                     <div className="w-full h-0.5 bg-secondary mt-5" />
                                 </div>
                                 {error && (
-                                    <div className="bg-danger-light border border-danger rounded-lg p-3 text-danger text-sm">
+                                    <div className="bg-danger/11 border border-danger/20 rounded-lg p-3 text-danger text-sm font-medium">
                                         {error}
                                     </div>
                                 )}

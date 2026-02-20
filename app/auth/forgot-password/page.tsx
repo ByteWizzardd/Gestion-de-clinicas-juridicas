@@ -22,11 +22,11 @@ export default function ForgotPasswordPage() {
     useEffect(() => {
         const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
         setPrefersReducedMotion(mediaQuery.matches);
-        
+
         const handleChange = (e: MediaQueryListEvent) => {
             setPrefersReducedMotion(e.matches);
         };
-        
+
         mediaQuery.addEventListener("change", handleChange);
         return () => mediaQuery.removeEventListener("change", handleChange);
     }, []);
@@ -74,7 +74,7 @@ export default function ForgotPasswordPage() {
 
             setResult(actionResult);
             setSuccess(true);
-            
+
             // Solo redirigir si el correo existe (emailFound === true)
             if (actionResult.data?.emailFound) {
                 // Redirigir a verify-code después de 2 segundos solo si el correo existe
@@ -94,7 +94,7 @@ export default function ForgotPasswordPage() {
         }
     };
 
-    return(
+    return (
         <div className="bg-background relative overflow-hidden min-h-svh">
             <AnimatePresence>
                 {!isExiting && (
@@ -112,73 +112,72 @@ export default function ForgotPasswordPage() {
                     </motion.div>
                 )}
             </AnimatePresence>
-            
+
             {/* Contenedor principal con layout flex */}
             <div className="flex min-h-svh items-center justify-center sm:justify-start px-4 sm:px-12 relative">
                 <AnimatePresence>
                     {!isExiting && (
-                        <motion.div 
+                        <motion.div
                             key="forgot-password-form"
                             className="w-full max-w-md mx-auto sm:mx-0 sm:pl-15"
                             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}>
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-6 w-full">
-                        <div className="mb-5">
-                            <h1 className="text-3xl sm:text-5xl font-normal text-foreground mb-2 text-center font-primary">¿Olvidó su contraseña?</h1>
-                            <div className="w-full h-0.5 bg-secondary mt-5"/>
-                        </div>
-                        <p className="text-sm sm:text-base text-gray-600 text-center mb-2">
-                            Ingrese su correo electrónico y le enviaremos instrucciones para restablecer su contraseña.
-                        </p>
-                        {error && (
-                            <div className="bg-danger-light border border-danger rounded-lg p-3 text-danger text-sm">
-                                {error}
-                            </div>
-                        )}
-                        {success && (
-                            <div className={`rounded-lg p-3 text-sm ${
-                                result?.data?.emailFound === false 
-                                    ? "bg-yellow-50 border border-yellow-200 text-yellow-700" 
-                                    : "bg-green-50 border border-green-200 text-green-700"
-                            }`}>
-                                {result?.data?.message || "Si el correo existe en nuestro sistema, recibirás instrucciones para restablecer tu contraseña."}
-                            </div>
-                        )}
-                        <div className="flex flex-col gap-4 font-urbanist!">
-                            <Input 
-                                label="Correo electrónico" 
-                                placeholder="Ingrese su correo electrónico" 
-                                className="bg-gray-100 text-base"
-                                name="email"
-                                type="email"
-                                value={formData.email}
-                                onChange={handleInputChange}
-                                required
-                                disabled={success}
-                            />
-                        </div>
-                        <div className="flex flex-col gap-2 mt-4 font-urbanist!">
-                            <Button 
-                                children={success ? "Redirigiendo..." : "Enviar instrucciones"} 
-                                variant="primary" 
-                                size="lg" 
-                                isLoading={isLoading}  
-                                className="rounded-3xl! text-xl! w-full" 
-                                type="submit"
-                                disabled={isLoading || success}
-                            />
-                        </div>
-                    </form>
-                    </motion.div>
+                            <form onSubmit={handleSubmit} className="flex flex-col gap-6 w-full">
+                                <div className="mb-5">
+                                    <h1 className="text-3xl sm:text-5xl font-normal text-foreground mb-2 text-center font-primary">¿Olvidó su contraseña?</h1>
+                                    <div className="w-full h-0.5 bg-secondary mt-5" />
+                                </div>
+                                <p className="text-sm sm:text-base text-gray-600 text-center mb-2">
+                                    Ingrese su correo electrónico y le enviaremos instrucciones para restablecer su contraseña.
+                                </p>
+                                {error && (
+                                    <div className="bg-danger/11 border border-danger/20 rounded-lg p-3 text-danger text-sm font-medium">
+                                        {error}
+                                    </div>
+                                )}
+                                {success && (
+                                    <div className={`rounded-lg p-3 text-sm ${result?.data?.emailFound === false
+                                            ? "bg-yellow-50 border border-yellow-200 text-yellow-700"
+                                            : "bg-green-50 border border-green-200 text-green-700"
+                                        }`}>
+                                        {result?.data?.message || "Si el correo existe en nuestro sistema, recibirás instrucciones para restablecer tu contraseña."}
+                                    </div>
+                                )}
+                                <div className="flex flex-col gap-4 font-urbanist!">
+                                    <Input
+                                        label="Correo electrónico"
+                                        placeholder="Ingrese su correo electrónico"
+                                        className="bg-gray-100 text-base"
+                                        name="email"
+                                        type="email"
+                                        value={formData.email}
+                                        onChange={handleInputChange}
+                                        required
+                                        disabled={success}
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2 mt-4 font-urbanist!">
+                                    <Button
+                                        children={success ? "Redirigiendo..." : "Enviar instrucciones"}
+                                        variant="primary"
+                                        size="lg"
+                                        isLoading={isLoading}
+                                        className="rounded-3xl! text-xl! w-full"
+                                        type="submit"
+                                        disabled={isLoading || success}
+                                    />
+                                </div>
+                            </form>
+                        </motion.div>
                     )}
                 </AnimatePresence>
-                
+
                 {/* Círculo con información y decoración - Derecha */}
                 <AnimatePresence>
                     {!isExiting && (
-                        <motion.div 
+                        <motion.div
                             key="circle"
                             className="hidden lg:block absolute right-5 top-1/2 -translate-y-1/2 translate-x-1/2 font-primary"
                             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}

@@ -44,7 +44,7 @@ export const authService = {
 
     // Verificar contraseña
     if (!user.password_hash) {
-      throw new UnauthorizedError('Usuario sin contraseña configurada');
+      throw new UnauthorizedError('Credenciales inválidas');
     }
 
     const passwordMatch = await comparePassword(data.password, user.password_hash);
