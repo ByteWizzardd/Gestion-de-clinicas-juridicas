@@ -9,10 +9,12 @@ import {
   FileText,
   Filter as FilterIcon,
   Flag,
+  Layers,
   User,
   UserCheck,
   X,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { createPortal } from 'react-dom';
@@ -46,6 +48,7 @@ interface FilterProps {
   materias?: { id_materia: number; nombre_materia: string; habilitado?: boolean }[];
   materiaOptions?: { value: string; label: string }[];
   nucleoLabel?: string;
+  nucleoIcon?: LucideIcon;
   nucleoAllLabel?: string;
   fechaInicio?: string;
   fechaFin?: string;
@@ -58,6 +61,11 @@ interface FilterProps {
   recentActivityFilter?: boolean;
   onRecentActivityChange?: (value: boolean) => void;
   showRecentActivity?: boolean;
+  // Filtro de operación (independiente de trámite)
+  operacionFilter?: string;
+  onOperacionChange?: (value: string) => void;
+  operacionOptions?: { value: string; label: string }[];
+  operacionLabel?: string;
 }
 
 function Filter({
@@ -96,6 +104,7 @@ function Filter({
   materiaOptions,
   nucleoLabel = 'Núcleo',
   nucleoAllLabel = 'Todos los núcleos',
+  nucleoIcon: NucleoIcon = Building2,
   fechaInicio,
   fechaFin,
   onFechaInicioChange,
@@ -107,10 +116,14 @@ function Filter({
   recentActivityFilter,
   onRecentActivityChange,
   showRecentActivity = false,
+  operacionFilter,
+  onOperacionChange,
+  operacionOptions = [],
+  operacionLabel = 'Operación',
 }: FilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<
-    'nucleo' | 'materia' | 'term' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas' | null
+    'nucleo' | 'materia' | 'term' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas' | 'operacion' | null
   >(null);
   const [nucleos, setNucleos] = useState<Array<{ id_nucleo: number; nombre_nucleo: string; habilitado?: boolean }>>([]);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 });
@@ -173,7 +186,7 @@ function Filter({
 
   // Eliminar useEffect de posicionamiento automático y usar el evento de click
   const handleSubmenuToggle = (
-    type: 'nucleo' | 'materia' | 'term' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas',
+    type: 'nucleo' | 'materia' | 'term' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas' | 'operacion',
     e: React.MouseEvent<HTMLButtonElement>
   ) => {
     if (activeSubmenu === type) {
@@ -286,7 +299,8 @@ function Filter({
     (materiaFilter ? 1 : 0) +
     (termFilter ? 1 : 0) +
     ((fechaInicio || fechaFin) ? 1 : 0) +
-    (recentActivityFilter ? 1 : 0);
+    (recentActivityFilter ? 1 : 0) +
+    (operacionFilter ? 1 : 0);
 
   const hasActiveFilter = activeFilterCount > 0;
 
@@ -305,6 +319,7 @@ function Filter({
         if (onCasosAsignadosChange) onCasosAsignadosChange(false);
         if (onFechaInicioChange) onFechaInicioChange('');
         if (onFechaFinChange) onFechaFinChange('');
+        if (onOperacionChange) onOperacionChange('');
         if (onRecentActivityChange) onRecentActivityChange(false);
       }
     } catch (e) {
@@ -373,6 +388,11 @@ function Filter({
           handler = onNacionalidadChange || (() => { });
           allLabel = 'Todas las nacionalidades';
           break;
+        case 'operacion':
+          options = operacionOptions;
+          handler = onOperacionChange || (() => { });
+          allLabel = `Todas las operaciones`;
+          break;
       }
     }
 
@@ -399,6 +419,9 @@ function Filter({
       case 'nacionalidad':
         filterValue = nacionalidadFilter || '';
         break;
+      case 'operacion':
+        filterValue = operacionFilter || '';
+        break;
     }
 
     // Si es el submenú de fechas, renderizar DatePickers
@@ -420,7 +443,7 @@ function Filter({
                 zIndex: 10000,
                 width: submenuPosition.width || undefined,
               }}
-              className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[200px] p-4 max-h-[calc(100vh-120px)] overflow-y-auto shadow-xl"
+              className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[200px] p-4 max-h-[450px] overflow-y-auto shadow-xl"
             >
               <div className="space-y-3">
                 {/* Opciones rápidas de fecha (mismo patrón que Citas) */}
@@ -547,7 +570,7 @@ function Filter({
               zIndex: 10000,
               width: submenuPosition.width || undefined,
             }}
-            className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[180px] p-2 max-h-[calc(100vh-120px)] overflow-y-auto shadow-xl"
+            className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[180px] p-2 max-h-[350px] overflow-y-auto shadow-xl"
           >
             <motion.button
               type="button"
@@ -639,7 +662,7 @@ function Filter({
                   zIndex: 9999,
                   width: menuPosition.width || undefined,
                 }}
-                className="bg-white border border-gray-300 rounded-2xl shadow-lg w-auto min-w-[180px] p-2 max-h-[calc(100vh-120px)] overflow-y-auto shadow-xl"
+                className="bg-white border border-gray-300 rounded-2xl shadow-lg w-auto min-w-[180px] p-2 max-h-[450px] overflow-y-auto shadow-xl"
               >
                 {/* Opción: Rango de Fechas */}
                 {showDateRange && (onFechaInicioChange || onFechaFinChange) && (
@@ -687,7 +710,7 @@ function Filter({
                       />
                       <div className="flex-1" /> {/* Spacer agregado nuevamente para asegurar alineación derecha */}
                       <span>{nucleoLabel}</span>
-                      <Building2 className="w-4 h-4" />
+                      <NucleoIcon className="w-4 h-4" />
                     </motion.button>
                     <div className="border-t border-gray-200 my-2"></div>
                   </>
@@ -813,6 +836,31 @@ function Filter({
                       <div className="flex-1" />
                       <span>Trámite</span>
                       <FileText className="w-4 h-4" />
+                    </motion.button>
+                    <div className="border-t border-gray-200 my-2"></div>
+                  </>
+                )}
+
+                {/* Opción: Operación */}
+                {onOperacionChange && (
+                  <>
+                    <motion.button
+                      ref={activeSubmenu === 'operacion' ? activeButtonRef : undefined}
+                      type="button"
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      onClick={(e) => handleSubmenuToggle('operacion', e)}
+                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'operacion'
+                        ? 'bg-primary-light text-primary'
+                        : operacionFilter
+                          ? 'text-primary hover:bg-gray-100'
+                          : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                    >
+                      <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'operacion' ? '-rotate-90' : ''}`} />
+                      <div className="flex-1" />
+                      <span>{operacionLabel}</span>
+                      <Activity className="w-4 h-4" />
                     </motion.button>
                     <div className="border-t border-gray-200 my-2"></div>
                   </>

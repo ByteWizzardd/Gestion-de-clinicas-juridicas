@@ -17,7 +17,14 @@ export interface UnifiedAuditLog {
 
 export async function getUnifiedAuditLogsAction(
     page: number = 1,
-    limit: number = 50
+    limit: number = 50,
+    filters?: {
+        entidad?: string;
+        usuarioId?: string;
+        operacion?: string;
+        fechaInicio?: string;
+        fechaFin?: string;
+    }
 ): Promise<{ logs: UnifiedAuditLog[], totalCount: number }> {
     const authResult = await requireAuthInServerActionWithCode();
 
@@ -34,7 +41,15 @@ export async function getUnifiedAuditLogsAction(
         const query = loadSQL('audit/get-unified-logs.sql');
         const offset = (page - 1) * limit;
 
-        const result = await pool.query(query, [limit, offset]);
+        const result = await pool.query(query, [
+            limit,
+            offset,
+            filters?.entidad || null,
+            filters?.usuarioId || null,
+            filters?.operacion || null,
+            filters?.fechaInicio || null,
+            filters?.fechaFin || null
+        ]);
 
         // Convert dates to ISO strings for serialization
         const logs = result.rows.map((row: any) => ({

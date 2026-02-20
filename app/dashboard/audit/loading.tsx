@@ -1,5 +1,5 @@
 import { Skeleton } from '@/components/ui/Skeleton';
-import AuditEntityCardSkeleton from '@/components/ui/skeletons/AuditEntityCardSkeleton';
+import AuditRecordCardSkeleton from '@/components/ui/skeletons/AuditRecordCardSkeleton';
 
 export default function AuditLoading() {
     return (
@@ -12,7 +12,7 @@ export default function AuditLoading() {
                 <Skeleton width="50%" height={14} borderRadius="6px" />
             </div>
 
-            {/* Barra de búsqueda */}
+            {/* Barra de búsqueda y filtros */}
             <div className="m-3 mb-6">
                 <div className="w-full flex items-center gap-4">
                     <div className="flex-1 min-w-0">
@@ -22,10 +22,10 @@ export default function AuditLoading() {
                 </div>
             </div>
 
-            {/* Grid de cards skeleton */}
-            <div className="m-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                {Array.from({ length: 12 }).map((_, i) => (
-                    <AuditEntityCardSkeleton key={i} />
+            {/* Cards skeleton (misma estructura que los módulos de auditoría) */}
+            <div className="m-3 space-y-3">
+                {Array.from({ length: 8 }).map((_, i) => (
+                    <AuditRecordCardSkeleton key={i} />
                 ))}
             </div>
         </div>

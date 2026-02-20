@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, ChevronUp, FileText, Calendar, User, X, Check, BookOpen, GraduationCap, Building, Briefcase, Activity, Tag, Tags, Scale, MapPin, Building2, Home, FolderTree, FolderOpen, UserCircle, Users, ArrowRight, UserX, ArrowDown, FileBarChart } from 'lucide-react';
+import { ChevronDown, ChevronUp, FileText, Calendar, User, X, Check, BookOpen, GraduationCap, Building, Briefcase, Activity, Tag, Tags, Scale, MapPin, Building2, Home, FolderTree, FolderOpen, UserCircle, Users, ArrowRight, UserX, ArrowDown, FileBarChart, LogIn, LogOut, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import UserAvatar from '@/components/ui/UserAvatar';
 import { formatDateTime } from '@/lib/utils/date-formatter';
@@ -32,7 +32,8 @@ import type {
   AccionEliminadaAuditRecord,
   EquipoActualizadoAuditRecord,
   MiembroEquipoAudit,
-  ReporteGeneradoAuditRecord
+  ReporteGeneradoAuditRecord,
+  SesionAuditRecord
 } from '@/types/audit';
 
 type AuditRecord = SoporteAuditRecord | SoporteCreadoAuditRecord | SoporteDescargadoAuditRecord | CitaEliminadaAuditRecord | CitaActualizadaAuditRecord | CitaCreadaAuditRecord | UsuarioEliminadoAuditRecord | UsuarioHabilitadoAuditRecord | UsuarioActualizadoCamposAuditRecord | UsuarioCreadoAuditRecord | CasoEliminadoAuditRecord | CasoActualizadoAuditRecord | CasoCreadoAuditRecord | SolicitanteEliminadoAuditRecord | SolicitanteActualizadoAuditRecord | SolicitanteCreadoAuditRecord | EstudianteInscritoAuditRecord | BeneficiarioEliminadoAuditRecord | BeneficiarioActualizadoAuditRecord | BeneficiarioInscritoAuditRecord | AccionCreadaAuditRecord | AccionActualizadaAuditRecord | AccionEliminadaAuditRecord | EquipoActualizadoAuditRecord | any;
@@ -1331,6 +1332,71 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               r.id_usuario_genero
             )}
           </>
+        );
+      }
+
+      case 'sesion': {
+        const r = record as SesionAuditRecord;
+        const isActive = !r.fecha_cierre;
+        const exitoso = r.exitoso !== false;
+
+        // Parse user agent
+        const ua = (r as any).dispositivo || '';
+        let browser = 'Desconocido';
+        let os = 'Desconocido';
+        if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
+        else if (ua.includes('Firefox')) browser = 'Firefox';
+        else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+        else if (ua.includes('Edg')) browser = 'Edge';
+        else if (ua.includes('Opera') || ua.includes('OPR')) browser = 'Opera';
+        if (ua.includes('Windows NT 10')) os = 'Windows 10/11';
+        else if (ua.includes('Windows')) os = 'Windows';
+        else if (ua.includes('Mac OS X')) os = 'macOS';
+        else if (ua.includes('Linux')) os = 'Linux';
+        else if (ua.includes('Android')) os = 'Android';
+        else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+
+        // Build user name
+        let nombreUsuario = (r as any).nombre_completo_usuario_accion;
+        if (!nombreUsuario && ((r as any).nombres || (r as any).apellidos)) {
+          nombreUsuario = `${(r as any).nombres || ''} ${(r as any).apellidos || ''}`.trim();
+        }
+        if (!nombreUsuario) {
+          nombreUsuario = (r as any).nombre_usuario || 'Usuario desconocido';
+        }
+
+        const icon = exitoso
+          ? (isActive ? <LogIn className="w-5 h-5 text-gray-600" /> : <LogOut className="w-5 h-5 text-gray-600" />)
+          : <XCircle className="w-5 h-5 text-gray-600" />;
+
+        return renderRow(
+          icon,
+          <>
+            {exitoso ? (isActive ? 'Inicio de sesión' : 'Sesión cerrada') : 'Intento de acceso fallido'}
+            {' - '}
+            {r.cedula_usuario ? (
+              <Link
+                href={`/dashboard/users/${r.cedula_usuario}`}
+                className="text-primary hover:underline font-medium transition-colors"
+                onClick={(e: any) => e.stopPropagation()}
+              >
+                {nombreUsuario}
+              </Link>
+            ) : (
+              <span>{nombreUsuario}</span>
+            )}
+            {isActive && exitoso && (
+              <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">
+                Activa
+              </span>
+            )}
+            {!exitoso && (
+              <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full">
+                Fallido
+              </span>
+            )}
+          </>,
+          <>IP: {(r as any).ip_direccion || 'No registrada'} • {browser} / {os}</>
         );
       }
 
@@ -4751,6 +4817,107 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           </div>
         );
       }
+
+      case 'sesion': {
+        const r = record as SesionAuditRecord;
+        const isActive = !r.fecha_cierre;
+        const exitoso = r.exitoso !== false;
+
+        // Parse user agent
+        const ua = (r as any).dispositivo || '';
+        let browser = 'Desconocido';
+        let os = 'Desconocido';
+        if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
+        else if (ua.includes('Firefox')) browser = 'Firefox';
+        else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+        else if (ua.includes('Edg')) browser = 'Edge';
+        else if (ua.includes('Opera') || ua.includes('OPR')) browser = 'Opera';
+        if (ua.includes('Windows NT 10')) os = 'Windows 10/11';
+        else if (ua.includes('Windows')) os = 'Windows';
+        else if (ua.includes('Mac OS X')) os = 'macOS';
+        else if (ua.includes('Linux')) os = 'Linux';
+        else if (ua.includes('Android')) os = 'Android';
+        else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+
+        // Build user name
+        let nombreUsuario = (r as any).nombre_completo_usuario_accion;
+        if (!nombreUsuario && ((r as any).nombres || (r as any).apellidos)) {
+          nombreUsuario = `${(r as any).nombres || ''} ${(r as any).apellidos || ''}`.trim();
+        }
+        if (!nombreUsuario) {
+          nombreUsuario = (r as any).nombre_usuario || 'Usuario desconocido';
+        }
+
+        // Duration helper
+        const formatDuration = (inicio: string, cierre: string | null): string => {
+          if (!cierre) return 'Activa';
+          const start = new Date(inicio);
+          const end = new Date(cierre);
+          const diff = end.getTime() - start.getTime();
+          const hours = Math.floor(diff / (1000 * 60 * 60));
+          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          if (hours > 0) return `${hours}h ${minutes}m`;
+          return `${minutes}m`;
+        };
+
+        return (
+          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">Usuario</p>
+                <p className="text-sm text-gray-600">
+                  Nombre:{' '}
+                  {r.cedula_usuario ? (
+                    <Link
+                      href={`/dashboard/users/${r.cedula_usuario}`}
+                      className="text-primary hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {nombreUsuario}
+                    </Link>
+                  ) : (
+                    nombreUsuario
+                  )}
+                </p>
+                <p className="text-sm text-gray-600">Cédula: {r.cedula_usuario || 'N/A'}</p>
+                {(r as any).nombre_usuario && (
+                  <p className="text-sm text-gray-600">Username: {(r as any).nombre_usuario}</p>
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">Conexión</p>
+                <p className="text-sm text-gray-600">Dirección IP: {(r as any).ip_direccion || 'No registrada'}</p>
+                <p className="text-sm text-gray-600">Navegador: {browser}</p>
+                <p className="text-sm text-gray-600">Sistema Operativo: {os}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">Tiempos</p>
+                <p className="text-sm text-gray-600">Inicio: {formatDate(r.fecha_inicio)}</p>
+                <p className="text-sm text-gray-600">
+                  Cierre: {r.fecha_cierre ? formatDate(r.fecha_cierre) : 'Sin cerrar (Activa)'}
+                </p>
+                {r.fecha_cierre && (
+                  <p className="text-sm text-gray-600">Duración: {formatDuration(r.fecha_inicio, r.fecha_cierre)}</p>
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">Estado</p>
+                <p className={`text-sm ${exitoso ? 'text-green-600' : 'text-red-600'}`}>
+                  {exitoso ? 'Autenticación exitosa' : 'Credenciales incorrectas o usuario no encontrado'}
+                </p>
+              </div>
+            </div>
+            {(r as any).dispositivo && (
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">User Agent</p>
+                <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded font-mono text-xs break-all">{(r as any).dispositivo}</p>
+              </div>
+            )}
+          </div>
+        );
+      }
     }
   };
 
@@ -4859,6 +5026,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       // Reportes
       case 'reporte-generado':
         return (record as ReporteGeneradoAuditRecord).fecha_generacion;
+      // Sesiones
+      case 'sesion':
+        return (record as SesionAuditRecord).fecha_inicio;
     }
   };
 

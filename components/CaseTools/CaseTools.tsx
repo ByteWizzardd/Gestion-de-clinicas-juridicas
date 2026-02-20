@@ -1,6 +1,7 @@
 import Add from "./Add";
 import Filter from "./Filter";
 import Search from "./search";
+import type { LucideIcon } from 'lucide-react';
 
 type CaseToolsProps = {
     addLabel?: string;
@@ -26,6 +27,7 @@ type CaseToolsProps = {
     materiaOptions?: { value: string; label: string }[];
     nucleoLabel?: string;
     nucleoAllLabel?: string;
+    nucleoIcon?: LucideIcon;
     estatusLabel?: string;
     estadoCivilFilter?: string;
     onEstadoCivilChange?: (value: string) => void;
@@ -49,6 +51,11 @@ type CaseToolsProps = {
     termFilter?: string;
     onTermChange?: (value: string) => void;
     termOptions?: { value: string; label: string }[];
+    // Filtro de operación
+    operacionFilter?: string;
+    onOperacionChange?: (value: string) => void;
+    operacionOptions?: { value: string; label: string }[];
+    operacionLabel?: string;
 };
 
 function CaseTools({
@@ -75,6 +82,7 @@ function CaseTools({
     materiaOptions,
     nucleoLabel,
     nucleoAllLabel,
+    nucleoIcon,
     estatusLabel,
     estadoCivilFilter = '',
     onEstadoCivilChange,
@@ -91,7 +99,11 @@ function CaseTools({
     onFechaFinChange,
     termFilter = '',
     onTermChange,
-    termOptions
+    termOptions,
+    operacionFilter = '',
+    onOperacionChange,
+    operacionOptions,
+    operacionLabel,
 }: CaseToolsProps) {
     const hasSearch = onSearchChange !== undefined;
     const hasAdd = Boolean(addLabel || onAddClick);
@@ -105,7 +117,8 @@ function CaseTools({
         onNacionalidadChange !== undefined ||
         onFechaInicioChange !== undefined ||
         onFechaFinChange !== undefined ||
-        onTermChange !== undefined;
+        onTermChange !== undefined ||
+        onOperacionChange !== undefined;
 
     const handleClearFilters = async () => {
         if (onClearFilters) {
@@ -136,6 +149,7 @@ function CaseTools({
         await call(onFechaInicioChange, '');
         await call(onFechaFinChange, '');
         await call(onTermChange, '');
+        await call(onOperacionChange, '');
     };
 
     return (
@@ -173,6 +187,7 @@ function CaseTools({
                         materiaOptions={materiaOptions}
                         nucleoLabel={nucleoLabel}
                         nucleoAllLabel={nucleoAllLabel}
+                        nucleoIcon={nucleoIcon}
                         estatusLabel={estatusLabel}
                         estadoCivilFilter={estadoCivilFilter}
                         onEstadoCivilChange={onEstadoCivilChange}
@@ -190,6 +205,10 @@ function CaseTools({
                         termFilter={termFilter}
                         onTermChange={onTermChange}
                         termOptions={termOptions}
+                        operacionFilter={operacionFilter}
+                        onOperacionChange={onOperacionChange}
+                        operacionOptions={operacionOptions}
+                        operacionLabel={operacionLabel}
                     />
                 )}
                 {hasAdd && <Add label={addLabel} onClick={onAddClick} />}
