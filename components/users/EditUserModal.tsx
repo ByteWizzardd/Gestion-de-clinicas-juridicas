@@ -233,7 +233,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
       showCloseButton={false}
     >
       {form && ( // Renderizar el contenido solo si hay un formulario
-        <div className="p-12 relative">
+        <div className="p-6 sm:p-10 lg:p-12 relative">
           {/* Botón de cerrar */}
           <button
             onClick={onClose}
@@ -403,11 +403,24 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
             </div>
             {/* Footer con botón */}
             <div className="flex flex-col border-t border-gray-200 pt-4">
-              <div className="flex justify-end gap-4 mt-4">
-                <Button type="button" variant="outline" size="xl" onClick={onClose} disabled={loading}>
+              <div className="flex flex-row flex-wrap justify-end gap-3 sm:gap-4 mt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  className="sm:w-auto sm:text-lg"
+                  onClick={onClose}
+                  disabled={loading}
+                >
                   Cancelar
                 </Button>
-                <Button type="submit" variant="primary" size="xl" disabled={loading}>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  className="sm:w-auto sm:text-lg"
+                  disabled={loading}
+                >
                   {loading ? (
                     <>
                       <Loader2 className="w-5 h-5 mr-2 animate-spin" />

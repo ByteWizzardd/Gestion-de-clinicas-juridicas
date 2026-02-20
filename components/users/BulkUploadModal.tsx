@@ -297,11 +297,12 @@ export default function BulkUploadModal({
         )}
 
         {/* Botones */}
-        <div className="flex justify-end gap-3">
+        <div className="flex flex-row flex-wrap justify-end gap-3 mt-4">
           <Button
             variant="outline"
             onClick={handleClose}
             disabled={loading}
+            className="sm:w-auto"
           >
             Cancelar
           </Button>
@@ -311,6 +312,7 @@ export default function BulkUploadModal({
               onClick={handlePreview}
               disabled={!file || !term || loading}
               isLoading={loading}
+              className="sm:w-auto"
             >
               Vista Previa
             </Button>
@@ -321,6 +323,7 @@ export default function BulkUploadModal({
               onClick={handleConfirm}
               disabled={loading}
               isLoading={loading}
+              className="sm:w-auto"
             >
               Confirmar Carga
             </Button>

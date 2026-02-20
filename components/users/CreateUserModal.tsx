@@ -486,7 +486,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
       className="rounded-[30px] sm:rounded-[40px] lg:rounded-[50px] w-[95vw] sm:w-[85vw] lg:w-[70vw] max-w-300 mx-auto"
       showCloseButton={false}
     >
-      <div className="p-12 relative">
+      <div className="p-6 sm:p-10 lg:p-12 relative">
         {/* Botón de cerrar */}
         <button
           onClick={onClose}
@@ -687,11 +687,24 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
               <span className="text-danger font-medium text-sm">*</span>
               <span className="text-sm text-gray-600">Campo obligatorio</span>
             </div>
-            <div className="flex justify-end gap-4">
-              <Button type="button" variant="outline" size="xl" onClick={onClose} disabled={loading}>
+            <div className="flex flex-row flex-wrap justify-end gap-3 sm:gap-4 mt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                className="sm:w-auto sm:text-lg"
+                onClick={onClose}
+                disabled={loading}
+              >
                 Cancelar
               </Button>
-              <Button type="submit" variant="primary" size="xl" disabled={loading}>
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                className="sm:w-auto sm:text-lg"
+                disabled={loading}
+              >
                 {loading ? (
                   <>
                     <Loader2 className="w-5 h-5 mr-2 animate-spin" />

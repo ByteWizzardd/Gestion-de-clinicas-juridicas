@@ -412,7 +412,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         </p>
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-center gap-3 sm:gap-4 w-full px-3">
+      <div className="flex flex-col lg:flex-row lg:items-center gap-4 w-full px-3">
         <div className="flex-1 min-w-0">
           <CaseTools
             searchValue={searchValue}
@@ -434,9 +434,9 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
             nucleoOptions={semestreOptions}
           />
         </div>
-        <div className="flex gap-3 sm:gap-4 items-center shrink-0">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center shrink-0 w-full lg:w-auto">
           {isSelectionMode ? (
-            <div className="flex gap-2 items-center">
+            <div className="flex flex-wrap gap-2 items-center w-full justify-end">
               <button
                 onClick={() => {
                   setIsSelectionMode(false);
@@ -455,7 +455,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
                       className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-red-50 text-red-600 border border-red-200 rounded-full hover:bg-red-100 transition-colors font-medium whitespace-nowrap"
                     >
                       <UserX className="w-5 h-5" />
-                      <span>Deshabilitar ({selectedCedulas.filter(id => usuarios.find(u => u.cedula === id)?.habilitado_sistema).length})</span>
+                      <span className="text-sm sm:text-base">Deshabilitar ({selectedCedulas.filter(id => usuarios.find(u => u.cedula === id)?.habilitado_sistema).length})</span>
                     </button>
                   )}
 
@@ -467,123 +467,125 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <span>Habilitar ({selectedCedulas.filter(id => !usuarios.find(u => u.cedula === id)?.habilitado_sistema).length})</span>
+                      <span className="text-sm sm:text-base">Habilitar ({selectedCedulas.filter(id => !usuarios.find(u => u.cedula === id)?.habilitado_sistema).length})</span>
                     </button>
                   )}
                 </>
               )}
             </div>
           ) : (
-            <DropdownMenu
-              trigger={(isOpen) => (
-                <div
-                  className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-white text-gray-700 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors font-medium whitespace-nowrap"
-                >
-                  <UserX className="w-5 h-5 text-gray-500" />
-                  <span>Gestión en lote</span>
-                  <svg
-                    className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    viewBox="0 0 24 24"
+            <div className="grid grid-cols-2 gap-3 w-full sm:w-auto">
+              <DropdownMenu
+                trigger={(isOpen) => (
+                  <div
+                    className="h-10 px-4 w-full flex items-center cursor-pointer justify-center gap-2 bg-white text-gray-700 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors font-medium whitespace-nowrap"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
+                    <UserX className="w-5 h-5 text-gray-500" />
+                    <span>Gestión en lote</span>
+                    <svg
+                      className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                )}
+                align="left"
+                className="w-full"
+                menuClassName="bg-white border border-gray-300 rounded-2xl shadow-xl min-w-[220px] overflow-hidden py-2"
+              >
+                <div onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setIsSelectionMode(true);
+                    }}
+                    className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 cursor-pointer"
+                  >
+                    <Users className="w-5 h-5 text-gray-500" />
+                    <span>Seleccionar usuarios</span>
+                  </button>
+                  <div className="border-t border-gray-200 my-1"></div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setShowCerrarSemestreConfirm(true);
+                    }}
+                    className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-3 cursor-pointer"
+                  >
+                    <CalendarX2 className="w-5 h-5 text-red-500" />
+                    <span>Cerrar Semestre</span>
+                  </button>
                 </div>
-              )}
-              align="left"
-              className="relative"
-              menuClassName="bg-white border border-gray-300 rounded-2xl shadow-xl min-w-[220px] overflow-hidden py-2"
-            >
-              <div onClick={(e) => e.stopPropagation()}>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    setIsSelectionMode(true);
-                  }}
-                  className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 cursor-pointer"
-                >
-                  <Users className="w-5 h-5 text-gray-500" />
-                  <span>Seleccionar usuarios</span>
-                </button>
-                <div className="border-t border-gray-200 my-1"></div>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    setShowCerrarSemestreConfirm(true);
-                  }}
-                  className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-3 cursor-pointer"
-                >
-                  <CalendarX2 className="w-5 h-5 text-red-500" />
-                  <span>Cerrar Semestre</span>
-                </button>
-              </div>
-            </DropdownMenu>
-          )}
+              </DropdownMenu>
 
-          <DropdownMenu
-            trigger={(isOpen) => (
-              <div
-                className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-primary text-white rounded-full hover:bg-primary-dark transition-colors font-medium whitespace-nowrap"
+              <DropdownMenu
+                trigger={(isOpen) => (
+                  <div
+                    className="h-10 px-4 w-full flex items-center cursor-pointer justify-center gap-2 bg-primary text-white rounded-full hover:bg-primary-dark transition-colors font-medium whitespace-nowrap"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>Registrar Usuario</span>
+                    <svg
+                      className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                )}
+                onOpenChange={setIsDropdownOpen}
+                align="left"
+                className="w-full"
+                menuClassName="bg-white border border-gray-300 rounded-2xl shadow-xl min-w-[220px] overflow-hidden py-2"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                <span>Registrar Usuario</span>
-                <svg
-                  className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            )}
-            onOpenChange={setIsDropdownOpen}
-            align="left"
-            className="relative"
-            menuClassName="bg-white border border-gray-300 rounded-2xl shadow-xl min-w-[220px] overflow-hidden py-2"
-          >
-            <div onClick={(e) => e.stopPropagation()}>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  setIsDropdownOpen(false);
-                  Promise.resolve().then(() => {
-                    setIsCreateUserModalOpen(true);
-                  });
-                }}
-                className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 cursor-pointer"
-              >
-                <UserPlus className="w-5 h-5 text-primary" />
-                <span>Registrar usuario</span>
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  setIsDropdownOpen(false);
-                  Promise.resolve().then(() => {
-                    setIsBulkUploadModalOpen(true);
-                  });
-                }}
-                className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 cursor-pointer"
-              >
-                <Users className="w-5 h-5 text-primary" />
-                <span>Registrar usuarios por lotes</span>
-              </button>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setIsDropdownOpen(false);
+                      Promise.resolve().then(() => {
+                        setIsCreateUserModalOpen(true);
+                      });
+                    }}
+                    className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 cursor-pointer"
+                  >
+                    <UserPlus className="w-5 h-5 text-primary" />
+                    <span>Registrar usuario</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setIsDropdownOpen(false);
+                      Promise.resolve().then(() => {
+                        setIsBulkUploadModalOpen(true);
+                      });
+                    }}
+                    className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 cursor-pointer"
+                  >
+                    <Users className="w-5 h-5 text-primary" />
+                    <span>Registrar por lotes</span>
+                  </button>
+                </div>
+              </DropdownMenu>
             </div>
-          </DropdownMenu>
+          )}
         </div>
       </div>
 
