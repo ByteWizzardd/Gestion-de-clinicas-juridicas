@@ -841,5 +841,7 @@ WHERE
     ($5::text IS NULL OR accion ILIKE '%' || $5 || '%') AND
     ($6::timestamp IS NULL OR fecha >= $6) AND
     ($7::timestamp IS NULL OR fecha <= $7)
-ORDER BY fecha DESC
+ORDER BY 
+    CASE WHEN ($8::text = 'asc') THEN fecha END ASC,
+    CASE WHEN ($8::text = 'desc' OR $8::text IS NULL) THEN fecha END DESC
 LIMIT $1 OFFSET $2;

@@ -13,6 +13,7 @@ import {
   User,
   UserCheck,
   X,
+  ArrowUpDown
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -61,11 +62,15 @@ interface FilterProps {
   recentActivityFilter?: boolean;
   onRecentActivityChange?: (value: boolean) => void;
   showRecentActivity?: boolean;
-  // Filtro de operación (independiente de trámite)
   operacionFilter?: string;
   onOperacionChange?: (value: string) => void;
   operacionOptions?: { value: string; label: string }[];
   operacionLabel?: string;
+  // Filtro de Ordenamiento
+  sortFilter?: string;
+  onSortChange?: (value: string) => void;
+  sortOptions?: { value: string; label: string }[];
+  sortLabel?: string;
 }
 
 function Filter({
@@ -120,10 +125,14 @@ function Filter({
   onOperacionChange,
   operacionOptions = [],
   operacionLabel = 'Operación',
+  sortFilter,
+  onSortChange,
+  sortOptions = [],
+  sortLabel = 'Orden',
 }: FilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<
-    'nucleo' | 'materia' | 'term' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas' | 'operacion' | null
+    'nucleo' | 'materia' | 'term' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas' | 'operacion' | 'sort' | null
   >(null);
   const [nucleos, setNucleos] = useState<Array<{ id_nucleo: number; nombre_nucleo: string; habilitado?: boolean }>>([]);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 });
@@ -186,7 +195,7 @@ function Filter({
 
   // Eliminar useEffect de posicionamiento automático y usar el evento de click
   const handleSubmenuToggle = (
-    type: 'nucleo' | 'materia' | 'term' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas' | 'operacion',
+    type: 'nucleo' | 'materia' | 'term' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas' | 'operacion' | 'sort',
     e: React.MouseEvent<HTMLButtonElement>
   ) => {
     if (activeSubmenu === type) {
@@ -300,7 +309,8 @@ function Filter({
     (termFilter ? 1 : 0) +
     ((fechaInicio || fechaFin) ? 1 : 0) +
     (recentActivityFilter ? 1 : 0) +
-    (operacionFilter ? 1 : 0);
+    (operacionFilter ? 1 : 0) +
+    (sortFilter ? 1 : 0);
 
   const hasActiveFilter = activeFilterCount > 0;
 
@@ -320,6 +330,7 @@ function Filter({
         if (onFechaInicioChange) onFechaInicioChange('');
         if (onFechaFinChange) onFechaFinChange('');
         if (onOperacionChange) onOperacionChange('');
+        if (onSortChange) onSortChange('');
         if (onRecentActivityChange) onRecentActivityChange(false);
       }
     } catch (e) {
@@ -393,6 +404,11 @@ function Filter({
           handler = onOperacionChange || (() => { });
           allLabel = `Todas las operaciones`;
           break;
+        case 'sort':
+          options = sortOptions;
+          handler = onSortChange || (() => { });
+          allLabel = 'Orden por defecto';
+          break;
       }
     }
 
@@ -421,6 +437,9 @@ function Filter({
         break;
       case 'operacion':
         filterValue = operacionFilter || '';
+        break;
+      case 'sort':
+        filterValue = sortFilter || '';
         break;
     }
 
@@ -861,6 +880,31 @@ function Filter({
                       <div className="flex-1" />
                       <span>{operacionLabel}</span>
                       <Activity className="w-4 h-4" />
+                    </motion.button>
+                    <div className="border-t border-gray-200 my-2"></div>
+                  </>
+                )}
+
+                {/* Opción: Orden */}
+                {onSortChange && (
+                  <>
+                    <motion.button
+                      ref={activeSubmenu === 'sort' ? activeButtonRef : undefined}
+                      type="button"
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      onClick={(e) => handleSubmenuToggle('sort', e)}
+                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'sort'
+                        ? 'bg-primary-light text-primary'
+                        : sortFilter
+                          ? 'text-primary hover:bg-gray-100'
+                          : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                    >
+                      <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'sort' ? '-rotate-90' : ''}`} />
+                      <div className="flex-1" />
+                      <span>{sortLabel}</span>
+                      <ArrowUpDown className="w-4 h-4" />
                     </motion.button>
                     <div className="border-t border-gray-200 my-2"></div>
                   </>

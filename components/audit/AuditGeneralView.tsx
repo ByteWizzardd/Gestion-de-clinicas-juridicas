@@ -28,6 +28,7 @@ export default function AuditGeneralView() {
     const [selectedOperation, setSelectedOperation] = useState<string>('');
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
+    const [sortOrder, setSortOrder] = useState<string>('desc');
     const [usuariosOptions, setUsuariosOptions] = useState<{ value: string; label: string }[]>([]);
     const { toast } = useToast();
 
@@ -39,7 +40,8 @@ export default function AuditGeneralView() {
                 usuarioId: selectedUser || undefined,
                 operacion: selectedOperation || undefined,
                 fechaInicio: startDate || undefined,
-                fechaFin: endDate || undefined
+                fechaFin: endDate || undefined,
+                orden: sortOrder
             });
             setLogs(newLogs);
             setTotalCount(count);
@@ -49,7 +51,7 @@ export default function AuditGeneralView() {
         } finally {
             setLoading(false);
         }
-    }, [page, rowsPerPage, selectedEntity, selectedUser, selectedOperation, startDate, endDate, toast]);
+    }, [page, rowsPerPage, selectedEntity, selectedUser, selectedOperation, startDate, endDate, sortOrder, toast]);
 
     useEffect(() => {
         fetchLogs();
@@ -58,7 +60,7 @@ export default function AuditGeneralView() {
     // Resetear a página 1 cuando cambian los filtros
     useEffect(() => {
         setPage(1);
-    }, [selectedEntity, selectedUser, selectedOperation, startDate, endDate]);
+    }, [selectedEntity, selectedUser, selectedOperation, startDate, endDate, sortOrder]);
 
 
     useEffect(() => {
@@ -103,6 +105,12 @@ export default function AuditGeneralView() {
         'Inicio de Sesión', 'Cierre de Sesión', 'Intento Fallido',
         'Generación', 'Descarga'
     ].map(o => ({ value: o, label: o }));
+
+    // Opciones de ordenamiento
+    const sortOptions = [
+        { value: 'desc', label: 'Más reciente' },
+        { value: 'asc', label: 'Más antiguo' }
+    ];
 
     const mapUnifiedLogToAuditRecord = (log: UnifiedAuditLog): { record: any, type: AuditRecordType } | null => {
         // Parsear metadata si es string
@@ -299,6 +307,12 @@ export default function AuditGeneralView() {
                     fechaFin={endDate}
                     onFechaInicioChange={setStartDate}
                     onFechaFinChange={setEndDate}
+
+                    // Filtro de Orden
+                    sortFilter={sortOrder}
+                    onSortChange={setSortOrder}
+                    sortLabel="Orden"
+                    sortOptions={sortOptions}
                 />
             </div>
 

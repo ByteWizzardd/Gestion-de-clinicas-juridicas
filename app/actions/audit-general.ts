@@ -24,6 +24,7 @@ export async function getUnifiedAuditLogsAction(
         operacion?: string;
         fechaInicio?: string;
         fechaFin?: string;
+        orden?: string;
     }
 ): Promise<{ logs: UnifiedAuditLog[], totalCount: number }> {
     const authResult = await requireAuthInServerActionWithCode();
@@ -48,7 +49,8 @@ export async function getUnifiedAuditLogsAction(
             filters?.usuarioId || null,
             filters?.operacion || null,
             filters?.fechaInicio || null,
-            filters?.fechaFin || null
+            filters?.fechaFin || null,
+            filters?.orden || 'desc'
         ]);
 
         // Convert dates to ISO strings for serialization

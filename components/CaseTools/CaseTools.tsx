@@ -56,6 +56,11 @@ type CaseToolsProps = {
     onOperacionChange?: (value: string) => void;
     operacionOptions?: { value: string; label: string }[];
     operacionLabel?: string;
+    // Filtro de orden
+    sortFilter?: string;
+    onSortChange?: (value: string) => void;
+    sortOptions?: { value: string; label: string }[];
+    sortLabel?: string;
 };
 
 function CaseTools({
@@ -104,6 +109,10 @@ function CaseTools({
     onOperacionChange,
     operacionOptions,
     operacionLabel,
+    sortFilter,
+    onSortChange,
+    sortOptions,
+    sortLabel,
 }: CaseToolsProps) {
     const hasSearch = onSearchChange !== undefined;
     const hasAdd = Boolean(addLabel || onAddClick);
@@ -118,7 +127,8 @@ function CaseTools({
         onFechaInicioChange !== undefined ||
         onFechaFinChange !== undefined ||
         onTermChange !== undefined ||
-        onOperacionChange !== undefined;
+        onOperacionChange !== undefined ||
+        onSortChange !== undefined;
 
     const handleClearFilters = async () => {
         if (onClearFilters) {
@@ -150,6 +160,7 @@ function CaseTools({
         await call(onFechaFinChange, '');
         await call(onTermChange, '');
         await call(onOperacionChange, '');
+        await call(onSortChange, '');
     };
 
     return (
@@ -209,6 +220,10 @@ function CaseTools({
                         onOperacionChange={onOperacionChange}
                         operacionOptions={operacionOptions}
                         operacionLabel={operacionLabel}
+                        sortFilter={sortFilter}
+                        onSortChange={onSortChange}
+                        sortOptions={sortOptions}
+                        sortLabel={sortLabel}
                     />
                 )}
                 {hasAdd && <Add label={addLabel} onClick={onAddClick} />}
