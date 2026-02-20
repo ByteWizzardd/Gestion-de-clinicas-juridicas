@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { getCurrentUserAction, logoutAction } from '@/app/actions/auth';
 import DashboardLayoutClient from '@/components/dashboard/DashboardLayoutClient';
 
@@ -17,8 +18,12 @@ export default async function DashboardLayout({
     redirect('/auth/login?invalid_token=true');
   }
 
+  // Obtener preferencia del sidebar desde la cookie
+  const cookieStore = await cookies();
+  const isSidebarCollapsed = cookieStore.get('sidebar_collapsed')?.value === 'true';
+
   return (
-    <DashboardLayoutClient user={result.data}>
+    <DashboardLayoutClient user={result.data} initialSidebarCollapsed={isSidebarCollapsed}>
       {children}
     </DashboardLayoutClient>
   );

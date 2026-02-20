@@ -18,9 +18,10 @@ interface DashboardLayoutClientProps {
     rol: string;
   };
   children: React.ReactNode;
+  initialSidebarCollapsed?: boolean;
 }
 
-export default function DashboardLayoutClient({ user, children }: DashboardLayoutClientProps) {
+export default function DashboardLayoutClient({ user, children, initialSidebarCollapsed = false }: DashboardLayoutClientProps) {
   const userRole: UserRole = mapSystemRoleToSidebarRole(user.rol);
   const userName = `${user.nombres} ${user.apellidos}`.trim() || 'Usuario';
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
@@ -56,7 +57,7 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
     <div className="flex h-screen bg-background relative overflow-x-hidden">
       {/* Sidebar escritorio */}
       <div className="shrink-0 hidden md:block">
-        <Sidebar role={userRole} userName={userName} />
+        <Sidebar role={userRole} userName={userName} initialCollapsed={initialSidebarCollapsed} />
       </div>
 
       {/* Sidebar móvil (off-canvas) */}
@@ -78,7 +79,7 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
           }
           aria-hidden={!isMobileSidebarOpen}
         >
-          <Sidebar role={userRole} userName={userName} onNavigate={() => setIsMobileSidebarOpen(false)} />
+          <Sidebar role={userRole} userName={userName} initialCollapsed={initialSidebarCollapsed} onNavigate={() => setIsMobileSidebarOpen(false)} />
         </div>
       </div>
 

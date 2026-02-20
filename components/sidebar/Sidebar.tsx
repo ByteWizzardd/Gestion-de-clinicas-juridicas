@@ -14,9 +14,10 @@ interface SidebarProps {
   role: UserRole;
   userName?: string;
   onNavigate?: () => void;
+  initialCollapsed?: boolean;
 }
 
-const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNavigate }: SidebarProps) {
+const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNavigate, initialCollapsed = false }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const menu = getMenuByRole(role);
@@ -25,8 +26,29 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
   const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<{ nombre: string; rol: string } | null>(null);
 
-  // Estado para colapsar el sidebar
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // Estado para colapsar el sidebar con persistencia
+  const [isCollapsed, setIsCollapsed] = useState(initialCollapsed);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Sincronizar con prop inicial al montar
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Función para cambiar estado y guardar preferencia en cookie y localStorage
+  const toggleSidebar = () => {
+    const newState = !isCollapsed;
+    setIsCollapsed(newState);
+    try {
+      // Guardar en localStorage para compatibilidad
+      localStorage.setItem('sidebar_collapsed', JSON.stringify(newState));
+
+      // Guardar en cookie para que el servidor lo sepa en la próxima carga
+      document.cookie = `sidebar_collapsed=${newState}; path=/; max-age=31536000`; // 1 año
+    } catch (error) {
+      console.error('Error al guardar preferencia del sidebar:', error);
+    }
+  };
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -131,8 +153,8 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
     >
       {/* Botón de toggle (visible al hacer hover o siempre visible) */}
       <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-2 md:-right-3 top-6 md:top-8 bg-white rounded-full p-1 md:p-1.5 shadow-md border border-gray-100 text-gray-500 hover:text-primary transition-colors z-50 opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 cursor-pointer"
+        onClick={toggleSidebar}
+        className="absolute -right-2 md:-right-3 top-6 md:top-8 bg-white rounded-full p-1 md:p-1.5 shadow-md border border-gray-100 text-gray-500 hover:text-primary transition-all duration-300 z-50 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 cursor-pointer hidden md:flex items-center justify-center"
         aria-label={isCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
       >
         {isCollapsed ? (
