@@ -208,11 +208,15 @@ function Filter({
       const width = type === 'fechas' ? 200 : 180;
 
       if (!menuRect || isMobileViewport()) {
-        // En móvil: abrir el submenú como panel sobre el menú (mismo ancho) para evitar overflow lateral
-        const mobileWidth = Math.max(180, window.innerWidth - margin * 2);
+        // En móvil: usar un ancho fijo razonable en lugar de ocupar toda la pantalla
+        const mobileWidth = type === 'fechas' ? 220 : 190;
+        const maxLeft = Math.max(margin, window.innerWidth - mobileWidth - margin);
+        // Intentar alinear con el botón si es posible, si no, centrar o ajustar a márgenes
+        const left = clamp(buttonRect.left, margin, maxLeft);
+
         setSubmenuPosition({
           top: (menuRect?.top ?? buttonRect.bottom) + 8,
-          left: margin,
+          left,
           width: mobileWidth,
         });
       } else {
@@ -247,10 +251,12 @@ function Filter({
     if (!rect || !menuRect) return;
 
     if (isMobileViewport()) {
-      const width = Math.max(180, window.innerWidth - margin * 2);
+      const width = 220; // Ancho fijo razonable para móvil
+      const maxLeft = Math.max(margin, window.innerWidth - width - margin);
+      const left = clamp(rect.left, margin, maxLeft);
       setMenuPosition({
         top: menuPosition.top,
-        left: margin,
+        left,
         width,
       });
       return;
@@ -461,8 +467,9 @@ function Filter({
                 left: submenuPosition.left,
                 zIndex: 10000,
                 width: submenuPosition.width || undefined,
+                maxHeight: isBrowser ? `calc(100vh - ${submenuPosition.top + 16}px)` : '450px',
               }}
-              className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[200px] p-4 max-h-[450px] overflow-y-auto shadow-xl"
+              className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[200px] p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent shadow-xl"
             >
               <div className="space-y-3">
                 {/* Opciones rápidas de fecha (mismo patrón que Citas) */}
@@ -588,8 +595,9 @@ function Filter({
               left: submenuPosition.left,
               zIndex: 10000,
               width: submenuPosition.width || undefined,
+              maxHeight: isBrowser ? `calc(100vh - ${submenuPosition.top + 16}px)` : '350px',
             }}
-            className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[180px] p-2 max-h-[350px] overflow-y-auto shadow-xl"
+            className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[180px] p-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent shadow-xl"
           >
             <motion.button
               type="button"
@@ -680,8 +688,9 @@ function Filter({
                   left: menuPosition.left,
                   zIndex: 9999,
                   width: menuPosition.width || undefined,
+                  maxHeight: isBrowser ? `calc(100vh - ${menuPosition.top + 16}px)` : '450px',
                 }}
-                className="bg-white border border-gray-300 rounded-2xl shadow-lg w-auto min-w-[180px] p-2 max-h-[450px] overflow-y-auto shadow-xl"
+                className="bg-white border border-gray-300 rounded-2xl shadow-lg w-auto min-w-[180px] p-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent shadow-xl"
               >
                 {/* Opción: Rango de Fechas */}
                 {showDateRange && (onFechaInicioChange || onFechaFinChange) && (
