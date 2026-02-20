@@ -434,7 +434,7 @@ export async function generateResumenCasosDOCX(
 
         const doc = new Document({ sections: sections });
         const blob = await Packer.toBlob(doc);
-        const periodLabel = term ? `Semestre_${term}` : `${fechaInicio || 'all'}_${fechaFin || 'all'}`;
+        const periodLabel = term ? `Semestre_${term}` : (fechaInicio && fechaFin ? `${fechaInicio}_${fechaFin}` : 'Historico');
         saveAs(blob, `Informe_Resumen_Casos_${periodLabel}.docx`);
     } catch (error) {
         console.error('Error al generar DOCX:', error);

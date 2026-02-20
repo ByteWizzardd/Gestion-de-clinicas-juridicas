@@ -578,7 +578,8 @@ export async function generateTiposCasosPDFReact(
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Tipos_de_Casos_${fechaInicio || 'all'}_${fechaFin || 'all'}.pdf`;
+    const periodLabel = term ? `Semestre_${term}` : (fechaInicio && fechaFin ? `${fechaInicio}_${fechaFin}` : 'Historico');
+    link.download = `Tipos_de_Casos_${periodLabel}.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -635,7 +636,7 @@ export async function generateEstatusCasosPDFReact(
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    const periodLabel = term ? `Semestre_${term}` : `${fechaInicio || 'historico'}_${fechaFin || 'historico'}`;
+    const periodLabel = term ? `Semestre_${term}` : (fechaInicio && fechaFin ? `${fechaInicio}_${fechaFin}` : 'Historico');
     link.download = `Reporte_Estatus_Casos_${periodLabel}.pdf`;
     document.body.appendChild(link);
     link.click();
@@ -882,7 +883,7 @@ export async function generateInformeResumenPDFReact(
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    const periodLabel = term ? `Semestre_${term}` : `${fechaInicio || 'historico'}_${fechaFin || 'historico'}`;
+    const periodLabel = term ? `Semestre_${term}` : (fechaInicio && fechaFin ? `${fechaInicio}_${fechaFin}` : 'Historico');
     link.download = `Informe_Resumen_${periodLabel}.pdf`;
     document.body.appendChild(link);
     link.click();
@@ -1133,7 +1134,7 @@ export async function generateInformeSocioeconomicoPDF(
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    const periodLabel = term ? `Semestre_${term}` : `${fechaInicio || 'historico'}_${fechaFin || 'historico'}`;
+    const periodLabel = term ? `Semestre_${term}` : (fechaInicio && fechaFin ? `${fechaInicio}_${fechaFin}` : 'Historico');
     link.download = `Informe_Socioeconomico_${periodLabel}.pdf`;
     document.body.appendChild(link);
     link.click();
