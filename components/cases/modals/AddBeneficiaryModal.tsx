@@ -276,23 +276,23 @@ export default function AddBeneficiaryModal({
       className="rounded-[30px] sm:rounded-[40px] lg:rounded-[50px] w-[95vw] sm:w-[90vw] lg:w-[85vw] max-w-[1100px] mx-auto"
       showCloseButton={false}
     >
-      <div className="flex flex-col h-full bg-white rounded-[50px] overflow-hidden max-h-[90vh]">
+      <div className="flex flex-col relative bg-white rounded-[30px] sm:rounded-[40px] lg:rounded-[50px] overflow-hidden max-h-[90vh]">
         {/* Header fijo */}
-        <div className="shrink-0 p-8 pb-4 relative border-b border-gray-200">
+        <div className="shrink-0 p-6 sm:p-8 pb-4 relative border-b border-gray-200">
           <button
             onClick={handleClose}
-            className="absolute top-6 right-6 cursor-pointer p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
+            className="absolute top-4 sm:top-6 right-4 sm:right-6 cursor-pointer p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
             disabled={isSubmitting}
           >
             <X className="w-6 h-6" />
           </button>
 
-          <h2 className="text-2xl font-normal text-foreground">Agregar Beneficiario</h2>
+          <h2 className="text-xl sm:text-2xl font-normal text-foreground pr-10">Agregar Beneficiario</h2>
         </div>
 
         {/* Área de contenido */}
-        <div className="px-8 py-6 overflow-y-auto flex-1 min-h-0 custom-scrollbar">
-          <div className="grid grid-cols-3 gap-x-8 gap-y-4">
+        <div className="px-6 sm:px-8 py-4 sm:py-6 overflow-y-auto flex-1 min-h-0 custom-scrollbar">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
             {/* Cédula con autocompletado */}
             <div className="col-span-1 relative" ref={containerRef}>
               <InputGroup
@@ -414,7 +414,7 @@ export default function AddBeneficiaryModal({
               />
             </div>
 
-            <div className="col-span-3">
+            <div className="col-span-1 sm:col-span-2 lg:col-span-3">
               <Input
                 label="Parentesco con el Solicitante *"
                 value={formData.parentesco}
@@ -429,18 +429,20 @@ export default function AddBeneficiaryModal({
         </div>
 
         {/* Footer fijo */}
-        <div className="shrink-0 flex flex-col border-t border-gray-200 px-8 py-4 bg-white">
-          <div className="flex items-center gap-1 mb-4">
+        <div className="shrink-0 flex flex-col sm:flex-row items-center sm:justify-between gap-4 border-t border-gray-200 px-6 sm:px-8 py-4 bg-white">
+          {/* Nota sobre campos obligatorios */}
+          <div className="flex items-center gap-1">
             <span className="text-danger font-medium text-sm">*</span>
             <span className="text-sm text-gray-600">Campo obligatorio</span>
           </div>
 
-          <div className="flex justify-end gap-3">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             <Button
               variant="outline"
               size="xl"
               onClick={handleClose}
               disabled={isSubmitting}
+              className="flex-1 sm:flex-none"
             >
               Cancelar
             </Button>
@@ -450,6 +452,7 @@ export default function AddBeneficiaryModal({
               onClick={handleSubmit}
               isLoading={isSubmitting}
               disabled={isSubmitting}
+              className="flex-1 sm:flex-none"
             >
               Registrar Beneficiario
             </Button>

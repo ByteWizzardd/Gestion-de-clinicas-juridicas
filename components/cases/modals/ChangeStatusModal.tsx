@@ -84,13 +84,13 @@ export default function ChangeStatusModal({
             className="rounded-[30px] w-[95vw] sm:w-[85vw] lg:w-[70vw] max-w-[600px] mx-auto"
             showCloseButton={false}
         >
-            <div className="flex flex-col relative w-full">
+            <div className="flex flex-col relative w-full max-h-[90vh]">
                 {/* Header fijo */}
-                <div className="shrink-0 p-8 pb-4 relative border-b border-gray-200">
+                <div className="shrink-0 p-6 sm:p-8 pb-4 relative border-b border-gray-200">
                     {/* Botón de cerrar */}
                     <button
                         onClick={handleClose}
-                        className="absolute top-6 right-6 cursor-pointer p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
+                        className="absolute top-4 sm:top-6 right-4 sm:right-6 cursor-pointer p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
                         aria-label="Cerrar modal"
                         disabled={isSubmitting}
                     >
@@ -98,7 +98,7 @@ export default function ChangeStatusModal({
                     </button>
 
                     {/* Título */}
-                    <h2 className="text-2xl font-normal text-foreground">
+                    <h2 className="text-xl sm:text-2xl font-normal text-foreground pr-10">
                         Cambiar Estatus del Caso
                     </h2>
 
@@ -111,7 +111,7 @@ export default function ChangeStatusModal({
                 </div>
 
                 {/* Área de contenido */}
-                <div className="px-8 py-6">
+                <div className="px-6 sm:px-8 py-4 sm:py-6 overflow-y-auto">
                     <form
                         id="change-status-form"
                         onSubmit={handleSubmit}
@@ -169,18 +169,18 @@ export default function ChangeStatusModal({
                 </div>
 
                 {/* Footer fijo */}
-                <div className="shrink-0 flex items-center justify-between border-t border-gray-200 px-8 py-4 bg-white rounded-b-[30px]">
+                <div className="shrink-0 flex flex-col sm:flex-row items-center sm:justify-between gap-4 border-t border-gray-200 px-6 sm:px-8 py-4 bg-white rounded-b-[30px]">
                     <div className="flex items-center gap-1">
                         <span className="text-danger font-medium text-sm">*</span>
                         <span className="text-sm text-gray-600">Campo obligatorio</span>
                     </div>
 
-                    {/* Botón de submit (MOVIDO AL FOOTER) */}
                     <Button
                         type="submit"
                         form="change-status-form"
                         variant="primary"
                         size="xl"
+                        className="w-full sm:w-auto"
                         disabled={isSubmitting}
                         isLoading={isSubmitting}
                     >

@@ -257,13 +257,13 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
       className="rounded-[30px] sm:rounded-[40px] lg:rounded-[50px] w-[95vw] sm:w-[90vw] lg:w-[85vw] max-w-[1100px] mx-auto"
       showCloseButton={false}
     >
-      <div className="flex flex-col relative">
+      <div className="flex flex-col relative max-h-[90vh]">
         {/* Header fijo */}
-        <div className="shrink-0 p-8 pb-4 relative border-b border-gray-200">
+        <div className="shrink-0 p-6 sm:p-8 pb-4 relative border-b border-gray-200">
           {/* Botón de cerrar */}
           <button
             onClick={handleClose}
-            className="absolute top-6 right-6 cursor-pointer p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
+            className="absolute top-4 sm:top-6 right-4 sm:right-6 cursor-pointer p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
             aria-label="Cerrar modal"
             disabled={loading || loadingData}
           >
@@ -271,7 +271,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
           </button>
 
           {/* Título */}
-          <h2 className="text-2xl font-normal text-foreground">
+          <h2 className="text-xl sm:text-2xl font-normal text-foreground pr-10">
             {editingAction ? 'Editar Acción' : 'Registrar Nueva Acción'}
           </h2>
 
@@ -286,7 +286,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
         </div>
 
         {/* Área de contenido */}
-        <div className="px-8 py-4">
+        <div className="px-6 sm:px-8 py-4 overflow-y-auto">
           {loadingData ? (
             <div className="py-12 text-center">
               <div className="text-gray-600">Cargando usuarios disponibles...</div>
@@ -298,10 +298,10 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
                 id="add-action-form"
                 onSubmit={handleSubmit}
                 noValidate
-                className="grid grid-cols-2 gap-x-8 gap-y-4"
+                className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4"
               >
                 {/* Detalle de la Acción (ocupa todo el ancho) */}
-                <div className="col-span-2">
+                <div className="col-span-1 sm:col-span-2">
                   <TextArea
                     label="Detalle de la Acción *"
                     value={detalleAccion}
@@ -315,7 +315,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
                 </div>
 
                 {/* Comentario (ocupa todo el ancho) */}
-                <div className="col-span-2">
+                <div className="col-span-1 sm:col-span-2">
                   <TextArea
                     label="Comentario"
                     value={comentario}
@@ -393,7 +393,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
 
                 {/* Mensaje de error general */}
                 {error && (
-                  <div className="col-span-2 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+                  <div className="col-span-1 sm:col-span-2 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
                     {error}
                   </div>
                 )}
@@ -403,7 +403,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
         </div>
 
         {/* Footer fijo */}
-        <div className="shrink-0 flex items-center justify-between border-t border-gray-200 px-8 py-4 bg-white">
+        <div className="shrink-0 flex flex-col sm:flex-row items-center sm:justify-between gap-4 border-t border-gray-200 px-6 sm:px-8 py-4 bg-white">
           {/* Nota sobre campos obligatorios */}
           <div className="flex items-center gap-1">
             <span className="text-danger font-medium text-sm">*</span>
