@@ -131,7 +131,8 @@ export default function SubcategoriasPage() {
             <p className="mb-6 ml-3">Subcategorías dentro de cada categoría</p>
             <CatalogDetailClient
                 data={subcategorias}
-                columns={["ID Materia", "ID Categoría", "ID Subcategoría", "Subcategoría", "Materia", "Categoría", "Habilitado"]}
+                columns={["Subcategoría", "Materia", "Categoría", "Habilitado"]}
+                keys={["nombre_subcategoria", "nombre_materia", "nombre_categoria", "habilitado"]}
                 addLabel="Añadir Subcategoría"
                 onAddClick={() => setIsModalOpen(true)}
                 filterField="nombre_materia"
@@ -201,9 +202,6 @@ export default function SubcategoriasPage() {
                 onClose={() => setIsViewModalOpen(false)}
                 title="Detalles de la Subcategoría"
                 fields={[
-                    { label: "ID Materia", value: viewItem?.id_materia, icon: Hash },
-                    { label: "ID Categoría", value: viewItem?.num_categoria, icon: Hash },
-                    { label: "ID Subcategoría", value: viewItem?.num_subcategoria, icon: Hash },
                     { label: "Subcategoría", value: viewItem?.nombre_subcategoria, icon: FileText, fullWidth: true },
                     { label: "Categoría", value: viewItem?.nombre_categoria, icon: FileText },
                     { label: "Materia", value: viewItem?.nombre_materia, icon: FileText },

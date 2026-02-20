@@ -100,9 +100,10 @@ export default function EstadosPage() {
         <>
             <h1 className="text-4xl m-3 font-semibold font-primary">Estados</h1>
             <p className="mb-6 ml-3">Estados del país registrados en el sistema</p>
-          <CatalogDetailClient
+            <CatalogDetailClient
                 data={estados}
-                columns={["ID Estado", "Estado", "Habilitado"]}
+                columns={["Estado", "Habilitado"]}
+                keys={["nombre_estado", "habilitado"]}
                 addLabel="Añadir Estado"
                 onAddClick={() => setIsModalOpen(true)}
                 loading={loading}
@@ -136,7 +137,6 @@ export default function EstadosPage() {
                 onClose={() => setIsViewModalOpen(false)}
                 title="Detalles del Estado"
                 fields={[
-                    { label: "ID Estado", value: viewItem?.id_estado, icon: Hash },
                     { label: "Estado", value: viewItem?.nombre_estado, icon: FileText, fullWidth: true },
                     { label: "Habilitado", value: viewItem?.habilitado, icon: CheckCircle2 }
                 ]}

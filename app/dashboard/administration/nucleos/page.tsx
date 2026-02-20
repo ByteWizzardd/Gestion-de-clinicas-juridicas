@@ -143,9 +143,10 @@ export default function NucleosPage() {
         <>
             <h1 className="text-4xl m-3 font-semibold font-primary">Núcleos</h1>
             <p className="mb-6 ml-3">Núcleos universitarios</p>
-          <CatalogDetailClient
+            <CatalogDetailClient
                 data={nucleos}
-                columns={["ID Núcleo", "Núcleo", "ID Estado", "ID Municipio", "ID Parroquia", "Estado", "Municipio", "Parroquia", "Habilitado"]}
+                columns={["Núcleo", "Estado", "Municipio", "Parroquia", "Habilitado"]}
+                keys={["nombre_nucleo", "nombre_estado", "nombre_municipio", "nombre_parroquia", "habilitado"]}
                 addLabel="Añadir Núcleo"
                 onAddClick={() => setIsModalOpen(true)}
                 loading={loading}
@@ -204,10 +205,6 @@ export default function NucleosPage() {
                 onClose={() => setIsViewModalOpen(false)}
                 title="Detalles del Núcleo"
                 fields={[
-                    { label: "ID Estado", value: viewItem?.id_estado, icon: Hash },
-                    { label: "ID Municipio", value: viewItem?.num_municipio, icon: Hash },
-                    { label: "ID Parroquia", value: viewItem?.num_parroquia, icon: Hash },
-                    { label: "ID Núcleo", value: viewItem?.num_nucleo, icon: Hash },
                     { label: "Núcleo", value: viewItem?.nombre_nucleo, icon: FileText, fullWidth: true },
                     { label: "Parroquia", value: viewItem?.nombre_parroquia, icon: FileText },
                     { label: "Municipio", value: viewItem?.nombre_municipio, icon: FileText },

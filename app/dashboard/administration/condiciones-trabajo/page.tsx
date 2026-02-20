@@ -66,7 +66,8 @@ export default function CondicionesTrabajoPage() {
       <p className="mb-6 ml-3">Condiciones laborales de los solicitantes</p>
       <CatalogDetailClient
         data={condiciones}
-        columns={["ID Condición", "Condición", "Habilitado"]}
+        columns={["Condición", "Habilitado"]}
+        keys={["nombre_trabajo", "habilitado"]}
         addLabel="Añadir Condición"
         onAddClick={() => setIsModalOpen(true)}
         loading={loading}
@@ -93,7 +94,6 @@ export default function CondicionesTrabajoPage() {
         onClose={() => setIsViewModalOpen(false)}
         title="Detalles de Condición de Trabajo"
         fields={[
-          { label: "ID Condición", value: viewItem?.id_trabajo, icon: Hash },
           { label: "Nombre Condición", value: viewItem?.nombre_trabajo, icon: FileText, fullWidth: true },
           { label: "Habilitado", value: viewItem?.habilitado, icon: CheckCircle2 }
         ]}

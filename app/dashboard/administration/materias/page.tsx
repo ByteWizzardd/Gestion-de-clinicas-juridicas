@@ -107,9 +107,10 @@ export default function MateriasPage() {
             <h1 className="text-4xl m-3 font-semibold font-primary">Materias</h1>
             <p className="mb-6 ml-3">Áreas principales del derecho que se manejan en el sistema</p>
 
-          <CatalogDetailClient
+            <CatalogDetailClient
                 data={materias}
-                columns={["ID Materia", "Materia", "Habilitado"]}
+                columns={["Materia", "Habilitado"]}
+                keys={["nombre_materia", "habilitado"]}
                 addLabel="Añadir Materia"
                 onAddClick={() => setIsModalOpen(true)}
                 loading={loading}
@@ -145,7 +146,6 @@ export default function MateriasPage() {
                 onClose={() => setIsViewModalOpen(false)}
                 title="Detalles de la Materia"
                 fields={[
-                    { label: "ID Materia", value: viewItem?.id_materia, icon: Hash },
                     { label: "Materia", value: viewItem?.nombre_materia, icon: FileText, fullWidth: true },
                     { label: "Habilitado", value: viewItem?.habilitado, icon: CheckCircle2 }
                 ]}

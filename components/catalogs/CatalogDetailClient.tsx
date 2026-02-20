@@ -21,6 +21,7 @@ interface CatalogDetailClientProps {
     disableFilter?: boolean; // Si es true, no muestra filtro aunque haya opciones
     renderActions?: (item: any) => React.ReactNode; // Custom render for actions column
     filterTarget?: 'estatus' | 'materia' | 'nucleo' | 'tramite'; // Explicitly map to CaseTools filter slot
+    keys?: string[]; // Keys to display in the table
 }
 
 import { useRouter } from 'next/navigation';
@@ -41,7 +42,8 @@ export default function CatalogDetailClient({
     autoGenerateFilter = false,
     disableFilter = false,
     renderActions,
-    filterTarget = 'estatus' // Default to estatus
+    filterTarget = 'estatus', // Default to estatus
+    keys
 }: CatalogDetailClientProps & { filterAllLabel?: string }) {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
@@ -162,6 +164,7 @@ export default function CatalogDetailClient({
                     data={filteredData}
                     columns={columns}
                     renderRowActions={renderActions ? (item) => renderActions(item) : undefined}
+                    keys={keys}
                 />
             )}
         </div>

@@ -100,9 +100,10 @@ export default function NivelesEducativosPage() {
         <>
             <h1 className="text-4xl m-3 font-semibold font-primary">Niveles Educativos</h1>
             <p className="mb-6 ml-3">Niveles educativos registrados en el sistema</p>
-          <CatalogDetailClient
+            <CatalogDetailClient
                 data={nivelesEducativos}
-                columns={["ID Nivel", "Descripción", "Habilitado"]}
+                columns={["Descripción", "Habilitado"]}
+                keys={["descripcion", "habilitado"]}
                 addLabel="Añadir Nivel Educativo"
                 onAddClick={() => setIsModalOpen(true)}
                 loading={loading}
@@ -136,7 +137,6 @@ export default function NivelesEducativosPage() {
                 onClose={() => setIsViewModalOpen(false)}
                 title="Detalles del Nivel Educativo"
                 fields={[
-                    { label: "ID Nivel", value: viewItem?.id_nivel_educativo, icon: Hash },
                     { label: "Descripción", value: viewItem?.descripcion, icon: FileText, fullWidth: true },
                     { label: "Habilitado", value: viewItem?.habilitado, icon: CheckCircle2 }
                 ]}

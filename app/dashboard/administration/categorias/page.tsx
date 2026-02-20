@@ -102,9 +102,10 @@ export default function CategoriasPage() {
         <>
             <h1 className="text-4xl m-3 font-semibold font-primary">Categorías</h1>
             <p className="mb-6 ml-3">Clasificaciones dentro de cada materia legal</p>
-          <CatalogDetailClient
+            <CatalogDetailClient
                 data={categorias}
-                columns={["ID Materia", "ID Categoría", "Categoría", "Materia", "Habilitado"]}
+                columns={["Categoría", "Materia", "Habilitado"]}
+                keys={["nombre_categoria", "nombre_materia", "habilitado"]}
                 addLabel="Añadir Categoría"
                 onAddClick={() => setIsModalOpen(true)}
                 filterField="nombre_materia"
@@ -152,8 +153,6 @@ export default function CategoriasPage() {
                 onClose={() => setIsViewModalOpen(false)}
                 title="Detalles de la Categoría"
                 fields={[
-                    { label: "ID Materia", value: viewItem?.id_materia, icon: Hash },
-                    { label: "ID Categoría", value: viewItem?.num_categoria, icon: Hash },
                     { label: "Categoría", value: viewItem?.nombre_categoria, icon: FileText, fullWidth: true },
                     { label: "Materia", value: viewItem?.nombre_materia, icon: FileText },
                     { label: "Habilitado", value: viewItem?.habilitado, icon: CheckCircle2 }

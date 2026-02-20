@@ -112,9 +112,10 @@ export default function ParroquiasPage() {
         <>
             <h1 className="text-4xl m-3 font-semibold font-primary">Parroquias</h1>
             <p className="mb-6 ml-3">Parroquias de Venezuela</p>
-          <CatalogDetailClient
+            <CatalogDetailClient
                 data={parroquias}
-                columns={["ID Parroquia", "Parroquia", "ID Estado", "ID Municipio", "Estado", "Municipio", "Habilitado"]}
+                columns={["Parroquia", "Estado", "Municipio", "Habilitado"]}
+                keys={["nombre_parroquia", "nombre_estado", "nombre_municipio", "habilitado"]}
                 addLabel="Añadir Parroquia"
                 onAddClick={() => setIsModalOpen(true)}
                 loading={loading}
@@ -169,9 +170,6 @@ export default function ParroquiasPage() {
                 onClose={() => setIsViewModalOpen(false)}
                 title="Detalles de la Parroquia"
                 fields={[
-                    { label: "ID Estado", value: viewItem?.id_estado, icon: Hash },
-                    { label: "ID Municipio", value: viewItem?.num_municipio, icon: Hash },
-                    { label: "ID Parroquia", value: viewItem?.num_parroquia, icon: Hash },
                     { label: "Parroquia", value: viewItem?.nombre_parroquia, icon: FileText, fullWidth: true },
                     { label: "Municipio", value: viewItem?.nombre_municipio, icon: FileText },
                     { label: "Estado", value: viewItem?.nombre_estado, icon: FileText },

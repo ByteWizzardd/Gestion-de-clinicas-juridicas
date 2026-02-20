@@ -151,7 +151,8 @@ export default function AmbitosLegalesPage() {
             <p className="mb-6 ml-3">Ámbitos legales específicos dentro de cada subcategoría</p>
             <CatalogDetailClient
                 data={ambitos}
-                columns={["ID Materia", "ID Categoría", "ID Subcategoría", "ID Ámbito", "Ámbito", "Materia", "Categoría", "Subcategoría", "Habilitado"]}
+                columns={["Ámbito", "Materia", "Categoría", "Subcategoría", "Habilitado"]}
+                keys={["nombre_ambito_legal", "nombre_materia", "nombre_categoria", "nombre_subcategoria", "habilitado"]}
                 addLabel="Añadir Ámbito Legal"
                 onAddClick={() => setIsModalOpen(true)}
                 loading={loading}
@@ -265,10 +266,6 @@ export default function AmbitosLegalesPage() {
                 onClose={() => setIsViewModalOpen(false)}
                 title="Detalles del Ámbito Legal"
                 fields={[
-                    { label: "ID Materia", value: viewItem?.id_materia, icon: Hash },
-                    { label: "ID Categoría", value: viewItem?.num_categoria, icon: Hash },
-                    { label: "ID Subcategoría", value: viewItem?.num_subcategoria, icon: Hash },
-                    { label: "ID Ámbito", value: viewItem?.num_ambito_legal, icon: Hash },
                     { label: "Ámbito Legal", value: viewItem?.nombre_ambito_legal, icon: FileText, fullWidth: true },
                     { label: "Subcategoría", value: viewItem?.nombre_subcategoria, icon: FileText },
                     { label: "Categoría", value: viewItem?.nombre_categoria, icon: FileText },

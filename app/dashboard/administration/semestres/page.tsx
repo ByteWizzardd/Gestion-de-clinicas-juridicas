@@ -102,6 +102,7 @@ export default function SemestresPage() {
       <CatalogDetailClient
         data={semestres}
         columns={["Semestre", "Fecha Inicio", "Fecha Fin", "Habilitado"]}
+        keys={["term", "fecha_inicio", "fecha_fin", "habilitado"]}
         addLabel="Añadir Semestre"
         onAddClick={() => setIsModalOpen(true)}
         loading={loading}

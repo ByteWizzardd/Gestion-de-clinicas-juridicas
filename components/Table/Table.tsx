@@ -24,6 +24,7 @@ interface TableProps<T> {
   selectedIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
   idKey?: string;
+  keys?: string[];
 }
 
 export default function Table<T extends Record<string, unknown>>({
@@ -40,7 +41,8 @@ export default function Table<T extends Record<string, unknown>>({
   selectable,
   selectedIds = [],
   onSelectionChange,
-  idKey = 'cedula'
+  idKey = 'cedula',
+  keys
 }: TableProps<T>) {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(initialRowsPerPage);
@@ -127,6 +129,7 @@ export default function Table<T extends Record<string, unknown>>({
                 selectable={selectable}
                 isSelected={selectedIds.includes(String(row[idKey]))}
                 onSelect={(checked) => handleSelectRow(String(row[idKey]), checked)}
+                columnKeys={keys}
               />
             ))
           ) : (

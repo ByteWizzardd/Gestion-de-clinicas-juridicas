@@ -97,7 +97,8 @@ export default function CaracteristicasPage() {
       <p className="mb-6 ml-3">Características de vivienda de los solicitantes</p>
       <CatalogDetailClient
         data={caracteristicas}
-        columns={["ID Tipo", "ID Característica", "Descripción", "Habilitado", "Tipo"]}
+        columns={["Descripción", "Tipo", "Habilitado"]}
+        keys={["descripcion", "nombre_tipo_caracteristica", "habilitado"]}
         addLabel="Añadir Característica"
         onAddClick={() => setIsModalOpen(true)}
         loading={loading}
@@ -142,8 +143,6 @@ export default function CaracteristicasPage() {
         onClose={() => setIsViewModalOpen(false)}
         title="Detalles de la Característica"
         fields={[
-          { label: "ID Tipo", value: viewItem?.id_tipo_caracteristica, icon: Hash },
-          { label: "ID Característica", value: viewItem?.num_caracteristica, icon: Hash },
           { label: "Descripción", value: viewItem?.descripcion, icon: FileText, fullWidth: true },
           { label: "Tipo", value: viewItem?.nombre_tipo_caracteristica || 'N/A', icon: Tag },
           { label: "Habilitado", value: viewItem?.habilitado, icon: CheckCircle2 }

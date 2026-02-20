@@ -77,7 +77,8 @@ export default function MunicipiosPage() {
       <p className="mb-6 ml-3">Municipios de Venezuela</p>
       <CatalogDetailClient
         data={municipios}
-        columns={["ID Estado", "ID Municipio", "Municipio", "Estado", "Habilitado"]}
+        columns={["Municipio", "Estado", "Habilitado"]}
+        keys={["nombre_municipio", "nombre_estado", "habilitado"]}
         addLabel="Añadir Municipio"
         onAddClick={() => setIsModalOpen(true)}
         loading={loading}
@@ -117,8 +118,6 @@ export default function MunicipiosPage() {
         onClose={() => setIsViewModalOpen(false)}
         title="Detalles del Municipio"
         fields={[
-          { label: "ID Estado", value: viewItem?.id_estado, icon: Hash },
-          { label: "ID Municipio", value: viewItem?.num_municipio, icon: Hash },
           { label: "Municipio", value: viewItem?.nombre_municipio, icon: FileText, fullWidth: true },
           { label: "Estado", value: viewItem?.nombre_estado, icon: FileText },
           { label: "Habilitado", value: viewItem?.habilitado, icon: CheckCircle2 }

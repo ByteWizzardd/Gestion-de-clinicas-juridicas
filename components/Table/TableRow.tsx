@@ -55,31 +55,35 @@ type TableRowProps<T> = {
     selectable?: boolean;
     isSelected?: boolean;
     onSelect?: (checked: boolean) => void;
+    columnKeys?: string[];
 };
 
-export function TableRow<T extends Record<string, unknown>>({ 
-    data, 
-    rowIndex, 
-    onView, 
-    onEdit, 
-    onDelete, 
-    actions, 
-    hideEdit, 
-    hideDelete, 
+export function TableRow<T extends Record<string, unknown>>({
+    data,
+    rowIndex,
+    onView,
+    onEdit,
+    onDelete,
+    actions,
+    hideEdit,
+    hideDelete,
     renderRowActions,
     selectable,
     isSelected,
-    onSelect
+    onSelect,
+    columnKeys
 }: TableRowProps<T>) {
-    const cells = Object.values(data);
+    const cells = columnKeys
+        ? columnKeys.map(key => data[key])
+        : Object.values(data);
     const shouldHideEdit = hideEdit ? hideEdit(data) : false;
     const shouldHideDelete = hideDelete ? hideDelete(data) : false;
     return (
         <tr className={`border-none flex items-center ${rowIndex % 2 === 1 ? 'bg-on-primary-light' : ''} ${isSelected ? 'bg-primary/5' : ''}`}>
             {selectable && (
                 <td className={`py-4 sm:py-5 text-center px-3 w-12 flex justify-center items-center ${rowIndex % 2 === 1 ? 'rounded-l-xl' : ''}`}>
-                    <input 
-                        type="checkbox" 
+                    <input
+                        type="checkbox"
                         className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
                         checked={isSelected}
                         onChange={(e) => onSelect?.(e.target.checked)}

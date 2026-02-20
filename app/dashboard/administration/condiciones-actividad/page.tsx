@@ -66,7 +66,8 @@ export default function CondicionesActividadPage() {
       <p className="mb-6 ml-3">Condiciones de actividad de los solicitantes</p>
       <CatalogDetailClient
         data={condiciones}
-        columns={["ID Actividad", "Condición Actividad", "Habilitado"]}
+        columns={["Condición Actividad", "Habilitado"]}
+        keys={["nombre_actividad", "habilitado"]}
         addLabel="Añadir Condición"
         onAddClick={() => setIsModalOpen(true)}
         loading={loading}
@@ -93,7 +94,6 @@ export default function CondicionesActividadPage() {
         onClose={() => setIsViewModalOpen(false)}
         title="Detalles de Condición de Actividad"
         fields={[
-          { label: "ID Actividad", value: viewItem?.id_actividad, icon: Hash },
           { label: "Nombre Condición", value: viewItem?.nombre_actividad, icon: FileText, fullWidth: true },
           { label: "Habilitado", value: viewItem?.habilitado, icon: CheckCircle2 }
         ]}
