@@ -1,5 +1,5 @@
-import DetailPageSkeleton from '@/components/ui/skeletons/DetailPageSkeleton';
+import ProfileSkeleton from '@/components/ui/skeletons/ProfileSkeleton';
 
 export default function UserDetailLoading() {
-    return <DetailPageSkeleton showAvatar tabsCount={3} />;
+    return <ProfileSkeleton showTabs tabsCount={3} breadcrumbsCount={3} />;
 }

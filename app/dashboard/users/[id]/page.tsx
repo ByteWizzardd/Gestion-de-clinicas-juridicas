@@ -13,7 +13,7 @@ import { getUsuarioInfoByCedulaAction } from "@/app/actions/usuarios";
 import { getCurrentUserAction } from "@/app/actions/auth";
 import { getCasosByUsuarioCedulaAction } from "@/app/actions/casos"; // Importar acción para casos
 import UserCasesTab from "@/components/users/tabs/UserCasesTab";
-import DetailPageSkeleton from '@/components/ui/skeletons/DetailPageSkeleton'; // Importar el componente de la pestaña
+import ProfileSkeleton from '@/components/ui/skeletons/ProfileSkeleton'; // Importar el componente de la pestaña
 
 interface Usuario {
   cedula: string;
@@ -88,7 +88,7 @@ export default function UserDetailPage() {
   }, [id]);
 
   if (loading) {
-    return <DetailPageSkeleton showAvatar tabsCount={3} />;
+    return <ProfileSkeleton showTabs tabsCount={3} breadcrumbsCount={3} />;
   }
 
   if (error || !usuario) {
@@ -130,9 +130,9 @@ export default function UserDetailPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        initial={{ opacity: 0.5 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
       >
         <Breadcrumbs
           items={[
@@ -148,9 +148,9 @@ export default function UserDetailPage() {
 
       <motion.div
         className="mb-6 sm:mb-8 relative"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
+        initial={{ opacity: 0.5 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
       >
         <div className="flex items-center gap-4 mb-4">
           <EditableAvatar
@@ -202,9 +202,9 @@ export default function UserDetailPage() {
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.2 }}
+        initial={{ opacity: 0.5 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
       >
         <Tabs tabs={tabs} defaultTab="general" />
       </motion.div>
