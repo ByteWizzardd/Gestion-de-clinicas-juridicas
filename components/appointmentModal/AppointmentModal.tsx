@@ -552,7 +552,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
       className="rounded-[30px] sm:rounded-[40px] lg:rounded-[50px] w-[95vw] sm:w-[90vw] lg:w-[85vw] max-w-[1200px] mx-auto"
       showCloseButton={false}
     >
-      <div className="p-12 relative">
+      <div className="p-6 sm:p-10 lg:p-12 relative">
         {/* Botón de cerrar */}
         <button
           onClick={handleClose}
@@ -568,9 +568,9 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
         </h2>
 
         {/* Grid de formulario */}
-        <form onSubmit={handleSubmit} noValidate className="grid grid-cols-3 gap-x-6 gap-y-4 mb-6">
+        <form onSubmit={handleSubmit} noValidate className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 mb-6">
           {/* Fila 1: Caso, Fecha de Encuentro, Fecha de Próxima cita */}
-          <div className="col-span-1">
+          <div className="col-span-1 sm:col-span-2 lg:col-span-1">
             <Select
               label={isEditing ? "Caso" : "Caso *"}
               options={caseOptions}
@@ -640,7 +640,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
           </div>
 
           {/* Fila 2: Usuarios que atendieron */}
-          <div className="col-span-3">
+          <div className="col-span-1 sm:col-span-2 lg:col-span-3">
             <MultiSelect
               label="Personas que atendieron *"
               options={usuarioOptions}
@@ -654,7 +654,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
           </div>
 
           {/* Fila 3: Orientación */}
-          <div className="col-span-3">
+          <div className="col-span-1 sm:col-span-2 lg:col-span-3">
             <div className="flex flex-col gap-1">
               <label className="text-base font-normal text-foreground mb-1">
                 Orientación <span className="text-danger">*</span>
@@ -691,7 +691,13 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
           </div>
 
           <div className="flex justify-end">
-            <Button variant="primary" size="xl" onClick={handleSubmit} disabled={loading}>
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={handleSubmit}
+              className="w-full sm:w-auto"
+              disabled={loading}
+            >
               {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />

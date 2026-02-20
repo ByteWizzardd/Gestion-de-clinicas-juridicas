@@ -664,7 +664,7 @@ export default function AppointmentsClient({
                     </div>
 
                     {/* Filtro y Botón Nueva Cita */}
-                    <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+                    <div className="grid grid-cols-2 gap-3 w-full sm:w-auto sm:flex sm:items-center sm:gap-4 shrink-0">
                       {/* Filtro */}
                       <AppointmentsToolbar
                         viewMode={viewMode}
@@ -690,6 +690,7 @@ export default function AppointmentsClient({
                       <NewAppointmentButton
                         onRegister={handleAddAppointment}
                         onSchedule={handleScheduleAppointment}
+                        className="w-full"
                       />
                     </div>
                   </div>
@@ -744,7 +745,7 @@ export default function AppointmentsClient({
                     </div>
 
                     {/* Filtro y Botón Nueva Cita */}
-                    <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+                    <div className="grid grid-cols-2 gap-3 w-full sm:w-auto sm:flex sm:items-center sm:gap-4 shrink-0">
                       {/* Filtro */}
                       <AppointmentsToolbar
                         viewMode={viewMode}
@@ -770,6 +771,7 @@ export default function AppointmentsClient({
                       <NewAppointmentButton
                         onRegister={handleAddAppointment}
                         onSchedule={handleScheduleAppointment}
+                        className="w-full"
                       />
                     </div>
                   </div>

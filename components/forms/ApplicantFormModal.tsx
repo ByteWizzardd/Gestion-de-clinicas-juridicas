@@ -3075,8 +3075,16 @@ export default function ApplicantFormModal({
             {initialData ? 'Editar Solicitante' : 'Registro de Solicitante'}
           </h2>
 
-          {/* Stepper */}
-          <Stepper steps={STEPS} currentStep={currentStep} />
+          {/* Stepper - Oculto en móviles porque no cabe el texto de los 6 pasos */}
+          <div className="hidden md:block">
+            <Stepper steps={STEPS} currentStep={currentStep} />
+          </div>
+
+          {/* Indicador de paso simplificado para móviles */}
+          <div className="md:hidden flex flex-col items-center mb-6">
+            <span className="text-sm font-medium text-gray-500 mb-1">Paso {currentStep + 1} de {STEPS.length}</span>
+            <h3 className="text-lg font-semibold text-secondary">{STEPS[currentStep]}</h3>
+          </div>
 
           {/* Contenido del paso */}
           <div className="min-h-[300px] mb-4">{renderStepContent()}</div>
@@ -3089,27 +3097,43 @@ export default function ApplicantFormModal({
               <span className="text-sm text-gray-600">Campo obligatorio</span>
             </div>
 
-            <div className="flex justify-between items-center gap-4">
+            <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-4 mt-2">
               <button
                 onClick={handleClearForm}
-                className="text-sm text-gray-500 hover:text-gray-700 underline cursor-pointer transition-colors"
+                className="text-sm text-gray-500 hover:text-gray-700 underline cursor-pointer transition-colors w-full sm:w-auto text-center sm:text-left"
               >
                 Limpiar Formulario
               </button>
-              <div className="flex gap-4">
+              <div className="flex items-center gap-3 w-full sm:w-auto">
                 {currentStep > 0 && (
-                  <Button variant="outline" size="xl" onClick={handleBack}>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={handleBack}
+                    className="flex-1 sm:flex-none"
+                  >
                     <ArrowLeft className="w-5 h-5 mr-2" />
                     Atrás
                   </Button>
                 )}
                 {currentStep < STEPS.length - 1 ? (
-                  <Button variant="primary" size="xl" onClick={handleNext}>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    onClick={handleNext}
+                    className="flex-1 sm:flex-none"
+                  >
                     Siguiente
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 ) : (
-                  <Button variant="primary" size="xl" onClick={handleSubmit} disabled={isSubmitting}>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className="flex-1 sm:flex-none"
+                  >
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-5 h-5 mr-2 animate-spin" />

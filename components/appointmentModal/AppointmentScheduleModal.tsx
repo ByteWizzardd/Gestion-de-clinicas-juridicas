@@ -239,7 +239,7 @@ export function AppointmentScheduleModal({
       className="rounded-[30px] sm:rounded-[40px] lg:rounded-[50px] w-[95vw] sm:w-[90vw] lg:w-[85vw] max-w-[1200px] mx-auto"
       showCloseButton={false}
     >
-      <div className="p-12 relative">
+      <div className="p-6 sm:p-10 lg:p-12 relative">
         <button
           onClick={handleClose}
           className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
@@ -252,8 +252,8 @@ export function AppointmentScheduleModal({
           Programar nueva cita
         </h2>
 
-        <form onSubmit={handleSubmit} noValidate className="grid grid-cols-3 gap-x-6 gap-y-4 mb-6">
-          <div className="col-span-1">
+        <form onSubmit={handleSubmit} noValidate className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 mb-6">
+          <div className="col-span-1 sm:col-span-2 lg:col-span-1">
             <Select
               label="Caso *"
               options={caseOptions}
@@ -292,7 +292,7 @@ export function AppointmentScheduleModal({
             </div>
           </div>
 
-          <div className="col-span-3">
+          <div className="col-span-1 sm:col-span-2 lg:col-span-3">
             <MultiSelect
               label="Personas que atenderán la cita *"
               options={usuarioOptions}
@@ -315,7 +315,13 @@ export function AppointmentScheduleModal({
           </div>
 
           <div className="flex justify-end">
-            <Button variant="primary" size="xl" onClick={handleSubmit} disabled={loading}>
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={handleSubmit}
+              className="w-full sm:w-auto"
+              disabled={loading}
+            >
               {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />

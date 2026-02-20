@@ -46,7 +46,7 @@ export function AppointmentDetailModal({ appointment, isOpen, onClose }: Appoint
       className="rounded-[30px] sm:rounded-[40px] lg:rounded-[50px] w-[95vw] sm:w-[85vw] lg:w-[70vw] max-w-[800px] mx-auto"
       showCloseButton={false}
     >
-      <div className="p-12 relative">
+      <div className="p-6 sm:p-10 lg:p-12 relative">
         {/* Botón de cerrar */}
         <button
           onClick={handleClose}
@@ -67,7 +67,7 @@ export function AppointmentDetailModal({ appointment, isOpen, onClose }: Appoint
         {/* Contenido diferente según el tipo de cita */}
         {isScheduledAppointment ? (
           /* Vista para citas programadas */
-          <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
             {/* Columna 1 */}
             <div className="space-y-6">
               {/* Fecha de Encuentro */}
@@ -103,7 +103,7 @@ export function AppointmentDetailModal({ appointment, isOpen, onClose }: Appoint
             </div>
 
             {/* Caso relacionado - ocupa ambas columnas */}
-            <div className="col-span-2">
+            <div className="col-span-1 sm:col-span-2">
               <div className="flex flex-col gap-1">
                 <label className="text-base font-normal text-foreground mb-2 flex items-center gap-2">
                   <FileText className="w-5 h-5 text-primary" />
@@ -117,7 +117,7 @@ export function AppointmentDetailModal({ appointment, isOpen, onClose }: Appoint
           </div>
         ) : (
           /* Vista para citas realizadas */
-          <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
             {/* Columna 1 */}
             <div className="space-y-6">
               {/* Fecha de la cita */}
@@ -181,7 +181,7 @@ export function AppointmentDetailModal({ appointment, isOpen, onClose }: Appoint
             </div>
 
             {/* Orientación - ocupa ambas columnas */}
-            <div className="col-span-2">
+            <div className="col-span-1 sm:col-span-2">
               <div className="flex flex-col gap-1">
                 <label className="text-base font-normal text-foreground mb-2 flex items-center gap-2">
                   <FileText className="w-5 h-5 text-primary" />

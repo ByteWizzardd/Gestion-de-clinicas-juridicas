@@ -70,32 +70,28 @@ export default function AppointmentsToolbar({
     } else {
       const buttonRect = e.currentTarget.getBoundingClientRect();
       const menuRect = menuRef.current?.getBoundingClientRect();
-      const submenuWidth = type === 'fechas' ? 200 : 180;
-      
-      const submenuMaxHeight = window.innerHeight * 0.8; // 80vh
-      const spaceBelow = window.innerHeight - buttonRect.top;
-      const spaceAbove = buttonRect.top;
-
-      // Calcular posición vertical para que no se corte
-      let topPosition = buttonRect.top;
-      if (spaceBelow < submenuMaxHeight && spaceAbove > spaceBelow) {
-        // Si no hay espacio abajo pero sí arriba, ajustar hacia arriba
-        topPosition = Math.max(8, buttonRect.top - (submenuMaxHeight - spaceBelow));
-      } else {
-        // Asegurar que no se salga por abajo
-        const maxTop = window.innerHeight - submenuMaxHeight - 8;
-        topPosition = Math.min(topPosition, maxTop);
-      }
+      const submenuWidth = 240; // Mantener ancho consistente de 240px para todos los submenús
 
       const margin = 8;
-      if (!menuRect || isMobileViewport()) {
-        const width = Math.max(180, window.innerWidth - margin * 2);
+      const estimatedSubmenuHeight = 300; // Altura máxima aproximada definida en el CSS (max-h-300)
+
+      // Base: alinear el top del submenú con el componente que lo activó
+      let topPosition = buttonRect.top;
+
+      // Si el submenú se sale por abajo de la pantalla, lo ajustamos hacia arriba
+      const spaceBelow = window.innerHeight - topPosition - margin;
+      if (spaceBelow < estimatedSubmenuHeight) {
+        // Lo subimos lo necesario para que quepa, pero sin pasarnos del tope de la pantalla
+        topPosition = Math.max(margin, window.innerHeight - estimatedSubmenuHeight - margin);
+      }
+
+      if (isMobileViewport()) {
         setSubmenuPosition({
-          top: Math.max(8, topPosition),
+          top: topPosition,
           left: margin,
-          width,
+          width: submenuWidth,
         });
-      } else {
+      } else if (menuRect) {
         const preferredLeft = menuRect.left - margin - submenuWidth;
         const alternativeLeft = menuRect.right + margin;
         const maxLeft = Math.max(margin, window.innerWidth - submenuWidth - margin);
@@ -108,7 +104,7 @@ export default function AppointmentsToolbar({
               : clamp(preferredLeft, margin, maxLeft));
 
         setSubmenuPosition({
-          top: Math.max(8, topPosition),
+          top: topPosition,
           left,
           width: submenuWidth,
         });
@@ -406,7 +402,7 @@ export default function AppointmentsToolbar({
 
           const margin = 8;
           const isMobile = isMobileViewport();
-          const width = isMobile ? Math.max(180, window.innerWidth - margin * 2) : 240;
+          const width = 240; // Mantener ancho consistente de 240px tanto en móvil como desktop
           const maxLeft = Math.max(margin, window.innerWidth - width - margin);
           const left = isMobile ? margin : clamp(rect.right - width, margin, maxLeft);
 
