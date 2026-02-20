@@ -102,9 +102,9 @@ export default function ChangePasswordClient() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        initial={{ opacity: 0.5 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
       >
         <Breadcrumbs
           items={[
@@ -116,9 +116,9 @@ export default function ChangePasswordClient() {
 
       <motion.div
         className="bg-white rounded-lg shadow-sm border border-gray-200 max-w-2xl"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.2 }}
+        initial={{ opacity: 0.5 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
       >
         <form onSubmit={handleSubmit} noValidate className="flex flex-col">
           <div className="p-6 sm:p-8 space-y-6">
@@ -174,7 +174,7 @@ export default function ChangePasswordClient() {
           {/* Footer con botones */}
           <div className="flex flex-col px-6 sm:px-8 py-4">
             <div className="border-t border-gray-200 mb-4"></div>
-            
+
             <div className="flex justify-end gap-4">
               <Button
                 type="button"

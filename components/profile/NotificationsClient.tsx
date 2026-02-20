@@ -8,9 +8,9 @@ export default function NotificationsClient() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        initial={{ opacity: 0.5 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
       >
         <Breadcrumbs
           items={[
@@ -23,18 +23,18 @@ export default function NotificationsClient() {
       <motion.h1
         className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-6 sm:mb-8 mt-4"
         style={{ fontFamily: 'var(--font-league-spartan)' }}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
+        initial={{ opacity: 0.5 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
       >
         Notificaciones
       </motion.h1>
 
       <motion.div
         className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sm:p-8"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.2 }}
+        initial={{ opacity: 0.5 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
       >
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <Bell className="w-16 h-16 text-gray-400 mb-4" />
@@ -42,7 +42,7 @@ export default function NotificationsClient() {
             Sistema de Notificaciones
           </h3>
           <p className="text-gray-600 max-w-md">
-            El sistema de notificaciones estará disponible próximamente. 
+            El sistema de notificaciones estará disponible próximamente.
             Aquí podrás ver y gestionar todas tus notificaciones.
           </p>
         </div>

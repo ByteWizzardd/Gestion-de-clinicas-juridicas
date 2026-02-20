@@ -1,5 +1,5 @@
-import DetailPageSkeleton from '@/components/ui/skeletons/DetailPageSkeleton';
+import ProfileSkeleton from '@/components/ui/skeletons/ProfileSkeleton';
 
 export default function ProfileLoading() {
-    return <DetailPageSkeleton showAvatar tabsCount={1} cardsCount={2} />;
+    return <ProfileSkeleton />;
 }

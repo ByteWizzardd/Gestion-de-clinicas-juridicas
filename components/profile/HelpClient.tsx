@@ -115,9 +115,9 @@ export default function HelpClient() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        initial={{ opacity: 0.5 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
       >
         <Breadcrumbs items={breadcrumbItems} />
       </motion.div>
@@ -125,18 +125,18 @@ export default function HelpClient() {
       <motion.h1
         className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-6 sm:mb-8 mt-4"
         style={{ fontFamily: 'var(--font-league-spartan)' }}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
+        initial={{ opacity: 0.5 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
       >
         Preguntas Frecuentes
       </motion.h1>
 
       <motion.div
         className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sm:p-8"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.2 }}
+        initial={{ opacity: 0.5 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
       >
         <div className="flex items-center gap-3 mb-6">
           <HelpCircle className="w-6 h-6 text-primary" />
@@ -149,9 +149,9 @@ export default function HelpClient() {
           {faqs.map((faq, index) => (
             <motion.div
               key={faq.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.2 + index * 0.05 }}
+              initial={{ opacity: 0.5 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.1, ease: "easeOut" }}
               className="border border-gray-200 rounded-lg overflow-hidden"
             >
               <button

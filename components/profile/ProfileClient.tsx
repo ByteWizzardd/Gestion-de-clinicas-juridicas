@@ -6,7 +6,7 @@ import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import PhotoUploadHeader from '@/components/profile/PhotoUploadHeader';
 import GeneralInfoTab from '@/components/profile/tabs/GeneralInfoTab';
 import { getCurrentUserAction } from '@/app/actions/auth';
-import DetailPageSkeleton from '@/components/ui/skeletons/DetailPageSkeleton';
+import ProfileSkeleton from '@/components/ui/skeletons/ProfileSkeleton';
 
 interface User {
   cedula: string;
@@ -53,7 +53,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   };
 
   if (loading) {
-    return <DetailPageSkeleton showAvatar tabsCount={1} />;
+    return <ProfileSkeleton />;
   }
 
   if (!user) {
@@ -72,9 +72,9 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <motion.div
-        initial={{ opacity: 0 }}
+        initial={{ opacity: 0.5 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
       >
         <Breadcrumbs
           items={[
@@ -85,9 +85,9 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
 
       <motion.div
         className="mb-6 sm:mb-8 relative"
-        initial={{ opacity: 0 }}
+        initial={{ opacity: 0.5 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
       >
         <div className="flex items-center gap-4 mb-4">
           <PhotoUploadHeader
@@ -124,9 +124,9 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0 }}
+        initial={{ opacity: 0.5 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
       >
         <GeneralInfoTab user={user} />
       </motion.div>
