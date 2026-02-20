@@ -175,11 +175,12 @@ export default function ChangePasswordClient() {
           <div className="flex flex-col px-6 sm:px-8 py-4">
             <div className="border-t border-gray-200 mb-4"></div>
 
-            <div className="flex justify-end gap-4">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 sm:gap-4">
               <Button
                 type="button"
                 variant="outline"
-                size="xl"
+                size="lg"
+                className="w-full sm:w-auto sm:text-lg"
                 onClick={() => router.back()}
                 disabled={loading}
               >
@@ -188,7 +189,8 @@ export default function ChangePasswordClient() {
               <Button
                 type="submit"
                 variant="primary"
-                size="xl"
+                size="lg"
+                className="w-full sm:w-auto sm:text-lg"
                 disabled={loading}
                 isLoading={loading}
               >
