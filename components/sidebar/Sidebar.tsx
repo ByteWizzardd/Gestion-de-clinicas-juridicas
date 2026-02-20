@@ -158,7 +158,7 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
       {/* Botón de toggle (visible al hacer hover o siempre visible) */}
       <button
         onClick={toggleSidebar}
-        className="absolute -right-2 md:-right-3 top-6 md:top-8 bg-white rounded-full p-1 md:p-1.5 shadow-md border border-gray-100 text-gray-500 hover:text-primary transition-all duration-300 z-50 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 cursor-pointer hidden md:flex items-center justify-center"
+        className="absolute -right-2 md:-right-3 top-6 md:top-8 bg-white rounded-full p-1 md:p-1.5 shadow-md border border-gray-100 text-gray-500 hover:text-primary transition-all duration-300 z-50 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 cursor-pointer flex items-center justify-center"
         aria-label={isCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
       >
         {isCollapsed ? (
