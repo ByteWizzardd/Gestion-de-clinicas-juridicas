@@ -502,9 +502,9 @@ export default function AuditDetailClient({
 
       {/* Filtros */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.1, ease: "easeOut" }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
         className="flex flex-wrap gap-3 sm:gap-4 items-center w-full px-3 mb-4 md:mb-6 mt-4"
       >
         <div className="w-full sm:flex-1 sm:min-w-0">
@@ -553,7 +553,7 @@ export default function AuditDetailClient({
       {/* Contenido */}
       {loading ? (
         <div className="space-y-3 px-3 min-h-[400px]">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {Array.from({ length: 10 }).map((_, i) => (
             <AuditRecordCardSkeleton key={i} />
           ))}
         </div>

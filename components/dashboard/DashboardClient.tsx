@@ -161,29 +161,22 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
   return (
     <div className="max-h-screen">
       <div className="max-w-[1920px] mx-auto px-4 md:px-6 lg:px-8">
-        <motion.div
-          // ... rest of component stays same
-
-          className="mb-4 md:mb-6 mt-4"
-          initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: "easeOut" }}
-        >
+        <div className="mb-4 md:mb-6 mt-4">
           <h1 className="text-2xl md:text-3xl font-medium text-foreground mb-1" style={{ fontFamily: 'var(--font-league-spartan)' }}>
             Bienvenido al dashboard
           </h1>
           <p className="text-sm md:text-base text-gray-600" style={{ fontFamily: 'var(--font-urbanist)' }}>
             Aquí podrás ver el estado de las citas y los casos.
           </p>
-        </motion.div>
+        </div>
 
         <div className="flex flex-col lg:flex-row gap-4 md:gap-6 mt-4 md:mt-6 h-[calc(100vh-8rem)] md:h-[calc(100vh-10rem)]">
           <div className="flex flex-col gap-4 md:gap-6 flex-1 max-w-full">
             <motion.div
               className="bg-white rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] p-4 md:p-6 flex-1 flex flex-col min-h-0"
-              initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
+              initial={{ opacity: 0.5 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.1, ease: "easeOut" }}
             >
               <div className="flex items-center justify-between mb-4 shrink-0">
                 <h3 className="text-xl md:text-2xl font-semibold text-neutral-800">
@@ -204,9 +197,9 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
 
             <motion.div
               className="bg-white rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] p-4 md:p-6 w-full flex-1 flex flex-col min-h-0"
-              initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
+              initial={{ opacity: 0.5 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.1, ease: "easeOut" }}
             >
               <div className="flex flex-col md:flex-row gap-4 md:gap-6 flex-1 min-h-0">
                 <div className="w-full md:w-1/2 flex flex-col min-h-0">
@@ -240,9 +233,9 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
           <div className="flex-1 w-full lg:min-w-94 lg:max-w-116 2xl:max-w-md">
             <motion.div
               className="bg-white rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] p-4 md:p-6 h-full min-h-[200px] lg:min-h-0 flex flex-col"
-              initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.25, ease: "easeOut" }}
+              initial={{ opacity: 0.5 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.1, ease: "easeOut" }}
             >
               <h3 className="text-xl md:text-2xl font-semibold text-center text-neutral-800 mb-4 md:mb-6 shrink-0">
                 Historial de Acciones

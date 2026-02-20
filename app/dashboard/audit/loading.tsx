@@ -1,25 +1,49 @@
+'use client';
+
 import { Skeleton } from '@/components/ui/Skeleton';
 import AuditRecordCardSkeleton from '@/components/ui/skeletons/AuditRecordCardSkeleton';
+import CaseTools from '@/components/CaseTools/CaseTools';
+import { Layers } from 'lucide-react';
 
 export default function AuditLoading() {
     return (
         <div className="p-4">
             {/* Título */}
-            <div className="m-3">
-                <Skeleton width="22%" height={32} borderRadius="8px" />
-            </div>
-            <div className="ml-3 mt-2 mb-6">
-                <Skeleton width="50%" height={14} borderRadius="6px" />
-            </div>
+            <h1 className="text-4xl m-3 font-semibold font-primary">Auditoría del Sistema</h1>
+            <p className="mb-6 ml-3">Registro completo de todas las acciones realizadas en el sistema</p>
 
-            {/* Barra de búsqueda y filtros */}
-            <div className="m-3 mb-6">
-                <div className="w-full flex items-center gap-4">
-                    <div className="flex-1 min-w-0">
-                        <Skeleton width="100%" height={40} borderRadius="9999px" />
-                    </div>
-                    <Skeleton width={150} height={40} borderRadius="9999px" />
-                </div>
+            {/* Barra de búsqueda y filtros (real) */}
+            <div className="mb-6">
+                <CaseTools
+                    searchValue=""
+                    onSearchChange={() => { }}
+                    searchPlaceholder="Buscar en logs..."
+                    nucleoFilter=""
+                    onNucleoChange={() => { }}
+                    nucleoLabel="Módulo"
+                    nucleoAllLabel="Todos los módulos"
+                    nucleoOptions={[]}
+                    nucleoIcon={Layers}
+                    operacionFilter=""
+                    onOperacionChange={() => { }}
+                    operacionOptions={[]}
+                    estadoCivilFilter=""
+                    onEstadoCivilChange={() => { }}
+                    estadoCivilLabel="Usuarios"
+                    estadoCivilOptions={[]}
+                    showDateRange={true}
+                    fechaInicio=""
+                    fechaFin=""
+                    onFechaInicioChange={() => { }}
+                    onFechaFinChange={() => { }}
+                    sortFilter="desc"
+                    onSortChange={() => { }}
+                    sortLabel="Orden"
+                    sortOptions={[
+                        { value: 'desc', label: 'Más reciente' },
+                        { value: 'asc', label: 'Más antiguo' }
+                    ]}
+                />
             </div>
 
             {/* Cards skeleton (misma estructura que los módulos de auditoría) */}

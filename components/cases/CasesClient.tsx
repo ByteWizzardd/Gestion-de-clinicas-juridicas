@@ -717,23 +717,14 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
   return (
     <>
-      <motion.div
-        className="mb-4 md:mb-6 mt-4"
-        initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: "easeOut" }}
-      >
+      <div className="mb-4 md:mb-6 mt-4">
         <div>
           <h1 className="text-4xl m-3 font-semibold font-primary">Casos</h1>
           <p className="mb-6 ml-3">Listado y gestión de todos los casos registrados.</p>
         </div>
-      </motion.div>
+      </div>
 
-      <motion.div
-        initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
-      >
+      <div className="px-1">
         <CaseTools
           addLabel="Añadir Caso"
           onAddClick={handleAddCase}
@@ -764,12 +755,12 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
           onTermChange={setTermFilter}
           termOptions={semestresOptions}
         />
-      </motion.div>
+      </div>
       <div className="mt-10"></div>
 
       {loading && (
         <div className="min-h-[400px] px-3">
-          <TableSkeleton columns={6} rows={8} />
+          <TableSkeleton columns={6} rows={10} />
         </div>
       )}
 
@@ -781,9 +772,9 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
       {!loading && (
         <motion.div
-          initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
+          initial={{ opacity: 0.5 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.1, ease: "easeOut" }}
         >
           <Table
             data={filteredCasos.map((caso) => ({

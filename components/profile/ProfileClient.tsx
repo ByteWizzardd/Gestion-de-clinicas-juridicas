@@ -72,9 +72,9 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
       >
         <Breadcrumbs
           items={[
@@ -85,9 +85,9 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
 
       <motion.div
         className="mb-6 sm:mb-8 relative"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
       >
         <div className="flex items-center gap-4 mb-4">
           <PhotoUploadHeader
@@ -110,9 +110,9 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
         <AnimatePresence>
           {showSuccess && (
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               className="flex justify-center mt-4"
             >
               <div className="p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
@@ -124,9 +124,9 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.2 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
       >
         <GeneralInfoTab user={user} />
       </motion.div>

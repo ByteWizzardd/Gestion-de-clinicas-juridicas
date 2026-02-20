@@ -100,9 +100,9 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
 
               <div className="min-w-0">
                 <motion.div
-                  initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: "easeOut" }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
                   className="flex items-center gap-3 text-base bg-white rounded-3xl shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] px-3 py-2 max-w-[calc(100vw-5rem)] overflow-hidden"
                 >
                   <Notification />
@@ -114,9 +114,9 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
         </div>
 
         <motion.div
-          initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: prefersReducedMotion ? 0 : 0.4, delay: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
           className="hidden md:flex absolute top-6 right-6 items-center gap-4 z-30 text-lg bg-white rounded-3xl shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] px-4 py-2"
         >
           <Notification />

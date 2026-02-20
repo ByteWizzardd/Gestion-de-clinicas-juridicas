@@ -91,10 +91,10 @@ export default function Modal({
         >
           <motion.div
             ref={modalRef}
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.1, ease: 'easeOut' }}
             className={`
                 bg-white rounded-xl shadow-xl w-full relative ${sizeStyles[size]} 
                 flex flex-col my-auto

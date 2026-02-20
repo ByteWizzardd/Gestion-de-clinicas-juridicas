@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import CaseTools from "@/components/CaseTools/CaseTools";
 import Table from "@/components/Table/Table";
+import { motion } from 'motion/react';
 import TableSkeleton from "@/components/ui/skeletons/TableSkeleton";
 
 interface CatalogDetailClientProps {
@@ -102,7 +103,7 @@ export default function CatalogDetailClient({
     const hasFilter = !disableFilter && generatedFilterOptions.length > 0 && filterField;
 
     return (
-        <>
+        <div>
             <div className="mb-4">
                 <Button
                     variant="ghost"
@@ -155,7 +156,7 @@ export default function CatalogDetailClient({
             />
             <div className="mt-10"></div>
             {loading ? (
-                <TableSkeleton columns={columns.length} rows={8} />
+                <TableSkeleton columns={columns.length} rows={10} />
             ) : (
                 <Table
                     data={filteredData}
@@ -163,6 +164,6 @@ export default function CatalogDetailClient({
                     renderRowActions={renderActions ? (item) => renderActions(item) : undefined}
                 />
             )}
-        </>
+        </div>
     );
 }

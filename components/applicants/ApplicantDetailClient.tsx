@@ -206,9 +206,9 @@ export default function ApplicantDetailClient() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
       >
         <Breadcrumbs
           items={[
@@ -221,16 +221,16 @@ export default function ApplicantDetailClient() {
       <motion.h1
         className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-2"
         style={{ fontFamily: 'var(--font-league-spartan)' }}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.1, ease: 'easeOut' }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
       >
         {nombreCompleto}
       </motion.h1>
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.2, ease: 'easeOut' }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
       >
         {solicitante.cedula && (
           <p className="text-sm sm:text-base text-gray-500 mb-6 sm:mb-8">
@@ -240,9 +240,9 @@ export default function ApplicantDetailClient() {
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.25, ease: 'easeOut' }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
       >
         <Tabs tabs={tabs} defaultTab="personal" />
       </motion.div>

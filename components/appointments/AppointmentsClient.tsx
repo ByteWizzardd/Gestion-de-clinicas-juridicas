@@ -561,12 +561,7 @@ export default function AppointmentsClient({
 
   return (
     <div className="h-full relative ">
-      <motion.div
-        className="mb-4 md:mb-6 mt-4"
-        initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: "easeOut" }}
-      >
+      <div className="mb-4 md:mb-6 mt-4">
         <div className="mb-4">
           <h1 className="text-3xl font-medium text-foreground mb-1" style={{ fontFamily: 'var(--font-league-spartan)' }}>
             Citas
@@ -575,7 +570,7 @@ export default function AppointmentsClient({
             Vista de programación de las citas.
           </p>
         </div>
-      </motion.div>
+      </div>
 
       {/* Tabs para cambiar entre vistas */}
       <Tabs
@@ -588,17 +583,17 @@ export default function AppointmentsClient({
             content: (
               <motion.div
                 key="calendar-view"
-                initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: prefersReducedMotion ? 0 : 0.3 }}
+                transition={{ duration: 0.1 }}
               >
                 <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6 pb-6">
                   <motion.div
                     className="h-[calc(100vh-10rem)]"
-                    initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
+                    initial={{ opacity: 0.5 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.1, ease: "easeOut" }}
                   >
                     <CalendarWidget
                       selectedDate={selectedDate}
@@ -610,9 +605,9 @@ export default function AppointmentsClient({
 
                   <motion.div
                     className="pr-6 h-[calc(100vh-10rem)] flex flex-col"
-                    initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.15, ease: "easeOut" }}
+                    initial={{ opacity: 0.5 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.1, ease: "easeOut" }}
                   >
                     <div className="flex-1 min-h-0">
                       <AppointmentList
@@ -636,18 +631,13 @@ export default function AppointmentsClient({
             content: (
               <motion.div
                 key="list-view"
-                initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: prefersReducedMotion ? 0 : 0.3 }}
+                transition={{ duration: 0.2 }}
               >
                 {/* Barra de búsqueda y filtro */}
-                <motion.div
-                  initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
-                  className="mb-4"
-                >
+                <div className="mb-4">
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
                     {/* Buscador */}
                     <div className="flex-1 min-w-0">
@@ -703,7 +693,7 @@ export default function AppointmentsClient({
                       />
                     </div>
                   </div>
-                </motion.div>
+                </div>
 
                 {/* Lista de cards */}
                 <AppointmentCardList
@@ -721,18 +711,13 @@ export default function AppointmentsClient({
             content: (
               <motion.div
                 key="scheduled-view"
-                initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: prefersReducedMotion ? 0 : 0.3 }}
+                transition={{ duration: 0.2 }}
               >
                 {/* Barra de búsqueda y filtro para citas agendadas */}
-                <motion.div
-                  initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
-                  className="mb-4"
-                >
+                <div className="mb-4">
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
                     {/* Buscador */}
                     <div className="flex-1 min-w-0">
@@ -788,7 +773,7 @@ export default function AppointmentsClient({
                       />
                     </div>
                   </div>
-                </motion.div>
+                </div>
 
                 {/* Lista de cards de citas agendadas filtradas */}
                 <AppointmentCardList

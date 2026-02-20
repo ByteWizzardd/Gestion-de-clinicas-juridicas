@@ -124,12 +124,9 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
 
   return (
     <motion.aside
-      initial={prefersReducedMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
-      animate={{
-        opacity: 1,
-        x: 0,
-      }}
-      transition={{ duration: prefersReducedMotion ? 0 : 0.4, ease: "easeInOut" }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
       className={`bg-background flex flex-col h-[calc(100vh-2rem)] rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] m-2 md:m-4 relative group transition-all duration-300 ease-in-out ${isCollapsed ? 'w-16 md:w-20' : 'w-52 md:w-56'}`}
     >
       {/* Botón de toggle (visible al hacer hover o siempre visible) */}
@@ -194,9 +191,9 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
             return (
               <motion.li
                 key={item.href}
-                initial={prefersReducedMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1 + index * 0.05, ease: "easeOut" }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
               >
                 <Link
                   href={item.href}
@@ -228,9 +225,9 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
 
       {/* Footer del Sidebar */}
       <motion.div
-        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+        initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.4, ease: "easeOut" }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
         className={`px-4 pb-8 ${isCollapsed ? 'px-2 flex justify-center' : ''}`}
       >
         <ProfileDropdown

@@ -167,23 +167,14 @@ export default function StudentsClient({ initialEstudiantes = [] }: StudentsClie
 
     return (
         <>
-            <motion.div
-                className="mb-4 md:mb-6 mt-4"
-                initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: "easeOut" }}
-            >
+            <div className="mb-4 md:mb-6 mt-4">
                 <h1 className="text-4xl m-3 font-semibold font-primary">Estudiantes</h1>
                 <p className="mb-6 ml-3">
                     Visualización y gestión de estudiantes registrados en el sistema.
                 </p>
-            </motion.div>
+            </div>
 
-            <motion.div
-                initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
-            >
+            <div className="px-3 md:px-1">
                 <div className="flex flex-col md:flex-row md:items-center gap-3 sm:gap-4 w-full px-3">
                     <div className="flex-1 min-w-0">
                         <CaseTools
@@ -214,19 +205,19 @@ export default function StudentsClient({ initialEstudiantes = [] }: StudentsClie
                         />
                     </div>
                 </div>
-            </motion.div>
+            </div>
 
             <div className="mt-10"></div>
 
             {loading ? (
                 <div className="m-3">
-                    <TableSkeleton columns={5} rows={8} />
+                    <TableSkeleton columns={5} rows={10} />
                 </div>
             ) : (
                 <motion.div
-                    initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
+                    initial={{ opacity: 0.5 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.1, ease: "easeOut" }}
                 >
                     <Table
                         data={filteredUsuarios.map((u) => {

@@ -861,23 +861,13 @@ export default function ReportsPage() {
     return (
         <div className="pt-2 px-6 pb-6 space-y-6 overflow-x-hidden max-w-full">
             {/* Header */}
-            <motion.div
-                className="mb-4 md:mb-6"
-                initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: "easeOut" }}
-            >
+            <div className="mb-4 md:mb-6">
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl m-3 font-semibold font-primary">Reportes</h1>
                 <p className="mb-6 ml-3 text-base">Presentación de las métricas clave a través de gráficas y cuadros.</p>
-            </motion.div>
+            </div>
 
             {/* Report Generation Cards */}
-            <motion.div
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-[10rem] gap-4 mb-6 w-full min-w-0"
-                initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
-            >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-[10rem] gap-4 mb-6 w-full min-w-0">
                 {/* 1. Resumen de Casos (Normal Card) */}
                 <ReportCard
                     title="Resumen de Casos"
@@ -926,19 +916,15 @@ export default function ReportsPage() {
                     onGenerate={() => handleGenerateReport('Reporte Socioeconómico')}
                     buttonColor="orange"
                 />
-            </motion.div>
+            </div>
 
             {/* Filter Bar with View Switcher */}
-            <motion.div
-                initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.15, ease: "easeOut" }}
-            >
+            <div>
                 <FilterBar
                     filters={filters}
                     onFilterChange={setFilters}
                 />
-            </motion.div>
+            </div>
 
             {/* Error State */}
             {error && (
@@ -950,9 +936,9 @@ export default function ReportsPage() {
             {/* Dynamic Content Area */}
             <motion.div
                 className="transition-all duration-300 mt-6"
-                initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
+                initial={{ opacity: 0.5 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.1, ease: "easeOut" }}
             >
                 {loading ? (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

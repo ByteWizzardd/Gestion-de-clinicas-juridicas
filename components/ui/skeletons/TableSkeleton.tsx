@@ -17,7 +17,7 @@ const CELL_WIDTHS = ['45%', '70%', '55%', '60%', '50%', '65%', '40%', '75%'];
  * - Columna de acciones con ícono circular
  * - Paginación inferior
  */
-export default function TableSkeleton({ columns, rows = 8 }: TableSkeletonProps) {
+export default function TableSkeleton({ columns, rows = 10 }: TableSkeletonProps) {
     return (
         <div className="w-full font-secondary flex flex-col gap-2">
             {/* ─── Header ─────────────────────────────── */}

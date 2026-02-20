@@ -627,12 +627,7 @@ export default function AuditClient() {
   return (
     <div className="w-full">
       {/* Barra de búsqueda */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="mb-6"
-      >
+      <div className="mb-6">
         <div className="w-full flex items-center gap-4">
           <div className="flex-1 min-w-0">
             <Search
@@ -659,7 +654,7 @@ export default function AuditClient() {
             </button>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Cards de entidades filtradas */}
       {filteredEntities.length === 0 ? (
@@ -669,9 +664,9 @@ export default function AuditClient() {
       ) : (
         <motion.div
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
+          initial={{ opacity: 0.5 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.1 }}
         >
           {filteredEntities.map((entity) => (
             <AuditEntityCard

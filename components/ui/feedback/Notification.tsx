@@ -91,10 +91,10 @@ const Notification: React.FC<NotificationProps> = () => {
     >
       <AnimatePresence>
         <motion.div
-          initial={{ opacity: 0, y: -10, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -10, scale: 0.95 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.1, ease: 'easeOut' }}
           className="bg-white border border-gray-200 rounded-xl shadow-xl flex flex-col max-h-[80vh]"
         >
           <div className="p-4 border-b border-gray-200 shrink-0">

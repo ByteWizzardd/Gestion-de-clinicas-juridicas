@@ -5,12 +5,8 @@ export default function ReportsLoading() {
         <div className="pt-2 px-6 pb-6 space-y-6 overflow-x-hidden max-w-full">
             {/* Header */}
             <div className="mb-4 md:mb-6">
-                <div className="m-3">
-                    <Skeleton width="12%" height={32} borderRadius="8px" />
-                </div>
-                <div className="ml-3 mt-2">
-                    <Skeleton width="55%" height={14} borderRadius="6px" />
-                </div>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl m-3 font-semibold font-primary">Reportes</h1>
+                <p className="mb-6 ml-3 text-base">Presentación de las métricas clave a través de gráficas y cuadros.</p>
             </div>
 
             {/* Report cards grid — 3x2 */}

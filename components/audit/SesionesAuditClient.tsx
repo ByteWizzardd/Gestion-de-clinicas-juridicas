@@ -337,9 +337,9 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
     return (
         <div className="w-full">
             <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.1, ease: "easeOut" }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
                 className="flex flex-wrap gap-3 sm:gap-4 items-center w-full px-3 mb-4 md:mb-6 mt-4"
             >
                 <div className="w-full sm:flex-1 sm:min-w-0">
@@ -383,14 +383,14 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
             </motion.div>
 
             <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
                 className="mx-3"
             >
                 {loading ? (
                     <div className="space-y-3">
-                        {Array.from({ length: 5 }).map((_, i) => (
+                        {Array.from({ length: rowsPerPage }).map((_, i) => (
                             <AuditRecordCardSkeleton key={i} />
                         ))}
                     </div>
@@ -442,9 +442,9 @@ export default function SesionesAuditClient() {
         <div className="w-full">
             {/* Header */}
             <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
             >
                 <h1 className="text-4xl m-3 font-semibold font-primary">Auditoría de Sesiones</h1>
                 <p className="mb-6 ml-3 text-gray-600">
@@ -453,9 +453,9 @@ export default function SesionesAuditClient() {
             </motion.div>
 
             <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
             >
                 <Tabs tabs={tabs} defaultTab="logins" />
             </motion.div>

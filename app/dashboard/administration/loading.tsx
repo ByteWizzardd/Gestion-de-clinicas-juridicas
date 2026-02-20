@@ -1,29 +1,28 @@
-import { Skeleton } from '@/components/ui/Skeleton';
+'use client';
+
 import AuditEntityCardSkeleton from '@/components/ui/skeletons/AuditEntityCardSkeleton';
+import Search from '@/components/CaseTools/search';
 
 export default function AdministrationLoading() {
     return (
-        <div className="p-4">
-            {/* Título */}
-            <div className="m-3">
-                <Skeleton width="22%" height={32} borderRadius="8px" />
-            </div>
-            <div className="ml-3 mt-2 mb-6">
-                <Skeleton width="50%" height={14} borderRadius="6px" />
+        <div className="pt-2 px-6 pb-6 space-y-6 overflow-x-hidden max-w-full">
+            {/* Header */}
+            <div className="mb-4 md:mb-6">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl m-3 font-semibold font-primary">Administración</h1>
+                <p className="mb-6 ml-3 text-base">Mantenimiento de los catálogos del sistema</p>
             </div>
 
-            {/* Barra de búsqueda */}
-            <div className="m-3 mb-6">
-                <div className="w-full flex items-center gap-4">
-                    <div className="flex-1 min-w-0">
-                        <Skeleton width="100%" height={40} borderRadius="9999px" />
-                    </div>
-                    <Skeleton width={150} height={40} borderRadius="9999px" />
-                </div>
+            {/* Buscador (real) */}
+            <div className="mb-6">
+                <Search
+                    value=""
+                    onChange={() => { }}
+                    placeholder="Buscar catálogo..."
+                />
             </div>
 
             {/* Grid de cards skeleton */}
-            <div className="m-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {Array.from({ length: 12 }).map((_, i) => (
                     <AuditEntityCardSkeleton key={i} />
                 ))}

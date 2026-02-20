@@ -1,31 +1,37 @@
-import { Skeleton } from '@/components/ui/Skeleton';
+'use client';
+
 import TableSkeleton from '@/components/ui/skeletons/TableSkeleton';
+import CaseTools from '@/components/CaseTools/CaseTools';
 
 export default function CasesLoading() {
     return (
-        <div className="p-4">
-            {/* Título */}
+        <>
             <div className="mb-4 md:mb-6 mt-4">
-                <div className="m-3">
-                    <Skeleton width="12%" height={32} borderRadius="8px" />
-                </div>
-                <div className="ml-3 mt-2">
-                    <Skeleton width="40%" height={14} borderRadius="6px" />
+                <div>
+                    <h1 className="text-4xl m-3 font-semibold font-primary">Casos</h1>
+                    <p className="mb-6 ml-3">Listado y gestión de todos los casos registrados.</p>
                 </div>
             </div>
 
-            {/* Barra de herramientas */}
-            <div className="flex flex-col md:flex-row md:items-center gap-3 sm:gap-4 w-full px-3 mb-10">
-                <div className="flex-1 min-w-0">
-                    <Skeleton width="100%" height={40} borderRadius="9999px" />
-                </div>
-                <Skeleton width={150} height={40} borderRadius="9999px" />
+            <div className="px-1">
+                <CaseTools
+                    addLabel="Añadir Caso"
+                    searchValue=""
+                    onSearchChange={() => { }}
+                    searchPlaceholder="Buscar caso..."
+                    nucleoFilter=""
+                    onNucleoChange={() => { }}
+                    tramiteFilter=""
+                    onTramiteChange={() => { }}
+                    estatusFilter=""
+                    onEstatusChange={() => { }}
+                />
             </div>
+            <div className="mt-10"></div>
 
-            {/* Tabla skeleton */}
-            <div className="px-3">
-                <TableSkeleton columns={6} rows={8} />
+            <div className="min-h-[400px] px-3">
+                <TableSkeleton columns={6} rows={10} />
             </div>
-        </div>
+        </>
     );
 }

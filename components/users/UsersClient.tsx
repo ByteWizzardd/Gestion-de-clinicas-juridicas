@@ -405,160 +405,82 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
 
   return (
     <>
-      <motion.div
-        className="mb-4 md:mb-6 mt-4"
-        initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: "easeOut" }}
-      >
+      <div className="mb-4 md:mb-6 mt-4">
         <h1 className="text-4xl m-3 font-semibold font-primary">Usuarios</h1>
         <p className="mb-6 ml-3">
           Administración de usuarios del sistema: estudiantes, profesores y coordinadores
         </p>
-      </motion.div>
+      </div>
 
-      <motion.div
-        initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
-      >
-        <div className="flex flex-col md:flex-row md:items-center gap-3 sm:gap-4 w-full px-3">
-          <div className="flex-1 min-w-0">
-            <CaseTools
-              searchValue={searchValue}
-              onSearchChange={setSearchValue}
-              searchPlaceholder="Buscar usuario..."
-              estatusFilter={tipoFilter}
-              onEstatusChange={setTipoFilter}
-              estatusOptions={tipoOptions}
-              tramiteFilter={estadoFilter}
-              onTramiteChange={setEstadoFilter}
-              tramiteOptions={[
-                { value: 'Habilitado', label: 'Habilitados' },
-                { value: 'Deshabilitado', label: 'Deshabilitados' }
-              ]}
-              nucleoFilter={semestreFilter}
-              onNucleoChange={setSemestreFilter}
-              nucleoLabel="Semestre"
-              nucleoAllLabel="Todos los semestres"
-              nucleoOptions={semestreOptions}
-            />
-          </div>
-          <div className="flex gap-3 sm:gap-4 items-center shrink-0">
-            {isSelectionMode ? (
-              <div className="flex gap-2 items-center">
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  onClick={() => {
-                    setIsSelectionMode(false);
-                    setSelectedCedulas([]);
-                  }}
-                  className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-gray-100 text-gray-700 border border-gray-200 rounded-full hover:bg-gray-200 transition-colors font-medium whitespace-nowrap"
-                >
-                  <span>Cancelar</span>
-                </motion.button>
-
-                {selectedCedulas.length > 0 && (
-                  <>
-                    {/* Botón de Deshabilitar (solo si hay alguno habilitado) */}
-                    {usuarios.some(u => selectedCedulas.includes(u.cedula) && u.habilitado_sistema) && (
-                      <motion.button
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        onClick={() => setShowBatchConfirm(true)}
-                        className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-red-50 text-red-600 border border-red-200 rounded-full hover:bg-red-100 transition-colors font-medium whitespace-nowrap"
-                      >
-                        <UserX className="w-5 h-5" />
-                        <span>Deshabilitar ({selectedCedulas.filter(id => usuarios.find(u => u.cedula === id)?.habilitado_sistema).length})</span>
-                      </motion.button>
-                    )}
-
-                    {/* Botón de Habilitar (solo si hay alguno deshabilitado) */}
-                    {usuarios.some(u => selectedCedulas.includes(u.cedula) && !u.habilitado_sistema) && (
-                      <motion.button
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        onClick={() => setShowBatchEnableConfirm(true)}
-                        className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-green-50 text-green-600 border border-green-200 rounded-full hover:bg-green-100 transition-colors font-medium whitespace-nowrap"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span>Habilitar ({selectedCedulas.filter(id => !usuarios.find(u => u.cedula === id)?.habilitado_sistema).length})</span>
-                      </motion.button>
-                    )}
-                  </>
-                )}
-              </div>
-            ) : (
-              <DropdownMenu
-                trigger={(isOpen) => (
-                  <motion.button
-                    type="button"
-                    className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-white text-gray-700 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors font-medium whitespace-nowrap"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <UserX className="w-5 h-5 text-gray-500" />
-                    <span>Gestión en lote</span>
-                    <svg
-                      className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </motion.button>
-                )}
-                align="left"
-                className="relative"
-                menuClassName="bg-white border border-gray-300 rounded-2xl shadow-xl min-w-[220px] overflow-hidden py-2"
+      <div className="flex flex-col md:flex-row md:items-center gap-3 sm:gap-4 w-full px-3">
+        <div className="flex-1 min-w-0">
+          <CaseTools
+            searchValue={searchValue}
+            onSearchChange={setSearchValue}
+            searchPlaceholder="Buscar usuario..."
+            estatusFilter={tipoFilter}
+            onEstatusChange={setTipoFilter}
+            estatusOptions={tipoOptions}
+            tramiteFilter={estadoFilter}
+            onTramiteChange={setEstadoFilter}
+            tramiteOptions={[
+              { value: 'Habilitado', label: 'Habilitados' },
+              { value: 'Deshabilitado', label: 'Deshabilitados' }
+            ]}
+            nucleoFilter={semestreFilter}
+            onNucleoChange={setSemestreFilter}
+            nucleoLabel="Semestre"
+            nucleoAllLabel="Todos los semestres"
+            nucleoOptions={semestreOptions}
+          />
+        </div>
+        <div className="flex gap-3 sm:gap-4 items-center shrink-0">
+          {isSelectionMode ? (
+            <div className="flex gap-2 items-center">
+              <button
+                onClick={() => {
+                  setIsSelectionMode(false);
+                  setSelectedCedulas([]);
+                }}
+                className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-gray-100 text-gray-700 border border-gray-200 rounded-full hover:bg-gray-200 transition-colors font-medium whitespace-nowrap"
               >
-                <div onClick={(e) => e.stopPropagation()}>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      setIsSelectionMode(true);
-                    }}
-                    className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 cursor-pointer"
-                  >
-                    <Users className="w-5 h-5 text-gray-500" />
-                    <span>Seleccionar usuarios</span>
-                  </button>
-                  <div className="border-t border-gray-200 my-1"></div>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      setShowCerrarSemestreConfirm(true);
-                    }}
-                    className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-3 cursor-pointer"
-                  >
-                    <CalendarX2 className="w-5 h-5 text-red-500" />
-                    <span>Cerrar Semestre</span>
-                  </button>
-                </div>
-              </DropdownMenu>
-            )}
+                <span>Cancelar</span>
+              </button>
 
+              {selectedCedulas.length > 0 && (
+                <>
+                  {usuarios.some(u => selectedCedulas.includes(u.cedula) && u.habilitado_sistema) && (
+                    <button
+                      onClick={() => setShowBatchConfirm(true)}
+                      className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-red-50 text-red-600 border border-red-200 rounded-full hover:bg-red-100 transition-colors font-medium whitespace-nowrap"
+                    >
+                      <UserX className="w-5 h-5" />
+                      <span>Deshabilitar ({selectedCedulas.filter(id => usuarios.find(u => u.cedula === id)?.habilitado_sistema).length})</span>
+                    </button>
+                  )}
+
+                  {usuarios.some(u => selectedCedulas.includes(u.cedula) && !u.habilitado_sistema) && (
+                    <button
+                      onClick={() => setShowBatchEnableConfirm(true)}
+                      className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-green-50 text-green-600 border border-green-200 rounded-full hover:bg-green-100 transition-colors font-medium whitespace-nowrap"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>Habilitar ({selectedCedulas.filter(id => !usuarios.find(u => u.cedula === id)?.habilitado_sistema).length})</span>
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          ) : (
             <DropdownMenu
               trigger={(isOpen) => (
-                <motion.button
-                  type="button"
-                  className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-primary text-white rounded-full hover:bg-primary-dark transition-colors font-medium whitespace-nowrap"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                <div
+                  className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-white text-gray-700 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors font-medium whitespace-nowrap"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span>Registrar Usuario</span>
+                  <UserX className="w-5 h-5 text-gray-500" />
+                  <span>Gestión en lote</span>
                   <svg
                     className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
                     fill="none"
@@ -568,9 +490,8 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                   </svg>
-                </motion.button>
+                </div>
               )}
-              onOpenChange={setIsDropdownOpen}
               align="left"
               className="relative"
               menuClassName="bg-white border border-gray-300 rounded-2xl shadow-xl min-w-[220px] overflow-hidden py-2"
@@ -581,48 +502,102 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
-                    setIsDropdownOpen(false);
-                    Promise.resolve().then(() => {
-                      setIsCreateUserModalOpen(true);
-                    });
+                    setIsSelectionMode(true);
                   }}
                   className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 cursor-pointer"
                 >
-                  <UserPlus className="w-5 h-5 text-primary" />
-                  <span>Registrar usuario</span>
+                  <Users className="w-5 h-5 text-gray-500" />
+                  <span>Seleccionar usuarios</span>
                 </button>
+                <div className="border-t border-gray-200 my-1"></div>
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
-                    setIsDropdownOpen(false);
-                    Promise.resolve().then(() => {
-                      setIsBulkUploadModalOpen(true);
-                    });
+                    setShowCerrarSemestreConfirm(true);
                   }}
-                  className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 cursor-pointer"
+                  className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-3 cursor-pointer"
                 >
-                  <Users className="w-5 h-5 text-primary" />
-                  <span>Registrar usuarios por lotes</span>
+                  <CalendarX2 className="w-5 h-5 text-red-500" />
+                  <span>Cerrar Semestre</span>
                 </button>
               </div>
             </DropdownMenu>
-          </div>
+          )}
+
+          <DropdownMenu
+            trigger={(isOpen) => (
+              <div
+                className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-primary text-white rounded-full hover:bg-primary-dark transition-colors font-medium whitespace-nowrap"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Registrar Usuario</span>
+                <svg
+                  className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            )}
+            onOpenChange={setIsDropdownOpen}
+            align="left"
+            className="relative"
+            menuClassName="bg-white border border-gray-300 rounded-2xl shadow-xl min-w-[220px] overflow-hidden py-2"
+          >
+            <div onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setIsDropdownOpen(false);
+                  Promise.resolve().then(() => {
+                    setIsCreateUserModalOpen(true);
+                  });
+                }}
+                className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 cursor-pointer"
+              >
+                <UserPlus className="w-5 h-5 text-primary" />
+                <span>Registrar usuario</span>
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setIsDropdownOpen(false);
+                  Promise.resolve().then(() => {
+                    setIsBulkUploadModalOpen(true);
+                  });
+                }}
+                className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 cursor-pointer"
+              >
+                <Users className="w-5 h-5 text-primary" />
+                <span>Registrar usuarios por lotes</span>
+              </button>
+            </div>
+          </DropdownMenu>
         </div>
-      </motion.div>
+      </div>
 
       <div className="mt-10"></div>
 
       {loading ? (
         <div className="m-3">
-          <TableSkeleton columns={5} rows={8} />
+          <TableSkeleton columns={5} rows={10} />
         </div>
       ) : (
         <motion.div
-          initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
+          initial={{ opacity: 0.5 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.1, ease: "easeOut" }}
         >
           <Table
             data={filteredUsuarios.map((u) => {

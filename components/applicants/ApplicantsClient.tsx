@@ -426,20 +426,11 @@ export default function ApplicantsClient({
 
   return (
     <>
-      <motion.div
-        className="mb-4 md:mb-6 mt-4"
-        initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: "easeOut" }}
-      >
+      <div className="mb-4 md:mb-6 mt-4">
         <h1 className="text-4xl m-3 font-semibold font-primary">Solicitantes</h1>
         <p className="mb-6 ml-3">Listado y búsqueda de todas las personas atendidas.</p>
-      </motion.div>
-      <motion.div
-        initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
-      >
+      </div>
+      <div className="px-1">
         <CaseTools
           addLabel="Añadir Solicitante"
           onAddClick={() => {
@@ -463,19 +454,19 @@ export default function ApplicantsClient({
           onFechaInicioChange={handleFechaInicioChange}
           onFechaFinChange={handleFechaFinChange}
         />
-      </motion.div>
+      </div>
       <div className="mt-10"></div>
 
       {isFiltering && (
         <div className="px-3">
-          <TableSkeleton columns={5} rows={6} />
+          <TableSkeleton columns={5} rows={10} />
         </div>
       )}
 
       <motion.div
-        initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: prefersReducedMotion ? 0 : 0.3, delay: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
+        initial={{ opacity: 0.5 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
       >
         <Table
           data={filteredSolicitantes.map((s) => ({

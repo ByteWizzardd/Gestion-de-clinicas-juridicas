@@ -320,7 +320,7 @@ export default function AuditGeneralView() {
             <div className="space-y-4">
                 {loading ? (
                     <div className="space-y-3">
-                        {Array.from({ length: 8 }).map((_, i) => (
+                        {Array.from({ length: rowsPerPage }).map((_, i) => (
                             <AuditRecordCardSkeleton key={i} />
                         ))}
                     </div>
@@ -338,9 +338,9 @@ export default function AuditGeneralView() {
                         return (
                             <motion.div
                                 key={`${log.fecha}-${index}`}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05 }}
+                                initial={{ opacity: 0.5 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.1 }}
                             >
                                 <AuditRecordCard record={mapped.record} type={mapped.type} moduleName={log.entidad} />
                             </motion.div>

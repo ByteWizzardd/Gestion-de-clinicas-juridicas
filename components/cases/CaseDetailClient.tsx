@@ -267,9 +267,9 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
   return (
     <div className="p-4 sm:p-6 lg:p-8 overflow-x-hidden">
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
       >
         <Breadcrumbs
           items={[
@@ -281,9 +281,9 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
 
       <motion.div
         className="flex items-center justify-between mb-2"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.1, ease: 'easeOut' }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
       >
         <div className="flex items-center gap-3">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold" style={{ fontFamily: 'var(--font-league-spartan)' }}>
@@ -399,9 +399,9 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
         </div>
       </motion.div>
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.2, ease: 'easeOut' }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
       >
         {nombreSolicitante && (
           <p className="text-sm sm:text-base text-gray-500 mb-6 sm:mb-8 flex items-center gap-1.5">
@@ -474,9 +474,9 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
       />
 
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.25, ease: 'easeOut' }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
       >
         <Tabs tabs={tabs} defaultTab={activeTab} onTabChange={setActiveTab} />
       </motion.div>

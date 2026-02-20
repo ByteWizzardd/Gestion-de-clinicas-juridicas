@@ -7,8 +7,12 @@ export default function DashboardLoading() {
 
         {/* Header */}
         <div className="mb-4 md:mb-6 mt-4">
-          <Skeleton width={300} height={32} borderRadius="8px" className="mb-2" />
-          <Skeleton width={400} height={20} borderRadius="6px" />
+          <h1 className="text-2xl md:text-3xl font-medium text-foreground mb-1" style={{ fontFamily: 'var(--font-league-spartan)' }}>
+            Bienvenido al dashboard
+          </h1>
+          <p className="text-sm md:text-base text-gray-600" style={{ fontFamily: 'var(--font-urbanist)' }}>
+            Aquí podrás ver el estado de las citas y los casos.
+          </p>
         </div>
 
         {/* Contenedor Principal */}

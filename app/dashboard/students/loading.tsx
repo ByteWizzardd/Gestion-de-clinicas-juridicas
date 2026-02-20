@@ -1,31 +1,50 @@
-import { Skeleton } from '@/components/ui/Skeleton';
+'use client';
+
 import TableSkeleton from '@/components/ui/skeletons/TableSkeleton';
+import CaseTools from '@/components/CaseTools/CaseTools';
 
 export default function StudentsLoading() {
     return (
-        <div className="p-4">
-            {/* Título */}
+        <>
             <div className="mb-4 md:mb-6 mt-4">
-                <div className="m-3">
-                    <Skeleton width="16%" height={32} borderRadius="8px" />
-                </div>
-                <div className="ml-3 mt-2">
-                    <Skeleton width="50%" height={14} borderRadius="6px" />
+                <h1 className="text-4xl m-3 font-semibold font-primary">Estudiantes</h1>
+                <p className="mb-6 ml-3">
+                    Visualización y gestión de estudiantes registrados en el sistema.
+                </p>
+            </div>
+
+            <div className="px-3 md:px-1">
+                <div className="flex flex-col md:flex-row md:items-center gap-3 sm:gap-4 w-full px-3">
+                    <div className="flex-1 min-w-0">
+                        <CaseTools
+                            searchValue=""
+                            onSearchChange={() => { }}
+                            searchPlaceholder="Buscar estudiante..."
+                            estatusFilter=""
+                            onEstatusChange={() => { }}
+                            estatusLabel="Estado"
+                            estatusOptions={[
+                                { value: 'Habilitado', label: 'Habilitado' },
+                                { value: 'Deshabilitado', label: 'Deshabilitado' },
+                            ]}
+                            nucleoFilter=""
+                            onNucleoChange={() => { }}
+                            nucleoLabel="Tipo"
+                            nucleoAllLabel="Todos los tipos"
+                            nucleoOptions={[]}
+                            tramiteFilter=""
+                            onTramiteChange={() => { }}
+                            tramiteOptions={[]}
+                        />
+                    </div>
                 </div>
             </div>
 
-            {/* Barra de herramientas */}
-            <div className="flex flex-col md:flex-row md:items-center gap-3 sm:gap-4 w-full px-3 mb-10">
-                <div className="flex-1 min-w-0">
-                    <Skeleton width="100%" height={40} borderRadius="9999px" />
-                </div>
-                <Skeleton width={150} height={40} borderRadius="9999px" />
-            </div>
+            <div className="mt-10"></div>
 
-            {/* Tabla skeleton */}
-            <div className="px-3">
-                <TableSkeleton columns={5} rows={8} />
+            <div className="m-3">
+                <TableSkeleton columns={5} rows={10} />
             </div>
-        </div>
+        </>
     );
 }

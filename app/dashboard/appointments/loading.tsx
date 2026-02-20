@@ -2,32 +2,34 @@ import { Skeleton } from '@/components/ui/Skeleton';
 
 export default function AppointmentsLoading() {
     return (
-        <div className="h-full relative p-4">
+        <div className="h-full relative">
             {/* Header */}
             <div className="mb-4 md:mb-6 mt-4">
                 <div className="mb-4">
-                    <Skeleton width="8%" height={28} borderRadius="8px" />
-                    <div className="mt-2">
-                        <Skeleton width="35%" height={14} borderRadius="6px" />
-                    </div>
+                    <h1 className="text-3xl font-medium text-foreground mb-1" style={{ fontFamily: 'var(--font-league-spartan)' }}>
+                        Citas
+                    </h1>
+                    <p className="text-base text-gray-600" style={{ fontFamily: 'var(--font-urbanist)' }}>
+                        Vista de programación de las citas.
+                    </p>
                 </div>
             </div>
 
-            {/* Tabs */}
-            <div className="flex gap-1 mb-6">
-                {['Calendario', 'Lista', 'Agendadas'].map((_, i) => (
-                    <Skeleton
-                        key={i}
-                        width={i === 0 ? 110 : i === 1 ? 70 : 100}
-                        height={36}
-                        borderRadius="9999px"
-                        style={
-                            i === 0
-                                ? { background: 'var(--primary)', opacity: 0.15, animation: 'none' }
-                                : undefined
-                        }
-                    />
-                ))}
+            {/* Tabs (real) */}
+            <div className="w-full">
+                <div className="border-b border-gray-200 mb-4 sm:mb-6">
+                    <div className="flex gap-1 w-full">
+                        <button className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-medium whitespace-nowrap shrink border-b-2 border-primary text-primary">
+                            Calendario
+                        </button>
+                        <button className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-medium whitespace-nowrap shrink border-b-2 border-transparent text-gray-500">
+                            Lista
+                        </button>
+                        <button className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-medium whitespace-nowrap shrink border-b-2 border-transparent text-gray-500">
+                            Agendadas
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {/* Calendar view layout — two columns */}

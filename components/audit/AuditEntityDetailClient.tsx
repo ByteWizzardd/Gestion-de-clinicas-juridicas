@@ -82,9 +82,9 @@ export default function AuditEntityDetailClient({
     <div className="w-full">
       {/* Encabezado de la entidad */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
       >
         <h1 className="text-4xl m-3 font-semibold font-primary">{entityTitle}</h1>
         <p className="mb-6 ml-3">{entityDescription}</p>
@@ -92,9 +92,9 @@ export default function AuditEntityDetailClient({
 
       {/* Tabs con las operaciones */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
       >
         <Tabs tabs={tabs} defaultTab={activeTab} onTabChange={setActiveTab} />
       </motion.div>
