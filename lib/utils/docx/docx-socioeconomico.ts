@@ -209,6 +209,7 @@ export async function generateSocioeconomicoDOCX(
             let labels: string[] = [];
             let values: number[] = [];
             let total = 0;
+            let totalLabel = 'Solicitantes';
 
             // Obtener datos
             if (section.isDynamicHousing) {
@@ -216,6 +217,9 @@ export async function generateSocioeconomicoDOCX(
                 labels = items.map(item => item.caracteristica);
                 values = items.map(item => Number(item.cantidad_solicitantes));
                 total = values.reduce((sum, v) => sum + v, 0);
+                if (section.typeName.toLowerCase().includes('artefact')) {
+                    totalLabel = 'Artefactos';
+                }
             } else {
                 // @ts-ignore
                 const items = data[section.dataKey] || [];
@@ -276,7 +280,7 @@ export async function generateSocioeconomicoDOCX(
             }));
 
             // Total Count Image
-            const subtitleImg = await generateSubtitleImage(`Total de Solicitantes: ${total}`);
+            const subtitleImg = await generateSubtitleImage(`Total de ${totalLabel}: ${total}`);
             topContent.push(new Paragraph({
                 alignment: AlignmentType.CENTER,
                 spacing: { after: 50 },

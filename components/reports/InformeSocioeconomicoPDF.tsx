@@ -229,7 +229,7 @@ const InformeSocioeconomicoPDF: React.FC<InformeSocioeconomicoPDFProps> = ({
                 housingSections.push({
                     key,
                     title: type,
-                    totalLabel: 'Solicitantes',
+                    totalLabel: type.toLowerCase().includes('artefact') ? 'Artefactos' : 'Solicitantes',
                     // Para el cálculo del total basado en esta sección específica
                     isDynamicHousing: true,
                     typeName: type
