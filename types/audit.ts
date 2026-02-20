@@ -773,6 +773,7 @@ export interface SesionAuditRecord {
   nombre_usuario?: string;
   fecha: string; // Alias para fecha_inicio
   usuario_accion: string; // Alias for cedula_usuario
+  detalle: string | null;
   nombre_completo_usuario_accion?: string;
 }
 

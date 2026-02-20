@@ -125,7 +125,7 @@ function SesionCard({ sesion }: { sesion: SesionExtended }) {
                                 {sesion.exitoso ? (
                                     isActive ? 'Inicio de sesión' : 'Sesión cerrada'
                                 ) : (
-                                    'Intento de acceso fallido'
+                                    sesion.detalle || 'Intento de acceso fallido'
                                 )}
                                 {' - '}
                                 {sesion.cedula_usuario ? (
@@ -222,7 +222,9 @@ function SesionCard({ sesion }: { sesion: SesionExtended }) {
                                 <div>
                                     <p className="text-sm font-semibold text-gray-700 mb-1">Estado</p>
                                     <p className={`text-sm ${sesion.exitoso ? 'text-green-600' : 'text-red-600'}`}>
-                                        {sesion.exitoso ? 'Autenticación exitosa' : 'Credenciales incorrectas o usuario no encontrado'}
+                                        {sesion.exitoso
+                                            ? (sesion.detalle || 'Autenticación exitosa')
+                                            : (sesion.detalle || 'Credenciales incorrectas o usuario no encontrado')}
                                     </p>
                                 </div>
                             </div>

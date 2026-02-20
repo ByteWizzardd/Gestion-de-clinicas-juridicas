@@ -8,7 +8,8 @@ SELECT
     ses.exitoso,
     u.nombres,
     u.apellidos,
-    u.nombre_usuario
+    u.nombre_usuario,
+    ses.detalle
 FROM auditoria_sesiones ses
 LEFT JOIN usuarios u ON ses.cedula_usuario = u.cedula
 WHERE

@@ -85,6 +85,19 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
     }
 
     if (user.habilitado_sistema === false) {
+      // Registrar intento fallido por usuario deshabilitado
+      const headersList = await headers();
+      const ipDireccion = headersList.get('x-forwarded-for') || 'unknown';
+      const dispositivo = headersList.get('user-agent') || 'unknown';
+
+      await authQueries.registrarInicioSesion({
+        cedula: user.cedula,
+        ipDireccion,
+        dispositivo,
+        exitoso: false,
+        detalle: 'Usuario deshabilitado. Contacte al administrador'
+      });
+
       return {
         success: false,
         error: {

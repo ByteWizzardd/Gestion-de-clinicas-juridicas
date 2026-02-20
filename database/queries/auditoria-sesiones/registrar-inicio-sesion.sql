@@ -3,11 +3,13 @@ INSERT INTO auditoria_sesiones (
     ip_direccion,
     dispositivo,
     exitoso,
-    fecha_inicio
+    fecha_inicio,
+    detalle
 ) VALUES (
     $1,
     $2,
     $3,
     $4,
-    (NOW() AT TIME ZONE 'America/Caracas')
+    (NOW() AT TIME ZONE 'America/Caracas'),
+    $5
 ) RETURNING id_sesion;

@@ -11,7 +11,7 @@ SELECT * FROM (
         COALESCE(t.fecha_inicio, t.fecha_cierre) as fecha,
         t.cedula_usuario as usuario_id,
         COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.cedula_usuario), t.cedula_usuario) as usuario_nombre,
-        'IP: ' || COALESCE(t.ip_direccion::text, 'N/A') as detalles,
+        COALESCE(t.detalle, 'IP: ' || COALESCE(t.ip_direccion::text, 'N/A')) as detalles,
         row_to_json(t.*)::text as metadata
     FROM auditoria_sesiones t
 

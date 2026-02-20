@@ -1579,6 +1579,7 @@ CREATE TABLE auditoria_sesiones (
     cedula_usuario VARCHAR(20),
     ip_direccion VARCHAR(50),
     dispositivo TEXT,
+    detalle TEXT,
     exitoso BOOLEAN DEFAULT TRUE,
     fecha_inicio TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas'),
     fecha_cierre TIMESTAMP

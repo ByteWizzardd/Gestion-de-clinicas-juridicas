@@ -132,6 +132,7 @@ export const authQueries = {
     ipDireccion?: string;
     dispositivo?: string;
     exitoso: boolean;
+    detalle?: string;
   }): Promise<number | null> => {
     try {
       const query = loadSQL('auditoria-sesiones/registrar-inicio-sesion.sql');
@@ -139,7 +140,8 @@ export const authQueries = {
         data.cedula,
         data.ipDireccion || null,
         data.dispositivo || null,
-        data.exitoso
+        data.exitoso,
+        data.detalle || null
       ]);
       return result.rows[0]?.id_sesion || null;
     } catch (error) {

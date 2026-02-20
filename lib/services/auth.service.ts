@@ -37,7 +37,8 @@ export const authService = {
         cedula: user.cedula,
         ipDireccion: data.ipDireccion,
         dispositivo: data.dispositivo,
-        exitoso: false
+        exitoso: false,
+        detalle: 'Usuario deshabilitado. Contacte al administrador'
       });
       throw new UnauthorizedError('Usuario deshabilitado. Contacte al administrador');
     }
@@ -55,7 +56,8 @@ export const authService = {
         cedula: user.cedula,
         ipDireccion: data.ipDireccion,
         dispositivo: data.dispositivo,
-        exitoso: false
+        exitoso: false,
+        detalle: 'Contraseña incorrecta'
       });
       throw new UnauthorizedError('Credenciales inválidas');
     }

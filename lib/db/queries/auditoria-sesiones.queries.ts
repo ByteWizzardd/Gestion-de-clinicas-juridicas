@@ -14,6 +14,7 @@ export interface SesionAuditoria {
     nombres?: string;
     apellidos?: string;
     nombre_usuario?: string;
+    detalle: string | null;
 }
 
 export type SortOrder = 'asc' | 'desc';
