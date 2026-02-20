@@ -12,6 +12,16 @@ import SocioeconomicInfoTab from '@/components/solicitantes/tabs/SocioeconomicIn
 import LocationHousingTab from '@/components/solicitantes/tabs/LocationHousingTab';
 import CasesTab from '@/components/solicitantes/tabs/CasesTab';
 import DetailPageSkeleton from '@/components/ui/skeletons/DetailPageSkeleton';
+import ActionMenu from '@/components/ui/ActionMenu';
+import { Download, Pencil, Trash2 } from 'lucide-react';
+import { useToast } from '@/components/ui/feedback/ToastProvider';
+import { getCurrentUserAction } from '@/app/actions/auth';
+import { updateSolicitanteAction, deleteSolicitanteAction } from '@/app/actions/solicitantes';
+import { descargarFichaSolicitanteAction } from '@/app/actions/reports';
+import { generateSolicitanteFichaZip } from '@/lib/utils/applicant-file-pdf-generator';
+import type { SolicitanteFichaData } from '@/lib/types/report-types';
+import ApplicantFormModal from '@/components/forms/ApplicantFormModal';
+import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 
 type GetSolicitanteByIdAction = typeof import('@/app/actions/solicitantes').getSolicitanteByIdAction;
 type GetSolicitanteByIdResult = Awaited<ReturnType<GetSolicitanteByIdAction>>;
@@ -63,6 +73,13 @@ export default function ApplicantDetailClient() {
   const [solicitante, setSolicitante] = useState<Solicitante | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userRol, setUserRol] = useState<string | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteMotivo, setDeleteMotivo] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const fetchSolicitante = useCallback(async () => {
     if (!cedula) {
@@ -101,6 +118,82 @@ export default function ApplicantDetailClient() {
       void fetchSolicitante();
     }
   }, [cedula, fetchSolicitante]);
+
+  useEffect(() => {
+    const loadUserRol = async () => {
+      try {
+        const result = await getCurrentUserAction();
+        if (result.success && result.data) {
+          setUserRol(result.data.rol);
+        }
+      } catch (err) {
+        console.error('Error al obtener rol del usuario:', err);
+      }
+    };
+    loadUserRol();
+  }, []);
+
+  const handleEditApplicant = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteApplicant = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!cedula) return;
+    setDeleteLoading(true);
+
+    try {
+      const result = await deleteSolicitanteAction(cedula, deleteMotivo);
+      if (result.success) {
+        toast.success('Solicitante eliminado exitosamente');
+        router.push('/dashboard/applicants');
+      } else {
+        toast.error('Error al eliminar el solicitante');
+      }
+    } catch (err) {
+      toast.error('Error al eliminar el solicitante');
+    } finally {
+      setDeleteLoading(false);
+      setIsDeleteModalOpen(false);
+    }
+  };
+
+  const handleDownloadFicha = async () => {
+    if (!cedula || !solicitante) return;
+    try {
+      const result = await descargarFichaSolicitanteAction(cedula);
+      if (result.success && result.data) {
+        await generateSolicitanteFichaZip(result.data as SolicitanteFichaData);
+        toast.success(`Ficha de ${nombreCompleto} descargada correctamente`);
+      } else {
+        toast.error('Error al descargar la ficha');
+      }
+    } catch (error) {
+      console.error('Error al descargar ficha:', error);
+      toast.error('Ocurrió un error al descargar la ficha del solicitante');
+    }
+  };
+
+  const handleSubmitEdit = async (data: any) => {
+    setIsSubmitting(true);
+    try {
+      const result = await updateSolicitanteAction(cedula, data);
+      if (result.success) {
+        toast.success('Solicitante actualizado exitosamente');
+        setIsEditModalOpen(false);
+        fetchSolicitante();
+      } else {
+        toast.error('Error al actualizar el solicitante');
+      }
+    } catch (err) {
+      toast.error('Error al actualizar el solicitante');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (loading) {
     return <DetailPageSkeleton tabsCount={5} />;
@@ -218,15 +311,33 @@ export default function ApplicantDetailClient() {
         />
       </motion.div>
 
-      <motion.h1
-        className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-2"
-        style={{ fontFamily: 'var(--font-league-spartan)' }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.2, ease: 'easeOut' }}
-      >
-        {nombreCompleto}
-      </motion.h1>
+      <div className="flex items-center gap-3 mb-2">
+        <motion.h1
+          className="text-2xl sm:text-3xl lg:text-4xl font-semibold"
+          style={{ fontFamily: 'var(--font-league-spartan)' }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+        >
+          {nombreCompleto}
+        </motion.h1>
+        <ActionMenu
+          variant="vertical"
+          onEdit={handleEditApplicant}
+          onDelete={handleDeleteApplicant}
+          customActions={[
+            {
+              label: (
+                <div className="flex items-center gap-2">
+                  <Download className="w-4 h-4 text-gray-500 group-hover:text-yellow-600 transition-colors" />
+                  <span className="group-hover:text-yellow-600 transition-colors">Descargar ficha</span>
+                </div>
+              ),
+              onClick: handleDownloadFicha
+            }
+          ]}
+        />
+      </div>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -246,6 +357,59 @@ export default function ApplicantDetailClient() {
       >
         <Tabs tabs={tabs} defaultTab="personal" />
       </motion.div>
+
+      <ApplicantFormModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSubmit={handleSubmitEdit}
+        initialData={solicitante}
+      />
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setDeleteMotivo('');
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Eliminar Solicitante permanentemente"
+        message={
+          <div>
+            <p className="mb-4 text-base text-foreground">
+              ¿Estás seguro de que deseas eliminar al solicitante <strong>{nombreCompleto}</strong>?
+            </p>
+            <p className="mb-6 text-red-600 font-semibold text-base">
+              Esta acción es irreversible y eliminará todos los datos asociados.
+            </p>
+            <div className="flex flex-col gap-1">
+              <label className="text-base font-normal text-foreground mb-1">
+                Motivo de la eliminación
+              </label>
+              <textarea
+                className={`
+                  w-full p-4 rounded-lg border bg-[#E5E7EB] border-transparent
+                  focus:outline-none focus:ring-1 focus:ring-primary
+                  text-base placeholder:text-[#717171] resize-none
+                  ${deleteLoading ? 'opacity-50 cursor-not-allowed' : ''}
+                `}
+                rows={4}
+                maxLength={250}
+                value={deleteMotivo}
+                onChange={e => setDeleteMotivo(e.target.value)}
+                placeholder="Describe el motivo de la eliminación..."
+                disabled={deleteLoading}
+              />
+              <div className="text-right text-xs text-gray-500 mt-1">
+                {deleteMotivo.length} / 250 caracteres
+              </div>
+            </div>
+          </div>
+        }
+        confirmLabel={deleteLoading ? 'Eliminando...' : 'Eliminar'}
+        cancelLabel="Cancelar"
+        disabled={deleteLoading || !deleteMotivo.trim()}
+        confirmVariant="danger"
+      />
     </div>
   );
 }

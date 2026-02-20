@@ -13,7 +13,7 @@ import ActionsHistoryTab from '@/components/cases/tabs/ActionsHistoryTab';
 import AppointmentsTab from '@/components/cases/tabs/AppointmentsTab';
 import StatusChangesTab from '@/components/cases/tabs/StatusChangesTab';
 import DocumentsTab from '@/components/cases/tabs/DocumentsTab';
-import { getCasoByIdAction, changeStatusAction } from '@/app/actions/casos';
+import { getCasoByIdAction, changeStatusAction, deleteCasoAction, updateCasoAction, uploadSoportesAction } from '@/app/actions/casos';
 import { ESTATUS_CASO } from '@/lib/constants/status';
 import DropdownMenu from '@/components/ui/navigation/DropdownMenu';
 import AddDocumentModal from '@/components/cases/modals/AddDocumentModal';
@@ -22,8 +22,15 @@ import AddActionModal from '@/components/cases/modals/AddActionModal';
 import AddBeneficiaryModal from '@/components/cases/modals/AddBeneficiaryModal';
 import ChangeStatusModal from '@/components/cases/modals/ChangeStatusModal';
 import { AppointmentModal } from '@/components/appointmentModal/AppointmentModal';
-import { ChevronDown, Plus, Pencil, RefreshCw } from 'lucide-react';
+import ActionMenu from '@/components/ui/ActionMenu';
+import CaseFormModal from '@/components/forms/CaseFormModal';
+import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
+import { descargarHistorialCasoAction } from '@/app/actions/reports';
+import { generateCasoHistorialZip } from '@/lib/utils/case-history-pdf-generator';
+import type { CasoHistorialData } from '@/lib/types/report-types';
+import { ChevronDown, Plus, Pencil, RefreshCw, Download } from 'lucide-react';
 import { getCurrentUserAction } from '@/app/actions/auth';
+import { useToast } from '@/components/ui/feedback/ToastProvider';
 import DetailPageSkeleton from '@/components/ui/skeletons/DetailPageSkeleton';
 
 interface CaseDetailClientProps {
@@ -48,6 +55,12 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const [editingAppointment, setEditingAppointment] = useState<any>(null);
   const [changingStatus, setChangingStatus] = useState(false);
+  const { toast } = useToast();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteMotivo, setDeleteMotivo] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [userRol, setUserRol] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>(() => {
     // Si viene el parámetro tab en la URL, usarlo como pestaña inicial
@@ -138,6 +151,94 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
   const handleDocumentUploaded = () => {
     setActiveTab('documentos');
     handleRefresh();
+  };
+
+  const handleEditCase = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteCase = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!id) return;
+    setDeleteLoading(true);
+
+    try {
+      const result = await deleteCasoAction(parseInt(id), deleteMotivo);
+      if (result.success) {
+        toast.success('Caso eliminado exitosamente');
+        router.push('/dashboard/cases');
+      } else {
+        toast.error(result.error?.message || 'Error al eliminar el caso');
+      }
+    } catch (err) {
+      toast.error('Error al eliminar el caso');
+    } finally {
+      setDeleteLoading(false);
+      setIsDeleteModalOpen(false);
+    }
+  };
+
+  const handleSubmitEdit = async (data: any) => {
+    setIsSubmitting(true);
+    try {
+      // Filtrar campos innecesarios que vienen del objeto 'caso'
+      const updateData = {
+        id_caso: data.id_caso,
+        tramite: data.tramite,
+        observaciones: data.observaciones,
+        fecha_fin_caso: data.fecha_fin_caso,
+        id_nucleo: data.id_nucleo,
+        id_materia: data.id_materia,
+        num_categoria: data.num_categoria ?? 0,
+        num_subcategoria: data.num_subcategoria ?? 0,
+        num_ambito_legal: data.num_ambito_legal,
+        fecha_solicitud: data.fecha_solicitud,
+      };
+
+      const result = await updateCasoAction(parseInt(id), updateData);
+      if (result.success) {
+        toast.success('Caso actualizado exitosamente');
+        setIsEditModalOpen(false);
+        fetchCaso();
+      } else {
+        toast.error(result.error?.message || 'Error al actualizar el caso');
+      }
+    } catch (err) {
+      toast.error('Error al actualizar el caso');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDownloadHistorial = async () => {
+    try {
+      const result = await descargarHistorialCasoAction(parseInt(id));
+      if (result.success && result.data) {
+        await generateCasoHistorialZip(result.data as CasoHistorialData);
+      } else {
+        toast.error(`Error al descargar el historial: ${result.error || 'Error desconocido'}`);
+      }
+    } catch (error) {
+      console.error('Error al descargar historial:', error);
+      toast.error('Ocurrió un error al descargar el historial del caso');
+    }
+  };
+
+  const handleDownloadRegistro = async () => {
+    try {
+      const { generateRegistroControlCasosPDF } = await import('@/lib/utils/case-registration-pdf-generator');
+      await generateRegistroControlCasosPDF({
+        caso,
+        equipo: caso.equipo || [],
+        beneficiarios: caso.beneficiarios || []
+      });
+    } catch (error) {
+      console.error('Error al generar registro:', error);
+      toast.error('Error al generar el documento');
+    }
   };
 
   const getStatusColor = (estatus: string | null) => {
@@ -294,6 +395,31 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
               {caso.estatus}
             </span>
           )}
+          <ActionMenu
+            variant="vertical"
+            onEdit={handleEditCase}
+            onDelete={handleDeleteCase}
+            customActions={[
+              {
+                label: (
+                  <div className="flex items-center gap-2">
+                    <Download className="w-4 h-4 text-gray-500 group-hover:text-yellow-600 transition-colors" />
+                    <span className="group-hover:text-yellow-600 transition-colors">Descargar historial</span>
+                  </div>
+                ),
+                onClick: handleDownloadHistorial
+              },
+              {
+                label: (
+                  <div className="flex items-center gap-2 text-wrap pr-1">
+                    <Download className="w-4 h-4 text-gray-500 group-hover:text-yellow-600 transition-colors shrink-0" />
+                    <span className="group-hover:text-yellow-600 transition-colors leading-tight">Descargar registro y control</span>
+                  </div>
+                ),
+                onClick: handleDownloadRegistro
+              }
+            ]}
+          />
         </div>
 
         <div className="w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar">
@@ -484,6 +610,59 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
       >
         <Tabs tabs={tabs} defaultTab={activeTab} onTabChange={setActiveTab} />
       </motion.div>
+      <CaseFormModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSubmit={handleSubmitEdit}
+        isEditing={true}
+        initialData={caso}
+      />
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setDeleteMotivo('');
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Eliminar caso permanentemente"
+        message={
+          <div>
+            <p className="mb-4 text-base text-foreground">
+              ¿Estás seguro de que deseas eliminar el caso <strong>{codigoCaso}</strong>?
+            </p>
+            <p className="mb-6 text-red-600 font-semibold text-base">
+              Esta acción es irreversible. Se eliminarán todas las referencias asociadas (citas, acciones, soportes, etc.).
+            </p>
+            <div className="flex flex-col gap-1">
+              <label className="text-base font-normal text-foreground mb-1">
+                Motivo de la eliminación
+              </label>
+              <textarea
+                className={`
+                  w-full p-4 rounded-lg border bg-[#E5E7EB] border-transparent
+                  focus:outline-none focus:ring-1 focus:ring-primary
+                  text-base placeholder:text-[#717171] resize-none
+                  ${deleteLoading ? 'opacity-50 cursor-not-allowed' : ''}
+                `}
+                rows={4}
+                maxLength={250}
+                value={deleteMotivo}
+                onChange={e => setDeleteMotivo(e.target.value)}
+                placeholder="Describe el motivo de la eliminación..."
+                disabled={deleteLoading}
+              />
+              <div className="text-right text-xs text-gray-500 mt-1">
+                {deleteMotivo.length} / 250 caracteres
+              </div>
+            </div>
+          </div>
+        }
+        confirmLabel={deleteLoading ? 'Eliminando...' : 'Eliminar'}
+        cancelLabel="Cancelar"
+        disabled={deleteLoading || !deleteMotivo.trim()}
+        confirmVariant="danger"
+      />
     </div>
   );
 }

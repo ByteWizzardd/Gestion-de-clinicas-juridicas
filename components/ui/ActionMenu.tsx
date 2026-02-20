@@ -1,6 +1,6 @@
 'use client';
 import { JSX } from 'react';
-import { MoreHorizontal, Eye, Pencil, Trash2 } from 'lucide-react';
+import { MoreHorizontal, MoreVertical, Eye, Pencil, Trash2 } from 'lucide-react';
 import DropdownMenu from './navigation/DropdownMenu';
 
 type CustomAction = {
@@ -14,9 +14,10 @@ type ActionMenuProps = {
   onDelete?: () => void;
   customActions?: CustomAction[];
   itemId?: string | number;
+  variant?: 'horizontal' | 'vertical';
 };
 
-export default function ActionMenu({ onView, onEdit, onDelete, customActions }: ActionMenuProps) {
+export default function ActionMenu({ onView, onEdit, onDelete, customActions, variant = 'horizontal' }: ActionMenuProps) {
   const handleAction = (action: () => void | undefined) => {
     if (action) {
       action();
@@ -29,7 +30,11 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions }: 
 
   const trigger = () => (
     <div className="inline-flex items-center justify-center p-1 rounded-full hover:bg-gray-200 transition-colors cursor-pointer">
-      <MoreHorizontal className="bg-on-primary-dots mx-auto text-on-primary rounded-full w-5 h-5 sm:w-6 sm:h-6" />
+      {variant === 'horizontal' ? (
+        <MoreHorizontal className="bg-on-primary-dots mx-auto text-on-primary rounded-full w-5 h-5 sm:w-6 sm:h-6" />
+      ) : (
+        <MoreVertical className="text-gray-500 mx-auto w-5 h-5 sm:w-6 sm:h-6" />
+      )}
     </div>
   );
 
