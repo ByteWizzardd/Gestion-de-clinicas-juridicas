@@ -631,7 +631,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {r.cedula_solicitante ? (
                 <Link
                   href={`/dashboard/applicants/${r.cedula_solicitante}`}
-                  className="text-primary hover:underline font-medium transition-colors"
+                  className="text-primary hover:underline font-medium transition-colors cursor-pointer"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {r.nombre_completo_solicitante || r.cedula_solicitante}
@@ -3832,7 +3832,10 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <p className="text-sm text-gray-600">ID Caso: {r.caso_eliminado}</p>
               {r.cedula_solicitante && (
                 <p className="text-sm text-gray-600">
-                  Solicitante: {r.nombre_completo_solicitante || 'N/A'} ({r.cedula_solicitante})
+                  Solicitante:{' '}
+                  <Link href={`/dashboard/applicants/${r.cedula_solicitante}`} className="text-primary hover:underline font-medium transition-colors">
+                    {r.nombre_completo_solicitante || 'N/A'} ({r.cedula_solicitante})
+                  </Link>
                 </p>
               )}
               {r.fecha_solicitud && (
@@ -3871,7 +3874,10 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <p className="text-sm text-gray-600">ID Caso: {r.id_caso}</p>
               {r.cedula_solicitante && (
                 <p className="text-sm text-gray-600">
-                  Solicitante: {r.nombre_completo_solicitante || 'N/A'} ({r.cedula_solicitante})
+                  Solicitante:{' '}
+                  <Link href={`/dashboard/applicants/${r.cedula_solicitante}`} className="text-primary hover:underline font-medium transition-colors">
+                    {r.nombre_completo_solicitante || 'N/A'} ({r.cedula_solicitante})
+                  </Link>
                 </p>
               )}
               {r.fecha_solicitud && (
@@ -4121,10 +4127,22 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   {hasSolicitanteChange && (
                     <div className="mb-2">
                       <p className="text-sm text-gray-600">
-                        Cédula Solicitante:{' '}
-                        <span className="line-through text-red-500">{r.cedula_solicitante_anterior || 'N/A'}</span>
+                        Solicitante:{' '}
+                        <span className="line-through text-red-500">
+                          {r.cedula_solicitante_anterior ? (
+                            <Link href={`/dashboard/applicants/${r.cedula_solicitante_anterior}`} className="text-primary hover:underline font-medium transition-colors">
+                              {r.cedula_solicitante_anterior}
+                            </Link>
+                          ) : 'N/A'}
+                        </span>
                         {' → '}
-                        <span className="text-green-600">{r.cedula_solicitante_nuevo || 'N/A'}</span>
+                        <span className="text-green-600">
+                          {r.cedula_solicitante_nuevo ? (
+                            <Link href={`/dashboard/applicants/${r.cedula_solicitante_nuevo}`} className="text-primary hover:underline font-medium transition-colors">
+                              {r.nombre_completo_solicitante ? `${r.nombre_completo_solicitante} (${r.cedula_solicitante_nuevo})` : r.cedula_solicitante_nuevo}
+                            </Link>
+                          ) : 'N/A'}
+                        </span>
                       </p>
                     </div>
                   )}

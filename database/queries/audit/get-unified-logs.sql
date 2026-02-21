@@ -55,6 +55,14 @@ SELECT * FROM (
                     'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos
                 ) FROM usuarios u WHERE u.cedula = t.id_usuario_creo),
                 '{}'::jsonb
+            ) ||
+            COALESCE(
+                (SELECT jsonb_build_object(
+                    'nombres_solicitante', s.nombres, 
+                    'apellidos_solicitante', s.apellidos, 
+                    'nombre_completo_solicitante', s.nombres || ' ' || s.apellidos
+                ) FROM solicitantes s WHERE s.cedula = t.cedula_solicitante),
+                '{}'::jsonb
             )
         )::text as metadata
     FROM auditoria_insercion_casos t
@@ -77,6 +85,14 @@ SELECT * FROM (
                     'nombre_completo_usuario_actualizo', u.nombres || ' ' || u.apellidos
                 ) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo),
                 '{}'::jsonb
+            ) ||
+            COALESCE(
+                (SELECT jsonb_build_object(
+                    'nombres_solicitante', s.nombres, 
+                    'apellidos_solicitante', s.apellidos, 
+                    'nombre_completo_solicitante', s.nombres || ' ' || s.apellidos
+                ) FROM solicitantes s WHERE s.cedula = COALESCE(t.cedula_solicitante_nuevo, t.cedula_solicitante_anterior)),
+                '{}'::jsonb
             )
         )::text as metadata
     FROM auditoria_actualizacion_casos t
@@ -98,6 +114,14 @@ SELECT * FROM (
                     'apellidos_usuario_elimino', u.apellidos, 
                     'nombre_completo_usuario_elimino', u.nombres || ' ' || u.apellidos
                 ) FROM usuarios u WHERE u.cedula = t.eliminado_por),
+                '{}'::jsonb
+            ) ||
+            COALESCE(
+                (SELECT jsonb_build_object(
+                    'nombres_solicitante', s.nombres, 
+                    'apellidos_solicitante', s.apellidos, 
+                    'nombre_completo_solicitante', s.nombres || ' ' || s.apellidos
+                ) FROM solicitantes s WHERE s.cedula = t.cedula_solicitante),
                 '{}'::jsonb
             )
         )::text as metadata

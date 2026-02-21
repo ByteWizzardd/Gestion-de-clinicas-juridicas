@@ -385,6 +385,9 @@ export interface CasoActualizadoAuditRecord {
   num_ambito_legal_nuevo: number | null;
   nombre_ambito_legal_anterior: string | null;
   nombre_ambito_legal_nuevo: string | null;
+  nombres_solicitante: string | null;
+  apellidos_solicitante: string | null;
+  nombre_completo_solicitante: string | null;
   // Campos de cambio de estatus
   estatus_anterior: string | null;
   estatus_nuevo: string | null;
