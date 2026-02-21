@@ -9,7 +9,7 @@ export default async function TipoCaracterísticaAuditPage() {
   return (
     <div>
       <AuditEntityDetailClient
-        entityTitle="Tipos Características"
+        entityTitle="Auditoría de Tipos Características"
         entityDescription="Registro completo de todas las acciones realizadas sobre los tipos caracteristicas del sistema"
         defaultTab="tipos-caracteristicas-insertados"
         operations={[

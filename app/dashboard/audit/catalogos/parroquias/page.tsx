@@ -9,7 +9,7 @@ export default async function ParroquiaAuditPage() {
   return (
     <div>
       <AuditEntityDetailClient
-        entityTitle="Parroquias"
+        entityTitle="Auditoría de Parroquias"
         entityDescription="Registro completo de todas las acciones realizadas sobre los parroquias del sistema"
         defaultTab="parroquias-insertadas"
         operations={[

@@ -9,7 +9,7 @@ export default async function EstadosAuditPage() {
   return (
     <div>
       <AuditEntityDetailClient
-        entityTitle="Estados"
+        entityTitle="Auditoría de Estados"
         entityDescription="Registro completo de todas las acciones realizadas sobre los estados del sistema"
         defaultTab="estados-insertados"
         operations={[

@@ -9,7 +9,7 @@ export default async function AccionesAuditPage() {
     return (
         <div>
             <AuditEntityDetailClient
-                entityTitle="Acciones"
+                entityTitle="Auditoría de Acciones"
                 entityDescription="Registro completo de todas las acciones de seguimiento realizadas sobre los casos"
                 defaultTab="acciones-creadas"
                 operations={[

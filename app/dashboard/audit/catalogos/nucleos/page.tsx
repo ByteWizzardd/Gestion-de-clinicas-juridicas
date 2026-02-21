@@ -9,7 +9,7 @@ export default async function NúcleoAuditPage() {
   return (
     <div>
       <AuditEntityDetailClient
-        entityTitle="Núcleos"
+        entityTitle="Auditoría de Núcleos"
         entityDescription="Registro completo de todas las acciones realizadas sobre los nucleos del sistema"
         defaultTab="nucleos-insertados"
         operations={[

@@ -9,7 +9,7 @@ export default async function CitasAuditPage() {
   return (
     <div>
       <AuditEntityDetailClient
-        entityTitle="Citas"
+        entityTitle="Auditoría de Citas"
         entityDescription="Registro completo de todas las acciones realizadas sobre las citas del sistema"
         defaultTab="citas-creadas"
         hideMainHeader={true}

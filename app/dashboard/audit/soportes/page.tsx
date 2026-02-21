@@ -9,7 +9,7 @@ export default async function SoportesAuditPage() {
   return (
     <div>
       <AuditEntityDetailClient
-        entityTitle="Soportes"
+        entityTitle="Auditoría de Soportes"
         entityDescription="Registro completo de todas las acciones realizadas sobre los documentos y archivos del sistema"
         defaultTab="soportes-creados"
         operations={[

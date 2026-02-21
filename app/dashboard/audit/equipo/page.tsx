@@ -9,7 +9,7 @@ export default async function EquipoAuditPage() {
     return (
         <div>
             <AuditEntityDetailClient
-                entityTitle="Equipo de Casos"
+                entityTitle="Auditoría de Equipo de Casos"
                 entityDescription="Registro completo de cambios en la asignación de estudiantes y profesores a casos"
                 defaultTab="equipos-creados"
                 operations={[

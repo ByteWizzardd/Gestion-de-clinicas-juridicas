@@ -9,7 +9,7 @@ export default async function SemestreAuditPage() {
   return (
     <div>
       <AuditEntityDetailClient
-        entityTitle="Semestres"
+        entityTitle="Auditoría de Semestres"
         entityDescription="Registro completo de todas las acciones realizadas sobre los semestres del sistema"
         defaultTab="semestres-insertados"
         operations={[

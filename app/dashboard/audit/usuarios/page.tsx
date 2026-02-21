@@ -1,4 +1,4 @@
-import { authorizeRole } from '@/lib/utils/auth-utils';
+﻿import { authorizeRole } from '@/lib/utils/auth-utils';
 import AuditEntityDetailClient from '@/components/audit/AuditEntityDetailClient';
 
 export const dynamic = 'force-dynamic';
@@ -9,7 +9,7 @@ export default async function UsuariosAuditPage() {
   return (
     <div>
       <AuditEntityDetailClient
-        entityTitle="Usuarios"
+        entityTitle="Auditoría de Usuarios"
         entityDescription="Registro completo de todas las acciones realizadas sobre los usuarios del sistema"
         defaultTab="usuarios-creados"
         hideMainHeader={true}

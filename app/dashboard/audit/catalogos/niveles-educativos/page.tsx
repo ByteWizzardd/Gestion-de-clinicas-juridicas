@@ -9,7 +9,7 @@ export default async function NivelEducativoAuditPage() {
   return (
     <div>
       <AuditEntityDetailClient
-        entityTitle="Niveles Educativos"
+        entityTitle="Auditoría de Niveles Educativos"
         entityDescription="Registro completo de todas las acciones realizadas sobre los niveles educativos del sistema"
         defaultTab="niveles-educativos-insertados"
         operations={[

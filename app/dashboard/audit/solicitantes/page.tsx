@@ -9,7 +9,7 @@ export default async function SolicitantesAuditPage() {
     return (
         <div>
             <AuditEntityDetailClient
-                entityTitle="Solicitantes"
+                entityTitle="Auditoría de Solicitantes"
                 entityDescription="Registro completo de todas las acciones realizadas sobre los solicitantes del sistema"
                 defaultTab="solicitantes-creados"
                 hideMainHeader={true}

@@ -9,7 +9,7 @@ export default async function MunicipioAuditPage() {
   return (
     <div>
       <AuditEntityDetailClient
-        entityTitle="Municipios"
+        entityTitle="Auditoría de Municipios"
         entityDescription="Registro completo de todas las acciones realizadas sobre los municipios del sistema"
         defaultTab="municipios-insertados"
         operations={[

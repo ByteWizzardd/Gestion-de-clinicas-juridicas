@@ -9,7 +9,7 @@ export default async function ReportesAuditPage() {
     return (
         <div>
             <AuditEntityDetailClient
-                entityTitle="Reportes"
+                entityTitle="Auditoría de Reportes"
                 entityDescription="Registro completo de todos los reportes generados en el sistema"
                 defaultTab="reportes-generados"
                 operations={[

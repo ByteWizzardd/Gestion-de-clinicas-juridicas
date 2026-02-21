@@ -9,7 +9,7 @@ export default async function ÁmbitoLegalAuditPage() {
   return (
     <div>
       <AuditEntityDetailClient
-        entityTitle="Ámbitos Legales"
+        entityTitle="Auditoría de Ámbitos Legales"
         entityDescription="Registro completo de todas las acciones realizadas sobre los ambitos legales del sistema"
         defaultTab="ambitos-legales-insertados"
         operations={[

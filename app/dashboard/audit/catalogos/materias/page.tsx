@@ -9,7 +9,7 @@ export default async function MateriaAuditPage() {
   return (
     <div>
       <AuditEntityDetailClient
-        entityTitle="Materias"
+        entityTitle="Auditoría de Materias"
         entityDescription="Registro completo de todas las acciones realizadas sobre los materias del sistema"
         defaultTab="materias-insertadas"
         operations={[

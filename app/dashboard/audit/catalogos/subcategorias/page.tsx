@@ -9,7 +9,7 @@ export default async function SubcategoríaAuditPage() {
   return (
     <div>
       <AuditEntityDetailClient
-        entityTitle="Subcategorías"
+        entityTitle="Auditoría de Subcategorías"
         entityDescription="Registro completo de todas las acciones realizadas sobre los subcategorias del sistema"
         defaultTab="subcategorias-insertadas"
         operations={[

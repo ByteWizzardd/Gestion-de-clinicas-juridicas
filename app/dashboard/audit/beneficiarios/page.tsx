@@ -9,7 +9,7 @@ export default async function BeneficiariosAuditPage() {
     return (
         <div>
             <AuditEntityDetailClient
-                entityTitle="Beneficiarios"
+                entityTitle="Auditoría de Beneficiarios"
                 entityDescription="Registro completo de todas las acciones realizadas sobre los beneficiarios de los casos"
                 defaultTab="beneficiarios-creados"
                 operations={[

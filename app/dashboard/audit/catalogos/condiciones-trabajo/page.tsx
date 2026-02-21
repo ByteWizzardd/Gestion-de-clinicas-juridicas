@@ -9,7 +9,7 @@ export default async function CondiciónTrabajoAuditPage() {
   return (
     <div>
       <AuditEntityDetailClient
-        entityTitle="Condiciones Trabajo"
+        entityTitle="Auditoría de Condiciones Trabajo"
         entityDescription="Registro completo de todas las acciones realizadas sobre los condiciones trabajo del sistema"
         defaultTab="condiciones-trabajo-insertadas"
         operations={[

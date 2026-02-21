@@ -9,7 +9,7 @@ export default async function CondiciónActividadAuditPage() {
   return (
     <div>
       <AuditEntityDetailClient
-        entityTitle="Condiciones Actividad"
+        entityTitle="Auditoría de Condiciones Actividad"
         entityDescription="Registro completo de todas las acciones realizadas sobre los condiciones actividad del sistema"
         defaultTab="condiciones-actividad-insertadas"
         operations={[
