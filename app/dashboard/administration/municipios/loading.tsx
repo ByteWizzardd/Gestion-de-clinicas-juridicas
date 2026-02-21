@@ -14,7 +14,7 @@ export default function CatalogLoading() {
                     addLabel="Cargando..."
                     searchValue=""
                     onSearchChange={() => { }}
-                    onNucleoChange={() => { }}
+                    onEstatusChange={() => { }}
                     searchPlaceholder="Buscar..."
                 />
             </div>

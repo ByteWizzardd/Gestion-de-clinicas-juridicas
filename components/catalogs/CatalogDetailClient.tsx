@@ -23,6 +23,11 @@ interface CatalogDetailClientProps {
     filterTarget?: 'estatus' | 'materia' | 'nucleo' | 'tramite'; // Explicitly map to CaseTools filter slot
     keys?: string[]; // Keys to display in the table
     hideBackButton?: boolean; // If true, hides the default back button
+    enableEstadoFilter?: boolean;
+    enableMunicipioFilter?: boolean;
+    enableParroquiaFilter?: boolean;
+    enableCategoriaFilter?: boolean;
+    enableSubcategoriaFilter?: boolean;
 }
 
 import { useRouter } from 'next/navigation';
@@ -46,12 +51,22 @@ export default function CatalogDetailClient({
     filterTarget = 'estatus', // Default to estatus
     keys,
     hideHeader = false,
-    hideBackButton = false
+    hideBackButton = false,
+    enableEstadoFilter = false,
+    enableMunicipioFilter = false,
+    enableParroquiaFilter = false,
+    enableCategoriaFilter = false,
+    enableSubcategoriaFilter = false
 }: CatalogDetailClientProps & { filterAllLabel?: string; hideHeader?: boolean }) {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterValue, setFilterValue] = useState('');
     const [estatusFilterValue, setEstatusFilterValue] = useState('');
+    const [estadoFilterValue, setEstadoFilterValue] = useState('');
+    const [municipioFilterValue, setMunicipioFilterValue] = useState('');
+    const [parroquiaFilterValue, setParroquiaFilterValue] = useState('');
+    const [categoriaFilterValue, setCategoriaFilterValue] = useState('');
+    const [subcategoriaFilterValue, setSubcategoriaFilterValue] = useState('');
 
     // Auto-generate filter options from data if requested
     const generatedFilterOptions = useMemo(() => {
@@ -80,6 +95,61 @@ export default function CatalogDetailClient({
         { value: 'false', label: 'Deshabilitado' }
     ], []);
 
+    const estadoOptions = useMemo(() => {
+        if (!enableEstadoFilter) return [];
+        const unique = new Set<string>();
+        data.forEach((item: any) => { if (item.nombre_estado) unique.add(item.nombre_estado); });
+        return Array.from(unique).sort().map(value => ({ value, label: value }));
+    }, [data, enableEstadoFilter]);
+
+    const municipioOptions = useMemo(() => {
+        if (!enableMunicipioFilter) return [];
+        const unique = new Set<string>();
+        data.forEach((item: any) => {
+            if (item.nombre_municipio && (!estadoFilterValue || item.nombre_estado === estadoFilterValue)) {
+                unique.add(item.nombre_municipio);
+            }
+        });
+        return Array.from(unique).sort().map(value => ({ value, label: value }));
+    }, [data, enableMunicipioFilter, estadoFilterValue]);
+
+    const parroquiaOptions = useMemo(() => {
+        if (!enableParroquiaFilter) return [];
+        const unique = new Set<string>();
+        data.forEach((item: any) => {
+            if (item.nombre_parroquia &&
+                (!estadoFilterValue || item.nombre_estado === estadoFilterValue) &&
+                (!municipioFilterValue || item.nombre_municipio === municipioFilterValue)) {
+                unique.add(item.nombre_parroquia);
+            }
+        });
+        return Array.from(unique).sort().map(value => ({ value, label: value }));
+    }, [data, enableParroquiaFilter, estadoFilterValue, municipioFilterValue]);
+
+    const categoriaOptions = useMemo(() => {
+        if (!enableCategoriaFilter) return [];
+        const unique = new Set<string>();
+        data.forEach((item: any) => {
+            if (item.nombre_categoria && (!filterValue || item.nombre_materia === filterValue)) {
+                unique.add(item.nombre_categoria);
+            }
+        });
+        return Array.from(unique).sort().map(value => ({ value, label: value }));
+    }, [data, enableCategoriaFilter, filterValue]);
+
+    const subcategoriaOptions = useMemo(() => {
+        if (!enableSubcategoriaFilter) return [];
+        const unique = new Set<string>();
+        data.forEach((item: any) => {
+            if (item.nombre_subcategoria &&
+                (!filterValue || item.nombre_materia === filterValue) &&
+                (!categoriaFilterValue || item.nombre_categoria === categoriaFilterValue)) {
+                unique.add(item.nombre_subcategoria);
+            }
+        });
+        return Array.from(unique).sort().map(value => ({ value, label: value }));
+    }, [data, enableSubcategoriaFilter, filterValue, categoriaFilterValue]);
+
     // Filter data based on search and filter
     const filteredData = useMemo(() => {
         let result = data;
@@ -102,8 +172,23 @@ export default function CatalogDetailClient({
                 Object.values(item).some(value => value?.toString().toLowerCase().includes(query))
             );
         }
+        if (estadoFilterValue) {
+            result = result.filter((item: any) => item.nombre_estado === estadoFilterValue);
+        }
+        if (municipioFilterValue) {
+            result = result.filter((item: any) => item.nombre_municipio === municipioFilterValue);
+        }
+        if (parroquiaFilterValue) {
+            result = result.filter((item: any) => item.nombre_parroquia === parroquiaFilterValue);
+        }
+        if (categoriaFilterValue) {
+            result = result.filter((item: any) => item.nombre_categoria === categoriaFilterValue);
+        }
+        if (subcategoriaFilterValue) {
+            result = result.filter((item: any) => item.nombre_subcategoria === subcategoriaFilterValue);
+        }
         return result;
-    }, [data, searchQuery, filterValue, filterField, estatusFilterValue]);
+    }, [data, searchQuery, filterValue, filterField, estatusFilterValue, estadoFilterValue, municipioFilterValue, parroquiaFilterValue, categoriaFilterValue, subcategoriaFilterValue]);
 
     // El filtro de estatus SIEMPRE debería aparecer a menos que se deshabilite explícitamente y no haya otros.
     // Actualmente, 'hasFilter' requiere que haya un `filterField` Y opciones autogeneradas Opciones pasadas por prop.
@@ -120,9 +205,11 @@ export default function CatalogDetailClient({
 
     // Ajuste final más simple para el caso del cliente:
     // Si autoGenerateFilter es falso, filterField es null y filterOptions está vacío, NO debe mostrar filtro adicional.
+    const hasActiveMultiFilters = enableEstadoFilter || enableMunicipioFilter || enableParroquiaFilter || enableCategoriaFilter || enableSubcategoriaFilter;
     const shouldShowFilter = !disableFilter && (
         (filterField && generatedFilterOptions.length > 0) ||
-        (loading && filterField && (autoGenerateFilter || !!filterOptions))
+        (loading && filterField && (autoGenerateFilter || !!filterOptions)) ||
+        hasActiveMultiFilters
     );
 
     return (
@@ -147,36 +234,77 @@ export default function CatalogDetailClient({
                 onSearchChange={setSearchQuery}
                 searchPlaceholder={searchPlaceholder}
                 {...(shouldShowFilter && {
+                    ...(enableEstadoFilter ? {
+                        estadoFilter: estadoFilterValue,
+                        onEstadoChange: (val: string) => {
+                            setEstadoFilterValue(val);
+                            setMunicipioFilterValue('');
+                            setParroquiaFilterValue('');
+                        },
+                        estadoOptions
+                    } : {}),
+                    ...(enableMunicipioFilter ? {
+                        municipioFilter: municipioFilterValue,
+                        onMunicipioChange: (val: string) => {
+                            setMunicipioFilterValue(val);
+                            setParroquiaFilterValue('');
+                        },
+                        municipioOptions
+                    } : {}),
+                    ...(enableParroquiaFilter ? {
+                        parroquiaFilter: parroquiaFilterValue,
+                        onParroquiaChange: setParroquiaFilterValue,
+                        parroquiaOptions
+                    } : {}),
                     // Map filter functionality based on filterTarget
-                    ...(filterTarget === 'materia' ? {
-                        materiaFilter: filterValue,
-                        onMateriaChange: setFilterValue,
-                        materias: generatedFilterOptions.map(opt => ({
-                            id_materia: opt.value as any,
-                            nombre_materia: opt.label
-                        }))
-                    } : filterTarget === 'nucleo' ? {
-                        nucleoFilter: filterValue,
-                        onNucleoChange: setFilterValue,
-                        nucleoOptions: generatedFilterOptions,
-                        nucleoLabel: filterLabel,
-                        nucleoAllLabel: filterAllLabel
-                    } : filterTarget === 'tramite' ? {
-                        tramiteFilter: filterValue,
-                        onTramiteChange: setFilterValue,
-                        tramiteOptions: generatedFilterOptions
-                    } : {
-                        // Default to estatus
-                        estatusFilter: filterValue,
-                        onEstatusChange: setFilterValue,
-                        estatusOptions: generatedFilterOptions,
-                        estatusLabel: filterLabel
-                    }),
+                    ...(filterField ? (
+                        filterTarget === 'materia' ? {
+                            materiaFilter: filterValue,
+                            onMateriaChange: (val: string) => {
+                                setFilterValue(val);
+                                if (enableCategoriaFilter) setCategoriaFilterValue('');
+                                if (enableSubcategoriaFilter) setSubcategoriaFilterValue('');
+                            },
+                            materias: generatedFilterOptions.map(opt => ({
+                                id_materia: opt.value as any,
+                                nombre_materia: opt.label
+                            }))
+                        } : filterTarget === 'nucleo' ? {
+                            nucleoFilter: filterValue,
+                            onNucleoChange: setFilterValue,
+                            nucleoOptions: generatedFilterOptions,
+                            nucleoLabel: filterLabel,
+                            nucleoAllLabel: filterAllLabel
+                        } : filterTarget === 'tramite' ? {
+                            tramiteFilter: filterValue,
+                            onTramiteChange: setFilterValue,
+                            tramiteOptions: generatedFilterOptions
+                        } : {
+                            // Default to estatus
+                            estatusFilter: filterValue,
+                            onEstatusChange: setFilterValue,
+                            estatusOptions: generatedFilterOptions,
+                            estatusLabel: filterLabel
+                        }
+                    ) : {}),
                     // Standard Estatus Filter (if not primary target)
-                    ...(filterTarget !== 'estatus' ? {
+                    ...((filterTarget !== 'estatus' || !filterField) ? {
                         estatusFilter: estatusFilterValue,
                         onEstatusChange: setEstatusFilterValue,
                         estatusOptions: estatusOptions
+                    } : {}),
+                    ...(enableCategoriaFilter ? {
+                        categoriaFilter: categoriaFilterValue,
+                        onCategoriaChange: (val: string) => {
+                            setCategoriaFilterValue(val);
+                            if (enableSubcategoriaFilter) setSubcategoriaFilterValue('');
+                        },
+                        categoriaOptions
+                    } : {}),
+                    ...(enableSubcategoriaFilter ? {
+                        subcategoriaFilter: subcategoriaFilterValue,
+                        onSubcategoriaChange: setSubcategoriaFilterValue,
+                        subcategoriaOptions
                     } : {})
                 })}
             />

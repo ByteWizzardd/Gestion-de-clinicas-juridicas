@@ -82,9 +82,7 @@ export default function MunicipiosPage() {
         loading={loading}
         hideHeader={true}
         hideBackButton={true}
-        filterField="nombre_estado"
-        filterLabel="Estado"
-        autoGenerateFilter={true}
+        enableEstadoFilter={true}
         renderActions={(item: any) => (
           <CatalogActionsMenu
             item={item}
