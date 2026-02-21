@@ -63,8 +63,6 @@ export default function TiposCaracteristicasPage() {
 
   return (
     <>
-      <h1 className="text-4xl m-3 font-semibold font-primary">Tipos de Características</h1>
-      <p className="mb-6 ml-3">Tipos de características de vivienda</p>
       <CatalogDetailClient
         data={tipos}
         columns={["Tipo Característica", "Habilitado"]}
@@ -72,6 +70,8 @@ export default function TiposCaracteristicasPage() {
         addLabel="Añadir Tipo"
         onAddClick={() => setIsModalOpen(true)}
         loading={loading}
+        hideHeader={true}
+        hideBackButton={true}
         renderActions={(item: any) => (
           <CatalogActionsMenu
             item={item}

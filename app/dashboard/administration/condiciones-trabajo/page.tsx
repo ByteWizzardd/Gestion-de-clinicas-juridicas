@@ -62,8 +62,6 @@ export default function CondicionesTrabajoPage() {
 
   return (
     <>
-      <h1 className="text-4xl m-3 font-semibold font-primary">Condiciones de Trabajo</h1>
-      <p className="mb-6 ml-3">Condiciones laborales de los solicitantes</p>
       <CatalogDetailClient
         data={condiciones}
         columns={["Condición", "Habilitado"]}
@@ -71,6 +69,8 @@ export default function CondicionesTrabajoPage() {
         addLabel="Añadir Condición"
         onAddClick={() => setIsModalOpen(true)}
         loading={loading}
+        hideHeader={true}
+        hideBackButton={true}
         renderActions={(item: any) => (
           <CatalogActionsMenu
             item={item}

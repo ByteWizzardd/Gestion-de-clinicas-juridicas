@@ -141,8 +141,6 @@ export default function NucleosPage() {
 
     return (
         <>
-            <h1 className="text-4xl m-3 font-semibold font-primary">Núcleos</h1>
-            <p className="mb-6 ml-3">Núcleos universitarios</p>
             <CatalogDetailClient
                 data={nucleos}
                 columns={["Núcleo", "Estado", "Municipio", "Parroquia", "Habilitado"]}
@@ -150,6 +148,8 @@ export default function NucleosPage() {
                 addLabel="Añadir Núcleo"
                 onAddClick={() => setIsModalOpen(true)}
                 loading={loading}
+                hideHeader={true}
+                hideBackButton={true}
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}

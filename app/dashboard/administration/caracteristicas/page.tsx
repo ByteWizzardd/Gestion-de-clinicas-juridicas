@@ -93,8 +93,6 @@ export default function CaracteristicasPage() {
 
   return (
     <>
-      <h1 className="text-4xl m-3 font-semibold font-primary">Características</h1>
-      <p className="mb-6 ml-3">Características de vivienda de los solicitantes</p>
       <CatalogDetailClient
         data={caracteristicas}
         columns={["Descripción", "Tipo", "Habilitado"]}
@@ -102,6 +100,8 @@ export default function CaracteristicasPage() {
         addLabel="Añadir Característica"
         onAddClick={() => setIsModalOpen(true)}
         loading={loading}
+        hideHeader={true}
+        hideBackButton={true}
         filterField="nombre_tipo_caracteristica"
         filterLabel="Tipo"
         autoGenerateFilter={true}

@@ -98,8 +98,6 @@ export default function NivelesEducativosPage() {
 
     return (
         <>
-            <h1 className="text-4xl m-3 font-semibold font-primary">Niveles Educativos</h1>
-            <p className="mb-6 ml-3">Niveles educativos registrados en el sistema</p>
             <CatalogDetailClient
                 data={nivelesEducativos}
                 columns={["Descripción", "Habilitado"]}
@@ -107,6 +105,8 @@ export default function NivelesEducativosPage() {
                 addLabel="Añadir Nivel Educativo"
                 onAddClick={() => setIsModalOpen(true)}
                 loading={loading}
+                hideHeader={true}
+                hideBackButton={true}
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}

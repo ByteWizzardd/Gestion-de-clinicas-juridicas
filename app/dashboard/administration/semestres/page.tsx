@@ -97,8 +97,6 @@ export default function SemestresPage() {
 
   return (
     <>
-      <h1 className="text-4xl m-3 font-semibold font-primary">Semestres</h1>
-      <p className="mb-6 ml-3">Períodos académicos del sistema</p>
       <CatalogDetailClient
         data={semestres}
         columns={["Semestre", "Fecha Inicio", "Fecha Fin", "Habilitado"]}
@@ -106,6 +104,8 @@ export default function SemestresPage() {
         addLabel="Añadir Semestre"
         onAddClick={() => setIsModalOpen(true)}
         loading={loading}
+        hideHeader={true}
+        hideBackButton={true}
         renderActions={(item: any) => (
           <CatalogActionsMenu
             item={item}

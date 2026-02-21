@@ -22,6 +22,7 @@ interface CatalogDetailClientProps {
     renderActions?: (item: any) => React.ReactNode; // Custom render for actions column
     filterTarget?: 'estatus' | 'materia' | 'nucleo' | 'tramite'; // Explicitly map to CaseTools filter slot
     keys?: string[]; // Keys to display in the table
+    hideBackButton?: boolean; // If true, hides the default back button
 }
 
 import { useRouter } from 'next/navigation';
@@ -44,7 +45,8 @@ export default function CatalogDetailClient({
     renderActions,
     filterTarget = 'estatus', // Default to estatus
     keys,
-    hideHeader = false
+    hideHeader = false,
+    hideBackButton = false
 }: CatalogDetailClientProps & { filterAllLabel?: string; hideHeader?: boolean }) {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
@@ -107,17 +109,19 @@ export default function CatalogDetailClient({
 
     return (
         <div>
-            <div className="mb-4">
-                <Button
-                    variant="ghost"
-                    onClick={() => router.push('/dashboard/administration')}
-                    className="flex items-center gap-2 px-2 hover:bg-gray-100"
-                    size="sm"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span className="text-sm font-medium">Volver a administración</span>
-                </Button>
-            </div>
+            {!hideBackButton && (
+                <div className="mb-4">
+                    <Button
+                        variant="ghost"
+                        onClick={() => router.push('/dashboard/administration')}
+                        className="flex items-center gap-2 px-2 hover:bg-gray-100"
+                        size="sm"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        <span className="text-sm font-medium">Volver a administración</span>
+                    </Button>
+                </div>
+            )}
             <CaseTools
                 addLabel={addLabel}
                 onAddClick={onAddClick}

@@ -100,8 +100,6 @@ export default function CategoriasPage() {
 
     return (
         <>
-            <h1 className="text-4xl m-3 font-semibold font-primary">Categorías</h1>
-            <p className="mb-6 ml-3">Clasificaciones dentro de cada materia legal</p>
             <CatalogDetailClient
                 data={categorias}
                 columns={["Categoría", "Materia", "Habilitado"]}
@@ -112,6 +110,8 @@ export default function CategoriasPage() {
                 filterTarget="materia"
                 autoGenerateFilter={true}
                 loading={loading}
+                hideHeader={true}
+                hideBackButton={true}
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}

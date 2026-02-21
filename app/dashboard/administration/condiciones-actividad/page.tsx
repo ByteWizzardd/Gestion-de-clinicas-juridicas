@@ -62,8 +62,6 @@ export default function CondicionesActividadPage() {
 
   return (
     <>
-      <h1 className="text-4xl m-3 font-semibold font-primary">Condiciones de Actividad</h1>
-      <p className="mb-6 ml-3">Condiciones de actividad de los solicitantes</p>
       <CatalogDetailClient
         data={condiciones}
         columns={["Condición Actividad", "Habilitado"]}
@@ -71,6 +69,8 @@ export default function CondicionesActividadPage() {
         addLabel="Añadir Condición"
         onAddClick={() => setIsModalOpen(true)}
         loading={loading}
+        hideHeader={true}
+        hideBackButton={true}
         renderActions={(item: any) => (
           <CatalogActionsMenu
             item={item}

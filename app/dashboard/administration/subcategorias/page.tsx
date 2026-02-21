@@ -127,8 +127,6 @@ export default function SubcategoriasPage() {
 
     return (
         <>
-            <h1 className="text-4xl m-3 font-semibold font-primary">Subcategorías</h1>
-            <p className="mb-6 ml-3">Subcategorías dentro de cada categoría</p>
             <CatalogDetailClient
                 data={subcategorias}
                 columns={["Subcategoría", "Materia", "Categoría", "Habilitado"]}
@@ -139,6 +137,8 @@ export default function SubcategoriasPage() {
                 filterTarget="materia"
                 autoGenerateFilter={true}
                 loading={loading}
+                hideHeader={true}
+                hideBackButton={true}
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}

@@ -73,8 +73,6 @@ export default function MunicipiosPage() {
 
   return (
     <>
-      <h1 className="text-4xl m-3 font-semibold font-primary">Municipios</h1>
-      <p className="mb-6 ml-3">Municipios de Venezuela</p>
       <CatalogDetailClient
         data={municipios}
         columns={["Municipio", "Estado", "Habilitado"]}
@@ -82,6 +80,8 @@ export default function MunicipiosPage() {
         addLabel="Añadir Municipio"
         onAddClick={() => setIsModalOpen(true)}
         loading={loading}
+        hideHeader={true}
+        hideBackButton={true}
         filterField="nombre_estado"
         filterLabel="Estado"
         autoGenerateFilter={true}

@@ -110,8 +110,6 @@ export default function ParroquiasPage() {
 
     return (
         <>
-            <h1 className="text-4xl m-3 font-semibold font-primary">Parroquias</h1>
-            <p className="mb-6 ml-3">Parroquias de Venezuela</p>
             <CatalogDetailClient
                 data={parroquias}
                 columns={["Parroquia", "Estado", "Municipio", "Habilitado"]}
@@ -119,6 +117,8 @@ export default function ParroquiasPage() {
                 addLabel="Añadir Parroquia"
                 onAddClick={() => setIsModalOpen(true)}
                 loading={loading}
+                hideHeader={true}
+                hideBackButton={true}
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}
