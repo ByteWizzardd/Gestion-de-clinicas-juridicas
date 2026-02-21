@@ -9,18 +9,18 @@ export default function CatalogLoading() {
         <div className="w-full">
             {/* Search and Filters toolbar skeleton - Using real component for consistency */}
             {/* Not pulsing to feel "pre-loaded" */}
-            <div className="px-1 mb-6">
-                <CaseTools
+            <CaseTools
                     addLabel="Cargando..."
                     searchValue=""
                     onSearchChange={() => { }}
                     onMateriaChange={() => { }}
                     searchPlaceholder="Buscar..."
                 />
-            </div>
+
+            <div className="mt-10"></div>
 
             {/* Table Skeleton */}
-            <div className="px-1 animate-pulse">
+            <div className="animate-pulse">
                 <TableSkeleton columns={4} rows={10} />
             </div>
         </div>
