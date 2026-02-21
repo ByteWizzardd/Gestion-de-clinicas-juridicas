@@ -150,6 +150,9 @@ export default function NucleosPage() {
                 loading={loading}
                 hideHeader={true}
                 hideBackButton={true}
+                enableEstadoFilter={true}
+                enableMunicipioFilter={true}
+                enableParroquiaFilter={true}
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}

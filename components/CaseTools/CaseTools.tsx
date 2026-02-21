@@ -25,6 +25,15 @@ type CaseToolsProps = {
     onMateriaChange?: (value: string) => void;
     materias?: { id_materia: number; nombre_materia: string; habilitado?: boolean }[];
     materiaOptions?: { value: string; label: string }[];
+    materiaLabel?: string;
+    categoriaFilter?: string;
+    onCategoriaChange?: (value: string) => void;
+    categoriaOptions?: { value: string; label: string }[];
+    categoriaLabel?: string;
+    subcategoriaFilter?: string;
+    onSubcategoriaChange?: (value: string) => void;
+    subcategoriaOptions?: { value: string; label: string }[];
+    subcategoriaLabel?: string;
     nucleoLabel?: string;
     nucleoAllLabel?: string;
     nucleoIcon?: LucideIcon;
@@ -36,6 +45,21 @@ type CaseToolsProps = {
     nacionalidadFilter?: string;
     onNacionalidadChange?: (value: string) => void;
     nacionalidadOptions?: { value: string; label: string }[];
+
+    estadoFilter?: string;
+    onEstadoChange?: (value: string) => void;
+    estadoOptions?: { value: string; label: string }[];
+    estadoLabel?: string;
+
+    municipioFilter?: string;
+    onMunicipioChange?: (value: string) => void;
+    municipioOptions?: { value: string; label: string }[];
+    municipioLabel?: string;
+
+    parroquiaFilter?: string;
+    onParroquiaChange?: (value: string) => void;
+    parroquiaOptions?: { value: string; label: string }[];
+    parroquiaLabel?: string;
 
     // Limpieza atómica (evita condiciones de carrera en consumers que disparan fetch)
     onClearFilters?: () => void | Promise<void>;
@@ -85,6 +109,15 @@ function CaseTools({
     onMateriaChange,
     materias = [],
     materiaOptions,
+    materiaLabel,
+    categoriaFilter = '',
+    onCategoriaChange,
+    categoriaOptions,
+    categoriaLabel,
+    subcategoriaFilter = '',
+    onSubcategoriaChange,
+    subcategoriaOptions,
+    subcategoriaLabel,
     nucleoLabel,
     nucleoAllLabel,
     nucleoIcon,
@@ -96,6 +129,18 @@ function CaseTools({
     nacionalidadFilter = '',
     onNacionalidadChange,
     nacionalidadOptions,
+    estadoFilter = '',
+    onEstadoChange,
+    estadoOptions,
+    estadoLabel,
+    municipioFilter = '',
+    onMunicipioChange,
+    municipioOptions,
+    municipioLabel,
+    parroquiaFilter = '',
+    onParroquiaChange,
+    parroquiaOptions,
+    parroquiaLabel,
     onClearFilters,
     showDateRange = false,
     fechaInicio,
@@ -122,8 +167,13 @@ function CaseTools({
         onEstatusChange !== undefined ||
         onCasosAsignadosChange !== undefined ||
         onMateriaChange !== undefined ||
+        onCategoriaChange !== undefined ||
+        onSubcategoriaChange !== undefined ||
         onEstadoCivilChange !== undefined ||
         onNacionalidadChange !== undefined ||
+        onEstadoChange !== undefined ||
+        onMunicipioChange !== undefined ||
+        onParroquiaChange !== undefined ||
         onFechaInicioChange !== undefined ||
         onFechaFinChange !== undefined ||
         onTermChange !== undefined ||
@@ -149,10 +199,15 @@ function CaseTools({
 
         await call(onNucleoChange, '');
         await call(onMateriaChange, '');
+        await call(onCategoriaChange, '');
+        await call(onSubcategoriaChange, '');
         await call(onTramiteChange, '');
         await call(onEstatusChange, '');
         await call(onEstadoCivilChange, '');
         await call(onNacionalidadChange, '');
+        await call(onEstadoChange, '');
+        await call(onMunicipioChange, '');
+        await call(onParroquiaChange, '');
         await call(onCasosAsignadosChange, false);
         await call(onFechaInicioChange, '');
         await call(onCasosAsignadosChange, false);
@@ -196,6 +251,18 @@ function CaseTools({
                         onMateriaChange={onMateriaChange}
                         materias={materias}
                         materiaOptions={materiaOptions}
+                        materiaLabel={materiaLabel}
+
+                        categoriaFilter={categoriaFilter}
+                        onCategoriaChange={onCategoriaChange}
+                        categoriaOptions={categoriaOptions}
+                        categoriaLabel={categoriaLabel}
+
+                        subcategoriaFilter={subcategoriaFilter}
+                        onSubcategoriaChange={onSubcategoriaChange}
+                        subcategoriaOptions={subcategoriaOptions}
+                        subcategoriaLabel={subcategoriaLabel}
+
                         nucleoLabel={nucleoLabel}
                         nucleoAllLabel={nucleoAllLabel}
                         nucleoIcon={nucleoIcon}
@@ -207,6 +274,21 @@ function CaseTools({
                         nacionalidadFilter={nacionalidadFilter}
                         onNacionalidadChange={onNacionalidadChange}
                         nacionalidadOptions={nacionalidadOptions}
+
+                        estadoFilter={estadoFilter}
+                        onEstadoChange={onEstadoChange}
+                        estadoOptions={estadoOptions}
+                        estadoLabel={estadoLabel}
+
+                        municipioFilter={municipioFilter}
+                        onMunicipioChange={onMunicipioChange}
+                        municipioOptions={municipioOptions}
+                        municipioLabel={municipioLabel}
+
+                        parroquiaFilter={parroquiaFilter}
+                        onParroquiaChange={onParroquiaChange}
+                        parroquiaOptions={parroquiaOptions}
+                        parroquiaLabel={parroquiaLabel}
 
                         showDateRange={showDateRange}
                         fechaInicio={fechaInicio}

@@ -8,12 +8,11 @@ import {
   Clock,
   FileText,
   Filter as FilterIcon,
-  Flag,
   Layers,
+  MapPin,
+  Tag,
+  Hash,
   User,
-  UserCheck,
-  X,
-  ArrowUpDown
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -40,14 +39,35 @@ interface FilterProps {
   estadoCivilOptions?: { value: string; label: string }[];
   estadoCivilLabel?: string;
   nacionalidadOptions?: { value: string; label: string }[];
-  tramiteOptions: { value: string; label: string }[];
-  estatusOptions: { value: string; label: string }[];
+  estadoFilter?: string;
+  onEstadoChange?: (value: string) => void;
+  estadoOptions?: { value: string; label: string }[];
+  estadoLabel?: string;
+  municipioFilter?: string;
+  onMunicipioChange?: (value: string) => void;
+  municipioOptions?: { value: string; label: string }[];
+  municipioLabel?: string;
+  parroquiaFilter?: string;
+  onParroquiaChange?: (value: string) => void;
+  parroquiaOptions?: { value: string; label: string }[];
+  parroquiaLabel?: string;
+  tramiteOptions?: { value: string; label: string }[];
+  estatusOptions?: { value: string; label: string }[];
   estatusLabel?: string;
   showCasosAsignados?: boolean;
   materiaFilter?: string;
   onMateriaChange?: (value: string) => void;
   materias?: { id_materia: number; nombre_materia: string; habilitado?: boolean }[];
   materiaOptions?: { value: string; label: string }[];
+  materiaLabel?: string;
+  categoriaFilter?: string;
+  onCategoriaChange?: (value: string) => void;
+  categoriaOptions?: { value: string; label: string }[];
+  categoriaLabel?: string;
+  subcategoriaFilter?: string;
+  onSubcategoriaChange?: (value: string) => void;
+  subcategoriaOptions?: { value: string; label: string }[];
+  subcategoriaLabel?: string;
   nucleoLabel?: string;
   nucleoIcon?: LucideIcon;
   nucleoAllLabel?: string;
@@ -99,14 +119,35 @@ function Filter({
     { value: 'V', label: 'Venezolano (V)' },
     { value: 'E', label: 'Extranjero (E)' },
   ],
-  tramiteOptions,
-  estatusOptions,
+  estadoFilter,
+  onEstadoChange,
+  estadoOptions = [],
+  estadoLabel = 'Estado',
+  municipioFilter,
+  onMunicipioChange,
+  municipioOptions = [],
+  municipioLabel = 'Municipio',
+  parroquiaFilter,
+  onParroquiaChange,
+  parroquiaOptions = [],
+  parroquiaLabel = 'Parroquia',
+  tramiteOptions = [],
+  estatusOptions = [],
   estatusLabel = 'Estatus',
   showCasosAsignados = false,
   materiaFilter,
   onMateriaChange,
   materias = [],
   materiaOptions,
+  materiaLabel = 'Materia',
+  categoriaFilter,
+  onCategoriaChange,
+  categoriaOptions = [],
+  categoriaLabel = 'Categoría',
+  subcategoriaFilter,
+  onSubcategoriaChange,
+  subcategoriaOptions = [],
+  subcategoriaLabel = 'Subcategoría',
   nucleoLabel = 'Núcleo',
   nucleoAllLabel = 'Todos los núcleos',
   nucleoIcon: NucleoIcon = Building2,
@@ -132,7 +173,9 @@ function Filter({
 }: FilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<
-    'nucleo' | 'materia' | 'term' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas' | 'operacion' | 'sort' | null
+    | 'nucleo' | 'materia' | 'categoria' | 'subcategoria' | 'term' | 'tramite'
+    | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas' | 'operacion'
+    | 'sort' | 'estado' | 'municipio' | 'parroquia' | null
   >(null);
   const [nucleos, setNucleos] = useState<Array<{ id_nucleo: number; nombre_nucleo: string; habilitado?: boolean }>>([]);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 });
@@ -195,7 +238,7 @@ function Filter({
 
   // Eliminar useEffect de posicionamiento automático y usar el evento de click
   const handleSubmenuToggle = (
-    type: 'nucleo' | 'materia' | 'term' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas' | 'operacion' | 'sort',
+    type: 'nucleo' | 'materia' | 'categoria' | 'subcategoria' | 'term' | 'tramite' | 'estatus' | 'estadoCivil' | 'nacionalidad' | 'fechas' | 'operacion' | 'sort' | 'estado' | 'municipio' | 'parroquia',
     e: React.MouseEvent<HTMLButtonElement>
   ) => {
     if (activeSubmenu === type) {
@@ -309,9 +352,13 @@ function Filter({
     (estatusFilter ? 1 : 0) +
     (estadoCivilFilter ? 1 : 0) +
     (nacionalidadFilter ? 1 : 0) +
-    (casosAsignadosFilter ? 1 : 0) +
+    (estadoFilter ? 1 : 0) +
+    (municipioFilter ? 1 : 0) +
+    (parroquiaFilter ? 1 : 0) +
     (casosAsignadosFilter ? 1 : 0) +
     (materiaFilter ? 1 : 0) +
+    (categoriaFilter ? 1 : 0) +
+    (subcategoriaFilter ? 1 : 0) +
     (termFilter ? 1 : 0) +
     ((fechaInicio || fechaFin) ? 1 : 0) +
     (recentActivityFilter ? 1 : 0) +
@@ -330,7 +377,12 @@ function Filter({
         if (onEstatusChange) onEstatusChange('');
         if (onEstadoCivilChange) onEstadoCivilChange('');
         if (onNacionalidadChange) onNacionalidadChange('');
+        if (onEstadoChange) onEstadoChange('');
+        if (onMunicipioChange) onMunicipioChange('');
+        if (onParroquiaChange) onParroquiaChange('');
         if (onMateriaChange) onMateriaChange('');
+        if (onCategoriaChange) onCategoriaChange('');
+        if (onSubcategoriaChange) onSubcategoriaChange('');
         if (onTermChange) onTermChange('');
         if (onCasosAsignadosChange) onCasosAsignadosChange(false);
         if (onFechaInicioChange) onFechaInicioChange('');
@@ -385,6 +437,16 @@ function Filter({
           handler = onMateriaChange || (() => { });
           allLabel = 'Todas las materias';
           break;
+        case 'categoria':
+          options = categoriaOptions;
+          handler = onCategoriaChange || (() => { });
+          allLabel = `Todas las categorías`;
+          break;
+        case 'subcategoria':
+          options = subcategoriaOptions;
+          handler = onSubcategoriaChange || (() => { });
+          allLabel = `Todas las subcategorías`;
+          break;
         case 'term':
           options = termOptions || [];
           handler = onTermChange || (() => { });
@@ -404,6 +466,21 @@ function Filter({
           options = nacionalidadOptions;
           handler = onNacionalidadChange || (() => { });
           allLabel = 'Todas las nacionalidades';
+          break;
+        case 'estado':
+          options = estadoOptions;
+          handler = onEstadoChange || (() => { });
+          allLabel = `Todos los estados`;
+          break;
+        case 'municipio':
+          options = municipioOptions;
+          handler = onMunicipioChange || (() => { });
+          allLabel = `Todos los municipios`;
+          break;
+        case 'parroquia':
+          options = parroquiaOptions;
+          handler = onParroquiaChange || (() => { });
+          allLabel = `Todas las parroquias`;
           break;
         case 'operacion':
           options = operacionOptions;
@@ -426,6 +503,12 @@ function Filter({
       case 'materia':
         filterValue = materiaFilter || '';
         break;
+      case 'categoria':
+        filterValue = categoriaFilter || '';
+        break;
+      case 'subcategoria':
+        filterValue = subcategoriaFilter || '';
+        break;
       case 'term':
         filterValue = termFilter || '';
         break;
@@ -440,6 +523,15 @@ function Filter({
         break;
       case 'nacionalidad':
         filterValue = nacionalidadFilter || '';
+        break;
+      case 'estado':
+        filterValue = estadoFilter || '';
+        break;
+      case 'municipio':
+        filterValue = municipioFilter || '';
+        break;
+      case 'parroquia':
+        filterValue = parroquiaFilter || '';
         break;
       case 'operacion':
         filterValue = operacionFilter || '';
@@ -744,6 +836,84 @@ function Filter({
                   </>
                 )}
 
+                {/* Opción: Estado */}
+                {onEstadoChange && (
+                  <>
+                    <motion.button
+                      ref={activeSubmenu === 'estado' ? activeButtonRef : undefined}
+                      type="button"
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      onClick={(e) => handleSubmenuToggle('estado', e)}
+                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'estado'
+                        ? 'bg-primary-light text-primary'
+                        : estadoFilter
+                          ? 'text-primary hover:bg-gray-100'
+                          : 'text-gray-700 hover:bg-gray-100'}`}
+                    >
+                      <ChevronLeft
+                        className={`w-4 h-4 transition-transform ${activeSubmenu === 'estado' ? '-rotate-90' : ''}`}
+                      />
+                      <div className="flex-1" />
+                      <span>{estadoLabel}</span>
+                      <MapPin className="w-4 h-4" />
+                    </motion.button>
+                    <div className="border-t border-gray-200 my-2"></div>
+                  </>
+                )}
+
+                {/* Opción: Municipio */}
+                {onMunicipioChange && (
+                  <>
+                    <motion.button
+                      ref={activeSubmenu === 'municipio' ? activeButtonRef : undefined}
+                      type="button"
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      onClick={(e) => handleSubmenuToggle('municipio', e)}
+                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'municipio'
+                        ? 'bg-primary-light text-primary'
+                        : municipioFilter
+                          ? 'text-primary hover:bg-gray-100'
+                          : 'text-gray-700 hover:bg-gray-100'}`}
+                    >
+                      <ChevronLeft
+                        className={`w-4 h-4 transition-transform ${activeSubmenu === 'municipio' ? '-rotate-90' : ''}`}
+                      />
+                      <div className="flex-1" />
+                      <span>{municipioLabel}</span>
+                      <MapPin className="w-4 h-4" />
+                    </motion.button>
+                    <div className="border-t border-gray-200 my-2"></div>
+                  </>
+                )}
+
+                {/* Opción: Parroquia */}
+                {onParroquiaChange && (
+                  <>
+                    <motion.button
+                      ref={activeSubmenu === 'parroquia' ? activeButtonRef : undefined}
+                      type="button"
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      onClick={(e) => handleSubmenuToggle('parroquia', e)}
+                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'parroquia'
+                        ? 'bg-primary-light text-primary'
+                        : parroquiaFilter
+                          ? 'text-primary hover:bg-gray-100'
+                          : 'text-gray-700 hover:bg-gray-100'}`}
+                    >
+                      <ChevronLeft
+                        className={`w-4 h-4 transition-transform ${activeSubmenu === 'parroquia' ? '-rotate-90' : ''}`}
+                      />
+                      <div className="flex-1" />
+                      <span>{parroquiaLabel}</span>
+                      <MapPin className="w-4 h-4" />
+                    </motion.button>
+                    <div className="border-t border-gray-200 my-2"></div>
+                  </>
+                )}
+
                 {/* Opción: Estado civil */}
                 {onEstadoCivilChange && (
                   <>
@@ -812,8 +982,58 @@ function Filter({
                     >
                       <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'materia' ? '-rotate-90' : ''}`} />
                       <div className="flex-1" />
-                      <span>Materia</span>
+                      <span>{materiaLabel}</span>
                       <BookOpen className="w-4 h-4" />
+                    </motion.button>
+                    <div className="border-t border-gray-200 my-2"></div>
+                  </>
+                )}
+
+                {/* Opción: Categoría */}
+                {onCategoriaChange && (
+                  <>
+                    <motion.button
+                      ref={activeSubmenu === 'categoria' ? activeButtonRef : undefined}
+                      type="button"
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      onClick={(e) => handleSubmenuToggle('categoria', e)}
+                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'categoria'
+                        ? 'bg-primary-light text-primary'
+                        : categoriaFilter
+                          ? 'text-primary hover:bg-gray-100'
+                          : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                    >
+                      <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'categoria' ? '-rotate-90' : ''}`} />
+                      <div className="flex-1" />
+                      <span>{categoriaLabel}</span>
+                      <Tag className="w-4 h-4" />
+                    </motion.button>
+                    <div className="border-t border-gray-200 my-2"></div>
+                  </>
+                )}
+
+                {/* Opción: Subcategoría */}
+                {onSubcategoriaChange && (
+                  <>
+                    <motion.button
+                      ref={activeSubmenu === 'subcategoria' ? activeButtonRef : undefined}
+                      type="button"
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      onClick={(e) => handleSubmenuToggle('subcategoria', e)}
+                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'subcategoria'
+                        ? 'bg-primary-light text-primary'
+                        : subcategoriaFilter
+                          ? 'text-primary hover:bg-gray-100'
+                          : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                    >
+                      <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'subcategoria' ? '-rotate-90' : ''}`} />
+                      <div className="flex-1" />
+                      <span>{subcategoriaLabel}</span>
+                      <Hash className="w-4 h-4" />
                     </motion.button>
                     <div className="border-t border-gray-200 my-2"></div>
                   </>

@@ -159,6 +159,8 @@ export default function AmbitosLegalesPage() {
                 autoGenerateFilter={true}
                 hideHeader={true}
                 hideBackButton={true}
+                enableCategoriaFilter={true}
+                enableSubcategoriaFilter={true}
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}
