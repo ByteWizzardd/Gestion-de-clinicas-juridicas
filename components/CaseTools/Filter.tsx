@@ -8,11 +8,15 @@ import {
   Clock,
   FileText,
   Filter as FilterIcon,
+  Flag,
   Layers,
   MapPin,
   Tag,
   Hash,
   User,
+  UserCheck,
+  X,
+  ArrowUpDown
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
