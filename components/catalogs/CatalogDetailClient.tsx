@@ -127,6 +127,7 @@ export default function CatalogDetailClient({
                 onAddClick={onAddClick}
                 searchValue={searchQuery}
                 onSearchChange={setSearchQuery}
+                searchPlaceholder={searchPlaceholder}
                 {...(hasFilter && {
                     // Map filter functionality based on filterTarget
                     ...(filterTarget === 'materia' ? {
