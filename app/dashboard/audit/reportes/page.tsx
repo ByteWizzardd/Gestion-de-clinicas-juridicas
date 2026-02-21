@@ -12,6 +12,7 @@ export default async function ReportesAuditPage() {
                 entityTitle="Auditoría de Reportes"
                 entityDescription="Registro completo de todos los reportes generados en el sistema"
                 defaultTab="reportes-generados"
+                hideMainHeader={true}
                 operations={[
                     {
                         label: 'Generados',

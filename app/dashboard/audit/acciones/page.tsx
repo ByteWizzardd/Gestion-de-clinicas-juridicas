@@ -12,6 +12,7 @@ export default async function AccionesAuditPage() {
                 entityTitle="Auditoría de Acciones"
                 entityDescription="Registro completo de todas las acciones de seguimiento realizadas sobre los casos"
                 defaultTab="acciones-creadas"
+                hideMainHeader={true}
                 operations={[
                     {
                         label: 'Creadas',

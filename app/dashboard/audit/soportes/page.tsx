@@ -12,6 +12,7 @@ export default async function SoportesAuditPage() {
         entityTitle="Auditoría de Soportes"
         entityDescription="Registro completo de todas las acciones realizadas sobre los documentos y archivos del sistema"
         defaultTab="soportes-creados"
+        hideMainHeader={true}
         operations={[
           {
             label: 'Creados',

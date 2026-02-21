@@ -437,19 +437,6 @@ export default function SesionesAuditClient() {
 
     return (
         <div className="w-full">
-            {/* Header */}
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-                className="mb-4 md:mb-6 mt-4"
-            >
-                <h1 className="text-4xl m-3 font-semibold font-primary">Auditoría de Sesiones</h1>
-                <p className="mb-6 ml-3 text-gray-600">
-                    Registro de actividad y seguridad de accesos al sistema
-                </p>
-            </motion.div>
-
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

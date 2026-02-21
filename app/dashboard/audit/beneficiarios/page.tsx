@@ -12,6 +12,7 @@ export default async function BeneficiariosAuditPage() {
                 entityTitle="Auditoría de Beneficiarios"
                 entityDescription="Registro completo de todas las acciones realizadas sobre los beneficiarios de los casos"
                 defaultTab="beneficiarios-creados"
+                hideMainHeader={true}
                 operations={[
                     {
                         label: 'Creados',
