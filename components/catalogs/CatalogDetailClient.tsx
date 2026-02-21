@@ -55,8 +55,8 @@ export default function CatalogDetailClient({
 
     // Auto-generate filter options from data if requested
     const generatedFilterOptions = useMemo(() => {
-        if (!autoGenerateFilter || !filterField || filterOptions) {
-            return filterOptions || [];
+        if (disableFilter || !filterField || filterOptions) {
+            return disableFilter ? [] : (filterOptions || []);
         }
 
         const uniqueValues = new Set<string>();
@@ -73,7 +73,7 @@ export default function CatalogDetailClient({
                 value: value,
                 label: value
             }));
-    }, [data, filterField, filterOptions, autoGenerateFilter]);
+    }, [data, filterField, filterOptions, disableFilter]);
 
     const estatusOptions = useMemo(() => [
         { value: 'true', label: 'Habilitado' },
@@ -105,7 +105,25 @@ export default function CatalogDetailClient({
         return result;
     }, [data, searchQuery, filterValue, filterField, estatusFilterValue]);
 
-    const hasFilter = !disableFilter && (generatedFilterOptions.length > 0 || (loading && (autoGenerateFilter || filterOptions))) && filterField;
+    // El filtro de estatus SIEMPRE debería aparecer a menos que se deshabilite explícitamente y no haya otros.
+    // Actualmente, 'hasFilter' requiere que haya un `filterField` Y opciones autogeneradas Opciones pasadas por prop.
+    // Necesitamos asegurarnos de que el filtro siempre aparezca a menos que desactivemos los filtros o no tengamos *ningún* filtro que mostrar.
+    // Si queremos que el filtro principal (materia, nucleo, etc) se oculte, necesitamos usar disableFilter={true} desde la página o hacer comprobación sobre generatedFilterOptions
+
+    // Mostramos el componente de filtro si:
+    // 1. NO estamos deshabilitando explícitamente el filtro `!disableFilter`
+    // 2. Y hay al menos Opciones principales qué mostrar (ya sea auto-generadas, prop `filterOptions` o mediante el `filterField`) o si está cargando y esperamos opciones predeterminadas
+    const hasFilter = !disableFilter && (
+        (filterField && (generatedFilterOptions.length > 0 || (loading && (autoGenerateFilter || filterOptions)))) ||
+        (!filterField && disableFilter === false) // Si no hay filterField pero no hemos deshabilitado el filtro por completo, podríamos mostrar solo el estatus (aunque CaseTools exige al menos uno principal, mejor dejar validación con filterField || si queremos habilitar estatus independientemente)
+    );
+
+    // Ajuste final más simple para el caso del cliente:
+    // Si autoGenerateFilter es falso, filterField es null y filterOptions está vacío, NO debe mostrar filtro adicional.
+    const shouldShowFilter = !disableFilter && (
+        (filterField && generatedFilterOptions.length > 0) ||
+        (loading && filterField && (autoGenerateFilter || !!filterOptions))
+    );
 
     return (
         <div>
@@ -128,7 +146,7 @@ export default function CatalogDetailClient({
                 searchValue={searchQuery}
                 onSearchChange={setSearchQuery}
                 searchPlaceholder={searchPlaceholder}
-                {...(hasFilter && {
+                {...(shouldShowFilter && {
                     // Map filter functionality based on filterTarget
                     ...(filterTarget === 'materia' ? {
                         materiaFilter: filterValue,
