@@ -109,11 +109,11 @@ export default function Modal({
             {showCloseButton && !title && (
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-primary hover:bg-red-50 rounded-full transition-colors z-50"
+                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-50 cursor-pointer"
                 aria-label="Cerrar modal"
                 type="button"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </button>
             )}
 
@@ -129,11 +129,11 @@ export default function Modal({
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className="p-2 text-gray-400 hover:text-primary hover:bg-red-50 rounded-full transition-colors"
+                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
                     aria-label="Cerrar modal"
                     type="button"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-6 h-6" />
                   </button>
                 )}
               </div>

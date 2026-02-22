@@ -179,7 +179,7 @@ export default function CatalogFormModal({
                 {/* Close button */}
                 <button
                     onClick={handleClose}
-                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
                     aria-label="Cerrar modal"
                 >
                     <X className="w-6 h-6" />

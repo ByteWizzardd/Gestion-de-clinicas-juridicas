@@ -973,9 +973,17 @@ export default function ReportsPage() {
                 onClose={handleCloseModal}
                 size={supportsPreview ? 'custom' : 'md'}
                 className={supportsPreview ? 'max-w-6xl' : ''}
-                showCloseButton={true}
+                showCloseButton={false}
             >
                 <div className={`relative flex flex-col ${supportsPreview ? 'lg:flex-row' : ''} h-full`}>
+                    {/* Botón de cerrar */}
+                    <button
+                        onClick={handleCloseModal}
+                        className="absolute top-2 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-50 cursor-pointer"
+                        aria-label="Cerrar modal"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
 
                     {/* Left Column: Form */}
                     <div className={`flex-shrink-0 p-6 ${supportsPreview ? 'lg:w-[380px] lg:border-r border-gray-100' : 'w-full'}`}>

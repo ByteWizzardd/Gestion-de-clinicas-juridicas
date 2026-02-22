@@ -3062,7 +3062,7 @@ export default function ApplicantFormModal({
           {/* Botón de cerrar */}
           <button
             onClick={handleClose}
-            className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
+            className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10 cursor-pointer"
             aria-label="Cerrar modal"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
