@@ -1,7 +1,5 @@
 -- Obtener beneficiarios agrupados por tipo, materia, categoría y subcategoría
--- Parámetros: $1 = fecha_inicio (opcional), $2 = fecha_fin (opcional)
--- Agrupa por tipo_beneficiario, materia, categoría y subcategoría (sin ámbito legal)
--- Incluye el tipo_beneficiario para poder filtrar después, pero agrupa por materia-categoría-subcategoría
+-- Parámetros: $1 = fecha_inicio (opcional), $2 = fecha_fin (opcional), $3 = term (opcional)
 SELECT 
     b.tipo_beneficiario,
     c.id_materia,
@@ -19,8 +17,19 @@ LEFT JOIN subcategorias sub ON c.id_materia = sub.id_materia
     AND c.num_categoria = sub.num_categoria 
     AND c.num_subcategoria = sub.num_subcategoria
 WHERE 
-    ($1::DATE IS NULL OR c.fecha_inicio_caso >= $1)
-    AND ($2::DATE IS NULL OR c.fecha_inicio_caso <= $2)
+    ($3::TEXT IS NULL OR EXISTS (
+        SELECT 1 FROM ocurren_en oe WHERE oe.id_caso = c.id_caso AND oe.term = $3
+    ))
+    AND (
+        ($1::DATE IS NULL AND $2::DATE IS NULL)
+        OR EXISTS (
+            SELECT 1 FROM ocurren_en oe
+            JOIN semestres sem ON oe.term = sem.term
+            WHERE oe.id_caso = c.id_caso
+            AND ($2::DATE IS NULL OR sem.fecha_inicio <= $2)
+            AND ($1::DATE IS NULL OR sem.fecha_fin >= $1)
+        )
+    )
 GROUP BY 
     b.tipo_beneficiario,
     c.id_materia,

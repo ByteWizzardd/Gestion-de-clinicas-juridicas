@@ -48,7 +48,8 @@ export async function getDistributionByTramite(
     const dbData = await casosQueries.getDistributionByTramite(
       start,
       end,
-      idNucleo
+      idNucleo,
+      term
     );
 
     // Mapeamos a formato de gráfica
@@ -79,7 +80,7 @@ export async function getCasosGroupedByAmbitoLegal(
 
     const { start, end } = await resolveDateRange(fechaInicio, fechaFin, term);
 
-    const data = await casosQueries.getGroupedByAmbitoLegal(start, end);
+    const data = await casosQueries.getGroupedByAmbitoLegal(start, end, term);
 
     return { success: true, data };
   } catch (error) {
@@ -108,7 +109,8 @@ export async function getCaseLoadTrend(
     const dbData = await casosQueries.getCaseLoadTrend(
       start,
       end,
-      idNucleo
+      idNucleo,
+      term
     );
 
     // Mapear datos al formato de la gráfica
@@ -138,7 +140,7 @@ export async function getDistributionByGender(
 
     const { start, end } = await resolveDateRange(fechaInicio, fechaFin, term);
 
-    const data = await solicitantesQueries.getDistribucionGenero(start, end);
+    const data = await solicitantesQueries.getDistribucionGenero(start, end, term);
 
     // Map 'M'/'F' to full names
     const formattedData = data.map(item => ({
@@ -174,7 +176,8 @@ export async function getDistributionByNucleo(
     const dbData = await casosQueries.getDistributionByNucleo(
       start,
       end,
-      idNucleo
+      idNucleo,
+      term
     );
 
     // Mapear datos al formato de la gráfica
@@ -301,7 +304,8 @@ export async function getDistributionByStatus(
     const dbData = await casosQueries.getDistributionByStatus(
       start,
       end,
-      idNucleo
+      idNucleo,
+      term
     );
 
     // Mapear datos al formato de la gráfica
@@ -334,7 +338,8 @@ export async function getTopCases(
     const dbData = await casosQueries.getTopMaterias(
       start,
       end,
-      idNucleo
+      idNucleo,
+      term
     );
 
     // Mapear datos al formato de la gráfica
@@ -362,7 +367,7 @@ export async function getCasosGroupedByEstatus(
 
     const { start, end } = await resolveDateRange(fechaInicio, fechaFin, term);
 
-    const dbData = await casosQueries.getGroupedByEstatus(start, end);
+    const dbData = await casosQueries.getGroupedByEstatus(start, end, term);
 
     // Mapear a EstatusGroupedData
     const data: EstatusGroupedData[] = dbData.map(item => ({
@@ -435,10 +440,10 @@ export async function getInformeResumenData(
       solicitantesPorEstado,
       solicitantesPorParroquia,
     ] = await Promise.all([
-      casosQueries.getByMateriaGrouped(start, end),
-      solicitantesQueries.getByGenero(start, end),
-      solicitantesQueries.getByEstado(start, end),
-      solicitantesQueries.getByParroquia(start, end),
+      casosQueries.getByMateriaGrouped(start, end, term),
+      solicitantesQueries.getByGenero(start, end, term),
+      solicitantesQueries.getByEstado(start, end, term),
+      solicitantesQueries.getByParroquia(start, end, term),
     ]);
 
     // Lote 2: Ámbito legal, estudiantes, profesores
@@ -447,9 +452,9 @@ export async function getInformeResumenData(
       estudiantesPorMateria,
       profesoresPorMateria,
     ] = await Promise.all([
-      casosQueries.getByAmbitoLegalTotal(start, end),
-      estudiantesQueries.getByMateria(start, end),
-      profesoresQueries.getByMateria(start, end),
+      casosQueries.getByAmbitoLegalTotal(start, end, term),
+      estudiantesQueries.getByMateria(start, end, term),
+      profesoresQueries.getByMateria(start, end, term),
     ]);
 
     // Lote 3: Tipos de caso, beneficiarios
@@ -458,9 +463,9 @@ export async function getInformeResumenData(
       beneficiariosPorTipo,
       beneficiariosPorParentesco,
     ] = await Promise.all([
-      casosQueries.getGroupedByAmbitoLegal(start, end),
-      beneficiariosQueries.getByTipoGrouped(start, end),
-      beneficiariosQueries.getByParentesco(start, end),
+      casosQueries.getGroupedByAmbitoLegal(start, end, term),
+      beneficiariosQueries.getByTipoGrouped(start, end, term),
+      beneficiariosQueries.getByParentesco(start, end, term),
     ]);
 
     return {
@@ -517,10 +522,10 @@ export async function getInformeSocioeconomicoData(
       distribucionPorEdad,
       distribucionPorEstadoCivil,
     ] = await Promise.all([
-      solicitantesQueries.getByTipoVivienda(start, end),
-      solicitantesQueries.getDistribucionGenero(start, end),
-      solicitantesQueries.getDistribucionEdad(start, end),
-      solicitantesQueries.getDistribucionEstadoCivil(start, end),
+      solicitantesQueries.getByTipoVivienda(start, end, term),
+      solicitantesQueries.getDistribucionGenero(start, end, term),
+      solicitantesQueries.getDistribucionEdad(start, end, term),
+      solicitantesQueries.getDistribucionEstadoCivil(start, end, term),
     ]);
 
     // Lote 2: Educación, laboral fusionada, condición trabajo, condición actividad
@@ -530,10 +535,10 @@ export async function getInformeSocioeconomicoData(
       distribucionPorCondicionTrabajo,
       distribucionPorCondicionActividad,
     ] = await Promise.all([
-      solicitantesQueries.getDistribucionNivelEducativo(start, end),
-      solicitantesQueries.getDistribucionLaboralFusionada(start, end),
-      solicitantesQueries.getDistribucionCondicionTrabajo(start, end),
-      solicitantesQueries.getDistribucionCondicionActividad(start, end),
+      solicitantesQueries.getDistribucionNivelEducativo(start, end, term),
+      solicitantesQueries.getDistribucionLaboralFusionada(start, end, term),
+      solicitantesQueries.getDistribucionCondicionTrabajo(start, end, term),
+      solicitantesQueries.getDistribucionCondicionActividad(start, end, term),
     ]);
 
     // Lote 3: Ingresos, tamaño hogar, trabajadores hogar, dependientes
@@ -543,10 +548,10 @@ export async function getInformeSocioeconomicoData(
       distribucionPorTrabajadoresHogar,
       distribucionPorDependientes,
     ] = await Promise.all([
-      solicitantesQueries.getDistribucionIngresos(start, end),
-      solicitantesQueries.getDistribucionTamanoHogar(start, end),
-      solicitantesQueries.getDistribucionTrabajadoresHogar(start, end),
-      solicitantesQueries.getDistribucionDependientes(start, end),
+      solicitantesQueries.getDistribucionIngresos(start, end, term),
+      solicitantesQueries.getDistribucionTamanoHogar(start, end, term),
+      solicitantesQueries.getDistribucionTrabajadoresHogar(start, end, term),
+      solicitantesQueries.getDistribucionDependientes(start, end, term),
     ]);
 
     // Lote 4: Niños hogar, habitaciones, baños, características vivienda
@@ -556,10 +561,10 @@ export async function getInformeSocioeconomicoData(
       distribucionPorBanos,
       distribucionPorCaracteristicasVivienda,
     ] = await Promise.all([
-      solicitantesQueries.getDistribucionNinosHogar(start, end),
-      solicitantesQueries.getDistribucionHabitaciones(start, end),
-      solicitantesQueries.getDistribucionBanos(start, end),
-      solicitantesQueries.getDistribucionCaracteristicasVivienda(start, end),
+      solicitantesQueries.getDistribucionNinosHogar(start, end, term),
+      solicitantesQueries.getDistribucionHabitaciones(start, end, term),
+      solicitantesQueries.getDistribucionBanos(start, end, term),
+      solicitantesQueries.getDistribucionCaracteristicasVivienda(start, end, term),
     ]);
 
     return {

@@ -94,7 +94,8 @@ export const estudiantesQueries = {
    */
   getByMateria: async (
     fechaInicio?: string | Date,
-    fechaFin?: string | Date
+    fechaFin?: string | Date,
+    term?: string
   ): Promise<Array<{
     nombre_materia: string;
     nombre_categoria: string | null;
@@ -112,6 +113,7 @@ export const estudiantesQueries = {
     const result: QueryResult = await pool.query(query, [
       fechaInicioStr,
       fechaFinStr,
+      term || null,
     ]);
     return result.rows;
   },

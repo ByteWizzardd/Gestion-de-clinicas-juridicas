@@ -214,7 +214,8 @@ export const casosQueries = {
    */
   getGroupedByAmbitoLegal: async (
     fechaInicio?: string | Date,
-    fechaFin?: string | Date
+    fechaFin?: string | Date,
+    term?: string
   ): Promise<Array<{
     id_materia: number;
     num_categoria: number;
@@ -234,7 +235,7 @@ export const casosQueries = {
       ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
       : null;
 
-    const result: QueryResult = await pool.query(query, [fechaInicioStr, fechaFinStr]);
+    const result: QueryResult = await pool.query(query, [fechaInicioStr, fechaFinStr, term || null]);
     return result.rows;
   },
 
@@ -248,7 +249,8 @@ export const casosQueries = {
   getDistributionByNucleo: async (
     fechaInicio?: string | Date,
     fechaFin?: string | Date,
-    idNucleo?: number): Promise<Array<{ nombre_nucleo: string; cantidad: number }>> => {
+    idNucleo?: number,
+    term?: string): Promise<Array<{ nombre_nucleo: string; cantidad: number }>> => {
     const query = loadSQL('casos/get-distribution-by-nucleo.sql');
     const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
@@ -261,6 +263,7 @@ export const casosQueries = {
       fechaInicioStr,
       fechaFinStr,
       idNucleo || null,
+      term || null,
     ]);
     return result.rows;
   },
@@ -275,7 +278,8 @@ export const casosQueries = {
   getTopMaterias: async (
     fechaInicio?: string | Date,
     fechaFin?: string | Date,
-    idNucleo?: number): Promise<Array<{ nombre_materia: string; cantidad: number }>> => {
+    idNucleo?: number,
+    term?: string): Promise<Array<{ nombre_materia: string; cantidad: number }>> => {
     const query = loadSQL('casos/get-top-materias.sql');
     const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
@@ -288,6 +292,7 @@ export const casosQueries = {
       fechaInicioStr,
       fechaFinStr,
       idNucleo || null,
+      term || null,
     ]);
     return result.rows;
   },
@@ -299,7 +304,8 @@ export const casosQueries = {
    */
   getGroupedByEstatus: async (
     fechaInicio?: string | Date,
-    fechaFin?: string | Date
+    fechaFin?: string | Date,
+    term?: string
   ): Promise<Array<{
     nombre_estatus: string;
     cantidad_casos: number;
@@ -315,7 +321,7 @@ export const casosQueries = {
       ? (typeof fechaFin === 'string' ? fechaFin : fechaFin.toISOString().split('T')[0])
       : null;
 
-    const result: QueryResult = await pool.query(query, [fechaInicioStr, fechaFinStr]);
+    const result: QueryResult = await pool.query(query, [fechaInicioStr, fechaFinStr, term || null]);
     return result.rows;
   },
 
@@ -331,7 +337,8 @@ export const casosQueries = {
   getDistributionByStatus: async (
     fechaInicio?: string | Date,
     fechaFin?: string | Date,
-    idNucleo?: number): Promise<Array<{ nombre_estatus: string; cantidad: number }>> => {
+    idNucleo?: number,
+    term?: string): Promise<Array<{ nombre_estatus: string; cantidad: number }>> => {
     const query = loadSQL('casos/get-distribution-by-status.sql');
     const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
@@ -344,6 +351,7 @@ export const casosQueries = {
       fechaInicioStr,
       fechaFinStr,
       idNucleo || null,
+      term || null,
     ]);
     return result.rows;
   },
@@ -358,7 +366,8 @@ export const casosQueries = {
   getCaseLoadTrend: async (
     fechaInicio?: string | Date,
     fechaFin?: string | Date,
-    idNucleo?: number): Promise<Array<{ mes: string; estatus: string; cantidad: number }>> => {
+    idNucleo?: number,
+    term?: string): Promise<Array<{ mes: string; estatus: string; cantidad: number }>> => {
     const query = loadSQL('casos/get-case-load-trend.sql');
     const fechaInicioStr = fechaInicio && fechaInicio !== ''
       ? (typeof fechaInicio === 'string' ? fechaInicio : fechaInicio.toISOString().split('T')[0])
@@ -371,6 +380,7 @@ export const casosQueries = {
       fechaInicioStr,
       fechaFinStr,
       idNucleo || null,
+      term || null,
     ]);
     return result.rows;
   },
@@ -406,7 +416,8 @@ export const casosQueries = {
    */
   getByAmbitoLegalTotal: async (
     fechaInicio?: string | Date,
-    fechaFin?: string | Date
+    fechaFin?: string | Date,
+    term?: string
   ): Promise<Array<{ nombre_ambito_legal: string; cantidad_casos: number }>> => {
     const query = loadSQL('casos/get-by-ambito-legal-total.sql');
     const fechaInicioStr = fechaInicio && fechaInicio !== ''
@@ -419,6 +430,7 @@ export const casosQueries = {
     const result: QueryResult = await pool.query(query, [
       fechaInicioStr,
       fechaFinStr,
+      term || null,
     ]);
     return result.rows;
   },
@@ -431,7 +443,8 @@ export const casosQueries = {
    */
   getByMateriaGrouped: async (
     fechaInicio?: string | Date,
-    fechaFin?: string | Date
+    fechaFin?: string | Date,
+    term?: string
   ): Promise<Array<{
     id_materia: number;
     num_categoria: number;
@@ -452,6 +465,7 @@ export const casosQueries = {
     const result: QueryResult = await pool.query(query, [
       fechaInicioStr,
       fechaFinStr,
+      term || null,
     ]);
     return result.rows;
   },
@@ -465,7 +479,8 @@ export const casosQueries = {
   getDistributionByTramite: async (
     fechaInicio?: string | Date,
     fechaFin?: string | Date,
-    idNucleo?: number
+    idNucleo?: number,
+    term?: string
   ): Promise<Array<{ nombre_tramite: string; cantidad_casos: number }>> => {
     const query = loadSQL('casos/get-distribucion-tramite.sql');
     const fechaInicioStr = fechaInicio && fechaInicio !== ''
@@ -479,6 +494,7 @@ export const casosQueries = {
       fechaInicioStr,
       fechaFinStr,
       idNucleo || null,
+      term || null,
     ]);
     return result.rows;
   },

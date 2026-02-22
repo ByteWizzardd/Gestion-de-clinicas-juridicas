@@ -15,22 +15,12 @@ export async function resolveDateRange(
   fechaFin?: string,
   term?: string
 ): Promise<{ start?: string; end?: string }> {
-  let start = fechaInicio;
-  let end = fechaFin;
-
-  // Si hay term, obtener sus fechas
-  if (term && term !== 'all') {
-    const { semestresQueries } = await import('@/lib/db/queries/semestres.queries');
-    const semestre = await semestresQueries.getByTerm(term);
-    if (semestre) {
-      start = semestre.fecha_inicio.toISOString().split('T')[0];
-      end = semestre.fecha_fin.toISOString().split('T')[0];
-    }
-  }
-
+  // Las fechas del usuario se pasan tal cual.
+  // El filtro por semestre se maneja en el SQL via el parámetro term ($3/$4).
+  // Ambos pueden combinarse: term filtra por ocurren_en, fechas por fecha_inicio_caso.
   return {
-    start: start || undefined,
-    end: end || undefined,
+    start: fechaInicio || undefined,
+    end: fechaFin || undefined,
   };
 }
 

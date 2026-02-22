@@ -136,7 +136,8 @@ export const beneficiariosQueries = {
    */
   getByParentesco: async (
     fechaInicio?: string | Date,
-    fechaFin?: string | Date
+    fechaFin?: string | Date,
+    term?: string
   ): Promise<Array<{
     parentesco: string;
     cantidad_beneficiarios: number
@@ -152,6 +153,7 @@ export const beneficiariosQueries = {
     const result: QueryResult = await pool.query(query, [
       fechaInicioStr,
       fechaFinStr,
+      term || null,
     ]);
     return result.rows;
   },
@@ -162,7 +164,8 @@ export const beneficiariosQueries = {
    */
   getByTipoGrouped: async (
     fechaInicio?: string | Date,
-    fechaFin?: string | Date
+    fechaFin?: string | Date,
+    term?: string
   ): Promise<Array<{
     tipo_beneficiario: string;
     id_materia: number;
@@ -184,6 +187,7 @@ export const beneficiariosQueries = {
     const result: QueryResult = await pool.query(query, [
       fechaInicioStr,
       fechaFinStr,
+      term || null,
     ]);
     return result.rows;
   },
