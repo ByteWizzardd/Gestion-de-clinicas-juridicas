@@ -41,7 +41,8 @@ export default function AuditGeneralView() {
                 operacion: selectedOperation || undefined,
                 fechaInicio: startDate || undefined,
                 fechaFin: endDate || undefined,
-                orden: sortOrder
+                orden: sortOrder,
+                busqueda: searchTerm || undefined
             });
             setLogs(newLogs);
             setTotalCount(count);
@@ -51,7 +52,7 @@ export default function AuditGeneralView() {
         } finally {
             setLoading(false);
         }
-    }, [page, rowsPerPage, selectedEntity, selectedUser, selectedOperation, startDate, endDate, sortOrder, toast]);
+    }, [page, rowsPerPage, selectedEntity, selectedUser, selectedOperation, startDate, endDate, sortOrder, searchTerm, toast]);
 
     useEffect(() => {
         fetchLogs();
@@ -60,7 +61,7 @@ export default function AuditGeneralView() {
     // Resetear a página 1 cuando cambian los filtros
     useEffect(() => {
         setPage(1);
-    }, [selectedEntity, selectedUser, selectedOperation, startDate, endDate, sortOrder]);
+    }, [selectedEntity, selectedUser, selectedOperation, startDate, endDate, sortOrder, searchTerm]);
 
 
     useEffect(() => {
@@ -80,15 +81,8 @@ export default function AuditGeneralView() {
         loadUsuarios();
     }, []);
 
-    // Filtrado en cliente (Solo búsqueda de texto, el resto es en servidor)
-    const filteredLogs = logs.filter(log => {
-        const matchesSearch =
-            (log.detalles?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-            (log.usuario_nombre?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-            (log.accion?.toLowerCase() || '').includes(searchTerm.toLowerCase());
-
-        return matchesSearch;
-    });
+    // Los logs ya vienen filtrados por servidor
+    const displayLogs = logs;
 
     // Lista de entidades disponibles para filtrar
     const availableEntitiesOptions = [
@@ -324,7 +318,7 @@ export default function AuditGeneralView() {
                             <AuditRecordCardSkeleton key={i} />
                         ))}
                     </div>
-                ) : filteredLogs.length === 0 ? (
+                ) : displayLogs.length === 0 ? (
                     <div className="py-12 text-center text-gray-400 bg-white rounded-lg border border-dashed border-gray-200">
                         <div className="flex flex-col items-center justify-center">
                             <AlertCircle className="w-8 h-8 mb-2 opacity-50" />
@@ -332,7 +326,7 @@ export default function AuditGeneralView() {
                         </div>
                     </div>
                 ) : (
-                    filteredLogs.map((log, index) => {
+                    displayLogs.map((log, index) => {
                         const mapped = mapUnifiedLogToAuditRecord(log);
                         if (!mapped) return null; // O renderizar un card genérico si es necesario
                         return (

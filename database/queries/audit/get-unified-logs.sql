@@ -891,7 +891,8 @@ WHERE
     ($4::text IS NULL OR usuario_id = $4) AND
     ($5::text IS NULL OR accion ILIKE '%' || $5 || '%') AND
     ($6::timestamp IS NULL OR fecha >= $6) AND
-    ($7::timestamp IS NULL OR fecha <= $7)
+    ($7::timestamp IS NULL OR fecha <= $7) AND
+    ($9::text IS NULL OR (detalles ILIKE '%' || $9 || '%' OR usuario_nombre ILIKE '%' || $9 || '%' OR accion ILIKE '%' || $9 || '%'))
 ORDER BY 
     CASE WHEN ($8::text = 'asc') THEN fecha END ASC,
     CASE WHEN ($8::text = 'desc' OR $8::text IS NULL) THEN fecha END DESC

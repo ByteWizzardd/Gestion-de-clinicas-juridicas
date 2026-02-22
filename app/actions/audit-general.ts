@@ -25,6 +25,7 @@ export async function getUnifiedAuditLogsAction(
         fechaInicio?: string;
         fechaFin?: string;
         orden?: string;
+        busqueda?: string;
     }
 ): Promise<{ logs: UnifiedAuditLog[], totalCount: number }> {
     const authResult = await requireAuthInServerActionWithCode();
@@ -40,33 +41,43 @@ export async function getUnifiedAuditLogsAction(
 
     try {
         const query = loadSQL('audit/get-unified-logs.sql');
+        const countQuery = loadSQL('audit/count-unified-logs.sql');
         const offset = (page - 1) * limit;
 
-        const result = await pool.query(query, [
-            limit,
-            offset,
-            filters?.entidad || null,
-            filters?.usuarioId || null,
-            filters?.operacion || null,
-            filters?.fechaInicio || null,
-            filters?.fechaFin || null,
-            filters?.orden || 'desc'
+        const [results, countResult] = await Promise.all([
+            pool.query(query, [
+                limit,
+                offset,
+                filters?.entidad || null,
+                filters?.usuarioId || null,
+                filters?.operacion || null,
+                filters?.fechaInicio || null,
+                filters?.fechaFin || null,
+                filters?.orden || 'desc',
+                filters?.busqueda || null
+            ]),
+            pool.query(countQuery, [
+                filters?.entidad || null,
+                filters?.usuarioId || null,
+                filters?.operacion || null,
+                filters?.fechaInicio || null,
+                filters?.fechaFin || null,
+                filters?.busqueda || null
+            ])
         ]);
 
         // Convert dates to ISO strings for serialization
-        const logs = result.rows.map((row: any) => ({
+        const logs = results.rows.map((row: any) => ({
             ...row,
             fecha: row.fecha ? new Date(row.fecha).toISOString() : null,
         }));
 
-        // TODO: Ideally we should have a count query as well, but for now we'll just return logs
-        // A proper count across all unions is expensive, maybe just estimate or do a separate count query later
-        const totalCount = 1000; // Placeholder until we add a count query
+        const totalCount = parseInt(countResult.rows[0].count, 10);
 
         return { logs, totalCount };
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error fetching unified audit logs:', error);
-        throw new Error('Error al obtener logs unificados de auditoría');
+        throw new Error(`Error al obtener logs unificados de auditoría: ${error.message}`);
     }
 }
