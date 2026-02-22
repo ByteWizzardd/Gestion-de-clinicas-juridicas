@@ -1458,6 +1458,15 @@ export default function ReportsPage() {
                                 previewKey={`${tipoReporteActual}-${selectedTermReporte}-${fechaInicioReporte}-${fechaFinReporte}-${formatoReporte}-${JSON.stringify(selectedResumenSections)}-${JSON.stringify(selectedSocioeconomicoSections)}`}
                                 reportType={tipoReporteActual}
                                 accentColor="#9c2327"
+                                icon={
+                                    tipoReporteActual === 'Resumen de Casos' ? <FileBarChart className="w-10 h-10 opacity-80" style={{ color: '#9c2327' }} />
+                                        : tipoReporteActual === 'Reporte de Estatus de Casos' ? <Clock className="w-10 h-10 opacity-80" style={{ color: '#9c2327' }} />
+                                            : tipoReporteActual === 'Tipos de Caso' ? <Briefcase className="w-10 h-10 opacity-80" style={{ color: '#9c2327' }} />
+                                                : tipoReporteActual === 'Historial de Casos del Solicitante' ? <History className="w-10 h-10 opacity-80" style={{ color: '#9c2327' }} />
+                                                    : tipoReporteActual === 'Ficha Resumen del Solicitante' ? <User className="w-10 h-10 opacity-80" style={{ color: '#9c2327' }} />
+                                                        : tipoReporteActual === 'Reporte Socioeconómico' ? <Home className="w-10 h-10 opacity-80" style={{ color: '#9c2327' }} />
+                                                            : undefined
+                                }
                             />
                         </div>
                     )}

@@ -17,6 +17,8 @@ interface ReportPreviewProps {
     reportType?: string;
     /** Accent color for styling */
     accentColor?: string;
+    /** Custom icon to display in idle state */
+    icon?: React.ReactNode;
 }
 
 type PreviewState = 'idle' | 'loading' | 'ready' | 'error' | 'empty' | 'no_sections';
@@ -27,6 +29,7 @@ export default function ReportPreview({
     autoGenerate = false,
     reportType = 'Reporte',
     accentColor = '#9c2327',
+    icon,
 }: ReportPreviewProps) {
     const [state, setState] = useState<PreviewState>('idle');
     const [blobUrl, setBlobUrl] = useState<string | null>(null);
@@ -213,7 +216,7 @@ export default function ReportPreview({
                             <div
                                 className="w-20 h-20 rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-gray-100 bg-white"
                             >
-                                <FileText className="w-10 h-10 opacity-80" style={{ color: accentColor }} />
+                                {icon || <FileText className="w-10 h-10 opacity-80" style={{ color: accentColor }} />}
                             </div>
                             <h3 className="text-xl font-semibold text-gray-800 mb-2 font-primary opacity-90">
                                 {reportType}
