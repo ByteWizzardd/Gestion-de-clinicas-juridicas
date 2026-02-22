@@ -151,6 +151,61 @@ export async function toggleSemestreHabilitado(term: string) {
     }
 }
 
+/**
+ * Cierra un semestre: deshabilita del sistema a todos los profesores y estudiantes
+ * asignados a ese term. Los coordinadores NUNCA se ven afectados.
+ */
+export async function cerrarSemestre(term: string) {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            await client.query('ROLLBACK');
+            return { success: false, error: 'No autorizado' };
+        }
+
+        // Obtener cédulas de estudiantes habilitados del semestre
+        const estudiantesRes = await client.query<{ cedula: string }>(`
+            SELECT u.cedula
+            FROM usuarios u
+            JOIN estudiantes e ON e.cedula_estudiante = u.cedula
+            WHERE e.term = $1
+              AND u.habilitado_sistema = true
+        `, [term]);
+
+        // Obtener cédulas de profesores habilitados del semestre
+        const profesoresRes = await client.query<{ cedula: string }>(`
+            SELECT u.cedula
+            FROM usuarios u
+            JOIN profesores p ON p.cedula_profesor = u.cedula
+            WHERE p.term = $1
+              AND u.habilitado_sistema = true
+        `, [term]);
+
+        const cedulas = [
+            ...estudiantesRes.rows.map(r => r.cedula),
+            ...profesoresRes.rows.map(r => r.cedula),
+        ];
+
+        // Deshabilitar cada usuario individualmente (registra auditoría)
+        for (const cedula of cedulas) {
+            await client.query('SELECT toggle_habilitado_usuario($1, $2)', [cedula, authResult.user.cedula]);
+        }
+
+        await client.query('COMMIT');
+        revalidatePath('/dashboard/users');
+        return { success: true, count: cedulas.length };
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error cerrando semestre:', error);
+        return { success: false, error: 'Error al cerrar semestre' };
+    } finally {
+        client.release();
+    }
+}
+
 export async function deleteSemestre(term: string, motivo?: string) {
     const client = await pool.connect();
     try {
