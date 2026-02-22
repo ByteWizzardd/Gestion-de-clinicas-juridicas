@@ -24,7 +24,8 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions, va
     }
   };
 
-  const hasActions = onView || onEdit || onDelete || (customActions && customActions.length > 0);
+  const visibleCustomActions = customActions?.filter(action => action.label !== '' && action.label !== null) || [];
+  const hasActions = onView || onEdit || onDelete || visibleCustomActions.length > 0;
 
   if (!hasActions) return null;
 
@@ -58,7 +59,7 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions, va
               <Eye className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
               Ver
             </button>
-            {(onEdit || (customActions && customActions.length > 0) || onDelete) && (
+            {(onEdit || visibleCustomActions.length > 0 || onDelete) && (
               <div className="border-t border-gray-100 my-1"></div>
             )}
           </>
@@ -78,14 +79,14 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions, va
               <Pencil className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
               Editar
             </button>
-            {((customActions && customActions.filter(action => action.label !== '' && action.label !== null).length > 0) || onDelete) && (
+            {(visibleCustomActions.length > 0 || onDelete) && (
               <div className="border-t border-gray-100 my-1"></div>
             )}
           </>
         )}
 
-        {customActions && customActions.filter(action => action.label !== '' && action.label !== null).map((action, idx) => {
-          const isLast = idx === customActions.length - 1 && !onDelete;
+        {visibleCustomActions.map((action, idx) => {
+          const isLast = idx === visibleCustomActions.length - 1 && !onDelete;
           return (
             <div key={idx}>
               <button
@@ -98,10 +99,10 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions, va
               >
                 {action.label}
               </button>
-              {!isLast && idx < customActions.length - 1 && (
+              {!isLast && idx < visibleCustomActions.length - 1 && (
                 <div className="border-t border-gray-100 my-1"></div>
               )}
-              {idx === customActions.length - 1 && onDelete && (
+              {idx === visibleCustomActions.length - 1 && onDelete && (
                 <div className="border-t border-gray-100 my-1"></div>
               )}
             </div>

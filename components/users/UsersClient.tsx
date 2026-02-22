@@ -27,9 +27,10 @@ interface Usuario extends Record<string, unknown> {
 
 interface UsersClientProps {
   initialUsuarios?: Usuario[];
+  currentUserCedula?: string;
 }
 
-export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) {
+export default function UsersClient({ initialUsuarios = [], currentUserCedula = '' }: UsersClientProps) {
   const [showEditModal, setShowEditModal] = useState(false);
   const [usuarioToEdit, setUsuarioToEdit] = useState<Usuario | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -222,8 +223,9 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
         (estadoFilter === 'Habilitado' && usuario.habilitado_sistema) ||
         (estadoFilter === 'Deshabilitado' && !usuario.habilitado_sistema);
 
-      // Filtrar por semestre: buscar en info_estudiante, info_profesor o info_coordinador
+      // El usuario actual siempre debe ser visible para sí mismo, independientemente del filtro de semestre
       const matchesSemestre = !semestreFilter ||
+        usuario.cedula === currentUserCedula ||
         ((usuario as any).info_estudiante && (usuario as any).info_estudiante.includes(semestreFilter)) ||
         ((usuario as any).info_profesor && (usuario as any).info_profesor.includes(semestreFilter)) ||
         ((usuario as any).info_coordinador && (usuario as any).info_coordinador.includes(semestreFilter));
@@ -393,15 +395,6 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
     }
   };
   const isMotivoValido = deleteMotivo.trim().length > 0;
-
-  const getCurrentUserCedula = (): string => {
-    if (typeof window !== 'undefined') {
-      return window.localStorage.getItem('cedula') || '';
-    }
-    return '';
-  };
-
-  const currentUserCedula = getCurrentUserCedula();
 
   return (
     <>
@@ -620,7 +613,11 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
             onDelete={handleDelete}
             selectable={isSelectionMode}
             selectedIds={selectedCedulas}
-            onSelectionChange={setSelectedCedulas}
+            onSelectionChange={(ids) => {
+              // No permitir seleccionarse a sí mismo en lote
+              const filteredIds = ids.filter(id => id !== currentUserCedula);
+              setSelectedCedulas(filteredIds);
+            }}
             idKey="cedula"
             actions={[
               {
@@ -671,7 +668,7 @@ export default function UsersClient({ initialUsuarios = [] }: UsersClientProps) 
                 },
               },
             ]}
-            hideEdit={(row: { cedula: string }) => row.cedula === currentUserCedula}
+            hideEdit={() => false}
             hideDelete={(row: { cedula: string }) => row.cedula === currentUserCedula}
           />
         </motion.div>

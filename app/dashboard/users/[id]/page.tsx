@@ -13,7 +13,13 @@ import { getUsuarioInfoByCedulaAction } from "@/app/actions/usuarios";
 import { getCurrentUserAction } from "@/app/actions/auth";
 import { getCasosByUsuarioCedulaAction } from "@/app/actions/casos"; // Importar acción para casos
 import UserCasesTab from "@/components/users/tabs/UserCasesTab";
-import ProfileSkeleton from '@/components/ui/skeletons/ProfileSkeleton'; // Importar el componente de la pestaña
+import ProfileSkeleton from '@/components/ui/skeletons/ProfileSkeleton';
+import ActionMenu from "@/components/ui/ActionMenu";
+import EditUserModal from "@/components/users/EditUserModal";
+import ConfirmModal from "@/components/ui/feedback/ConfirmModal";
+import { useToast } from "@/components/ui/feedback/ToastProvider";
+import { toggleHabilitadoUsuarioAction, deleteUsuarioFisicoAction } from "@/app/actions/usuarios";
+import { UserX, UserCheck } from "lucide-react";
 
 interface Usuario {
   cedula: string;
@@ -41,7 +47,14 @@ export default function UserDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
+  const [currentUserCedula, setCurrentUserCedula] = useState<string | null>(null);
   const [casos, setCasos] = useState<any[]>([]); // Estado para los casos
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteMotivo, setDeleteMotivo] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isTogglingHabilitado, setIsTogglingHabilitado] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (id) {
@@ -58,6 +71,7 @@ export default function UserDetailPage() {
 
           if (userResult.success && userResult.data) {
             setCurrentUserRole(userResult.data.rol);
+            setCurrentUserCedula(userResult.data.cedula);
           }
 
           if (!result.success) {
@@ -85,7 +99,55 @@ export default function UserDetailPage() {
       };
       fetchUsuario();
     }
-  }, [id]);
+  }, [id, id]);
+
+  const handleEdit = () => {
+    setShowEditModal(true);
+  };
+
+  const handleSaveEdit = (usuarioEditado: any) => {
+    setUsuario(prev => prev ? { ...prev, ...usuarioEditado } : null);
+    setShowEditModal(false);
+  };
+
+  const handleToggleHabilitado = async () => {
+    if (!usuario || isTogglingHabilitado) return;
+
+    setIsTogglingHabilitado(true);
+    try {
+      const result = await toggleHabilitadoUsuarioAction(usuario.cedula);
+      if (result.success) {
+        setUsuario(prev => prev ? { ...prev, habilitado_sistema: !prev.habilitado_sistema } : null);
+        toast.success(`Usuario ${!usuario.habilitado_sistema ? 'habilitado' : 'deshabilitado'} correctamente`);
+      } else {
+        toast.error(result.error?.message || 'Error al cambiar estado');
+      }
+    } catch (error) {
+      toast.error('Error inesperado al cambiar estado');
+    } finally {
+      setIsTogglingHabilitado(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!usuario || isDeleting) return;
+
+    setIsDeleting(true);
+    try {
+      const result = await deleteUsuarioFisicoAction(usuario.cedula, deleteMotivo);
+      if (result.success) {
+        toast.success('Usuario eliminado permanentemente');
+        router.push(currentUserRole === 'Profesor' ? '/dashboard/students' : '/dashboard/users');
+      } else {
+        toast.error(result.error?.message || 'Error al eliminar usuario');
+      }
+    } catch (error) {
+      toast.error('Error inesperado al eliminar usuario');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
 
   if (loading) {
     return <ProfileSkeleton showTabs tabsCount={3} breadcrumbsCount={3} />;
@@ -174,10 +236,60 @@ export default function UserDetailPage() {
             }}
             onSuccess={setShowSuccess}
           />
-          <div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-2" style={{ fontFamily: 'var(--font-league-spartan)' }}>
-              {usuario.nombre_completo}
-            </h1>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold transition-all duration-200" style={{ fontFamily: 'var(--font-league-spartan)' }}>
+                {usuario.nombre_completo}
+              </h1>
+              <ActionMenu
+                variant="vertical"
+                onEdit={handleEdit}
+                onDelete={usuario.cedula === currentUserCedula ? undefined : () => setShowDeleteConfirm(true)}
+                customActions={[
+                  ...(usuario.cedula !== currentUserCedula ? [{
+                    label: (
+                      <span className="flex items-center gap-2">
+                        {usuario.habilitado_sistema ? (
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="w-4 h-4 text-yellow-600"
+                          >
+                            <rect x="3" y="11" width="18" height="10" rx="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            <circle cx="12" cy="16" r="1" />
+                          </svg>
+                        ) : (
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="w-4 h-4 text-yellow-600"
+                          >
+                            <rect x="3" y="11" width="18" height="10" rx="2" />
+                            <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+                            <circle cx="12" cy="16" r="1" />
+                          </svg>
+                        )}
+                        {usuario.habilitado_sistema ? 'Deshabilitar' : 'Habilitar'}
+                      </span>
+                    ),
+                    onClick: handleToggleHabilitado
+                  }] : [])
+                ]}
+              />
+            </div>
             <p className="text-sm sm:text-base text-gray-500">
               Cédula: {usuario.cedula}
             </p>
@@ -208,6 +320,60 @@ export default function UserDetailPage() {
       >
         <Tabs tabs={tabs} defaultTab="general" />
       </motion.div>
+
+      {/* Modales */}
+      <EditUserModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        usuario={usuario as any}
+        onSave={handleSaveEdit}
+      />
+
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setDeleteMotivo("");
+        }}
+        onConfirm={handleDelete}
+        title="Eliminar usuario permanentemente"
+        message={
+          <div>
+            <p className="mb-4 text-base text-foreground">
+              ¿Estás seguro de que deseas eliminar permanentemente a <strong>{usuario.nombre_completo}</strong>?
+            </p>
+            <p className="mb-6 text-red-600 font-semibold text-base">
+              Esta acción es irreversible y eliminará todos los registros históricos asociados a este usuario.
+            </p>
+            <div className="flex flex-col gap-1">
+              <label className="text-base font-normal text-foreground mb-1">
+                Motivo de la eliminación
+              </label>
+              <textarea
+                className={`
+                  w-full p-4 rounded-lg border bg-[#E5E7EB] border-transparent
+                  focus:outline-none focus:ring-1 focus:ring-primary
+                  text-base placeholder:text-[#717171] resize-none
+                  ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}
+                `}
+                rows={4}
+                maxLength={250}
+                value={deleteMotivo}
+                onChange={e => setDeleteMotivo(e.target.value)}
+                placeholder="Describe el motivo de la eliminación..."
+                disabled={isDeleting}
+              />
+              <div className="text-right text-xs text-gray-500 mt-1">
+                {deleteMotivo.length} / 250 caracteres
+              </div>
+            </div>
+          </div>
+        }
+        confirmLabel={isDeleting ? 'Eliminando...' : 'Eliminar usuario'}
+        cancelLabel="Cancelar"
+        disabled={isDeleting || !deleteMotivo.trim()}
+        confirmVariant="danger"
+      />
     </div>
   );
 }
