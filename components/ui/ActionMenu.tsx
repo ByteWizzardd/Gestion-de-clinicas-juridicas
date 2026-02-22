@@ -48,6 +48,7 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions, va
         {onView && (
           <>
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 handleAction(onView);
@@ -67,6 +68,7 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions, va
           <>
             <button
               key="edit-btn"
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 handleAction(onEdit);
@@ -87,6 +89,7 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions, va
           return (
             <div key={idx}>
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   action.onClick();
@@ -107,6 +110,7 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions, va
 
         {onDelete && (
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               handleAction(onDelete);

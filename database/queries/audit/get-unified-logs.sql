@@ -93,6 +93,33 @@ SELECT * FROM (
                     'nombre_completo_solicitante', s.nombres || ' ' || s.apellidos
                 ) FROM solicitantes s WHERE s.cedula = COALESCE(t.cedula_solicitante_nuevo, t.cedula_solicitante_anterior)),
                 '{}'::jsonb
+            ) ||
+            COALESCE(
+                (SELECT jsonb_build_object(
+                    'nombre_ambito_legal_anterior', al_ant.nombre_ambito_legal,
+                    'nombre_ambito_legal_nuevo', al_nue.nombre_ambito_legal,
+                    'nombre_materia_anterior', m_ant.nombre_materia,
+                    'nombre_materia_nuevo', m_nue.nombre_materia,
+                    'nombre_categoria_anterior', c_ant.nombre_categoria,
+                    'nombre_categoria_nuevo', c_nue.nombre_categoria,
+                    'nombre_subcategoria_anterior', sc_ant.nombre_subcategoria,
+                    'nombre_subcategoria_nuevo', sc_nue.nombre_subcategoria,
+                    'nombre_nucleo_anterior', n_ant.nombre_nucleo,
+                    'nombre_nucleo_nuevo', n_nue.nombre_nucleo
+                ) 
+                FROM auditoria_actualizacion_casos ac
+                LEFT JOIN public.nucleos n_ant ON ac.id_nucleo_anterior = n_ant.id_nucleo
+                LEFT JOIN public.nucleos n_nue ON ac.id_nucleo_nuevo = n_nue.id_nucleo
+                LEFT JOIN public.materias m_ant ON ac.id_materia_anterior = m_ant.id_materia
+                LEFT JOIN public.materias m_nue ON ac.id_materia_nuevo = m_nue.id_materia
+                LEFT JOIN public.categorias c_ant ON ac.id_materia_anterior = c_ant.id_materia AND ac.num_categoria_anterior = c_ant.num_categoria
+                LEFT JOIN public.categorias c_nue ON ac.id_materia_nuevo = c_nue.id_materia AND ac.num_categoria_nuevo = c_nue.num_categoria
+                LEFT JOIN public.subcategorias sc_ant ON ac.id_materia_anterior = sc_ant.id_materia AND ac.num_categoria_anterior = sc_ant.num_categoria AND ac.num_subcategoria_anterior = sc_ant.num_subcategoria
+                LEFT JOIN public.subcategorias sc_nue ON ac.id_materia_nuevo = sc_nue.id_materia AND ac.num_categoria_nuevo = sc_nue.num_categoria AND ac.num_subcategoria_nuevo = sc_nue.num_subcategoria
+                LEFT JOIN public.ambitos_legales al_ant ON ac.id_materia_anterior = al_ant.id_materia AND ac.num_categoria_anterior = al_ant.num_categoria AND ac.num_subcategoria_anterior = al_ant.num_subcategoria AND ac.num_ambito_legal_anterior = al_ant.num_ambito_legal
+                LEFT JOIN public.ambitos_legales al_nue ON ac.id_materia_nuevo = al_nue.id_materia AND ac.num_categoria_nuevo = al_nue.num_categoria AND ac.num_subcategoria_nuevo = al_nue.num_subcategoria AND ac.num_ambito_legal_nuevo = al_nue.num_ambito_legal
+                WHERE ac.id = t.id),
+                '{}'::jsonb
             )
         )::text as metadata
     FROM auditoria_actualizacion_casos t
