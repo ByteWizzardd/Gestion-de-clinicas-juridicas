@@ -394,14 +394,14 @@ const mapInitialDataToFormData = (data: any): FormData => {
     concubinato: data.concubinato ? 'si' : 'no',
     nacionalidad: data.nacionalidad || 'V',
 
-    idEstado: (data.id_estado || '').toString(),
-    numMunicipio: (data.num_municipio || '').toString(),
-    numParroquia: (data.num_parroquia || '').toString(),
+    idEstado: (data.id_estado ?? '').toString(),
+    numMunicipio: (data.num_municipio ?? '').toString(),
+    numParroquia: (data.num_parroquia ?? '').toString(),
     direccionHabitacion: data.direccion_habitacion || '',
 
     tipoVivienda: data.tipo_vivienda || '',
-    cantHabitaciones: (data.cant_habitaciones || '').toString(),
-    cantBanos: (data.cant_banos || '').toString(),
+    cantHabitaciones: (data.cant_habitaciones ?? '').toString(),
+    cantBanos: (data.cant_banos ?? '').toString(),
     materialPiso: data.material_piso || '',
     materialParedes: data.material_paredes || '',
     materialTecho: data.material_techo || '',
@@ -410,10 +410,10 @@ const mapInitialDataToFormData = (data: any): FormData => {
     aseo: data.aseo || '',
     artefactosDomesticos: Array.isArray(data.artefactos_domesticos) ? data.artefactos_domesticos : [],
 
-    cantPersonas: (data.cant_personas || '').toString(),
-    cantTrabajadores: (data.cant_trabajadores || '').toString(),
-    cantNinos: (data.cant_ninos || '').toString(),
-    cantNinosEstudiando: (data.cant_ninos_estudiando || '').toString(),
+    cantPersonas: (data.cant_personas ?? '').toString(),
+    cantTrabajadores: (data.cant_trabajadores ?? '').toString(),
+    cantNinos: (data.cant_ninos ?? '').toString(),
+    cantNinosEstudiando: (data.cant_ninos_estudiando ?? '').toString(),
     jefeHogar: data.jefe_hogar ? 'si' : 'no',
 
     // Jefe logic
@@ -421,15 +421,15 @@ const mapInitialDataToFormData = (data: any): FormData => {
     numeroEducativo: '',
     nivelEducativo: data.nivel_educativo_jefe || '',
     tipoTiempoEstudioJefe: data.tipo_tiempo_estudio_jefe || '',
-    tiempoEstudioJefe: (data.tiempo_estudio_jefe || '').toString(),
-    ingresosMensuales: (data.ingresos_mensuales || '').toString(),
+    tiempoEstudioJefe: (data.tiempo_estudio_jefe ?? '').toString(),
+    ingresosMensuales: (data.ingresos_mensuales ?? '').toString(),
 
     // Solicitante Education
     tipoEducativoSolicitante: '',
     numeroEducativoSolicitante: '',
     nivelEducativoSolicitante: data.nivel_educativo || '',
     tipoTiempoEstudioSolicitante: data.tipo_tiempo_estudio || '',
-    tiempoEstudioSolicitante: (data.tiempo_estudio || '').toString(),
+    tiempoEstudioSolicitante: (data.tiempo_estudio ?? '').toString(),
 
     trabaja,
     condicionTrabajo,
@@ -1214,25 +1214,29 @@ export default function ApplicantFormModal({
   // Guardar datos en localStorage cada vez que formData cambie, pero SOLO si estamos en modo creación
   useEffect(() => {
     // Solo guardar si el modal está abierto, no estamos en modo edición, y hay datos
-    if (isOpen && formData && !isEditMode) {
+    if (isOpen && formData && !initialData) {
       saveFormDataToStorage(formData);
     }
-  }, [formData, isOpen, isEditMode]);
+  }, [formData, isOpen, initialData]);
 
   // Guardar el paso actual en localStorage cada vez que cambie, pero SOLO si estamos en modo creación
   useEffect(() => {
-    if (isOpen && !isEditMode) {
+    if (isOpen && !initialData) {
       saveCurrentStepToStorage(currentStep);
     }
-  }, [currentStep, isOpen, isEditMode]);
+  }, [currentStep, isOpen, initialData]);
 
   // Limpiar el formulario solo cuando el modal se cierra después de un registro exitoso
   useEffect(() => {
     if (!isOpen && shouldClearOnClose) {
       // Limpiar el formulario solo cuando el modal se cierra después de un registro exitoso
-      const initialData = getInitialFormData();
-      setFormData(initialData);
-      clearFormDataFromStorage(); // Limpiar localStorage
+      const emptyData = getInitialFormData();
+      setFormData(emptyData);
+
+      if (!initialData) {
+        clearFormDataFromStorage(); // Limpiar localStorage solo si fue una creación exitosa
+      }
+
       setErrors({});
       setCurrentStep(0);
       setLockedFields(new Set());
@@ -1440,9 +1444,11 @@ export default function ApplicantFormModal({
 
   const handleClearForm = () => {
     // Limpiar todo el formulario y volver al principio
-    const initialData = getInitialFormData();
-    setFormData(initialData);
-    clearFormDataFromStorage(); // Limpiar localStorage
+    const emptyData = getInitialFormData();
+    setFormData(emptyData);
+    if (!initialData) {
+      clearFormDataFromStorage(); // Limpiar localStorage solo en modo creación
+    }
     setErrors({});
     setCurrentStep(0);
     setLockedFields(new Set());

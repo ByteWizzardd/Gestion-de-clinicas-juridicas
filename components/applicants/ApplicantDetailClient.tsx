@@ -177,21 +177,14 @@ export default function ApplicantDetailClient() {
     }
   };
 
-  const handleSubmitEdit = async (data: any) => {
-    setIsSubmitting(true);
-    try {
-      const result = await updateSolicitanteAction(cedula, data);
-      if (result.success) {
-        toast.success('Solicitante actualizado exitosamente');
-        setIsEditModalOpen(false);
-        fetchSolicitante();
-      } else {
-        toast.error('Error al actualizar el solicitante');
-      }
-    } catch (err) {
-      toast.error('Error al actualizar el solicitante');
-    } finally {
-      setIsSubmitting(false);
+  const handleSubmitEdit = async (result: any) => {
+    // El modal ya realizó la acción, aquí solo manejamos el resultado
+    if (result.success) {
+      toast.success('Solicitante actualizado exitosamente');
+      setIsEditModalOpen(false);
+      fetchSolicitante();
+    } else {
+      toast.error(result.error?.message || 'Error al actualizar el solicitante');
     }
   };
 
