@@ -422,7 +422,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
           />
         </div>
 
-        <div className="w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar">
+        <div className="w-full sm:w-auto overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar">
           <div className="flex items-center gap-2 min-w-max sm:min-w-0 sm:flex-wrap sm:justify-end">
             {(() => {
               const isClosed = caso.estatus === 'Entregado' || caso.estatus === 'Archivado';
@@ -431,13 +431,14 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
               return (
                 <>
                   {userRol && userRol !== 'Estudiante' && (
-                    <div className="relative group">
+                    <div className={`relative group ${isClosed ? 'cursor-not-allowed' : ''}`}>
                       <button
                         onClick={() => {
                           if (isClosed) return;
                           setShowAssignTeamModal(true);
                         }}
-                        className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-primary-light'}`}
+                        disabled={isClosed}
+                        className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-primary-light'}`}
                       >
                         {caso.equipo && caso.equipo.length > 0 ? (
                           <Pencil className="w-[18px] h-[18px] text-[#414040]" />
@@ -456,13 +457,14 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
                     </div>
                   )}
 
-                  <div className="relative group">
+                  <div className={`relative group ${isClosed ? 'cursor-not-allowed' : ''}`}>
                     <button
                       onClick={() => {
                         if (isClosed) return;
                         setShowAddDocumentModal(true);
                       }}
-                      className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-primary-light'}`}
+                      disabled={isClosed}
+                      className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-primary-light'}`}
                     >
                       <Plus className="w-[18px] h-[18px] text-[#414040]" />
                       <span className="text-base text-center">Agregar Documento</span>
@@ -474,13 +476,14 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
                     )}
                   </div>
 
-                  <div className="relative group">
+                  <div className={`relative group ${isClosed ? 'cursor-not-allowed' : ''}`}>
                     <button
                       onClick={() => {
                         if (isClosed) return;
                         setShowAddActionModal(true);
                       }}
-                      className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-primary-light'}`}
+                      disabled={isClosed}
+                      className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-primary-light'}`}
                     >
                       <Plus className="w-[18px] h-[18px] text-[#414040]" />
                       <span className="text-base text-center">Registrar Acción</span>
@@ -492,13 +495,14 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
                     )}
                   </div>
 
-                  <div className="relative group">
+                  <div className={`relative group ${isClosed ? 'cursor-not-allowed' : ''}`}>
                     <button
                       onClick={() => {
                         if (isClosed) return;
                         setShowAddBeneficiaryModal(true);
                       }}
-                      className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-primary-light'}`}
+                      disabled={isClosed}
+                      className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-primary-light'}`}
                     >
                       <Plus className="w-[18px] h-[18px] text-[#414040]" />
                       <span className="text-base text-center">Agregar Beneficiario</span>
