@@ -249,9 +249,9 @@ export default function CaseFormModal({
           const formatDate = (dateVal: string | Date | undefined | null): string => {
             if (!dateVal) return getCurrentDate();
             if (dateVal instanceof Date) {
-              const year = dateVal.getFullYear();
-              const month = String(dateVal.getMonth() + 1).padStart(2, '0');
-              const day = String(dateVal.getDate()).padStart(2, '0');
+              const year = dateVal.getUTCFullYear();
+              const month = String(dateVal.getUTCMonth() + 1).padStart(2, '0');
+              const day = String(dateVal.getUTCDate()).padStart(2, '0');
               return `${year}-${month}-${day}`;
             }
             if (typeof dateVal === 'string') {
