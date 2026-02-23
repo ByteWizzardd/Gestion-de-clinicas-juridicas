@@ -245,18 +245,26 @@ export default function CaseFormModal({
           } else if (initialData.id_materia) {
             await loadAmbitosLegales(initialData.id_materia, 0, 0);
           }
-
           const formatDate = (dateVal: string | Date | undefined | null): string => {
             if (!dateVal) return getCurrentDate();
-            if (dateVal instanceof Date) {
-              const year = dateVal.getFullYear();
-              const month = String(dateVal.getMonth() + 1).padStart(2, '0');
-              const day = String(dateVal.getDate()).padStart(2, '0');
-              return `${year}-${month}-${day}`;
+
+            try {
+              // Si es un objeto Date
+              if (dateVal instanceof Date) {
+                // Usa toISOString() para no lidiar con zonas horarias locales que corren los días
+                return dateVal.toISOString().split('T')[0];
+              }
+              // Si es un string con formato ISO Date (de la base de datos)
+              if (typeof dateVal === 'string') {
+                // Si solo viene "YYYY-MM-DD", regresarlo tal cual
+                if (dateVal.length === 10) return dateVal;
+                // Si viene como datetime, convertirlo a Date temporal para extraer el formato seguro
+                return new Date(dateVal).toISOString().split('T')[0];
+              }
+            } catch (err) {
+              console.error("Error formateando fecha:", err);
             }
-            if (typeof dateVal === 'string') {
-              return dateVal.split('T')[0];
-            }
+
             return getCurrentDate();
           };
 
