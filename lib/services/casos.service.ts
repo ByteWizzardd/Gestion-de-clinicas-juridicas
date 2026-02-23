@@ -275,7 +275,7 @@ export const casosService = {
                 // Sin embargo, el código original hacía la query inline aquí.
                 // Para mantener la lógica exacta (y aprovechar que ya edité casosQueries.update), lo invoco.
 
-                return await casosQueries.update(idCaso, {
+                const result = await casosQueries.update(idCaso, {
                     tramite: updateData.tramite || (existingCaso as any).tramite,
                     observaciones: updateData.observaciones !== undefined ? updateData.observaciones : (existingCaso as any).observaciones,
                     fecha_fin_caso: updateData.fecha_fin_caso !== undefined ? updateData.fecha_fin_caso : (existingCaso as any).fecha_fin_caso,
@@ -287,6 +287,7 @@ export const casosService = {
                     fecha_solicitud: updateData.fecha_solicitud ? (typeof updateData.fecha_solicitud === 'string' ? updateData.fecha_solicitud : updateData.fecha_solicitud) : (existingCaso as any).fecha_solicitud,
                     cedula: updateData.cedula || (existingCaso as any).cedula,
                 }, client);
+                return result;
             };
 
             // Si viene un cliente externo, usarlo directamente

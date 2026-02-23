@@ -559,6 +559,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
           num_subcategoria: caseData.num_subcategoria ?? 0,
           num_ambito_legal: caseData.num_ambito_legal,
           fecha_solicitud: caseData.fecha_solicitud,
+          cedula: caseData.cedula,
         };
 
         if (typeof caseData.id_caso !== 'number') {

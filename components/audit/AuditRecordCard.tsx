@@ -4140,16 +4140,16 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                         Solicitante:{' '}
                         <span className="line-through text-red-500">
                           {r.cedula_solicitante_anterior ? (
-                            <Link href={`/dashboard/applicants/${r.cedula_solicitante_anterior}`} className="text-primary hover:underline font-medium transition-colors">
-                              {r.cedula_solicitante_anterior}
+                            <Link href={`/dashboard/applicants/${r.cedula_solicitante_anterior}`} className="text-red-500 hover:underline" onClick={(e) => e.stopPropagation()}>
+                              {(r as any).nombre_solicitante_anterior || r.cedula_solicitante_anterior}
                             </Link>
                           ) : 'N/A'}
                         </span>
                         {' → '}
                         <span className="text-green-600">
                           {r.cedula_solicitante_nuevo ? (
-                            <Link href={`/dashboard/applicants/${r.cedula_solicitante_nuevo}`} className="text-primary hover:underline font-medium transition-colors">
-                              {r.nombre_completo_solicitante ? `${r.nombre_completo_solicitante} (${r.cedula_solicitante_nuevo})` : r.cedula_solicitante_nuevo}
+                            <Link href={`/dashboard/applicants/${r.cedula_solicitante_nuevo}`} className="text-green-600 hover:underline" onClick={(e) => e.stopPropagation()}>
+                              {(r as any).nombre_solicitante_nuevo || r.cedula_solicitante_nuevo}
                             </Link>
                           ) : 'N/A'}
                         </span>

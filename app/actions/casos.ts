@@ -1784,7 +1784,7 @@ export async function removeCaseFromSemesterAction(idCaso: number, term: string)
     }
 
     await withSecureTransaction(authResult.user.rol, async () => {
-       await casosService.removeOcurrencia(idCaso, term);
+      await casosService.removeOcurrencia(idCaso, term);
     });
 
     revalidatePath(`/dashboard/cases/${idCaso}`);

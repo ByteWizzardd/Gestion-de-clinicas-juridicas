@@ -88,6 +88,8 @@ SELECT
     n_ant.nombre_nucleo AS nombre_nucleo_anterior,
     n_nue.nombre_nucleo AS nombre_nucleo_nuevo,
     ac.cedula_solicitante_anterior, ac.cedula_solicitante_nuevo,
+    CONCAT(s_ant.nombres, ' ', s_ant.apellidos) AS nombre_solicitante_anterior,
+    CONCAT(s_nue.nombres, ' ', s_nue.apellidos) AS nombre_solicitante_nuevo,
     ac.id_materia_anterior, ac.id_materia_nuevo,
     m_ant.nombre_materia AS nombre_materia_anterior,
     m_nue.nombre_materia AS nombre_materia_nuevo,
@@ -123,5 +125,8 @@ LEFT JOIN public.materias m_nue ON ac.id_materia_nuevo = m_nue.id_materia
 LEFT JOIN public.categorias c_nue ON ac.id_materia_nuevo = c_nue.id_materia AND ac.num_categoria_nuevo = c_nue.num_categoria
 LEFT JOIN public.subcategorias sc_nue ON ac.id_materia_nuevo = sc_nue.id_materia AND ac.num_categoria_nuevo = sc_nue.num_categoria AND ac.num_subcategoria_nuevo = sc_nue.num_subcategoria
 LEFT JOIN public.ambitos_legales al_nue ON ac.id_materia_nuevo = al_nue.id_materia AND ac.num_categoria_nuevo = al_nue.num_categoria AND ac.num_subcategoria_nuevo = al_nue.num_subcategoria AND ac.num_ambito_legal_nuevo = al_nue.num_ambito_legal
+-- Joins para nombres de solicitantes
+LEFT JOIN public.solicitantes s_ant ON ac.cedula_solicitante_anterior = s_ant.cedula
+LEFT JOIN public.solicitantes s_nue ON ac.cedula_solicitante_nuevo = s_nue.cedula
 ORDER BY ac.fecha_actualizacion DESC;
 

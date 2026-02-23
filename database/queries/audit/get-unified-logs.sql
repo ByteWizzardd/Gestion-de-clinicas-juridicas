@@ -88,10 +88,17 @@ SELECT * FROM (
             ) ||
             COALESCE(
                 (SELECT jsonb_build_object(
-                    'nombres_solicitante', s.nombres, 
-                    'apellidos_solicitante', s.apellidos, 
-                    'nombre_completo_solicitante', s.nombres || ' ' || s.apellidos
-                ) FROM solicitantes s WHERE s.cedula = COALESCE(t.cedula_solicitante_nuevo, t.cedula_solicitante_anterior)),
+                    'nombre_solicitante_anterior', s_ant.nombres || ' ' || s_ant.apellidos
+                ) FROM solicitantes s_ant WHERE s_ant.cedula = t.cedula_solicitante_anterior),
+                '{}'::jsonb
+            ) ||
+            COALESCE(
+                (SELECT jsonb_build_object(
+                    'nombre_solicitante_nuevo', s_nue.nombres || ' ' || s_nue.apellidos,
+                    'nombres_solicitante', s_nue.nombres, 
+                    'apellidos_solicitante', s_nue.apellidos, 
+                    'nombre_completo_solicitante', s_nue.nombres || ' ' || s_nue.apellidos
+                ) FROM solicitantes s_nue WHERE s_nue.cedula = COALESCE(t.cedula_solicitante_nuevo, t.cedula_solicitante_anterior)),
                 '{}'::jsonb
             ) ||
             COALESCE(
