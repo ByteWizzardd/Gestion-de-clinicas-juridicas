@@ -286,6 +286,14 @@ SELECT * FROM (
                     'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos
                 ) FROM usuarios u WHERE u.cedula = t.id_usuario_creo),
                 '{}'::jsonb
+            ) ||
+            jsonb_build_object(
+                'nivel_educativo', (SELECT ne.descripcion FROM niveles_educativos ne WHERE ne.id_nivel_educativo = t.id_nivel_educativo),
+                'condicion_trabajo', (SELECT ct.nombre_trabajo FROM condicion_trabajo ct WHERE ct.id_trabajo = t.id_trabajo),
+                'condicion_actividad', (SELECT ca.nombre_actividad FROM condicion_actividad ca WHERE ca.id_actividad = t.id_actividad),
+                'nombre_estado', (SELECT e.nombre_estado FROM estados e WHERE e.id_estado = t.id_estado),
+                'nombre_municipio', (SELECT m.nombre_municipio FROM municipios m WHERE m.id_estado = t.id_estado AND m.num_municipio = t.num_municipio),
+                'nombre_parroquia', (SELECT p.nombre_parroquia FROM parroquias p WHERE p.id_estado = t.id_estado AND p.num_municipio = t.num_municipio AND p.num_parroquia = t.num_parroquia)
             )
         )::text as metadata
     FROM auditoria_insercion_solicitantes t
