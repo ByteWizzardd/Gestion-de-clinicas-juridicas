@@ -35,24 +35,41 @@ export function formatDate(date: Date | string | null | undefined): string {
 }
 
 /**
- * Formats a date to include time (e.g., "DD/MM/YYYY hh:mm a").
+ * Formats a date to include time (e.g., "DD/MM/YYYY, hh:mm a. m.").
+ * Parses the date string manually to avoid timezone conversion issues.
+ * Server timestamps are already in America/Caracas timezone.
  * @param date The date to format.
- * @param options Optional Intl.DateTimeFormatOptions.
+ * @param _options Optional (kept for backward compatibility, ignored).
  * @returns The formatted date and time string.
  */
-export function formatDateTime(date: Date | string | null | undefined, options?: Intl.DateTimeFormatOptions): string {
+export function formatDateTime(date: Date | string | null | undefined, _options?: Intl.DateTimeFormatOptions): string {
     if (!date) return '';
 
-    const d = new Date(date);
-    if (isNaN(d.getTime())) return '';
+    let dateStr = typeof date === 'string' ? date : date.toISOString();
+    // Normalizar: reemplazar espacio por T
+    dateStr = dateStr.replace(' ', 'T');
 
-    return new Intl.DateTimeFormat('es-VE', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-        ...options
-    }).format(d);
+    // Intentar parsear con hora
+    const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+    if (match) {
+        const day = match[3];
+        const month = match[2];
+        const year = match[1];
+        let hour = parseInt(match[4], 10);
+        const minute = match[5];
+
+        const ampm = hour >= 12 ? 'p.\u00a0m.' : 'a.\u00a0m.';
+        let displayHour = hour % 12;
+        displayHour = displayHour || 12;
+
+        return `${day}/${month}/${year}, ${displayHour.toString().padStart(2, '0')}:${minute} ${ampm}`;
+    }
+
+    // Solo fecha sin hora
+    const dateOnlyMatch = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (dateOnlyMatch) {
+        return `${dateOnlyMatch[3]}/${dateOnlyMatch[2]}/${dateOnlyMatch[1]}`;
+    }
+
+    return '';
 }

@@ -320,6 +320,20 @@ SELECT * FROM (
                     'apellidos_solicitante', COALESCE(t.apellidos_nuevo, t.apellidos_anterior),
                     'nombre_completo_solicitante', COALESCE(t.nombres_nuevo, t.nombres_anterior) || ' ' || COALESCE(t.apellidos_nuevo, t.apellidos_anterior)
                 )
+            ) ||
+            jsonb_build_object(
+                'condicion_trabajo_anterior', (SELECT ct.nombre_trabajo FROM condicion_trabajo ct WHERE ct.id_trabajo = t.id_trabajo_anterior),
+                'condicion_trabajo_nuevo', (SELECT ct.nombre_trabajo FROM condicion_trabajo ct WHERE ct.id_trabajo = t.id_trabajo_nuevo),
+                'condicion_actividad_anterior', (SELECT ca.nombre_actividad FROM condicion_actividad ca WHERE ca.id_actividad = t.id_actividad_anterior),
+                'condicion_actividad_nuevo', (SELECT ca.nombre_actividad FROM condicion_actividad ca WHERE ca.id_actividad = t.id_actividad_nuevo),
+                'nivel_educativo_anterior', (SELECT ne.descripcion FROM niveles_educativos ne WHERE ne.id_nivel_educativo = t.id_nivel_educativo_anterior),
+                'nivel_educativo_nuevo', (SELECT ne.descripcion FROM niveles_educativos ne WHERE ne.id_nivel_educativo = t.id_nivel_educativo_nuevo),
+                'estado_anterior', (SELECT e.nombre_estado FROM estados e WHERE e.id_estado = t.id_estado_anterior),
+                'estado_nuevo', (SELECT e.nombre_estado FROM estados e WHERE e.id_estado = t.id_estado_nuevo),
+                'municipio_anterior', (SELECT m.nombre_municipio FROM municipios m WHERE m.id_estado = t.id_estado_anterior AND m.num_municipio = t.num_municipio_anterior),
+                'municipio_nuevo', (SELECT m.nombre_municipio FROM municipios m WHERE m.id_estado = t.id_estado_nuevo AND m.num_municipio = t.num_municipio_nuevo),
+                'parroquia_anterior', (SELECT p.nombre_parroquia FROM parroquias p WHERE p.id_estado = t.id_estado_anterior AND p.num_municipio = t.num_municipio_anterior AND p.num_parroquia = t.num_parroquia_anterior),
+                'parroquia_nuevo', (SELECT p.nombre_parroquia FROM parroquias p WHERE p.id_estado = t.id_estado_nuevo AND p.num_municipio = t.num_municipio_nuevo AND p.num_parroquia = t.num_parroquia_nuevo)
             )
         )::text as metadata
     FROM auditoria_actualizacion_solicitantes t

@@ -4758,7 +4758,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-700 mb-1">Fecha</p>
-                  <p className="text-sm text-gray-600">{formatDateTime(r.fecha_generacion)}</p>
+                  <p className="text-sm text-gray-600">{formatDate(r.fecha_generacion)}</p>
                 </div>
               </div>
 
