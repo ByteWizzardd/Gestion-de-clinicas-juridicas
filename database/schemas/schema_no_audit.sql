@@ -371,7 +371,7 @@ CREATE TABLE cambio_estatus (
     id_caso INTEGER NOT NULL,
     motivo TEXT,
     nuevo_estatus VARCHAR(50) NOT NULL CHECK (nuevo_estatus IN ('En proceso', 'Archivado', 'Entregado', 'Asesoría')),
-    fecha DATE NOT NULL DEFAULT CURRENT_DATE CHECK (fecha <= CURRENT_DATE),
+    fecha TIMESTAMP NOT NULL DEFAULT (NOW() AT TIME ZONE 'America/Caracas'),
     id_usuario_cambia VARCHAR(20) NOT NULL,
     
     PRIMARY KEY (num_cambio, id_caso),

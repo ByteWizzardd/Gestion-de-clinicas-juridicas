@@ -24,6 +24,7 @@ SELECT
     GREATEST(
         COALESCE((SELECT MAX(fecha_creacion) FROM auditoria_insercion_casos), '1970-01-01'),
         COALESCE((SELECT MAX(fecha_actualizacion) FROM auditoria_actualizacion_casos), '1970-01-01'),
+        COALESCE((SELECT MAX(fecha) FROM cambio_estatus WHERE num_cambio > 1), '1970-01-01'),
         COALESCE((SELECT MAX(fecha) FROM auditoria_eliminacion_casos), '1970-01-01')
     ) as casos,
     -- Solicitantes

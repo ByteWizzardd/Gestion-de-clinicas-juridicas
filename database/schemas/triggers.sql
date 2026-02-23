@@ -2637,15 +2637,13 @@ BEGIN
         id_caso,
         nuevo_estatus,
         id_usuario_cambia,
-        motivo,
-        fecha
+        motivo
     ) VALUES (
         num_cambio_actual,
         NEW.id_caso,
         'Asesoría',
         cedula_usuario,
-        'Registro del caso',
-        COALESCE(NEW.fecha_solicitud, CURRENT_DATE)
+        'Registro del caso'
     );
     
     RETURN NEW;

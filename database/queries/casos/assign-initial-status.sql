@@ -25,16 +25,14 @@ nuevos_cambios AS (
         id_caso,
         nuevo_estatus,
         id_usuario_cambia,
-        motivo,
-        fecha
+        motivo
     )
     SELECT 
         1 AS num_cambio,
         cse.id_caso,
         'Asesoría' AS nuevo_estatus,
         uf.cedula_usuario AS id_usuario_cambia,
-        'Registro del caso (asignado retroactivamente)' AS motivo,
-        COALESCE(cse.fecha_solicitud, CURRENT_DATE) AS fecha
+        'Registro del caso (asignado retroactivamente)' AS motivo
     FROM casos_sin_estatus cse
     CROSS JOIN usuario_fallback uf
     RETURNING id_caso, nuevo_estatus, id_usuario_cambia

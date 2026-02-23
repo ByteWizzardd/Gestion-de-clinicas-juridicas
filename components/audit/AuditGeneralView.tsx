@@ -211,6 +211,7 @@ export default function AuditGeneralView() {
 
         if (record) {
             record.fecha = log.fecha;
+            record.fecha_actualizacion = log.fecha;
 
             // Para sesiones, inyectar nombre completo directamente
             if (e === 'Sesión') {

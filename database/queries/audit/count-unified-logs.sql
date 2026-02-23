@@ -52,6 +52,19 @@ SELECT COUNT(*) FROM (
 
     UNION ALL
 
+    -- Casos (Cambio de estatus)
+    SELECT
+        'Caso' as entidad,
+        'Actualización' as accion,
+        t.fecha as fecha,
+        t.id_usuario_cambia as usuario_id,
+        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_cambia), t.id_usuario_cambia) as usuario_nombre,
+        'Cambio de estatus del caso ' || t.id_caso as detalles
+    FROM public.cambio_estatus t
+    WHERE t.num_cambio > 1
+
+    UNION ALL
+
     -- Casos (Eliminación)
     SELECT
         'Caso' as entidad,

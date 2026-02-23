@@ -11,16 +11,14 @@ INSERT INTO cambio_estatus (
     id_caso,
     nuevo_estatus,
     id_usuario_cambia,
-    motivo,
-    fecha
+    motivo
 )
 SELECT 
     COALESCE(MAX(num_cambio), 0) + 1,
     $1,
     'Archivado',
     $2,
-    $3,
-    CURRENT_DATE
+    $3
 FROM cambio_estatus
 WHERE id_caso = $1
 RETURNING *;

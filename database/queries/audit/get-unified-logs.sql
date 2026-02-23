@@ -126,6 +126,34 @@ SELECT * FROM (
 
     UNION ALL
 
+    -- Casos (Cambio de estatus)
+    SELECT
+        'Caso' as entidad,
+        'Actualización' as accion,
+        t.fecha as fecha,
+        t.id_usuario_cambia as usuario_id,
+        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_cambia), t.id_usuario_cambia) as usuario_nombre,
+        'Cambio de estatus del caso ' || t.id_caso as detalles,
+        (row_to_json(t.*)::jsonb || 
+            jsonb_build_object(
+                'tipo_cambio', 'cambio_estatus',
+                'estatus_nuevo', t.nuevo_estatus,
+                'fecha_actualizacion', t.fecha,
+                'estatus_anterior', (
+                    SELECT prev.nuevo_estatus 
+                    FROM public.cambio_estatus prev 
+                    WHERE prev.id_caso = t.id_caso 
+                      AND prev.num_cambio < t.num_cambio
+                    ORDER BY prev.num_cambio DESC
+                    LIMIT 1
+                )
+            )
+        )::text as metadata
+    FROM public.cambio_estatus t
+    WHERE t.num_cambio > 1
+
+    UNION ALL
+
     -- Casos (Eliminación)
     SELECT
         'Caso' as entidad,

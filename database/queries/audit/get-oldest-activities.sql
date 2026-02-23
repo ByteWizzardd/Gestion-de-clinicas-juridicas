@@ -24,6 +24,7 @@ SELECT
     LEAST(
         COALESCE((SELECT MIN(fecha_creacion) FROM auditoria_insercion_casos), '9999-12-31'),
         COALESCE((SELECT MIN(fecha_actualizacion) FROM auditoria_actualizacion_casos), '9999-12-31'),
+        COALESCE((SELECT MIN(fecha) FROM cambio_estatus WHERE num_cambio > 1), '9999-12-31'),
         COALESCE((SELECT MIN(fecha) FROM auditoria_eliminacion_casos), '9999-12-31')
     ) as casos,
     -- Solicitantes
