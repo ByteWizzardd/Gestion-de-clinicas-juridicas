@@ -48,7 +48,7 @@ export const UpdateCasoSchema = z.object({
     TRAMITES.ASISTENCIA_JUDICIAL,
   ] as [string, ...string[]]).optional(),
   observaciones: z.string().optional().nullable(),
-  // Nota: La cédula del solicitante generalmente no se actualiza, pero si fuera necesario se agregaría aquí
+  cedula: z.string().min(1, 'La cédula del solicitante no puede estar vacía').optional(),
   // Nota: El estatus se maneja por separado
   id_nucleo: z.number().int().positive().optional(),
   id_materia: z.number().int().positive().optional(),

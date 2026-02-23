@@ -11,6 +11,7 @@
 --   $8 = num_subcategoria (opcional)
 --   $9 = num_ambito_legal (opcional)
 --   $10 = fecha_solicitud (opcional)
+--   $11 = cedula (opcional)
 UPDATE casos
 SET 
     tramite = COALESCE($2, tramite),
@@ -21,7 +22,8 @@ SET
     num_categoria = COALESCE($7, num_categoria),
     num_subcategoria = COALESCE($8, num_subcategoria),
     num_ambito_legal = COALESCE($9, num_ambito_legal),
-    fecha_solicitud = COALESCE($10, fecha_solicitud)
+    fecha_solicitud = COALESCE($10, fecha_solicitud),
+    cedula = COALESCE($11, cedula)
 WHERE id_caso = $1
 RETURNING *;
 

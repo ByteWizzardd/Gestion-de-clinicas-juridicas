@@ -196,6 +196,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
         num_subcategoria: data.num_subcategoria ?? 0,
         num_ambito_legal: data.num_ambito_legal,
         fecha_solicitud: data.fecha_solicitud,
+        cedula: data.cedula,
       };
 
       const result = await updateCasoAction(parseInt(id), updateData);

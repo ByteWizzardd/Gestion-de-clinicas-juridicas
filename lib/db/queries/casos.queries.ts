@@ -187,6 +187,7 @@ export const casosQueries = {
       num_subcategoria?: number;
       num_ambito_legal?: number;
       fecha_solicitud?: string | Date;
+      cedula?: string;
     },
     client?: import('pg').PoolClient
   ): Promise<unknown> => {
@@ -203,6 +204,7 @@ export const casosQueries = {
       data.num_subcategoria || null,
       data.num_ambito_legal || null,
       data.fecha_solicitud ? (typeof data.fecha_solicitud === 'string' ? data.fecha_solicitud : data.fecha_solicitud.toISOString().split('T')[0]) : null,
+      data.cedula || null,
     ]);
     return result.rows[0];
   },

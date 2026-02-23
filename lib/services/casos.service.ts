@@ -234,6 +234,14 @@ export const casosService = {
                 }
             }
 
+            // Validar si la cédula cambia y existe
+            if (validatedData.cedula && validatedData.cedula !== (existingCaso as any).cedula) {
+                const solicitanteExists = await solicitantesQueries.getSolicitanteById(validatedData.cedula);
+                if (!solicitanteExists) {
+                    throw new NotFoundError(`Solicitante con cédula ${validatedData.cedula} no encontrado`);
+                }
+            }
+
             // Preparar datos para actualización
             const updateData = {
                 tramite: validatedData.tramite,
@@ -245,6 +253,7 @@ export const casosService = {
                 num_subcategoria: validatedData.num_subcategoria,
                 num_ambito_legal: validatedData.num_ambito_legal,
                 fecha_solicitud: validatedData.fecha_solicitud,
+                cedula: validatedData.cedula,
             };
 
             // Lógica de actualización (abstraída para reutilizar)
@@ -276,6 +285,7 @@ export const casosService = {
                     num_subcategoria: updateData.num_subcategoria ?? (existingCaso as any).num_subcategoria,
                     num_ambito_legal: updateData.num_ambito_legal || (existingCaso as any).num_ambito_legal,
                     fecha_solicitud: updateData.fecha_solicitud ? (typeof updateData.fecha_solicitud === 'string' ? updateData.fecha_solicitud : updateData.fecha_solicitud) : (existingCaso as any).fecha_solicitud,
+                    cedula: updateData.cedula || (existingCaso as any).cedula,
                 }, client);
             };
 

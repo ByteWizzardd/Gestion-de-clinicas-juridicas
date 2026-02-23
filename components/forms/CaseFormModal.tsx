@@ -245,26 +245,18 @@ export default function CaseFormModal({
           } else if (initialData.id_materia) {
             await loadAmbitosLegales(initialData.id_materia, 0, 0);
           }
+
           const formatDate = (dateVal: string | Date | undefined | null): string => {
             if (!dateVal) return getCurrentDate();
-
-            try {
-              // Si es un objeto Date
-              if (dateVal instanceof Date) {
-                // Usa toISOString() para no lidiar con zonas horarias locales que corren los días
-                return dateVal.toISOString().split('T')[0];
-              }
-              // Si es un string con formato ISO Date (de la base de datos)
-              if (typeof dateVal === 'string') {
-                // Si solo viene "YYYY-MM-DD", regresarlo tal cual
-                if (dateVal.length === 10) return dateVal;
-                // Si viene como datetime, convertirlo a Date temporal para extraer el formato seguro
-                return new Date(dateVal).toISOString().split('T')[0];
-              }
-            } catch (err) {
-              console.error("Error formateando fecha:", err);
+            if (dateVal instanceof Date) {
+              const year = dateVal.getFullYear();
+              const month = String(dateVal.getMonth() + 1).padStart(2, '0');
+              const day = String(dateVal.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
             }
-
+            if (typeof dateVal === 'string') {
+              return dateVal.split('T')[0];
+            }
             return getCurrentDate();
           };
 
@@ -322,9 +314,6 @@ export default function CaseFormModal({
 
   // Efecto para verificar si el solicitante existe cuando cambia la cédula (con debounce de 500ms)
   useEffect(() => {
-    // No verificar en modo edición (el solicitante ya existe)
-    if (isEditing) return;
-
     // Limpiar timeout anterior si existe
     if (cedulaCheckTimeoutRef.current) {
       clearTimeout(cedulaCheckTimeoutRef.current);
@@ -378,7 +367,7 @@ export default function CaseFormModal({
         clearTimeout(cedulaCheckTimeoutRef.current);
       }
     };
-  }, [formData.cedulaSolicitanteTipo, formData.cedulaSolicitante, isEditing]);
+  }, [formData.cedulaSolicitanteTipo, formData.cedulaSolicitante]);
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
@@ -433,7 +422,8 @@ export default function CaseFormModal({
           formData.categoria !== originalFormData.categoria ||
           formData.subcategoria !== originalFormData.subcategoria ||
           formData.ambitoLegal !== originalFormData.ambitoLegal ||
-          formData.observaciones !== originalFormData.observaciones;
+          formData.observaciones !== originalFormData.observaciones ||
+          (formData.cedulaSolicitanteTipo + '-' + formData.cedulaSolicitante) !== (originalFormData.cedulaSolicitanteTipo + '-' + originalFormData.cedulaSolicitante);
 
         if (!hasChanges) {
           toast.info('No se han detectado cambios para guardar.', 'Sin cambios');
@@ -645,13 +635,12 @@ export default function CaseFormModal({
             <CedulaInput
               label="Cédula de Solicitante *"
               tipoValue={formData.cedulaSolicitanteTipo}
-              onTipoChange={(value) => !isEditing && updateField('cedulaSolicitanteTipo', value)}
+              onTipoChange={(value) => updateField('cedulaSolicitanteTipo', value)}
               value={formData.cedulaSolicitante}
-              onChange={(e) => !isEditing && updateField('cedulaSolicitante', e.target.value)}
+              onChange={(e) => updateField('cedulaSolicitante', e.target.value)}
               placeholder="Ingrese cédula de solicitante"
               error={errors.cedulaSolicitante}
               required
-              disabled={isEditing}
             />
           </div>
 
