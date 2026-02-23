@@ -20,7 +20,7 @@ SELECT * FROM (
     -- Reportes (auditoria_reportes)
     SELECT
         'Reporte' as entidad,
-        'Generación' as accion,
+        CASE WHEN t.operacion = 'vista_previa' THEN 'Vista Previa' ELSE 'Generación' END as accion,
         t.fecha_generacion as fecha,
         t.id_usuario_genero as usuario_id,
         COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_genero), t.id_usuario_genero) as usuario_nombre,

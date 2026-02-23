@@ -826,6 +826,7 @@ export async function registrarAuditoriaReporteAction(params: {
   formato?: string;
   cedulaSolicitante?: string;
   idCaso?: number;
+  operacion?: 'generacion' | 'vista_previa';
 }): Promise<{ success: boolean; id?: number; error?: string }> {
   try {
     const authResult = await requireAuthInServerActionWithCode();
@@ -839,6 +840,7 @@ export async function registrarAuditoriaReporteAction(params: {
       idUsuarioGenero: authResult.user.cedula,
       formato: params.formato || 'PDF',
       cedulaSolicitante: params.cedulaSolicitante,
+      operacion: params.operacion || 'generacion',
     });
 
     revalidatePath('/dashboard/audit/reportes');

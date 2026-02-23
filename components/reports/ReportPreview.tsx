@@ -19,6 +19,8 @@ interface ReportPreviewProps {
     accentColor?: string;
     /** Custom icon to display in idle state */
     icon?: React.ReactNode;
+    /** Callback fired when a preview is successfully generated */
+    onPreviewGenerated?: () => void;
 }
 
 type PreviewState = 'idle' | 'loading' | 'ready' | 'error' | 'empty' | 'no_sections';
@@ -30,6 +32,7 @@ export default function ReportPreview({
     reportType = 'Reporte',
     accentColor = '#9c2327',
     icon,
+    onPreviewGenerated,
 }: ReportPreviewProps) {
     const [state, setState] = useState<PreviewState>('idle');
     const [blobUrl, setBlobUrl] = useState<string | null>(null);
@@ -114,6 +117,9 @@ export default function ReportPreview({
             blobUrlRef.current = url;
             setBlobUrl(url);
             setState('ready');
+
+            // Notify parent that preview was generated
+            onPreviewGenerated?.();
 
         } catch (err: any) {
             // If aborted, silently ignore (user closed modal or changed params)

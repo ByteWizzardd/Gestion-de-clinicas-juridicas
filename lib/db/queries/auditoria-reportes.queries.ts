@@ -11,6 +11,7 @@ export interface AuditoriaReportesFilters {
     idUsuario?: string;
     tipoReporte?: string;
     orden?: 'asc' | 'desc';
+    operacion?: 'generacion' | 'vista_previa';
 }
 
 /**
@@ -22,6 +23,7 @@ export interface AuditoriaReporteRecord {
     filtros_aplicados: Record<string, unknown> | null;
     formato: string;
     cedula_solicitante: string | null;
+    operacion: 'generacion' | 'vista_previa';
     fecha_generacion: string;
     id_usuario_genero: string;
     nombres_usuario_genero: string | null;
@@ -42,6 +44,7 @@ export interface InsertAuditoriaReporteParams {
     idUsuarioGenero: string;
     formato?: string;
     cedulaSolicitante?: string;
+    operacion?: 'generacion' | 'vista_previa';
 }
 
 /**
@@ -59,7 +62,8 @@ export const auditoriaReportesQueries = {
             params.filtrosAplicados ? JSON.stringify(params.filtrosAplicados) : null,
             params.idUsuarioGenero,
             params.formato || 'PDF',
-            params.cedulaSolicitante || null
+            params.cedulaSolicitante || null,
+            params.operacion || 'generacion'
         ]);
         return result.rows[0].id;
     },
@@ -75,6 +79,7 @@ export const auditoriaReportesQueries = {
             filters?.idUsuario || null,
             filters?.tipoReporte || null,
             filters?.orden || 'desc',
+            filters?.operacion || null,
         ]);
         // Convertir foto_perfil de Buffer a base64
         return result.rows.map(row => ({

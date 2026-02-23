@@ -457,6 +457,40 @@ export default function ReportsPage() {
         abortReportGeneration();
     }, [abortReportGeneration]);
 
+    // Register audit when preview is generated
+    const handlePreviewGenerated = useCallback(async () => {
+        // Map tipoReporteActual label to constant
+        const tipoReporteMap: Record<string, string> = {
+            'Tipos de Caso': TIPOS_REPORTE.DISTRIBUCION_TRAMITE,
+            'Reporte de Estatus de Casos': TIPOS_REPORTE.DISTRIBUCION_ESTATUS,
+            'Resumen de Casos': TIPOS_REPORTE.INFORME_RESUMEN,
+            'Reporte Socioeconómico': TIPOS_REPORTE.INFORME_SOCIOECONOMICO,
+            'Historial de Casos del Solicitante': TIPOS_REPORTE.HISTORIAL_SOLICITANTE,
+            'Ficha Resumen del Solicitante': TIPOS_REPORTE.EXPEDIENTE_SOLICITANTE,
+        };
+
+        const tipoReporte = tipoReporteMap[tipoReporteActual];
+        if (!tipoReporte) return;
+
+        try {
+            await registrarAuditoriaReporteAction({
+                tipoReporte,
+                filtrosAplicados: {
+                    fechaInicio: fechaInicioReporte || undefined,
+                    fechaFin: fechaFinReporte || undefined,
+                    semestre: selectedTermReporte !== 'all' ? selectedTermReporte : undefined,
+                    ...(selectedSolicitante ? { cedulaSolicitante: selectedSolicitante.cedula } : {}),
+                },
+                formato: 'PDF',
+                cedulaSolicitante: selectedSolicitante?.cedula,
+                operacion: 'vista_previa',
+            });
+        } catch (err) {
+            // No bloquear la vista previa por un error de auditoría
+            console.error('Error registrando auditoría de vista previa:', err);
+        }
+    }, [tipoReporteActual, fechaInicioReporte, fechaFinReporte, selectedTermReporte, selectedSolicitante]);
+
     const handleGenerateTiposCasosReport = async () => {
         // Validacion especifica para historial solicitante y ficha resumen
         if (tipoReporteActual === 'Historial de Casos del Solicitante' || tipoReporteActual === 'Ficha Resumen del Solicitante') {
@@ -1458,6 +1492,7 @@ export default function ReportsPage() {
                                 previewKey={`${tipoReporteActual}-${selectedTermReporte}-${fechaInicioReporte}-${fechaFinReporte}-${formatoReporte}-${JSON.stringify(selectedResumenSections)}-${JSON.stringify(selectedSocioeconomicoSections)}`}
                                 reportType={tipoReporteActual}
                                 accentColor="#9c2327"
+                                onPreviewGenerated={handlePreviewGenerated}
                                 icon={
                                     tipoReporteActual === 'Resumen de Casos' ? <FileBarChart className="w-10 h-10 opacity-80" style={{ color: '#9c2327' }} />
                                         : tipoReporteActual === 'Reporte de Estatus de Casos' ? <Clock className="w-10 h-10 opacity-80" style={{ color: '#9c2327' }} />

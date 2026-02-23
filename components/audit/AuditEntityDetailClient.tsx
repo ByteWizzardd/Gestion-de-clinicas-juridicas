@@ -29,7 +29,7 @@ interface AuditOperation {
   | 'beneficiarios-eliminados' | 'beneficiarios-actualizados' | 'beneficiarios-creados'
   | 'acciones-creadas' | 'acciones-actualizadas' | 'acciones-eliminadas'
   | 'equipos-actualizados' | 'equipos-creados'
-  | 'reportes-generados';
+  | 'reportes-generados' | 'reportes-vista-previa';
   title: string;
   description: string;
   emptyMessage: string;

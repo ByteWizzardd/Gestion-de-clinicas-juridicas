@@ -20,6 +20,13 @@ export default async function ReportesAuditPage() {
                         title: 'Reportes Generados',
                         description: 'Registro cronológico e inmutable de todos los reportes generados',
                         emptyMessage: 'No se encontraron reportes generados'
+                    },
+                    {
+                        label: 'Vistas Previas',
+                        auditType: 'reportes-vista-previa',
+                        title: 'Vistas Previas de Reportes',
+                        description: 'Registro cronológico de todas las vistas previas de reportes',
+                        emptyMessage: 'No se encontraron vistas previas de reportes'
                     }
                 ]}
             />

@@ -6,14 +6,15 @@
 -- $4 = id_usuario_genero (VARCHAR) - Cédula del usuario que generó
 -- $5 = formato (VARCHAR) - Formato del reporte (PDF, Excel, etc.)
 -- $6 = cedula_solicitante (VARCHAR, opcional) - Para reportes específicos de solicitante
--- $7 = id_caso (INTEGER, opcional) - Para reportes específicos de caso
+-- $7 = operacion (VARCHAR, opcional) - 'generacion' o 'vista_previa' (default: 'generacion')
 INSERT INTO auditoria_reportes (
     tipo_reporte,
     filtros_aplicados,
     id_usuario_genero,
     formato,
     cedula_solicitante,
+    operacion,
     fecha_generacion
 ) VALUES (
-    $1, $2, $3, $4, $5, CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'
+    $1, $2, $3, $4, $5, COALESCE($6, 'generacion'), CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'
 ) RETURNING id;

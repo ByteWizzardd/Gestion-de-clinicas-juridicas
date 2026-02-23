@@ -2432,6 +2432,7 @@ export async function getReportesGeneradosAuditAction(filters?: AuditFilters) {
       idUsuario: filters?.idUsuario,
       tipoReporte: filters?.tipoReporte,
       orden: filters?.orden,
+      operacion: 'generacion',
     });
     return records.map((r) => ({
       ...r,
@@ -2442,5 +2443,38 @@ export async function getReportesGeneradosAuditAction(filters?: AuditFilters) {
   } catch (error) {
     console.error('Error obteniendo auditoría de reportes generados:', error);
     throw new Error('Error al obtener auditoría de reportes generados');
+  }
+}
+
+export async function getReportesVistaPreviaAuditAction(filters?: AuditFilters) {
+  const authResult = await requireAuthInServerActionWithCode();
+
+  if (!authResult.success || !authResult.user) {
+    throw new Error('No autorizado');
+  }
+
+  const userSidebarRole = mapSystemRoleToSidebarRole(authResult.user.rol);
+  if (userSidebarRole !== 'coordinator') {
+    throw new Error('No autorizado');
+  }
+
+  try {
+    const records = await auditoriaReportesQueries.getAll({
+      fechaInicio: filters?.fechaInicio,
+      fechaFin: filters?.fechaFin,
+      idUsuario: filters?.idUsuario,
+      tipoReporte: filters?.tipoReporte,
+      orden: filters?.orden,
+      operacion: 'vista_previa',
+    });
+    return records.map((r) => ({
+      ...r,
+      fecha: r.fecha_generacion,
+      usuario_accion: r.id_usuario_genero,
+      nombre_completo_usuario_accion: r.nombre_completo_usuario_genero || undefined,
+    }));
+  } catch (error) {
+    console.error('Error obteniendo auditoría de vistas previas:', error);
+    throw new Error('Error al obtener auditoría de vistas previas');
   }
 }

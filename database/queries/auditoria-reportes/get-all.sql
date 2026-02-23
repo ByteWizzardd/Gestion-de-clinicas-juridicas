@@ -5,12 +5,14 @@
 -- $3 = id_usuario_genero (VARCHAR, opcional)
 -- $4 = tipo_reporte (VARCHAR, opcional)
 -- $5 = orden (TEXT, opcional) - 'asc' o 'desc' (por defecto 'desc')
+-- $6 = operacion (VARCHAR, opcional) - 'generacion' o 'vista_previa'
 SELECT 
     ar.id,
     ar.tipo_reporte,
     ar.filtros_aplicados,
     ar.formato,
     ar.cedula_solicitante,
+    ar.operacion,
     to_char(ar.fecha_generacion, 'YYYY-MM-DD"T"HH24:MI:SS') as fecha_generacion,
     ar.id_usuario_genero,
     u.nombres AS nombres_usuario_genero,
@@ -29,6 +31,7 @@ WHERE
     AND ($2::DATE IS NULL OR ar.fecha_generacion::DATE <= $2)
     AND ($3::VARCHAR IS NULL OR ar.id_usuario_genero = $3)
     AND ($4::VARCHAR IS NULL OR ar.tipo_reporte = $4)
+    AND ($6::VARCHAR IS NULL OR ar.operacion = $6)
 ORDER BY 
     CASE WHEN ($5::TEXT IS NULL OR $5::TEXT = 'desc') THEN ar.fecha_generacion END DESC NULLS LAST,
     CASE WHEN $5::TEXT = 'asc' THEN ar.fecha_generacion END ASC NULLS FIRST;

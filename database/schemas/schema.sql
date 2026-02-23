@@ -1593,6 +1593,7 @@ CREATE TABLE auditoria_reportes (
     id_usuario_genero VARCHAR(20),
     formato VARCHAR(20),
     cedula_solicitante VARCHAR(20),
+    operacion VARCHAR(20) DEFAULT 'generacion' CHECK (operacion IN ('generacion', 'vista_previa')),
     fecha_generacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
 );
 

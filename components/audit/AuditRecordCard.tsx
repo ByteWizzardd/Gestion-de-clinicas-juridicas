@@ -263,7 +263,16 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       <div className="flex-1">
         <div className="flex flex-wrap items-center gap-x-1 font-semibold text-gray-900">
           <span>{title}</span>
-          {moduleName && <span className="font-semibold">• {moduleName}</span>}
+          {moduleName && (
+            <span className="font-semibold">
+              • {moduleName}
+              {type === 'reporte-generado' && (
+                <span className="text-gray-500 font-normal">
+                  {' '}({(record as any).operacion === 'vista_previa' ? 'Vista Previa' : 'Generación'})
+                </span>
+              )}
+            </span>
+          )}
         </div>
         <div className="text-sm text-gray-600">
           {subtitle}
@@ -1305,6 +1314,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
         };
+        const isPreview = r.operacion === 'vista_previa';
         return renderRow(
           <FileBarChart className="w-5 h-5 text-gray-600" />,
           <span className="flex flex-wrap items-center gap-x-2">
@@ -1324,7 +1334,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           </span>,
           <>
             Formato: {r.formato || 'PDF'}
-            {' • Generado por: '}
+            {isPreview ? ' • Previsualizado por: ' : ' • Generado por: '}
             {renderUserLink(
               r.nombre_completo_usuario_genero,
               r.nombres_usuario_genero,
@@ -4742,6 +4752,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   <p className="text-sm font-semibold text-gray-700 mb-1">Información del Reporte</p>
                   <p className="text-sm text-gray-600">Tipo: {formatTipoReporte(r.tipo_reporte)}</p>
                   <p className="text-sm text-gray-600">Formato: {r.formato || 'PDF'}</p>
+                  <p className="text-sm text-gray-600">
+                    Operación: {r.operacion === 'vista_previa' ? 'Vista Previa' : 'Generación'}
+                  </p>
                   {/* Descripción eliminada por redundancia */}
                   {r.cedula_solicitante && (
                     <p className="text-sm text-gray-600">

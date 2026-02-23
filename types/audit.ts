@@ -650,6 +650,7 @@ export interface ReporteGeneradoAuditRecord {
   filtros_aplicados: Record<string, unknown> | null;
   formato: string;
   cedula_solicitante: string | null;
+  operacion: 'generacion' | 'vista_previa';
   id_caso: number | null;
   fecha_generacion: string;
   fecha: string; // Alias para fecha_generacion
@@ -979,6 +980,7 @@ export interface ReporteGeneradoAuditRecord extends AuditRecord {
   filtros_aplicados: Record<string, unknown> | null;
   formato: string;
   cedula_solicitante: string | null;
+  operacion: 'generacion' | 'vista_previa';
   id_caso: number | null;
   fecha_generacion: string;
   id_usuario_genero: string;
