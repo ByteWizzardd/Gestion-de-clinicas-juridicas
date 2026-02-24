@@ -56,12 +56,12 @@ export default function DashboardLayoutClient({ user, children, initialSidebarCo
   return (
     <div className="flex h-screen bg-background relative overflow-x-hidden">
       {/* Sidebar escritorio */}
-      <div className="shrink-0 hidden md:block">
+      <div className="shrink-0 hidden lg:block">
         <Sidebar role={userRole} userName={userName} initialCollapsed={initialSidebarCollapsed} userCedula={user.cedula} />
       </div>
 
       {/* Sidebar móvil (off-canvas) */}
-      <div className="md:hidden">
+      <div className="lg:hidden">
         {isMobileSidebarOpen && (
           <button
             type="button"
@@ -85,7 +85,7 @@ export default function DashboardLayoutClient({ user, children, initialSidebarCo
 
       <div className="flex-1 flex flex-col w-full min-w-0 overflow-x-hidden">
         {/* Header móvil (reserva espacio arriba para no tapar títulos) */}
-        <div className="md:hidden sticky top-0 z-30 bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60">
+        <div className="lg:hidden sticky top-0 z-30 bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60">
           <div className="px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-1">
             <div className="h-14 flex items-center justify-between gap-3">
               <button
@@ -118,7 +118,7 @@ export default function DashboardLayoutClient({ user, children, initialSidebarCo
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="hidden md:flex absolute top-6 right-6 items-center gap-4 z-30 text-lg bg-white rounded-3xl shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] px-4 py-2"
+          className="hidden lg:flex absolute top-6 right-6 items-center gap-4 z-30 text-lg bg-white rounded-3xl shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] px-4 py-2"
         >
           <Notification />
           <DateTime />
