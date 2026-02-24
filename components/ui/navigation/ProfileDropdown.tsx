@@ -1,6 +1,6 @@
 'use client';
 import { useState, useRef, useEffect, ReactNode } from 'react';
-import { User, Key, Bell, HelpCircle, LogOut } from 'lucide-react';
+import { User, Key, Bell, HelpCircle, LogOut, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface ProfileDropdownProps {
@@ -24,6 +24,7 @@ export default function ProfileDropdown({
 }: ProfileDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showAbove, setShowAbove] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false); // Base para modo oscuro
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
 
@@ -118,6 +119,22 @@ export default function ProfileDropdown({
               >
                 <HelpCircle className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
                 Preguntas frecuentes
+              </button>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDarkMode(!isDarkMode);
+                }}
+                className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 hover:bg-gray-50 flex items-center justify-between transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <Moon className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
+                  Modo oscuro
+                </div>
+                <div className={`w-8 h-4 rounded-full flex items-center transition-colors px-0.5 ${isDarkMode ? 'bg-primary' : 'bg-gray-300'}`}>
+                    <div className={`w-3 h-3 rounded-full bg-white transform transition-transform ${isDarkMode ? 'translate-x-4' : 'translate-x-0'}`} />
+                </div>
               </button>
             </div>
 
