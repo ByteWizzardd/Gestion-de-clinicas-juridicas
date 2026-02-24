@@ -32,8 +32,8 @@ export default function DistributionChart({ data }: DistributionChartProps) {
     };
 
     return (
-        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-            <h3 className="text-xl font-medium text-foreground mb-4 text-center">Distribución por Origen</h3>
+        <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm w-full min-w-0 overflow-hidden">
+            <h3 className="text-lg sm:text-xl font-medium text-foreground mb-4 text-center">Distribución por Origen</h3>
             {(!data || data.length === 0 || data.every(item => item.value === 0)) ? (
                 <div className="h-[300px] w-full flex items-center justify-center">
                     <p className="text-gray-500 text-sm">No hay casos con los filtros seleccionados</p>

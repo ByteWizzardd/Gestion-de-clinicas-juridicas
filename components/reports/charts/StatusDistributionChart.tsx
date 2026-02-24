@@ -39,8 +39,8 @@ export default function StatusDistributionChart({ data }: StatusDistributionChar
     };
 
     return (
-        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-            <h3 className="text-xl font-medium text-foreground mb-4 text-center">Distribución por Estatus</h3>
+        <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm w-full min-w-0 overflow-hidden">
+            <h3 className="text-lg sm:text-xl font-medium text-foreground mb-4 text-center">Distribución por Estatus</h3>
             {(!chartData || chartData.length === 0 || chartData.every(item => item.value === 0)) ? (
                 <div className="h-[300px] w-full flex items-center justify-center">
                     <p className="text-gray-500 text-sm">No hay casos con los filtros seleccionados</p>
@@ -53,7 +53,7 @@ export default function StatusDistributionChart({ data }: StatusDistributionChar
                             cx="50%"
                             cy="50%"
                             labelLine={false}
-                            outerRadius={100}
+                            outerRadius="75%"
                             dataKey="value"
                         >
                             {chartData.map((entry, index) => (

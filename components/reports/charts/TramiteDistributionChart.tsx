@@ -46,22 +46,22 @@ export default function TramiteDistributionChart({ data }: TramiteDistributionCh
     };
 
     return (
-        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm flex flex-col h-full min-h-[400px]">
-            <h3 className="text-xl font-medium text-foreground mb-6 text-center">Distribución por Trámite</h3>
+        <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm flex flex-col h-full min-h-[400px] w-full min-w-0 overflow-hidden">
+            <h3 className="text-lg sm:text-xl font-medium text-foreground mb-6 text-center">Distribución por Trámite</h3>
             {(!data || data.length === 0 || data.every(item => item.value === 0)) ? (
-                <div className="flex-grow flex items-center justify-center">
+                <div className="grow flex items-center justify-center">
                     <p className="text-gray-500 text-sm">No hay casos con los filtros seleccionados</p>
                 </div>
             ) : (
-                <div className="flex-grow w-full">
+                <div className="grow w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
                                 data={data}
                                 cx="50%"
                                 cy="50%"
-                                innerRadius={60}
-                                outerRadius={120}
+                                innerRadius="45%"
+                                outerRadius="75%"
                                 fill="#8884d8"
                                 paddingAngle={2}
                                 dataKey="value"
