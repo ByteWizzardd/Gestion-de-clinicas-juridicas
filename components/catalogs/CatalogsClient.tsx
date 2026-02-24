@@ -27,7 +27,7 @@ export default function CatalogsClient({ counts }: CatalogsClientProps) {
     }, []);
 
     return (
-        <div className="px-3 md:px-1 space-y-6">
+        <div className="px-3 md:px-1">
             {/* Buscador */}
             <div className="mb-6">
                 <Search

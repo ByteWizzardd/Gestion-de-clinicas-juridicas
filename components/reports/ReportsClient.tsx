@@ -902,7 +902,7 @@ export default function ReportsPage() {
 
             <div className="px-3 md:px-1 space-y-6">
                 {/* Report Generation Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-[10rem] gap-4 mb-6 w-full min-w-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-[10rem] gap-4 md:gap-6 mb-6 w-full min-w-0">
                     {/* 1. Resumen de Casos (Normal Card) */}
                     <ReportCard
                         title="Resumen de Casos"

@@ -1,6 +1,9 @@
 import { Skeleton } from '@/components/ui/Skeleton';
+import { FileBarChart, Clock, Briefcase, History, User, Home } from 'lucide-react';
 
 export default function ReportsLoading() {
+    const skeletonIcons = [FileBarChart, Clock, Briefcase, History, User, Home];
+
     return (
         <div className="w-full">
             {/* Header */}
@@ -11,40 +14,43 @@ export default function ReportsLoading() {
 
             <div className="px-3 md:px-1 space-y-6">
                 {/* Report cards grid — 3x2 */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-[10rem] gap-4 mb-6 w-full">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                        <div
-                            key={i}
-                            className="bg-neutral-50 rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.15)] h-full min-h-40 w-full relative overflow-hidden p-4 flex flex-col"
-                        >
-                            {/* Título del card */}
-                            <div className="my-auto pr-20">
-                                <Skeleton
-                                    width={i % 2 === 0 ? '65%' : '80%'}
-                                    height={18}
-                                    borderRadius="6px"
-                                />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-[10rem] gap-4 md:gap-6 mb-6 w-full">
+                    {Array.from({ length: 6 }).map((_, i) => {
+                        const Icon = skeletonIcons[i] || FileBarChart;
+                        return (
+                            <div
+                                key={i}
+                                className="bg-neutral-50 rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.15)] h-full min-h-40 w-full relative overflow-hidden p-4 flex flex-col"
+                            >
+                                {/* Título del card */}
+                                <div className="my-auto pr-20">
+                                    <Skeleton
+                                        width={i % 2 === 0 ? '65%' : '80%'}
+                                        height={18}
+                                        borderRadius="6px"
+                                    />
+                                </div>
+                                {/* Ícono decorativo */}
+                                <div className={`absolute top-2 right-2 w-24 h-24 flex items-center justify-center ${i % 2 === 0 ? 'text-primary/10' : 'text-secondary/10'}`}>
+                                    <Icon size={80} strokeWidth={1} />
+                                </div>
+                                {/* Botón */}
+                                <div className="mt-auto flex justify-center pt-2">
+                                    <Skeleton
+                                        width={160}
+                                        height={36}
+                                        borderRadius="8px"
+                                        style={{
+                                            background: i % 2 === 0
+                                                ? 'rgba(156,35,39,0.15)'
+                                                : 'rgba(244,126,31,0.15)',
+                                            animation: 'none',
+                                        }}
+                                    />
+                                </div>
                             </div>
-                            {/* Ícono decorativo */}
-                            <div className="absolute top-2 right-2 w-24 h-24 flex items-center justify-center">
-                                <Skeleton width={60} height={60} borderRadius="12px" className="!opacity-[0.08]" style={{ opacity: 0.08 }} />
-                            </div>
-                            {/* Botón */}
-                            <div className="mt-auto flex justify-center pt-2">
-                                <Skeleton
-                                    width={160}
-                                    height={36}
-                                    borderRadius="8px"
-                                    style={{
-                                        background: i % 2 === 0
-                                            ? 'rgba(156,35,39,0.15)'
-                                            : 'rgba(244,126,31,0.15)',
-                                        animation: 'none',
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 {/* Filter bar */}
