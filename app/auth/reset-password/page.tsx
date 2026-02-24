@@ -167,7 +167,7 @@ function ResetPasswordForm() {
                                     <Input
                                         label="Nueva contraseña"
                                         placeholder="Ingrese su nueva contraseña"
-                                        className="bg-gray-100 text-base"
+                                        className="bg-gray-200 text-base"
                                         name="newPassword"
                                         type="password"
                                         value={formData.newPassword}
@@ -178,7 +178,7 @@ function ResetPasswordForm() {
                                     <Input
                                         label="Confirmar contraseña"
                                         placeholder="Confirme su nueva contraseña"
-                                        className="bg-gray-200 text-base!"
+                                        className="bg-gray-200 text-base"
                                         name="confirmPassword"
                                         type="password"
                                         value={formData.confirmPassword}

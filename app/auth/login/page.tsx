@@ -132,7 +132,7 @@ export default function LoginPage() {
                                     <Input
                                         label="Nombre de usuario"
                                         placeholder="Ingrese su nombre de usuario"
-                                        className="bg-gray-100 text-base"
+                                        className="bg-gray-200 text-base"
                                         name="nombreUsuario"
                                         type="text"
                                         value={formData.nombreUsuario}
@@ -142,7 +142,7 @@ export default function LoginPage() {
                                     <Input
                                         label="Contraseña"
                                         placeholder="Ingrese su contraseña"
-                                        className="bg-gray-200 text-base!"
+                                        className="bg-gray-200 text-base"
                                         name="password"
                                         type={showPassword ? "text" : "password"}
                                         value={formData.password}

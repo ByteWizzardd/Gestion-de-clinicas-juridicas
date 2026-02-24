@@ -154,7 +154,7 @@ function VerifyCodeContent() {
                                     <Input
                                         label="Código de verificación"
                                         placeholder="000000"
-                                        className="bg-gray-100 text-center text-xl sm:text-2xl tracking-widest font-mono"
+                                        className="bg-gray-200 text-center text-xl sm:text-2xl tracking-widest font-mono"
                                         name="codigo"
                                         type="text"
                                         inputMode="numeric"
