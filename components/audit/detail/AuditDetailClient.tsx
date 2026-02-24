@@ -499,10 +499,10 @@ export default function AuditDetailClient({
     <div className="w-full">
       {/* Encabezado (solo si no está oculto) */}
       {!hideHeader && (
-        <>
+        <div className="mb-4 md:mb-6 mt-4">
           <h1 className="text-4xl m-3 font-semibold font-primary">{title}</h1>
-          <p className="mb-6 ml-3">{description}</p>
-        </>
+          <p className="mb-6 ml-3 text-gray-600">{description}</p>
+        </div>
       )}
 
       {/* Filtros */}
@@ -557,16 +557,20 @@ export default function AuditDetailClient({
             <AuditRecordCardSkeleton key={i} />
           ))}
         </div>
-      ) : error ? (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
-          <p>Error: {error}</p>
-        </div>
       ) : (
-        <AuditList
-          records={records}
-          recordType={recordTypeMap[auditType]}
-          emptyMessage={emptyMessage}
-        />
+        <div className="px-3 md:px-1">
+          {error ? (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
+              <p>Error: {error}</p>
+            </div>
+          ) : (
+            <AuditList
+              records={records}
+              recordType={recordTypeMap[auditType]}
+              emptyMessage={emptyMessage}
+            />
+          )}
+        </div>
       )}
     </div>
   );

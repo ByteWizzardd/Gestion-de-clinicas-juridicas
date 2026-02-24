@@ -900,106 +900,108 @@ export default function ReportsPage() {
                 <p className="mb-6 ml-3 text-base text-gray-600">Presentación de las métricas clave a través de gráficas y cuadros.</p>
             </div>
 
-            {/* Report Generation Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-[10rem] gap-4 mb-6 w-full min-w-0">
-                {/* 1. Resumen de Casos (Normal Card) */}
-                <ReportCard
-                    title="Resumen de Casos"
-                    icon={<FileBarChart className="w-full h-full" strokeWidth={1.5} />}
-                    onGenerate={() => handleGenerateReport('Resumen de Casos')}
-                    buttonColor="red"
-                />
+            <div className="px-3 md:px-1 space-y-6">
+                {/* Report Generation Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-[10rem] gap-4 mb-6 w-full min-w-0">
+                    {/* 1. Resumen de Casos (Normal Card) */}
+                    <ReportCard
+                        title="Resumen de Casos"
+                        icon={<FileBarChart className="w-full h-full" strokeWidth={1.5} />}
+                        onGenerate={() => handleGenerateReport('Resumen de Casos')}
+                        buttonColor="red"
+                    />
 
-                {/* 2. Estatus de Casos (Top Right) */}
-                <ReportCard
-                    title="Reporte de Estatus de Casos"
-                    icon={<Clock className="w-full h-full" strokeWidth={1.5} />}
-                    onGenerate={() => handleGenerateReport('Reporte de Estatus de Casos')}
-                    buttonColor="orange"
-                />
+                    {/* 2. Estatus de Casos (Top Right) */}
+                    <ReportCard
+                        title="Reporte de Estatus de Casos"
+                        icon={<Clock className="w-full h-full" strokeWidth={1.5} />}
+                        onGenerate={() => handleGenerateReport('Reporte de Estatus de Casos')}
+                        buttonColor="orange"
+                    />
 
-                {/* 3. Tipos de Caso (Middle Right) */}
-                <ReportCard
-                    title="Tipos de Caso"
-                    icon={<Briefcase className="w-full h-full" strokeWidth={1.5} />}
-                    onGenerate={() => handleGenerateReport('Tipos de Caso')}
-                    buttonColor="red"
-                />
+                    {/* 3. Tipos de Caso (Middle Right) */}
+                    <ReportCard
+                        title="Tipos de Caso"
+                        icon={<Briefcase className="w-full h-full" strokeWidth={1.5} />}
+                        onGenerate={() => handleGenerateReport('Tipos de Caso')}
+                        buttonColor="red"
+                    />
 
 
-                {/* 4. Historial de Casos (Bottom Row) */}
-                <ReportCard
-                    title="Historial de Casos del Solicitante"
-                    icon={<History className="w-full h-full" strokeWidth={1.5} />}
-                    onGenerate={() => handleGenerateReport('Historial de Casos del Solicitante')}
-                    buttonColor="orange"
-                />
+                    {/* 4. Historial de Casos (Bottom Row) */}
+                    <ReportCard
+                        title="Historial de Casos del Solicitante"
+                        icon={<History className="w-full h-full" strokeWidth={1.5} />}
+                        onGenerate={() => handleGenerateReport('Historial de Casos del Solicitante')}
+                        buttonColor="orange"
+                    />
 
-                {/* 5. Ficha Resumen (Bottom Row) */}
-                <ReportCard
-                    title="Ficha Resumen del Solicitante"
-                    icon={<User className="w-full h-full" strokeWidth={1.5} />}
-                    onGenerate={() => handleGenerateReport('Ficha Resumen del Solicitante')}
-                    buttonColor="red"
-                />
+                    {/* 5. Ficha Resumen (Bottom Row) */}
+                    <ReportCard
+                        title="Ficha Resumen del Solicitante"
+                        icon={<User className="w-full h-full" strokeWidth={1.5} />}
+                        onGenerate={() => handleGenerateReport('Ficha Resumen del Solicitante')}
+                        buttonColor="red"
+                    />
 
-                {/* 6. Reporte Socioeconómico (Bottom Row) */}
-                <ReportCard
-                    title="Reporte Socioeconómico"
-                    icon={<Home className="w-full h-full" strokeWidth={1.5} />}
-                    onGenerate={() => handleGenerateReport('Reporte Socioeconómico')}
-                    buttonColor="orange"
-                />
-            </div>
-
-            {/* Filter Bar with View Switcher */}
-            <div>
-                <FilterBar
-                    filters={filters}
-                    onFilterChange={setFilters}
-                />
-            </div>
-
-            {/* Error State */}
-            {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-                    {error}
+                    {/* 6. Reporte Socioeconómico (Bottom Row) */}
+                    <ReportCard
+                        title="Reporte Socioeconómico"
+                        icon={<Home className="w-full h-full" strokeWidth={1.5} />}
+                        onGenerate={() => handleGenerateReport('Reporte Socioeconómico')}
+                        buttonColor="orange"
+                    />
                 </div>
-            )}
 
-            {/* Dynamic Content Area */}
-            <motion.div
-                className="transition-all duration-300 mt-6"
-                initial={{ opacity: 0.5 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.1, ease: "easeOut" }}
-            >
-                {loading ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm h-96 animate-pulse">
-                                <div className="h-6 bg-gray-200 rounded w-1/2 mx-auto mb-4"></div>
-                                <div className="h-64 bg-gray-100 rounded"></div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full min-w-0">
-                        <div className="w-full min-w-0">
-                            <DistributionChart data={distributionData} />
-                        </div>
-                        <div className="w-full min-w-0">
-                            <TopCasesChart data={topCasesData} />
-                        </div>
-                        <div className="w-full min-w-0">
-                            <StatusDistributionChart data={statusDistributionData} />
-                        </div>
-                        <div className="w-full min-w-0">
-                            <TramiteDistributionChart data={tramiteDistributionData} />
-                        </div>
+                {/* Filter Bar with View Switcher */}
+                <div>
+                    <FilterBar
+                        filters={filters}
+                        onFilterChange={setFilters}
+                    />
+                </div>
+
+                {/* Error State */}
+                {error && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+                        {error}
                     </div>
                 )}
-            </motion.div>
+
+                {/* Dynamic Content Area */}
+                <motion.div
+                    className="transition-all duration-300 mt-6"
+                    initial={{ opacity: 0.5 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.1, ease: "easeOut" }}
+                >
+                    {loading ? (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {[1, 2, 3, 4].map((i) => (
+                                <div key={i} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm h-96 animate-pulse">
+                                    <div className="h-6 bg-gray-200 rounded w-1/2 mx-auto mb-4"></div>
+                                    <div className="h-64 bg-gray-100 rounded"></div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full min-w-0">
+                            <div className="w-full min-w-0">
+                                <DistributionChart data={distributionData} />
+                            </div>
+                            <div className="w-full min-w-0">
+                                <TopCasesChart data={topCasesData} />
+                            </div>
+                            <div className="w-full min-w-0">
+                                <StatusDistributionChart data={statusDistributionData} />
+                            </div>
+                            <div className="w-full min-w-0">
+                                <TramiteDistributionChart data={tramiteDistributionData} />
+                            </div>
+                        </div>
+                    )}
+                </motion.div>
+            </div>
 
             {/* Modal para seleccionar rango de fechas del reporte */}
             <Modal
