@@ -47,23 +47,23 @@ export default function AuthHome (){
                         {/* Decoración 1 - Esquina superior derecha */}
                         <motion.div 
                             key="deco1"
-                            className="hidden sm:block absolute top-[-10] right-0 z-0"
+                            className="absolute top-[-10] right-0 z-0 pointer-events-none"
                             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}>
-                            <Image src="/deco1.svg" alt="Decoración 1" width={600} height={600} className="object-contain w-80 md:w-[600px] h-auto"/>
+                            <Image src="/deco1.svg" alt="Decoración 1" width={600} height={600} className="object-contain w-48 sm:w-80 md:w-[600px] h-auto"/>
                         </motion.div>
                         
                         {/* Decoración 2 - Esquina inferior izquierda */}
                         <motion.div 
                             key="deco2"
-                            className="hidden sm:block absolute bottom-[-10] left-0 z-0"
+                            className="absolute bottom-[-10] left-0 z-0 pointer-events-none"
                             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}>
-                            <Image src="/deco2.svg" alt="Decoración 2" width={600} height={600} className="object-contain w-80 md:w-[600px] h-auto"/>
+                            <Image src="/deco2.svg" alt="Decoración 2" width={600} height={600} className="object-contain w-48 sm:w-80 md:w-[600px] h-auto"/>
                         </motion.div>
                     </>
                 )}
