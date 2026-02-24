@@ -1,6 +1,6 @@
 'use client';
 
-import { User, MapPin, Building2 } from 'lucide-react';
+import { User, MapPin, Building } from 'lucide-react';
 import { formatDate, calculateAge } from '@/lib/utils/date-formatter';
 
 interface PersonalInfoTabProps {
@@ -129,7 +129,7 @@ export default function PersonalInfoTab({ solicitante }: PersonalInfoTabProps) {
       {solicitante.nombre_nucleo && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
           <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-primary" />
+            <Building className="w-5 h-5 text-primary" />
             Núcleo Asignado
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

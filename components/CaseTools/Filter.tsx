@@ -2,6 +2,7 @@
 import {
   Activity,
   BookOpen,
+  Building,
   Building2,
   Calendar,
   ChevronLeft,
@@ -9,10 +10,12 @@ import {
   FileText,
   Filter as FilterIcon,
   Flag,
+  FolderTree,
+  Hash,
+  Home,
   Layers,
   MapPin,
   Tag,
-  Hash,
   User,
   UserCheck,
   X,
@@ -56,6 +59,7 @@ interface FilterProps {
   parroquiaOptions?: { value: string; label: string }[];
   parroquiaLabel?: string;
   tramiteOptions?: { value: string; label: string }[];
+  tramiteLabel?: string;
   estatusOptions?: { value: string; label: string }[];
   estatusLabel?: string;
   showCasosAsignados?: boolean;
@@ -95,6 +99,8 @@ interface FilterProps {
   onSortChange?: (value: string) => void;
   sortOptions?: { value: string; label: string }[];
   sortLabel?: string;
+  tramiteIcon?: LucideIcon;
+  estatusIcon?: LucideIcon;
 }
 
 function Filter({
@@ -136,6 +142,7 @@ function Filter({
   parroquiaOptions = [],
   parroquiaLabel = 'Parroquia',
   tramiteOptions = [],
+  tramiteLabel = 'Trámite',
   estatusOptions = [],
   estatusLabel = 'Estatus',
   showCasosAsignados = false,
@@ -154,7 +161,7 @@ function Filter({
   subcategoriaLabel = 'Subcategoría',
   nucleoLabel = 'Núcleo',
   nucleoAllLabel = 'Todos los núcleos',
-  nucleoIcon: NucleoIcon = Building2,
+  nucleoIcon: NucleoIcon = Building,
   fechaInicio,
   fechaFin,
   onFechaInicioChange,
@@ -174,6 +181,8 @@ function Filter({
   onSortChange,
   sortOptions = [],
   sortLabel = 'Orden',
+  tramiteIcon: TramiteIcon = FileText,
+  estatusIcon: EstatusIcon = Activity,
 }: FilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<
@@ -430,7 +439,11 @@ function Filter({
         case 'tramite':
           options = tramiteOptions;
           handler = onTramiteChange || (() => { });
-          allLabel = 'Todos los trámites';
+          allLabel = tramiteLabel.toLowerCase() === 'estado'
+            ? 'Todos los estados'
+            : tramiteLabel.toLowerCase() === 'trámite'
+              ? 'Todos los trámites'
+              : `Todos los ${tramiteLabel.toLowerCase()}`;
           break;
         case 'materia':
           options = (materiaOptions && materiaOptions.length > 0)
@@ -459,7 +472,9 @@ function Filter({
         case 'estatus':
           options = estatusOptions;
           handler = onEstatusChange || (() => { });
-          allLabel = `Todos los ${estatusLabel.toLowerCase()}`;
+          allLabel = estatusLabel.toLowerCase() === 'rol'
+            ? 'Todos los roles'
+            : `Todos los ${estatusLabel.toLowerCase()}`;
           break;
         case 'estadoCivil':
           options = estadoCivilOptions;
@@ -814,6 +829,106 @@ function Filter({
                   </>
                 )}
 
+                {/* Opción: Semestre */}
+                {onTermChange && (
+                  <>
+                    <motion.button
+                      ref={activeSubmenu === 'term' ? activeButtonRef : undefined}
+                      type="button"
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      onClick={(e) => handleSubmenuToggle('term', e)}
+                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'term'
+                        ? 'bg-primary-light text-primary'
+                        : termFilter
+                          ? 'text-primary hover:bg-gray-100'
+                          : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                    >
+                      <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'term' ? '-rotate-90' : ''}`} />
+                      <div className="flex-1" />
+                      <span>Semestre</span>
+                      <Calendar className="w-4 h-4" />
+                    </motion.button>
+                    <div className="border-t border-gray-200 my-2"></div>
+                  </>
+                )}
+
+                {/* Opción: Materia */}
+                {onMateriaChange && (
+                  <>
+                    <motion.button
+                      ref={activeSubmenu === 'materia' ? activeButtonRef : undefined}
+                      type="button"
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      onClick={(e) => handleSubmenuToggle('materia', e)}
+                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'materia'
+                        ? 'bg-primary-light text-primary'
+                        : materiaFilter
+                          ? 'text-primary hover:bg-gray-100'
+                          : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                    >
+                      <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'materia' ? '-rotate-90' : ''}`} />
+                      <div className="flex-1" />
+                      <span>{materiaLabel}</span>
+                      <BookOpen className="w-4 h-4" />
+                    </motion.button>
+                    <div className="border-t border-gray-200 my-2"></div>
+                  </>
+                )}
+
+                {/* Opción: Categoría */}
+                {onCategoriaChange && (
+                  <>
+                    <motion.button
+                      ref={activeSubmenu === 'categoria' ? activeButtonRef : undefined}
+                      type="button"
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      onClick={(e) => handleSubmenuToggle('categoria', e)}
+                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'categoria'
+                        ? 'bg-primary-light text-primary'
+                        : categoriaFilter
+                          ? 'text-primary hover:bg-gray-100'
+                          : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                    >
+                      <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'categoria' ? '-rotate-90' : ''}`} />
+                      <div className="flex-1" />
+                      <span>{categoriaLabel}</span>
+                      <FolderTree className="w-4 h-4" />
+                    </motion.button>
+                    <div className="border-t border-gray-200 my-2"></div>
+                  </>
+                )}
+
+                {/* Opción: Subcategoría */}
+                {onSubcategoriaChange && (
+                  <>
+                    <motion.button
+                      ref={activeSubmenu === 'subcategoria' ? activeButtonRef : undefined}
+                      type="button"
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      onClick={(e) => handleSubmenuToggle('subcategoria', e)}
+                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'subcategoria'
+                        ? 'bg-primary-light text-primary'
+                        : subcategoriaFilter
+                          ? 'text-primary hover:bg-gray-100'
+                          : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                    >
+                      <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'subcategoria' ? '-rotate-90' : ''}`} />
+                      <div className="flex-1" />
+                      <span>{subcategoriaLabel}</span>
+                      <FileText className="w-4 h-4" />
+                    </motion.button>
+                    <div className="border-t border-gray-200 my-2"></div>
+                  </>
+                )}
+
                 {/* Opción: Núcleo */}
                 {onNucleoChange && (
                   <>
@@ -832,9 +947,59 @@ function Filter({
                       <ChevronLeft
                         className={`w-4 h-4 transition-transform ${activeSubmenu === 'nucleo' ? '-rotate-90' : ''}`}
                       />
-                      <div className="flex-1" /> {/* Spacer agregado nuevamente para asegurar alineación derecha */}
+                      <div className="flex-1" />
                       <span>{nucleoLabel}</span>
                       <NucleoIcon className="w-4 h-4" />
+                    </motion.button>
+                    <div className="border-t border-gray-200 my-2"></div>
+                  </>
+                )}
+
+                {/* Opción: Trámite */}
+                {onTramiteChange && (
+                  <>
+                    <motion.button
+                      ref={activeSubmenu === 'tramite' ? activeButtonRef : undefined}
+                      type="button"
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      onClick={(e) => handleSubmenuToggle('tramite', e)}
+                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'tramite'
+                        ? 'bg-primary-light text-primary'
+                        : tramiteFilter
+                          ? 'text-primary hover:bg-gray-100'
+                          : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                    >
+                      <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'tramite' ? '-rotate-90' : ''}`} />
+                      <div className="flex-1" />
+                      <span>{tramiteLabel}</span>
+                      <TramiteIcon className="w-4 h-4" />
+                    </motion.button>
+                    <div className="border-t border-gray-200 my-2"></div>
+                  </>
+                )}
+
+                {/* Opción: Estatus */}
+                {onEstatusChange && (
+                  <>
+                    <motion.button
+                      ref={activeSubmenu === 'estatus' ? activeButtonRef : undefined}
+                      type="button"
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      onClick={(e) => handleSubmenuToggle('estatus', e)}
+                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'estatus'
+                        ? 'bg-primary-light text-primary'
+                        : estatusFilter
+                          ? 'text-primary hover:bg-gray-100'
+                          : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                    >
+                      <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'estatus' ? '-rotate-90' : ''}`} />
+                      <div className="flex-1" />
+                      <span>{estatusLabel}</span>
+                      <EstatusIcon className="w-4 h-4" />
                     </motion.button>
                     <div className="border-t border-gray-200 my-2"></div>
                   </>
@@ -886,7 +1051,7 @@ function Filter({
                       />
                       <div className="flex-1" />
                       <span>{municipioLabel}</span>
-                      <MapPin className="w-4 h-4" />
+                      <Building2 className="w-4 h-4" />
                     </motion.button>
                     <div className="border-t border-gray-200 my-2"></div>
                   </>
@@ -912,7 +1077,7 @@ function Filter({
                       />
                       <div className="flex-1" />
                       <span>{parroquiaLabel}</span>
-                      <MapPin className="w-4 h-4" />
+                      <Home className="w-4 h-4" />
                     </motion.button>
                     <div className="border-t border-gray-200 my-2"></div>
                   </>
@@ -968,131 +1133,6 @@ function Filter({
                   </>
                 )}
 
-                {/* Opción: Materia */}
-                {onMateriaChange && (
-                  <>
-                    <motion.button
-                      ref={activeSubmenu === 'materia' ? activeButtonRef : undefined}
-                      type="button"
-                      whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
-                      onClick={(e) => handleSubmenuToggle('materia', e)}
-                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'materia'
-                        ? 'bg-primary-light text-primary'
-                        : materiaFilter
-                          ? 'text-primary hover:bg-gray-100'
-                          : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                    >
-                      <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'materia' ? '-rotate-90' : ''}`} />
-                      <div className="flex-1" />
-                      <span>{materiaLabel}</span>
-                      <BookOpen className="w-4 h-4" />
-                    </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
-                  </>
-                )}
-
-                {/* Opción: Categoría */}
-                {onCategoriaChange && (
-                  <>
-                    <motion.button
-                      ref={activeSubmenu === 'categoria' ? activeButtonRef : undefined}
-                      type="button"
-                      whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
-                      onClick={(e) => handleSubmenuToggle('categoria', e)}
-                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'categoria'
-                        ? 'bg-primary-light text-primary'
-                        : categoriaFilter
-                          ? 'text-primary hover:bg-gray-100'
-                          : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                    >
-                      <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'categoria' ? '-rotate-90' : ''}`} />
-                      <div className="flex-1" />
-                      <span>{categoriaLabel}</span>
-                      <Tag className="w-4 h-4" />
-                    </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
-                  </>
-                )}
-
-                {/* Opción: Subcategoría */}
-                {onSubcategoriaChange && (
-                  <>
-                    <motion.button
-                      ref={activeSubmenu === 'subcategoria' ? activeButtonRef : undefined}
-                      type="button"
-                      whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
-                      onClick={(e) => handleSubmenuToggle('subcategoria', e)}
-                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'subcategoria'
-                        ? 'bg-primary-light text-primary'
-                        : subcategoriaFilter
-                          ? 'text-primary hover:bg-gray-100'
-                          : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                    >
-                      <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'subcategoria' ? '-rotate-90' : ''}`} />
-                      <div className="flex-1" />
-                      <span>{subcategoriaLabel}</span>
-                      <Hash className="w-4 h-4" />
-                    </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
-                  </>
-                )}
-
-                {/* Opción: Semestre */}
-                {onTermChange && (
-                  <>
-                    <motion.button
-                      ref={activeSubmenu === 'term' ? activeButtonRef : undefined}
-                      type="button"
-                      whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
-                      onClick={(e) => handleSubmenuToggle('term', e)}
-                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'term'
-                        ? 'bg-primary-light text-primary'
-                        : termFilter
-                          ? 'text-primary hover:bg-gray-100'
-                          : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                    >
-                      <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'term' ? '-rotate-90' : ''}`} />
-                      <div className="flex-1" />
-                      <span>Semestre</span>
-                      <Calendar className="w-4 h-4" />
-                    </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
-                  </>
-                )}
-
-                {/* Opción: Trámite */}
-                {onTramiteChange && (
-                  <>
-                    <motion.button
-                      ref={activeSubmenu === 'tramite' ? activeButtonRef : undefined}
-                      type="button"
-                      whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
-                      onClick={(e) => handleSubmenuToggle('tramite', e)}
-                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'tramite'
-                        ? 'bg-primary-light text-primary'
-                        : tramiteFilter
-                          ? 'text-primary hover:bg-gray-100'
-                          : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                    >
-                      <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'tramite' ? '-rotate-90' : ''}`} />
-                      <div className="flex-1" />
-                      <span>Trámite</span>
-                      <FileText className="w-4 h-4" />
-                    </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
-                  </>
-                )}
-
                 {/* Opción: Operación */}
                 {onOperacionChange && (
                   <>
@@ -1138,31 +1178,6 @@ function Filter({
                       <div className="flex-1" />
                       <span>{sortLabel}</span>
                       <ArrowUpDown className="w-4 h-4" />
-                    </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
-                  </>
-                )}
-
-                {/* Opción: Estatus */}
-                {onEstatusChange && (
-                  <>
-                    <motion.button
-                      ref={activeSubmenu === 'estatus' ? activeButtonRef : undefined}
-                      type="button"
-                      whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
-                      onClick={(e) => handleSubmenuToggle('estatus', e)}
-                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'estatus'
-                        ? 'bg-primary-light text-primary'
-                        : estatusFilter
-                          ? 'text-primary hover:bg-gray-100'
-                          : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                    >
-                      <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'estatus' ? '-rotate-90' : ''}`} />
-                      <div className="flex-1" />
-                      <span>{estatusLabel}</span>
-                      <Activity className="w-4 h-4" />
                     </motion.button>
                     <div className="border-t border-gray-200 my-2"></div>
                   </>

@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
-import { UserPlus, Users, UserX, CalendarX2 } from 'lucide-react';
+import { UserPlus, Users, UserX, CalendarX2, Activity, UserCheck } from 'lucide-react';
 import ConfirmModal from '../ui/feedback/ConfirmModal';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
@@ -408,17 +408,19 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
             estatusFilter={tipoFilter}
             onEstatusChange={setTipoFilter}
             estatusOptions={tipoOptions}
+            estatusLabel="Rol"
+            estatusIcon={UserCheck}
             tramiteFilter={estadoFilter}
             onTramiteChange={setEstadoFilter}
             tramiteOptions={[
               { value: 'Habilitado', label: 'Habilitados' },
               { value: 'Deshabilitado', label: 'Deshabilitados' }
             ]}
-            nucleoFilter={semestreFilter}
-            onNucleoChange={setSemestreFilter}
-            nucleoLabel="Semestre"
-            nucleoAllLabel="Todos los semestres"
-            nucleoOptions={semestreOptions}
+            tramiteLabel="Estado"
+            tramiteIcon={Activity}
+            termFilter={semestreFilter}
+            onTermChange={setSemestreFilter}
+            termOptions={semestreOptions}
           />
         </div>
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center shrink-0 w-full lg:w-auto">
@@ -602,12 +604,12 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
               return {
                 cedula: u.cedula,
                 nombre_completo: `${u.nombres || ''} ${u.apellidos || ''}`.trim(),
-                tipo_usuario: u.tipo_usuario,
+                rol: u.tipo_usuario,
                 semestre: semestreActual,
                 estado: u.habilitado_sistema ? 'Habilitado' : 'Deshabilitado',
               };
             })}
-            columns={["Cédula", "Nombre Completo", "Tipo", "Semestre", "Estado"]}
+            columns={["Cédula", "Nombre Completo", "Rol", "Semestre", "Estado"]}
             onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDelete}

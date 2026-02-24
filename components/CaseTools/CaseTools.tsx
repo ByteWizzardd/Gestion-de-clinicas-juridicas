@@ -38,6 +38,7 @@ type CaseToolsProps = {
     nucleoAllLabel?: string;
     nucleoIcon?: LucideIcon;
     estatusLabel?: string;
+    tramiteLabel?: string;
     estadoCivilFilter?: string;
     onEstadoCivilChange?: (value: string) => void;
     estadoCivilOptions?: { value: string; label: string }[];
@@ -85,6 +86,8 @@ type CaseToolsProps = {
     onSortChange?: (value: string) => void;
     sortOptions?: { value: string; label: string }[];
     sortLabel?: string;
+    tramiteIcon?: LucideIcon;
+    estatusIcon?: LucideIcon;
 };
 
 function CaseTools({
@@ -122,6 +125,7 @@ function CaseTools({
     nucleoAllLabel,
     nucleoIcon,
     estatusLabel,
+    tramiteLabel,
     estadoCivilFilter = '',
     onEstadoCivilChange,
     estadoCivilOptions,
@@ -158,6 +162,8 @@ function CaseTools({
     onSortChange,
     sortOptions,
     sortLabel,
+    tramiteIcon,
+    estatusIcon,
 }: CaseToolsProps) {
     const hasSearch = onSearchChange !== undefined;
     const hasAdd = Boolean(addLabel || onAddClick);
@@ -245,6 +251,7 @@ function CaseTools({
                         onEstatusChange={onEstatusChange}
                         onCasosAsignadosChange={onCasosAsignadosChange}
                         tramiteOptions={tramiteOptions}
+                        tramiteLabel={tramiteLabel}
                         estatusOptions={estatusOptions}
                         showCasosAsignados={showCasosAsignados}
                         materiaFilter={materiaFilter}
@@ -306,6 +313,8 @@ function CaseTools({
                         onSortChange={onSortChange}
                         sortOptions={sortOptions}
                         sortLabel={sortLabel}
+                        tramiteIcon={tramiteIcon}
+                        estatusIcon={estatusIcon}
                     />
                 )}
                 {hasAdd && <Add label={addLabel} onClick={onAddClick} />}
