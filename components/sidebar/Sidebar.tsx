@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { getMenuByRole, type UserRole } from './menu-config';
 import ProfileDropdown from '@/components/ui/navigation/ProfileDropdown';
 import { getCurrentUserAction } from '@/app/actions/auth';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 interface SidebarProps {
   role: UserRole;
@@ -28,8 +28,11 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
   const [currentUser, setCurrentUser] = useState<{ nombre: string; rol: string } | null>(null);
 
   // Estado para colapsar el sidebar con persistencia
-  const [isCollapsed, setIsCollapsed] = useState(initialCollapsed);
+  const [isCollapsedState, setIsCollapsed] = useState(initialCollapsed);
   const [isMounted, setIsMounted] = useState(false);
+
+  // Forzamos a que el sidebar de móvil/tablet (cuando tiene onNavigate) NUNCA se colapse
+  const isCollapsed = onNavigate ? false : isCollapsedState;
 
   // Sincronizar con prop inicial al montar
   useEffect(() => {
@@ -38,7 +41,7 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
 
   // Función para cambiar estado y guardar preferencia en cookie y localStorage
   const toggleSidebar = () => {
-    const newState = !isCollapsed;
+    const newState = !isCollapsedState;
     setIsCollapsed(newState);
     try {
       // Usar llave específica del usuario si la cédula está disponible
@@ -158,15 +161,26 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
       {/* Botón de toggle (visible al hacer hover o siempre visible) */}
       <button
         onClick={toggleSidebar}
-        className="absolute -right-2 md:-right-3 top-6 md:top-8 bg-white rounded-full p-1 md:p-1.5 shadow-md border border-gray-100 text-gray-500 hover:text-primary transition-all duration-300 z-50 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 cursor-pointer flex items-center justify-center"
+        className="absolute -right-2 lg:-right-3 top-6 lg:top-8 bg-white rounded-full p-1 lg:p-1.5 shadow-md border border-gray-100 text-gray-500 hover:text-primary transition-all duration-300 z-50 lg:opacity-0 lg:group-hover:opacity-100 focus:opacity-100 cursor-pointer hidden lg:flex items-center justify-center"
         aria-label={isCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
       >
         {isCollapsed ? (
-          <ChevronRight className="w-3.5 h-3.5 md:w-4 md:h-4" />
+          <ChevronRight className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
         ) : (
-          <ChevronLeft className="w-3.5 h-3.5 md:w-4 md:h-4" />
+          <ChevronLeft className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
         )}
       </button>
+
+      {/* Botón de cerrar para móvil/tablet */}
+      {onNavigate && (
+        <button
+          onClick={onNavigate}
+          className="absolute right-3 top-5 bg-gray-100/80 backdrop-blur-sm rounded-full p-1.5 text-gray-600 hover:text-primary hover:bg-gray-200 transition-all duration-300 z-50 lg:hidden flex items-center justify-center cursor-pointer shadow-sm"
+          aria-label="Cerrar menú"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      )}
 
       <div className={`p-4 md:p-6 flex justify-center items-center overflow-hidden transition-all duration-300 ${isCollapsed ? 'px-2' : ''}`}>
         <AnimatePresence mode="wait">

@@ -79,7 +79,7 @@ export default function DashboardLayoutClient({ user, children, initialSidebarCo
           }
           aria-hidden={!isMobileSidebarOpen}
         >
-          <Sidebar role={userRole} userName={userName} initialCollapsed={initialSidebarCollapsed} userCedula={user.cedula} onNavigate={() => setIsMobileSidebarOpen(false)} />
+          <Sidebar role={userRole} userName={userName} initialCollapsed={false} userCedula={user.cedula} onNavigate={() => setIsMobileSidebarOpen(false)} />
         </div>
       </div>
 
@@ -90,13 +90,13 @@ export default function DashboardLayoutClient({ user, children, initialSidebarCo
             <div className="h-14 flex items-center justify-between gap-3">
               <button
                 type="button"
-                className="inline-flex items-center justify-center rounded-xl bg-white p-1.5 shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] shrink-0"
+                className="inline-flex items-center justify-center rounded-xl bg-white p-2 shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] shrink-0 transition-transform active:scale-95"
                 aria-label={isMobileSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
                 aria-controls="mobile-sidebar"
                 aria-expanded={isMobileSidebarOpen}
                 onClick={() => setIsMobileSidebarOpen((v: boolean) => !v)}
               >
-                {isMobileSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+                {isMobileSidebarOpen ? <X className="w-8 h-8 text-gray-700" /> : <Menu className="w-8 h-8 text-gray-700" />}
               </button>
 
               <div className="min-w-0">
