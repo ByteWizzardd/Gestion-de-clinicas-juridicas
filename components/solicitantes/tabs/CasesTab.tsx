@@ -6,11 +6,12 @@ import { FileText } from 'lucide-react';
 import { formatDate } from '@/lib/utils/date-formatter';
 import Table from '@/components/Table/Table';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
-import { deleteCasoAction } from '@/app/actions/casos';
+import { deleteCasoAction, getCasoByIdAction, updateCasoAction } from '@/app/actions/casos';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import { getMateriasAction } from '@/app/actions/materias';
 import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
+import CaseFormModal from '@/components/forms/CaseFormModal';
 
 interface CasesTabProps {
   cedulaSolicitante?: string;
@@ -49,6 +50,9 @@ export default function CasesTab({ casos, cedulaSolicitante }: CasesTabProps) {
   const [itemToDelete, setItemToDelete] = useState<number | null>(null);
   const [deleteMotivo, setDeleteMotivo] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedCaseData, setSelectedCaseData] = useState<any>(null);
+  const [isFetchingCase, setIsFetchingCase] = useState(false);
 
   const uniqueOptions = (values: Array<string | null | undefined>) => {
     const set = new Set(values.map((v) => (v ?? '').trim()).filter(Boolean));
@@ -238,10 +242,43 @@ export default function CasesTab({ casos, cedulaSolicitante }: CasesTabProps) {
     }
   };
 
-  const handleEdit = (data: Record<string, unknown>) => {
+  const handleEdit = async (data: Record<string, unknown>) => {
     const idCaso = data.id_caso as number;
-    if (idCaso) {
-      router.push(`/dashboard/cases/${idCaso}?edit=true`);
+    if (!idCaso) return;
+
+    try {
+      setIsFetchingCase(true);
+      const result = await getCasoByIdAction(idCaso);
+      if (result.success && result.data) {
+        setSelectedCaseData(result.data);
+        setIsEditModalOpen(true);
+      } else {
+        toast.error(result.error?.message || 'No se pudo cargar la información del caso');
+      }
+    } catch (error) {
+      console.error('Error al obtener caso:', error);
+      toast.error('Ocurrió un error al cargar el caso');
+    } finally {
+      setIsFetchingCase(false);
+    }
+  };
+
+  const handleSubmitEdit = async (formData: any) => {
+    if (!selectedCaseData?.id_caso) return;
+
+    try {
+      const result = await updateCasoAction(selectedCaseData.id_caso, formData);
+      if (result.success) {
+        toast.success('Caso actualizado correctamente');
+        setIsEditModalOpen(false);
+        setSelectedCaseData(null);
+        router.refresh();
+      } else {
+        toast.error(result.error?.message || 'Error al actualizar el caso');
+      }
+    } catch (error) {
+      console.error('Error al actualizar caso:', error);
+      toast.error('Ocurrió un error al actualizar el caso');
     }
   };
 
@@ -362,6 +399,17 @@ export default function CasesTab({ casos, cedulaSolicitante }: CasesTabProps) {
         onMotiveChange={setDeleteMotivo}
         motivePlaceholder="Indique el motivo de la eliminación..."
         disabled={isDeleting}
+      />
+
+      <CaseFormModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedCaseData(null);
+        }}
+        onSubmit={handleSubmitEdit}
+        isEditing={true}
+        initialData={selectedCaseData}
       />
     </div>
   );
