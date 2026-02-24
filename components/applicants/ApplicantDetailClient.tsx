@@ -295,6 +295,7 @@ export default function ApplicantDetailClient() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
+        className="hidden md:block mb-4 sm:mb-6"
       >
         <Breadcrumbs
           items={[
@@ -302,6 +303,22 @@ export default function ApplicantDetailClient() {
             { label: nombreCompleto }
           ]}
         />
+      </motion.div>
+
+      {/* Botón de volver para móvil */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        className="md:hidden mb-4"
+      >
+        <button
+          onClick={() => router.push('/dashboard/applicants')}
+          className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors cursor-pointer font-medium"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span>Volver a Solicitantes</span>
+        </button>
       </motion.div>
 
       <div className="flex items-center gap-3 mb-2">
