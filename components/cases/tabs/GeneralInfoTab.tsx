@@ -93,14 +93,14 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
     try {
       const result = await getSemestres();
       if (result.success && result.data) {
-          // Filter out semesters already assigned
-          const currentTerms = new Set(semesters.map(s => s.term));
-          const available = result.data.filter((s:any) => !currentTerms.has(s.term));
-          setAvailableSemesters(available);
+        // Filter out semesters already assigned
+        const currentTerms = new Set(semesters.map(s => s.term));
+        const available = result.data.filter((s: any) => !currentTerms.has(s.term));
+        setAvailableSemesters(available);
       }
       setAddSemesterModalOpen(true);
     } catch (error) {
-        toast.error('Error al cargar lista de semestres');
+      toast.error('Error al cargar lista de semestres');
     }
   };
 
@@ -119,7 +119,7 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
         toast.error(result.error?.message || 'Error al agregar semestre');
       }
     } catch (error) {
-        toast.error('Error inesperado');
+      toast.error('Error inesperado');
     } finally {
       setIsAddingSemester(false);
     }
@@ -132,21 +132,21 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
 
   const confirmRemoveSemester = async () => {
     if (!semesterToDelete) return;
-    
+
     try {
       const result = await removeCaseFromSemesterAction(caso.id_caso, semesterToDelete);
       if (result.success) {
-          toast.success('Semestre eliminado correctamente');
-          fetchSemesters();
-          if (onRefresh) onRefresh();
+        toast.success('Semestre eliminado correctamente');
+        fetchSemesters();
+        if (onRefresh) onRefresh();
       } else {
-          toast.error(result.error?.message || 'Error al eliminar semestre');
+        toast.error(result.error?.message || 'Error al eliminar semestre');
       }
     } catch (error) {
-        toast.error('Error inesperado');
+      toast.error('Error inesperado');
     } finally {
-        setDeleteSemesterConfirmOpen(false);
-        setSemesterToDelete(null);
+      setDeleteSemesterConfirmOpen(false);
+      setSemesterToDelete(null);
     }
   };
 
@@ -390,83 +390,83 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
             Semestres de Actividad ({semesters.length})
           </h3>
           <button
-              onClick={handleOpenAddSemester}
-              className="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+            onClick={handleOpenAddSemester}
+            className="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1 cursor-pointer"
           >
-              + Agregar Semestre
+            + Agregar Semestre
           </button>
         </div>
-        
+
         {loadingSemesters ? (
-            <p className="text-gray-500">Cargando semestres...</p>
+          <p className="text-gray-500">Cargando semestres...</p>
         ) : (
-            <div className="space-y-3">
-                {semesters.length === 0 ? (
-                    <p className="text-gray-500 italic">No hay semestres asociados a este caso.</p>
-                ) : (
-                    semesters.map((sem) => (
-                        <div key={sem.term} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg bg-gray-50/50 hover:bg-gray-50 transition-colors group">
-                            <div className="flex flex-col">
-                                <span className="font-medium text-gray-900">Semestre {sem.term}</span>
-                                <span className="text-xs text-gray-500">
-                                    {formatDate(sem.fecha_inicio)} - {formatDate(sem.fecha_fin)}
-                                </span>
-                            </div>
-                            <button
-                                onClick={() => handleRemoveSemester(sem.term)}
-                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
-                                title="Eliminar asociación"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </button>
-                        </div>
-                    ))
-                )}
-            </div>
+          <div className="space-y-3">
+            {semesters.length === 0 ? (
+              <p className="text-gray-500 italic">No hay semestres asociados a este caso.</p>
+            ) : (
+              semesters.map((sem) => (
+                <div key={sem.term} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg bg-gray-50/50 hover:bg-gray-50 transition-colors group">
+                  <div className="flex flex-col">
+                    <span className="font-medium text-gray-900">Semestre {sem.term}</span>
+                    <span className="text-xs text-gray-500">
+                      {formatDate(sem.fecha_inicio)} - {formatDate(sem.fecha_fin)}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleRemoveSemester(sem.term)}
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"
+                    title="Eliminar asociación"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
         )}
       </div>
 
       {/* Modal Agregar Semestre */}
       <Modal
-          isOpen={addSemesterModalOpen}
-          onClose={() => setAddSemesterModalOpen(false)}
-          title="Asociar Semestre"
-          size="sm"
+        isOpen={addSemesterModalOpen}
+        onClose={() => setAddSemesterModalOpen(false)}
+        title="Asociar Semestre"
+        size="sm"
       >
-          <div className="p-6">
-              <p className="mb-4 text-sm text-gray-600">
-                  Selecciona el semestre que deseas asociar a este caso.
-              </p>
-              
-              <div className="mb-6">
-                  <Select
-                      label="Semestre"
-                      value={selectedSemesterToAdd}
-                      onChange={(e) => setSelectedSemesterToAdd(e.target.value)}
-                      options={availableSemesters.map(s => ({ value: s.term, label: s.term }))}
-                      placeholder="Seleccionar semestre..."
-                      disabled={isAddingSemester}
-                  />
-              </div>
+        <div className="p-6">
+          <p className="mb-4 text-sm text-gray-600">
+            Selecciona el semestre que deseas asociar a este caso.
+          </p>
 
-              <div className="flex justify-end gap-3">
-                  <Button
-                      variant="outline"
-                      onClick={() => setAddSemesterModalOpen(false)}
-                      disabled={isAddingSemester}
-                  >
-                      Cancelar
-                  </Button>
-                  <Button
-                      variant="primary"
-                      onClick={handleAddSemester}
-                      disabled={!selectedSemesterToAdd || isAddingSemester}
-                      isLoading={isAddingSemester}
-                  >
-                      Agregar
-                  </Button>
-              </div>
+          <div className="mb-6">
+            <Select
+              label="Semestre"
+              value={selectedSemesterToAdd}
+              onChange={(e) => setSelectedSemesterToAdd(e.target.value)}
+              options={availableSemesters.map(s => ({ value: s.term, label: s.term }))}
+              placeholder="Seleccionar semestre..."
+              disabled={isAddingSemester}
+            />
           </div>
+
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setAddSemesterModalOpen(false)}
+              disabled={isAddingSemester}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleAddSemester}
+              disabled={!selectedSemesterToAdd || isAddingSemester}
+              isLoading={isAddingSemester}
+            >
+              Agregar
+            </Button>
+          </div>
+        </div>
       </Modal>
       <EditBeneficiaryModal
         isOpen={editModalOpen}
@@ -505,8 +505,8 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
       <ConfirmModal
         isOpen={deleteSemesterConfirmOpen}
         onClose={() => {
-            setDeleteSemesterConfirmOpen(false);
-            setSemesterToDelete(null);
+          setDeleteSemesterConfirmOpen(false);
+          setSemesterToDelete(null);
         }}
         onConfirm={confirmRemoveSemester}
         title="Eliminar Semestre"
