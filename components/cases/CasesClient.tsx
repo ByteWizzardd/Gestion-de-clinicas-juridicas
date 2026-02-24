@@ -20,7 +20,7 @@ import { descargarHistorialCasoAction } from '@/app/actions/reports';
 import { generateCasoHistorialZip } from '@/lib/utils/case-history-pdf-generator';
 import type { CasoHistorialData } from '@/lib/types/report-types';
 import { getSemestres } from '@/app/actions/catalogos/semestres.actions';
-
+import { getCurrentTermAction } from '@/app/actions/estudiantes';
 interface Caso {
   id_caso: number;
   fecha_inicio_caso: string;
@@ -132,6 +132,12 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
             .sort((a, b) => b.term.localeCompare(a.term))
             .map(s => ({ value: s.term, label: s.term }));
           setSemestresOptions(sortedTerms);
+        }
+        
+        // Cargar el semestre actual como valor predeterminado
+        const currentTermResult = await getCurrentTermAction();
+        if (currentTermResult.success && currentTermResult.data) {
+          setTermFilter(currentTermResult.data.term);
         }
       } catch (error) {
         console.error('Error cargando datos de catálogo:', error);

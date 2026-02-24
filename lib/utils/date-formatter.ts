@@ -30,6 +30,14 @@ export function calculateAge(birthDate: Date | string | null | undefined): numbe
  */
 export function formatDate(date: Date | string | null | undefined): string {
     if (!date) return '';
+    
+    if (typeof date === 'string') {
+        const match = date.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (match) {
+            return `${match[3]}/${match[2]}/${match[1]}`;
+        }
+    }
+
     const d = new Date(date);
     return d.toLocaleDateString('es-VE'); // Use Venezuelan locale or default
 }
