@@ -20,7 +20,7 @@ export default function ReportsLoading() {
                         return (
                             <div
                                 key={i}
-                                className="bg-neutral-50 rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.15)] h-full min-h-40 w-full relative overflow-hidden p-4 flex flex-col"
+                                className="bg-neutral-50 rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.3)] h-full min-h-40 w-full relative overflow-hidden p-4 flex flex-col"
                             >
                                 {/* Título del card */}
                                 <div className="my-auto pr-20">
@@ -31,8 +31,8 @@ export default function ReportsLoading() {
                                     />
                                 </div>
                                 {/* Ícono decorativo */}
-                                <div className={`absolute top-2 right-2 w-24 h-24 flex items-center justify-center ${i % 2 === 0 ? 'text-primary/10' : 'text-secondary/10'}`}>
-                                    <Icon size={80} strokeWidth={1} />
+                                <div className={`absolute top-2 right-2 w-24 h-24 flex items-center justify-center pointer-events-none ${i % 2 === 0 ? 'text-primary/20' : 'text-secondary/20'}`}>
+                                    <Icon className="w-full h-full" strokeWidth={1.5} />
                                 </div>
                                 {/* Botón */}
                                 <div className="mt-auto flex justify-center pt-2">

@@ -36,7 +36,7 @@ export interface CatalogCount {
 }
 
 interface CatalogsGridProps {
-    counts: CatalogCount;
+    counts?: CatalogCount;
     searchQuery?: string;
 }
 
@@ -47,7 +47,7 @@ export default function CatalogsGrid({ counts, searchQuery = '' }: CatalogsGridP
             id: 1,
             title: 'Materias',
             description: 'Áreas principales del derecho que se manejan en el sistema. Define las categorías generales de casos legales.',
-            count: counts.materias,
+            count: counts?.materias ?? 0,
             icon: BookOpen,
             href: '/dashboard/administration/materias'
         },
@@ -55,7 +55,7 @@ export default function CatalogsGrid({ counts, searchQuery = '' }: CatalogsGridP
             id: 2,
             title: 'Categorías',
             description: 'Clasificaciones específicas dentro de cada materia legal. Permite organizar los casos por tipo de problema jurídico.',
-            count: counts.categorias,
+            count: counts?.categorias ?? 0,
             icon: FolderTree,
             href: '/dashboard/administration/categorias'
         },
@@ -63,7 +63,7 @@ export default function CatalogsGrid({ counts, searchQuery = '' }: CatalogsGridP
             id: 3,
             title: 'Subcategorías',
             description: 'Subdivisiones detalladas de las categorías. Proporciona una clasificación más granular de los casos.',
-            count: counts.subcategorias,
+            count: counts?.subcategorias ?? 0,
             icon: FileText,
             href: '/dashboard/administration/subcategorias'
         },
@@ -71,7 +71,7 @@ export default function CatalogsGrid({ counts, searchQuery = '' }: CatalogsGridP
             id: 4,
             title: 'Ámbitos Legales',
             description: 'Ámbitos específicos de aplicación legal dentro de cada subcategoría. Define el alcance preciso de cada caso.',
-            count: counts.ambitos_legales,
+            count: counts?.ambitos_legales ?? 0,
             icon: Scale,
             href: '/dashboard/administration/ambitos-legales'
         },
@@ -81,7 +81,7 @@ export default function CatalogsGrid({ counts, searchQuery = '' }: CatalogsGridP
             id: 5,
             title: 'Tipos de Características',
             description: 'Categorías principales de características de vivienda (tipo, materiales, servicios). Agrupa las características por tipo.',
-            count: counts.tipos_caracteristicas,
+            count: counts?.tipos_caracteristicas ?? 0,
             icon: Tag,
             href: '/dashboard/administration/tipos-caracteristicas'
         },
@@ -89,7 +89,7 @@ export default function CatalogsGrid({ counts, searchQuery = '' }: CatalogsGridP
             id: 6,
             title: 'Características',
             description: 'Características específicas de viviendas de los solicitantes. Incluye detalles sobre materiales, servicios y condiciones.',
-            count: counts.caracteristicas,
+            count: counts?.caracteristicas ?? 0,
             icon: Tags,
             href: '/dashboard/administration/caracteristicas'
         },
@@ -99,7 +99,7 @@ export default function CatalogsGrid({ counts, searchQuery = '' }: CatalogsGridP
             id: 7,
             title: 'Estados',
             description: 'Estados del país registrados en el sistema. Nivel superior de la jerarquía geográfica.',
-            count: counts.estados,
+            count: counts?.estados ?? 0,
             icon: MapPin,
             href: '/dashboard/administration/estados'
         },
@@ -107,7 +107,7 @@ export default function CatalogsGrid({ counts, searchQuery = '' }: CatalogsGridP
             id: 8,
             title: 'Municipios',
             description: 'Municipios asociados a cada estado. Segundo nivel de la jerarquía geográfica para ubicar casos y solicitantes.',
-            count: counts.municipios,
+            count: counts?.municipios ?? 0,
             icon: Building2,
             href: '/dashboard/administration/municipios'
         },
@@ -115,7 +115,7 @@ export default function CatalogsGrid({ counts, searchQuery = '' }: CatalogsGridP
             id: 9,
             title: 'Parroquias',
             description: 'Parroquias asociadas a cada municipio. Nivel más específico de ubicación geográfica en el sistema.',
-            count: counts.parroquias,
+            count: counts?.parroquias ?? 0,
             icon: Home,
             href: '/dashboard/administration/parroquias'
         },
@@ -123,7 +123,7 @@ export default function CatalogsGrid({ counts, searchQuery = '' }: CatalogsGridP
             id: 10,
             title: 'Núcleos',
             description: 'Centros de atención legal donde se originan y gestionan los casos. Cada núcleo tiene una ubicación geográfica específica.',
-            count: counts.nucleos,
+            count: counts?.nucleos ?? 0,
             icon: Building,
             href: '/dashboard/administration/nucleos'
         },
@@ -133,7 +133,7 @@ export default function CatalogsGrid({ counts, searchQuery = '' }: CatalogsGridP
             id: 11,
             title: 'Semestres',
             description: 'Períodos académicos registrados en el sistema. Define los términos en los que estudiantes y profesores participan.',
-            count: counts.semestres,
+            count: counts?.semestres ?? 0,
             icon: Calendar,
             href: '/dashboard/administration/semestres'
         },
@@ -141,7 +141,7 @@ export default function CatalogsGrid({ counts, searchQuery = '' }: CatalogsGridP
             id: 12,
             title: 'Condiciones de Trabajo',
             description: 'Tipos de condiciones laborales de los solicitantes. Permite clasificar la situación de empleo de cada persona.',
-            count: counts.condiciones_trabajo,
+            count: counts?.condiciones_trabajo ?? 0,
             icon: Briefcase,
             href: '/dashboard/administration/condiciones-trabajo'
         },
@@ -149,7 +149,7 @@ export default function CatalogsGrid({ counts, searchQuery = '' }: CatalogsGridP
             id: 13,
             title: 'Condiciones de Actividad',
             description: 'Tipos de actividades económicas de los solicitantes. Complementa la información laboral y socioeconómica.',
-            count: counts.condiciones_actividad,
+            count: counts?.condiciones_actividad ?? 0,
             icon: Activity,
             href: '/dashboard/administration/condiciones-actividad'
         },
@@ -157,7 +157,7 @@ export default function CatalogsGrid({ counts, searchQuery = '' }: CatalogsGridP
             id: 14,
             title: 'Niveles Educativos',
             description: 'Niveles educativos de los solicitantes y jefes de hogar. Permite clasificar el nivel de educación alcanzado.',
-            count: counts.niveles_educativos,
+            count: counts?.niveles_educativos ?? 0,
             icon: GraduationCap,
             href: '/dashboard/administration/niveles-educativos'
         }
