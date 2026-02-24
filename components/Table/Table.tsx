@@ -135,7 +135,7 @@ export default function Table<T extends Record<string, unknown>>({
           ) : (
             <tr className="border-none">
               <td colSpan={columns.length + (selectable ? 2 : 1)} className="text-center py-8 text-gray-500">
-                No se encontraron casos que coincidan con los filtros
+                No se encontraron registros que coincidan con los filtros
               </td>
             </tr>
           )}
