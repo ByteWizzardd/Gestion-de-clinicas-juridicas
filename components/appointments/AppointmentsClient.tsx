@@ -562,14 +562,12 @@ export default function AppointmentsClient({
   return (
     <div className="h-full relative ">
       <div className="mb-4 md:mb-6 mt-4">
-        <div className="mb-4">
-          <h1 className="text-3xl font-medium text-foreground mb-1" style={{ fontFamily: 'var(--font-league-spartan)' }}>
-            Citas
-          </h1>
-          <p className="text-base text-gray-600" style={{ fontFamily: 'var(--font-urbanist)' }}>
-            Vista de programación de las citas.
-          </p>
-        </div>
+        <h1 className="text-4xl m-3 font-semibold font-primary">
+          Citas
+        </h1>
+        <p className="mb-6 ml-3 text-gray-600">
+          Vista de programación de las citas.
+        </p>
       </div>
 
       {/* Tabs para cambiar entre vistas */}

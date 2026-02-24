@@ -86,7 +86,7 @@ export default function AuditEntityDetailClient({
       {!hideMainHeader && (
         <div className="mb-4 md:mb-6 mt-4">
           <h1 className="text-4xl m-3 font-semibold font-primary">{entityTitle}</h1>
-          <p className="mb-6 ml-3">{entityDescription}</p>
+          <p className="mb-6 ml-3 text-gray-600">{entityDescription}</p>
         </div>
       )}
 

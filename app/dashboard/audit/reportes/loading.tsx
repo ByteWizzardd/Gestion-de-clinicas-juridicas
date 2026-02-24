@@ -14,6 +14,9 @@ export default function ReportesAuditLoading() {
                     <button className="px-4 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-medium whitespace-nowrap shrink border-b-2 border-primary text-primary transition-colors cursor-pointer">
                         Generados
                     </button>
+                    <button className="px-4 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-medium whitespace-nowrap shrink border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors cursor-pointer">
+                        Vistas Previas
+                    </button>
                 </div>
             </div>
 

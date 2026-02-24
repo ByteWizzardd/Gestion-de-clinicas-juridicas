@@ -10,10 +10,12 @@ export default async function TeamsPage() {
 
   return (
     <>
-      <h1 className="text-4xl m-3 font-semibold font-primary">Gestión de Equipo</h1>
-      <p className="mb-6 ml-3">
-        Supervisión de la carga de trabajo, desempeño y asignación de personal estudiantil
-      </p>
+      <div className="mb-4 md:mb-6 mt-4">
+        <h1 className="text-4xl m-3 font-semibold font-primary">Gestión de Equipo</h1>
+        <p className="mb-6 ml-3 text-gray-600">
+          Supervisión de la carga de trabajo, desempeño y asignación de personal estudiantil
+        </p>
+      </div>
       <CaseTools addLabel="Añadir Estudiante" />
       <div className="mt-10"></div>
       <Table

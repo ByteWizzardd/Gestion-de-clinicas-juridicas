@@ -893,11 +893,11 @@ export default function ReportsPage() {
     };
 
     return (
-        <div className="pt-2 px-6 pb-6 space-y-6 overflow-x-hidden max-w-full">
+        <div className="w-full overflow-x-hidden max-w-full">
             {/* Header */}
-            <div className="mb-4 md:mb-6">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl m-3 font-semibold font-primary">Reportes</h1>
-                <p className="mb-6 ml-3 text-base">Presentación de las métricas clave a través de gráficas y cuadros.</p>
+            <div className="mb-4 md:mb-6 mt-4">
+                <h1 className="text-4xl m-3 font-semibold font-primary">Reportes</h1>
+                <p className="mb-6 ml-3 text-base text-gray-600">Presentación de las métricas clave a través de gráficas y cuadros.</p>
             </div>
 
             {/* Report Generation Cards */}

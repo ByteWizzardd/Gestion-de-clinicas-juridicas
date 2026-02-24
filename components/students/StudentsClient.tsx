@@ -169,7 +169,7 @@ export default function StudentsClient({ initialEstudiantes = [] }: StudentsClie
         <>
             <div className="mb-4 md:mb-6 mt-4">
                 <h1 className="text-4xl m-3 font-semibold font-primary">Estudiantes</h1>
-                <p className="mb-6 ml-3">
+                <p className="mb-6 ml-3 text-gray-600">
                     Visualización y gestión de estudiantes registrados en el sistema.
                 </p>
             </div>
