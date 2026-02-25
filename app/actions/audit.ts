@@ -236,14 +236,7 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
 
     for (const [key, value] of Object.entries(rawActivityData)) {
       if (value instanceof Date) {
-        // HACK: 'reportes' parece venir con hora local mientras que los demás vienen con UTC (+4h).
-        // Ajustamos manualmente para que coincidan y el ordenamiento funcione.
-        if (key === 'reportes') {
-          const adjustedDate = new Date(value.getTime() + 4 * 60 * 60 * 1000);
-          lastActivityData[key] = adjustedDate.toISOString();
-        } else {
-          lastActivityData[key] = value.toISOString();
-        }
+        lastActivityData[key] = value.toISOString();
       } else if (typeof value === 'string') {
         lastActivityData[key] = value;
       } else {
