@@ -315,14 +315,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
                 ]}
                 error={errors.tipo_usuario}
               />
-              {form.rol !== undefined && (
-                <Input
-                  label="Rol"
-                  name="rol"
-                  value={form.rol as string || ''}
-                  onChange={handleChange}
-                />
-              )}
 
               <Select
                 label="TERM"
@@ -339,7 +331,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
                     }
                   }
                 }}
-                options={[{ value: '', label: 'Seleccione...' }, ...semesters]}
+                options={semesters}
                 error={errors.term}
               />
 

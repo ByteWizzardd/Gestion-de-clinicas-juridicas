@@ -272,6 +272,7 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
         correo_electronico: result.data.correo_electronico,
         telefono: result.data.telefono_celular,
         nombre_usuario: result.data.nombre_usuario || usuario.nombre_usuario || '',
+        tipo_usuario: result.data.tipo_usuario || usuario.tipo_usuario,
         term:
           result.data.estudiante?.term ||
           result.data.profesor?.term ||

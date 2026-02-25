@@ -105,6 +105,24 @@ export default function UserDetailPage() {
     setShowEditModal(true);
   };
 
+  // Build the usuario object for EditUserModal with flat fields
+  const usuarioForEdit = usuario ? {
+    cedula: usuario.cedula,
+    nombres: usuario.nombres,
+    apellidos: usuario.apellidos,
+    correo_electronico: usuario.correo_electronico,
+    telefono: usuario.telefono_celular,
+    nombre_usuario: usuario.nombre_usuario,
+    tipo_usuario: usuario.tipo_usuario || '',
+    term:
+      (usuario as any).estudiante?.term ||
+      (usuario as any).profesor?.term ||
+      (usuario as any).coordinador?.term || '',
+    tipo_estudiante: (usuario as any).estudiante?.tipo_estudiante || '',
+    tipo_profesor: (usuario as any).profesor?.tipo_profesor || '',
+    nrc: (usuario as any).estudiante?.nrc || '',
+  } : null;
+
   const handleSaveEdit = (usuarioEditado: any) => {
     setUsuario(prev => prev ? { ...prev, ...usuarioEditado } : null);
     setShowEditModal(false);
@@ -342,7 +360,7 @@ export default function UserDetailPage() {
       <EditUserModal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
-        usuario={usuario as any}
+        usuario={usuarioForEdit as any}
         onSave={handleSaveEdit}
       />
 
