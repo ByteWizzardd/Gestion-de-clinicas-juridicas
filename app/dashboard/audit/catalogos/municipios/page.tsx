@@ -12,6 +12,7 @@ export default async function MunicipioAuditPage() {
         entityTitle="Auditoría de Municipios"
         entityDescription="Registro completo de todas las acciones realizadas sobre los municipios del sistema"
         defaultTab="municipios-insertados"
+        hideMainHeader={true}
         operations={[
           {
             label: 'Creados',

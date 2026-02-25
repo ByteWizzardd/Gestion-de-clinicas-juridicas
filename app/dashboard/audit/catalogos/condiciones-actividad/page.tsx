@@ -12,6 +12,7 @@ export default async function CondiciónActividadAuditPage() {
         entityTitle="Auditoría de Condiciones Actividad"
         entityDescription="Registro completo de todas las acciones realizadas sobre los condiciones actividad del sistema"
         defaultTab="condiciones-actividad-insertadas"
+        hideMainHeader={true}
         operations={[
           {
             label: 'Creados',

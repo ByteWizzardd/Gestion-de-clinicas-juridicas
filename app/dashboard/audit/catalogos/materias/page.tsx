@@ -12,6 +12,7 @@ export default async function MateriaAuditPage() {
         entityTitle="Auditoría de Materias"
         entityDescription="Registro completo de todas las acciones realizadas sobre los materias del sistema"
         defaultTab="materias-insertadas"
+        hideMainHeader={true}
         operations={[
           {
             label: 'Creados',

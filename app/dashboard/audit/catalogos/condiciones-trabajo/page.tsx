@@ -12,6 +12,7 @@ export default async function CondiciónTrabajoAuditPage() {
         entityTitle="Auditoría de Condiciones Trabajo"
         entityDescription="Registro completo de todas las acciones realizadas sobre los condiciones trabajo del sistema"
         defaultTab="condiciones-trabajo-insertadas"
+        hideMainHeader={true}
         operations={[
           {
             label: 'Creados',

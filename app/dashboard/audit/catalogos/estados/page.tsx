@@ -12,6 +12,7 @@ export default async function EstadosAuditPage() {
         entityTitle="Auditoría de Estados"
         entityDescription="Registro completo de todas las acciones realizadas sobre los estados del sistema"
         defaultTab="estados-insertados"
+        hideMainHeader={true}
         operations={[
           {
             label: 'Creados',

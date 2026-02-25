@@ -12,6 +12,7 @@ export default async function TipoCaracterísticaAuditPage() {
         entityTitle="Auditoría de Tipos Características"
         entityDescription="Registro completo de todas las acciones realizadas sobre los tipos caracteristicas del sistema"
         defaultTab="tipos-caracteristicas-insertados"
+        hideMainHeader={true}
         operations={[
           {
             label: 'Creados',

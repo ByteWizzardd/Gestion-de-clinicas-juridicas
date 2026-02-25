@@ -12,6 +12,7 @@ export default async function SemestreAuditPage() {
         entityTitle="Auditoría de Semestres"
         entityDescription="Registro completo de todas las acciones realizadas sobre los semestres del sistema"
         defaultTab="semestres-insertados"
+        hideMainHeader={true}
         operations={[
           {
             label: 'Creados',

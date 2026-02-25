@@ -12,6 +12,7 @@ export default async function ParroquiaAuditPage() {
         entityTitle="Auditoría de Parroquias"
         entityDescription="Registro completo de todas las acciones realizadas sobre los parroquias del sistema"
         defaultTab="parroquias-insertadas"
+        hideMainHeader={true}
         operations={[
           {
             label: 'Creados',

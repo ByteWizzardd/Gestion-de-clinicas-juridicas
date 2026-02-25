@@ -12,6 +12,7 @@ export default async function CaracterísticaAuditPage() {
         entityTitle="Auditoría de Características"
         entityDescription="Registro completo de todas las acciones realizadas sobre los caracteristicas del sistema"
         defaultTab="caracteristicas-insertadas"
+        hideMainHeader={true}
         operations={[
           {
             label: 'Creados',

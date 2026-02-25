@@ -12,6 +12,7 @@ export default async function NivelEducativoAuditPage() {
         entityTitle="Auditoría de Niveles Educativos"
         entityDescription="Registro completo de todas las acciones realizadas sobre los niveles educativos del sistema"
         defaultTab="niveles-educativos-insertados"
+        hideMainHeader={true}
         operations={[
           {
             label: 'Creados',

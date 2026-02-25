@@ -12,6 +12,7 @@ export default async function ÁmbitoLegalAuditPage() {
         entityTitle="Auditoría de Ámbitos Legales"
         entityDescription="Registro completo de todas las acciones realizadas sobre los ambitos legales del sistema"
         defaultTab="ambitos-legales-insertados"
+        hideMainHeader={true}
         operations={[
           {
             label: 'Creados',

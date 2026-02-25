@@ -12,6 +12,7 @@ export default async function NúcleoAuditPage() {
         entityTitle="Auditoría de Núcleos"
         entityDescription="Registro completo de todas las acciones realizadas sobre los nucleos del sistema"
         defaultTab="nucleos-insertados"
+        hideMainHeader={true}
         operations={[
           {
             label: 'Creados',

@@ -12,6 +12,7 @@ export default async function CategoríaAuditPage() {
         entityTitle="Auditoría de Categorías"
         entityDescription="Registro completo de todas las acciones realizadas sobre los categorias del sistema"
         defaultTab="categorias-insertadas"
+        hideMainHeader={true}
         operations={[
           {
             label: 'Creados',
