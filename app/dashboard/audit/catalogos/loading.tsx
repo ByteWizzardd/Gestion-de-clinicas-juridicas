@@ -1,3 +1,4 @@
+import AuditModuleSkeleton from '@/components/ui/skeletons/AuditModuleSkeleton';
 export default function Loading() {
-    return null;
+    return <AuditModuleSkeleton tabs={['Insertados', 'Actualizados', 'Eliminados']} />;
 }
