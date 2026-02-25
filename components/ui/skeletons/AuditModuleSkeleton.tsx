@@ -10,12 +10,16 @@ export default function AuditModuleSkeleton({
     tabs,
     title,
     description,
-    showHeaderSkeleton = false
+    showHeaderSkeleton = false,
+    searchPlaceholder = "Buscar por usuario, acción o detalle...",
+    showSortButton = true
 }: {
     tabs?: string[];
     title?: string;
     description?: string;
     showHeaderSkeleton?: boolean;
+    searchPlaceholder?: string;
+    showSortButton?: boolean;
 }) {
     return (
         <div className="w-full">
@@ -51,7 +55,7 @@ export default function AuditModuleSkeleton({
                     border-b-2 transition-colors duration-200 cursor-not-allowed
                     ${idx === 0
                                             ? 'border-primary text-primary'
-                                            : 'border-transparent text-gray-500 opacity-70'
+                                            : 'border-transparent text-gray-500'
                                         }
                   `}
                                     disabled
@@ -75,17 +79,19 @@ export default function AuditModuleSkeleton({
             <div className="w-full">
                 <div className="flex flex-wrap gap-3 sm:gap-4 items-center w-full px-3 mb-4 md:mb-6">
                     <div className="w-full sm:flex-1 sm:min-w-0">
-                        <Search value="" onChange={() => { }} placeholder="Buscar..." />
+                        <Search value="" onChange={() => { }} placeholder={searchPlaceholder} />
                     </div>
                     <div className="flex w-full sm:w-auto gap-3 sm:gap-4 items-center shrink-0 justify-start sm:justify-end">
-                        <button
-                            type="button"
-                            className="h-10 px-4 cursor-not-allowed rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap opacity-50"
-                            disabled
-                        >
-                            <ArrowDown className="w-[18px] h-[18px] text-[#414040]" />
-                            <span className="text-base text-center">Más reciente</span>
-                        </button>
+                        {showSortButton && (
+                            <button
+                                type="button"
+                                className="h-10 px-4 cursor-not-allowed rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap opacity-50"
+                                disabled
+                            >
+                                <ArrowDown className="w-[18px] h-[18px] text-[#414040]" />
+                                <span className="text-base text-center">Más reciente</span>
+                            </button>
+                        )}
                         <Filter
                             nucleoFilter=""
                             onNucleoChange={() => { }}

@@ -1,5 +1,10 @@
 import AuditModuleSkeleton from '@/components/ui/skeletons/AuditModuleSkeleton';
 
 export default function Loading() {
-    return <AuditModuleSkeleton tabs={['Historial', 'Intentos Fallidos']} />;
+    return (
+        <AuditModuleSkeleton
+            tabs={['Historial', 'Intentos Fallidos']}
+            searchPlaceholder="Buscar por usuario, IP o dispositivo..."
+        />
+    );
 }

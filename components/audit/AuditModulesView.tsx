@@ -607,7 +607,7 @@ export default function AuditClient() {
             <Search
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="Buscar por módulo..."
+              placeholder="Buscar por usuario, acción o detalle..."
             />
           </div>
           <div className="flex items-center gap-2">

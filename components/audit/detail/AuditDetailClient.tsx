@@ -511,7 +511,7 @@ export default function AuditDetailClient({
           <Search
             value={filters.busqueda || ''}
             onChange={(value) => handleFilterChange('busqueda', value || undefined)}
-            placeholder="Buscar..."
+            placeholder="Buscar por usuario, acción o detalle..."
           />
         </div>
         <div className="flex w-full sm:w-auto gap-3 sm:gap-4 items-center shrink-0 justify-start sm:justify-end">
