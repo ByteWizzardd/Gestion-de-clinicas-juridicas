@@ -5,7 +5,7 @@ export default function AuditReportesLayout({ children }: { children: ReactNode 
         <div className="w-full">
             <div className="mb-4 md:mb-6 mt-4">
                 <h1 className="text-4xl m-3 font-semibold font-primary">Auditoría de Reportes</h1>
-                <p className="mb-6 ml-3">Registro completo de todos los reportes generados en el sistema</p>
+                <p className="mb-6 ml-3 text-gray-600">Registro completo de todos los reportes generados en el sistema</p>
             </div>
             {children}
         </div>

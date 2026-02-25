@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { motion } from 'motion/react';
+
 import AuditEntityCardSkeleton from '@/components/ui/skeletons/AuditEntityCardSkeleton';
 import Search from '@/components/CaseTools/search';
 
@@ -601,7 +601,7 @@ export default function AuditClient() {
   return (
     <div className="w-full">
       {/* Barra de búsqueda */}
-      <div className="mb-6">
+      <div className="mb-6 px-3">
         <div className="w-full flex items-center gap-4">
           <div className="flex-1 min-w-0">
             <Search
@@ -631,7 +631,7 @@ export default function AuditClient() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 px-3">
           {Array.from({ length: 12 }).map((_, i) => (
             <AuditEntityCardSkeleton key={i} />
           ))}
@@ -641,12 +641,7 @@ export default function AuditClient() {
           <p className="text-gray-500 text-lg">No se encontraron resultados para "{searchQuery}"</p>
         </div>
       ) : (
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
-          initial={{ opacity: 0.5 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.1 }}
-        >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 px-3">
           {filteredEntities.map((entity) => (
             <AuditEntityCard
               key={entity.title}
@@ -658,7 +653,7 @@ export default function AuditClient() {
               href={entity.href}
             />
           ))}
-        </motion.div>
+        </div>
       )}
     </div>
   );

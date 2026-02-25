@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { motion } from 'motion/react';
 import Tabs from '@/components/ui/Tabs';
 import AuditDetailClient from './detail/AuditDetailClient';
 
@@ -91,14 +90,9 @@ export default function AuditEntityDetailClient({
       )}
 
       {/* Tabs con las operaciones */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.2 }}
-        className="px-0"
-      >
+      <div className="px-0">
         <Tabs tabs={tabs} defaultTab={activeTab} onTabChange={setActiveTab} />
-      </motion.div>
+      </div>
     </div>
   );
 }

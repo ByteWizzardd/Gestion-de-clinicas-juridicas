@@ -379,12 +379,7 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
                 </div>
             </div>
 
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-                className="mx-3"
-            >
+            <div className="mx-3">
                 {loading ? (
                     <div className="space-y-3">
                         {Array.from({ length: rowsPerPage }).map((_, i) => (
@@ -416,7 +411,7 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
                         }}
                     />
                 )}
-            </motion.div>
+            </div>
         </div>
     );
 }
@@ -437,14 +432,9 @@ export default function SesionesAuditClient() {
 
     return (
         <div className="w-full">
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-                className="px-0"
-            >
+            <div className="px-0">
                 <Tabs tabs={tabs} defaultTab="logins" />
-            </motion.div>
+            </div>
         </div>
     );
 }

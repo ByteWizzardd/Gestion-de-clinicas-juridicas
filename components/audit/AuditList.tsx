@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { motion } from 'motion/react';
 import { TablePagination } from '@/components/Table/TablePagination';
 import AuditRecordCard from './AuditRecordCard';
 
@@ -59,17 +58,11 @@ export default function AuditList({
     <div className="space-y-4">
       <div className="space-y-4">
         {paginatedRecords.map((record, index) => (
-          <motion.div
+          <AuditRecordCard
             key={`${record.id}-${index}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
-          >
-            <AuditRecordCard
-              record={record}
-              type={record.tipo_registro ? (record.tipo_registro as any) : recordType}
-            />
-          </motion.div>
+            record={record}
+            type={record.tipo_registro ? (record.tipo_registro as any) : recordType}
+          />
         ))}
       </div>
 

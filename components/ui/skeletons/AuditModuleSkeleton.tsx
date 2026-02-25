@@ -6,9 +6,38 @@ import Search from '@/components/CaseTools/search';
 import { ArrowDown } from 'lucide-react';
 import Filter from '@/components/CaseTools/Filter';
 
-export default function AuditModuleSkeleton({ tabs }: { tabs?: string[] }) {
+export default function AuditModuleSkeleton({
+    tabs,
+    title,
+    description,
+    showHeaderSkeleton = false
+}: {
+    tabs?: string[];
+    title?: string;
+    description?: string;
+    showHeaderSkeleton?: boolean;
+}) {
     return (
         <div className="w-full">
+            {/* Header - Solo se muestra si se pasa título/descripción o si se pide explícitamente el skeleton */}
+            {(title || description || showHeaderSkeleton) && (
+                <div className="mb-4 md:mb-6 mt-4">
+                    {title ? (
+                        <h1 className="text-4xl m-3 font-semibold font-primary">{title}</h1>
+                    ) : showHeaderSkeleton ? (
+                        <div className="m-3">
+                            <Skeleton width="40%" height={36} borderRadius="8px" />
+                        </div>
+                    ) : null}
+                    {description ? (
+                        <p className="mb-6 ml-3 text-gray-600">{description}</p>
+                    ) : showHeaderSkeleton ? (
+                        <div className="ml-3 mb-6">
+                            <Skeleton width="60%" height={16} borderRadius="6px" />
+                        </div>
+                    ) : null}
+                </div>
+            )}
             {/* Tabs */}
             {tabs && tabs.length > 0 && (
                 <div className="w-full">
@@ -37,13 +66,13 @@ export default function AuditModuleSkeleton({ tabs }: { tabs?: string[] }) {
                     </div>
                 </div>
             )}
-            {(!tabs || tabs.length === 0) && renderInner()}
+            {(!tabs || tabs.length === 0) && <div className="mt-4">{renderInner()}</div>}
         </div>
     );
 
     function renderInner() {
         return (
-            <div className="w-full mt-4">
+            <div className="w-full">
                 <div className="flex flex-wrap gap-3 sm:gap-4 items-center w-full px-3 mb-4 md:mb-6">
                     <div className="w-full sm:flex-1 sm:min-w-0">
                         <Search value="" onChange={() => { }} placeholder="Buscar..." />

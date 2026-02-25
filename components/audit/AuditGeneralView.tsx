@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { motion } from 'motion/react';
+
 import {
     FileText, Calendar, User, Users, UserX, FolderOpen, AlertCircle, Hash, Search,
     Filter, CheckCircle2, Clock, MapPin, Building, Building2, BookOpen, GraduationCap, Briefcase, Activity, Tag, FolderTree, Scale, Layers
@@ -269,9 +269,9 @@ export default function AuditGeneralView() {
     };
 
     return (
-        <>
+        <div className="w-full">
             {/* Filtros y Búsqueda */}
-            <div className="mb-6">
+            <div className="mb-6 px-3">
                 <CaseTools
                     searchValue={searchTerm}
                     onSearchChange={setSearchTerm}
@@ -312,37 +312,32 @@ export default function AuditGeneralView() {
             </div>
 
             {/* Lista de Cards */}
-            <div className="space-y-4">
-                {loading ? (
-                    <div className="space-y-3">
-                        {Array.from({ length: rowsPerPage }).map((_, i) => (
-                            <AuditRecordCardSkeleton key={i} />
-                        ))}
+            {loading ? (
+                <div className="space-y-3 px-3">
+                    {Array.from({ length: rowsPerPage }).map((_, i) => (
+                        <AuditRecordCardSkeleton key={i} />
+                    ))}
+                </div>
+            ) : displayLogs.length === 0 ? (
+                <div className="py-12 text-center text-gray-400 bg-white rounded-lg border border-dashed border-gray-200 px-3">
+                    <div className="flex flex-col items-center justify-center">
+                        <AlertCircle className="w-8 h-8 mb-2 opacity-50" />
+                        <span>No se encontraron registros de auditoría</span>
                     </div>
-                ) : displayLogs.length === 0 ? (
-                    <div className="py-12 text-center text-gray-400 bg-white rounded-lg border border-dashed border-gray-200">
-                        <div className="flex flex-col items-center justify-center">
-                            <AlertCircle className="w-8 h-8 mb-2 opacity-50" />
-                            <span>No se encontraron registros de auditoría</span>
-                        </div>
-                    </div>
-                ) : (
-                    displayLogs.map((log, index) => {
+                </div>
+            ) : (
+                <div className="space-y-4 px-3">
+                    {displayLogs.map((log, index) => {
                         const mapped = mapUnifiedLogToAuditRecord(log);
-                        if (!mapped) return null; // O renderizar un card genérico si es necesario
+                        if (!mapped) return null;
                         return (
-                            <motion.div
-                                key={`${log.fecha}-${index}`}
-                                initial={{ opacity: 0.5 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ duration: 0.1 }}
-                            >
+                            <div key={`${log.fecha}-${index}`}>
                                 <AuditRecordCard record={mapped.record} type={mapped.type} moduleName={log.entidad} />
-                            </motion.div>
+                            </div>
                         );
-                    })
-                )}
-            </div>
+                    })}
+                </div>
+            )}
 
             {/* Footer con Paginación */}
             {!loading && totalCount > 0 && (
@@ -362,6 +357,6 @@ export default function AuditGeneralView() {
                     />
                 </div>
             )}
-        </>
+        </div>
     );
 }
