@@ -45,6 +45,10 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
       } else if (!initialFormState.telefono) {
         initialFormState.telefono = '+58';
       }
+      // Default NRC to 15753 if empty
+      if (!initialFormState.nrc || (typeof initialFormState.nrc === 'string' && !initialFormState.nrc.trim())) {
+        initialFormState.nrc = '15753';
+      }
       setForm(initialFormState);
       setErrors({});
     }
@@ -341,7 +345,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
                   <Input
                     label="NRC"
                     name="nrc"
-                    value={typeof form.nrc === 'string' ? form.nrc : ''}
+                    value={typeof form.nrc === 'string' && form.nrc ? form.nrc : '15753'}
                     onChange={handleChange}
                   />
                   <Select
