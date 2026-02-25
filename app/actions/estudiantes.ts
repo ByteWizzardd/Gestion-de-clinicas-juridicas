@@ -241,7 +241,7 @@ export async function deshabilitarUsuariosSemestreFinalizadoAction(): Promise<De
     }
 
     // Ejecutar la deshabilitación usando la función de queries
-    const result = await usuariosQueries.disableFinishedTermUsers();
+    const result = await usuariosQueries.disableFinishedTermUsers(authResult.user.cedula);
 
     // Revalidar páginas afectadas
     revalidatePath('/dashboard/users');
