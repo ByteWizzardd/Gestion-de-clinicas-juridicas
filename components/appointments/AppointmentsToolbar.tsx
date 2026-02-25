@@ -1,6 +1,6 @@
 'use client';
 
-import { Filter as FilterIcon, ChevronLeft, Layers, UserCheck, Calendar, FileText, X, Users } from 'lucide-react';
+import { Filter as FilterIcon, ChevronLeft, Layers, UserCheck, Calendar, FileText, X, Users, BookOpen } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { AppointmentViewMode } from '@/components/ui/navigation/AppointmentViewSwitcher';
 import DatePicker from '@/components/forms/DatePicker';
@@ -23,6 +23,8 @@ interface AppointmentsToolbarProps {
   dateRangeFilter: string;
   customDateStart: string;
   customDateEnd: string;
+  termFilter?: string;
+  semestresOptions?: Array<{ term: string; fecha_inicio: string; fecha_fin: string }>;
   onNucleoFilterChange: (value: string) => void;
   onUsuarioFilterChange: (value: string[]) => void;
   onCaseFilterChange: (value: string[]) => void;
@@ -30,6 +32,7 @@ interface AppointmentsToolbarProps {
   onDateRangeFilterChange: (value: string) => void;
   onCustomDateStartChange: (value: string) => void;
   onCustomDateEndChange: (value: string) => void;
+  onTermChange?: (value: string) => void;
   filterOptions: AppointmentFilterOptions;
 }
 
@@ -42,6 +45,8 @@ export default function AppointmentsToolbar({
   dateRangeFilter,
   customDateStart,
   customDateEnd,
+  termFilter = '',
+  semestresOptions = [],
   onNucleoFilterChange,
   onUsuarioFilterChange,
   onCaseFilterChange,
@@ -49,10 +54,11 @@ export default function AppointmentsToolbar({
   onDateRangeFilterChange,
   onCustomDateStartChange,
   onCustomDateEndChange,
+  onTermChange,
   filterOptions,
 }: AppointmentsToolbarProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeSubmenu, setActiveSubmenu] = useState<'nucleo' | 'usuario' | 'caso' | 'fechas' | null>(null);
+  const [activeSubmenu, setActiveSubmenu] = useState<'nucleo' | 'usuario' | 'caso' | 'fechas' | 'semestre' | null>(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 });
   const [submenuPosition, setSubmenuPosition] = useState({ top: 0, left: 0, width: 0 });
 
@@ -64,7 +70,7 @@ export default function AppointmentsToolbar({
   const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
   const isMobileViewport = () => window.innerWidth < 640; // Tailwind sm
 
-  const handleSubmenuToggle = (type: 'nucleo' | 'usuario' | 'caso' | 'fechas', e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleSubmenuToggle = (type: 'nucleo' | 'usuario' | 'caso' | 'fechas' | 'semestre', e: React.MouseEvent<HTMLButtonElement>) => {
     if (activeSubmenu === type) {
       setActiveSubmenu(null);
     } else {
@@ -143,7 +149,8 @@ export default function AppointmentsToolbar({
     (usuarioFilter.length > 0 ? 1 : 0) +
     (caseFilter.length > 0 ? 1 : 0) +
     (misCasosFilter ? 1 : 0) +
-    (dateRangeFilter !== 'all' ? 1 : 0);
+    (dateRangeFilter !== 'all' ? 1 : 0) +
+    (termFilter && termFilter !== 'all' ? 1 : 0);
 
   const hasActiveFilter = activeFilterCount > 0;
 
@@ -155,6 +162,7 @@ export default function AppointmentsToolbar({
     onDateRangeFilterChange('all');
     onCustomDateStartChange('');
     onCustomDateEndChange('');
+    onTermChange?.('');
     setActiveSubmenu(null);
   };
 
@@ -174,6 +182,11 @@ export default function AppointmentsToolbar({
   const casoOptions = filterOptions.casos.map((c) => ({
     value: c.id_caso.toString(),
     label: `C-${c.id_caso} - ${c.tramite}`,
+  }));
+
+  const semestreOptions = (semestresOptions || []).map((s) => ({
+    value: s.term,
+    label: s.term,
   }));
 
   // Renderizar submenú
@@ -288,6 +301,12 @@ export default function AppointmentsToolbar({
         isMultiple = true;
         handler = onCaseFilterChange;
         allLabel = 'Todos los casos';
+        break;
+      case 'semestre':
+        options = semestreOptions;
+        filterValue = termFilter || '';
+        handler = onTermChange || (() => {});
+        allLabel = 'Todos los semestres';
         break;
     }
 
@@ -463,6 +482,27 @@ export default function AppointmentsToolbar({
                 <div className="flex-1" />
                 <span>Rango de fechas</span>
                 <Calendar className="w-4 h-4" />
+              </motion.button>
+              <div className="border-t border-gray-200 my-2"></div>
+
+              {/* Opción: Semestre */}
+              <motion.button
+                ref={activeSubmenu === 'semestre' ? activeButtonRef : undefined}
+                type="button"
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                onClick={(e) => handleSubmenuToggle('semestre', e)}
+                className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'semestre'
+                  ? 'bg-primary-light text-primary'
+                  : (termFilter && termFilter !== 'all')
+                    ? 'text-primary hover:bg-gray-100'
+                    : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+              >
+                <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'semestre' ? '-rotate-90' : ''}`} />
+                <div className="flex-1" />
+                <span>Semestre</span>
+                <BookOpen className="w-4 h-4" />
               </motion.button>
               <div className="border-t border-gray-200 my-2"></div>
 

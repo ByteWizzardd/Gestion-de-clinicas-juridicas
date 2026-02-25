@@ -27,12 +27,16 @@ interface AppointmentsClientProps {
   initialAppointments: Appointment[];
   initialUserAppointments: Appointment[];
   initialFilterOptions?: AppointmentFilterOptions;
+  semestresData?: Array<{ term: string; fecha_inicio: string; fecha_fin: string }>;
+  initialTermFilter?: string;
 }
 
 export default function AppointmentsClient({
   initialAppointments,
   initialUserAppointments,
-  initialFilterOptions = { nucleos: [], usuarios: [], casos: [] }
+  initialFilterOptions = { nucleos: [], usuarios: [], casos: [] },
+  semestresData = [],
+  initialTermFilter = '',
 }: AppointmentsClientProps) {
   const [viewMode, setViewMode] = useState<AppointmentViewMode>('calendar');
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -69,6 +73,7 @@ export default function AppointmentsClient({
   const [dateRangeFilter, setDateRangeFilter] = useState<string>('all'); // 'all', 'today', 'week', 'month', 'custom'
   const [customDateStart, setCustomDateStart] = useState<string>('');
   const [customDateEnd, setCustomDateEnd] = useState<string>('');
+  const [termFilter, setTermFilter] = useState<string>(initialTermFilter);
 
   const normalizeText = (text: string): string => {
     return (text ?? '')
@@ -97,6 +102,22 @@ export default function AppointmentsClient({
         const userIdsInAppointment = list.map((u) => u.id_usuario);
         return usuarioFilter.every((selectedUserId) => userIdsInAppointment.includes(selectedUserId));
       });
+    }
+
+    // Filtro por semestre (termFilter)
+    if (termFilter && termFilter !== 'all') {
+      const selectedSemester = semestresData.find((s) => s.term === termFilter);
+      if (selectedSemester) {
+        const semesterStart = new Date(selectedSemester.fecha_inicio);
+        semesterStart.setHours(0, 0, 0, 0);
+        const semesterEnd = new Date(selectedSemester.fecha_fin);
+        semesterEnd.setHours(23, 59, 59, 999);
+
+        filtered = filtered.filter((apt) => {
+          const aptDate = new Date(apt.date);
+          return aptDate >= semesterStart && aptDate <= semesterEnd;
+        });
+      }
     }
 
     // Rango de fechas
@@ -139,7 +160,7 @@ export default function AppointmentsClient({
     }
 
     return new Set(filtered.map((apt) => String(apt.caseId)));
-  }, [appointments, userAppointments, misCasosFilter, nucleoFilter, usuarioFilter, dateRangeFilter, customDateStart, customDateEnd]);
+  }, [appointments, userAppointments, misCasosFilter, nucleoFilter, usuarioFilter, dateRangeFilter, customDateStart, customDateEnd, termFilter, semestresData]);
 
   const filterOptionsForToolbar = useMemo(() => {
     const casos = initialFilterOptions.casos.filter((c) => availableCaseIdsForFilter.has(String(c.id_caso)));
@@ -214,6 +235,22 @@ export default function AppointmentsClient({
       });
     }
 
+    // Filtro por semestre (termFilter)
+    if (termFilter && termFilter !== 'all') {
+      const selectedSemester = semestresData.find((s) => s.term === termFilter);
+      if (selectedSemester) {
+        const semesterStart = new Date(selectedSemester.fecha_inicio);
+        semesterStart.setHours(0, 0, 0, 0);
+        const semesterEnd = new Date(selectedSemester.fecha_fin);
+        semesterEnd.setHours(23, 59, 59, 999);
+
+        filtered = filtered.filter((apt) => {
+          const aptDate = new Date(apt.date);
+          return aptDate >= semesterStart && aptDate <= semesterEnd;
+        });
+      }
+    }
+
     // Aplicar filtros de fecha (igual que antes)
     if (filterByDate) {
       // Filtrar solo las citas del día seleccionado
@@ -236,7 +273,7 @@ export default function AppointmentsClient({
     }
 
     return filtered;
-  }, [userAppointments, selectedMonth, selectedDate, filterByDate, nucleoFilter, usuarioFilter, caseFilter]);
+  }, [userAppointments, selectedMonth, selectedDate, filterByDate, nucleoFilter, usuarioFilter, caseFilter, termFilter, semestresData]);
 
   // Filtrar citas por búsqueda y filtros (solo para vista de lista)
   const filteredAppointmentsForList = useMemo(() => {
@@ -288,6 +325,22 @@ export default function AppointmentsClient({
       });
     }
 
+    // Filtro por semestre (termFilter)
+    if (termFilter && termFilter !== 'all') {
+      const selectedSemester = semestresData.find((s) => s.term === termFilter);
+      if (selectedSemester) {
+        const semesterStart = new Date(selectedSemester.fecha_inicio);
+        semesterStart.setHours(0, 0, 0, 0);
+        const semesterEnd = new Date(selectedSemester.fecha_fin);
+        semesterEnd.setHours(23, 59, 59, 999);
+
+        filtered = filtered.filter((apt) => {
+          const aptDate = new Date(apt.date);
+          return aptDate >= semesterStart && aptDate <= semesterEnd;
+        });
+      }
+    }
+
     // Filtro por rango de fechas
     if (dateRangeFilter !== 'all') {
       const now = new Date();
@@ -331,7 +384,7 @@ export default function AppointmentsClient({
     }
 
     return filtered;
-  }, [appointments, userAppointments, misCasosFilter, searchValue, nucleoFilter, usuarioFilter, caseFilter, dateRangeFilter, customDateStart, customDateEnd]);
+  }, [appointments, userAppointments, misCasosFilter, searchValue, nucleoFilter, usuarioFilter, caseFilter, dateRangeFilter, customDateStart, customDateEnd, termFilter, semestresData]);
 
   // Filtrar citas agendadas (citas programadas)
   const scheduledAppointments = useMemo(() => {
@@ -674,6 +727,8 @@ export default function AppointmentsClient({
                         dateRangeFilter={dateRangeFilter}
                         customDateStart={customDateStart}
                         customDateEnd={customDateEnd}
+                        termFilter={termFilter}
+                        semestresOptions={semestresData}
                         onNucleoFilterChange={setNucleoFilter}
                         onUsuarioFilterChange={setUsuarioFilter}
                         onCaseFilterChange={setCaseFilter}
@@ -681,6 +736,7 @@ export default function AppointmentsClient({
                         onDateRangeFilterChange={setDateRangeFilter}
                         onCustomDateStartChange={setCustomDateStart}
                         onCustomDateEndChange={setCustomDateEnd}
+                        onTermChange={setTermFilter}
                         filterOptions={filterOptionsForToolbar}
                       />
 
@@ -755,6 +811,8 @@ export default function AppointmentsClient({
                         dateRangeFilter={dateRangeFilter}
                         customDateStart={customDateStart}
                         customDateEnd={customDateEnd}
+                        termFilter={termFilter}
+                        semestresOptions={semestresData}
                         onNucleoFilterChange={setNucleoFilter}
                         onUsuarioFilterChange={setUsuarioFilter}
                         onCaseFilterChange={setCaseFilter}
@@ -762,6 +820,7 @@ export default function AppointmentsClient({
                         onDateRangeFilterChange={setDateRangeFilter}
                         onCustomDateStartChange={setCustomDateStart}
                         onCustomDateEndChange={setCustomDateEnd}
+                        onTermChange={setTermFilter}
                         filterOptions={filterOptionsForToolbar}
                       />
 
