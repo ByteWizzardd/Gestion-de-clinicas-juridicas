@@ -14,6 +14,8 @@ import EditUserModal from './EditUserModal';
 import CreateUserModal from './CreateUserModal';
 import DropdownMenu from '@/components/ui/navigation/DropdownMenu';
 import TableSkeleton from '@/components/ui/skeletons/TableSkeleton';
+import Modal from '@/components/ui/feedback/Modal';
+import Button from '@/components/ui/Button';
 
 interface Usuario extends Record<string, unknown> {
   cedula: string;
@@ -62,6 +64,7 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
   // Cerrar semestre (deshabilitar usuarios de semestres finalizados)
   const [showCerrarSemestreConfirm, setShowCerrarSemestreConfirm] = useState(false);
   const [isCerrandoSemestre, setIsCerrandoSemestre] = useState(false);
+  const [resultadoCerrarSemestre, setResultadoCerrarSemestre] = useState<{ title: string, message: React.ReactNode, type: 'success' | 'error' } | null>(null);
 
   const router = useRouter();
 
@@ -382,14 +385,35 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
 
       if (result.success) {
         const total = (result.data?.estudiantes_deshabilitados || 0) + (result.data?.profesores_deshabilitados || 0);
-        alert(`Semestre cerrado exitosamente.\n\nUsuarios deshabilitados:\n- Estudiantes: ${result.data?.estudiantes_deshabilitados || 0}\n- Profesores: ${result.data?.profesores_deshabilitados || 0}\n\nTotal: ${total}`);
+        setResultadoCerrarSemestre({
+          title: "Semestre cerrado exitosamente",
+          type: "success",
+          message: (
+            <div className="space-y-2">
+              <p>Usuarios deshabilitados:</p>
+              <ul className="list-disc pl-5">
+                <li>Estudiantes: {result.data?.estudiantes_deshabilitados || 0}</li>
+                <li>Profesores: {result.data?.profesores_deshabilitados || 0}</li>
+              </ul>
+              <p className="font-semibold mt-2">Total: {total}</p>
+            </div>
+          )
+        });
         loadUsuarios(); // Recargar la lista
       } else {
-        alert(result.error?.message || 'Error al cerrar el semestre');
+        setResultadoCerrarSemestre({
+          title: "Error",
+          type: "error",
+          message: result.error?.message || 'Error al cerrar el semestre'
+        });
       }
     } catch (error) {
       console.error('Error al cerrar semestre:', error);
-      alert('Error inesperado al cerrar el semestre');
+      setResultadoCerrarSemestre({
+        title: "Error",
+        type: "error",
+        message: 'Error inesperado al cerrar el semestre'
+      });
     } finally {
       setIsCerrandoSemestre(false);
       setShowCerrarSemestreConfirm(false);
@@ -803,6 +827,29 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
         disabled={isCerrandoSemestre}
         confirmVariant="danger"
       />
+
+      {/* Modal de Resultado Cerrar Semestre */}
+      <Modal
+        isOpen={!!resultadoCerrarSemestre}
+        onClose={() => setResultadoCerrarSemestre(null)}
+        title={resultadoCerrarSemestre?.title}
+        size="sm"
+        footer={
+          <div className="flex justify-end w-full">
+            <Button
+              variant={resultadoCerrarSemestre?.type === 'error' ? 'primary' : 'primary'}
+              onClick={() => setResultadoCerrarSemestre(null)}
+              className="w-full sm:w-auto"
+            >
+              Aceptar
+            </Button>
+          </div>
+        }
+      >
+        <div className="px-6 py-4 text-gray-700">
+          {resultadoCerrarSemestre?.message}
+        </div>
+      </Modal>
     </>
   );
 }
