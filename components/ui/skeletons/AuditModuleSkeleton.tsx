@@ -1,3 +1,5 @@
+'use client';
+
 import { Skeleton } from '@/components/ui/Skeleton';
 import AuditRecordCardSkeleton from '@/components/ui/skeletons/AuditRecordCardSkeleton';
 import Search from '@/components/CaseTools/search';
