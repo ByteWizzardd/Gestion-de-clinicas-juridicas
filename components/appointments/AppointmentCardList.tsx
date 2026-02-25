@@ -141,16 +141,6 @@ export default function AppointmentCardList({
                   </div>
                 </div>
 
-                {/* Ubicación */}
-                <div className="mb-3">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
-                    <p className="text-sm text-gray-600 truncate">
-                      {appointment.location}
-                    </p>
-                  </div>
-                </div>
-
                 {/* Usuarios que atendieron */}
                 {appointment.attendingUsers && (
                   <div className="mb-3">
