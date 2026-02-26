@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Calendar, User, FileText, MapPin, CheckCircle, XCircle } from 'lucide-react';
+import { Calendar, User, FileText, CheckCircle, XCircle, Users } from 'lucide-react';
 import type { Appointment } from '@/types/appointment';
 import ActionMenu from '@/components/ui/ActionMenu';
 import Button from '@/components/ui/Button';
@@ -141,21 +141,11 @@ export default function AppointmentCardList({
                   </div>
                 </div>
 
-                {/* Ubicación */}
-                <div className="mb-3">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
-                    <p className="text-sm text-gray-600 truncate">
-                      {appointment.location}
-                    </p>
-                  </div>
-                </div>
-
                 {/* Usuarios que atendieron */}
                 {appointment.attendingUsers && (
                   <div className="mb-3">
-                    <div className="flex items-start gap-2">
-                      <User className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-gray-400 shrink-0" />
                       <p className="text-xs text-gray-500 line-clamp-2">
                         {appointment.isMultiplePeople ? 'Atendido por: ' : 'Atendido por: '}
                         {appointment.attendingUsers}

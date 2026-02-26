@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import { Bell } from 'lucide-react';
 import DropdownMenu from '../navigation/DropdownMenu';
 import { AnimatePresence, motion } from 'motion/react';
@@ -15,6 +17,7 @@ interface NotificationProps {
 // NotificationItem viene de useNotifications
 
 const Notification: React.FC<NotificationProps> = () => {
+  const [isOpen, setIsOpen] = useState(false);
   const { notifications, loading, error, markAsRead, remove } = useNotifications();
   const router = useRouter();
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -63,7 +66,7 @@ const Notification: React.FC<NotificationProps> = () => {
       className="relative flex items-center justify-center p-2 cursor-pointer hover:bg-neutral-100 rounded-lg transition-colors"
       aria-label="Notificaciones"
     >
-      <Bell className="w-6 h-6 text-foreground" />
+      <Bell className={`w-6 h-6 ${isOpen ? 'text-primary' : 'text-foreground'}`} />
       {unreadCount > 0 && (
         <span className="absolute top-0 right-0 flex items-center justify-center w-5 h-5 text-xs font-semibold text-white bg-primary rounded-full">
           {unreadCount > 9 ? '9+' : unreadCount}
@@ -72,8 +75,9 @@ const Notification: React.FC<NotificationProps> = () => {
     </button>
   );
 
-  const handleOpenChange = (isOpen: boolean) => {
-    if (isOpen) {
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (open) {
       notifications.forEach((notification) => {
         if (!notification.read) {
           markAsRead(notification.id);

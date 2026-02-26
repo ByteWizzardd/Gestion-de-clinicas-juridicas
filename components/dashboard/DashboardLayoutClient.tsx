@@ -90,7 +90,7 @@ export default function DashboardLayoutClient({ user, children, initialSidebarCo
             <div className="h-14 flex items-center justify-between gap-3">
               <button
                 type="button"
-                className="inline-flex items-center justify-center rounded-xl bg-white p-2 shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] shrink-0 transition-transform active:scale-95"
+                className="inline-flex items-center justify-center rounded-xl bg-white p-2 shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] shrink-0 transition-transform active:scale-95 cursor-pointer"
                 aria-label={isMobileSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
                 aria-controls="mobile-sidebar"
                 aria-expanded={isMobileSidebarOpen}

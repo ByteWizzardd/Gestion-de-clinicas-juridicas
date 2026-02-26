@@ -783,24 +783,84 @@ export const usuariosQueries = {
 
   /**
    * Deshabilita automáticamente estudiantes y profesores
-   * de semestres que ya finalizaron (fecha_fin < fecha actual)
+   * de semestres que ya finalizaron (fecha_fin < fecha actual) y registra la auditoría.
    */
-  disableFinishedTermUsers: async (): Promise<{
+  disableFinishedTermUsers: async (cedula_actor: string): Promise<{
     estudiantes: number;
     profesores: number;
   }> => {
-    // Deshabilitar estudiantes
-    const estudiantesQuery = loadSQL('usuarios/disable-students-finished-term.sql');
-    const estudiantesResult = await pool.query(estudiantesQuery);
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    // Deshabilitar profesores
-    const profesoresQuery = loadSQL('usuarios/disable-professors-finished-term.sql');
-    const profesoresResult = await pool.query(profesoresQuery);
+      // 1. Registrar auditoría para estudiantes
+      const auditStudentsQuery = `
+        INSERT INTO auditoria_actualizacion_usuarios (
+          ci_usuario, nombres_anterior, apellidos_anterior, correo_electronico_anterior, nombre_usuario_anterior,
+          telefono_celular_anterior, habilitado_sistema_anterior, tipo_usuario_anterior, tipo_estudiante_anterior, tipo_profesor_anterior,
+          nombres_nuevo, apellidos_nuevo, correo_electronico_nuevo, nombre_usuario_nuevo, telefono_celular_nuevo,
+          habilitado_sistema_nuevo, tipo_usuario_nuevo, tipo_estudiante_nuevo, tipo_profesor_nuevo,
+          id_usuario_actualizo, fecha_actualizacion
+        )
+        SELECT 
+          u.cedula, u.nombres, u.apellidos, u.correo_electronico, u.nombre_usuario,
+          u.telefono_celular, u.habilitado_sistema, u.tipo_usuario, e.tipo_estudiante, NULL,
+          u.nombres, u.apellidos, u.correo_electronico, u.nombre_usuario, u.telefono_celular,
+          false, u.tipo_usuario, e.tipo_estudiante, NULL,
+          $1, (NOW() AT TIME ZONE 'America/Caracas')
+        FROM usuarios u
+        JOIN estudiantes e ON u.cedula = e.cedula_estudiante
+        JOIN semestres s ON e.term = s.term
+        WHERE s.fecha_fin < CURRENT_DATE
+          AND u.habilitado_sistema = TRUE
+          AND u.tipo_usuario = 'Estudiante'
+      `;
+      await client.query(auditStudentsQuery, [cedula_actor]);
 
-    return {
-      estudiantes: estudiantesResult.rowCount || 0,
-      profesores: profesoresResult.rowCount || 0,
-    };
+      // 2. Deshabilitar estudiantes
+      const estudiantesQuery = loadSQL('usuarios/disable-students-finished-term.sql');
+      const estudiantesResult = await client.query(estudiantesQuery);
+
+      // 3. Registrar auditoría para profesores
+      const auditProfessorsQuery = `
+        INSERT INTO auditoria_actualizacion_usuarios (
+          ci_usuario, nombres_anterior, apellidos_anterior, correo_electronico_anterior, nombre_usuario_anterior,
+          telefono_celular_anterior, habilitado_sistema_anterior, tipo_usuario_anterior, tipo_estudiante_anterior, tipo_profesor_anterior,
+          nombres_nuevo, apellidos_nuevo, correo_electronico_nuevo, nombre_usuario_nuevo, telefono_celular_nuevo,
+          habilitado_sistema_nuevo, tipo_usuario_nuevo, tipo_estudiante_nuevo, tipo_profesor_nuevo,
+          id_usuario_actualizo, fecha_actualizacion
+        )
+        SELECT 
+          u.cedula, u.nombres, u.apellidos, u.correo_electronico, u.nombre_usuario,
+          u.telefono_celular, u.habilitado_sistema, u.tipo_usuario, NULL, p.tipo_profesor,
+          u.nombres, u.apellidos, u.correo_electronico, u.nombre_usuario, u.telefono_celular,
+          false, u.tipo_usuario, NULL, p.tipo_profesor,
+          $1, (NOW() AT TIME ZONE 'America/Caracas')
+        FROM usuarios u
+        JOIN profesores p ON u.cedula = p.cedula_profesor
+        JOIN semestres s ON p.term = s.term
+        WHERE s.fecha_fin < CURRENT_DATE
+          AND u.habilitado_sistema = TRUE
+          AND u.tipo_usuario = 'Profesor'
+      `;
+      await client.query(auditProfessorsQuery, [cedula_actor]);
+
+      // 4. Deshabilitar profesores
+      const profesoresQuery = loadSQL('usuarios/disable-professors-finished-term.sql');
+      const profesoresResult = await client.query(profesoresQuery);
+
+      await client.query('COMMIT');
+
+      return {
+        estudiantes: estudiantesResult.rowCount || 0,
+        profesores: profesoresResult.rowCount || 0,
+      };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   },
 };
 
