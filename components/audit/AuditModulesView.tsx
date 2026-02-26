@@ -602,19 +602,19 @@ export default function AuditClient() {
     <div className="w-full">
       {/* Barra de búsqueda */}
       <div className="mb-6 px-3">
-        <div className="w-full flex items-center gap-4">
-          <div className="flex-1 min-w-0">
+        <div className="w-full flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+          <div className="w-full sm:flex-1 sm:min-w-0">
             <Search
               value={searchQuery}
               onChange={setSearchQuery}
               placeholder="Buscar por usuario, acción o detalle..."
             />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="w-full sm:w-auto flex items-center gap-2">
             <button
               type="button"
               onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
-              className="h-10 px-4 cursor-pointer rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors"
+              className="w-full sm:w-auto h-10 px-4 cursor-pointer rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors"
               title={sortOrder === 'desc' ? 'Más reciente primero' : 'Más antiguo primero'}
             >
               {sortOrder === 'desc' ? (
