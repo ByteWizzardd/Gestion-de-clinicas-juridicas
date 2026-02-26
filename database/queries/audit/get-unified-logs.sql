@@ -23,15 +23,35 @@ SELECT * FROM (
         CASE WHEN t.operacion = 'vista_previa' THEN 'Vista Previa' ELSE 'Generación' END as accion,
         t.fecha_generacion as fecha,
         t.id_usuario_genero as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_genero), t.id_usuario_genero) as usuario_nombre,
+        COALESCE(
+            (SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_genero),
+            t.id_usuario_genero
+        ) as usuario_nombre,
         'Tipo: ' || t.tipo_reporte as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_genero', u.nombres, 
-                    'apellidos_usuario_genero', u.apellidos, 
-                    'nombre_completo_usuario_genero', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.id_usuario_genero),
+        (
+            row_to_json(t.*)::jsonb 
+            || COALESCE(
+                (
+                    SELECT jsonb_build_object(
+                        'nombres_usuario_genero', u.nombres, 
+                        'apellidos_usuario_genero', u.apellidos, 
+                        'nombre_completo_usuario_genero', u.nombres || ' ' || u.apellidos
+                    )
+                    FROM usuarios u
+                    WHERE u.cedula = t.id_usuario_genero
+                ),
+                '{}'::jsonb
+            )
+            || COALESCE(
+                (
+                    SELECT jsonb_build_object(
+                        'nombres_solicitante', s.nombres,
+                        'apellidos_solicitante', s.apellidos,
+                        'nombre_completo_solicitante', s.nombres || ' ' || s.apellidos
+                    )
+                    FROM solicitantes s
+                    WHERE s.cedula = t.cedula_solicitante
+                ),
                 '{}'::jsonb
             )
         )::text as metadata

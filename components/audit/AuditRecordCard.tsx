@@ -645,7 +645,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 >
                   {r.nombre_completo_solicitante || r.cedula_solicitante}
                 </Link>
-              ) : <span className="italic">Solicitante desconocido</span>}
+              ) : (
+                <span className="italic">Solicitante desconocido</span>
+              )}
             </span>
           </>,
           <>
@@ -681,7 +683,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 >
                   {r.nombre_completo_solicitante || r.cedula_solicitante}
                 </Link>
-              ) : <span className="italic">Solicitante desconocido</span>}
+              ) : (
+                <span className="italic">Solicitante desconocido</span>
+              )}
             </span>
           </>,
           <>
@@ -1327,7 +1331,10 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   className="text-primary hover:underline font-medium transition-colors"
                   onClick={(e: any) => e.stopPropagation()}
                 >
-                  {r.nombre_completo_solicitante || r.cedula_solicitante}
+                  {r.nombre_completo_solicitante ||
+                    (r.filtros_aplicados &&
+                      (r.filtros_aplicados as any).nombreSolicitante) ||
+                    r.cedula_solicitante}
                 </Link>
               </span>
             )}
@@ -4764,7 +4771,10 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                         className="text-primary hover:underline font-medium transition-colors"
                         onClick={(e: any) => e.stopPropagation()}
                       >
-                        {r.nombre_completo_solicitante || r.cedula_solicitante}
+                        {r.nombre_completo_solicitante ||
+                          (r.filtros_aplicados &&
+                            (r.filtros_aplicados as any).nombreSolicitante) ||
+                          r.cedula_solicitante}
                       </Link>
                     </p>
                   )}
