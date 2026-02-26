@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Upload, X, User, Edit, Trash2 } from 'lucide-react';
 import { uploadFotoPerfilAction } from '@/app/actions/usuarios';
 import { motion, AnimatePresence } from 'motion/react';
+import { useToast } from '@/components/ui/feedback/ToastProvider';
 
 interface PhotoUploadHeaderProps {
   currentPhoto?: string | null;
@@ -17,7 +18,7 @@ export default function PhotoUploadHeader({ currentPhoto, onPhotoUpdated, nombre
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const { toast } = useToast();
   const [showEditIcon, setShowEditIcon] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -67,7 +68,6 @@ export default function PhotoUploadHeader({ currentPhoto, onPhotoUpdated, nombre
     }
 
     setError(null);
-    setSuccess(false);
     setIsUploading(true);
     setShowMenu(false);
 
@@ -78,7 +78,7 @@ export default function PhotoUploadHeader({ currentPhoto, onPhotoUpdated, nombre
       const result = await uploadFotoPerfilAction(formData);
 
       if (result.success) {
-        setSuccess(true);
+        toast.success('Foto de perfil actualizada exitosamente');
         onSuccess?.(true);
         // Crear preview
         const reader = new FileReader();
@@ -89,11 +89,8 @@ export default function PhotoUploadHeader({ currentPhoto, onPhotoUpdated, nombre
         onPhotoUpdated?.();
         // Disparar evento para actualizar el sidebar
         window.dispatchEvent(new CustomEvent('photoProfileUpdated'));
-        setTimeout(() => {
-          setSuccess(false);
-          onSuccess?.(false);
-        }, 3000);
       } else {
+        toast.error(result.error?.message || 'Error al subir la foto');
         setError(result.error?.message || 'Error al subir la foto');
       }
     } catch (err) {
@@ -113,7 +110,6 @@ export default function PhotoUploadHeader({ currentPhoto, onPhotoUpdated, nombre
     }
 
     setError(null);
-    setSuccess(false);
     setIsDeleting(true);
     setShowMenu(false);
 
@@ -122,17 +118,14 @@ export default function PhotoUploadHeader({ currentPhoto, onPhotoUpdated, nombre
       const result = await deleteFotoPerfilAction();
 
       if (result.success) {
-        setSuccess(true);
+        toast.success('Foto de perfil eliminada exitosamente');
         onSuccess?.(true);
         setPreview(null);
         onPhotoUpdated?.();
         // Disparar evento para actualizar el sidebar
         window.dispatchEvent(new CustomEvent('photoProfileUpdated'));
-        setTimeout(() => {
-          setSuccess(false);
-          onSuccess?.(false);
-        }, 3000);
       } else {
+        toast.error(result.error?.message || 'Error al eliminar la foto');
         setError(result.error?.message || 'Error al eliminar la foto');
       }
     } catch (err) {
@@ -145,7 +138,7 @@ export default function PhotoUploadHeader({ currentPhoto, onPhotoUpdated, nombre
 
   return (
     <div className="relative">
-      <div 
+      <div
         className="relative"
         onMouseEnter={() => setShowEditIcon(true)}
         onMouseLeave={() => {
@@ -165,7 +158,7 @@ export default function PhotoUploadHeader({ currentPhoto, onPhotoUpdated, nombre
               className="w-20 h-20 rounded-full object-cover border-4 border-gray-200 flex-shrink-0 transition-all duration-200"
             />
           ) : (
-            <div 
+            <div
               className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center border-4 border-gray-200 flex-shrink-0 transition-all duration-200"
             >
               <span className="text-gray-500 text-2xl font-medium">
@@ -173,7 +166,7 @@ export default function PhotoUploadHeader({ currentPhoto, onPhotoUpdated, nombre
               </span>
             </div>
           )}
-          
+
           <AnimatePresence>
             {showEditIcon && (
               <motion.div
@@ -214,7 +207,7 @@ export default function PhotoUploadHeader({ currentPhoto, onPhotoUpdated, nombre
                 className="hidden"
                 id="photo-upload-header"
               />
-              
+
               <label
                 htmlFor="photo-upload-header"
                 className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 hover:bg-gray-50 flex items-center gap-3 transition-colors cursor-pointer"

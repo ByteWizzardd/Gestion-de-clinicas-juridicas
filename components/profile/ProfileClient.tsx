@@ -24,7 +24,6 @@ interface ProfileClientProps {
 export default function ProfileClient({ initialUser }: ProfileClientProps) {
   const [user, setUser] = useState<User | null>(initialUser || null);
   const [loading, setLoading] = useState(!initialUser);
-  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     if (!initialUser) {
@@ -94,7 +93,6 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
             currentPhoto={user.fotoPerfil || null}
             onPhotoUpdated={handlePhotoUpdated}
             nombreInicial={user.nombres}
-            onSuccess={setShowSuccess}
           />
           <div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-2" style={{ fontFamily: 'var(--font-league-spartan)' }}>
@@ -105,22 +103,6 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
             </p>
           </div>
         </div>
-
-        {/* Notificación de éxito centrada abajo de la sección */}
-        <AnimatePresence>
-          {showSuccess && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex justify-center mt-4"
-            >
-              <div className="p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
-                Operación exitosa
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </motion.div>
 
       <motion.div

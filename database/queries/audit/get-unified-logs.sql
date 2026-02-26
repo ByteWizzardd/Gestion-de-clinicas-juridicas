@@ -227,6 +227,12 @@ SELECT * FROM (
                     'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos
                 ) FROM usuarios u WHERE u.cedula = t.id_usuario_creo),
                 '{}'::jsonb
+            ) ||
+            COALESCE(
+                (SELECT jsonb_build_object(
+                    'foto_perfil_usuario', u.foto_perfil
+                ) FROM usuarios u WHERE u.cedula = t.cedula),
+                '{}'::jsonb
             )
         )::text as metadata
     FROM auditoria_insercion_usuarios t
@@ -254,12 +260,14 @@ SELECT * FROM (
                 (SELECT jsonb_build_object(
                     'nombres_usuario', u.nombres, 
                     'apellidos_usuario', u.apellidos, 
-                    'nombre_completo_usuario', u.nombres || ' ' || u.apellidos
+                    'nombre_completo_usuario', u.nombres || ' ' || u.apellidos,
+                    'foto_perfil_usuario', u.foto_perfil
                 ) FROM usuarios u WHERE u.cedula = t.ci_usuario),
                 jsonb_build_object(
                     'nombres_usuario', COALESCE(t.nombres_nuevo, t.nombres_anterior),
                     'apellidos_usuario', COALESCE(t.apellidos_nuevo, t.apellidos_anterior),
-                    'nombre_completo_usuario', COALESCE(t.nombres_nuevo, t.nombres_anterior) || ' ' || COALESCE(t.apellidos_nuevo, t.apellidos_anterior)
+                    'nombre_completo_usuario', COALESCE(t.nombres_nuevo, t.nombres_anterior) || ' ' || COALESCE(t.apellidos_nuevo, t.apellidos_anterior),
+                    'foto_perfil_usuario', t.foto_perfil_nuevo
                 )
             ) ||
             COALESCE(
