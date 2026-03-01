@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Select from '@/components/forms/Select';
-import { Calendar } from 'lucide-react';
+import { Calendar, Building } from 'lucide-react';
 
 export interface ReportFilters {
     dateRange: string;
@@ -75,6 +75,7 @@ export default function FilterBar({
                         onChange={(e) => handleFilterUpdate('nucleo', e.target.value)}
                         placeholder="Núcleo"
                         className="text-md w-full"
+                        icon={<Building className="w-5 h-5 text-neutral-700" />}
                     />
                 </div>
 
@@ -85,6 +86,7 @@ export default function FilterBar({
                         onChange={(e) => handleFilterUpdate('term', e.target.value)}
                         placeholder="TERM - Periodo"
                         className="text-md w-full"
+                        icon={<Calendar className="w-5 h-5 text-neutral-700" />}
                     />
                 </div>
             </div>

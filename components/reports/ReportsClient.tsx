@@ -1147,6 +1147,7 @@ export default function ReportsPage() {
                                                 setDateError(null);
                                             }}
                                             placeholder="Seleccionar Semestre"
+                                            icon={<Calendar className="w-5 h-5 text-neutral-700" />}
                                         />
                                     </div>
                                 </div>
