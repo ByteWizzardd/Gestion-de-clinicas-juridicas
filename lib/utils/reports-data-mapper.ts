@@ -78,10 +78,10 @@ export interface CaseLoadTrendData {
 
 // Color palette for status distribution (pie chart)
 const STATUS_COLORS: Record<string, string> = {
-    'En proceso': '#4A90E2', // Blue
-    'Archivado': '#7B68EE', // Purple
-    'Entregado': '#50C878', // Green
-    'Asesoría': '#D2691E', // Brown/Orange
+    'En proceso': '#3b82f6', // blue-500
+    'Archivado': '#6b7280',  // gray-500
+    'Entregado': '#22c55e',  // green-500
+    'Asesoría': '#a855f7',   // purple-500
 };
 
 /**
