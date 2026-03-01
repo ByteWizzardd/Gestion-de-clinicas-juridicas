@@ -36,7 +36,7 @@ export default function TableSkeleton({ columns, rows = 10 }: TableSkeletonProps
                                             height={16}
                                             borderRadius="6px"
                                             style={{
-                                                background: 'rgba(255,255,255,0.18)',
+                                                background: 'rgba(255,255,255,0.25)',
                                                 animation: 'none',
                                             }}
                                         />
@@ -51,7 +51,7 @@ export default function TableSkeleton({ columns, rows = 10 }: TableSkeletonProps
                                         height={16}
                                         borderRadius="6px"
                                         style={{
-                                            background: 'rgba(255,255,255,0.18)',
+                                            background: 'rgba(255,255,255,0.25)',
                                             animation: 'none',
                                         }}
                                     />
@@ -64,7 +64,7 @@ export default function TableSkeleton({ columns, rows = 10 }: TableSkeletonProps
                     <tbody className="border-t-2 border-t-transparent">
                         {Array.from({ length: rows }).map((_, rowIdx) => {
                             const isOdd = rowIdx % 2 === 1;
-                            const rowBgClass = isOdd ? 'bg-on-primary-light' : '';
+                            const rowBgClass = isOdd ? 'bg-[var(--table-row-even-bg)]' : '';
                             return (
                                 <tr
                                     key={rowIdx}
@@ -76,7 +76,7 @@ export default function TableSkeleton({ columns, rows = 10 }: TableSkeletonProps
                                         return (
                                             <td
                                                 key={colIdx}
-                                                className={`py-4 sm:py-5 px-3 ${rowBgClass} ${isOdd && colIdx === 0 ? 'rounded-l-xl' : ''}`}
+                                                className={`py-4 sm:py-5 px-3 transition-colors ${rowBgClass} ${isOdd && colIdx === 0 ? 'rounded-l-xl' : ''}`}
                                             >
                                                 <div className="flex justify-center">
                                                     <Skeleton
@@ -89,7 +89,7 @@ export default function TableSkeleton({ columns, rows = 10 }: TableSkeletonProps
                                         );
                                     })}
                                     {/* Columna de acciones — 3 dot icon */}
-                                    <td className={`py-4 sm:py-5 px-3 ${rowBgClass} ${isOdd ? 'rounded-r-xl' : ''}`}>
+                                    <td className={`py-4 sm:py-5 px-3 transition-colors ${rowBgClass} ${isOdd ? 'rounded-r-xl' : ''}`}>
                                         <div className="flex justify-center">
                                             <div className="flex items-center gap-[3px]">
                                                 {[0, 1, 2].map((d) => (
@@ -116,7 +116,7 @@ export default function TableSkeleton({ columns, rows = 10 }: TableSkeletonProps
 
                 <div className="flex items-center justify-center gap-2 order-1 lg:order-2">
                     <Skeleton width={36} height={36} borderRadius="12px" />
-                    <div className="flex items-center gap-1 p-1 bg-white border border-gray-100 shadow-sm rounded-2xl hidden sm:flex">
+                    <div className="flex items-center gap-1 p-1 bg-[var(--card-bg)] border border-[var(--card-border)] shadow-sm rounded-2xl hidden sm:flex transition-colors">
                         <Skeleton width={32} height={32} borderRadius="12px" />
                         <Skeleton width={32} height={32} borderRadius="12px" />
                         <Skeleton width={32} height={32} borderRadius="12px" />
@@ -125,7 +125,7 @@ export default function TableSkeleton({ columns, rows = 10 }: TableSkeletonProps
                 </div>
 
                 <div className="flex justify-center lg:justify-end lg:flex-1 w-full lg:w-auto order-2 lg:order-3">
-                    <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-3 bg-[var(--card-bg)] px-4 py-2 rounded-full shadow-sm border border-[var(--card-border)] transition-colors">
                         <Skeleton width={30} height={12} borderRadius="6px" />
                         <Skeleton width={40} height={20} borderRadius="6px" />
                     </div>

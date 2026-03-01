@@ -10,7 +10,7 @@ export default function NotificationSkeleton({ count = 3 }: { count?: number }) 
     return (
         <>
             {Array.from({ length: count }).map((_, i) => (
-                <div key={i} className="w-full px-4 py-3 border-b border-gray-100 last:border-b-0">
+                <div key={i} className="w-full px-4 py-3 border-b border-[var(--dropdown-divider)] last:border-b-0 transition-colors">
                     <div className="flex items-start gap-3">
                         <Skeleton width={8} height={8} borderRadius="50%" style={{ marginTop: 8 }} />
                         <div className="flex-1 min-w-0">

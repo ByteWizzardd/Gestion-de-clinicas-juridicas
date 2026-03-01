@@ -181,7 +181,7 @@ export default function UserDetailPage() {
           <ArrowLeft className="w-5 h-5" />
           <span>Volver</span>
         </button>
-        <div className="bg-red-50 border border-red-200 text-danger px-4 py-3 rounded">
+        <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 px-4 py-3 rounded transition-colors">
           <strong className="font-bold">Error: </strong>
           <span>{error || "No se encontró el usuario"}</span>
         </div>
@@ -325,7 +325,7 @@ export default function UserDetailPage() {
                 ]}
               />
             </div>
-            <p className="text-sm sm:text-base text-gray-500">
+            <p className="text-sm sm:text-base text-[var(--card-text-muted)] transition-colors">
               Cédula: {usuario.cedula}
             </p>
           </div>
@@ -340,7 +340,7 @@ export default function UserDetailPage() {
               exit={{ opacity: 0, y: -10 }}
               className="flex justify-center mt-4"
             >
-              <div className="p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
+              <div className="p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800/50 text-green-700 dark:text-green-400 rounded-lg text-sm transition-colors">
                 Operación exitosa
               </div>
             </motion.div>

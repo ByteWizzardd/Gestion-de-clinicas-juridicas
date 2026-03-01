@@ -1,11 +1,13 @@
 'use client';
 import { useState, useRef, useEffect, ReactNode } from 'react';
-import { User, Key, Bell, HelpCircle, LogOut, Moon } from 'lucide-react';
+import { User, Key, Bell, HelpCircle, LogOut, Moon, Sun } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTheme } from 'next-themes';
 
 interface ProfileDropdownProps {
   userName: string;
   userRole: string;
+  userCedula?: string;
   onProfileClick: () => void;
   onPasswordClick: () => void;
   onHelpClick: () => void;
@@ -16,6 +18,7 @@ interface ProfileDropdownProps {
 export default function ProfileDropdown({
   userName,
   userRole,
+  userCedula,
   onProfileClick,
   onPasswordClick,
   onHelpClick,
@@ -24,9 +27,14 @@ export default function ProfileDropdown({
 }: ProfileDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showAbove, setShowAbove] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false); // Base para modo oscuro
+  const [mounted, setMounted] = useState(false);
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -69,18 +77,25 @@ export default function ProfileDropdown({
     };
   }, [isOpen]);
 
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
-
   const handleAction = (action: () => void) => {
     action();
     setIsOpen(false);
   };
+
+  const handleToggleTheme = () => {
+    // Usar resolvedTheme para determinar el estado actual real (incluyendo system preference)
+    const effectiveTheme = theme === 'system' ? resolvedTheme : theme;
+    const newTheme = effectiveTheme === 'dark' ? 'light' : 'dark';
+
+    setTheme(newTheme);
+
+    // Persistir en cookie específica del usuario (similar al sidebar)
+    if (userCedula) {
+      document.cookie = `theme_preference_${userCedula}=${newTheme}; path=/; max-age=31536000`; // 1 año
+    }
+  };
+
+  const isDarkMode = resolvedTheme === 'dark';
 
   return (
     <div className="relative">
@@ -132,17 +147,23 @@ export default function ProfileDropdown({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setIsDarkMode(!isDarkMode);
+                  handleToggleTheme();
                 }}
                 className="group w-full px-4 py-2.5 text-left text-base text-[var(--dropdown-text)] hover:text-[var(--dropdown-text-hover)] hover:bg-[var(--dropdown-hover)] flex items-center justify-between transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <Moon className="w-4 h-4 text-[var(--dropdown-text)] group-hover:text-[var(--dropdown-text-hover)] transition-colors" />
-                  Modo oscuro
+                  {mounted && isDarkMode ? (
+                    <Sun className="w-4 h-4 text-[var(--dropdown-text)] group-hover:text-[var(--dropdown-text-hover)] transition-colors" />
+                  ) : (
+                    <Moon className="w-4 h-4 text-[var(--dropdown-text)] group-hover:text-[var(--dropdown-text-hover)] transition-colors" />
+                  )}
+                  {mounted && isDarkMode ? 'Modo claro' : 'Modo oscuro'}
                 </div>
-                <div className={`w-8 h-4 rounded-full flex items-center transition-colors px-0.5 ${isDarkMode ? 'bg-primary' : 'bg-gray-200'}`}>
-                  <div className={`w-3 h-3 rounded-full bg-white transform transition-transform ${isDarkMode ? 'translate-x-4' : 'translate-x-0'}`} />
-                </div>
+                {mounted && (
+                  <div className={`w-8 h-4 rounded-full flex items-center transition-colors px-0.5 ${isDarkMode ? 'bg-primary' : 'bg-gray-200'}`}>
+                    <div className={`w-3 h-3 rounded-full bg-white transform transition-transform ${isDarkMode ? 'translate-x-4' : 'translate-x-0'}`} />
+                  </div>
+                )}
               </button>
             </div>
 

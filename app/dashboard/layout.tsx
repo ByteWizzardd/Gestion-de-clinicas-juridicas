@@ -22,8 +22,15 @@ export default async function DashboardLayout({
   const cookieStore = await cookies();
   const isSidebarCollapsed = cookieStore.get(`sidebar_collapsed_${result.data.cedula}`)?.value === 'true';
 
+  // Obtener preferencia de tema desde la cookie (específica del usuario)
+  const themePreference = cookieStore.get(`theme_preference_${result.data.cedula}`)?.value as 'light' | 'dark' | undefined;
+
   return (
-    <DashboardLayoutClient user={result.data} initialSidebarCollapsed={isSidebarCollapsed}>
+    <DashboardLayoutClient
+      user={result.data}
+      initialSidebarCollapsed={isSidebarCollapsed}
+      initialTheme={themePreference || 'light'}
+    >
       {children}
     </DashboardLayoutClient>
   );

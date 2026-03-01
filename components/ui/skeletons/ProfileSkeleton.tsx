@@ -69,12 +69,12 @@ export default function ProfileSkeleton({
 
             {/* === Tabs (Optional) === */}
             {showTabs && (
-                <div className="border-b border-gray-200 mb-4 sm:mb-6">
+                <div className="border-b border-[var(--card-border)] mb-4 sm:mb-6 transition-colors">
                     <div className="flex gap-1">
                         {Array.from({ length: tabsCount }).map((_, i) => (
-                            <div key={i} className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 border-b-2 border-transparent">
+                            <div key={i} className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 border-b-2 border-transparent transition-colors">
                                 <Skeleton width={i === 0 ? 120 : 100} height={16} borderRadius="4px" />
-                                {i === 0 && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-100 mt-2"></div>}
+                                {i === 0 && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--card-border)] mt-2 transition-colors"></div>}
                             </div>
                         ))}
                     </div>
@@ -84,7 +84,7 @@ export default function ProfileSkeleton({
             {/* === Content Area: Cards === */}
             <div className="space-y-4 sm:space-y-6">
                 {/* Card 1: "Información de Contacto" */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+                <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-4 sm:p-6 transition-colors">
                     <div className="flex items-center gap-2 mb-4">
                         <Skeleton width={20} height={20} borderRadius="4px" />
                         <Skeleton width={220} height={24} borderRadius="6px" />
@@ -99,7 +99,7 @@ export default function ProfileSkeleton({
                 </div>
 
                 {/* Card 2: "Datos Personales" */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+                <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-4 sm:p-6 transition-colors">
                     <div className="flex items-center gap-2 mb-4">
                         <Skeleton width={20} height={20} borderRadius="4px" />
                         <Skeleton width={180} height={24} borderRadius="6px" />

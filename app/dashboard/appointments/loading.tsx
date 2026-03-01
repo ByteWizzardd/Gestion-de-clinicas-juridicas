@@ -5,25 +5,25 @@ export default function AppointmentsLoading() {
         <div className="h-full relative">
             {/* Header */}
             <div className="mb-4 md:mb-6 mt-4">
-                <h1 className="text-4xl m-3 font-semibold font-primary">
+                <h1 className="text-4xl m-3 font-semibold font-primary text-[var(--foreground)] transition-colors">
                     Citas
                 </h1>
-                <p className="mb-6 ml-3 text-gray-600">
+                <p className="mb-6 ml-3 text-[var(--card-text-muted)] transition-colors">
                     Vista de programación de las citas.
                 </p>
             </div>
 
             {/* Tabs (real) */}
             <div className="w-full">
-                <div className="border-b border-gray-200 mb-4 sm:mb-6">
+                <div className="border-b border-[var(--card-border)] mb-4 sm:mb-6 transition-colors">
                     <div className="flex gap-1 w-full">
                         <button className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-medium whitespace-nowrap shrink border-b-2 border-primary text-primary">
                             Calendario
                         </button>
-                        <button className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-medium whitespace-nowrap shrink border-b-2 border-transparent text-gray-500">
+                        <button className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-medium whitespace-nowrap shrink border-b-2 border-transparent text-[var(--card-text-muted)] transition-colors">
                             Lista
                         </button>
-                        <button className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-medium whitespace-nowrap shrink border-b-2 border-transparent text-gray-500">
+                        <button className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-medium whitespace-nowrap shrink border-b-2 border-transparent text-[var(--card-text-muted)] transition-colors">
                             Agendadas
                         </button>
                     </div>
@@ -34,7 +34,7 @@ export default function AppointmentsLoading() {
             <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6 pb-6">
                 {/* Calendar widget skeleton */}
                 <div className="h-[calc(100vh-16rem)]">
-                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 h-full flex flex-col">
+                    <div className="bg-[var(--card-bg)] rounded-2xl border border-[var(--card-border)] shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] p-6 h-full flex flex-col transition-colors">
                         {/* Month header */}
                         <div className="flex items-center justify-between mb-6">
                             <Skeleton width={36} height={36} borderRadius="50%" />
@@ -76,7 +76,7 @@ export default function AppointmentsLoading() {
 
                 {/* Appointment list skeleton */}
                 <div className="pr-6 h-[calc(100vh-16rem)] flex flex-col">
-                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-4 py-5 flex-1 flex flex-col">
+                    <div className="bg-[var(--card-bg)] rounded-2xl border border-[var(--card-border)] shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] px-4 py-5 flex-1 flex flex-col transition-colors">
                         {/* List header */}
                         <div className="flex items-center justify-between mb-5">
                             <Skeleton width="55%" height={16} borderRadius="6px" />
@@ -86,7 +86,7 @@ export default function AppointmentsLoading() {
                         {/* Appointment items */}
                         <div className="flex-1 space-y-3 overflow-hidden">
                             {Array.from({ length: 6 }).map((_, i) => (
-                                <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50/60">
+                                <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-[var(--ui-bg-muted)] transition-colors">
                                     {/* Time badge */}
                                     <div className="shrink-0">
                                         <Skeleton width={50} height={44} borderRadius="10px" />

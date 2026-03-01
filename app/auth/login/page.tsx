@@ -99,9 +99,9 @@ export default function LoginPage() {
                         exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                         transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.15, ease: "easeOut" }}>
                         <Link href="/auth" onClick={handleBack}
-                            className="absolute top-4 left-4 sm:top-10 sm:left-8 z-30 p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                            className="absolute top-4 left-4 sm:top-10 sm:left-8 z-30 p-2 hover:bg-[var(--sidebar-hover)] rounded-full transition-colors cursor-pointer"
                         >
-                            <ArrowLeft className="w-6 h-6 sm:w-8 sm:h-8 text-foreground hover:text-primary transition-colors" />
+                            <ArrowLeft className="w-6 h-6 sm:w-8 sm:h-8 text-[var(--foreground)] hover:text-primary transition-colors" />
                         </Link>
                     </motion.div>
                 )}
@@ -132,7 +132,7 @@ export default function LoginPage() {
                                     <Input
                                         label="Nombre de usuario"
                                         placeholder="Ingrese su nombre de usuario"
-                                        className="bg-gray-200 text-base"
+                                        className="text-base"
                                         name="nombreUsuario"
                                         type="text"
                                         value={formData.nombreUsuario}
@@ -142,7 +142,7 @@ export default function LoginPage() {
                                     <Input
                                         label="Contraseña"
                                         placeholder="Ingrese su contraseña"
-                                        className="bg-gray-200 text-base"
+                                        className="text-base"
                                         name="password"
                                         type={showPassword ? "text" : "password"}
                                         value={formData.password}
@@ -152,7 +152,7 @@ export default function LoginPage() {
                                             <button
                                                 type="button"
                                                 onClick={() => setShowPassword(!showPassword)}
-                                                className="focus:outline-none hover:text-gray-700 transition-colors cursor-pointer"
+                                                className="focus:outline-none hover:text-[var(--foreground)] transition-colors cursor-pointer"
                                                 aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                                             >
                                                 {showPassword ? (

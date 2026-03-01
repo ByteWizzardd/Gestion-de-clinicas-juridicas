@@ -62,7 +62,7 @@ export default function DetailPageSkeleton({
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-4 border-b border-gray-200 pb-2 mb-6 overflow-x-auto no-scrollbar">
+            <div className="flex gap-4 border-b border-[var(--card-border)] pb-2 mb-6 overflow-x-auto no-scrollbar transition-colors">
                 {Array.from({ length: tabsCount }).map((_, i) => (
                     <Skeleton
                         key={i}
@@ -77,7 +77,7 @@ export default function DetailPageSkeleton({
             {/* Tab content placeholder */}
             <div className="space-y-6">
                 {/* Section 1 - General Info */}
-                <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <div className="bg-[var(--card-bg)] rounded-xl border border-[var(--card-border)] p-6 transition-colors">
                     <div className="flex items-center gap-3 mb-6">
                         <Skeleton width={24} height={24} borderRadius="4px" />
                         <Skeleton width="45%" height={24} borderRadius="6px" />
@@ -90,7 +90,7 @@ export default function DetailPageSkeleton({
                             </div>
                         ))}
                     </div>
-                    <div className="mt-6 pt-4 border-t border-gray-100">
+                    <div className="mt-6 pt-4 border-t border-[var(--card-border)] transition-colors">
                         <Skeleton width="20%" height={14} borderRadius="4px" className="mb-2" />
                         <SkeletonText lines={2} />
                     </div>
@@ -98,7 +98,7 @@ export default function DetailPageSkeleton({
 
                 {/* Section 2 - Solicitante/Info Adicional */}
                 {cardsCount >= 2 && (
-                    <div className="bg-white rounded-xl border border-gray-200 p-6">
+                    <div className="bg-[var(--card-bg)] rounded-xl border border-[var(--card-border)] p-6 transition-colors">
                         <div className="flex items-center gap-3 mb-6">
                             <Skeleton width={24} height={24} borderRadius="4px" />
                             <Skeleton width="35%" height={24} borderRadius="6px" />
@@ -116,14 +116,14 @@ export default function DetailPageSkeleton({
 
                 {/* Section 3 - Beneficiarios/Listas */}
                 {cardsCount >= 3 && (
-                    <div className="bg-white rounded-xl border border-gray-200 p-6">
+                    <div className="bg-[var(--card-bg)] rounded-xl border border-[var(--card-border)] p-6 transition-colors">
                         <div className="flex items-center gap-3 mb-6">
                             <Skeleton width={24} height={24} borderRadius="4px" />
                             <Skeleton width="40%" height={24} borderRadius="6px" />
                         </div>
                         <div className="space-y-4">
                             {Array.from({ length: 2 }).map((_, i) => (
-                                <div key={i} className="border border-gray-100 rounded-lg p-4 flex flex-col gap-3">
+                                <div key={i} className="border border-[var(--card-border)] rounded-lg p-4 flex flex-col gap-3 transition-colors">
                                     <div className="flex items-center justify-between">
                                         <Skeleton width="50%" height={18} borderRadius="6px" />
                                         <Skeleton width={24} height={24} borderRadius="50%" />

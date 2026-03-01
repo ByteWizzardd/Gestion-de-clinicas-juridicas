@@ -27,14 +27,14 @@ export default function AuditModuleSkeleton({
             {(title || description || showHeaderSkeleton) && (
                 <div className="mb-4 md:mb-6 mt-4">
                     {title ? (
-                        <h1 className="text-4xl m-3 font-semibold font-primary">{title}</h1>
+                        <h1 className="text-4xl m-3 font-semibold font-primary text-[var(--foreground)] transition-colors">{title}</h1>
                     ) : showHeaderSkeleton ? (
                         <div className="m-3">
                             <Skeleton width="40%" height={36} borderRadius="8px" />
                         </div>
                     ) : null}
                     {description ? (
-                        <p className="mb-6 ml-3 text-gray-600">{description}</p>
+                        <p className="mb-6 ml-3 text-[var(--card-text-muted)] transition-colors">{description}</p>
                     ) : showHeaderSkeleton ? (
                         <div className="ml-3 mb-6">
                             <Skeleton width="60%" height={16} borderRadius="6px" />
@@ -45,7 +45,7 @@ export default function AuditModuleSkeleton({
             {/* Tabs */}
             {tabs && tabs.length > 0 && (
                 <div className="w-full">
-                    <div className="border-b border-gray-200 mb-4 sm:mb-6 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+                    <div className="border-b border-[var(--card-border)] mb-4 sm:mb-6 overflow-x-auto scrollbar-thin scrollbar-thumb-[var(--card-border)] scrollbar-track-transparent transition-colors">
                         <div className="flex gap-1 w-full min-w-max">
                             {tabs.map((tab, idx) => (
                                 <button
@@ -55,7 +55,7 @@ export default function AuditModuleSkeleton({
                     border-b-2 transition-colors duration-200 cursor-not-allowed
                     ${idx === 0
                                             ? 'border-primary text-primary'
-                                            : 'border-transparent text-gray-500'
+                                            : 'border-transparent text-[var(--card-text-muted)]'
                                         }
                   `}
                                     disabled
@@ -85,10 +85,10 @@ export default function AuditModuleSkeleton({
                         {showSortButton && (
                             <button
                                 type="button"
-                                className="h-10 px-4 cursor-not-allowed rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap opacity-50"
+                                className="h-10 px-4 cursor-not-allowed rounded-full bg-transparent border border-primary text-[var(--foreground)] flex items-center justify-center gap-1.5 whitespace-nowrap opacity-50 transition-colors"
                                 disabled
                             >
-                                <ArrowDown className="w-[18px] h-[18px] text-[#414040]" />
+                                <ArrowDown className="w-[18px] h-[18px] text-[var(--card-text-muted)]" />
                                 <span className="text-base text-center">Más reciente</span>
                             </button>
                         )}

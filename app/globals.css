@@ -60,6 +60,11 @@
   --dropdown-divider: #f3f4f6;
   /* gray-100 */
 
+  --skeleton-bg: #e5e7eb;
+  /* gray-200 */
+  --skeleton-shimmer: #f3f4f6;
+  /* gray-100 */
+
   /* Calendario & UI Elements */
   --ui-border: #d1d5db;
   /* gray-300 */
@@ -147,6 +152,11 @@
   --dropdown-text-hover: #f3f4f6;
   --dropdown-divider: #27272a;
   /* zinc-800 */
+
+  --skeleton-bg: #262626;
+  /* neutral-800 */
+  --skeleton-shimmer: #404040;
+  /* neutral-700 */
 
   /* Calendario & UI Elements en oscuro */
   --ui-border: #404040;
@@ -241,6 +251,16 @@ body {
   color: var(--foreground);
   box-sizing: border-box;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Aplicar transición a contenedores principales para el cambio de tema sin bloquear otras propiedades (como el ancho del sidebar) */
+.bg-background,
+.bg-card-bg,
+.bg-\[var\(--card-bg\)\] {
+  transition-property: background-color, border-color, color;
+  transition-duration: 0.3s;
+  transition-timing-function: ease;
 }
 
 /* Skeleton shimmer animation */
@@ -256,9 +276,9 @@ body {
 
 .skeleton-shimmer {
   background: linear-gradient(90deg,
-      #e5e7eb 0%,
-      #f3f4f6 40%,
-      #e5e7eb 80%);
+      var(--skeleton-bg) 0%,
+      var(--skeleton-shimmer) 40%,
+      var(--skeleton-bg) 80%);
   background-size: 800px 100%;
   animation: skeleton-shimmer 1.5s ease-in-out infinite;
 }

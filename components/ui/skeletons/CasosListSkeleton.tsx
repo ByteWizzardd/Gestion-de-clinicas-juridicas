@@ -12,7 +12,7 @@ export default function CasosListSkeleton({ count = 4 }: { count?: number }) {
             {Array.from({ length: count }).map((_, i) => (
                 <div
                     key={i}
-                    className="bg-white rounded-xl p-4 border border-gray-200"
+                    className="bg-[var(--card-bg)] rounded-xl p-4 border border-[var(--card-border)] transition-colors"
                 >
                     <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">

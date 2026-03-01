@@ -176,7 +176,7 @@ export default function PhotoUploadHeader({ currentPhoto, onPhotoUpdated, nombre
                 transition={{ duration: 0.2 }}
                 className="absolute bottom-0 right-0 pointer-events-none"
               >
-                <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center border-2 border-white shadow-lg">
+                <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center border-2 border-[var(--background)] shadow-lg transition-all duration-300">
                   <Edit className="w-4 h-4 text-white" />
                 </div>
               </motion.div>
@@ -210,21 +210,21 @@ export default function PhotoUploadHeader({ currentPhoto, onPhotoUpdated, nombre
 
               <label
                 htmlFor="photo-upload-header"
-                className="group w-full px-4 py-2.5 text-left text-base text-[var(--card-text)] hover:text-[var(--foreground)] hover:bg-[var(--sidebar-hover)] flex items-center gap-3 transition-colors cursor-pointer"
+                className="group w-full px-4 py-2.5 text-left text-base text-[var(--dropdown-text)] hover:text-[var(--dropdown-text-hover)] hover:bg-[var(--dropdown-hover)] flex items-center gap-3 transition-colors cursor-pointer"
               >
-                <Upload className="w-4 h-4 text-[var(--card-text-muted)] group-hover:text-[var(--foreground)] transition-colors" />
+                <Upload className="w-4 h-4 text-[var(--dropdown-text)] group-hover:text-[var(--dropdown-text-hover)] transition-colors" />
                 {isUploading ? 'Subiendo...' : 'Subir foto'}
               </label>
 
               {preview && (
                 <>
-                  <div className="border-t border-gray-100 my-1"></div>
+                  <div className="border-t border-[var(--dropdown-divider)] my-1 transition-all duration-300"></div>
                   <button
                     onClick={handleDelete}
                     disabled={isDeleting}
-                    className="group w-full px-4 py-2.5 text-left text-base text-[var(--card-text)] hover:text-red-500 hover:bg-red-500/10 flex items-center gap-3 transition-colors cursor-pointer disabled:opacity-50"
+                    className="group w-full px-4 py-2.5 text-left text-base text-[var(--dropdown-text)] hover:text-red-500 hover:bg-red-500/10 flex items-center gap-3 transition-colors cursor-pointer disabled:opacity-50"
                   >
-                    <Trash2 className="w-4 h-4 text-[var(--card-text-muted)] group-hover:text-red-500 transition-colors" />
+                    <Trash2 className="w-4 h-4 text-[var(--dropdown-text)] group-hover:text-red-500 transition-colors" />
                     {isDeleting ? 'Eliminando...' : 'Eliminar foto'}
                   </button>
                 </>
@@ -239,12 +239,12 @@ export default function PhotoUploadHeader({ currentPhoto, onPhotoUpdated, nombre
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute top-full left-0 mt-2 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm whitespace-nowrap z-40"
+          className="absolute top-full left-0 mt-2 p-3 bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400 rounded-lg text-sm whitespace-nowrap z-40 shadow-md backdrop-blur-sm"
         >
           {error}
           <button
             onClick={() => setError(null)}
-            className="ml-2 text-red-700 hover:text-red-900"
+            className="ml-2 text-red-700 dark:text-red-400 hover:text-red-900 dark:hover:text-red-200 transition-colors"
           >
             <X className="w-4 h-4 inline" />
           </button>

@@ -768,7 +768,7 @@ function Filter({
         }}
         className={`h-10 w-full sm:w-auto px-4 cursor-pointer rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-all ${hasActiveFilter ? 'bg-primary-light border-primary-dark' : ''}`}
       >
-        <FilterIcon className="w-[18px] h-[18px] text-foreground opacity-60" />
+        <FilterIcon className="w-[18px] h-[18px] text-foreground" />
         <span className="text-base text-right">Filtro</span>
         {hasActiveFilter && (
           <span className="ml-1 bg-primary text-on-primary rounded-full w-5 h-5 flex items-center justify-center text-xs font-medium">

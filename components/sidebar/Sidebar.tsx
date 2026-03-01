@@ -9,6 +9,7 @@ import { getMenuByRole, type UserRole } from './menu-config';
 import ProfileDropdown from '@/components/ui/navigation/ProfileDropdown';
 import { getCurrentUserAction } from '@/app/actions/auth';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 interface SidebarProps {
   role: UserRole;
@@ -24,6 +25,7 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
   const menu = getMenuByRole(role);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const { resolvedTheme } = useTheme();
   const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<{ nombre: string; rol: string } | null>(null);
 
@@ -156,6 +158,11 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
+      style={{
+        transitionProperty: "width",
+        transitionDuration: "300ms",
+        transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)"
+      }}
       className={`bg-background flex flex-col h-[calc(100vh-2rem)] rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] m-2 md:m-4 relative group transition-all duration-300 ease-in-out ${isCollapsed ? 'w-16 md:w-20' : 'w-52 md:w-56'}`}
     >
       {/* Botón de toggle (visible al hacer hover o siempre visible) */}
@@ -214,7 +221,13 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
               transition={{ duration: 0.2 }}
             >
               <Link href="/dashboard" onClick={onNavigate}>
-                <Image src="/image.png" alt="DER Logo" width={240} height={87} className="object-contain cursor-pointer transition-transform duration-300 ease-in-out hover:scale-105 w-40 md:w-60 h-auto" />
+                <Image
+                  src={isMounted && resolvedTheme === 'dark' ? "/sidebar blanco.png" : "/image.png"}
+                  alt="DER Logo"
+                  width={240}
+                  height={87}
+                  className="object-contain cursor-pointer transition-transform duration-300 ease-in-out hover:scale-105 w-40 md:w-60 h-auto"
+                />
               </Link>
             </motion.div>
           )}
@@ -273,6 +286,7 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
         <ProfileDropdown
           userName={displayName}
           userRole={displayRole}
+          userCedula={userCedula}
           onProfileClick={() => {
             onNavigate?.();
             router.push('/dashboard/profile');

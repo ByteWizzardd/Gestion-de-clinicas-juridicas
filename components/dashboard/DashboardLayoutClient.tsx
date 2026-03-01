@@ -8,6 +8,7 @@ import DateTime from '../ui/calendar/DateTime';
 import { mapSystemRoleToSidebarRole } from '@/lib/utils/role-mapper';
 import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 interface DashboardLayoutClientProps {
   user: {
@@ -16,12 +17,24 @@ interface DashboardLayoutClientProps {
     apellidos: string;
     correo: string;
     rol: string;
+    fotoPerfil?: string | null;
   };
   children: React.ReactNode;
   initialSidebarCollapsed?: boolean;
+  initialTheme?: 'light' | 'dark';
 }
 
-export default function DashboardLayoutClient({ user, children, initialSidebarCollapsed = false }: DashboardLayoutClientProps) {
+export default function DashboardLayoutClient({ user, children, initialSidebarCollapsed = false, initialTheme }: DashboardLayoutClientProps) {
+  const { setTheme } = useTheme();
+
+  // Aplicar tema inicial desde el servidor solo al montar para evitar sobreescrituras en caliente
+  useEffect(() => {
+    if (initialTheme) {
+      setTheme(initialTheme);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo al montar
+
   const userRole: UserRole = mapSystemRoleToSidebarRole(user.rol);
   const userName = `${user.nombres} ${user.apellidos}`.trim() || 'Usuario';
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
