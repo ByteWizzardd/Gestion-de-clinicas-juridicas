@@ -160,7 +160,7 @@ export default function ReportPreview({
                     <div className="flex items-center bg-[var(--ui-bg-muted)] rounded-lg p-1 border border-[var(--card-border)] shadow-sm">
                         <button
                             onClick={handleZoomOut}
-                            className="p-1.5 rounded-md text-[var(--card-text-muted)] hover:text-primary hover:bg-[var(--card-bg)] hover:shadow-sm transition-all disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none"
+                            className="p-1.5 rounded-md text-[var(--card-text-muted)] hover:text-primary hover:bg-[var(--card-bg)] hover:shadow-sm transition-all disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none cursor-pointer"
                             title="Reducir zoom"
                             disabled={zoomLevel <= 50}
                             type="button"
@@ -174,7 +174,7 @@ export default function ReportPreview({
 
                         <button
                             onClick={handleZoomIn}
-                            className="p-1.5 rounded-md text-[var(--card-text-muted)] hover:text-primary hover:bg-[var(--card-bg)] hover:shadow-sm transition-all disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none"
+                            className="p-1.5 rounded-md text-[var(--card-text-muted)] hover:text-primary hover:bg-[var(--card-bg)] hover:shadow-sm transition-all disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none cursor-pointer"
                             title="Aumentar zoom"
                             disabled={zoomLevel >= 200}
                             type="button"
@@ -186,7 +186,7 @@ export default function ReportPreview({
 
                         <button
                             onClick={handleResetZoom}
-                            className="px-2 py-1 text-[10px] font-medium text-[var(--card-text-muted)] hover:text-primary hover:bg-[var(--card-bg)] hover:shadow-sm rounded transition-all uppercase tracking-wide"
+                            className="px-2 py-1 text-[10px] font-medium text-[var(--card-text-muted)] hover:text-primary hover:bg-[var(--card-bg)] hover:shadow-sm rounded transition-all uppercase tracking-wide cursor-pointer"
                             title="Restablecer zoom (100%)"
                             type="button"
                         >
@@ -197,7 +197,7 @@ export default function ReportPreview({
                     {/* Block 2: Regenerate Button */}
                     <button
                         onClick={handleGeneratePreview}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-[var(--card-text-muted)] bg-[var(--ui-bg-muted)] border border-[var(--card-border)] shadow-sm hover:text-primary hover:bg-[var(--card-bg)] hover:shadow transition-all h-[34px]"
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-[var(--card-text-muted)] bg-[var(--ui-bg-muted)] border border-[var(--card-border)] shadow-sm hover:text-primary hover:bg-[var(--card-bg)] hover:shadow transition-all h-[34px] cursor-pointer"
                         title="Regenerar vista previa"
                         type="button"
                     >
@@ -268,7 +268,7 @@ export default function ReportPreview({
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.4, ease: "easeOut" }}
-                            className="absolute inset-0 overflow-auto bg-[var(--sidebar-hover)] flex flex-col items-center p-4 transition-all"
+                            className="absolute inset-0 overflow-auto bg-[var(--ui-bg-muted)] flex flex-col items-center p-4 transition-all"
                         >
                             <div
                                 style={{
