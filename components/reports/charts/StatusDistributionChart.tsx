@@ -65,10 +65,12 @@ export default function StatusDistributionChart({ data }: StatusDistributionChar
                             cy="50%"
                             labelLine={false}
                             outerRadius="75%"
+                            stroke="var(--card-bg)"
+                            strokeWidth={2}
                             dataKey="value"
                         >
                             {chartData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.fill} />
+                                <Cell key={`cell-${index}`} fill={entry.fill} stroke="var(--card-bg)" strokeWidth={2} />
                             ))}
                         </Pie>
                         <Tooltip content={<CustomTooltip />} />

@@ -294,10 +294,10 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
                 alt="Foto de perfil"
                 width={40}
                 height={40}
-                className="w-10 h-10 rounded-full object-cover shrink-0 border-2 border-gray-200"
+                className="w-10 h-10 rounded-full object-cover shrink-0 border-2 border-[var(--background)]"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-[var(--sidebar-hover)] shrink-0 flex items-center justify-center transition-colors">
+              <div className="w-10 h-10 rounded-full bg-[var(--sidebar-hover)] shrink-0 flex items-center justify-center transition-colors border-2 border-[var(--background)]">
                 <span className="text-[var(--foreground)] opacity-60 text-sm font-medium">
                   {displayName.charAt(0).toUpperCase()}
                 </span>

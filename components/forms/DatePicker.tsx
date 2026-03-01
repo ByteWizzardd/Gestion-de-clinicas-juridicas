@@ -348,15 +348,15 @@ export default function DatePicker({ value, onChange, error, required, disabled 
         }}
         className={`
           w-full h-[40px] pl-12 pr-4 rounded-full border flex items-center relative transition-all
-          ${error ? 'border-danger' : 'border-[var(--card-border)]'}
+          ${error ? 'border-danger' : 'border-[var(--ui-border)]'}
           focus-within:ring-1 
           ${error ? 'focus-within:ring-danger' : 'focus-within:ring-primary'}
           bg-[var(--card-bg)]
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         `}
       >
-        <Calendar className="absolute left-4 w-5 h-5 text-[var(--card-text-muted)] transition-colors" />
-        <span className={`text-base transition-colors ${value ? 'text-[var(--card-text)]' : 'text-[var(--card-text-muted)]'}`}>
+        <Calendar className="absolute left-4 w-5 h-5 text-[var(--select-placeholder)] transition-colors" />
+        <span className={`text-base transition-colors ${value ? 'text-[var(--card-text)]' : 'text-[var(--select-placeholder)]'}`}>
           {formatDisplayDate(value)}
         </span>
       </div>

@@ -128,9 +128,14 @@ export function TablePagination({ currentPage, totalPages, rowsPerPage, onPageCh
                             className="appearance-none bg-transparent border-none pr-6 text-sm focus:outline-none focus:ring-0 cursor-pointer text-[var(--foreground)] font-bold transition-colors"
                             value={rowsPerPage}
                             onChange={e => onRowsPerPageChange(Number(e.target.value))}
+                            style={{ colorScheme: 'light dark' }}
                         >
                             {rowsPerPageOptions.map(option => (
-                                <option key={option} value={option}>
+                                <option
+                                    key={option}
+                                    value={option}
+                                    className="bg-[var(--card-bg)] text-[var(--card-text)]"
+                                >
                                     {option}
                                 </option>
                             ))}

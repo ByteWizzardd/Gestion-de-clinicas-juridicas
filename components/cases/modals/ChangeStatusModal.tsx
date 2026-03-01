@@ -68,12 +68,12 @@ export default function ChangeStatusModal({
     // Status badge helper
     const getStatusColor = (estatus: string) => {
         const colors: Record<string, string> = {
-            'En proceso': 'bg-blue-100 text-blue-800',
-            'Archivado': 'bg-gray-100 text-gray-800',
-            'Entregado': 'bg-green-100 text-green-800',
-            'Asesoría': 'bg-purple-100 text-purple-800',
+            'En proceso': 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-400',
+            'Archivado': 'bg-gray-100 text-gray-800 dark:bg-gray-800/60 dark:text-gray-400',
+            'Entregado': 'bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-400',
+            'Asesoría': 'bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-400',
         };
-        return colors[estatus] || 'bg-gray-100 text-gray-800';
+        return colors[estatus] || 'bg-gray-100 text-gray-800 dark:bg-gray-800/60 dark:text-gray-400';
     };
 
     return (
@@ -86,11 +86,11 @@ export default function ChangeStatusModal({
         >
             <div className="flex flex-col relative w-full max-h-[90vh]">
                 {/* Header fijo */}
-                <div className="shrink-0 p-6 sm:p-8 pb-4 relative border-b border-gray-200">
+                <div className="shrink-0 p-6 sm:p-8 pb-4 relative border-b border-gray-200 dark:border-[var(--card-border)]">
                     {/* Botón de cerrar */}
                     <button
                         onClick={handleClose}
-                        className="absolute top-4 sm:top-6 right-4 sm:right-6 cursor-pointer p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
+                        className="absolute top-4 sm:top-6 right-4 sm:right-6 cursor-pointer p-2 text-gray-400 hover:text-gray-600 dark:hover:text-[var(--foreground)] hover:bg-gray-100 dark:hover:bg-[var(--sidebar-hover)] rounded-md transition-colors z-10"
                         aria-label="Cerrar modal"
                         disabled={isSubmitting}
                     >
@@ -98,12 +98,12 @@ export default function ChangeStatusModal({
                     </button>
 
                     {/* Título */}
-                    <h2 className="text-xl sm:text-2xl font-normal text-foreground pr-10">
+                    <h2 className="text-xl sm:text-2xl font-normal text-foreground dark:text-[var(--foreground)] pr-10">
                         Cambiar Estatus del Caso
                     </h2>
 
                     <div className="mt-2 flex items-center gap-2">
-                        <span className="text-sm text-gray-600">Estatus actual:</span>
+                        <span className="text-sm text-gray-600 dark:text-[var(--card-text-muted)]">Estatus actual:</span>
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(estatusActual)}`}>
                             {estatusActual}
                         </span>
@@ -154,14 +154,14 @@ export default function ChangeStatusModal({
                                 placeholder="Ingrese el motivo detallado del cambio de estatus..."
                                 rows={4}
                             />
-                            <p className="text-xs text-gray-500 mt-1 text-right">
+                            <p className="text-xs text-gray-500 dark:text-[var(--card-text-muted)] mt-1 text-right">
                                 {motivo.length}/500 caracteres
                             </p>
                         </div>
 
                         {/* Mensaje de error general */}
                         {error && (
-                            <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+                            <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 rounded-lg text-sm">
                                 {error}
                             </div>
                         )}
@@ -169,10 +169,10 @@ export default function ChangeStatusModal({
                 </div>
 
                 {/* Footer fijo */}
-                <div className="shrink-0 flex flex-col sm:flex-row items-center sm:justify-between gap-4 border-t border-gray-200 px-6 sm:px-8 py-4 bg-white rounded-b-[30px]">
+                <div className="shrink-0 flex flex-col sm:flex-row items-center sm:justify-between gap-4 border-t border-gray-200 dark:border-[var(--card-border)] px-6 sm:px-8 py-4 bg-white dark:bg-[var(--card-bg)] rounded-b-[30px] transition-colors">
                     <div className="flex items-center gap-1">
                         <span className="text-danger font-medium text-sm">*</span>
-                        <span className="text-sm text-gray-600">Campo obligatorio</span>
+                        <span className="text-sm text-gray-600 dark:text-[var(--card-text-muted)]">Campo obligatorio</span>
                     </div>
 
                     <Button

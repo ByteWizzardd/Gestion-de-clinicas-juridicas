@@ -133,14 +133,14 @@ export default function HelpClient() {
       </motion.h1>
 
       <motion.div
-        className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sm:p-8"
+        className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-6 sm:p-8 transition-colors"
         initial={{ opacity: 0.5 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.1, ease: "easeOut" }}
       >
         <div className="flex items-center gap-3 mb-6">
           <HelpCircle className="w-6 h-6 text-primary" />
-          <p className="text-gray-600 text-sm sm:text-base">
+          <p className="text-[var(--card-text-muted)] text-sm sm:text-base transition-colors">
             Encuentra respuestas a las preguntas más comunes sobre el uso del sistema de gestión de clínica jurídica.
           </p>
         </div>
@@ -152,19 +152,19 @@ export default function HelpClient() {
               initial={{ opacity: 0.5 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.1, ease: "easeOut" }}
-              className="border border-gray-200 rounded-lg overflow-hidden"
+              className="border border-[var(--dropdown-border)] rounded-lg overflow-hidden transition-colors"
             >
               <button
                 onClick={() => toggleFaq(faq.id)}
-                className="w-full px-4 sm:px-6 py-4 text-left flex items-center justify-between gap-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                className="w-full px-4 sm:px-6 py-4 text-left flex items-center justify-between gap-4 hover:bg-[var(--sidebar-hover)] transition-colors cursor-pointer"
               >
-                <span className="font-medium text-gray-900 text-sm sm:text-base pr-4">
+                <span className="font-medium text-[var(--card-text)] text-sm sm:text-base pr-4 transition-colors">
                   {faq.question}
                 </span>
                 {openFaq === faq.id ? (
-                  <ChevronUp className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                  <ChevronUp className="w-5 h-5 text-[var(--card-text-muted)] flex-shrink-0 transition-colors" />
                 ) : (
-                  <ChevronDown className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                  <ChevronDown className="w-5 h-5 text-[var(--card-text-muted)] flex-shrink-0 transition-colors" />
                 )}
               </button>
 
@@ -177,8 +177,8 @@ export default function HelpClient() {
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden"
                   >
-                    <div className="px-4 sm:px-6 py-4 bg-gray-50 border-t border-gray-200">
-                      <p className="text-gray-700 text-sm sm:text-base leading-relaxed">
+                    <div className="px-4 sm:px-6 py-4 bg-[var(--ui-bg-muted)] border-t border-[var(--dropdown-border)] transition-colors">
+                      <p className="text-[var(--faq-answer-text)] text-sm sm:text-base leading-relaxed transition-colors">
                         {faq.answer}
                       </p>
                     </div>

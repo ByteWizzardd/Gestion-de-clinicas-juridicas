@@ -115,7 +115,7 @@ export default function ChangePasswordClient() {
       </motion.div>
 
       <motion.div
-        className="bg-white rounded-lg shadow-sm border border-gray-200 max-w-2xl"
+        className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] max-w-2xl transition-colors"
         initial={{ opacity: 0.5 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.1, ease: "easeOut" }}
@@ -173,7 +173,7 @@ export default function ChangePasswordClient() {
 
           {/* Footer con botones */}
           <div className="flex flex-col px-6 sm:px-8 py-4">
-            <div className="border-t border-gray-200 mb-4"></div>
+            <div className="border-t border-[var(--card-border)] mb-4 transition-colors"></div>
 
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 sm:gap-4">
               <Button

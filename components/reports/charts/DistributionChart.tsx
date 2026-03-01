@@ -69,9 +69,9 @@ export default function DistributionChart({ data }: DistributionChartProps) {
                             content={<CustomTooltip />}
                             cursor={{ fill: 'rgba(156, 35, 39, 0.1)' }}
                         />
-                        <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                        <Bar dataKey="value" radius={[8, 8, 0, 0]} stroke="none">
                             {data.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                             ))}
                         </Bar>
                     </BarChart>

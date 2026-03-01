@@ -5,8 +5,8 @@ export default function NucleosLayout({ children }: { children: ReactNode }) {
     return (
         <div className="w-full">
             <div className="mb-4 md:mb-6 mt-4">
-                <h1 className="text-4xl m-3 font-semibold font-primary">Núcleos</h1>
-                <p className="mb-4 ml-3 text-gray-600">Núcleos universitarios</p>
+                <h1 className="text-4xl m-3 font-semibold font-primary text-[var(--foreground)] transition-colors">Núcleos</h1>
+                <p className="mb-4 ml-3 text-base text-[var(--card-text-muted)] transition-colors">Núcleos universitarios</p>
                 <div className="ml-3">
                     <CatalogBackButton />
                 </div>

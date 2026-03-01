@@ -65,9 +65,9 @@ export default function ConfirmModal({
               Motivo
             </label>
             <textarea
-              className="w-full p-4 rounded-lg border bg-[var(--ui-bg-muted)] border-[var(--dropdown-border)]
+              className="w-full p-4 rounded-lg border bg-[var(--input-bg)] border-transparent
                          focus:outline-none focus:ring-1 focus:ring-primary
-                         text-[var(--foreground)] placeholder:text-[var(--card-text-muted)] resize-none transition-colors"
+                         text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] resize-none transition-colors"
               rows={4}
               maxLength={250}
               value={motiveValue}

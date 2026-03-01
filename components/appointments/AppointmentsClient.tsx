@@ -61,6 +61,7 @@ export default function AppointmentsClient({
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [isCancellingScheduled, setIsCancellingScheduled] = useState(false); // Nuevo estado para cancelar agendadas
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteMotivo, setDeleteMotivo] = useState('');
   const [searchValue, setSearchValue] = useState('');
@@ -524,6 +525,8 @@ export default function AppointmentsClient({
   // Manejar eliminación de cita - Abre el modal de confirmación
   const handleDeleteAppointment = (appointment: Appointment) => {
     setAppointmentToDelete(appointment);
+    setIsCancellingScheduled(false);
+    setDeleteMotivo('');
     setShowDeleteConfirmModal(true);
   };
 
@@ -583,6 +586,8 @@ export default function AppointmentsClient({
   const handleCancelDelete = () => {
     setShowDeleteConfirmModal(false);
     setAppointmentToDelete(null);
+    setIsCancellingScheduled(false);
+    setDeleteMotivo('');
   };
 
   // Manejar cuando se marca una cita programada como completada
@@ -595,14 +600,11 @@ export default function AppointmentsClient({
 
   // Manejar cuando se marca una cita programada como no realizada
   const handleAppointmentCancelled = (appointment: Appointment) => {
-    // Por ahora, simplemente mostrar confirmación y eliminar la cita programada
-    const confirmCancel = window.confirm(
-      `¿Está seguro de que la cita programada para el ${formatDate(appointment.date)} no se realizó? Se eliminará del sistema.`
-    );
-
-    if (confirmCancel) {
-      handleDeleteAppointment(appointment);
-    }
+    // Usar el modal de confirmación en lugar de window.confirm
+    setAppointmentToDelete(appointment);
+    setIsCancellingScheduled(true);
+    setDeleteMotivo('');
+    setShowDeleteConfirmModal(true);
   };
 
   const formatDate = (date: Date) => {
@@ -756,6 +758,8 @@ export default function AppointmentsClient({
                   onEdit={handleEditAppointment}
                   onDelete={handleDeleteAppointment}
                   onView={handleAppointmentClick}
+                  onAppointmentCompleted={handleAppointmentCompleted}
+                  onAppointmentCancelled={handleAppointmentCancelled}
                 />
               </motion.div>
             ),
@@ -881,38 +885,51 @@ export default function AppointmentsClient({
         isOpen={showDeleteConfirmModal}
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
-        title="Eliminar cita"
+        title={isCancellingScheduled ? "Cancelar cita agendada" : "Eliminar cita"}
         message={
           appointmentToDelete ? (
             <div>
-              <p className="mb-4 text-base text-foreground">
-                ¿Estás seguro de que deseas eliminar la cita del{' '}
-                <strong>{formatDate(appointmentToDelete.date)}</strong>?
-              </p>
-              <p className="mb-2 text-base text-foreground">
-                <strong>Caso:</strong> {appointmentToDelete.caseDetail}
-              </p>
-              <p className="mb-6 text-red-600 font-semibold text-base">
-                Esta acción no se puede deshacer.
-              </p>
+              {isCancellingScheduled ? (
+                <p className="mb-4 text-base text-foreground">
+                  ¿Está seguro de que la cita programada para el{' '}
+                  <strong>{formatDate(appointmentToDelete.date)}</strong> no se realizó? Se eliminará del sistema.
+                </p>
+              ) : (
+                <>
+                  <p className="mb-4 text-base text-foreground">
+                    ¿Estás seguro de que deseas eliminar la cita del{' '}
+                    <strong>{formatDate(appointmentToDelete.date)}</strong>?
+                  </p>
+                  <p className="mb-2 text-base text-foreground">
+                    <strong>Caso:</strong> {appointmentToDelete.caseDetail}
+                  </p>
+                </>
+              )}
+
+              {!isCancellingScheduled && (
+                <p className="mb-6 text-red-600 font-semibold text-base">
+                  Esta acción no se puede deshacer.
+                </p>
+              )}
+
               <div className="flex flex-col gap-1">
                 <label className="text-base font-normal text-foreground mb-1">
-                  Motivo de la eliminación
+                  {isCancellingScheduled ? "Motivo de la cancelación" : "Motivo de la eliminación"}
                 </label>
                 <textarea
                   className={`
-                    w-full p-4 rounded-lg border bg-[#E5E7EB]
+                    w-full p-4 rounded-lg border bg-[var(--input-bg)]
                     border-transparent
                     focus:outline-none focus:ring-1
                     focus:ring-primary
-                    text-base placeholder:text-[#717171] resize-none
+                    text-base placeholder:text-[var(--input-placeholder)] resize-none
                     ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}
                   `}
                   rows={4}
                   maxLength={500}
                   value={deleteMotivo}
                   onChange={e => setDeleteMotivo(e.target.value)}
-                  placeholder="Describe el motivo de la eliminación..."
+                  placeholder={isCancellingScheduled ? "Indique por qué no se realizó la cita..." : "Describe el motivo de la eliminación..."}
                   disabled={isDeleting}
                 />
                 <div className="text-right text-xs text-gray-500 mt-1">
@@ -921,13 +938,13 @@ export default function AppointmentsClient({
               </div>
             </div>
           ) : (
-            '¿Está seguro de que desea eliminar esta cita?'
+            '¿Está seguro de que desea proceder?'
           )
         }
-        confirmLabel={isDeleting ? 'Eliminando...' : 'Eliminar'}
+        confirmLabel={isDeleting ? 'Eliminando...' : (isCancellingScheduled ? 'Confirmar' : 'Eliminar')}
         cancelLabel="Cancelar"
         disabled={isDeleting || !deleteMotivo.trim()}
-        confirmVariant="danger"
+        confirmVariant={isCancellingScheduled ? 'primary' : 'danger'}
       />
     </div>
   );

@@ -618,9 +618,9 @@ export default function AuditClient() {
               title={sortOrder === 'desc' ? 'Más reciente primero' : 'Más antiguo primero'}
             >
               {sortOrder === 'desc' ? (
-                <ArrowDown className="w-[18px] h-[18px] text-[#414040]" />
+                <ArrowDown className="w-[18px] h-[18px] opacity-70" />
               ) : (
-                <ArrowUp className="w-[18px] h-[18px] text-[#414040]" />
+                <ArrowUp className="w-[18px] h-[18px] opacity-70" />
               )}
               <span className="text-base text-center">
                 {sortOrder === 'desc' ? 'Más reciente' : 'Más antiguo'}
@@ -637,8 +637,8 @@ export default function AuditClient() {
           ))}
         </div>
       ) : filteredEntities.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-          <p className="text-gray-500 text-lg">No se encontraron resultados para "{searchQuery}"</p>
+        <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-8 text-center transition-colors">
+          <p className="text-[var(--card-text-muted)] text-lg">No se encontraron resultados para "{searchQuery}"</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 px-3">

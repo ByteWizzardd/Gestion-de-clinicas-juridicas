@@ -99,8 +99,8 @@ export default function CaseLoadTrendChart({ data }: CaseLoadTrendChartProps) {
                                 dataKey={status}
                                 stroke={STATUS_LINE_COLORS[status] || '#9E9E9E'}
                                 strokeWidth={2}
-                                dot={{ r: 4 }}
-                                activeDot={{ r: 6 }}
+                                dot={{ r: 4, strokeWidth: 0 }}
+                                activeDot={{ r: 6, strokeWidth: 0 }}
                             />
                         ))}
                     </LineChart>

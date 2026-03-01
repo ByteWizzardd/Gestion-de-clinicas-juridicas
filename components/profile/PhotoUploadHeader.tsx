@@ -155,13 +155,13 @@ export default function PhotoUploadHeader({ currentPhoto, onPhotoUpdated, nombre
             <img
               src={preview}
               alt="Foto de perfil"
-              className="w-20 h-20 rounded-full object-cover border-4 border-gray-200 flex-shrink-0 transition-all duration-200"
+              className="w-20 h-20 rounded-full object-cover border-4 border-[var(--background)] flex-shrink-0 transition-all duration-200"
             />
           ) : (
             <div
-              className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center border-4 border-gray-200 flex-shrink-0 transition-all duration-200"
+              className="w-20 h-20 rounded-full bg-[var(--sidebar-hover)] flex items-center justify-center border-4 border-[var(--background)] flex-shrink-0 transition-all duration-200"
             >
-              <span className="text-gray-500 text-2xl font-medium">
+              <span className="text-[var(--card-text-muted)] text-2xl font-medium">
                 {nombreInicial.charAt(0).toUpperCase()}
               </span>
             </div>
@@ -192,7 +192,7 @@ export default function PhotoUploadHeader({ currentPhoto, onPhotoUpdated, nombre
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="absolute left-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 z-30 py-2"
+              className="absolute left-0 mt-2 w-48 bg-[var(--card-bg)] rounded-xl shadow-xl border border-[var(--card-border)] z-30 py-2 transition-colors"
               onMouseEnter={() => setShowEditIcon(true)}
               onMouseLeave={() => {
                 setShowEditIcon(false);
@@ -210,9 +210,9 @@ export default function PhotoUploadHeader({ currentPhoto, onPhotoUpdated, nombre
 
               <label
                 htmlFor="photo-upload-header"
-                className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 hover:bg-gray-50 flex items-center gap-3 transition-colors cursor-pointer"
+                className="group w-full px-4 py-2.5 text-left text-base text-[var(--card-text)] hover:text-[var(--foreground)] hover:bg-[var(--sidebar-hover)] flex items-center gap-3 transition-colors cursor-pointer"
               >
-                <Upload className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
+                <Upload className="w-4 h-4 text-[var(--card-text-muted)] group-hover:text-[var(--foreground)] transition-colors" />
                 {isUploading ? 'Subiendo...' : 'Subir foto'}
               </label>
 
@@ -222,9 +222,9 @@ export default function PhotoUploadHeader({ currentPhoto, onPhotoUpdated, nombre
                   <button
                     onClick={handleDelete}
                     disabled={isDeleting}
-                    className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors cursor-pointer disabled:opacity-50"
+                    className="group w-full px-4 py-2.5 text-left text-base text-[var(--card-text)] hover:text-red-500 hover:bg-red-500/10 flex items-center gap-3 transition-colors cursor-pointer disabled:opacity-50"
                   >
-                    <Trash2 className="w-4 h-4 text-gray-500 group-hover:text-red-600 transition-colors" />
+                    <Trash2 className="w-4 h-4 text-[var(--card-text-muted)] group-hover:text-red-500 transition-colors" />
                     {isDeleting ? 'Eliminando...' : 'Eliminar foto'}
                   </button>
                 </>

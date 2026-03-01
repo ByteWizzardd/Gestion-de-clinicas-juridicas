@@ -104,12 +104,12 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
 
     // PDF: application/pdf
     if (mimeLower === 'application/pdf' || mimeLower.includes('pdf')) {
-      return <FileText className="w-8 h-8 text-gray-600" />;
+      return <FileText className="w-8 h-8 text-[var(--card-text-muted)] opacity-60" />;
     }
 
     // Imágenes: image/*
     if (mimeLower.startsWith('image/')) {
-      return <Image className="w-8 h-8 text-gray-600" />;
+      return <Image className="w-8 h-8 text-[var(--card-text-muted)] opacity-60" />;
     }
 
     // Word: application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document
@@ -117,7 +117,7 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
       mimeLower.includes('wordprocessingml') ||
       mimeLower.includes('application/vnd.ms-word') ||
       mimeLower.includes('docx')) {
-      return <FileEdit className="w-8 h-8 text-gray-600" />;
+      return <FileEdit className="w-8 h-8 text-[var(--card-text-muted)] opacity-60" />;
     }
 
     // Excel: application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
@@ -125,18 +125,18 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
       mimeLower.includes('spreadsheetml') ||
       mimeLower.includes('application/vnd.ms-excel') ||
       mimeLower.includes('xlsx')) {
-      return <FileSpreadsheet className="w-8 h-8 text-gray-600" />;
+      return <FileSpreadsheet className="w-8 h-8 text-[var(--card-text-muted)] opacity-60" />;
     }
 
     // Por defecto
-    return <File className="w-8 h-8 text-gray-600" />;
+    return <File className="w-8 h-8 text-[var(--card-text-muted)] opacity-60" />;
   };
 
   if (!soportes || soportes.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-        <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-500 text-lg">No hay documentos registrados para este caso</p>
+      <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-8 text-center transition-colors">
+        <FileText className="w-12 h-12 text-[var(--card-text-muted)] opacity-20 mx-auto mb-4" />
+        <p className="text-[var(--card-text-muted)] text-lg transition-colors">No hay documentos registrados para este caso</p>
       </div>
     );
   }
@@ -193,7 +193,7 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
           const isDeleting = deleting?.idCaso === soporte.id_caso && deleting?.numSoporte === soporte.num_soporte;
 
           return (
-            <div key={`${soporte.num_soporte}-${soporte.id_caso}`} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 relative group">
+            <div key={`${soporte.num_soporte}-${soporte.id_caso}`} className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-4 sm:p-6 relative group transition-colors">
               {/* Icono de eliminar en la esquina superior derecha */}
               <button
                 onClick={() => setConfirmDelete({ idCaso: soporte.id_caso, numSoporte: soporte.num_soporte, nombreArchivo: soporte.nombre_archivo })}
@@ -212,8 +212,8 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
                 <div className="flex items-center gap-3">
                   <div className="flex items-center justify-center">{getFileIcon(soporte.tipo_mime)}</div>
                   <div>
-                    <h4 className="text-base sm:text-lg font-semibold text-gray-900">{soporte.nombre_archivo}</h4>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <h4 className="text-base sm:text-lg font-semibold text-[var(--card-text)] transition-colors">{soporte.nombre_archivo}</h4>
+                    <p className="text-sm text-[var(--card-text-muted)] mt-1 transition-colors">
                       {formatDateTime(soporte.fecha_consignacion)}
                     </p>
                   </div>
@@ -223,20 +223,20 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
               <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Tipo de Archivo</label>
-                    <p className="text-base text-gray-900 mt-1">{soporte.tipo_mime.replace(/^application\//, '')}</p>
+                    <label className="text-sm font-medium text-[var(--card-text-muted)]">Tipo de Archivo</label>
+                    <p className="text-base text-[var(--card-text)] mt-1">{soporte.tipo_mime.replace(/^application\//, '')}</p>
                   </div>
                 </div>
 
                 {soporte.nombre_completo_usuario_subio && (
                   <div>
-                    <label className="text-sm font-medium text-gray-500 flex items-center gap-2">
+                    <label className="text-sm font-medium text-[var(--card-text-muted)] flex items-center gap-2">
                       <User className="w-4 h-4" />
                       Subido por
                     </label>
-                    <p className="text-base text-gray-900 mt-1">{soporte.nombre_completo_usuario_subio}</p>
+                    <p className="text-base text-[var(--card-text)] mt-1">{soporte.nombre_completo_usuario_subio}</p>
                     {soporte.fecha_consignacion && (
-                      <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
+                      <p className="text-sm text-[var(--card-text-muted)] mt-1 flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
                         {formatDateTime(soporte.fecha_consignacion)}
                       </p>
@@ -246,14 +246,14 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
 
                 {soporte.descripcion && (
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Descripción</label>
-                    <p className="text-base text-gray-900 mt-1 whitespace-pre-wrap bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <label className="text-sm font-medium text-[var(--card-text-muted)]">Descripción</label>
+                    <p className="text-base text-[var(--card-text)] mt-1 whitespace-pre-wrap bg-[var(--ui-bg-muted)] rounded-lg p-3 border border-[var(--card-border)] transition-colors">
                       {soporte.descripcion}
                     </p>
                   </div>
                 )}
 
-                <div className="pt-2 border-t border-gray-200">
+                <div className="pt-2 border-t border-[var(--card-border)]">
                   <button
                     className="inline-flex items-center gap-2 px-4 py-2 text-primary hover:bg-primary-light rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     onClick={() => handleDownload(soporte.id_caso, soporte.num_soporte, soporte.nombre_archivo)}

@@ -575,7 +575,7 @@ function Filter({
                 width: submenuPosition.width || undefined,
                 maxHeight: isBrowser ? `calc(100vh - ${submenuPosition.top + 16}px)` : '450px',
               }}
-              className="bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)] rounded-2xl shadow-lg w-[200px] p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent shadow-xl transition-colors"
+              className="bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)] rounded-2xl shadow-lg w-[200px] p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-[var(--card-border)] scrollbar-track-transparent shadow-xl transition-colors"
             >
               <div className="space-y-3">
                 {/* Opciones rápidas de fecha (mismo patrón que Citas) */}
@@ -618,7 +618,7 @@ function Filter({
                     }}
                     className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end ${dateRangeFilter === range
                       ? 'bg-primary-light text-primary font-medium'
-                      : 'text-[var(--card-text-muted)] hover:bg-[var(--dropdown-hover)]'
+                      : 'text-[var(--foreground)] hover:bg-[var(--dropdown-hover)]'
                       }`}
                   >
                     {range === 'all' && 'Todas las fechas'}
@@ -627,7 +627,7 @@ function Filter({
                     {range === 'month' && 'Último mes'}
                   </motion.button>
                 ))}
-                <div className="border-t border-gray-200 my-2" />
+                <div className="border-t border-[var(--card-border)] my-2" />
 
                 <motion.button
                   type="button"
@@ -638,14 +638,14 @@ function Filter({
                   }}
                   className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end ${dateRangeFilter === 'custom'
                     ? 'bg-primary-light text-primary font-medium'
-                    : 'text-[var(--card-text-muted)] hover:bg-[var(--dropdown-hover)]'
+                    : 'text-[var(--foreground)] hover:bg-[var(--dropdown-hover)]'
                     }`}
                 >
                   Rango personalizado
                 </motion.button>
 
                 {dateRangeFilter === 'custom' && (
-                  <div className="mt-3 space-y-2 pl-2 border-l-2 border-primary-light">
+                  <div className="mt-3 space-y-2 pl-2 border-l-2 border-[var(--primary-light)]">
                     <DatePicker
                       label="Fecha inicio"
                       value={fechaInicio || ''}
@@ -668,7 +668,7 @@ function Filter({
                           if (onFechaFinChange) onFechaFinChange('');
                           setDateRangeFilter('all');
                         }}
-                        className="w-full px-3 py-2 text-sm text-center text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2"
+                        className="w-full px-3 py-2 text-sm text-center text-[var(--danger)] hover:bg-red-50 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2"
                       >
                         <X className="w-4 h-4" />
                         Limpiar fechas
@@ -703,7 +703,7 @@ function Filter({
               width: submenuPosition.width || undefined,
               maxHeight: isBrowser ? `calc(100vh - ${submenuPosition.top + 16}px)` : '350px',
             }}
-            className="bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)] rounded-2xl shadow-lg w-[180px] p-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent shadow-xl transition-colors"
+            className="bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)] rounded-2xl shadow-lg w-[180px] p-2 overflow-y-auto scrollbar-thin scrollbar-thumb-[var(--card-border)] scrollbar-track-transparent shadow-xl transition-colors"
           >
             <motion.button
               type="button"
@@ -715,7 +715,7 @@ function Filter({
               }}
               className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end text-right ${filterValue === ''
                 ? 'bg-primary-light text-primary font-medium'
-                : 'text-[var(--card-text-muted)] hover:bg-[var(--dropdown-hover)]'
+                : 'text-[var(--foreground)] hover:bg-[var(--dropdown-hover)]'
                 }`}
             >
               <div className="flex-1" />
@@ -733,7 +733,7 @@ function Filter({
                 }}
                 className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end text-right ${filterValue === option.value
                   ? 'bg-primary-light text-primary font-medium'
-                  : 'text-[var(--card-text-muted)] hover:bg-[var(--dropdown-hover)]'
+                  : 'text-[var(--foreground)] hover:bg-[var(--dropdown-hover)]'
                   }`}
               >
                 <div className="flex-1" />
@@ -796,7 +796,7 @@ function Filter({
                   width: menuPosition.width || undefined,
                   maxHeight: isBrowser ? `calc(100vh - ${menuPosition.top + 16}px)` : '450px',
                 }}
-                className="bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)] rounded-2xl shadow-lg w-auto min-w-[180px] p-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent shadow-xl transition-colors"
+                className="bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)] rounded-2xl shadow-lg w-auto min-w-[180px] p-2 overflow-y-auto scrollbar-thin scrollbar-thumb-[var(--card-border)] scrollbar-track-transparent shadow-xl transition-colors"
               >
                 {/* Opción: Rango de Fechas */}
                 {showDateRange && (onFechaInicioChange || onFechaFinChange) && (
@@ -805,13 +805,13 @@ function Filter({
                       ref={activeSubmenu === 'fechas' ? activeButtonRef : undefined}
                       type="button"
                       whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      whileHover={{ x: 4, backgroundColor: 'var(--sidebar-hover)' }}
                       onClick={(e) => handleSubmenuToggle('fechas', e)}
                       className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'fechas'
                         ? 'bg-primary-light text-primary'
                         : fechaInicio || fechaFin
-                          ? 'text-primary hover:bg-gray-100'
-                          : 'text-gray-700 hover:bg-gray-100'}`}
+                          ? 'text-primary hover:bg-[var(--sidebar-hover)]'
+                          : 'text-[var(--card-text)] hover:bg-[var(--sidebar-hover)]'}`}
                     >
                       <ChevronLeft
                         className={`w-4 h-4 transition-transform ${activeSubmenu === 'fechas' ? '-rotate-90' : ''}`}
@@ -820,7 +820,7 @@ function Filter({
                       <span>Rango de fechas</span>
                       <Calendar className="w-4 h-4" />
                     </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
+                    <div className="border-t border-[var(--card-border)] my-2 transition-colors"></div>
                   </>
                 )}
 
@@ -831,13 +831,13 @@ function Filter({
                       ref={activeSubmenu === 'term' ? activeButtonRef : undefined}
                       type="button"
                       whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      whileHover={{ x: 4, backgroundColor: 'var(--sidebar-hover)' }}
                       onClick={(e) => handleSubmenuToggle('term', e)}
                       className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'term'
                         ? 'bg-primary-light text-primary'
                         : termFilter
-                          ? 'text-primary hover:bg-gray-100'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? 'text-primary hover:bg-[var(--sidebar-hover)]'
+                          : 'text-[var(--card-text)] hover:bg-[var(--sidebar-hover)]'
                         }`}
                     >
                       <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'term' ? '-rotate-90' : ''}`} />
@@ -845,7 +845,7 @@ function Filter({
                       <span>Semestre</span>
                       <Calendar className="w-4 h-4" />
                     </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
+                    <div className="border-t border-[var(--card-border)] my-2 transition-colors"></div>
                   </>
                 )}
 
@@ -856,13 +856,13 @@ function Filter({
                       ref={activeSubmenu === 'materia' ? activeButtonRef : undefined}
                       type="button"
                       whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      whileHover={{ x: 4, backgroundColor: 'var(--sidebar-hover)' }}
                       onClick={(e) => handleSubmenuToggle('materia', e)}
                       className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'materia'
                         ? 'bg-primary-light text-primary'
                         : materiaFilter
-                          ? 'text-primary hover:bg-gray-100'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? 'text-primary hover:bg-[var(--sidebar-hover)]'
+                          : 'text-[var(--card-text)] hover:bg-[var(--sidebar-hover)]'
                         }`}
                     >
                       <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'materia' ? '-rotate-90' : ''}`} />
@@ -870,7 +870,7 @@ function Filter({
                       <span>{materiaLabel}</span>
                       <BookOpen className="w-4 h-4" />
                     </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
+                    <div className="border-t border-[var(--card-border)] my-2 transition-colors"></div>
                   </>
                 )}
 
@@ -881,13 +881,13 @@ function Filter({
                       ref={activeSubmenu === 'categoria' ? activeButtonRef : undefined}
                       type="button"
                       whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      whileHover={{ x: 4, backgroundColor: 'var(--sidebar-hover)' }}
                       onClick={(e) => handleSubmenuToggle('categoria', e)}
                       className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'categoria'
                         ? 'bg-primary-light text-primary'
                         : categoriaFilter
-                          ? 'text-primary hover:bg-gray-100'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? 'text-primary hover:bg-[var(--sidebar-hover)]'
+                          : 'text-[var(--card-text)] hover:bg-[var(--sidebar-hover)]'
                         }`}
                     >
                       <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'categoria' ? '-rotate-90' : ''}`} />
@@ -895,7 +895,7 @@ function Filter({
                       <span>{categoriaLabel}</span>
                       <FolderTree className="w-4 h-4" />
                     </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
+                    <div className="border-t border-[var(--card-border)] my-2 transition-colors"></div>
                   </>
                 )}
 
@@ -906,13 +906,13 @@ function Filter({
                       ref={activeSubmenu === 'subcategoria' ? activeButtonRef : undefined}
                       type="button"
                       whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      whileHover={{ x: 4, backgroundColor: 'var(--sidebar-hover)' }}
                       onClick={(e) => handleSubmenuToggle('subcategoria', e)}
                       className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'subcategoria'
                         ? 'bg-primary-light text-primary'
                         : subcategoriaFilter
-                          ? 'text-primary hover:bg-gray-100'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? 'text-primary hover:bg-[var(--sidebar-hover)]'
+                          : 'text-[var(--card-text)] hover:bg-[var(--sidebar-hover)]'
                         }`}
                     >
                       <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'subcategoria' ? '-rotate-90' : ''}`} />
@@ -920,7 +920,7 @@ function Filter({
                       <span>{subcategoriaLabel}</span>
                       <FileText className="w-4 h-4" />
                     </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
+                    <div className="border-t border-[var(--card-border)] my-2 transition-colors"></div>
                   </>
                 )}
 
@@ -931,13 +931,13 @@ function Filter({
                       ref={activeSubmenu === 'nucleo' ? activeButtonRef : undefined}
                       type="button"
                       whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      whileHover={{ x: 4, backgroundColor: 'var(--sidebar-hover)' }}
                       onClick={(e) => handleSubmenuToggle('nucleo', e)}
                       className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'nucleo'
                         ? 'bg-primary-light text-primary'
                         : nucleoFilter
-                          ? 'text-primary hover:bg-gray-100'
-                          : 'text-gray-700 hover:bg-gray-100'}`}
+                          ? 'text-primary hover:bg-[var(--sidebar-hover)]'
+                          : 'text-[var(--card-text)] hover:bg-[var(--sidebar-hover)]'}`}
                     >
                       <ChevronLeft
                         className={`w-4 h-4 transition-transform ${activeSubmenu === 'nucleo' ? '-rotate-90' : ''}`}
@@ -946,7 +946,7 @@ function Filter({
                       <span>{nucleoLabel}</span>
                       <NucleoIcon className="w-4 h-4" />
                     </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
+                    <div className="border-t border-[var(--card-border)] my-2 transition-colors"></div>
                   </>
                 )}
 
@@ -957,13 +957,13 @@ function Filter({
                       ref={activeSubmenu === 'tramite' ? activeButtonRef : undefined}
                       type="button"
                       whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      whileHover={{ x: 4, backgroundColor: 'var(--sidebar-hover)' }}
                       onClick={(e) => handleSubmenuToggle('tramite', e)}
                       className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'tramite'
                         ? 'bg-primary-light text-primary'
                         : tramiteFilter
-                          ? 'text-primary hover:bg-gray-100'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? 'text-primary hover:bg-[var(--sidebar-hover)]'
+                          : 'text-[var(--card-text)] hover:bg-[var(--sidebar-hover)]'
                         }`}
                     >
                       <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'tramite' ? '-rotate-90' : ''}`} />
@@ -971,7 +971,7 @@ function Filter({
                       <span>{tramiteLabel}</span>
                       <TramiteIcon className="w-4 h-4" />
                     </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
+                    <div className="border-t border-[var(--card-border)] my-2 transition-colors"></div>
                   </>
                 )}
 
@@ -982,13 +982,13 @@ function Filter({
                       ref={activeSubmenu === 'estatus' ? activeButtonRef : undefined}
                       type="button"
                       whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      whileHover={{ x: 4, backgroundColor: 'var(--sidebar-hover)' }}
                       onClick={(e) => handleSubmenuToggle('estatus', e)}
                       className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'estatus'
                         ? 'bg-primary-light text-primary'
                         : estatusFilter
-                          ? 'text-primary hover:bg-gray-100'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? 'text-primary hover:bg-[var(--sidebar-hover)]'
+                          : 'text-[var(--card-text)] hover:bg-[var(--sidebar-hover)]'
                         }`}
                     >
                       <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'estatus' ? '-rotate-90' : ''}`} />
@@ -996,7 +996,7 @@ function Filter({
                       <span>{estatusLabel}</span>
                       <EstatusIcon className="w-4 h-4" />
                     </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
+                    <div className="border-t border-[var(--card-border)] my-2 transition-colors"></div>
                   </>
                 )}
 
@@ -1007,13 +1007,13 @@ function Filter({
                       ref={activeSubmenu === 'estado' ? activeButtonRef : undefined}
                       type="button"
                       whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      whileHover={{ x: 4, backgroundColor: 'var(--sidebar-hover)' }}
                       onClick={(e) => handleSubmenuToggle('estado', e)}
                       className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'estado'
                         ? 'bg-primary-light text-primary'
                         : estadoFilter
-                          ? 'text-primary hover:bg-gray-100'
-                          : 'text-gray-700 hover:bg-gray-100'}`}
+                          ? 'text-primary hover:bg-[var(--sidebar-hover)]'
+                          : 'text-[var(--card-text)] hover:bg-[var(--sidebar-hover)]'}`}
                     >
                       <ChevronLeft
                         className={`w-4 h-4 transition-transform ${activeSubmenu === 'estado' ? '-rotate-90' : ''}`}
@@ -1022,7 +1022,7 @@ function Filter({
                       <span>{estadoLabel}</span>
                       <MapPin className="w-4 h-4" />
                     </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
+                    <div className="border-t border-[var(--card-border)] my-2 transition-colors"></div>
                   </>
                 )}
 
@@ -1033,13 +1033,13 @@ function Filter({
                       ref={activeSubmenu === 'municipio' ? activeButtonRef : undefined}
                       type="button"
                       whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      whileHover={{ x: 4, backgroundColor: 'var(--sidebar-hover)' }}
                       onClick={(e) => handleSubmenuToggle('municipio', e)}
                       className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'municipio'
                         ? 'bg-primary-light text-primary'
                         : municipioFilter
-                          ? 'text-primary hover:bg-gray-100'
-                          : 'text-gray-700 hover:bg-gray-100'}`}
+                          ? 'text-primary hover:bg-[var(--sidebar-hover)]'
+                          : 'text-[var(--card-text)] hover:bg-[var(--sidebar-hover)]'}`}
                     >
                       <ChevronLeft
                         className={`w-4 h-4 transition-transform ${activeSubmenu === 'municipio' ? '-rotate-90' : ''}`}
@@ -1048,7 +1048,7 @@ function Filter({
                       <span>{municipioLabel}</span>
                       <Building2 className="w-4 h-4" />
                     </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
+                    <div className="border-t border-[var(--card-border)] my-2 transition-colors"></div>
                   </>
                 )}
 
@@ -1059,13 +1059,13 @@ function Filter({
                       ref={activeSubmenu === 'parroquia' ? activeButtonRef : undefined}
                       type="button"
                       whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      whileHover={{ x: 4, backgroundColor: 'var(--sidebar-hover)' }}
                       onClick={(e) => handleSubmenuToggle('parroquia', e)}
                       className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'parroquia'
                         ? 'bg-primary-light text-primary'
                         : parroquiaFilter
-                          ? 'text-primary hover:bg-gray-100'
-                          : 'text-gray-700 hover:bg-gray-100'}`}
+                          ? 'text-primary hover:bg-[var(--sidebar-hover)]'
+                          : 'text-[var(--card-text)] hover:bg-[var(--sidebar-hover)]'}`}
                     >
                       <ChevronLeft
                         className={`w-4 h-4 transition-transform ${activeSubmenu === 'parroquia' ? '-rotate-90' : ''}`}
@@ -1074,7 +1074,7 @@ function Filter({
                       <span>{parroquiaLabel}</span>
                       <Home className="w-4 h-4" />
                     </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
+                    <div className="border-t border-[var(--card-border)] my-2 transition-colors"></div>
                   </>
                 )}
 
@@ -1085,13 +1085,13 @@ function Filter({
                       ref={activeSubmenu === 'estadoCivil' ? activeButtonRef : undefined}
                       type="button"
                       whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      whileHover={{ x: 4, backgroundColor: 'var(--sidebar-hover)' }}
                       onClick={(e) => handleSubmenuToggle('estadoCivil', e)}
                       className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'estadoCivil'
                         ? 'bg-primary-light text-primary'
                         : estadoCivilFilter
-                          ? 'text-primary hover:bg-gray-100'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? 'text-primary hover:bg-[var(--sidebar-hover)]'
+                          : 'text-[var(--card-text)] hover:bg-[var(--sidebar-hover)]'
                         }`}
                     >
                       <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'estadoCivil' ? '-rotate-90' : ''}`} />
@@ -1099,7 +1099,7 @@ function Filter({
                       <span>{estadoCivilLabel}</span>
                       <User className="w-4 h-4" />
                     </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
+                    <div className="border-t border-[var(--card-border)] my-2 transition-colors"></div>
                   </>
                 )}
 
@@ -1110,13 +1110,13 @@ function Filter({
                       ref={activeSubmenu === 'nacionalidad' ? activeButtonRef : undefined}
                       type="button"
                       whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      whileHover={{ x: 4, backgroundColor: 'var(--sidebar-hover)' }}
                       onClick={(e) => handleSubmenuToggle('nacionalidad', e)}
                       className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'nacionalidad'
                         ? 'bg-primary-light text-primary'
                         : nacionalidadFilter
-                          ? 'text-primary hover:bg-gray-100'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? 'text-primary hover:bg-[var(--sidebar-hover)]'
+                          : 'text-[var(--card-text)] hover:bg-[var(--sidebar-hover)]'
                         }`}
                     >
                       <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'nacionalidad' ? '-rotate-90' : ''}`} />
@@ -1124,7 +1124,7 @@ function Filter({
                       <span>Nacionalidad</span>
                       <Flag className="w-4 h-4" />
                     </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
+                    <div className="border-t border-[var(--card-border)] my-2 transition-colors"></div>
                   </>
                 )}
 
@@ -1135,13 +1135,13 @@ function Filter({
                       ref={activeSubmenu === 'operacion' ? activeButtonRef : undefined}
                       type="button"
                       whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      whileHover={{ x: 4, backgroundColor: 'var(--sidebar-hover)' }}
                       onClick={(e) => handleSubmenuToggle('operacion', e)}
                       className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'operacion'
                         ? 'bg-primary-light text-primary'
                         : operacionFilter
-                          ? 'text-primary hover:bg-gray-100'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? 'text-primary hover:bg-[var(--sidebar-hover)]'
+                          : 'text-[var(--card-text)] hover:bg-[var(--sidebar-hover)]'
                         }`}
                     >
                       <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'operacion' ? '-rotate-90' : ''}`} />
@@ -1149,7 +1149,7 @@ function Filter({
                       <span>{operacionLabel}</span>
                       <Activity className="w-4 h-4" />
                     </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
+                    <div className="border-t border-[var(--card-border)] my-2 transition-colors"></div>
                   </>
                 )}
 
@@ -1160,13 +1160,13 @@ function Filter({
                       ref={activeSubmenu === 'sort' ? activeButtonRef : undefined}
                       type="button"
                       whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      whileHover={{ x: 4, backgroundColor: 'var(--sidebar-hover)' }}
                       onClick={(e) => handleSubmenuToggle('sort', e)}
                       className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'sort'
                         ? 'bg-primary-light text-primary'
                         : sortFilter
-                          ? 'text-primary hover:bg-gray-100'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? 'text-primary hover:bg-[var(--sidebar-hover)]'
+                          : 'text-[var(--card-text)] hover:bg-[var(--sidebar-hover)]'
                         }`}
                     >
                       <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'sort' ? '-rotate-90' : ''}`} />
@@ -1174,7 +1174,7 @@ function Filter({
                       <span>{sortLabel}</span>
                       <ArrowUpDown className="w-4 h-4" />
                     </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
+                    <div className="border-t border-[var(--card-border)] my-2 transition-colors"></div>
                   </>
                 )}
 
@@ -1184,18 +1184,18 @@ function Filter({
                     <motion.button
                       type="button"
                       whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      whileHover={{ x: 4, backgroundColor: 'var(--sidebar-hover)' }}
                       onClick={() => onCasosAsignadosChange(!casosAsignadosFilter)}
                       className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 group ${casosAsignadosFilter
-                        ? 'text-red-600'
-                        : 'text-gray-600'
+                        ? 'text-[var(--danger)]'
+                        : 'text-[var(--card-text)]'
                         }`}
                     >
                       <div className="flex-1" />
                       <span>Mis casos</span>
-                      <UserCheck className={`w-4 h-4 ${casosAsignadosFilter ? 'text-red-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
+                      <UserCheck className={`w-4 h-4 ${casosAsignadosFilter ? 'text-[var(--danger)]' : 'text-[var(--card-text-muted)] group-hover:text-[var(--foreground)]'}`} />
                     </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
+                    <div className="border-t border-[var(--card-border)] my-2 transition-colors"></div>
                   </>
                 )}
 
@@ -1206,18 +1206,18 @@ function Filter({
                     <motion.button
                       type="button"
                       whileTap={{ scale: 0.95 }}
-                      whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                      whileHover={{ x: 4, backgroundColor: 'var(--sidebar-hover)' }}
                       onClick={() => onRecentActivityChange(!recentActivityFilter)}
                       className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 group ${recentActivityFilter
                         ? 'text-primary'
-                        : 'text-gray-600'
+                        : 'text-[var(--card-text)]'
                         }`}
                     >
                       <div className="flex-1" />
                       <span>Actividad más reciente</span>
-                      <Clock className={`w-4 h-4 ${recentActivityFilter ? 'text-primary' : 'text-gray-400 group-hover:text-gray-600'}`} />
+                      <Clock className={`w-4 h-4 ${recentActivityFilter ? 'text-primary' : 'text-[var(--card-text-muted)] group-hover:text-[var(--foreground)]'}`} />
                     </motion.button>
-                    <div className="border-t border-gray-200 my-2"></div>
+                    <div className="border-t border-[var(--card-border)] my-2 transition-colors"></div>
                   </>
                 )}
 
@@ -1227,7 +1227,7 @@ function Filter({
                   <button
                     type="button"
                     onClick={handleClearFilters}
-                    className="w-full px-3 py-2 text-sm text-center text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2"
+                    className="w-full px-3 py-2 text-sm text-center text-[var(--danger)] hover:bg-[var(--bulk-error-bg)] rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2"
                   >
                     <X className="w-4 h-4" />
                     Limpiar filtros

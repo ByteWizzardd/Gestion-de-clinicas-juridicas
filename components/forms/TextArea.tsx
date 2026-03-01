@@ -22,11 +22,11 @@ export default function TextArea({ label, error, ...props }: TextAreaProps) {
 
       <textarea
         className={`
-          w-full p-4 rounded-lg border bg-[#E5E7EB]
+          w-full p-4 rounded-lg border bg-[var(--input-bg)]
           ${error ? 'border-danger' : 'border-transparent'}
           focus:outline-none focus:ring-1
           ${error ? 'focus:ring-danger' : 'focus:ring-primary'}
-          text-base placeholder:text-[#717171] resize-none
+          text-base text-foreground placeholder:text-[var(--input-placeholder)] resize-none
         `}
         rows={3}
         {...props}

@@ -52,11 +52,13 @@ export default function GenderDistributionChart({ data }: GenderDistributionChar
                             cy="50%"
                             innerRadius={60}
                             outerRadius={100}
-                            paddingAngle={5}
+                            paddingAngle={0}
+                            stroke="var(--card-bg)"
+                            strokeWidth={2}
                             dataKey="value"
                         >
                             {data.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                <Cell key={`cell-${index}`} fill={entry.color} stroke="var(--card-bg)" strokeWidth={2} />
                             ))}
                         </Pie>
                         <Tooltip content={<CustomTooltip />} />

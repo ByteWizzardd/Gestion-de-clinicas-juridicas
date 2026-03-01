@@ -73,44 +73,77 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 }
 
 const toastVariants = {
-    initial: { opacity: 0, x: 50, scale: 0.9 },
-    animate: { opacity: 1, x: 0, scale: 1 },
-    exit: { opacity: 0, x: 50, scale: 0.9, transition: { duration: 0.2 } },
+    initial: { opacity: 0, x: 20, scale: 0.95 },
+    animate: {
+        opacity: 1,
+        x: 0,
+        scale: 1,
+        transition: {
+            type: 'spring' as const,
+            stiffness: 350,
+            damping: 25
+        }
+    },
+    exit: {
+        opacity: 0,
+        x: 20,
+        scale: 0.95,
+        transition: { duration: 0.15 }
+    },
 };
 
 function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: () => void }) {
     const styles = {
-        success: { icon: <CheckCircle2 className="w-6 h-6 text-green-500" />, border: 'border-green-200', bg: 'bg-white/95', highlight: 'bg-green-500' },
-        error: { icon: <AlertCircle className="w-6 h-6 text-red-500" />, border: 'border-red-200', bg: 'bg-white/95', highlight: 'bg-red-500' },
-        info: { icon: <Info className="w-6 h-6 text-blue-500" />, border: 'border-blue-200', bg: 'bg-white/95', highlight: 'bg-blue-500' },
-        warning: { icon: <AlertTriangle className="w-6 h-6 text-amber-500" />, border: 'border-amber-200', bg: 'bg-white/95', highlight: 'bg-amber-500' },
+        success: {
+            icon: <CheckCircle2 className="w-6 h-6 text-green-500" />,
+            border: 'border-green-200 dark:border-green-500/20',
+            bg: 'bg-[var(--card-bg)]/90',
+            highlight: 'bg-green-500'
+        },
+        error: {
+            icon: <AlertCircle className="w-6 h-6 text-red-500" />,
+            border: 'border-red-200 dark:border-red-500/20',
+            bg: 'bg-[var(--card-bg)]/90',
+            highlight: 'bg-red-500'
+        },
+        info: {
+            icon: <Info className="w-6 h-6 text-blue-500" />,
+            border: 'border-blue-200 dark:border-blue-500/20',
+            bg: 'bg-[var(--card-bg)]/90',
+            highlight: 'bg-blue-500'
+        },
+        warning: {
+            icon: <AlertTriangle className="w-6 h-6 text-amber-500" />,
+            border: 'border-amber-200 dark:border-amber-500/20',
+            bg: 'bg-[var(--card-bg)]/90',
+            highlight: 'bg-amber-500'
+        },
     };
 
     const style = styles[toast.type];
 
     return (
         <motion.div
-            layout
             variants={toastVariants}
             initial="initial"
             animate="animate"
             exit="exit"
             className={`
-        pointer-events-auto relative overflow-hidden
-        flex items-start gap-3 p-4 rounded-xl border shadow-xl backdrop-blur-md
-        ${style.bg} ${style.border}
-      `}
+                pointer-events-auto relative overflow-hidden
+                flex items-start gap-3 p-4 rounded-xl border shadow-xl backdrop-blur-md
+                ${style.bg} ${style.border}
+            `}
         >
             <div className={`absolute left-0 top-0 bottom-0 w-1 ${style.highlight}`} />
 
             <div className="mt-0.5 shrink-0 pl-1">{style.icon}</div>
             <div className="flex-1 min-w-0 pt-0.5">
-                {toast.title && <h4 className="font-semibold text-sm text-gray-900 mb-1">{toast.title}</h4>}
-                <p className="text-sm text-gray-600 leading-relaxed font-medium">{toast.message}</p>
+                {toast.title && <h4 className="font-semibold text-sm text-[var(--foreground)] mb-1">{toast.title}</h4>}
+                <p className="text-sm text-[var(--card-text-muted)] leading-relaxed font-medium">{toast.message}</p>
             </div>
             <button
                 onClick={onRemove}
-                className="shrink-0 -mt-1 -mr-1 p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-black/5 transition-colors cursor-pointer"
+                className="shrink-0 -mt-1 -mr-1 p-2 rounded-full text-[var(--card-text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--dropdown-hover)] transition-colors cursor-pointer"
             >
                 <X className="w-4 h-4" />
             </button>

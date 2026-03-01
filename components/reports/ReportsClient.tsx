@@ -1015,14 +1015,14 @@ export default function ReportsPage() {
                     {/* Botón de cerrar */}
                     <button
                         onClick={handleCloseModal}
-                        className="absolute top-2 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-50 cursor-pointer"
+                        className="absolute top-2 right-4 p-2 text-[var(--card-text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--sidebar-hover)] rounded-md transition-colors z-50 cursor-pointer"
                         aria-label="Cerrar modal"
                     >
                         <X className="w-6 h-6" />
                     </button>
 
                     {/* Left Column: Form */}
-                    <div className={`flex-shrink-0 p-6 ${supportsPreview ? 'lg:w-[380px] lg:border-r border-gray-100' : 'w-full'}`}>
+                    <div className={`flex-shrink-0 p-6 ${supportsPreview ? 'lg:w-[380px] lg:border-r border-[var(--card-border)]' : 'w-full'}`}>
 
 
                         {/* Título */}
@@ -1042,7 +1042,7 @@ export default function ReportsPage() {
 
                         {/* Tabs para Resumen de Casos y Reporte Socioeconómico */}
                         {(tipoReporteActual === 'Resumen de Casos' || tipoReporteActual === 'Reporte Socioeconómico') && (
-                            <div className="border-b border-gray-200 mb-6">
+                            <div className="border-b border-[var(--card-border)] mb-6">
                                 <div className="flex gap-1 w-full">
                                     <button
                                         onClick={() => setActiveTab('filtros')}
@@ -1050,7 +1050,7 @@ export default function ReportsPage() {
                                             flex-1 px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors duration-200 text-center cursor-pointer
                                             ${activeTab === 'filtros'
                                                 ? 'border-primary text-primary'
-                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                : 'border-transparent text-[var(--card-text-muted)] hover:text-[var(--foreground)] hover:border-[var(--card-text-muted)]'
                                             }
                                         `}
                                     >
@@ -1062,7 +1062,7 @@ export default function ReportsPage() {
                                             flex-1 px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors duration-200 text-center cursor-pointer
                                             ${activeTab === 'secciones'
                                                 ? 'border-primary text-primary'
-                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                : 'border-transparent text-[var(--card-text-muted)] hover:text-[var(--foreground)] hover:border-[var(--card-text-muted)]'
                                             }
                                         `}
                                     >
@@ -1084,7 +1084,7 @@ export default function ReportsPage() {
                                         <input
                                             type="text"
                                             placeholder="Buscar por nombre, apellido o cédula..."
-                                            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent pr-10"
+                                            className="w-full p-2 border border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)] rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent pr-10"
                                             value={solicitanteSearch}
                                             onChange={(e) => {
                                                 setSolicitanteSearch(e.target.value);
@@ -1103,11 +1103,11 @@ export default function ReportsPage() {
                                     </div>
 
                                     {showSolicitanteDropdown && filteredSolicitantes.length > 0 && (
-                                        <div className="absolute z-100 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                        <div className="absolute z-100 w-full mt-1 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-md shadow-lg max-h-60 overflow-y-auto">
                                             {filteredSolicitantes.map((solicitante) => (
                                                 <div
                                                     key={solicitante.cedula}
-                                                    className="p-2 hover:bg-gray-50 cursor-pointer flex flex-col border-b border-gray-100 last:border-0"
+                                                    className="p-2 hover:bg-[var(--sidebar-hover)] cursor-pointer flex flex-col border-b border-[var(--card-border)] last:border-0"
                                                     onClick={() => {
                                                         setSelectedSolicitante(solicitante);
                                                         setSolicitanteSearch(`${solicitante.nombre_completo} (${solicitante.cedula})`);
@@ -1121,7 +1121,7 @@ export default function ReportsPage() {
                                         </div>
                                     )}
                                     {showSolicitanteDropdown && filteredSolicitantes.length === 0 && !isLoadingSolicitantes && (
-                                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg p-2 text-center text-gray-500 text-sm">
+                                        <div className="absolute z-50 w-full mt-1 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-md shadow-lg p-2 text-center text-[var(--card-text-muted)] text-sm">
                                             No se encontraron resultados
                                         </div>
                                     )}
@@ -1421,13 +1421,13 @@ export default function ReportsPage() {
                                                 value="pdf"
                                                 checked={formatoReporte === 'pdf'}
                                                 onChange={() => setFormatoReporte('pdf')}
-                                                className="appearance-none w-5 h-5 rounded-full border-2 border-gray-300 checked:border-primary transition-all cursor-pointer"
+                                                className="appearance-none w-5 h-5 rounded-full border-2 border-[var(--card-border)] checked:border-primary bg-[var(--card-bg)] transition-all cursor-pointer"
                                             />
                                             {formatoReporte === 'pdf' && (
                                                 <div className="absolute w-2.5 h-2.5 rounded-full bg-primary" />
                                             )}
                                         </div>
-                                        <span className={`text-sm ${formatoReporte === 'pdf' ? 'text-primary font-medium' : 'text-gray-600'}`}>PDF (.pdf)</span>
+                                        <span className={`text-sm ${formatoReporte === 'pdf' ? 'text-primary font-medium' : 'text-[var(--card-text)]'}`}>PDF (.pdf)</span>
                                     </label>
 
                                     <label className="flex items-center gap-2 cursor-pointer group">
@@ -1438,13 +1438,13 @@ export default function ReportsPage() {
                                                 value="word"
                                                 checked={formatoReporte === 'word'}
                                                 onChange={() => setFormatoReporte('word')}
-                                                className="appearance-none w-5 h-5 rounded-full border-2 border-gray-300 checked:border-primary transition-all cursor-pointer"
+                                                className="appearance-none w-5 h-5 rounded-full border-2 border-[var(--card-border)] checked:border-primary bg-[var(--card-bg)] transition-all cursor-pointer"
                                             />
                                             {formatoReporte === 'word' && (
                                                 <div className="absolute w-2.5 h-2.5 rounded-full bg-primary" />
                                             )}
                                         </div>
-                                        <span className={`text-sm ${formatoReporte === 'word' ? 'text-primary font-medium' : 'text-gray-600'}`}>Word (.docx)</span>
+                                        <span className={`text-sm ${formatoReporte === 'word' ? 'text-primary font-medium' : 'text-[var(--card-text)]'}`}>Word (.docx)</span>
                                     </label>
                                 </div>
                             </div>
@@ -1467,7 +1467,7 @@ export default function ReportsPage() {
                         )}
 
                         {/* Footer con botón */}
-                        <div className="flex flex-col border-t border-gray-200 pt-4">
+                        <div className="flex flex-col border-t border-[var(--card-border)] pt-4">
                             <div className="flex justify-end gap-3">
                                 <Button
                                     onClick={handleCloseModal}
@@ -1487,7 +1487,7 @@ export default function ReportsPage() {
 
                     {/* Right Column: Real PDF Preview (only for supported report types) */}
                     {supportsPreview && (
-                        <div className="hidden lg:flex flex-col flex-1 min-w-0 rounded-r-xl overflow-hidden border-l border-gray-200/50 relative">
+                        <div className="hidden lg:flex flex-col flex-1 min-w-0 rounded-r-xl overflow-hidden border-l border-[var(--card-border)]/50 relative">
 
 
                             <ReportPreview
@@ -1522,7 +1522,7 @@ export default function ReportsPage() {
                         transition={{ duration: 0.3 }}
                     >
                         <motion.div
-                            className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 border border-gray-100"
+                            className="bg-[var(--card-bg)] p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 border border-[var(--card-border)]"
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -1530,8 +1530,8 @@ export default function ReportsPage() {
                         >
                             <Spinner />
                             <div className="flex flex-col items-center text-center">
-                                <h3 className="text-xl font-semibold text-gray-800">Generando Reporte</h3>
-                                <p className="text-gray-500">Por favor, espera un momento...</p>
+                                <h3 className="text-xl font-semibold text-[var(--foreground)]">Generando Reporte</h3>
+                                <p className="text-[var(--card-text-muted)]">Por favor, espera un momento...</p>
                             </div>
                         </motion.div>
                     </motion.div>

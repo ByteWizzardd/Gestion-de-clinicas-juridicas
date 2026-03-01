@@ -4,8 +4,8 @@ export default function AuditSubcategoriasLayout({ children }: { children: React
     return (
         <div className="w-full">
             <div className="mb-4 md:mb-6 mt-4">
-                <h1 className="text-4xl m-3 font-semibold font-primary">Auditoría de Subcategorías</h1>
-                <p className="mb-6 ml-3 text-gray-600">Registro completo de todas las acciones realizadas sobre las subcategorías del sistema</p>
+                <h1 className="text-4xl m-3 font-semibold font-primary text-[var(--foreground)] transition-colors">Auditoría de Subcategorías</h1>
+                <p className="mb-6 ml-3 text-base text-[var(--card-text-muted)] transition-colors">Registro completo de todas las acciones realizadas sobre las subcategorías del sistema</p>
             </div>
             {children}
         </div>

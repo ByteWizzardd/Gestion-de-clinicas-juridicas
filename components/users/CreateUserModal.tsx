@@ -490,7 +490,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
         {/* Botón de cerrar */}
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10 cursor-pointer"
+          className="absolute top-6 right-6 p-2 text-[var(--card-text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--sidebar-hover)] rounded-md transition-all z-10 cursor-pointer"
           aria-label="Cerrar modal"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M18 6L6 18" /><path d="M6 6l12 12" /></svg>
@@ -689,11 +689,11 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
             )}
           </div>
           {/* Footer con botón */}
-          <div className="flex flex-col border-t border-gray-200">
+          <div className="flex flex-col border-t border-[var(--card-border)] transition-colors">
             {/* Nota sobre campos obligatorios */}
             <div className="flex items-center gap-1 pt-2 pb-2">
               <span className="text-danger font-medium text-sm">*</span>
-              <span className="text-sm text-gray-600">Campo obligatorio</span>
+              <span className="text-sm text-[var(--card-text-muted)] transition-colors">Campo obligatorio</span>
             </div>
             <div className="flex flex-row flex-wrap justify-end gap-3 sm:gap-4 mt-2">
               <Button

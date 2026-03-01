@@ -606,12 +606,12 @@ export default function CaseFormModal({
           <X className="w-6 h-6" />
         </button>
 
-        <h2 className="text-2xl font-normal text-foreground mb-3">{isEditing ? 'Editar Caso' : 'Registro de Caso'}</h2>
+        <h2 className="text-2xl font-normal text-[var(--foreground)] mb-3">{isEditing ? 'Editar Caso' : 'Registro de Caso'}</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 sm:gap-x-6 gap-y-2.5 mb-3">
           <div className="col-span-1">
             <div className="flex flex-col gap-1">
-              <label className="text-base font-normal text-foreground mb-1">Fecha del Caso <span className="text-danger">*</span></label>
+              <label className="text-base font-normal text-[var(--foreground)] mb-1">Fecha del Caso <span className="text-danger">*</span></label>
               <div className="relative">
                 <DatePicker
                   value={formData.fechaCaso}
@@ -792,10 +792,10 @@ export default function CaseFormModal({
                 />
                 <label
                   htmlFor="file-upload"
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-300 bg-[#E5E7EB] cursor-pointer hover:bg-gray-200 transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--ui-border)] bg-[var(--input-bg)] cursor-pointer hover:opacity-80 transition-all"
                 >
-                  <Upload className="w-5 h-5 text-gray-600" />
-                  <span className="text-base text-foreground">Seleccionar archivos</span>
+                  <Upload className="w-5 h-5 text-[var(--card-text-muted)]" />
+                  <span className="text-base text-[var(--card-text)]">Seleccionar archivos</span>
                 </label>
               </div>
 
@@ -804,14 +804,14 @@ export default function CaseFormModal({
                   {archivos.map((archivo, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between px-4 py-2 rounded-lg bg-gray-100 border border-gray-200"
+                      className="flex items-center justify-between px-4 py-2 rounded-lg bg-[var(--ui-bg-muted)] border border-[var(--card-border)]"
                     >
                       <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <File className="w-4 h-4 text-gray-600 shrink-0" />
-                        <span className="text-sm text-foreground truncate" title={archivo.name}>
+                        <File className="w-4 h-4 text-[var(--card-text-muted)] shrink-0" />
+                        <span className="text-sm text-[var(--card-text)] truncate" title={archivo.name}>
                           {archivo.name}
                         </span>
-                        <span className={`text-xs shrink-0 ${archivo.size > MAX_FILE_SIZE ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
+                        <span className={`text-xs shrink-0 ${archivo.size > MAX_FILE_SIZE ? 'text-red-500 font-medium' : 'text-[var(--card-text-muted)]'}`}>
                           ({(archivo.size / 1024 / 1024).toFixed(2)} MB)
                         </span>
                       </div>
@@ -830,17 +830,17 @@ export default function CaseFormModal({
               {fileError && (
                 <p className="text-xs text-danger mt-0.5">{fileError}</p>
               )}
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-[var(--card-text-muted)] mt-0.5">
                 Tamaño máximo por archivo: 10MB
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col border-t border-gray-200 mt-3 pt-3">
+        <div className="flex flex-col border-t border-[var(--card-border)] mt-3 pt-3">
           <div className="flex items-center gap-1 pb-1.5">
             <span className="text-danger font-medium text-sm">*</span>
-            <span className="text-sm text-gray-600">Campo obligatorio</span>
+            <span className="text-sm text-[var(--card-text-muted)]">Campo obligatorio</span>
           </div>
 
           <div className="flex justify-end">

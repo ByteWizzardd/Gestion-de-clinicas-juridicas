@@ -179,7 +179,7 @@ export default function BulkUploadModal({
       <div className="p-6">
         {/* Selector de archivo */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-[var(--bulk-text)] mb-2">
             Archivo (CSV o Excel)
           </label>
           <div className="relative">
@@ -193,20 +193,20 @@ export default function BulkUploadModal({
             />
             <label
               htmlFor="file-upload"
-              className={`flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-gray-300 cursor-pointer hover:border-primary transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : ''
+              className={`flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-[var(--bulk-border)] cursor-pointer hover:border-primary transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
             >
-              <Upload className="w-5 h-5 text-gray-500" />
-              <span className="text-sm text-gray-700">
+              <Upload className="w-5 h-5 text-[var(--bulk-icon)]" />
+              <span className="text-sm text-[var(--bulk-text)]">
                 {file ? file.name : 'Seleccionar archivo CSV o Excel'}
               </span>
             </label>
           </div>
           {file && (
-            <div className="mt-2 flex items-center gap-2 text-sm text-gray-600">
+            <div className="mt-2 flex items-center gap-2 text-sm text-[var(--bulk-text)] opacity-80">
               <File className="w-4 h-4" />
               <span>{file.name}</span>
-              <span className="text-gray-400">({(file.size / 1024).toFixed(2)} KB)</span>
+              <span className="opacity-60">({(file.size / 1024).toFixed(2)} KB)</span>
             </div>
           )}
         </div>
@@ -226,38 +226,38 @@ export default function BulkUploadModal({
 
         {/* Mensaje de error */}
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+          <div className="mb-4 p-3 bg-[var(--bulk-error-bg)] border border-[var(--bulk-error-border)] rounded-lg flex items-start gap-2">
             <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-            <p className="text-sm text-red-700">{error}</p>
+            <p className="text-sm text-[var(--bulk-error-text)]">{error}</p>
           </div>
         )}
 
         {/* Vista previa / Resultado */}
         {preview && (
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <h3 className="text-lg font-semibold mb-3">Resumen de Procesamiento</h3>
+          <div className="mb-6 p-4 bg-[var(--bulk-preview-bg)] rounded-lg border border-[var(--bulk-preview-border)]">
+            <h3 className="text-lg font-semibold mb-3 text-[var(--foreground)]">Resumen de Procesamiento</h3>
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-green-500" />
-                <span className="text-sm">
+                <span className="text-sm dark:text-neutral-300">
                   <strong>{preview.success}</strong> exitosos
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <XCircle className="w-5 h-5 text-red-500" />
-                <span className="text-sm">
+                <span className="text-sm dark:text-neutral-300">
                   <strong>{preview.errors}</strong> con errores
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-yellow-500" />
-                <span className="text-sm">
+                <span className="text-sm dark:text-neutral-300">
                   <strong>{preview.duplicates}</strong> duplicados
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <File className="w-5 h-5 text-gray-500" />
-                <span className="text-sm">
+                <File className="w-5 h-5 text-gray-500 dark:text-neutral-400" />
+                <span className="text-sm dark:text-neutral-300">
                   <strong>{preview.total}</strong> total
                 </span>
               </div>
@@ -266,12 +266,12 @@ export default function BulkUploadModal({
             {/* Detalles de errores */}
             {preview.details.some(d => d.errors.length > 0) && (
               <div className="mt-4">
-                <h4 className="text-sm font-semibold mb-2 text-red-700">Errores encontrados:</h4>
+                <h4 className="text-sm font-semibold mb-2 text-[var(--bulk-error-text)]">Errores encontrados:</h4>
                 <div className="max-h-40 overflow-y-auto space-y-1">
                   {preview.details
                     .filter(d => d.errors.length > 0)
                     .map((detail, idx) => (
-                      <div key={idx} className="text-xs text-red-600 bg-red-50 p-2 rounded">
+                      <div key={idx} className="text-xs text-[var(--bulk-error-text)] bg-[var(--bulk-error-bg)] p-2 rounded">
                         <strong>Fila {detail.rowNumber}:</strong> {detail.errors.join(', ')}
                       </div>
                     ))}
@@ -283,14 +283,14 @@ export default function BulkUploadModal({
 
         {/* Resultado final después de confirmar */}
         {uploadResult && !preview && (
-          <div className="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
+          <div className="mb-6 p-4 bg-[var(--bulk-success-bg)] rounded-lg border border-[var(--bulk-success-border)]">
             <div className="flex items-center gap-2 mb-2">
               <CheckCircle className="w-5 h-5 text-green-500" />
-              <h3 className="text-lg font-semibold text-green-700">
+              <h3 className="text-lg font-semibold text-[var(--bulk-success-text)]">
                 Estudiantes cargados exitosamente
               </h3>
             </div>
-            <p className="text-sm text-green-600">
+            <p className="text-sm text-[var(--bulk-success-text)] opacity-90">
               Se procesaron {uploadResult.success} estudiantes correctamente.
             </p>
           </div>
@@ -333,4 +333,3 @@ export default function BulkUploadModal({
     </Modal>
   );
 }
-

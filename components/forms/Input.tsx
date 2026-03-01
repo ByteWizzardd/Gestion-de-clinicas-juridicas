@@ -25,11 +25,11 @@ export default function Input({ label, error, className = "", disabled, endConte
                     className={`
                         w-full h-[40px] px-4 rounded-full border transition-all
                         ${error ? 'border-danger' : 'border-[var(--dropdown-border)]'}
-                        ${disabled ? 'bg-[var(--ui-bg-inactive)] text-[var(--card-text-muted)] cursor-not-allowed' : 'bg-[var(--ui-bg-muted)] text-[var(--foreground)]'}
+                        ${disabled ? 'bg-[var(--ui-bg-inactive)] text-[var(--card-text-muted)] cursor-not-allowed' : 'bg-[var(--input-bg)] text-[var(--foreground)]'}
                         focus:outline-none focus:ring-1 focus:ring-primary
                         ${error ? 'focus:ring-danger border-danger' : 'focus:ring-primary'}
                         ${disabled ? 'focus:ring-0' : ''}
-                        text-base placeholder:text-[var(--card-text-muted)]
+                        text-base placeholder:text-[var(--input-placeholder)]
                         ${endContent ? 'pr-10' : ''}
                         ${className}
                     `}

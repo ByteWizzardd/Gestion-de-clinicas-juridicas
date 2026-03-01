@@ -5,8 +5,8 @@ export default function CondicionesActividadLayout({ children }: { children: Rea
     return (
         <div className="w-full">
             <div className="mb-4 md:mb-6 mt-4">
-                <h1 className="text-4xl m-3 font-semibold font-primary">Condiciones de Actividad</h1>
-                <p className="mb-4 ml-3 text-gray-600">Condiciones de actividad de los solicitantes</p>
+                <h1 className="text-4xl m-3 font-semibold font-primary text-[var(--foreground)] transition-colors">Condiciones de Actividad</h1>
+                <p className="mb-4 ml-3 text-base text-[var(--card-text-muted)] transition-colors">Condiciones de actividad de los solicitantes</p>
                 <div className="ml-3">
                     <CatalogBackButton />
                 </div>

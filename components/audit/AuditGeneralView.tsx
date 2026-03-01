@@ -319,7 +319,7 @@ export default function AuditGeneralView() {
                     ))}
                 </div>
             ) : displayLogs.length === 0 ? (
-                <div className="py-12 text-center text-gray-400 bg-white rounded-lg border border-dashed border-gray-200 px-3">
+                <div className="py-12 text-center text-[var(--card-text-muted)] bg-[var(--card-bg)] rounded-lg border border-dashed border-[var(--card-border)] px-3 transition-colors">
                     <div className="flex flex-col items-center justify-center">
                         <AlertCircle className="w-8 h-8 mb-2 opacity-50" />
                         <span>No se encontraron registros de auditoría</span>

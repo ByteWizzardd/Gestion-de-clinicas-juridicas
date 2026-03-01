@@ -11,8 +11,8 @@ export default async function TeamsPage() {
   return (
     <>
       <div className="mb-4 md:mb-6 mt-4">
-        <h1 className="text-4xl m-3 font-semibold font-primary">Gestión de Equipo</h1>
-        <p className="mb-6 ml-3 text-gray-600">
+        <h1 className="text-4xl m-3 font-semibold font-primary text-[var(--foreground)] transition-colors">Gestión de Equipo</h1>
+        <p className="mb-6 ml-3 text-base text-[var(--card-text-muted)] transition-colors">
           Supervisión de la carga de trabajo, desempeño y asignación de personal estudiantil
         </p>
       </div>

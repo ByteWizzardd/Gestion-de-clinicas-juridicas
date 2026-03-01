@@ -60,18 +60,18 @@ function SelectSmall({ value, onChange, options, className = '', error = false, 
         disabled={disabled}
         className={`
           w-full h-[40px] px-3 pr-8 rounded-full border flex items-center justify-between
-          ${error ? 'border-danger' : 'border-gray-300'}
+          ${error ? 'border-danger' : 'border-[var(--dropdown-border)]'}
           focus:outline-none focus:ring-1 focus:ring-primary
-          bg-white transition-colors
-          text-base font-normal text-foreground
-          ${disabled ? 'opacity-50 cursor-not-allowed bg-gray-100' : 'cursor-pointer'}
+          bg-[var(--card-bg)] transition-colors
+          text-base font-normal
+          ${disabled ? 'opacity-50 cursor-not-allowed bg-[var(--ui-bg-inactive)]' : 'cursor-pointer'}
         `}
       >
-        <span className={selectedOption ? 'text-foreground' : 'text-[#717171]'}>
+        <span className={`transition-colors ${disabled ? 'text-[var(--card-text-muted)]' : 'text-[var(--select-placeholder-shadowed)] dark:text-[var(--foreground)]'}`}>
           {selectedOption ? selectedOption.label : 'V'}
         </span>
         <ChevronDown
-          className={`absolute top-1/2 right-2 transform -translate-y-1/2 w-3 h-3 text-gray-400 transition-transform pointer-events-none ${isOpen ? 'rotate-180' : ''}`}
+          className={`absolute top-1/2 right-2 transform -translate-y-1/2 w-3 h-3 transition-transform pointer-events-none ${disabled ? 'text-[var(--card-text-muted)]' : 'text-[var(--select-placeholder-shadowed)] dark:text-[var(--foreground)]'} ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -82,7 +82,7 @@ function SelectSmall({ value, onChange, options, className = '', error = false, 
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-2xl shadow-lg max-h-60 overflow-hidden"
+            className="absolute z-50 w-full mt-1 bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)] rounded-2xl shadow-lg max-h-60 overflow-hidden"
           >
             {options.map((option, index) => (
               <button
@@ -90,7 +90,7 @@ function SelectSmall({ value, onChange, options, className = '', error = false, 
                 type="button"
                 onClick={() => handleSelect(option.value)}
                 className={`
-                  w-full px-3 py-2 text-left text-base text-foreground hover:bg-gray-100 transition-colors cursor-pointer
+                  w-full px-3 py-2 text-left text-base text-[var(--card-text)] hover:bg-[var(--sidebar-hover)] transition-colors cursor-pointer
                   ${value === option.value ? 'bg-primary-light text-primary font-medium' : ''}
                   ${index === 0 ? 'rounded-t-2xl' : ''}
                   ${index === options.length - 1 ? 'rounded-b-2xl' : ''}
@@ -300,12 +300,12 @@ export default function CedulaInput({
               }
             }}
             className={`
-              w-full h-[40px] px-4 rounded-full border bg-[#E5E7EB]
+              w-full h-[40px] px-4 rounded-full border bg-[var(--input-bg)]
               ${error ? 'border-danger' : 'border-transparent'}
               focus:outline-none focus:ring-1 
               ${error ? 'focus:ring-danger' : 'focus:ring-primary'}
-              text-base placeholder:text-[#717171]
-              ${disabled ? 'opacity-50 cursor-not-allowed text-gray-500' : ''}
+              text-base text-foreground placeholder:text-[var(--input-placeholder)]
+              ${disabled ? 'opacity-50 cursor-not-allowed text-[var(--input-placeholder)]' : ''}
             `}
           />
 
@@ -317,7 +317,7 @@ export default function CedulaInput({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
                 transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+                className="absolute z-50 left-0 right-0 top-full mt-1 bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)] rounded-md shadow-lg max-h-60 overflow-auto"
               >
                 {isSearching && (
                   <motion.div
@@ -336,10 +336,10 @@ export default function CedulaInput({
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.03, duration: 0.15 }}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none transition-colors cursor-pointer"
+                    className="w-full text-left px-4 py-2 hover:bg-[var(--sidebar-hover)] focus:bg-[var(--sidebar-hover)] focus:outline-none transition-colors cursor-pointer"
                   >
-                    <div className="font-medium text-gray-900">{solicitante.cedula}</div>
-                    <div className="text-sm text-gray-600">{solicitante.nombre_completo}</div>
+                    <div className="font-medium text-[var(--card-text)]">{solicitante.cedula}</div>
+                    <div className="text-sm text-[var(--card-text-muted)]">{solicitante.nombre_completo}</div>
                   </motion.button>
                 ))}
               </motion.div>

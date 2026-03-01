@@ -103,7 +103,7 @@ export default function AddDocumentModal({ isOpen, onClose, idCaso, onSuccess }:
       <form onSubmit={handleSubmit} className="px-6 pb-6 pt-6">
         <div className="mb-6">
           <div className="flex flex-col gap-1">
-            <label className="text-base font-normal text-foreground mb-1">
+            <label className="text-base font-normal text-[var(--card-text)] mb-1">
               Archivos
             </label>
             <div className="relative">
@@ -118,12 +118,12 @@ export default function AddDocumentModal({ isOpen, onClose, idCaso, onSuccess }:
               />
               <label
                 htmlFor="file-upload"
-                className={`flex items-center gap-2 px-4 py-2 rounded-full border ${error && files.length === 0 ? 'border-danger' : 'border-gray-300'
-                  } bg-[#E5E7EB] cursor-pointer hover:bg-gray-200 transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : ''
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border ${error && files.length === 0 ? 'border-danger' : 'border-[var(--ui-border)]'
+                  } bg-[var(--input-bg)] cursor-pointer hover:bg-[var(--sidebar-hover)] transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
               >
-                <Upload className="w-5 h-5 text-gray-600" />
-                <span className="text-base text-foreground">
+                <Upload className="w-5 h-5 text-[var(--dropdown-text)]" />
+                <span className="text-base text-[var(--card-text)]">
                   Seleccionar archivos
                 </span>
               </label>
@@ -131,7 +131,7 @@ export default function AddDocumentModal({ isOpen, onClose, idCaso, onSuccess }:
             {error && (
               <p className="text-xs text-danger mt-1">{error}</p>
             )}
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-[var(--card-text-muted)] mt-1 opacity-70">
               Tamaño máximo por archivo: 10MB
             </p>
           </div>
@@ -142,19 +142,19 @@ export default function AddDocumentModal({ isOpen, onClose, idCaso, onSuccess }:
             {files.map((file, index) => (
               <div
                 key={index}
-                className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200"
+                className="flex items-center gap-2 p-3 bg-[var(--ui-bg-muted)] rounded-lg border border-[var(--dropdown-border)] transition-colors"
               >
-                <File className="w-4 h-4 text-gray-500" />
-                <span className="flex-1 text-sm text-gray-700 truncate">
+                <File className="w-4 h-4 text-[var(--card-text-muted)]" />
+                <span className="flex-1 text-sm text-[var(--card-text)] truncate">
                   {file.name}
                 </span>
-                <span className={`text-xs ${file.size > MAX_FILE_SIZE ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
+                <span className={`text-xs ${file.size > MAX_FILE_SIZE ? 'text-red-500 font-medium' : 'text-[var(--card-text-muted)]'}`}>
                   ({(file.size / 1024 / 1024).toFixed(2)} MB)
                 </span>
                 <button
                   type="button"
                   onClick={() => removeFile(index)}
-                  className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                  className="p-1 text-[var(--card-text-muted)] hover:text-red-500 transition-colors"
                   disabled={loading}
                 >
                   <X className="w-4 h-4 cursor-pointer" />

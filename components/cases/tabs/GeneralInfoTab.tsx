@@ -195,56 +195,56 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Información General del Caso */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-        <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+      <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-4 sm:p-6 transition-colors">
+        <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2 text-[var(--card-text)] transition-colors">
           <FileText className="w-5 h-5 text-primary" />
           Información General del Caso
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium text-gray-500">Código del Caso</label>
-            <p className="text-base text-gray-900 mt-1">{caso.id_caso}</p>
+            <label className="text-sm font-medium text-[var(--card-text-muted)]">Código del Caso</label>
+            <p className="text-base text-[var(--card-text)] mt-1">{caso.id_caso}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-500">Estatus</label>
-            <p className="text-base text-gray-900 mt-1">{caso.estatus || 'N/A'}</p>
+            <label className="text-sm font-medium text-[var(--card-text-muted)]">Estatus</label>
+            <p className="text-base text-[var(--card-text)] mt-1">{caso.estatus || 'N/A'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-500">Fecha de Solicitud</label>
-            <p className="text-base text-gray-900 mt-1">
+            <label className="text-sm font-medium text-[var(--card-text-muted)]">Fecha de Solicitud</label>
+            <p className="text-base text-[var(--card-text)] mt-1">
               {caso.fecha_solicitud ? formatDate(caso.fecha_solicitud) : 'N/A'}
             </p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-500">Fecha de Inicio</label>
-            <p className="text-base text-gray-900 mt-1">
+            <label className="text-sm font-medium text-[var(--card-text-muted)]">Fecha de Inicio</label>
+            <p className="text-base text-[var(--card-text)] mt-1">
               {caso.fecha_inicio_caso ? formatDate(caso.fecha_inicio_caso) : 'N/A'}
             </p>
           </div>
           {caso.fecha_fin_caso && (
             <div>
-              <label className="text-sm font-medium text-gray-500">Fecha de Fin</label>
-              <p className="text-base text-gray-900 mt-1">
+              <label className="text-sm font-medium text-[var(--card-text-muted)]">Fecha de Fin</label>
+              <p className="text-base text-[var(--card-text)] mt-1">
                 {formatDate(caso.fecha_fin_caso)}
               </p>
             </div>
           )}
           <div>
-            <label className="text-sm font-medium text-gray-500">Trámite</label>
-            <p className="text-base text-gray-900 mt-1">{caso.tramite || 'N/A'}</p>
+            <label className="text-sm font-medium text-[var(--card-text-muted)]">Trámite</label>
+            <p className="text-base text-[var(--card-text)] mt-1">{caso.tramite || 'N/A'}</p>
           </div>
           {caso.nombre_nucleo && (
             <div>
-              <label className="text-sm font-medium text-gray-500">Núcleo</label>
-              <p className="text-base text-gray-900 mt-1">
+              <label className="text-sm font-medium text-[var(--card-text-muted)]">Núcleo</label>
+              <p className="text-base text-[var(--card-text)] mt-1">
                 {caso.nombre_nucleo}
               </p>
             </div>
           )}
           {caso.nombre_materia && (
             <div className="col-span-1 sm:col-span-2">
-              <label className="text-sm font-medium text-gray-500">Tipo de Caso</label>
-              <p className="text-base text-gray-900 mt-1">
+              <label className="text-sm font-medium text-[var(--card-text-muted)]">Tipo de Caso</label>
+              <p className="text-base text-[var(--card-text)] mt-1">
                 {(() => {
                   const mat = caso.nombre_materia;
                   const cat = caso.nombre_categoria;
@@ -265,22 +265,22 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
         </div>
         {caso.observaciones && (
           <div className="mt-4">
-            <label className="text-sm font-medium text-gray-500">Observaciones</label>
-            <p className="text-base text-gray-900 mt-1 whitespace-pre-wrap">{caso.observaciones}</p>
+            <label className="text-sm font-medium text-[var(--card-text-muted)]">Observaciones</label>
+            <p className="text-base text-[var(--card-text)] mt-1 whitespace-pre-wrap">{caso.observaciones}</p>
           </div>
         )}
       </div>
 
       {/* Información del Solicitante */}
       {caso.nombre_completo_solicitante && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+        <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-4 sm:p-6 transition-colors">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2 text-[var(--card-text)]">
             <User className="w-5 h-5 text-primary" />
             Solicitante
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-500">Nombre Completo</label>
+              <label className="text-sm font-medium text-[var(--card-text-muted)]">Nombre Completo</label>
               <p className="text-base mt-1">
                 {caso.cedula ? (
                   <Link
@@ -290,14 +290,14 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
                     {caso.nombre_completo_solicitante}
                   </Link>
                 ) : (
-                  <span className="text-gray-900">{caso.nombre_completo_solicitante}</span>
+                  <span className="text-[var(--card-text)]">{caso.nombre_completo_solicitante}</span>
                 )}
               </p>
             </div>
             {caso.cedula && (
               <div>
-                <label className="text-sm font-medium text-gray-500">Cédula</label>
-                <p className="text-base text-gray-900 mt-1">{caso.cedula}</p>
+                <label className="text-sm font-medium text-[var(--card-text-muted)]">Cédula</label>
+                <p className="text-base text-[var(--card-text)] mt-1">{caso.cedula}</p>
               </div>
             )}
           </div>
@@ -306,8 +306,8 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
 
       {/* Beneficiarios */}
       {caso.beneficiarios && caso.beneficiarios.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+        <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-4 sm:p-6 transition-colors">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2 text-[var(--card-text)]">
             <Users className="w-5 h-5 text-primary" />
             Beneficiarios ({caso.beneficiarios.length})
           </h3>
@@ -315,14 +315,14 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
             {caso.beneficiarios.map((beneficiario) => {
               const edad = beneficiario.fecha_nac ? calculateAge(beneficiario.fecha_nac) : null;
               return (
-                <div key={beneficiario.num_beneficiario} className="border border-gray-200 rounded-lg p-4 relative group">
+                <div key={beneficiario.num_beneficiario} className="border border-[var(--card-border)] rounded-lg p-4 relative group transition-colors">
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                     <button
                       onClick={() => {
                         setSelectedBeneficiary(beneficiario);
                         setEditModalOpen(true);
                       }}
-                      className="p-2 text-gray-500 hover:text-primary hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                      className="p-2 text-[var(--card-text-muted)] hover:text-primary hover:bg-[var(--sidebar-hover)] rounded-full transition-colors cursor-pointer"
                       type="button"
                       title="Editar beneficiario"
                     >
@@ -339,33 +339,33 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Nombre Completo</label>
-                      <p className="text-base text-gray-900 mt-1">{beneficiario.nombre_completo}</p>
+                      <label className="text-sm font-medium text-[var(--card-text-muted)]">Nombre Completo</label>
+                      <p className="text-base text-[var(--card-text)] mt-1">{beneficiario.nombre_completo}</p>
                     </div>
                     {beneficiario.cedula && (
                       <div>
-                        <label className="text-sm font-medium text-gray-500">Cédula</label>
-                        <p className="text-base text-gray-900 mt-1">{beneficiario.cedula}</p>
+                        <label className="text-sm font-medium text-[var(--card-text-muted)]">Cédula</label>
+                        <p className="text-base text-[var(--card-text)] mt-1">{beneficiario.cedula}</p>
                       </div>
                     )}
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Fecha de Nacimiento</label>
-                      <p className="text-base text-gray-900 mt-1">
+                      <label className="text-sm font-medium text-[var(--card-text-muted)]">Fecha de Nacimiento</label>
+                      <p className="text-base text-[var(--card-text)] mt-1">
                         {beneficiario.fecha_nac ? formatDate(beneficiario.fecha_nac) : 'N/A'}
                         {edad !== null && ` (${edad} años)`}
                       </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Sexo</label>
-                      <p className="text-base text-gray-900 mt-1">{formatSexo(beneficiario.sexo)}</p>
+                      <label className="text-sm font-medium text-[var(--card-text-muted)]">Sexo</label>
+                      <p className="text-base text-[var(--card-text)] mt-1">{formatSexo(beneficiario.sexo)}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Tipo de Beneficiario</label>
-                      <p className="text-base text-gray-900 mt-1">{beneficiario.tipo_beneficiario}</p>
+                      <label className="text-sm font-medium text-[var(--card-text-muted)]">Tipo de Beneficiario</label>
+                      <p className="text-base text-[var(--card-text)] mt-1">{beneficiario.tipo_beneficiario}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Parentesco</label>
-                      <p className="text-base text-gray-900 mt-1">{beneficiario.parentesco}</p>
+                      <label className="text-sm font-medium text-[var(--card-text-muted)]">Parentesco</label>
+                      <p className="text-base text-[var(--card-text)] mt-1">{beneficiario.parentesco}</p>
                     </div>
                   </div>
                 </div>
@@ -376,16 +376,16 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
       )}
 
       {(!caso.beneficiarios || caso.beneficiarios.length === 0) && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-          <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 text-lg">No hay beneficiarios registrados para este caso</p>
+        <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-8 text-center transition-colors">
+          <Users className="w-12 h-12 text-[var(--card-text-muted)] opacity-20 mx-auto mb-4" />
+          <p className="text-[var(--card-text-muted)] text-lg">No hay beneficiarios registrados para este caso</p>
         </div>
       )}
 
       {/* Semestres de Actividad */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+      <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-4 sm:p-6 transition-colors">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+          <h3 className="text-lg sm:text-xl font-semibold flex items-center gap-2 text-[var(--card-text)] transition-colors">
             <Calendar className="w-5 h-5 text-primary" />
             Semestres de Actividad ({semesters.length})
           </h3>
@@ -398,23 +398,23 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
         </div>
 
         {loadingSemesters ? (
-          <p className="text-gray-500">Cargando semestres...</p>
+          <p className="text-[var(--card-text-muted)]">Cargando semestres...</p>
         ) : (
           <div className="space-y-3">
             {semesters.length === 0 ? (
-              <p className="text-gray-500 italic">No hay semestres asociados a este caso.</p>
+              <p className="text-[var(--card-text-muted)] italic">No hay semestres asociados a este caso.</p>
             ) : (
               semesters.map((sem) => (
-                <div key={sem.term} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg bg-gray-50/50 hover:bg-gray-50 transition-colors group">
+                <div key={sem.term} className="flex items-center justify-between p-3 border border-[var(--card-border)] rounded-lg bg-[var(--ui-bg-muted)] hover:bg-[var(--sidebar-hover)] transition-colors group">
                   <div className="flex flex-col">
-                    <span className="font-medium text-gray-900">Semestre {sem.term}</span>
-                    <span className="text-xs text-gray-500">
+                    <span className="font-medium text-[var(--card-text)]">Semestre {sem.term}</span>
+                    <span className="text-xs text-[var(--card-text-muted)]">
                       {formatDate(sem.fecha_inicio)} - {formatDate(sem.fecha_fin)}
                     </span>
                   </div>
                   <button
                     onClick={() => handleRemoveSemester(sem.term)}
-                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"
+                    className="p-2 text-[var(--card-text-muted)] hover:text-red-600 hover:bg-red-500/10 rounded-full transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"
                     title="Eliminar asociación"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -434,7 +434,7 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
         size="sm"
       >
         <div className="p-6">
-          <p className="mb-4 text-sm text-gray-600">
+          <p className="mb-4 text-sm text-[var(--card-text-muted)]">
             Selecciona el semestre que deseas asociar a este caso.
           </p>
 

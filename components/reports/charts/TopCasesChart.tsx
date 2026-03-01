@@ -77,9 +77,10 @@ export default function TopCasesChart({ data }: TopCasesChartProps) {
                         <Bar
                             dataKey="value"
                             radius={[8, 8, 0, 0]}
+                            stroke="none"
                         >
                             {data.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
                             ))}
                         </Bar>
                     </BarChart>

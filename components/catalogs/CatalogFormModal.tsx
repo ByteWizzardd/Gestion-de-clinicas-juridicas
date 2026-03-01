@@ -179,7 +179,7 @@ export default function CatalogFormModal({
                 {/* Close button */}
                 <button
                     onClick={handleClose}
-                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+                    className="absolute top-4 right-4 p-2 text-[var(--card-text-muted)] hover:text-[var(--card-text)] hover:bg-[var(--catalog-modal-close-hover)] rounded-md transition-colors cursor-pointer"
                     aria-label="Cerrar modal"
                 >
                     <X className="w-6 h-6" />
@@ -227,7 +227,7 @@ export default function CatalogFormModal({
                                         type={field.type || 'text'}
                                         value={formData[field.name] || ''}
                                         onChange={(e) => updateField(field.name, e.target.value)}
-                                        className={`w-full h-[40px] px-4 rounded-full border ${errors[field.name] ? 'border-danger' : 'border-transparent'} bg-[#E5E7EB] text-base placeholder:text-[#717171] focus:outline-none focus:ring-1 ${errors[field.name] ? 'focus:ring-danger' : 'focus:ring-primary'}`}
+                                        className={`w-full h-[40px] px-4 rounded-full border ${errors[field.name] ? 'border-danger' : 'border-transparent'} bg-[var(--input-bg)] text-base text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:ring-1 ${errors[field.name] ? 'focus:ring-danger' : 'focus:ring-primary'} transition-colors`}
                                         placeholder={`Ingrese ${field.label.toLowerCase()}`}
                                     />
                                     {errors[field.name] && (
@@ -240,7 +240,7 @@ export default function CatalogFormModal({
                 </div>
 
                 {/* Footer */}
-                <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                <div className="flex justify-end gap-3 pt-4 border-t border-[var(--catalog-modal-border)] transition-colors">
                     <Button variant="outline" onClick={handleClose}>
                         Cancelar
                     </Button>

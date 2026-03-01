@@ -27,9 +27,9 @@ export default function UserCasesTab({ casos }: UserCasesTabProps) {
 
     if (!casos || casos.length === 0) {
         return (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-                <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">No hay casos asociados a este usuario</p>
+            <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-8 text-center transition-colors">
+                <FileText className="w-12 h-12 text-[var(--card-text-muted)] mx-auto mb-4 transition-colors" />
+                <p className="text-[var(--card-text-muted)] text-lg transition-colors">No hay casos asociados a este usuario</p>
             </div>
         );
     }

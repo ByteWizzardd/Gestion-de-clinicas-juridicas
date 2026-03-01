@@ -456,7 +456,7 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
                   setIsSelectionMode(false);
                   setSelectedCedulas([]);
                 }}
-                className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-gray-100 text-gray-700 border border-gray-200 rounded-full hover:bg-gray-200 transition-colors font-medium whitespace-nowrap"
+                className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-[var(--sidebar-hover)] text-[var(--card-text)] border border-[var(--ui-border)] rounded-full hover:opacity-80 transition-all font-medium whitespace-nowrap"
               >
                 <span>Cancelar</span>
               </button>
@@ -466,7 +466,7 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
                   {usuarios.some(u => selectedCedulas.includes(u.cedula) && u.habilitado_sistema) && (
                     <button
                       onClick={() => setShowBatchConfirm(true)}
-                      className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-red-50 text-red-600 border border-red-200 rounded-full hover:bg-red-100 transition-colors font-medium whitespace-nowrap"
+                      className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 rounded-full hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors font-medium whitespace-nowrap"
                     >
                       <UserX className="w-5 h-5" />
                       <span className="text-sm sm:text-base">Deshabilitar ({selectedCedulas.filter(id => usuarios.find(u => u.cedula === id)?.habilitado_sistema).length})</span>
@@ -476,7 +476,7 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
                   {usuarios.some(u => selectedCedulas.includes(u.cedula) && !u.habilitado_sistema) && (
                     <button
                       onClick={() => setShowBatchEnableConfirm(true)}
-                      className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-green-50 text-green-600 border border-green-200 rounded-full hover:bg-green-100 transition-colors font-medium whitespace-nowrap"
+                      className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-500/20 rounded-full hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors font-medium whitespace-nowrap"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -492,9 +492,9 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
               <DropdownMenu
                 trigger={(isOpen) => (
                   <div
-                    className="h-10 px-4 w-full flex items-center cursor-pointer justify-center gap-2 bg-white text-gray-700 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors font-medium whitespace-nowrap"
+                    className="h-10 px-4 w-full flex items-center cursor-pointer justify-center gap-2 bg-[var(--card-bg)] text-[var(--card-text)] border border-[var(--ui-border)] rounded-full hover:bg-[var(--sidebar-hover)] transition-colors font-medium whitespace-nowrap"
                   >
-                    <UserX className="w-5 h-5 text-gray-500" />
+                    <UserX className="w-5 h-5 text-[var(--card-text-muted)]" />
                     <span>Gestión en lote</span>
                     <svg
                       className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
@@ -509,7 +509,7 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
                 )}
                 align="left"
                 className="w-full"
-                menuClassName="bg-white border border-gray-300 rounded-2xl shadow-xl min-w-[220px] overflow-hidden py-2"
+                menuClassName="bg-[var(--card-bg)] border border-[var(--ui-border)] rounded-2xl shadow-xl min-w-[220px] overflow-hidden py-2 transition-colors"
               >
                 <div onClick={(e) => e.stopPropagation()}>
                   <button
@@ -519,12 +519,12 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
                       e.preventDefault();
                       setIsSelectionMode(true);
                     }}
-                    className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 cursor-pointer"
+                    className="w-full px-4 py-3 text-left text-sm text-[var(--card-text)] hover:bg-[var(--sidebar-hover)] transition-colors flex items-center gap-3 cursor-pointer"
                   >
-                    <Users className="w-5 h-5 text-gray-500" />
+                    <Users className="w-5 h-5 text-[var(--card-text-muted)]" />
                     <span>Seleccionar usuarios</span>
                   </button>
-                  <div className="border-t border-gray-200 my-1"></div>
+                  <div className="border-t border-[var(--ui-border)] my-1 transition-colors"></div>
                   <button
                     type="button"
                     onClick={(e) => {
@@ -532,7 +532,7 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
                       e.preventDefault();
                       setShowCerrarSemestreConfirm(true);
                     }}
-                    className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-3 cursor-pointer"
+                    className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-500/10 transition-colors flex items-center gap-3 cursor-pointer"
                   >
                     <CalendarX2 className="w-5 h-5 text-red-500" />
                     <span>Cerrar Semestre</span>
@@ -563,7 +563,7 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
                 onOpenChange={setIsDropdownOpen}
                 align="left"
                 className="w-full"
-                menuClassName="bg-white border border-gray-300 rounded-2xl shadow-xl min-w-[220px] overflow-hidden py-2"
+                menuClassName="bg-[var(--card-bg)] border border-[var(--ui-border)] rounded-2xl shadow-xl min-w-[220px] overflow-hidden py-2 transition-colors"
               >
                 <div onClick={(e) => e.stopPropagation()}>
                   <button
@@ -576,7 +576,7 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
                         setIsCreateUserModalOpen(true);
                       });
                     }}
-                    className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 cursor-pointer"
+                    className="w-full px-4 py-3 text-left text-sm text-[var(--card-text)] hover:bg-[var(--sidebar-hover)] transition-colors flex items-center gap-3 cursor-pointer"
                   >
                     <UserPlus className="w-5 h-5 text-primary" />
                     <span>Registrar usuario</span>
@@ -591,7 +591,7 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
                         setIsBulkUploadModalOpen(true);
                       });
                     }}
-                    className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 cursor-pointer"
+                    className="w-full px-4 py-3 text-left text-sm text-[var(--card-text)] hover:bg-[var(--sidebar-hover)] transition-colors flex items-center gap-3 cursor-pointer"
                   >
                     <Users className="w-5 h-5 text-primary" />
                     <span>Registrar por lotes</span>
@@ -731,7 +731,7 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
             <p className="mb-4 text-base text-foreground">
               ¿Estás seguro de que deseas deshabilitar el acceso a los <strong>{selectedCedulas.filter(id => usuarios.find(u => u.cedula === id)?.habilitado_sistema).length}</strong> usuarios seleccionados?
             </p>
-            <p className="text-gray-600 text-sm">
+            <p className="text-[var(--card-text-muted)] text-sm transition-colors">
               Estos usuarios ya no podrán ingresar al sistema, pero su información histórica se mantendrá preservada en todos los registros de casos y citas.
             </p>
           </div>
@@ -753,7 +753,7 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
             <p className="mb-4 text-base text-foreground">
               ¿Estás seguro de que deseas reactivar el acceso a los <strong>{selectedCedulas.filter(id => !usuarios.find(u => u.cedula === id)?.habilitado_sistema).length}</strong> usuarios seleccionados?
             </p>
-            <p className="text-gray-600 text-sm">
+            <p className="text-[var(--card-text-muted)] text-sm transition-colors">
               Estos usuarios podrán ingresar nuevamente al sistema con sus credenciales habituales.
             </p>
           </div>
@@ -786,9 +786,9 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
               </label>
               <textarea
                 className={`
-                  w-full p-4 rounded-lg border bg-[#E5E7EB] border-transparent
+                  w-full p-4 rounded-lg border bg-[var(--sidebar-hover)] border-[var(--card-border)]
                   focus:outline-none focus:ring-1 focus:ring-primary
-                  text-base placeholder:text-[#717171] resize-none
+                  text-base text-[var(--card-text)] placeholder:text-[var(--card-text-muted)] resize-none transition-colors
                   ${deleteLoading ? 'opacity-50 cursor-not-allowed' : ''}
                 `}
                 rows={4}

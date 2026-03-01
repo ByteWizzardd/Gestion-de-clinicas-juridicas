@@ -22,16 +22,16 @@ interface MultiSelectProps {
     disabled?: boolean;
 }
 
-export default function MultiSelect({ 
-    label, 
-    error, 
-    options, 
-    placeholder = "Selecciona opciones", 
-    value = [], 
-    onChange, 
-    required, 
-    className = "", 
-    disabled = false 
+export default function MultiSelect({
+    label,
+    error,
+    options,
+    placeholder = "Selecciona opciones",
+    value = [],
+    onChange,
+    required,
+    className = "",
+    disabled = false
 }: MultiSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -49,11 +49,11 @@ export default function MultiSelect({
 
     const handleToggle = (optionValue: string) => {
         if (disabled) return;
-        
+
         const newValues = value.includes(optionValue)
             ? value.filter((v) => v !== optionValue)
             : [...value, optionValue];
-        
+
         if (onChange) {
             onChange(newValues);
         }
@@ -62,7 +62,7 @@ export default function MultiSelect({
     const handleRemove = (optionValue: string, e: React.MouseEvent) => {
         e.stopPropagation();
         if (disabled) return;
-        
+
         const newValues = value.filter((v) => v !== optionValue);
         if (onChange) {
             onChange(newValues);
@@ -103,13 +103,14 @@ export default function MultiSelect({
             type="button"
             disabled={disabled}
             className={`
-                w-full min-h-10 ${selectedOptions.length > 0 ? 'py-2' : 'py-2.5'} px-5 rounded-3xl shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] 
-                overflow-hidden flex items-center gap-3 justify-between
+                w-full min-h-10 ${selectedOptions.length > 0 ? 'py-2' : 'py-2.5'} px-5 rounded-3xl border overflow-hidden flex items-center gap-3 justify-between transition-colors
+                ${error ? 'border-danger' : 'border-[var(--custom-select-border)] shadow-[var(--custom-select-shadow)]'}
                 outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0
-                bg-white cursor-pointer
-                text-neutral-800/90 text-left font-normal
-                ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                ${error ? 'border border-danger' : ''}
+                ${disabled
+                    ? 'bg-[var(--custom-select-bg-disabled)] cursor-not-allowed opacity-60'
+                    : 'bg-[var(--custom-select-bg)] cursor-pointer'
+                }
+                text-[var(--custom-select-text)] text-left font-normal
                 ${className || 'text-base'}
             `}
         >
@@ -140,11 +141,11 @@ export default function MultiSelect({
                         </span>
                     ))
                 ) : (
-                    <span className="text-neutral-600">{placeholder}</span>
+                    <span className="text-[var(--custom-select-placeholder)]">{placeholder}</span>
                 )}
             </div>
             <ChevronDown
-                className={`w-4 h-4 text-neutral-700 transition-transform flex-shrink-0 ${isOpenState ? 'transform rotate-180' : ''}`}
+                className={`w-4 h-4 transition-transform flex-shrink-0 ${disabled ? 'text-[var(--custom-select-disabled-chevron)]' : 'text-[var(--custom-select-chevron)]'} ${isOpenState ? 'transform rotate-180' : ''}`}
             />
         </button>
     );
@@ -153,7 +154,7 @@ export default function MultiSelect({
         <div className="flex flex-col gap-1" ref={containerRef}>
             {label && (
                 <label className="text-base font-normal text-foreground mb-1">
-                    {label.split(' *').map((part, index, array) => 
+                    {label.split(' *').map((part, index, array) =>
                         index < array.length - 1 ? (
                             <span key={index}>
                                 {part} <span className="text-danger">*</span>
@@ -177,19 +178,19 @@ export default function MultiSelect({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
                         transition={{ duration: 0.2, ease: 'easeOut' }}
-                        className="bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-hidden flex flex-col"
+                        className="bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)] rounded-xl shadow-xl max-h-60 overflow-hidden flex flex-col"
                     >
                         {/* Campo de búsqueda */}
-                        <div className="px-3 pt-2 pb-2 border-b border-gray-200 sticky top-0 bg-white z-10">
+                        <div className="px-3 pt-2 pb-2 border-b border-[var(--dropdown-border)] sticky top-0 bg-[var(--dropdown-bg)] z-10">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--card-text-muted)]" />
                                 <input
                                     ref={searchInputRef}
                                     type="text"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     placeholder="Buscar por nombre..."
-                                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                                    className="w-full pl-9 pr-3 py-2 text-sm border border-[var(--ui-border)] rounded-lg bg-[var(--dropdown-bg)] text-[var(--card-text)] placeholder:text-[var(--card-text-muted)] focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
                                     onClick={(e) => e.stopPropagation()}
                                     onKeyDown={(e) => {
                                         // Prevenir que Enter cierre el dropdown
@@ -200,7 +201,7 @@ export default function MultiSelect({
                                 />
                             </div>
                         </div>
-                        
+
                         {/* Lista de opciones filtradas */}
                         <div className="overflow-y-auto max-h-48">
                             {filteredOptions.length > 0 ? (
@@ -214,15 +215,14 @@ export default function MultiSelect({
                                             className={`
                                                 w-full px-4 py-2.5 text-left text-base transition-colors cursor-pointer
                                                 flex items-center gap-2
-                                                ${isSelected 
-                                                    ? 'bg-primary-light text-primary font-medium' 
-                                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                                                ${isSelected
+                                                    ? 'bg-primary-light text-primary font-medium'
+                                                    : 'text-[var(--dropdown-text)] hover:text-[var(--dropdown-text-hover)] hover:bg-[var(--dropdown-hover)]'
                                                 }
                                             `}
                                         >
-                                            <div className={`w-4 h-4 border-2 rounded flex items-center justify-center flex-shrink-0 ${
-                                                isSelected ? 'border-primary bg-primary' : 'border-gray-300'
-                                            }`}>
+                                            <div className={`w-4 h-4 border-2 rounded flex items-center justify-center flex-shrink-0 ${isSelected ? 'border-primary bg-primary' : 'border-[var(--ui-border)]'
+                                                }`}>
                                                 {isSelected && (
                                                     <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -234,7 +234,7 @@ export default function MultiSelect({
                                     );
                                 })
                             ) : (
-                                <div className="px-4 py-2.5 text-base text-gray-500 text-center">
+                                <div className="px-4 py-2.5 text-base text-[var(--card-text-muted)] text-center">
                                     {searchTerm.trim() ? 'No se encontraron resultados' : 'No hay opciones disponibles'}
                                 </div>
                             )}

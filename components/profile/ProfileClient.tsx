@@ -95,10 +95,10 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
             nombreInicial={user.nombres}
           />
           <div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-2" style={{ fontFamily: 'var(--font-league-spartan)' }}>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-2 text-[var(--foreground)] transition-colors" style={{ fontFamily: 'var(--font-league-spartan)' }}>
               {nombreCompleto}
             </h1>
-            <p className="text-sm sm:text-base text-gray-500">
+            <p className="text-sm sm:text-base text-[var(--card-text-muted)] transition-colors">
               Cédula: {user.cedula}
             </p>
           </div>

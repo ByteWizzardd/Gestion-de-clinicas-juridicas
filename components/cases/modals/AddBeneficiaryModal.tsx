@@ -276,18 +276,18 @@ export default function AddBeneficiaryModal({
       className="rounded-[30px] sm:rounded-[40px] lg:rounded-[50px] w-[95vw] sm:w-[90vw] lg:w-[85vw] max-w-[1100px] mx-auto"
       showCloseButton={false}
     >
-      <div className="flex flex-col relative bg-white rounded-[30px] sm:rounded-[40px] lg:rounded-[50px] overflow-hidden max-h-[90vh]">
+      <div className="flex flex-col relative bg-[var(--card-bg)] rounded-[30px] sm:rounded-[40px] lg:rounded-[50px] overflow-hidden max-h-[90vh] transition-colors">
         {/* Header fijo */}
-        <div className="shrink-0 p-6 sm:p-8 pb-4 relative border-b border-gray-200">
+        <div className="shrink-0 p-6 sm:p-8 pb-4 relative border-b border-[var(--card-border)]">
           <button
             onClick={handleClose}
-            className="absolute top-4 sm:top-6 right-4 sm:right-6 cursor-pointer p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
+            className="absolute top-4 sm:top-6 right-4 sm:right-6 cursor-pointer p-2 text-[var(--card-text-muted)] hover:text-[var(--card-text)] hover:bg-[var(--sidebar-hover)] rounded-md transition-colors z-10"
             disabled={isSubmitting}
           >
             <X className="w-6 h-6" />
           </button>
 
-          <h2 className="text-xl sm:text-2xl font-normal text-foreground pr-10">Agregar Beneficiario</h2>
+          <h2 className="text-xl sm:text-2xl font-normal text-[var(--card-text)] pr-10">Agregar Beneficiario</h2>
         </div>
 
         {/* Área de contenido */}
@@ -317,10 +317,10 @@ export default function AddBeneficiaryModal({
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-300 rounded-2xl shadow-xl max-h-48 overflow-y-auto p-2"
+                    className="absolute z-50 left-0 right-0 top-full mt-1 bg-[var(--card-bg)] border border-[var(--ui-border)] rounded-2xl shadow-xl max-h-48 overflow-y-auto p-2"
                   >
                     {isSearching ? (
-                      <div className="p-4 text-center text-sm text-gray-500">Buscando...</div>
+                      <div className="p-4 text-center text-sm text-[var(--card-text-muted)]">Buscando...</div>
                     ) : (
                       suggestions.map((item, idx) => (
                         <button
@@ -328,12 +328,12 @@ export default function AddBeneficiaryModal({
                           onClick={() => autocompleteFromPerson(item)}
                           className="w-full text-left px-4 py-3 hover:bg-primary/5 rounded-xl transition-colors flex items-center gap-3"
                         >
-                          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                            <User className="w-4 h-4 text-gray-500" />
+                          <div className="w-8 h-8 rounded-full bg-[var(--sidebar-hover)] flex items-center justify-center">
+                            <User className="w-4 h-4 text-[var(--card-text-muted)]" />
                           </div>
                           <div>
-                            <div className="font-medium text-gray-900 text-sm">{item.cedula}</div>
-                            <div className="text-xs text-gray-500">{item.nombre_completo}</div>
+                            <div className="font-medium text-[var(--card-text)] text-sm">{item.cedula}</div>
+                            <div className="text-xs text-[var(--card-text-muted)]">{item.nombre_completo}</div>
                           </div>
                         </button>
                       ))
@@ -369,7 +369,7 @@ export default function AddBeneficiaryModal({
 
             <div className="col-span-1">
               <div className="flex flex-col gap-1">
-                <label className="text-base font-normal text-foreground mb-1">
+                <label className="text-base font-normal text-[var(--card-text)] mb-1">
                   Fecha de Nacimiento <span className="text-danger">*</span>
                 </label>
                 <DatePicker
@@ -429,11 +429,11 @@ export default function AddBeneficiaryModal({
         </div>
 
         {/* Footer fijo */}
-        <div className="shrink-0 flex flex-col sm:flex-row items-center sm:justify-between gap-4 border-t border-gray-200 px-6 sm:px-8 py-4 bg-white">
+        <div className="shrink-0 flex flex-col sm:flex-row items-center sm:justify-between gap-4 border-t border-[var(--card-border)] px-6 sm:px-8 py-4 bg-[var(--card-bg)] transition-colors">
           {/* Nota sobre campos obligatorios */}
           <div className="flex items-center gap-1">
             <span className="text-danger font-medium text-sm">*</span>
-            <span className="text-sm text-gray-600">Campo obligatorio</span>
+            <span className="text-sm text-[var(--card-text-muted)]">Campo obligatorio</span>
           </div>
 
           <div className="flex items-center gap-3 w-full sm:w-auto">

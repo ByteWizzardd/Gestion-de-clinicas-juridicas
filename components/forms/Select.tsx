@@ -23,9 +23,21 @@ interface SelectProps {
     className?: string;
     icon?: React.ReactNode;
     disabled?: boolean;
+    variant?: 'default' | 'outline';
 }
 
-export default function Select({ label, error, options, placeholder = "Selecciona una opción", value = "", onChange, className = "", icon, disabled = false }: SelectProps) {
+export default function Select({
+    label,
+    error,
+    options,
+    placeholder = "Selecciona una opción",
+    value = "",
+    onChange,
+    className = "",
+    icon,
+    disabled = false,
+    variant = 'default'
+}: SelectProps) {
 
     const selectedOption = options.find((opt) => opt.value === value);
     const handleSelect = (optionValue: string) => {
@@ -43,25 +55,35 @@ export default function Select({ label, error, options, placeholder = "Seleccion
             type="button"
             disabled={disabled}
             className={`
-                w-full h-10 ${icon ? 'pl-4 pr-4' : 'pl-5 pr-4'} rounded-3xl border overflow-hidden flex items-center gap-3 justify-between transition-all
-                ${error ? 'border-danger focus:ring-1 focus:ring-danger' : 'border-[var(--dropdown-border)]'}
-                outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0
-                ${disabled
-                    ? 'bg-[var(--ui-bg-inactive)] cursor-not-allowed text-[var(--card-text-muted)] opacity-70'
-                    : 'bg-[var(--card-bg)] cursor-pointer text-[var(--foreground)]'
+                w-full h-10 ${icon ? 'pl-4 pr-4' : 'pl-5 pr-4'} rounded-3xl border overflow-hidden flex items-center gap-3 justify-between transition-colors
+                ${variant === 'default'
+                    ? (error ? 'border-danger' : 'border-[var(--custom-select-border)] shadow-[var(--custom-select-shadow)]')
+                    : (error ? 'border-danger' : 'border-[var(--select-border)] shadow-[var(--select-shadow)]')
                 }
-                text-left font-normal
+                outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0
+                ${error ? 'focus:ring-1 focus:ring-danger' : ''}
+                ${disabled
+                    ? (variant === 'default' ? 'bg-[var(--custom-select-bg-disabled)]' : 'bg-gray-100') + ' cursor-not-allowed opacity-60'
+                    : (variant === 'default' ? 'bg-[var(--custom-select-bg)]' : 'bg-white') + ' cursor-pointer'
+                }
+                ${variant === 'default' ? 'text-[var(--custom-select-text)]' : 'text-neutral-800/90'} text-left font-normal
                 ${className || 'text-base'}
             `}
         >
             <div className="flex items-center gap-3 flex-1 min-w-0">
-                {icon && <span className="shrink-0 opacity-70">{icon}</span>}
-                <span className={`truncate ${selectedOption ? 'text-[var(--foreground)]' : 'text-[var(--card-text-muted)]'} ${disabled ? 'opacity-80' : ''}`}>
+                {icon && <span className="shrink-0">{icon}</span>}
+                <span className={`truncate 
+                    ${selectedOption
+                        ? (variant === 'default' ? 'text-[var(--custom-select-text)]' : 'text-neutral-800/90')
+                        : (variant === 'default' ? 'text-[var(--custom-select-placeholder)]' : 'text-neutral-600')
+                    } 
+                    ${disabled ? (variant === 'default' ? 'text-[var(--custom-select-disabled-text)]' : 'text-gray-500') : ''}
+                `}>
                     {selectedOption ? selectedOption.label : placeholder}
                 </span>
             </div>
             <ChevronDown
-                className={`w-4 h-4 transition-transform shrink-0 ${disabled ? 'opacity-30' : 'text-[var(--card-text-muted)]'} ${isOpenState ? 'transform rotate-180' : ''}`}
+                className={`w-4 h-4 transition-transform shrink-0 ${disabled ? (variant === 'default' ? 'text-[var(--custom-select-disabled-chevron)]' : 'text-gray-400') : (variant === 'default' ? 'text-[var(--custom-select-chevron)]' : 'text-neutral-700')} ${isOpenState ? 'transform rotate-180' : ''}`}
             />
         </button>
     );
@@ -94,7 +116,7 @@ export default function Select({ label, error, options, placeholder = "Seleccion
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
                         transition={{ duration: 0.2, ease: 'easeOut' }}
-                        className="bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)] rounded-xl shadow-xl max-h-60 overflow-auto py-1 transition-colors"
+                        className="bg-[var(--custom-dropdown-bg)] border border-[var(--custom-dropdown-border)] rounded-xl shadow-xl max-h-60 overflow-auto py-1"
                     >
                         {options.length > 0 ? (
                             options.map((option, index) => {
@@ -103,7 +125,7 @@ export default function Select({ label, error, options, placeholder = "Seleccion
                                     return (
                                         <div
                                             key={option.value}
-                                            className="px-4 py-2 text-xs font-semibold text-[var(--card-text-muted)] opacity-60 uppercase tracking-wide bg-[var(--ui-bg-muted)] border-b border-[var(--dropdown-border)] cursor-default select-none transition-colors"
+                                            className="px-4 py-2 text-xs font-semibold text-[var(--custom-dropdown-header-text)] uppercase tracking-wide bg-[var(--custom-dropdown-header-bg)] border-b border-[var(--custom-dropdown-border)] cursor-default select-none"
                                         >
                                             {option.label}
                                         </div>
@@ -117,7 +139,7 @@ export default function Select({ label, error, options, placeholder = "Seleccion
                                         data-close-menu
                                         onClick={() => handleSelect(option.value)}
                                         className={`
-                                            w-full px-4 py-2.5 text-left text-base text-[var(--dropdown-text)] hover:text-[var(--dropdown-text-hover)] hover:bg-[var(--dropdown-hover)] transition-colors cursor-pointer
+                                            w-full px-4 py-2.5 text-left text-base text-[var(--custom-dropdown-text)] hover:text-[var(--custom-dropdown-text-hover)] hover:bg-[var(--custom-dropdown-hover-bg)] transition-colors cursor-pointer
                                             ${value === option.value ? 'bg-primary-light text-primary font-medium' : ''}
                                             ${index === options.length - 1 ? 'rounded-b-xl' : ''}
                                         `}
@@ -127,7 +149,7 @@ export default function Select({ label, error, options, placeholder = "Seleccion
                                 );
                             })
                         ) : (
-                            <div className="px-4 py-2.5 text-base text-[var(--card-text-muted)] text-center">
+                            <div className="px-4 py-2.5 text-base text-[var(--custom-dropdown-header-text)] text-center">
                                 No hay opciones disponibles
                             </div>
                         )}

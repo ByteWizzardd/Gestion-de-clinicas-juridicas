@@ -660,9 +660,9 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
                 Orientación <span className="text-danger">*</span>
               </label>
               <textarea
-                className={`w-full px-4 py-3 rounded-lg border bg-[var(--ui-bg-muted)] ${errors.orientacion ? 'border-danger' : 'border-[var(--dropdown-border)]'
+                className={`w-full px-4 py-3 rounded-lg border bg-[var(--input-bg)] ${errors.orientacion ? 'border-danger' : 'border-transparent'
                   } focus:outline-none focus:ring-1 ${errors.orientacion ? 'focus:ring-danger' : 'focus:ring-primary'
-                  } text-base text-[var(--foreground)] placeholder:text-[var(--card-text-muted)] resize-none transition-colors`}
+                  } text-base text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] resize-none transition-colors`}
                 placeholder="Escribe aquí la orientación..."
                 maxLength={500}
                 value={orientacion}

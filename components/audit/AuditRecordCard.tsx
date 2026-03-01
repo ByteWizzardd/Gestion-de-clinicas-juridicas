@@ -60,7 +60,7 @@ const moduleColors: Record<string, string> = {
 };
 
 const getModuleColor = (name: string) => {
-  return moduleColors[name] || 'text-gray-600';
+  return moduleColors[name] || 'text-[var(--card-text-muted)]';
 };
 
 export default function AuditRecordCard({ record, type, moduleName }: AuditRecordCardProps) {
@@ -219,13 +219,13 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           >
             {nombre}
           </Link>
-          <span className="text-gray-600"> (Cédula: {cedula})</span>
+          <span className="text-[var(--card-text-muted)]"> (Cédula: {cedula})</span>
         </>
       );
     }
 
     // Sin cédula, solo texto
-    return <span className="text-gray-600">{nombre}</span>;
+    return <span className="text-[var(--card-text-muted)]">{nombre}</span>;
   };
 
   // Helper para renderizar nombre de usuario eliminado como texto (sin enlace)
@@ -248,33 +248,33 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
     // Mostrar como texto normal (sin enlace)
     if (cedula) {
       return (
-        <span className="text-gray-900">
-          {nombre} <span className="text-gray-600">(Cédula: {cedula})</span>
+        <span className="text-[var(--card-text)]">
+          {nombre} <span className="text-[var(--card-text-muted)]">(Cédula: {cedula})</span>
         </span>
       );
     }
 
-    return <span className="text-gray-900">{nombre}</span>;
+    return <span className="text-[var(--card-text)]">{nombre}</span>;
   };
 
   const renderRow = (iconNode: React.ReactNode, title: React.ReactNode, subtitle: React.ReactNode) => (
     <div className="flex items-start gap-3">
-      <div className="mt-0.5 text-gray-600">{iconNode}</div>
+      <div className="mt-0.5 text-[var(--card-text-muted)]">{iconNode}</div>
       <div className="flex-1">
-        <div className="flex flex-wrap items-center gap-x-1 font-semibold text-gray-900">
+        <div className="flex flex-wrap items-center gap-x-1 font-semibold text-[var(--card-text)]">
           <span>{title}</span>
           {moduleName && (
             <span className="font-semibold">
               • {moduleName}
               {type === 'reporte-generado' && (
-                <span className="text-gray-500 font-normal">
+                <span className="text-[var(--card-text-muted)] font-normal">
                   {' '}({(record as any).operacion === 'vista_previa' ? 'Vista Previa' : 'Generación'})
                 </span>
               )}
             </span>
           )}
         </div>
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-[var(--card-text-muted)]">
           {subtitle}
         </div>
       </div>
@@ -287,7 +287,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'accion-creada': {
         const r = record as AccionCreadaAuditRecord;
         return renderRow(
-          <Activity className="w-5 h-5 text-gray-600" />,
+          <Activity className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>
             Acción #{r.num_accion} -{' '}
             <Link
@@ -312,7 +312,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'accion-actualizada': {
         const r = record as AccionActualizadaAuditRecord;
         return renderRow(
-          <Check className="w-5 h-5 text-gray-600" />,
+          <Check className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>
             Acción #{r.num_accion} -{' '}
             <Link
@@ -337,11 +337,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'accion-eliminada': {
         const r = record as AccionEliminadaAuditRecord;
         return renderRow(
-          <Activity className="w-5 h-5 text-gray-600" />,
+          <Activity className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>
             Acción #{r.num_accion} -{' '}
             {r.motivo?.includes('Eliminado por eliminación del caso') ? (
-              <span className="text-gray-700">Caso #{r.id_caso}</span>
+              <span className="text-[var(--card-text)]">Caso #{r.id_caso}</span>
             ) : (
               <Link
                 href={`/dashboard/cases/${r.id_caso}`}
@@ -366,7 +366,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'soporte': {
         const r = record as SoporteAuditRecord;
         return renderRow(
-          <FileText className="w-5 h-5 text-gray-600" />,
+          <FileText className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>{r.nombre_archivo}</>,
           <>
             Caso #{r.id_caso} • Eliminado por:{' '}
@@ -382,7 +382,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'soporte-creado': {
         const r = record as SoporteCreadoAuditRecord;
         return renderRow(
-          <FileText className="w-5 h-5 text-gray-600" />,
+          <FileText className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>{r.nombre_archivo}</>,
           <>
             <Link
@@ -404,7 +404,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'soporte-descargado': {
         const r = record as SoporteDescargadoAuditRecord;
         return renderRow(
-          <ArrowDown className="w-5 h-5 text-gray-600" />,
+          <ArrowDown className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>{r.nombre_archivo}</>,
           <>
             <Link
@@ -426,11 +426,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'cita-eliminada': {
         const r = record as CitaEliminadaAuditRecord;
         return renderRow(
-          <Calendar className="w-5 h-5 text-gray-600" />,
+          <Calendar className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>
             Cita #{r.num_cita} -{' '}
             {r.motivo?.includes('Eliminado por eliminación del caso') ? (
-              <span className="text-gray-700">Caso #{r.id_caso}</span>
+              <span className="text-[var(--card-text)]">Caso #{r.id_caso}</span>
             ) : (
               <Link
                 href={`/dashboard/cases/${r.id_caso}`}
@@ -455,7 +455,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'cita-creada': {
         const r = record as CitaCreadaAuditRecord;
         return renderRow(
-          <Calendar className="w-5 h-5 text-gray-600" />,
+          <Calendar className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>
             Cita #{r.num_cita} -{' '}
             <Link
@@ -480,7 +480,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'cita-actualizada': {
         const r = record as CitaActualizadaAuditRecord;
         return renderRow(
-          <Check className="w-5 h-5 text-gray-600" />,
+          <Check className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>
             Cita #{r.num_cita} -{' '}
             <Link
@@ -633,10 +633,10 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'caso-eliminado': {
         const r = record as CasoEliminadoAuditRecord;
         return renderRow(
-          <Briefcase className="w-5 h-5 text-gray-600" />,
+          <Briefcase className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>
             Caso #{r.caso_eliminado} -{' '}
-            <span className="text-gray-600">
+            <span className="text-[var(--card-text-muted)]">
               {r.cedula_solicitante ? (
                 <Link
                   href={`/dashboard/applicants/${r.cedula_solicitante}`}
@@ -664,7 +664,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'caso-creado': {
         const r = record as CasoCreadoAuditRecord;
         return renderRow(
-          <Briefcase className="w-5 h-5 text-gray-600" />,
+          <Briefcase className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>
             <Link
               href={`/dashboard/cases/${r.id_caso}`}
@@ -674,7 +674,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               Caso #{r.id_caso}
             </Link>
             {' '}-{' '}
-            <span className="text-gray-600">
+            <span className="text-[var(--card-text-muted)]">
               {r.cedula_solicitante ? (
                 <Link
                   href={`/dashboard/applicants/${r.cedula_solicitante}`}
@@ -764,7 +764,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         const nombreCompleto = `${nombres} ${apellidos}`.trim() || 'Beneficiario desconocido';
 
         return renderRow(
-          <Check className="w-5 h-5 text-gray-600" />,
+          <Check className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>{nombreCompleto}</>,
           <>
             Caso #{r.id_caso} • Actualizado por:{' '}
@@ -783,11 +783,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'solicitante-eliminado': {
         const r = record as SolicitanteEliminadoAuditRecord;
         return renderRow(
-          <User className="w-5 h-5 text-gray-600" />,
+          <User className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>
             {r.nombres_solicitante_eliminado || 'N/A'} {r.apellidos_solicitante_eliminado || ''}
             {r.solicitante_eliminado && (
-              <span className="text-gray-600 font-normal"> (Cédula: {r.solicitante_eliminado})</span>
+              <span className="text-[var(--card-text-muted)] font-normal"> (Cédula: {r.solicitante_eliminado})</span>
             )}
           </>,
           <>
@@ -807,7 +807,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           ? `${r.nombres} ${r.apellidos}`.trim()
           : (r.nombres || r.apellidos || 'Solicitante desconocido');
         return renderRow(
-          <User className="w-5 h-5 text-gray-600" />,
+          <User className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>
             <Link
               href={`/dashboard/applicants/${r.cedula}`}
@@ -817,7 +817,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {nombreCompleto}
             </Link>
             {r.cedula && (
-              <span className="text-gray-600 font-normal"> (Cédula: {r.cedula})</span>
+              <span className="text-[var(--card-text-muted)] font-normal"> (Cédula: {r.cedula})</span>
             )}
           </>,
           <>
@@ -837,7 +837,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           ? `${r.nombres_solicitante} ${r.apellidos_solicitante}`.trim()
           : (r.nombres_solicitante || r.apellidos_solicitante || 'Solicitante desconocido');
         return renderRow(
-          <Check className="w-5 h-5 text-gray-600" />,
+          <Check className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>
             <Link
               href={`/dashboard/applicants/${r.cedula_solicitante}`}
@@ -847,7 +847,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {nombreCompleto}
             </Link>
             {r.cedula_solicitante && (
-              <span className="text-gray-600 font-normal"> (Cédula: {r.cedula_solicitante})</span>
+              <span className="text-[var(--card-text-muted)] font-normal"> (Cédula: {r.cedula_solicitante})</span>
             )}
           </>,
           <>
@@ -1021,26 +1021,26 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           : null;
 
         return renderRow(
-          <Icon className="w-5 h-5 text-gray-600" />,
+          <Icon className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>
             {nameField}
             {tipoCaracteristica && (
-              <span className="text-gray-500 font-normal ml-2">({tipoCaracteristica})</span>
+              <span className="text-[var(--card-text-muted)] font-normal ml-2">({tipoCaracteristica})</span>
             )}
             {materiaCategoria && (
-              <span className="text-gray-500 font-normal ml-2">({materiaCategoria})</span>
+              <span className="text-[var(--card-text-muted)] font-normal ml-2">({materiaCategoria})</span>
             )}
             {categoriaSubcategoria && (
-              <span className="text-gray-500 font-normal ml-2">({categoriaSubcategoria})</span>
+              <span className="text-[var(--card-text-muted)] font-normal ml-2">({categoriaSubcategoria})</span>
             )}
             {subcategoriaAmbito && (
-              <span className="text-gray-500 font-normal ml-2">({subcategoriaAmbito})</span>
+              <span className="text-[var(--card-text-muted)] font-normal ml-2">({subcategoriaAmbito})</span>
             )}
             {estadoMunicipio && (
-              <span className="text-gray-500 font-normal ml-2">({estadoMunicipio})</span>
+              <span className="text-[var(--card-text-muted)] font-normal ml-2">({estadoMunicipio})</span>
             )}
             {municipioParroquia && estadoParroquia && (
-              <span className="text-gray-500 font-normal ml-2">({municipioParroquia}, {estadoParroquia})</span>
+              <span className="text-[var(--card-text-muted)] font-normal ml-2">({municipioParroquia}, {estadoParroquia})</span>
             )}
           </>,
           <>
@@ -1169,26 +1169,26 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           : null;
 
         return renderRow(
-          <Check className="w-5 h-5 text-gray-600" />,
+          <Check className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>
             {nameField}
             {tipoCaracteristica && (
-              <span className="text-gray-500 font-normal ml-2">({tipoCaracteristica})</span>
+              <span className="text-[var(--card-text-muted)] font-normal ml-2">({tipoCaracteristica})</span>
             )}
             {materiaCategoria && (
-              <span className="text-gray-500 font-normal ml-2">({materiaCategoria})</span>
+              <span className="text-[var(--card-text-muted)] font-normal ml-2">({materiaCategoria})</span>
             )}
             {categoriaSubcategoria && (
-              <span className="text-gray-500 font-normal ml-2">({categoriaSubcategoria})</span>
+              <span className="text-[var(--card-text-muted)] font-normal ml-2">({categoriaSubcategoria})</span>
             )}
             {subcategoriaAmbito && (
-              <span className="text-gray-500 font-normal ml-2">({subcategoriaAmbito})</span>
+              <span className="text-[var(--card-text-muted)] font-normal ml-2">({subcategoriaAmbito})</span>
             )}
             {estadoMunicipioActualizado && (
-              <span className="text-gray-500 font-normal ml-2">({estadoMunicipioActualizado})</span>
+              <span className="text-[var(--card-text-muted)] font-normal ml-2">({estadoMunicipioActualizado})</span>
             )}
             {municipioParroquiaActualizada && estadoParroquiaActualizada && (
-              <span className="text-gray-500 font-normal ml-2">({municipioParroquiaActualizada}, {estadoParroquiaActualizada})</span>
+              <span className="text-[var(--card-text-muted)] font-normal ml-2">({municipioParroquiaActualizada}, {estadoParroquiaActualizada})</span>
             )}
           </>,
           <>
@@ -1207,7 +1207,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         const isEquipoUpdate = (record as any).tipo_cambio === 'equipo-actualizado';
 
         return renderRow(
-          isEquipoUpdate ? <Users className="w-5 h-5 text-gray-600" /> : <Briefcase className="w-5 h-5 text-gray-600" />,
+          isEquipoUpdate ? <Users className="w-5 h-5 text-[var(--card-text-muted)]" /> : <Briefcase className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>
             <Link
               href={`/dashboard/cases/${r.id_caso}`}
@@ -1237,10 +1237,10 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           : (r.nombres || r.apellidos || 'Beneficiario desconocido');
 
         return renderRow(
-          <Users className="w-5 h-5 text-gray-600" />,
+          <Users className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>
             {nombreCompleto}
-            {r.cedula && <span className="text-gray-600 font-normal"> (Cédula: {r.cedula})</span>}
+            {r.cedula && <span className="text-[var(--card-text-muted)] font-normal"> (Cédula: {r.cedula})</span>}
           </>,
           <>
             Caso #{r.id_caso} • Inscrito por:{' '}
@@ -1259,10 +1259,10 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         const nombreCompleto = r.nombres || 'Beneficiario desconocido';
 
         return renderRow(
-          <Users className="w-5 h-5 text-gray-600" />,
+          <Users className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>
             {nombreCompleto}
-            {r.cedula && <span className="text-gray-600 font-normal"> (Cédula: {r.cedula})</span>}
+            {r.cedula && <span className="text-[var(--card-text-muted)] font-normal"> (Cédula: {r.cedula})</span>}
           </>,
           <>
             Caso #{r.id_caso} • Eliminado por:{' '}
@@ -1279,7 +1279,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         const r = record as EquipoActualizadoAuditRecord;
 
         return renderRow(
-          <Users className="w-5 h-5 text-gray-500" />,
+          <Users className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>
             <Link href={`/dashboard/cases/${r.id_caso}`} className="hover:underline text-primary">
               Caso #{r.id_caso}
@@ -1320,11 +1320,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         };
         const isPreview = r.operacion === 'vista_previa';
         return renderRow(
-          <FileBarChart className="w-5 h-5 text-gray-600" />,
+          <FileBarChart className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <span className="flex flex-wrap items-center gap-x-2">
             {formatTipoReporte(r.tipo_reporte)}
             {r.cedula_solicitante && (
-              <span className="font-normal text-gray-500 flex items-center gap-1">
+              <span className="font-normal text-[var(--card-text-muted)] flex items-center gap-1">
                 -
                 <Link
                   href={`/dashboard/applicants/${r.cedula_solicitante}`}
@@ -1383,8 +1383,8 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         }
 
         const icon = exitoso
-          ? (isActive ? <LogIn className="w-5 h-5 text-gray-600" /> : <LogOut className="w-5 h-5 text-gray-600" />)
-          : <XCircle className="w-5 h-5 text-gray-600" />;
+          ? (isActive ? <LogIn className="w-5 h-5 text-[var(--card-text-muted)]" /> : <LogOut className="w-5 h-5 text-[var(--card-text-muted)]" />)
+          : <XCircle className="w-5 h-5 text-[var(--card-text-muted)]" />;
 
         return renderRow(
           icon,
@@ -1420,7 +1420,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       default:
         console.warn('Tipo de auditoría no reconocido en renderSummary:', type);
         return renderRow(
-          <FileText className="w-5 h-5 text-gray-600" />,
+          <FileText className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>Tipo: {type}</>,
           <span className="italic">Registro de auditoría (Sin detalle)</span>
         );
@@ -1437,10 +1437,10 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           : (r.nombres || r.apellidos || '-');
 
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Información del Profesor</p>
-              <div className="flex flex-col text-sm text-gray-600 space-y-0.5">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información del Profesor</p>
+              <div className="flex flex-col text-sm text-[var(--card-text-muted)] space-y-0.5">
                 <p>
                   <span className="font-medium">Nombre:</span>{' '}
                   <Link
@@ -1458,9 +1458,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             </div>
 
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
-              <p className="text-sm text-gray-600">Fecha de asignación: {formatDateTime(r.fecha_creacion)}</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha de asignación: {formatDateTime(r.fecha_creacion)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Asignado por:{' '}
                 {renderUserLink(
                   r.nombre_completo_usuario_creo,
@@ -1493,12 +1493,12 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           ? [...new Set(ejecutoresArray.map(e => e.fecha_ejecucion).filter(Boolean))]
           : [];
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Información de la Acción</p>
-              <p className="text-sm text-gray-600 whitespace-pre-wrap">Detalle: {r.detalle_accion}</p>
-              {r.comentario && <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">Comentario: {r.comentario}</p>}
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información de la Acción</p>
+              <p className="text-sm text-[var(--card-text-muted)] whitespace-pre-wrap">Detalle: {r.detalle_accion}</p>
+              {r.comentario && <p className="text-sm text-[var(--card-text-muted)] mt-1 whitespace-pre-wrap">Comentario: {r.comentario}</p>}
+              <p className="text-sm text-[var(--card-text-muted)] mt-1">
                 Usuarios Ejecutores:{' '}
                 {ejecutoresArray && ejecutoresArray.length > 0 ? (
                   ejecutoresArray.map((e, idx) => (
@@ -1517,7 +1517,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   'Ninguno asignado'
                 )}
               </p>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-[var(--card-text-muted)] mt-1">
                 Fecha de Ejecución:{' '}
                 {fechasEjecucion.length > 0
                   ? fechasEjecucion.map((d: string) => formatOnlyDate(d)).join(', ')
@@ -1525,9 +1525,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               </p>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
-              <p className="text-sm text-gray-600">Fecha creación: {formatDateTime(r.fecha_creacion)}</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha creación: {formatDateTime(r.fecha_creacion)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Creada por:{' '}
                 {renderUserLink(
                   r.nombre_completo_usuario_creo,
@@ -1600,12 +1600,12 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         const fechasNuevoStr = fechasNuevo.join(', ');
 
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Cambios Realizados</p>
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Cambios Realizados</p>
               {r.detalle_accion_anterior !== r.detalle_accion_nuevo && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Detalle:{' '}
                     <span className="line-through text-red-500">
                       {r.detalle_accion_anterior || 'N/A'}
@@ -1619,7 +1619,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               )}
               {r.comentario_anterior !== r.comentario_nuevo && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Comentario:{' '}
                     <span className="line-through text-red-500">
                       {r.comentario_anterior || 'Sin comentario'}
@@ -1633,7 +1633,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               )}
               {ejecutoresAnteriorStr !== ejecutoresNuevoStr && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Ejecutores:{' '}
                     <span className="line-through text-red-500">
                       {ejecutoresAnteriorArray && ejecutoresAnteriorArray.length > 0
@@ -1673,7 +1673,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               )}
               {fechasAnteriorStr !== fechasNuevoStr && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Fecha de Ejecución:{' '}
                     <span className="line-through text-red-500">
                       {fechasAnterior.length > 0
@@ -1691,9 +1691,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               )}
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
-              <p className="text-sm text-gray-600">Fecha actualización: {formatDateTime(r.fecha_actualizacion)}</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha actualización: {formatDateTime(r.fecha_actualizacion)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Actualizada por:{' '}
                 {renderUserLink(
                   r.nombre_completo_usuario_actualizo,
@@ -1734,12 +1734,12 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           ? [...new Set(ejecutoresArray.map(e => e.fecha_ejecucion).filter(Boolean))]
           : [];
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Información de la Acción Eliminada</p>
-              <p className="text-sm text-gray-600 whitespace-pre-wrap">Detalle: {r.detalle_accion}</p>
-              {r.comentario && <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">Comentario: {r.comentario}</p>}
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información de la Acción Eliminada</p>
+              <p className="text-sm text-[var(--card-text-muted)] whitespace-pre-wrap">Detalle: {r.detalle_accion}</p>
+              {r.comentario && <p className="text-sm text-[var(--card-text-muted)] mt-1 whitespace-pre-wrap">Comentario: {r.comentario}</p>}
+              <p className="text-sm text-[var(--card-text-muted)] mt-1">
                 Usuarios Ejecutores:{' '}
                 {ejecutoresArray && ejecutoresArray.length > 0 ? (
                   ejecutoresArray.map((e, idx) => (
@@ -1758,7 +1758,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   'Ninguno asignado'
                 )}
               </p>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-[var(--card-text-muted)] mt-1">
                 Fecha de Ejecución:{' '}
                 {fechasEjecucion.length > 0
                   ? fechasEjecucion.map((d: string) => formatOnlyDate(d)).join(', ')
@@ -1766,9 +1766,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               </p>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Datos de Eliminación</p>
-              <p className="text-sm text-gray-600">Fecha eliminación: {formatDateTime(r.fecha)}</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Datos de Eliminación</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha eliminación: {formatDateTime(r.fecha)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Eliminada por:{' '}
                 {renderUserLink(
                   r.nombre_completo_eliminado_por,
@@ -1779,8 +1779,8 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               </p>
               {r.motivo && (
                 <div className="mt-2">
-                  <p className="text-sm text-gray-600 font-medium">Motivo:</p>
-                  <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded mt-1">{r.motivo}</p>
+                  <p className="text-sm text-[var(--card-text-muted)] font-medium">Motivo:</p>
+                  <p className="text-sm text-[var(--card-text-muted)] bg-[var(--ui-bg-muted)] p-2 rounded mt-1">{r.motivo}</p>
                 </div>
               )}
             </div>
@@ -1801,28 +1801,28 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'soporte': {
         const r = record as SoporteAuditRecord;
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Información del Documento</p>
-                <p className="text-sm text-gray-600">Nombre: {r.nombre_archivo}</p>
-                <p className="text-sm text-gray-600">Tipo: {r.tipo_mime || 'N/A'}</p>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información del Documento</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Nombre: {r.nombre_archivo}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Tipo: {r.tipo_mime || 'N/A'}</p>
                 {r.descripcion && (
-                  <p className="text-sm text-gray-600">Descripción: {r.descripcion}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">Descripción: {r.descripcion}</p>
                 )}
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Fechas</p>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Fechas</p>
                 {r.fecha_consignacion && (
-                  <p className="text-sm text-gray-600">Consignación: {formatDate(r.fecha_consignacion)}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">Consignación: {formatDate(r.fecha_consignacion)}</p>
                 )}
-                <p className="text-sm text-gray-600">Eliminación: {formatDate(r.fecha_eliminacion)}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Eliminación: {formatDate(r.fecha_eliminacion)}</p>
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Subido por</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Subido por</p>
+                <p className="text-sm text-[var(--card-text-muted)]">
                   {r.id_usuario_subio ? (
                     renderUserLink(
                       r.nombre_completo_usuario_subio,
@@ -1831,13 +1831,13 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                       r.id_usuario_subio
                     )
                   ) : (
-                    <span className="text-gray-600">N/A</span>
+                    <span className="text-[var(--card-text-muted)]">N/A</span>
                   )}
                 </p>
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Eliminado por</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Eliminado por</p>
+                <p className="text-sm text-[var(--card-text-muted)]">
                   {renderUserLink(
                     r.nombre_completo_usuario_elimino,
                     r.nombres_usuario_elimino,
@@ -1848,8 +1848,8 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               </div>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Motivo de eliminación</p>
-              <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Motivo de eliminación</p>
+              <p className="text-sm text-[var(--card-text-muted)] bg-[var(--ui-bg-muted)] p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
             </div>
             {/* No mostrar enlace al caso si fue eliminado junto con el caso */}
             {!r.motivo?.includes('Eliminado por eliminación del caso') && (
@@ -1868,24 +1868,24 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'soporte-creado': {
         const r = record as SoporteCreadoAuditRecord;
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Información del Documento</p>
-                <p className="text-sm text-gray-600">Nombre: {r.nombre_archivo}</p>
-                <p className="text-sm text-gray-600">Tipo: {r.tipo_mime || 'N/A'}</p>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información del Documento</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Nombre: {r.nombre_archivo}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Tipo: {r.tipo_mime || 'N/A'}</p>
                 {r.descripcion && (
-                  <p className="text-sm text-gray-600">Descripción: {r.descripcion}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">Descripción: {r.descripcion}</p>
                 )}
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Fecha</p>
-                <p className="text-sm text-gray-600">Creación: {formatDateTime(r.fecha_creacion)}</p>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Fecha</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Creación: {formatDateTime(r.fecha_creacion)}</p>
               </div>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Subido por</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Subido por</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 {r.id_usuario_subio ? (
                   renderUserLink(
                     r.nombre_completo_usuario_subio,
@@ -1894,7 +1894,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     r.id_usuario_subio
                   )
                 ) : (
-                  <span className="text-gray-600">N/A</span>
+                  <span className="text-[var(--card-text-muted)]">N/A</span>
                 )}
               </p>
             </div>
@@ -1912,23 +1912,23 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'soporte-descargado': {
         const r = record as SoporteDescargadoAuditRecord;
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Información del Documento</p>
-                <p className="text-sm text-gray-600">Nombre: {r.nombre_archivo}</p>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información del Documento</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Nombre: {r.nombre_archivo}</p>
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Fecha</p>
-                <p className="text-sm text-gray-600">Descarga: {formatDateTime(r.fecha_descarga, { timeZone: 'UTC' })}</p>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Fecha</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Descarga: {formatDateTime(r.fecha_descarga, { timeZone: 'UTC' })}</p>
                 {r.ip_direccion && (
-                  <p className="text-sm text-gray-600">IP: {r.ip_direccion}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">IP: {r.ip_direccion}</p>
                 )}
               </div>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Descargado por</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Descargado por</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 {r.cedula_descargo ? (
                   renderUserLink(
                     r.nombre_completo_usuario_descargo,
@@ -1937,7 +1937,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     r.cedula_descargo
                   )
                 ) : (
-                  <span className="text-gray-600">N/A</span>
+                  <span className="text-[var(--card-text-muted)]">N/A</span>
                 )}
               </p>
             </div>
@@ -1960,21 +1960,21 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           : (r.nombres || r.apellidos || 'Beneficiario desconocido');
 
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Información del Beneficiario</p>
-              {r.cedula && <p className="text-sm text-gray-600">Cédula: {r.cedula}</p>}
-              <p className="text-sm text-gray-600">Nombres: {r.nombres}</p>
-              <p className="text-sm text-gray-600">Apellidos: {r.apellidos}</p>
-              <p className="text-sm text-gray-600">Fecha Nacimiento: {formatOnlyDate(r.fecha_nacimiento)}</p>
-              <p className="text-sm text-gray-600">Sexo: {r.sexo}</p>
-              <p className="text-sm text-gray-600">Tipo: {r.tipo_beneficiario}</p>
-              <p className="text-sm text-gray-600">Parentesco: {r.parentesco}</p>
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información del Beneficiario</p>
+              {r.cedula && <p className="text-sm text-[var(--card-text-muted)]">Cédula: {r.cedula}</p>}
+              <p className="text-sm text-[var(--card-text-muted)]">Nombres: {r.nombres}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Apellidos: {r.apellidos}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha Nacimiento: {formatOnlyDate(r.fecha_nacimiento)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Sexo: {r.sexo}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Tipo: {r.tipo_beneficiario}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Parentesco: {r.parentesco}</p>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
-              <p className="text-sm text-gray-600">Fecha: {formatDateTime(r.fecha_registro)}</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha: {formatDateTime(r.fecha_registro)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Inscrito por:{' '}
                 {renderUserLink(
                   r.usuario_nombre_completo || null,
@@ -1998,13 +1998,13 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'beneficiario-actualizado': {
         const r = record as BeneficiarioActualizadoAuditRecord;
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Cambios Realizados</p>
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Cambios Realizados</p>
 
               {r.cedula_anterior !== r.cedula_nuevo && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Cédula: <span className="line-through text-red-500">{r.cedula_anterior || 'N/A'}</span>
                     {' → '}
                     <span className="text-green-600">{r.cedula_nuevo || 'N/A'}</span>
@@ -2013,7 +2013,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               )}
               {r.nombres_anterior !== r.nombres_nuevo && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Nombres: <span className="line-through text-red-500">{r.nombres_anterior || 'N/A'}</span>
                     {' → '}
                     <span className="text-green-600">{r.nombres_nuevo || 'N/A'}</span>
@@ -2022,7 +2022,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               )}
               {r.apellidos_anterior !== r.apellidos_nuevo && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Apellidos: <span className="line-through text-red-500">{r.apellidos_anterior || 'N/A'}</span>
                     {' → '}
                     <span className="text-green-600">{r.apellidos_nuevo || 'N/A'}</span>
@@ -2031,7 +2031,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               )}
               {r.sexo_anterior !== r.sexo_nuevo && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Sexo: <span className="line-through text-red-500">{r.sexo_anterior || 'N/A'}</span>
                     {' → '}
                     <span className="text-green-600">{r.sexo_nuevo || 'N/A'}</span>
@@ -2040,7 +2040,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               )}
               {r.tipo_beneficiario_anterior !== r.tipo_beneficiario_nuevo && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Tipo: <span className="line-through text-red-500">{r.tipo_beneficiario_anterior || 'N/A'}</span>
                     {' → '}
                     <span className="text-green-600">{r.tipo_beneficiario_nuevo || 'N/A'}</span>
@@ -2049,7 +2049,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               )}
               {r.parentesco_anterior !== r.parentesco_nuevo && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Parentesco: <span className="line-through text-red-500">{r.parentesco_anterior || 'N/A'}</span>
                     {' → '}
                     <span className="text-green-600">{r.parentesco_nuevo || 'N/A'}</span>
@@ -2058,7 +2058,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               )}
               {r.edad_mental_anterior !== r.edad_mental_nuevo && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Edad Mental: <span className="line-through text-red-500">{r.edad_mental_anterior || 'N/A'}</span>
                     {' → '}
                     <span className="text-green-600">{r.edad_mental_nuevo || 'N/A'}</span>
@@ -2067,7 +2067,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               )}
               {r.ingresos_anterior !== r.ingresos_nuevo && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Ingresos: <span className="line-through text-red-500">{r.ingresos_anterior || 'N/A'}</span>
                     {' → '}
                     <span className="text-green-600">{r.ingresos_nuevo || 'N/A'}</span>
@@ -2076,7 +2076,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               )}
               {!areDatesEqual(r.fecha_nacimiento_anterior, r.fecha_nacimiento_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Fecha Nacimiento: <span className="line-through text-red-500">{formatOnlyDate(r.fecha_nacimiento_anterior)}</span>
                     {' → '}
                     <span className="text-green-600">{formatOnlyDate(r.fecha_nacimiento_nuevo)}</span>
@@ -2085,9 +2085,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               )}
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
-              <p className="text-sm text-gray-600">Fecha: {formatDateTime(r.fecha_actualizacion)}</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha: {formatDateTime(r.fecha_actualizacion)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Actualizado por:{' '}
                 {renderUserLink(
                   r.usuario_nombre_completo || null,
@@ -2115,20 +2115,20 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           : (r.nombres || r.apellidos || 'Beneficiario desconocido');
 
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Información del Beneficiario</p>
-              <p className="text-sm text-gray-600">Nombre: {nombreCompleto}</p>
-              <p className="text-sm text-gray-600">Cédula: {r.cedula || 'N/A'}</p>
-              <p className="text-sm text-gray-600">Fecha Nacimiento: {formatOnlyDate(r.fecha_nacimiento)}</p>
-              <p className="text-sm text-gray-600">Sexo: {r.sexo || 'N/A'}</p>
-              <p className="text-sm text-gray-600">Tipo: {r.tipo_beneficiario || 'N/A'}</p>
-              <p className="text-sm text-gray-600">Parentesco: {r.parentesco || 'N/A'}</p>
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información del Beneficiario</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Nombre: {nombreCompleto}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Cédula: {r.cedula || 'N/A'}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha Nacimiento: {formatOnlyDate(r.fecha_nacimiento)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Sexo: {r.sexo || 'N/A'}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Tipo: {r.tipo_beneficiario || 'N/A'}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Parentesco: {r.parentesco || 'N/A'}</p>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
-              <p className="text-sm text-gray-600">Fecha: {formatDateTime(r.fecha_eliminacion)}</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha: {formatDateTime(r.fecha_eliminacion)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Eliminado por:{' '}
                 {renderUserLink(
                   r.usuario_nombre_completo || null,
@@ -2139,8 +2139,8 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               </p>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Motivo de eliminación</p>
-              <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Motivo de eliminación</p>
+              <p className="text-sm text-[var(--card-text-muted)] bg-[var(--ui-bg-muted)] p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
             </div>
             {/* No mostrar enlace al caso si fue eliminado junto con el caso */}
             {!r.motivo?.includes('Eliminado por eliminación del caso') && (
@@ -2159,22 +2159,22 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'cita-eliminada': {
         const r = record as CitaEliminadaAuditRecord;
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Información de la Cita</p>
-                <p className="text-sm text-gray-600">Número: {r.num_cita}</p>
-                <p className="text-sm text-gray-600">Fecha encuentro: {formatDateOnly(r.fecha_encuentro)}</p>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información de la Cita</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Número: {r.num_cita}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Fecha encuentro: {formatDateOnly(r.fecha_encuentro)}</p>
                 {r.fecha_proxima_cita && (
-                  <p className="text-sm text-gray-600">Próxima cita: {formatDateOnly(r.fecha_proxima_cita)}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">Próxima cita: {formatDateOnly(r.fecha_proxima_cita)}</p>
                 )}
-                <p className="text-sm text-gray-600">Orientación: {r.orientacion}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Orientación: {r.orientacion}</p>
                 {r.usuarios_atendieron && Array.isArray(r.usuarios_atendieron) && r.usuarios_atendieron.length > 0 && (
                   <div className="mt-2">
-                    <p className="text-sm font-semibold text-gray-700 mb-1">Atendida por:</p>
+                    <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Atendida por:</p>
                     <div className="space-y-1">
                       {r.usuarios_atendieron.map((usuario: any, idx: number) => (
-                        <p key={idx} className="text-sm text-gray-600">
+                        <p key={idx} className="text-sm text-[var(--card-text-muted)]">
                           {renderUserLink(
                             usuario.nombre_completo,
                             usuario.nombres,
@@ -2188,9 +2188,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 )}
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
                 {r.id_usuario_registro && (
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Registrado por:{' '}
                     {renderUserLink(
                       r.nombre_completo_usuario_registro,
@@ -2200,7 +2200,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     )}
                   </p>
                 )}
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Eliminado por:{' '}
                   {renderUserLink(
                     r.nombre_completo_usuario_elimino,
@@ -2209,12 +2209,12 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     r.id_usuario_elimino
                   )}
                 </p>
-                <p className="text-sm text-gray-600">Fecha eliminación: {formatDate(r.fecha_eliminacion)}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Fecha eliminación: {formatDate(r.fecha_eliminacion)}</p>
               </div>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Motivo de eliminación</p>
-              <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Motivo de eliminación</p>
+              <p className="text-sm text-[var(--card-text-muted)] bg-[var(--ui-bg-muted)] p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
             </div>
             {/* No mostrar enlace al caso si fue eliminado junto con el caso */}
             {!r.motivo?.includes('Eliminado por eliminación del caso') && (
@@ -2233,22 +2233,22 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'cita-creada': {
         const r = record as CitaCreadaAuditRecord;
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Información de la Cita</p>
-                <p className="text-sm text-gray-600">Número: {r.num_cita}</p>
-                <p className="text-sm text-gray-600">Fecha encuentro: {formatDateOnly(r.fecha_encuentro)}</p>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información de la Cita</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Número: {r.num_cita}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Fecha encuentro: {formatDateOnly(r.fecha_encuentro)}</p>
                 {r.fecha_proxima_cita && (
-                  <p className="text-sm text-gray-600">Próxima cita: {formatDateOnly(r.fecha_proxima_cita)}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">Próxima cita: {formatDateOnly(r.fecha_proxima_cita)}</p>
                 )}
-                <p className="text-sm text-gray-600">Orientación: {r.orientacion}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Orientación: {r.orientacion}</p>
                 {r.usuarios_atendieron && Array.isArray(r.usuarios_atendieron) && r.usuarios_atendieron.length > 0 && (
                   <div className="mt-2">
-                    <p className="text-sm font-semibold text-gray-700 mb-1">Atendida por:</p>
+                    <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Atendida por:</p>
                     <div className="space-y-1">
                       {r.usuarios_atendieron.map((usuario: any, idx: number) => (
-                        <p key={idx} className="text-sm text-gray-600">
+                        <p key={idx} className="text-sm text-[var(--card-text-muted)]">
                           {renderUserLink(
                             usuario.nombre_completo,
                             usuario.nombres,
@@ -2262,8 +2262,8 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 )}
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Creado por:{' '}
                   {renderUserLink(
                     r.nombre_completo_usuario_creo,
@@ -2272,7 +2272,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     r.id_usuario_creo
                   )}
                 </p>
-                <p className="text-sm text-gray-600">Fecha creación: {formatDate(r.fecha_creacion)}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Fecha creación: {formatDate(r.fecha_creacion)}</p>
               </div>
             </div>
             <div className="pt-2" onClick={(e) => e.stopPropagation()}>
@@ -2300,16 +2300,16 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         const hasAnyChange = hasFechaEncuentroChange || hasFechaProximaCitaChange || hasOrientacionChange || hasAtencionesChange;
 
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Cambios Realizados</p>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Cambios Realizados</p>
                 {!hasAnyChange && (
-                  <p className="text-sm text-gray-500 italic">No se detectaron cambios específicos</p>
+                  <p className="text-sm text-[var(--card-text-muted)] italic">No se detectaron cambios específicos</p>
                 )}
                 {hasFechaEncuentroChange && (
                   <div className="mb-2">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-[var(--card-text-muted)]">
                       Fecha encuentro:{' '}
                       <span className="line-through text-red-500">
                         {r.fecha_encuentro_anterior ? formatDateOnly(r.fecha_encuentro_anterior) : 'N/A'}
@@ -2323,7 +2323,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 )}
                 {hasFechaProximaCitaChange && (
                   <div className="mb-2">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-[var(--card-text-muted)]">
                       Próxima cita:{' '}
                       <span className="line-through text-red-500">
                         {r.fecha_proxima_cita_anterior ? formatDateOnly(r.fecha_proxima_cita_anterior) : 'N/A'}
@@ -2337,7 +2337,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 )}
                 {hasOrientacionChange && (
                   <div className="mb-2">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-[var(--card-text-muted)]">
                       Orientación:{' '}
                       <span className="line-through text-red-500">
                         {r.orientacion_anterior || 'N/A'}
@@ -2351,7 +2351,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 )}
                 {hasAtencionesChange && (
                   <div className="mb-2">
-                    <p className="text-sm text-gray-600 mb-1">
+                    <p className="text-sm text-[var(--card-text-muted)] mb-1">
                       Personas que atendieron:
                     </p>
                     <p className="text-sm">
@@ -2393,8 +2393,8 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 )}
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Actualizado por:{' '}
                   {renderUserLink(
                     r.nombre_completo_usuario_actualizo,
@@ -2403,15 +2403,15 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     r.id_usuario_actualizo
                   )}
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Fecha actualización: {formatDate(r.fecha_actualizacion)}
                 </p>
                 {r.usuarios_atendieron && Array.isArray(r.usuarios_atendieron) && r.usuarios_atendieron.length > 0 && (
                   <div className="mt-3">
-                    <p className="text-sm font-semibold text-gray-700 mb-1">Atendida por:</p>
+                    <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Atendida por:</p>
                     <div className="space-y-1">
                       {r.usuarios_atendieron.map((usuario: any, idx: number) => (
-                        <p key={idx} className="text-sm text-gray-600">
+                        <p key={idx} className="text-sm text-[var(--card-text-muted)]">
                           {renderUserLink(
                             usuario.nombre_completo,
                             usuario.nombres,
@@ -2457,10 +2457,10 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         }
 
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Información</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Usuario eliminado:{' '}
                 {renderDeletedUser(
                   r.nombre_completo_usuario_eliminado,
@@ -2469,7 +2469,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   r.usuario_eliminado
                 )}
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Eliminado por:{' '}
                 {renderUserLink(
                   r.nombre_completo_eliminado_por,
@@ -2478,11 +2478,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   r.eliminado_por
                 )}
               </p>
-              <p className="text-sm text-gray-600">Fecha: {formatDate(r.fecha)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha: {formatDate(r.fecha)}</p>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Motivo</p>
-              <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Motivo</p>
+              <p className="text-sm text-[var(--card-text-muted)] bg-[var(--ui-bg-muted)] p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
             </div>
           </div>
         );
@@ -2490,10 +2490,10 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'usuario-habilitado': {
         const r = record as UsuarioHabilitadoAuditRecord;
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Información</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Usuario reactivado:{' '}
                 {r.usuario_habilitado ? (
                   <Link
@@ -2507,7 +2507,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   r.nombre_completo_usuario_habilitado || `${r.nombres_usuario_habilitado} ${r.apellidos_usuario_habilitado}`
                 )}
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Reactivado por:{' '}
                 {renderUserLink(
                   r.nombre_completo_habilitado_por,
@@ -2516,11 +2516,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   r.habilitado_por
                 )}
               </p>
-              <p className="text-sm text-gray-600">Fecha: {formatDate(r.fecha)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha: {formatDate(r.fecha)}</p>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Motivo</p>
-              <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Motivo</p>
+              <p className="text-sm text-[var(--card-text-muted)] bg-[var(--ui-bg-muted)] p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
             </div>
           </div>
         );
@@ -2534,10 +2534,10 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         }
 
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Información del Usuario</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información del Usuario</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Nombre:{' '}
                 {r.cedula ? (
                   <Link
@@ -2551,28 +2551,28 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   nombreCompleto
                 )}
               </p>
-              <p className="text-sm text-gray-600">Cédula: {r.cedula}</p>
-              <p className="text-sm text-gray-600">Correo: {r.correo_electronico || 'N/A'}</p>
-              <p className="text-sm text-gray-600">Nombre de usuario: {r.nombre_usuario || 'N/A'}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Cédula: {r.cedula}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Correo: {r.correo_electronico || 'N/A'}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Nombre de usuario: {r.nombre_usuario || 'N/A'}</p>
               {r.telefono_celular && (
-                <p className="text-sm text-gray-600">Teléfono: {r.telefono_celular}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Teléfono: {r.telefono_celular}</p>
               )}
-              <p className="text-sm text-gray-600">Tipo: {r.tipo_usuario || 'N/A'}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Tipo: {r.tipo_usuario || 'N/A'}</p>
               {r.tipo_estudiante && (
-                <p className="text-sm text-gray-600">Tipo estudiante: {r.tipo_estudiante}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Tipo estudiante: {r.tipo_estudiante}</p>
               )}
               {r.term && (
-                <p className="text-sm text-gray-600">Semestre: {r.term}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Semestre: {r.term}</p>
               )}
               {r.tipo_profesor && (
-                <p className="text-sm text-gray-600">Tipo profesor: {r.tipo_profesor}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Tipo profesor: {r.tipo_profesor}</p>
               )}
-              <p className="text-sm text-gray-600">Habilitado: {r.habilitado_sistema ? 'Sí' : 'No'}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Habilitado: {r.habilitado_sistema ? 'Sí' : 'No'}</p>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
-              <p className="text-sm text-gray-600">Fecha creación: {formatDate(r.fecha_creacion)}</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha creación: {formatDate(r.fecha_creacion)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Creado por:{' '}
                 {renderUserLink(
                   r.nombre_completo_usuario_creo,
@@ -2594,10 +2594,10 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           : (r.nombres || r.apellidos || 'Estudiante desconocido');
 
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Información del Estudiante</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información del Estudiante</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Nombre:{' '}
                 {r.cedula ? (
                   <Link
@@ -2611,27 +2611,27 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   nombreCompleto
                 )}
               </p>
-              {r.cedula && <p className="text-sm text-gray-600">Cédula: {r.cedula}</p>}
-              <p className="text-sm text-gray-600">Correo: {r.correo_electronico || 'N/A'}</p>
-              <p className="text-sm text-gray-600">Usuario: {r.nombre_usuario || 'N/A'}</p>
+              {r.cedula && <p className="text-sm text-[var(--card-text-muted)]">Cédula: {r.cedula}</p>}
+              <p className="text-sm text-[var(--card-text-muted)]">Correo: {r.correo_electronico || 'N/A'}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Usuario: {r.nombre_usuario || 'N/A'}</p>
               {r.telefono_celular && (
-                <p className="text-sm text-gray-600">Teléfono: {r.telefono_celular}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Teléfono: {r.telefono_celular}</p>
               )}
-              <p className="text-sm text-gray-600">Tipo: {r.tipo_usuario || 'N/A'}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Tipo: {r.tipo_usuario || 'N/A'}</p>
               {r.tipo_estudiante && (
-                <p className="text-sm text-gray-600">Tipo estudiante: {r.tipo_estudiante}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Tipo estudiante: {r.tipo_estudiante}</p>
               )}
               {r.term && (
-                <p className="text-sm text-gray-600">Semestre: {r.term}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Semestre: {r.term}</p>
               )}
               {r.nrc && (
-                <p className="text-sm text-gray-600">NRC: {r.nrc}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">NRC: {r.nrc}</p>
               )}
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
-              <p className="text-sm text-gray-600">Fecha inscripción: {formatOnlyDate(r.fecha_creacion)}</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha inscripción: {formatOnlyDate(r.fecha_creacion)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Inscrito por:{' '}
                 {renderUserLink(
                   r.nombre_completo_usuario_creo,
@@ -2656,10 +2656,10 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         }
 
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Cambios Realizados</p>
-              <p className="text-sm text-gray-600 mb-3">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Cambios Realizados</p>
+              <p className="text-sm text-[var(--card-text-muted)] mb-3">
                 Usuario:{' '}
                 {renderUserLink(
                   r.nombre_completo_usuario,
@@ -2672,7 +2672,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Mostrar solo los campos que cambiaron */}
               {(r.nombres_anterior !== r.nombres_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Nombres:{' '}
                     <span className="line-through text-red-500">
                       {r.nombres_anterior || 'N/A'}
@@ -2687,7 +2687,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
               {(r.apellidos_anterior !== r.apellidos_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Apellidos:{' '}
                     <span className="line-through text-red-500">
                       {r.apellidos_anterior || 'N/A'}
@@ -2702,7 +2702,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
               {(r.correo_electronico_anterior !== r.correo_electronico_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Correo electrónico:{' '}
                     <span className="line-through text-red-500">
                       {r.correo_electronico_anterior || 'N/A'}
@@ -2717,7 +2717,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
               {(r.nombre_usuario_anterior !== r.nombre_usuario_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Nombre de usuario:{' '}
                     <span className="line-through text-red-500">
                       {r.nombre_usuario_anterior || 'N/A'}
@@ -2732,7 +2732,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
               {!areValuesEffectivelyEqual(r.telefono_celular_anterior, r.telefono_celular_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Teléfono celular:{' '}
                     <span className="line-through text-red-500">
                       {r.telefono_celular_anterior || 'N/A'}
@@ -2747,7 +2747,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
               {(r.habilitado_sistema_anterior !== r.habilitado_sistema_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Habilitado en sistema:{' '}
                     <span className="line-through text-red-500">
                       {r.habilitado_sistema_anterior ? 'Sí' : 'No'}
@@ -2762,7 +2762,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
               {(r.tipo_usuario_anterior !== r.tipo_usuario_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Tipo de usuario:{' '}
                     <span className="line-through text-red-500">
                       {r.tipo_usuario_anterior || 'N/A'}
@@ -2778,7 +2778,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Solo mostrar cambios de tipo_estudiante si el tipo_usuario NO cambió */}
               {(r.tipo_usuario_anterior === r.tipo_usuario_nuevo && r.tipo_estudiante_anterior !== r.tipo_estudiante_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Tipo de estudiante:{' '}
                     <span className="line-through text-red-500">
                       {r.tipo_estudiante_anterior || 'N/A'}
@@ -2794,7 +2794,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Solo mostrar cambios de tipo_profesor si el tipo_usuario NO cambió */}
               {(r.tipo_usuario_anterior === r.tipo_usuario_nuevo && r.tipo_profesor_anterior !== r.tipo_profesor_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Tipo de profesor:{' '}
                     <span className="line-through text-red-500">
                       {r.tipo_profesor_anterior || 'N/A'}
@@ -2809,12 +2809,12 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
               {(r.foto_perfil_anterior !== r.foto_perfil_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600 mb-2">
+                  <p className="text-sm text-[var(--card-text-muted)] mb-2">
                     Foto de perfil:
                   </p>
                   <div className="flex items-center gap-4">
                     <div className="flex flex-col items-center">
-                      <span className="text-xs text-gray-500 mb-1">Anterior</span>
+                      <span className="text-xs text-[var(--card-text-muted)] mb-1">Anterior</span>
                       {r.foto_perfil_anterior ? (
                         <img
                           src={r.foto_perfil_anterior}
@@ -2822,14 +2822,14 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                           className="w-16 h-16 rounded-full object-cover border-2 border-red-200 opacity-75"
                         />
                       ) : (
-                        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs border border-gray-200">
+                        <div className="w-16 h-16 rounded-full bg-[var(--ui-bg-inactive)] flex items-center justify-center text-[var(--card-text-muted)] text-xs border border-[var(--card-border)]">
                           Sin foto
                         </div>
                       )}
                     </div>
-                    <span className="text-gray-400 text-xl">→</span>
+                    <span className="text-[var(--card-text-muted)] text-xl">→</span>
                     <div className="flex flex-col items-center">
-                      <span className="text-xs text-gray-500 mb-1">Nueva</span>
+                      <span className="text-xs text-[var(--card-text-muted)] mb-1">Nueva</span>
                       {r.foto_perfil_nuevo ? (
                         <img
                           src={r.foto_perfil_nuevo}
@@ -2837,7 +2837,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                           className="w-16 h-16 rounded-full object-cover border-2 border-green-500"
                         />
                       ) : (
-                        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs border border-gray-200">
+                        <div className="w-16 h-16 rounded-full bg-[var(--ui-bg-inactive)] flex items-center justify-center text-[var(--card-text-muted)] text-xs border border-[var(--card-border)]">
                           Sin foto
                         </div>
                       )}
@@ -2847,8 +2847,8 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               )}
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Actualizado por:{' '}
                 {renderUserLink(
                   r.nombre_completo_usuario_actualizo,
@@ -2857,7 +2857,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   r.id_usuario_actualizo
                 )}
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Fecha actualización: {formatDate(r.fecha_actualizacion)}
               </p>
             </div>
@@ -2942,13 +2942,13 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         const estadoParroquiaEliminada = type === 'parroquia-eliminada' ? r.nombre_estado : null;
 
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Información</p>
-                <p className="text-sm text-gray-600">Nombre: {nameField}</p>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Nombre: {nameField}</p>
                 {entidadFuerte && (
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     {type === 'categoria-eliminada' ? 'Materia' :
                       type === 'subcategoria-eliminada' ? 'Categoría' :
                         type === 'ambito-legal-eliminado' ? 'Subcategoría' :
@@ -2958,30 +2958,30 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   </p>
                 )}
                 {estadoParroquiaEliminada && (
-                  <p className="text-sm text-gray-600">Estado: {estadoParroquiaEliminada}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">Estado: {estadoParroquiaEliminada}</p>
                 )}
                 {/* Para semestres, el term es el ID, así que no mostramos ID por separado */}
                 {type !== 'semestre-eliminado' && (
-                  <p className="text-sm text-gray-600">ID: {idField}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">ID: {idField}</p>
                 )}
                 {/* Para semestres, mostrar todos los atributos */}
                 {type === 'semestre-eliminado' && (
                   <>
                     {r.fecha_inicio && (
-                      <p className="text-sm text-gray-600">Fecha inicio: {formatOnlyDate(r.fecha_inicio)}</p>
+                      <p className="text-sm text-[var(--card-text-muted)]">Fecha inicio: {formatOnlyDate(r.fecha_inicio)}</p>
                     )}
                     {r.fecha_fin && (
-                      <p className="text-sm text-gray-600">Fecha fin: {formatOnlyDate(r.fecha_fin)}</p>
+                      <p className="text-sm text-[var(--card-text-muted)]">Fecha fin: {formatOnlyDate(r.fecha_fin)}</p>
                     )}
                   </>
                 )}
                 {r.habilitado !== null && (
-                  <p className="text-sm text-gray-600">Habilitado: {r.habilitado ? 'Sí' : 'No'}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">Habilitado: {r.habilitado ? 'Sí' : 'No'}</p>
                 )}
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Eliminado por:{' '}
                   {renderUserLink(
                     r.nombre_completo_usuario_elimino,
@@ -2990,12 +2990,12 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     r.id_usuario_elimino
                   )}
                 </p>
-                <p className="text-sm text-gray-600">Fecha eliminación: {formatDate(r.fecha_eliminacion)}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Fecha eliminación: {formatDate(r.fecha_eliminacion)}</p>
               </div>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Motivo de eliminación</p>
-              <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Motivo de eliminación</p>
+              <p className="text-sm text-[var(--card-text-muted)] bg-[var(--ui-bg-muted)] p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
             </div>
           </div>
         );
@@ -3077,13 +3077,13 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         const estadoParroquiaInsertada = type === 'parroquia-insertada' ? r.nombre_estado : null;
 
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Información</p>
-                <p className="text-sm text-gray-600">Nombre: {nameField}</p>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Nombre: {nameField}</p>
                 {entidadFuerte && (
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     {type === 'categoria-insertada' ? 'Materia' :
                       type === 'subcategoria-insertada' ? 'Categoría' :
                         type === 'ambito-legal-insertado' ? 'Subcategoría' :
@@ -3093,30 +3093,30 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   </p>
                 )}
                 {estadoParroquiaInsertada && (
-                  <p className="text-sm text-gray-600">Estado: {estadoParroquiaInsertada}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">Estado: {estadoParroquiaInsertada}</p>
                 )}
                 {/* Para semestres, el term es el ID, así que no mostramos ID por separado */}
                 {type !== 'semestre-insertado' && (
-                  <p className="text-sm text-gray-600">ID: {idField}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">ID: {idField}</p>
                 )}
                 {/* Para semestres, mostrar todos los atributos */}
                 {type === 'semestre-insertado' && (
                   <>
                     {r.fecha_inicio && (
-                      <p className="text-sm text-gray-600">Fecha inicio: {formatOnlyDate(r.fecha_inicio)}</p>
+                      <p className="text-sm text-[var(--card-text-muted)]">Fecha inicio: {formatOnlyDate(r.fecha_inicio)}</p>
                     )}
                     {r.fecha_fin && (
-                      <p className="text-sm text-gray-600">Fecha fin: {formatOnlyDate(r.fecha_fin)}</p>
+                      <p className="text-sm text-[var(--card-text-muted)]">Fecha fin: {formatOnlyDate(r.fecha_fin)}</p>
                     )}
                   </>
                 )}
                 {r.habilitado !== null && (
-                  <p className="text-sm text-gray-600">Habilitado: {r.habilitado ? 'Sí' : 'No'}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">Habilitado: {r.habilitado ? 'Sí' : 'No'}</p>
                 )}
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Creado por:{' '}
                   {renderUserLink(
                     r.nombre_completo_usuario_creo,
@@ -3125,7 +3125,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     r.id_usuario_creo
                   )}
                 </p>
-                <p className="text-sm text-gray-600">Fecha creación: {formatDate(r.fecha_creacion)}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Fecha creación: {formatDate(r.fecha_creacion)}</p>
               </div>
             </div>
           </div>
@@ -3154,49 +3154,49 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         }
 
         return (
-          <div className="mt-4 pt-4 border-t border-gray-200">
+          <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
             {/* Grid uniforme de 4 columnas */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
               {/* Columna 1: Datos Personales */}
               <div className="space-y-1">
-                <p className="font-semibold text-gray-700">Datos Personales</p>
-                <p className="text-gray-600">Nombre: {nombreCompletoEliminado}</p>
-                <p className="text-gray-600">Cédula: {r.solicitante_eliminado}</p>
-                {r.fecha_nacimiento && <p className="text-gray-600">Nacimiento: {formatOnlyDate(r.fecha_nacimiento)}</p>}
-                {r.sexo && <p className="text-gray-600">Sexo: {r.sexo === 'M' ? 'Masculino' : 'Femenino'}</p>}
-                {r.nacionalidad && <p className="text-gray-600">Nacionalidad: {r.nacionalidad === 'V' ? 'Venezolano' : 'Extranjero'}</p>}
-                {r.estado_civil && <p className="text-gray-600">Estado Civil: {r.estado_civil}</p>}
-                {r.concubinato !== null && <p className="text-gray-600">Concubinato: {r.concubinato ? 'Sí' : 'No'}</p>}
+                <p className="font-semibold text-[var(--card-text)]">Datos Personales</p>
+                <p className="text-[var(--card-text-muted)]">Nombre: {nombreCompletoEliminado}</p>
+                <p className="text-[var(--card-text-muted)]">Cédula: {r.solicitante_eliminado}</p>
+                {r.fecha_nacimiento && <p className="text-[var(--card-text-muted)]">Nacimiento: {formatOnlyDate(r.fecha_nacimiento)}</p>}
+                {r.sexo && <p className="text-[var(--card-text-muted)]">Sexo: {r.sexo === 'M' ? 'Masculino' : 'Femenino'}</p>}
+                {r.nacionalidad && <p className="text-[var(--card-text-muted)]">Nacionalidad: {r.nacionalidad === 'V' ? 'Venezolano' : 'Extranjero'}</p>}
+                {r.estado_civil && <p className="text-[var(--card-text-muted)]">Estado Civil: {r.estado_civil}</p>}
+                {r.concubinato !== null && <p className="text-[var(--card-text-muted)]">Concubinato: {r.concubinato ? 'Sí' : 'No'}</p>}
               </div>
 
               {/* Columna 2: Contacto + Académico/Laboral */}
               <div className="space-y-1">
-                <p className="font-semibold text-gray-700">Contacto y Ubicación</p>
-                {r.correo_electronico && <p className="text-gray-600">Correo: {r.correo_electronico}</p>}
-                {r.telefono_celular && <p className="text-gray-600">Celular: {r.telefono_celular}</p>}
-                {r.telefono_local && <p className="text-gray-600">Tel. Local: {r.telefono_local}</p>}
+                <p className="font-semibold text-[var(--card-text)]">Contacto y Ubicación</p>
+                {r.correo_electronico && <p className="text-[var(--card-text-muted)]">Correo: {r.correo_electronico}</p>}
+                {r.telefono_celular && <p className="text-[var(--card-text-muted)]">Celular: {r.telefono_celular}</p>}
+                {r.telefono_local && <p className="text-[var(--card-text-muted)]">Tel. Local: {r.telefono_local}</p>}
                 {r.estado && (
-                  <p className="text-gray-600">
+                  <p className="text-[var(--card-text-muted)]">
                     Ubicación: {r.estado}{r.municipio && `, ${r.municipio}`}{r.parroquia && `, ${r.parroquia}`}
                   </p>
                 )}
                 {/* Académico/Laboral dentro de la misma columna */}
                 {(r.nivel_educativo || r.condicion_trabajo) && (
                   <>
-                    <p className="font-semibold text-gray-700 pt-2">Académico/Laboral</p>
-                    {r.nivel_educativo && <p className="text-gray-600">Nivel Educativo: {r.nivel_educativo}</p>}
-                    {r.condicion_trabajo && <p className="text-gray-600">Condición: {r.condicion_trabajo}</p>}
+                    <p className="font-semibold text-[var(--card-text)] pt-2">Académico/Laboral</p>
+                    {r.nivel_educativo && <p className="text-[var(--card-text-muted)]">Nivel Educativo: {r.nivel_educativo}</p>}
+                    {r.condicion_trabajo && <p className="text-[var(--card-text-muted)]">Condición: {r.condicion_trabajo}</p>}
                   </>
                 )}
               </div>
 
               {/* Columna 3: Vivienda */}
               <div className="space-y-1">
-                <p className="font-semibold text-gray-700">Vivienda</p>
-                {r.cant_habitaciones !== null && <p className="text-gray-600">Habitaciones: {r.cant_habitaciones}</p>}
-                {r.cant_banos !== null && <p className="text-gray-600">Baños: {r.cant_banos}</p>}
+                <p className="font-semibold text-[var(--card-text)]">Vivienda</p>
+                {r.cant_habitaciones !== null && <p className="text-[var(--card-text-muted)]">Habitaciones: {r.cant_habitaciones}</p>}
+                {r.cant_banos !== null && <p className="text-[var(--card-text-muted)]">Baños: {r.cant_banos}</p>}
                 {Object.entries(caracteristicasAgrupadas).map(([tipo, caracteristicas]) => (
-                  <p key={tipo} className="text-gray-600">
+                  <p key={tipo} className="text-[var(--card-text-muted)]">
                     <span className="font-medium">{tipo}:</span> {caracteristicas.join(', ')}
                   </p>
                 ))}
@@ -3204,24 +3204,24 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
               {/* Columna 4: Familia y Hogar */}
               <div className="space-y-1">
-                <p className="font-semibold text-gray-700">Familia y Hogar</p>
-                {r.cant_personas !== null && <p className="text-gray-600">Personas: {r.cant_personas}</p>}
-                {r.cant_trabajadores !== null && <p className="text-gray-600">Trabajadores: {r.cant_trabajadores}</p>}
-                {r.cant_no_trabajadores !== null && <p className="text-gray-600">No trabajadores: {r.cant_no_trabajadores}</p>}
-                {r.cant_ninos !== null && <p className="text-gray-600">Niños: {r.cant_ninos}</p>}
-                {r.cant_ninos_estudiando !== null && <p className="text-gray-600">Niños estudiando: {r.cant_ninos_estudiando}</p>}
-                {r.jefe_hogar !== null && <p className="text-gray-600">Jefe del hogar: {r.jefe_hogar ? 'Sí' : 'No'}</p>}
+                <p className="font-semibold text-[var(--card-text)]">Familia y Hogar</p>
+                {r.cant_personas !== null && <p className="text-[var(--card-text-muted)]">Personas: {r.cant_personas}</p>}
+                {r.cant_trabajadores !== null && <p className="text-[var(--card-text-muted)]">Trabajadores: {r.cant_trabajadores}</p>}
+                {r.cant_no_trabajadores !== null && <p className="text-[var(--card-text-muted)]">No trabajadores: {r.cant_no_trabajadores}</p>}
+                {r.cant_ninos !== null && <p className="text-[var(--card-text-muted)]">Niños: {r.cant_ninos}</p>}
+                {r.cant_ninos_estudiando !== null && <p className="text-[var(--card-text-muted)]">Niños estudiando: {r.cant_ninos_estudiando}</p>}
+                {r.jefe_hogar !== null && <p className="text-[var(--card-text-muted)]">Jefe del hogar: {r.jefe_hogar ? 'Sí' : 'No'}</p>}
                 {r.ingresos_mensuales !== null && (
-                  <p className="text-gray-600">Ingresos: Bs. {Number(r.ingresos_mensuales).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</p>
+                  <p className="text-[var(--card-text-muted)]">Ingresos: Bs. {Number(r.ingresos_mensuales).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</p>
                 )}
-                {r.nivel_educativo_jefe && <p className="text-gray-600">Nivel edu. jefe: {r.nivel_educativo_jefe}</p>}
+                {r.nivel_educativo_jefe && <p className="text-[var(--card-text-muted)]">Nivel edu. jefe: {r.nivel_educativo_jefe}</p>}
               </div>
             </div>
 
             {/* Motivo de eliminación */}
-            <div className="mt-4 pt-3 border-t border-gray-100">
-              <p className="text-sm font-semibold text-gray-700 mb-1">Motivo de eliminación</p>
-              <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
+            <div className="mt-4 pt-3 border-t border-[var(--card-border)]">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Motivo de eliminación</p>
+              <p className="text-sm text-[var(--card-text-muted)] bg-[var(--ui-bg-muted)] p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
             </div>
           </div>
         );
@@ -3232,33 +3232,33 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           ? `${r.nombres} ${r.apellidos}`.trim()
           : (r.nombres || r.apellidos || 'Solicitante desconocido');
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Datos Personales</p>
-                <p className="text-sm text-gray-600">Nombre: {nombreCompleto}</p>
-                <p className="text-sm text-gray-600">Cédula: {r.cedula || 'N/A'}</p>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Datos Personales</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Nombre: {nombreCompleto}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Cédula: {r.cedula || 'N/A'}</p>
                 {r.fecha_nacimiento && (
-                  <p className="text-sm text-gray-600">Fecha Nacimiento: {formatOnlyDate(r.fecha_nacimiento)}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">Fecha Nacimiento: {formatOnlyDate(r.fecha_nacimiento)}</p>
                 )}
-                {r.sexo && <p className="text-sm text-gray-600">Sexo: {r.sexo}</p>}
-                {r.estado_civil && <p className="text-sm text-gray-600">Estado Civil: {r.estado_civil}</p>}
+                {r.sexo && <p className="text-sm text-[var(--card-text-muted)]">Sexo: {r.sexo}</p>}
+                {r.estado_civil && <p className="text-sm text-[var(--card-text-muted)]">Estado Civil: {r.estado_civil}</p>}
               </div>
 
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Contacto y Ubicación</p>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Contacto y Ubicación</p>
                 {r.correo_electronico && (
-                  <p className="text-sm text-gray-600">Correo: {r.correo_electronico}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">Correo: {r.correo_electronico}</p>
                 )}
                 {r.telefono_celular && (
-                  <p className="text-sm text-gray-600">Teléfono: {r.telefono_celular}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">Teléfono: {r.telefono_celular}</p>
                 )}
                 {(r.nombre_estado || r.telefono_local) && (
                   <div className="mt-1">
-                    {r.telefono_local && <p className="text-sm text-gray-600">Tlf. Local: {r.telefono_local}</p>}
+                    {r.telefono_local && <p className="text-sm text-[var(--card-text-muted)]">Tlf. Local: {r.telefono_local}</p>}
                     {r.nombre_estado && (
-                      <div className="text-sm text-gray-600 mt-1">
-                        <p className="font-medium text-xs text-gray-500 uppercase">Ubicación</p>
+                      <div className="text-sm text-[var(--card-text-muted)] mt-1">
+                        <p className="font-medium text-xs text-[var(--card-text-muted)] uppercase">Ubicación</p>
                         <p>{r.nombre_estado}
                           {r.nombre_municipio && `, ${r.nombre_municipio}`}
                           {r.nombre_parroquia && `, ${r.nombre_parroquia}`}
@@ -3270,17 +3270,17 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               </div>
 
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Información Adicional</p>
-                {r.nivel_educativo && <p className="text-sm text-gray-600">Nivel Educativo: {r.nivel_educativo}</p>}
-                {r.condicion_trabajo && <p className="text-sm text-gray-600">Condición Trabajo: {r.condicion_trabajo}</p>}
-                {r.condicion_actividad && <p className="text-sm text-gray-600">Actividad: {r.condicion_actividad}</p>}
-                {r.nacionalidad && <p className="text-sm text-gray-600">Nacionalidad: {r.nacionalidad.toLowerCase() === 'v' ? 'Venezolano' : 'Extranjero'}</p>}
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información Adicional</p>
+                {r.nivel_educativo && <p className="text-sm text-[var(--card-text-muted)]">Nivel Educativo: {r.nivel_educativo}</p>}
+                {r.condicion_trabajo && <p className="text-sm text-[var(--card-text-muted)]">Condición Trabajo: {r.condicion_trabajo}</p>}
+                {r.condicion_actividad && <p className="text-sm text-[var(--card-text-muted)]">Actividad: {r.condicion_actividad}</p>}
+                {r.nacionalidad && <p className="text-sm text-[var(--card-text-muted)]">Nacionalidad: {r.nacionalidad.toLowerCase() === 'v' ? 'Venezolano' : 'Extranjero'}</p>}
               </div>
 
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
-                <p className="text-sm text-gray-600">Fecha creación: {formatDate(r.fecha_creacion)}</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Fecha creación: {formatDate(r.fecha_creacion)}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Creado por:{' '}
                   {renderUserLink(
                     r.nombre_completo_usuario_creo,
@@ -3324,14 +3324,14 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         };
 
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Cambios Realizados</p>
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Cambios Realizados</p>
 
               {/* Nombres */}
               {(r.nombres_anterior !== r.nombres_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Nombres:{' '}
                     <span className="line-through text-red-500">{r.nombres_anterior || 'N/A'}</span>
                     {' → '}
@@ -3343,7 +3343,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Apellidos */}
               {(r.apellidos_anterior !== r.apellidos_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Apellidos:{' '}
                     <span className="line-through text-red-500">{r.apellidos_anterior || 'N/A'}</span>
                     {' → '}
@@ -3355,7 +3355,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Fecha de Nacimiento */}
               {!areDatesEqual(r.fecha_nacimiento_anterior, r.fecha_nacimiento_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Fecha Nacimiento:{' '}
                     <span className="line-through text-red-500">
                       {r.fecha_nacimiento_anterior ? formatOnlyDate(r.fecha_nacimiento_anterior) : 'N/A'}
@@ -3371,7 +3371,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Sexo */}
               {(r.sexo_anterior !== r.sexo_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Sexo:{' '}
                     <span className="line-through text-red-500">{r.sexo_anterior || 'N/A'}</span>
                     {' → '}
@@ -3383,7 +3383,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Estado Civil */}
               {(r.estado_civil_anterior !== r.estado_civil_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Estado Civil:{' '}
                     <span className="line-through text-red-500">{r.estado_civil_anterior || 'N/A'}</span>
                     {' → '}
@@ -3395,7 +3395,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Concubinato */}
               {(r.concubinato_anterior !== r.concubinato_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Concubinato:{' '}
                     <span className="line-through text-red-500">
                       {r.concubinato_anterior === true ? 'Sí' : (r.concubinato_anterior === false ? 'No' : 'N/A')}
@@ -3411,7 +3411,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Nacionalidad */}
               {(r.nacionalidad_anterior !== r.nacionalidad_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Nacionalidad:{' '}
                     <span className="line-through text-red-500">{formatNacionalidad(r.nacionalidad_anterior)}</span>
                     {' → '}
@@ -3423,7 +3423,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Teléfono Local */}
               {(r.telefono_local_anterior !== r.telefono_local_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Teléfono Local:{' '}
                     <span className="line-through text-red-500">{r.telefono_local_anterior || 'N/A'}</span>
                     {' → '}
@@ -3435,7 +3435,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Teléfono Celular */}
               {(r.telefono_celular_anterior !== r.telefono_celular_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Teléfono Celular:{' '}
                     <span className="line-through text-red-500">{r.telefono_celular_anterior || 'N/A'}</span>
                     {' → '}
@@ -3447,7 +3447,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Correo Electrónico */}
               {(r.correo_electronico_anterior !== r.correo_electronico_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Correo:{' '}
                     <span className="line-through text-red-500">{r.correo_electronico_anterior || 'N/A'}</span>
                     {' → '}
@@ -3459,7 +3459,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Nivel Educativo */}
               {(r.id_nivel_educativo_anterior !== r.id_nivel_educativo_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Nivel Educativo:{' '}
                     <span className="line-through text-red-500">{r.nivel_educativo_anterior || 'N/A'}</span>
                     {' → '}
@@ -3471,7 +3471,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Tiempo de Estudio */}
               {(r.tiempo_estudio_anterior !== r.tiempo_estudio_nuevo || r.tipo_tiempo_estudio_anterior !== r.tipo_tiempo_estudio_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Tiempo de Estudio:{' '}
                     <span className="line-through text-red-500">
                       {r.tiempo_estudio_anterior ? `${r.tiempo_estudio_anterior} ${r.tipo_tiempo_estudio_anterior || ''}` : 'N/A'}
@@ -3487,7 +3487,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Dirección de Habitación */}
               {(r.direccion_habitacion_anterior !== r.direccion_habitacion_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Dirección:{' '}
                     <span className="line-through text-red-500">{r.direccion_habitacion_anterior || 'N/A'}</span>
                     {' → '}
@@ -3499,7 +3499,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Condición de Trabajo */}
               {(r.id_trabajo_anterior !== r.id_trabajo_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Condición Trabajo:{' '}
                     <span className="line-through text-red-500">{r.condicion_trabajo_anterior || 'N/A'}</span>
                     {' → '}
@@ -3511,7 +3511,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Condición de Actividad */}
               {(r.id_actividad_anterior !== r.id_actividad_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Actividad:{' '}
                     <span className="line-through text-red-500">{r.condicion_actividad_anterior || 'N/A'}</span>
                     {' → '}
@@ -3523,7 +3523,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Estado */}
               {(r.id_estado_anterior !== r.id_estado_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Estado:{' '}
                     <span className="line-through text-red-500">{r.estado_anterior || 'N/A'}</span>
                     {' → '}
@@ -3535,7 +3535,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Municipio */}
               {(r.num_municipio_anterior !== r.num_municipio_nuevo || r.id_estado_anterior !== r.id_estado_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Municipio:{' '}
                     <span className="line-through text-red-500">{r.municipio_anterior || 'N/A'}</span>
                     {' → '}
@@ -3547,7 +3547,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Parroquia */}
               {(r.num_parroquia_anterior !== r.num_parroquia_nuevo || r.num_municipio_anterior !== r.num_municipio_nuevo || r.id_estado_anterior !== r.id_estado_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Parroquia:{' '}
                     <span className="line-through text-red-500">{r.parroquia_anterior || 'N/A'}</span>
                     {' → '}
@@ -3560,7 +3560,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             {/* Jefe del Hogar */}
             {(Boolean(r.jefe_hogar_anterior) !== Boolean(r.jefe_hogar_nuevo)) && (
               <div className="mb-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Jefe del Hogar:{' '}
                   <span className="line-through text-red-500">{r.jefe_hogar_anterior ? 'Sí' : 'No'}</span>
                   {' → '}
@@ -3572,7 +3572,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             {/* Nivel Educativo del Jefe */}
             {((r.nivel_educativo_jefe_anterior ?? '') !== (r.nivel_educativo_jefe_nuevo ?? '')) && (
               <div className="mb-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Nivel Educativo del Jefe:{' '}
                   <span className="line-through text-red-500">{r.nivel_educativo_jefe_anterior || 'N/A'}</span>
                   {' → '}
@@ -3584,7 +3584,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             {/* Tiempo de Estudio del Jefe */}
             {(r.tiempo_estudio_jefe_anterior !== r.tiempo_estudio_jefe_nuevo || r.tipo_tiempo_estudio_jefe_anterior !== r.tipo_tiempo_estudio_jefe_nuevo) && (
               <div className="mb-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Tiempo Estudio Jefe:{' '}
                   <span className="line-through text-red-500">
                     {r.tiempo_estudio_jefe_anterior ? `${r.tiempo_estudio_jefe_anterior} ${r.tipo_tiempo_estudio_jefe_anterior || ''}` : 'N/A'}
@@ -3600,7 +3600,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             {/* Ingresos Mensuales */}
             {(String(r.ingresos_mensuales_anterior ?? '') !== String(r.ingresos_mensuales_nuevo ?? '')) && (
               <div className="mb-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Ingresos Mensuales:{' '}
                   <span className="line-through text-red-500">
                     {r.ingresos_mensuales_anterior != null ? `Bs. ${Number(r.ingresos_mensuales_anterior).toLocaleString('es-VE', { minimumFractionDigits: 2 })}` : 'N/A'}
@@ -3616,7 +3616,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             {/* Habitaciones */}
             {(r.cant_habitaciones_anterior !== r.cant_habitaciones_nuevo) && (r.cant_habitaciones_anterior != null || r.cant_habitaciones_nuevo != null) && (
               <div className="mb-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Habitaciones:{' '}
                   <span className="line-through text-red-500">{r.cant_habitaciones_anterior ?? 'N/A'}</span>
                   {' → '}
@@ -3628,7 +3628,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             {/* Baños */}
             {(r.cant_banos_anterior !== r.cant_banos_nuevo) && (r.cant_banos_anterior != null || r.cant_banos_nuevo != null) && (
               <div className="mb-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Baños:{' '}
                   <span className="line-through text-red-500">{r.cant_banos_anterior ?? 'N/A'}</span>
                   {' → '}
@@ -3640,7 +3640,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             {/* Tipo Vivienda */}
             {(r.tipo_vivienda_anterior !== r.tipo_vivienda_nuevo) && (
               <div className="mb-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Tipo Vivienda:{' '}
                   <span className="line-through text-red-500">{r.tipo_vivienda_anterior || 'N/A'}</span>
                   {' → '}
@@ -3652,7 +3652,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             {/* Material Piso */}
             {(r.material_piso_anterior !== r.material_piso_nuevo) && (
               <div className="mb-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Piso:{' '}
                   <span className="line-through text-red-500">{r.material_piso_anterior || 'N/A'}</span>
                   {' → '}
@@ -3664,7 +3664,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             {/* Material Paredes */}
             {(r.material_paredes_anterior !== r.material_paredes_nuevo) && (
               <div className="mb-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Paredes:{' '}
                   <span className="line-through text-red-500">{r.material_paredes_anterior || 'N/A'}</span>
                   {' → '}
@@ -3676,7 +3676,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             {/* Material Techo */}
             {(r.material_techo_anterior !== r.material_techo_nuevo) && (
               <div className="mb-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Techo:{' '}
                   <span className="line-through text-red-500">{r.material_techo_anterior || 'N/A'}</span>
                   {' → '}
@@ -3688,7 +3688,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             {/* Agua Potable */}
             {(r.agua_potable_anterior !== r.agua_potable_nuevo) && (
               <div className="mb-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Agua Potable:{' '}
                   <span className="line-through text-red-500">{r.agua_potable_anterior || 'N/A'}</span>
                   {' → '}
@@ -3700,7 +3700,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             {/* Aguas Negras */}
             {(r.eliminacion_aguas_negras_anterior !== r.eliminacion_aguas_negras_nuevo) && (
               <div className="mb-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Aguas Negras:{' '}
                   <span className="line-through text-red-500">{r.eliminacion_aguas_negras_anterior || 'N/A'}</span>
                   {' → '}
@@ -3712,7 +3712,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             {/* Aseo */}
             {(r.aseo_anterior !== r.aseo_nuevo) && (
               <div className="mb-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Aseo:{' '}
                   <span className="line-through text-red-500">{r.aseo_anterior || 'N/A'}</span>
                   {' → '}
@@ -3724,7 +3724,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             {/* Personas en el hogar */}
             {(r.cant_personas_anterior !== r.cant_personas_nuevo) && (r.cant_personas_anterior != null || r.cant_personas_nuevo != null) && (
               <div className="mb-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Personas en el hogar:{' '}
                   <span className="line-through text-red-500">{r.cant_personas_anterior ?? 'N/A'}</span>
                   {' → '}
@@ -3736,7 +3736,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             {/* Trabajadores */}
             {(r.cant_trabajadores_anterior !== r.cant_trabajadores_nuevo) && (r.cant_trabajadores_anterior != null || r.cant_trabajadores_nuevo != null) && (
               <div className="mb-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Trabajadores:{' '}
                   <span className="line-through text-red-500">{r.cant_trabajadores_anterior ?? 'N/A'}</span>
                   {' → '}
@@ -3748,7 +3748,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             {/* No trabajadores */}
             {(r.cant_no_trabajadores_anterior !== r.cant_no_trabajadores_nuevo) && (r.cant_no_trabajadores_anterior != null || r.cant_no_trabajadores_nuevo != null) && (
               <div className="mb-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   No trabajadores:{' '}
                   <span className="line-through text-red-500">{r.cant_no_trabajadores_anterior ?? 'N/A'}</span>
                   {' → '}
@@ -3760,7 +3760,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             {/* Niños */}
             {(r.cant_ninos_anterior !== r.cant_ninos_nuevo) && (r.cant_ninos_anterior != null || r.cant_ninos_nuevo != null) && (
               <div className="mb-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Niños:{' '}
                   <span className="line-through text-red-500">{r.cant_ninos_anterior ?? 'N/A'}</span>
                   {' → '}
@@ -3772,7 +3772,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             {/* Niños estudiando */}
             {(r.cant_ninos_estudiando_anterior !== r.cant_ninos_estudiando_nuevo) && (r.cant_ninos_estudiando_anterior != null || r.cant_ninos_estudiando_nuevo != null) && (
               <div className="mb-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Niños estudiando:{' '}
                   <span className="line-through text-red-500">{r.cant_ninos_estudiando_anterior ?? 'N/A'}</span>
                   {' → '}
@@ -3802,21 +3802,21 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
               return (
                 <div className="mb-2">
-                  <p className="text-sm font-semibold text-gray-700 mb-1">Artefactos Domésticos:</p>
+                  <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Artefactos Domésticos:</p>
                   {eliminados.length > 0 && (
-                    <p className="text-sm text-gray-600 ml-2">
+                    <p className="text-sm text-[var(--card-text-muted)] ml-2">
                       <span className="text-red-500 font-medium">Eliminados:</span>{' '}
                       {eliminados.join(', ')}
                     </p>
                   )}
                   {agregados.length > 0 && (
-                    <p className="text-sm text-gray-600 ml-2">
+                    <p className="text-sm text-[var(--card-text-muted)] ml-2">
                       <span className="text-green-600 font-medium">Agregados:</span>{' '}
                       {agregados.join(', ')}
                     </p>
                   )}
                   {sinCambio.length > 0 && (
-                    <p className="text-sm text-gray-500 ml-2">
+                    <p className="text-sm text-[var(--card-text-muted)] ml-2">
                       Sin cambio: {sinCambio.join(', ')}
                     </p>
                   )}
@@ -3825,8 +3825,8 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             })()}
 
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Actualizado por:{' '}
                 {renderUserLink(
                   r.nombre_completo_usuario_actualizo,
@@ -3835,7 +3835,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   r.id_usuario_actualizo
                 )}
               </p>
-              <p className="text-sm text-gray-600">Fecha actualización: {formatDate(r.fecha_actualizacion)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha actualización: {formatDate(r.fecha_actualizacion)}</p>
             </div>
           </div>
         );
@@ -3843,12 +3843,12 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'caso-eliminado': {
         const r = record as CasoEliminadoAuditRecord;
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Información del Caso</p>
-              <p className="text-sm text-gray-600">ID Caso: {r.caso_eliminado}</p>
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información del Caso</p>
+              <p className="text-sm text-[var(--card-text-muted)]">ID Caso: {r.caso_eliminado}</p>
               {r.cedula_solicitante && (
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Solicitante:{' '}
                   <Link href={`/dashboard/applicants/${r.cedula_solicitante}`} className="text-primary hover:underline font-medium transition-colors">
                     {r.nombre_completo_solicitante || 'N/A'} ({r.cedula_solicitante})
@@ -3856,15 +3856,15 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 </p>
               )}
               {r.fecha_solicitud && (
-                <p className="text-sm text-gray-600">Fecha Solicitud: {formatOnlyDate(r.fecha_solicitud)}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Fecha Solicitud: {formatOnlyDate(r.fecha_solicitud)}</p>
               )}
               {r.tramite && (
-                <p className="text-sm text-gray-600">Trámite: {r.tramite}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Trámite: {r.tramite}</p>
               )}
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Eliminado por:{' '}
                 {renderUserLink(
                   r.nombre_completo_usuario_elimino,
@@ -3873,11 +3873,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   r.eliminado_por
                 )}
               </p>
-              <p className="text-sm text-gray-600">Fecha eliminación: {formatDate(r.fecha)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha eliminación: {formatDate(r.fecha)}</p>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Motivo</p>
-              <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Motivo</p>
+              <p className="text-sm text-[var(--card-text-muted)] bg-[var(--ui-bg-muted)] p-2 rounded">{r.motivo || 'Sin motivo registrado'}</p>
             </div>
           </div>
         );
@@ -3885,12 +3885,12 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'caso-creado': {
         const r = record as CasoCreadoAuditRecord;
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Información del Caso</p>
-              <p className="text-sm text-gray-600">ID Caso: {r.id_caso}</p>
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información del Caso</p>
+              <p className="text-sm text-[var(--card-text-muted)]">ID Caso: {r.id_caso}</p>
               {r.cedula_solicitante && (
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Solicitante:{' '}
                   <Link href={`/dashboard/applicants/${r.cedula_solicitante}`} className="text-primary hover:underline font-medium transition-colors">
                     {r.nombre_completo_solicitante || 'N/A'} ({r.cedula_solicitante})
@@ -3898,16 +3898,16 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 </p>
               )}
               {r.fecha_solicitud && (
-                <p className="text-sm text-gray-600">Fecha Solicitud: {formatOnlyDate(r.fecha_solicitud)}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Fecha Solicitud: {formatOnlyDate(r.fecha_solicitud)}</p>
               )}
               {r.tramite && (
-                <p className="text-sm text-gray-600">Trámite: {r.tramite}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Trámite: {r.tramite}</p>
               )}
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
-              <p className="text-sm text-gray-600">Fecha creación: {formatDate(r.fecha_creacion)}</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha creación: {formatDate(r.fecha_creacion)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Creado por:{' '}
                 {renderUserLink(
                   r.nombre_completo_usuario_creo,
@@ -3953,15 +3953,15 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           const estudiantesChanged = hasTeamChanged(estudiantesAnteriores, estudiantesNuevos);
 
           return (
-            <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+            <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-2">Cambios en el Equipo</p>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-2">Cambios en el Equipo</p>
 
                 {/* Profesores */}
                 {profesoresChanged && (
                   <div className="mb-2">
-                    <p className="text-sm text-gray-600">
-                      <span className="font-semibold text-gray-700">Profesores:</span>{' '}
+                    <p className="text-sm text-[var(--card-text-muted)]">
+                      <span className="font-semibold text-[var(--card-text)]">Profesores:</span>{' '}
                       <span className="line-through text-red-500">
                         {profesoresAnteriores.length > 0 ? (
                           profesoresAnteriores.map((m: MiembroEquipoAudit, i: number) => (
@@ -4002,8 +4002,8 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 {/* Estudiantes */}
                 {estudiantesChanged && (
                   <div className="mb-2">
-                    <p className="text-sm text-gray-600">
-                      <span className="font-semibold text-gray-700">Estudiantes:</span>{' '}
+                    <p className="text-sm text-[var(--card-text-muted)]">
+                      <span className="font-semibold text-[var(--card-text)]">Estudiantes:</span>{' '}
                       <span className="line-through text-red-500">
                         {estudiantesAnteriores.length > 0 ? (
                           estudiantesAnteriores.map((m: MiembroEquipoAudit, i: number) => (
@@ -4042,9 +4042,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 )}
               </div>
 
-              <div className="pt-4 border-t border-gray-200">
-                <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
-                <p className="text-sm text-gray-600">
+              <div className="pt-4 border-t border-[var(--card-border)]">
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Modificado por:{' '}
                   {renderUserLink(
                     rEquipo.nombre_completo_usuario_modifico,
@@ -4053,7 +4053,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     rEquipo.id_usuario_modifico
                   )}
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Fecha modificación: {formatDate(rEquipo.fecha || r.fecha_actualizacion)}
                 </p>
               </div>
@@ -4077,15 +4077,15 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         const hasAmbitoLegalChange = r.num_ambito_legal_anterior !== r.num_ambito_legal_nuevo;
 
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Cambios Realizados</p>
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Cambios Realizados</p>
 
               {/* Cambio de estatus */}
               {/* Cambio de estatus */}
               {isCambioEstatus && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600 mb-2">
+                  <p className="text-sm text-[var(--card-text-muted)] mb-2">
                     Estatus:{' '}
                     <span className="line-through text-red-500">{r.estatus_anterior || 'N/A'}</span>
                     {' → '}
@@ -4099,7 +4099,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <>
                   {hasFechaSolicitudChange && (
                     <div className="mb-2">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-[var(--card-text-muted)]">
                         Fecha Solicitud:{' '}
                         <span className="line-through text-red-500">{r.fecha_solicitud_anterior ? formatOnlyDate(r.fecha_solicitud_anterior) : 'N/A'}</span>
                         {' → '}
@@ -4110,7 +4110,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
                   {hasFechaInicioCasoChange && (
                     <div className="mb-2">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-[var(--card-text-muted)]">
                         Fecha Inicio Caso:{' '}
                         <span className="line-through text-red-500">{r.fecha_inicio_caso_anterior ? formatOnlyDate(r.fecha_inicio_caso_anterior) : 'N/A'}</span>
                         {' → '}
@@ -4121,7 +4121,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
                   {hasFechaFinCasoChange && (
                     <div className="mb-2">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-[var(--card-text-muted)]">
                         Fecha Fin Caso:{' '}
                         <span className="line-through text-red-500">{r.fecha_fin_caso_anterior ? formatOnlyDate(r.fecha_fin_caso_anterior) : 'N/A'}</span>
                         {' → '}
@@ -4132,7 +4132,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
                   {hasTramiteChange && (
                     <div className="mb-2">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-[var(--card-text-muted)]">
                         Trámite:{' '}
                         <span className="line-through text-red-500">{r.tramite_anterior || 'N/A'}</span>
                         {' → '}
@@ -4143,7 +4143,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
                   {hasSolicitanteChange && (
                     <div className="mb-2">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-[var(--card-text-muted)]">
                         Solicitante:{' '}
                         <span className="line-through text-red-500">
                           {r.cedula_solicitante_anterior ? (
@@ -4166,7 +4166,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
                   {hasNucleoChange && (
                     <div className="mb-2">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-[var(--card-text-muted)]">
                         Núcleo:{' '}
                         <span className="line-through text-red-500">{r.nombre_nucleo_anterior || r.id_nucleo_anterior || 'N/A'}</span>
                         {' → '}
@@ -4177,7 +4177,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
                   {hasMateriaChange && (
                     <div className="mb-2">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-[var(--card-text-muted)]">
                         Materia:{' '}
                         <span className="line-through text-red-500">{r.nombre_materia_anterior || r.id_materia_anterior || 'N/A'}</span>
                         {' → '}
@@ -4188,7 +4188,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
                   {hasCategoriaChange && (
                     <div className="mb-2">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-[var(--card-text-muted)]">
                         Categoría:{' '}
                         <span className="line-through text-red-500">{r.nombre_categoria_anterior || (r.num_categoria_anterior !== null ? `#${r.num_categoria_anterior}` : 'N/A')}</span>
                         {' → '}
@@ -4199,7 +4199,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
                   {hasSubcategoriaChange && (
                     <div className="mb-2">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-[var(--card-text-muted)]">
                         Subcategoría:{' '}
                         <span className="line-through text-red-500">{r.nombre_subcategoria_anterior || (r.num_subcategoria_anterior !== null ? `#${r.num_subcategoria_anterior}` : 'N/A')}</span>
                         {' → '}
@@ -4210,7 +4210,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
                   {hasAmbitoLegalChange && (
                     <div className="mb-2">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-[var(--card-text-muted)]">
                         Ámbito Legal:{' '}
                         <span className="line-through text-red-500">{r.nombre_ambito_legal_anterior || (r.num_ambito_legal_anterior !== null ? `#${r.num_ambito_legal_anterior}` : 'N/A')}</span>
                         {' → '}
@@ -4221,7 +4221,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
                   {hasObservacionesChange && (
                     <div className="mb-2">
-                      <p className="text-sm text-gray-600 mb-1">Observaciones:</p>
+                      <p className="text-sm text-[var(--card-text-muted)] mb-1">Observaciones:</p>
                       <p className="text-sm line-through text-red-500 bg-red-50 p-2 rounded mb-1">
                         {r.observaciones_anterior || 'Sin observaciones'}
                       </p>
@@ -4235,8 +4235,8 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Actualizado por:{' '}
                 {renderUserLink(
                   r.nombre_completo_usuario_actualizo,
@@ -4245,13 +4245,13 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   r.id_usuario_actualizo
                 )}
               </p>
-              <p className="text-sm text-gray-600">Fecha actualización: {formatDate(r.fecha_actualizacion)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha actualización: {formatDate(r.fecha_actualizacion)}</p>
             </div>
 
             {r.motivo && (
               <div className="mt-3 text-sm">
-                <span className="font-semibold text-gray-700 block mb-1">Motivo:</span>
-                <div className="p-3 bg-gray-50 rounded-lg text-gray-600 border border-gray-100">
+                <span className="font-semibold text-[var(--card-text)] block mb-1">Motivo:</span>
+                <div className="p-3 bg-[var(--ui-bg-muted)] rounded-lg text-[var(--card-text-muted)] border border-[var(--card-border)]">
                   <p className="whitespace-pre-wrap">{r.motivo}</p>
                 </div>
               </div>
@@ -4354,17 +4354,17 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         const estadoParroquiaActualizadaDetalle = type === 'parroquia-actualizada' ? r.nombre_estado : null;
 
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Cambios Realizados</p>
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Cambios Realizados</p>
               {/* Para semestres, el term es el ID, así que no mostramos ID por separado */}
               {type !== 'semestre-actualizado' && (
-                <p className="text-sm text-gray-600 mb-3">ID: {idField}</p>
+                <p className="text-sm text-[var(--card-text-muted)] mb-3">ID: {idField}</p>
               )}
 
               {(nameFieldAnterior !== nameFieldNuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Nombre:{' '}
                     <span className="line-through text-red-500">
                       {nameFieldAnterior}
@@ -4379,7 +4379,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
               {(r.habilitado_anterior !== null && r.habilitado_nuevo !== null && r.habilitado_anterior !== r.habilitado_nuevo) && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Habilitado:{' '}
                     <span className="line-through text-red-500">
                       {r.habilitado_anterior ? 'Sí' : 'No'}
@@ -4397,7 +4397,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <>
                   {r.term_anterior && r.term_anterior !== r.term && (
                     <div className="mb-2">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-[var(--card-text-muted)]">
                         TERM:{' '}
                         <span className="line-through text-red-500">
                           {r.term_anterior}
@@ -4411,7 +4411,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   )}
                   {!areDatesEqual(r.fecha_inicio_anterior, r.fecha_inicio_nuevo) && (
                     <div className="mb-2">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-[var(--card-text-muted)]">
                         Fecha inicio:{' '}
                         <span className="line-through text-red-500">
                           {r.fecha_inicio_anterior ? formatOnlyDate(r.fecha_inicio_anterior) : 'N/A'}
@@ -4425,7 +4425,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   )}
                   {!areDatesEqual(r.fecha_fin_anterior, r.fecha_fin_nuevo) && (
                     <div className="mb-2">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-[var(--card-text-muted)]">
                         Fecha fin:{' '}
                         <span className="line-through text-red-500">
                           {r.fecha_fin_anterior ? formatOnlyDate(r.fecha_fin_anterior) : 'N/A'}
@@ -4447,7 +4447,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     <>
                       {(r.id_estado_anterior !== r.id_estado_nuevo || (r.nombre_estado_anterior !== r.nombre_estado_nuevo && (r.nombre_estado_anterior || r.nombre_estado_nuevo))) && (
                         <div className="mb-2">
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-[var(--card-text-muted)]">
                             Estado:{' '}
                             <span className="line-through text-red-500">
                               {r.nombre_estado_anterior || 'N/A'}
@@ -4461,7 +4461,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                       )}
                       {(r.num_municipio_anterior !== r.num_municipio_nuevo || (r.nombre_municipio_anterior !== r.nombre_municipio_nuevo && (r.nombre_municipio_anterior || r.nombre_municipio_nuevo))) && (
                         <div className="mb-2">
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-[var(--card-text-muted)]">
                             Municipio:{' '}
                             <span className="line-through text-red-500">
                               {r.nombre_municipio_anterior || 'N/A'}
@@ -4475,7 +4475,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                       )}
                       {(r.num_parroquia_anterior !== r.num_parroquia_nuevo || (r.nombre_parroquia_anterior !== r.nombre_parroquia_nuevo && (r.nombre_parroquia_anterior || r.nombre_parroquia_nuevo))) && (
                         <div className="mb-2">
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-[var(--card-text-muted)]">
                             Parroquia:{' '}
                             <span className="line-through text-red-500">
                               {r.nombre_parroquia_anterior || 'N/A'}
@@ -4499,7 +4499,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     <>
                       {(r.id_estado_anterior !== r.id_estado_nuevo || (r.nombre_estado_anterior !== r.nombre_estado_nuevo && (r.nombre_estado_anterior || r.nombre_estado_nuevo))) && (
                         <div className="mb-2">
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-[var(--card-text-muted)]">
                             Estado:{' '}
                             <span className="line-through text-red-500">
                               {r.nombre_estado_anterior || 'N/A'}
@@ -4513,7 +4513,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                       )}
                       {(r.num_municipio_anterior !== r.num_municipio_nuevo || (r.nombre_municipio_anterior !== r.nombre_municipio_nuevo && (r.nombre_municipio_anterior || r.nombre_municipio_nuevo))) && (
                         <div className="mb-2">
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-[var(--card-text-muted)]">
                             Municipio:{' '}
                             <span className="line-through text-red-500">
                               {r.nombre_municipio_anterior || 'N/A'}
@@ -4535,7 +4535,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <>
                   {(r.id_materia_anterior !== r.id_materia_nuevo || (r.nombre_materia_anterior !== r.nombre_materia_nuevo && (r.nombre_materia_anterior || r.nombre_materia_nuevo))) && (
                     <div className="mb-2">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-[var(--card-text-muted)]">
                         Materia:{' '}
                         <span className="line-through text-red-500">
                           {r.nombre_materia_anterior || 'N/A'}
@@ -4549,7 +4549,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   )}
                   {(r.num_categoria_anterior !== r.num_categoria_nuevo || r.id_materia_anterior !== r.id_materia_nuevo || (r.nombre_categoria_anterior !== r.nombre_categoria_nuevo && (r.nombre_categoria_anterior || r.nombre_categoria_nuevo))) && (
                     <div className="mb-2">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-[var(--card-text-muted)]">
                         Categoría:{' '}
                         <span className="line-through text-red-500">
                           {r.nombre_categoria_anterior || 'N/A'}
@@ -4567,22 +4567,22 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             {/* Para semestres actualizados, mostrar sección de Información con todos los atributos */}
             {type === 'semestre-actualizado' && (
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Información</p>
-                <p className="text-sm text-gray-600">Nombre: {nameFieldNuevo}</p>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Nombre: {nameFieldNuevo}</p>
                 {r.fecha_inicio_nuevo && (
-                  <p className="text-sm text-gray-600">Fecha inicio: {formatOnlyDate(r.fecha_inicio_nuevo)}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">Fecha inicio: {formatOnlyDate(r.fecha_inicio_nuevo)}</p>
                 )}
                 {r.fecha_fin_nuevo && (
-                  <p className="text-sm text-gray-600">Fecha fin: {formatOnlyDate(r.fecha_fin_nuevo)}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">Fecha fin: {formatOnlyDate(r.fecha_fin_nuevo)}</p>
                 )}
                 {r.habilitado_nuevo !== null && (
-                  <p className="text-sm text-gray-600">Habilitado: {r.habilitado_nuevo ? 'Sí' : 'No'}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">Habilitado: {r.habilitado_nuevo ? 'Sí' : 'No'}</p>
                 )}
               </div>
             )}
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Actualizado por:{' '}
                 {renderUserLink(
                   r.nombre_completo_usuario_actualizo,
@@ -4591,7 +4591,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   r.id_usuario_actualizo
                 )}
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Fecha actualización: {formatDate(r.fecha_actualizacion)}
               </p>
             </div>
@@ -4626,15 +4626,15 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         const estudiantesChanged = hasTeamChanged(estudiantesAnteriores, estudiantesNuevos);
 
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-2">Cambios en el Equipo</p>
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-2">Cambios en el Equipo</p>
 
               {/* Profesores */}
               {profesoresChanged && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
-                    <span className="font-semibold text-gray-700">Profesores:</span>{' '}
+                  <p className="text-sm text-[var(--card-text-muted)]">
+                    <span className="font-semibold text-[var(--card-text)]">Profesores:</span>{' '}
                     <span className="line-through text-red-500">
                       {profesoresAnteriores.length > 0 ? (
                         profesoresAnteriores.map((m: MiembroEquipoAudit, i: number) => (
@@ -4675,8 +4675,8 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Estudiantes */}
               {estudiantesChanged && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-600">
-                    <span className="font-semibold text-gray-700">Estudiantes:</span>{' '}
+                  <p className="text-sm text-[var(--card-text-muted)]">
+                    <span className="font-semibold text-[var(--card-text)]">Estudiantes:</span>{' '}
                     <span className="line-through text-red-500">
                       {estudiantesAnteriores.length > 0 ? (
                         estudiantesAnteriores.map((m: MiembroEquipoAudit, i: number) => (
@@ -4715,9 +4715,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               )}
             </div>
 
-            <div className="pt-4 border-t border-gray-200">
-              <p className="text-sm font-semibold text-gray-700 mb-1">Auditoría</p>
-              <p className="text-sm text-gray-600">
+            <div className="pt-4 border-t border-[var(--card-border)]">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Modificado por:{' '}
                 {renderUserLink(
                   r.nombre_completo_usuario_modifico,
@@ -4726,7 +4726,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   r.id_usuario_modifico
                 )}
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[var(--card-text-muted)]">
                 Fecha modificación: {formatDate(r.fecha)}
               </p>
             </div>
@@ -4752,19 +4752,19 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             .join(' ');
         };
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <div>
-                  <p className="text-sm font-semibold text-gray-700 mb-1">Información del Reporte</p>
-                  <p className="text-sm text-gray-600">Tipo: {formatTipoReporte(r.tipo_reporte)}</p>
-                  <p className="text-sm text-gray-600">Formato: {r.formato || 'PDF'}</p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información del Reporte</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">Tipo: {formatTipoReporte(r.tipo_reporte)}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">Formato: {r.formato || 'PDF'}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">
                     Operación: {r.operacion === 'vista_previa' ? 'Vista Previa' : 'Generación'}
                   </p>
                   {/* Descripción eliminada por redundancia */}
                   {r.cedula_solicitante && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-[var(--card-text-muted)]">
                       Solicitante:{' '}
                       <Link
                         href={`/dashboard/applicants/${r.cedula_solicitante}`}
@@ -4780,13 +4780,13 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   )}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-700 mb-1">Fecha</p>
-                  <p className="text-sm text-gray-600">{formatDate(r.fecha_generacion)}</p>
+                  <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Fecha</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">{formatDate(r.fecha_generacion)}</p>
                 </div>
               </div>
 
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Filtros Aplicados</p>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Filtros Aplicados</p>
                 {r.filtros_aplicados && Object.keys(r.filtros_aplicados).length > 0 ? (
                   <div className="space-y-1">
                     {(() => {
@@ -4830,7 +4830,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                         return String(value);
                       };
                       return Object.entries(f).filter(([key, v]) => v !== null && v !== undefined && v !== '' && key !== 'cantidadCasos').map(([key, value]) => (
-                        <p key={key} className="text-sm text-gray-600">
+                        <p key={key} className="text-sm text-[var(--card-text-muted)]">
                           <span className="font-medium">{formatFilterLabel(key)}:</span>{' '}
                           {formatFilterValue(key, value)}
                         </p>
@@ -4838,14 +4838,14 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     })()}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500 italic">Sin filtros específicos</p>
+                  <p className="text-sm text-[var(--card-text-muted)] italic">Sin filtros específicos</p>
                 )}
               </div>
             </div>
 
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">Generado por</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Generado por</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
                 {renderUserLink(
                   r.nombre_completo_usuario_genero,
                   r.nombres_usuario_genero,
@@ -4902,11 +4902,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         };
 
         return (
-          <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Usuario</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Usuario</p>
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Nombre:{' '}
                   {r.cedula_usuario ? (
                     <Link
@@ -4920,31 +4920,31 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     nombreUsuario
                   )}
                 </p>
-                <p className="text-sm text-gray-600">Cédula: {r.cedula_usuario || 'N/A'}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Cédula: {r.cedula_usuario || 'N/A'}</p>
                 {(r as any).nombre_usuario && (
-                  <p className="text-sm text-gray-600">Username: {(r as any).nombre_usuario}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">Username: {(r as any).nombre_usuario}</p>
                 )}
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Conexión</p>
-                <p className="text-sm text-gray-600">Dirección IP: {(r as any).ip_direccion || 'No registrada'}</p>
-                <p className="text-sm text-gray-600">Navegador: {browser}</p>
-                <p className="text-sm text-gray-600">Sistema Operativo: {os}</p>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Conexión</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Dirección IP: {(r as any).ip_direccion || 'No registrada'}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Navegador: {browser}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Sistema Operativo: {os}</p>
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Tiempos</p>
-                <p className="text-sm text-gray-600">Inicio: {formatDate(r.fecha_inicio)}</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Tiempos</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Inicio: {formatDate(r.fecha_inicio)}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">
                   Cierre: {r.fecha_cierre ? formatDate(r.fecha_cierre) : 'Sin cerrar (Activa)'}
                 </p>
                 {r.fecha_cierre && (
-                  <p className="text-sm text-gray-600">Duración: {formatDuration(r.fecha_inicio, r.fecha_cierre)}</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">Duración: {formatDuration(r.fecha_inicio, r.fecha_cierre)}</p>
                 )}
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Estado</p>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Estado</p>
                 <p className={`text-sm ${exitoso ? 'text-green-600' : 'text-red-600'}`}>
                   {exitoso ? (r.detalle || 'Autenticación exitosa') : (r.detalle || 'Credenciales incorrectas o usuario no encontrado')}
                 </p>
@@ -4952,8 +4952,8 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             </div>
             {(r as any).dispositivo && (
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">User Agent</p>
-                <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded font-mono text-xs break-all">{(r as any).dispositivo}</p>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">User Agent</p>
+                <p className="text-sm text-[var(--card-text-muted)] bg-[var(--ui-bg-muted)] p-2 rounded font-mono text-xs break-all">{(r as any).dispositivo}</p>
               </div>
             )}
           </div>
@@ -5074,7 +5074,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
+    <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-5 hover:shadow-md transition-all">
       <div
         className="flex items-start justify-between gap-4 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
@@ -5083,15 +5083,15 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           <div>
             {renderSummary()}
           </div>
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-[var(--card-text-muted)] mt-2">
             {formatDate(getDate())}
           </p>
         </div>
-        <div className="shrink-0 p-2 hover:bg-gray-100 rounded-full transition-colors">
+        <div className="shrink-0 p-2 hover:bg-[var(--dropdown-hover)] rounded-full transition-colors">
           {expanded ? (
-            <ChevronUp className="w-5 h-5 text-gray-600" />
+            <ChevronUp className="w-5 h-5 text-[var(--card-text-muted)]" />
           ) : (
-            <ChevronDown className="w-5 h-5 text-gray-600" />
+            <ChevronDown className="w-5 h-5 text-[var(--card-text-muted)]" />
           )}
         </div>
       </div>

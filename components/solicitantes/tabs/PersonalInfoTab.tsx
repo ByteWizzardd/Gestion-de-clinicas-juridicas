@@ -49,63 +49,63 @@ export default function PersonalInfoTab({ solicitante }: PersonalInfoTabProps) {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Datos Básicos Card */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-        <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+      <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-4 sm:p-6 transition-colors">
+        <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2 text-[var(--card-text)]">
           <User className="w-5 h-5 text-primary" />
           Datos Básicos
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {solicitante.cedula && (
             <div>
-              <label className="text-sm font-medium text-gray-500">Cédula</label>
-              <p className="text-base text-gray-900 mt-1">
+              <label className="text-sm font-medium text-[var(--card-text-muted)]">Cédula</label>
+              <p className="text-base text-[var(--card-text)] mt-1">
                 {solicitante.cedula}
               </p>
             </div>
           )}
           {solicitante.nombres && (
             <div>
-              <label className="text-sm font-medium text-gray-500">Nombres</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.nombres}</p>
+              <label className="text-sm font-medium text-[var(--card-text-muted)]">Nombres</label>
+              <p className="text-base text-[var(--card-text)] mt-1">{solicitante.nombres}</p>
             </div>
           )}
           {solicitante.apellidos && (
             <div>
-              <label className="text-sm font-medium text-gray-500">Apellidos</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.apellidos}</p>
+              <label className="text-sm font-medium text-[var(--card-text-muted)]">Apellidos</label>
+              <p className="text-base text-[var(--card-text)] mt-1">{solicitante.apellidos}</p>
             </div>
           )}
           <div>
-            <label className="text-sm font-medium text-gray-500">Fecha de Nacimiento</label>
-            <p className="text-base text-gray-900 mt-1">
+            <label className="text-sm font-medium text-[var(--card-text-muted)]">Fecha de Nacimiento</label>
+            <p className="text-base text-[var(--card-text)] mt-1">
               {formatDate(solicitante.fecha_nacimiento)}
             </p>
           </div>
           {edad !== null && edad !== undefined && (
             <div>
-              <label className="text-sm font-medium text-gray-500">Edad</label>
-              <p className="text-base text-gray-900 mt-1">{edad} años</p>
+              <label className="text-sm font-medium text-[var(--card-text-muted)]">Edad</label>
+              <p className="text-base text-[var(--card-text)] mt-1">{edad} años</p>
             </div>
           )}
           {solicitante.sexo && (
             <div>
-              <label className="text-sm font-medium text-gray-500">Sexo</label>
-              <p className="text-base text-gray-900 mt-1">{formatSexo(solicitante.sexo)}</p>
+              <label className="text-sm font-medium text-[var(--card-text-muted)]">Sexo</label>
+              <p className="text-base text-[var(--card-text)] mt-1">{formatSexo(solicitante.sexo)}</p>
             </div>
           )}
           {solicitante.nacionalidad && (
             <div>
-              <label className="text-sm font-medium text-gray-500">Nacionalidad</label>
-              <p className="text-base text-gray-900 mt-1">{formatNacionalidad(solicitante.nacionalidad)}</p>
+              <label className="text-sm font-medium text-[var(--card-text-muted)]">Nacionalidad</label>
+              <p className="text-base text-[var(--card-text)] mt-1">{formatNacionalidad(solicitante.nacionalidad)}</p>
             </div>
           )}
           <div>
-            <label className="text-sm font-medium text-gray-500">Estado Civil</label>
-            <p className="text-base text-gray-900 mt-1">{solicitante.estado_civil || 'No especificado'}</p>
+            <label className="text-sm font-medium text-[var(--card-text-muted)]">Estado Civil</label>
+            <p className="text-base text-[var(--card-text)] mt-1">{solicitante.estado_civil || 'No especificado'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-500">Concubinato</label>
-            <p className="text-base text-gray-900 mt-1">
+            <label className="text-sm font-medium text-[var(--card-text-muted)]">Concubinato</label>
+            <p className="text-base text-[var(--card-text)] mt-1">
               {solicitante.concubinato === null ? 'No especificado' : solicitante.concubinato ? 'Sí' : 'No'}
             </p>
           </div>
@@ -114,47 +114,47 @@ export default function PersonalInfoTab({ solicitante }: PersonalInfoTabProps) {
 
       {/* Dirección de Habitación Card */}
       {solicitante.direccion_habitacion && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+        <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-4 sm:p-6 transition-colors">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2 text-[var(--card-text)]">
             <MapPin className="w-5 h-5 text-primary" />
             Dirección de Habitación
           </h3>
           <div>
-            <p className="text-base text-gray-900">{solicitante.direccion_habitacion}</p>
+            <p className="text-base text-[var(--card-text)]">{solicitante.direccion_habitacion}</p>
           </div>
         </div>
       )}
 
       {/* Núcleo Asignado Card */}
       {solicitante.nombre_nucleo && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+        <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-4 sm:p-6 transition-colors">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2 text-[var(--card-text)]">
             <Building className="w-5 h-5 text-primary" />
             Núcleo Asignado
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-500">Núcleo</label>
-              <p className="text-base text-gray-900 mt-1">{solicitante.nombre_nucleo}</p>
+              <label className="text-sm font-medium text-[var(--card-text-muted)]">Núcleo</label>
+              <p className="text-base text-[var(--card-text)] mt-1">{solicitante.nombre_nucleo}</p>
             </div>
             {(solicitante.nucleo_nombre_parroquia || solicitante.nombre_parroquia) && (
               <div>
-                <label className="text-sm font-medium text-gray-500">Parroquia</label>
-                <p className="text-base text-gray-900 mt-1">
+                <label className="text-sm font-medium text-[var(--card-text-muted)]">Parroquia</label>
+                <p className="text-base text-[var(--card-text)] mt-1">
                   {solicitante.nucleo_nombre_parroquia || solicitante.nombre_parroquia}
                 </p>
               </div>
             )}
             {(solicitante.nucleo_nombre_municipio || solicitante.nombre_municipio) && (
               <div>
-                <label className="text-sm font-medium text-gray-500">Municipio</label>
-                <p className="text-base text-gray-900 mt-1">{solicitante.nucleo_nombre_municipio || solicitante.nombre_municipio}</p>
+                <label className="text-sm font-medium text-[var(--card-text-muted)]">Municipio</label>
+                <p className="text-base text-[var(--card-text)] mt-1">{solicitante.nucleo_nombre_municipio || solicitante.nombre_municipio}</p>
               </div>
             )}
             {(solicitante.nucleo_nombre_estado || solicitante.nombre_estado) && (
               <div>
-                <label className="text-sm font-medium text-gray-500">Estado</label>
-                <p className="text-base text-gray-900 mt-1">{solicitante.nucleo_nombre_estado || solicitante.nombre_estado}</p>
+                <label className="text-sm font-medium text-[var(--card-text-muted)]">Estado</label>
+                <p className="text-base text-[var(--card-text)] mt-1">{solicitante.nucleo_nombre_estado || solicitante.nombre_estado}</p>
               </div>
             )}
           </div>

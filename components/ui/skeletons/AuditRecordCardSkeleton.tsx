@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
  */
 export default function AuditRecordCardSkeleton() {
     return (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+        <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-5 transition-colors">
             <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                     {/* Summary Section */}

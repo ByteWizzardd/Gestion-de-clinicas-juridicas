@@ -259,11 +259,11 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
     >
       <div className="flex flex-col relative max-h-[90vh]">
         {/* Header fijo */}
-        <div className="shrink-0 p-6 sm:p-8 pb-4 relative border-b border-gray-200">
+        <div className="shrink-0 p-6 sm:p-8 pb-4 relative border-b border-[var(--card-border)]">
           {/* Botón de cerrar */}
           <button
             onClick={handleClose}
-            className="absolute top-4 sm:top-6 right-4 sm:right-6 cursor-pointer p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
+            className="absolute top-4 sm:top-6 right-4 sm:right-6 cursor-pointer p-2 text-[var(--card-text-muted)] hover:text-[var(--card-text)] hover:bg-[var(--sidebar-hover)] rounded-md transition-colors z-10"
             aria-label="Cerrar modal"
             disabled={loading || loadingData}
           >
@@ -277,8 +277,8 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
 
           {/* Nota para acciones de cita */}
           {isCitaAction && (
-            <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-700">
+            <div className="mt-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <p className="text-sm text-blue-500">
                 <strong>Acción vinculada a cita:</strong> Algunos campos están deshabilitados para mantener la sincronización con la cita correspondiente.
               </p>
             </div>
@@ -329,7 +329,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
                 {/* Usuarios Ejecutores */}
                 <div className="col-span-1">
                   <div className="flex flex-col gap-1">
-                    <label className="text-base font-normal text-foreground mb-1 flex items-center gap-2">
+                    <label className="text-base font-normal text-[var(--card-text)] mb-1 flex items-center gap-2">
                       <Users className="w-4 h-4" />
                       Usuarios Ejecutores {isCitaAction ? '' : <span className="text-danger">*</span>}
                     </label>
@@ -361,7 +361,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
                 {/* Fecha de Ejecución */}
                 <div className="col-span-1">
                   <div className="flex flex-col gap-1">
-                    <label className="text-base font-normal text-foreground mb-1 flex items-center gap-2">
+                    <label className="text-base font-normal text-[var(--card-text)] mb-1 flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
                       Fecha de Ejecución {isCitaAction ? '' : <span className="text-danger">*</span>}
                     </label>
@@ -403,11 +403,11 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
         </div>
 
         {/* Footer fijo */}
-        <div className="shrink-0 flex flex-col sm:flex-row items-center sm:justify-between gap-4 border-t border-gray-200 px-6 sm:px-8 py-4 bg-white">
+        <div className="shrink-0 flex flex-col sm:flex-row items-center sm:justify-between gap-4 border-t border-[var(--card-border)] px-6 sm:px-8 py-4 bg-[var(--card-bg)] transition-colors">
           {/* Nota sobre campos obligatorios */}
           <div className="flex items-center gap-1">
             <span className="text-danger font-medium text-sm">*</span>
-            <span className="text-sm text-gray-600">Campo obligatorio</span>
+            <span className="text-sm text-[var(--card-text-muted)]">Campo obligatorio</span>
           </div>
 
           {/* Botón de submit */}

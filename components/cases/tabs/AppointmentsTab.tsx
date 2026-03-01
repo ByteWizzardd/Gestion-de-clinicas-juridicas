@@ -143,9 +143,9 @@ export default function AppointmentsTab({ citas, onRefresh, onEditAppointment }:
 
   if (!citasOrdenadas || citasOrdenadas.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-        <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-500 text-lg">No hay citas registradas para este caso</p>
+      <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-8 text-center transition-colors">
+        <Calendar className="w-12 h-12 text-[var(--card-text-muted)] opacity-20 mx-auto mb-4" />
+        <p className="text-[var(--card-text-muted)] text-lg transition-colors">No hay citas registradas para este caso</p>
       </div>
     );
   }
@@ -153,25 +153,25 @@ export default function AppointmentsTab({ citas, onRefresh, onEditAppointment }:
   return (
     <div className="space-y-4">
       {citasOrdenadas.map((cita) => (
-        <div key={`${cita.num_cita}-${cita.id_caso}`} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+        <div key={`${cita.num_cita}-${cita.id_caso}`} className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-4 sm:p-6 transition-colors">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <h4 className="text-base sm:text-lg font-semibold text-gray-900">Cita #{cita.num_cita}</h4>
-              <p className="text-sm text-gray-500 mt-1">
+              <h4 className="text-base sm:text-lg font-semibold text-[var(--card-text)]">Cita #{cita.num_cita}</h4>
+              <p className="text-sm text-[var(--card-text-muted)] mt-1 transition-colors">
                 Fecha de encuentro: {formatDate(cita.fecha_encuentro)}
               </p>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleEditAppointment(cita)}
-                className="text-gray-500 hover:text-gray-700 p-1 rounded transition-colors cursor-pointer"
+                className="text-[var(--card-text-muted)] hover:text-gray-700 p-1 rounded transition-colors cursor-pointer"
                 title="Editar cita"
               >
                 <Pencil className="w-5 h-5" />
               </button>
               <button
                 onClick={() => handleDeleteAppointment(cita)}
-                className="text-gray-500 hover:text-gray-700 p-1 rounded transition-colors cursor-pointer"
+                className="text-[var(--card-text-muted)] hover:text-gray-700 p-1 rounded transition-colors cursor-pointer"
                 title="Eliminar cita"
               >
                 <Trash2 className="w-5 h-5" />
@@ -182,37 +182,37 @@ export default function AppointmentsTab({ citas, onRefresh, onEditAppointment }:
           <div className="space-y-4">
             {cita.fecha_proxima_cita && (
               <div>
-                <label className="text-sm font-medium text-gray-500">
+                <label className="text-sm font-medium text-[var(--card-text-muted)]">
                   Próxima Cita
                 </label>
-                <p className="text-base text-gray-900 mt-1">{formatDate(cita.fecha_proxima_cita)}</p>
+                <p className="text-base text-[var(--card-text)] mt-1">{formatDate(cita.fecha_proxima_cita)}</p>
               </div>
             )}
 
             <div>
-              <label className="text-sm font-medium text-gray-500 mb-2">
+              <label className="text-sm font-medium text-[var(--card-text-muted)] mb-2">
                 Orientación
               </label>
-              <p className="text-base text-gray-900 mt-1 whitespace-pre-wrap bg-gray-50 rounded-lg p-3 border border-gray-200">
+              <p className="text-base text-[var(--card-text)] mt-1 whitespace-pre-wrap bg-[var(--ui-bg-muted)] rounded-lg p-3 border border-[var(--card-border)] transition-colors">
                 {cita.orientacion}
               </p>
             </div>
 
             {cita.atenciones && cita.atenciones.length > 0 && (
               <div>
-                <label className="text-sm font-medium text-gray-500 mb-2">
+                <label className="text-sm font-medium text-[var(--card-text-muted)] mb-2">
                   Atendido por ({cita.atenciones.length})
                 </label>
                 <div className="space-y-2">
                   {cita.atenciones.map((atencion, index) => (
-                    <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <div key={index} className="bg-[var(--ui-bg-muted)] rounded-lg p-3 border border-[var(--card-border)] transition-colors">
                       <Link
                         href={`/dashboard/users/${atencion.id_usuario}`}
                         className="text-sm text-primary hover:underline font-medium"
                       >
                         {atencion.nombre_completo}
                       </Link>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-[var(--card-text-muted)] mt-1">
                         Fecha de registro: {formatDate(atencion.fecha_registro)}
                       </p>
                     </div>

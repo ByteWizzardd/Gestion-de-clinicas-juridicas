@@ -36,11 +36,11 @@ export default function CatalogViewModal({ isOpen, onClose, title, fields }: Cat
         if (value === null || value === undefined) return '-';
         if (typeof value === 'boolean') {
             return value ? (
-                <span className="inline-flex items-center gap-1 text-green-700 bg-green-50 px-2 py-0.5 rounded text-sm">
+                <span className="inline-flex items-center gap-1 text-[var(--bulk-success-text)] bg-[var(--bulk-success-bg)] px-2 py-0.5 rounded text-sm transition-colors">
                     <CheckCircle2 className="w-3 h-3" /> Sí
                 </span>
             ) : (
-                <span className="inline-flex items-center gap-1 text-gray-500 bg-gray-100 px-2 py-0.5 rounded text-sm">
+                <span className="inline-flex items-center gap-1 text-[var(--bulk-icon)] bg-[var(--ui-bg-muted)] px-2 py-0.5 rounded text-sm transition-colors">
                     <AlertCircle className="w-3 h-3" /> No
                 </span>
             );
@@ -65,7 +65,7 @@ export default function CatalogViewModal({ isOpen, onClose, title, fields }: Cat
                 {/* Botón de cerrar */}
                 <button
                     onClick={handleClose}
-                    className="absolute top-6 right-6 cursor-pointer p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
+                    className="absolute top-6 right-6 cursor-pointer p-2 text-[var(--card-text-muted)] hover:text-[var(--card-text)] hover:bg-[var(--catalog-modal-close-hover)] rounded-md transition-colors z-10"
                     aria-label="Cerrar modal"
                 >
                     <X className="w-6 h-6" />
@@ -88,7 +88,7 @@ export default function CatalogViewModal({ isOpen, onClose, title, fields }: Cat
                                     {getIcon(field.icon)}
                                     {field.label}
                                 </label>
-                                <div className="text-base text-gray-900 wrap-break-words">
+                                <div className="text-base text-[var(--catalog-view-value)] wrap-break-words transition-colors">
                                     {formatValue(field.value)}
                                 </div>
                             </div>

@@ -74,11 +74,13 @@ export default function TramiteDistributionChart({ data }: TramiteDistributionCh
                                 innerRadius="45%"
                                 outerRadius="75%"
                                 fill="#8884d8"
-                                paddingAngle={2}
+                                paddingAngle={0}
+                                stroke="var(--card-bg)"
+                                strokeWidth={2}
                                 dataKey="value"
                             >
                                 {data.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="var(--card-bg)" strokeWidth={2} />
                                 ))}
                             </Pie>
                             <Tooltip content={<CustomTooltip />} />

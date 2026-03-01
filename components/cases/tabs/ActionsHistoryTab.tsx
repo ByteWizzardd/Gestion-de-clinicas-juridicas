@@ -149,10 +149,10 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
 
   if (!acciones || acciones.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-        <History className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-500 text-lg mb-2">No hay acciones registradas</p>
-        <p className="text-sm text-gray-400">Registre una nueva acción para comenzar el historial</p>
+      <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-8 text-center transition-colors">
+        <History className="w-12 h-12 text-[var(--card-text-muted)] opacity-20 mx-auto mb-4" />
+        <p className="text-[var(--card-text-muted)] text-lg mb-2">No hay acciones registradas</p>
+        <p className="text-sm text-[var(--card-text-muted)] opacity-60">Registre una nueva acción para comenzar el historial</p>
       </div>
     );
   }
@@ -160,12 +160,12 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
   return (
     <div className="space-y-4">
       {acciones.map((accion) => (
-        <div key={`${accion.num_accion}-${accion.id_caso}`} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+        <div key={`${accion.num_accion}-${accion.id_caso}`} className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-4 sm:p-6 transition-colors">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <h4 className="text-base sm:text-lg font-semibold text-gray-900">Acción #{accion.num_accion}</h4>
+              <h4 className="text-base sm:text-lg font-semibold text-[var(--card-text)]">Acción #{accion.num_accion}</h4>
               {(accion.fecha_ejecucion || (accion.ejecutores && accion.ejecutores.length > 0)) && (
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-[var(--card-text-muted)] mt-1">
                   Fecha de ejecución: {accion.fecha_ejecucion ? formatDate(accion.fecha_ejecucion) : formatDate(accion.ejecutores[0].fecha_ejecucion)}
                 </p>
               )}
@@ -173,14 +173,14 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleEditAccion(accion)}
-                className="text-gray-500 hover:text-gray-700 p-1 rounded transition-colors cursor-pointer"
+                className="text-[var(--card-text-muted)] hover:text-gray-700 p-1 rounded transition-colors cursor-pointer"
                 title="Editar acción"
               >
                 <Pencil className="w-5 h-5" />
               </button>
               <button
                 onClick={() => handleDeleteAccion(accion)}
-                className="text-gray-500 hover:text-gray-700 p-1 rounded transition-colors cursor-pointer"
+                className="text-[var(--card-text-muted)] hover:text-gray-700 p-1 rounded transition-colors cursor-pointer"
                 title="Eliminar acción"
               >
                 <Trash2 className="w-5 h-5" />
@@ -190,20 +190,20 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
 
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-500">Detalle de la Acción</label>
-              <p className="text-base text-gray-900 mt-1 whitespace-pre-wrap wrap-break-word overflow-wrap-anywhere hyphens-auto" style={{ wordBreak: 'break-word', hyphens: 'auto' }}>{accion.detalle_accion}</p>
+              <label className="text-sm font-medium text-[var(--card-text-muted)]">Detalle de la Acción</label>
+              <p className="text-base text-[var(--card-text)] mt-1 whitespace-pre-wrap wrap-break-word overflow-wrap-anywhere hyphens-auto" style={{ wordBreak: 'break-word', hyphens: 'auto' }}>{accion.detalle_accion}</p>
             </div>
 
             {accion.comentario && (
               <div>
-                <label className="text-sm font-medium text-gray-500">Comentario</label>
-                <p className="text-base text-gray-900 mt-1 whitespace-pre-wrap wrap-break-word overflow-wrap-anywhere hyphens-auto" style={{ wordBreak: 'break-word', hyphens: 'auto' }}>{accion.comentario}</p>
+                <label className="text-sm font-medium text-[var(--card-text-muted)]">Comentario</label>
+                <p className="text-base text-[var(--card-text)] mt-1 whitespace-pre-wrap wrap-break-word overflow-wrap-anywhere hyphens-auto" style={{ wordBreak: 'break-word', hyphens: 'auto' }}>{accion.comentario}</p>
               </div>
             )}
 
             <div>
-              <label className="text-sm font-medium text-gray-500">Registrado por</label>
-              <p className="text-base text-gray-900 mt-1">
+              <label className="text-sm font-medium text-[var(--card-text-muted)]">Registrado por</label>
+              <p className="text-base text-[var(--card-text)] mt-1">
                 <Link
                   href={`/dashboard/users/${accion.id_usuario_registra}`}
                   className="text-primary hover:underline font-medium"
@@ -211,19 +211,19 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
                   {accion.nombre_completo_usuario_registra}
                 </Link>
               </p>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-[var(--card-text-muted)] mt-1">
                 Fecha de registro: {formatDate(accion.fecha_registro)}
               </p>
             </div>
 
             {accion.ejecutores && accion.ejecutores.length > 0 && (
               <div>
-                <label className="text-sm font-medium text-gray-500 mb-2">
+                <label className="text-sm font-medium text-[var(--card-text-muted)] mb-2">
                   Ejecutores ({accion.ejecutores.length})
                 </label>
                 <div className="space-y-2">
                   {accion.ejecutores.map((ejecutor, index) => (
-                    <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <div key={index} className="bg-[var(--ui-bg-muted)] rounded-lg p-3 border border-[var(--card-border)]">
                       <Link
                         href={`/dashboard/users/${ejecutor.id_usuario}`}
                         className="text-sm text-primary hover:underline font-medium"

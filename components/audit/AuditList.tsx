@@ -48,8 +48,8 @@ export default function AuditList({
 
   if (records.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-        <p className="text-gray-500 text-lg">{emptyMessage}</p>
+      <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-8 text-center transition-colors">
+        <p className="text-[var(--card-text-muted)] text-lg transition-colors">{emptyMessage}</p>
       </div>
     );
   }

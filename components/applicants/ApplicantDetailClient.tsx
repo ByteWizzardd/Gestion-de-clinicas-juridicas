@@ -197,12 +197,12 @@ export default function ApplicantDetailClient() {
       <div className="p-8">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 mb-6 text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+          className="flex items-center gap-2 mb-6 text-[var(--card-text-muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-5 h-5" />
           <span>Volver</span>
         </button>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 px-4 py-3 rounded">
           <strong className="font-bold">Error: </strong>
           <span>{error || 'No se encontró el solicitante'}</span>
         </div>
@@ -323,7 +323,7 @@ export default function ApplicantDetailClient() {
 
       <div className="flex items-center gap-3 mb-2">
         <motion.h1
-          className="text-2xl sm:text-3xl lg:text-4xl font-semibold"
+          className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-[var(--foreground)]"
           style={{ fontFamily: 'var(--font-league-spartan)' }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -339,7 +339,7 @@ export default function ApplicantDetailClient() {
             {
               label: (
                 <div className="flex items-center gap-2">
-                  <Download className="w-4 h-4 text-gray-500 group-hover:text-yellow-600 transition-colors" />
+                  <Download className="w-4 h-4 text-[var(--card-text-muted)] group-hover:text-yellow-600 transition-colors" />
                   <span className="group-hover:text-yellow-600 transition-colors">Descargar ficha</span>
                 </div>
               ),
@@ -354,7 +354,7 @@ export default function ApplicantDetailClient() {
         transition={{ duration: 0.2, ease: 'easeOut' }}
       >
         {solicitante.cedula && (
-          <p className="text-sm sm:text-base text-gray-500 mb-6 sm:mb-8">
+          <p className="text-sm sm:text-base text-[var(--card-text-muted)] mb-6 sm:mb-8">
             Cédula: {solicitante.cedula}
           </p>
         )}
@@ -397,9 +397,9 @@ export default function ApplicantDetailClient() {
               </label>
               <textarea
                 className={`
-                  w-full p-4 rounded-lg border bg-[#E5E7EB] border-transparent
+                  w-full p-4 rounded-lg border bg-[var(--sidebar-hover)] border-transparent
                   focus:outline-none focus:ring-1 focus:ring-primary
-                  text-base placeholder:text-[#717171] resize-none
+                  text-[var(--card-text)] placeholder:text-[var(--card-text-muted)] resize-none
                   ${deleteLoading ? 'opacity-50 cursor-not-allowed' : ''}
                 `}
                 rows={4}
@@ -409,7 +409,7 @@ export default function ApplicantDetailClient() {
                 placeholder="Describe el motivo de la eliminación..."
                 disabled={deleteLoading}
               />
-              <div className="text-right text-xs text-gray-500 mt-1">
+              <div className="text-right text-xs text-[var(--card-text-muted)] mt-1">
                 {deleteMotivo.length} / 250 caracteres
               </div>
             </div>

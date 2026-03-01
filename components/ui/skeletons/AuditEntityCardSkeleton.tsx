@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
  */
 export default function AuditEntityCardSkeleton() {
     return (
-        <div className="bg-white rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] relative overflow-hidden px-4 sm:px-6 md:px-8 py-4 md:py-5 min-h-[160px] md:min-h-[180px] flex flex-col w-full">
+        <div className="bg-[var(--card-bg)] border-[var(--card-border)] border rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] relative overflow-hidden px-4 sm:px-6 md:px-8 py-4 md:py-5 min-h-[160px] md:min-h-[180px] flex flex-col w-full transition-colors">
             {/* Icono de fondo decorativo (shimmer circular grande) */}
             <div className="absolute top-2 w-full h-full flex items-center justify-center right-0 opacity-10">
                 <Skeleton width={128} height={128} borderRadius="50%" />

@@ -63,7 +63,7 @@ const Notification: React.FC<NotificationProps> = () => {
 
   const triggerButton = (
     <button
-      className="relative flex items-center justify-center p-2 cursor-pointer hover:bg-neutral-100 rounded-lg transition-colors"
+      className="relative flex items-center justify-center p-2 cursor-pointer hover:bg-[var(--dropdown-hover)] rounded-lg transition-colors"
       aria-label="Notificaciones"
     >
       <Bell className={`w-6 h-6 ${isOpen ? 'text-primary' : 'text-foreground'}`} />
@@ -99,10 +99,10 @@ const Notification: React.FC<NotificationProps> = () => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.1, ease: 'easeOut' }}
-          className="bg-white border border-gray-200 rounded-xl shadow-xl flex flex-col max-h-[80vh]"
+          className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl shadow-xl flex flex-col max-h-[80vh] transition-colors"
         >
-          <div className="p-4 border-b border-gray-200 shrink-0">
-            <h3 className="text-lg font-semibold text-neutral-800">Notificaciones</h3>
+          <div className="p-4 border-b border-[var(--dropdown-divider)] shrink-0 transition-colors">
+            <h3 className="text-lg font-semibold text-[var(--foreground)] transition-colors">Notificaciones</h3>
           </div>
           <div className="overflow-y-auto flex-1 min-h-0">
             {loading ? (
@@ -114,8 +114,8 @@ const Notification: React.FC<NotificationProps> = () => {
                 <div
                   key={notification.id}
                   className={`
-                    w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0
-                    ${!notification.read ? 'bg-primary-light/10' : ''}
+                    w-full px-4 py-3 text-left hover:bg-[var(--dropdown-hover)] transition-colors border-b border-[var(--dropdown-divider)] last:border-b-0
+                    ${!notification.read ? 'bg-[var(--primary-light)]' : ''}
                     ${getNotificationHref(notification) || !notification.read ? 'cursor-pointer' : 'cursor-default'}
                   `}
                   role="button"
@@ -147,13 +147,13 @@ const Notification: React.FC<NotificationProps> = () => {
                       <div className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-md font-medium text-neutral-800">{notification.title}</p>
-                      <p className="text-base text-neutral-600 mt-1 line-clamp-2">{notification.message}</p>
+                      <p className="text-md font-medium text-[var(--foreground)] transition-colors">{notification.title}</p>
+                      <p className="text-base text-[var(--card-text-muted)] transition-colors mt-1 line-clamp-2">{notification.message}</p>
                     </div>
 
                     <button
                       type="button"
-                      className="text-sm text-red-600 hover:text-red-700 font-medium shrink-0 cursor-pointer"
+                      className="text-sm text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 font-medium shrink-0 cursor-pointer transition-colors"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -166,7 +166,7 @@ const Notification: React.FC<NotificationProps> = () => {
                 </div>
               ))
             ) : (
-              <div className="px-4 py-8 text-base text-gray-500 text-center">
+              <div className="px-4 py-8 text-base text-[var(--card-text-muted)] transition-colors text-center">
                 No hay notificaciones
               </div>
             )}

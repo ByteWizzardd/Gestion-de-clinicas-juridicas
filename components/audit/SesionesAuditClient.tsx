@@ -103,7 +103,7 @@ function SesionCard({ sesion }: { sesion: SesionExtended }) {
     }
 
     return (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
+        <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-5 hover:shadow-md transition-all transition-colors duration-200">
             <div
                 className="flex items-start justify-between gap-4 cursor-pointer"
                 onClick={() => setExpanded(!expanded)}
@@ -113,15 +113,15 @@ function SesionCard({ sesion }: { sesion: SesionExtended }) {
                     <div className="flex items-center gap-3">
                         {sesion.exitoso ? (
                             isActive ? (
-                                <LogIn className="w-5 h-5 text-gray-600" />
+                                <LogIn className="w-5 h-5 text-[var(--card-text-muted)]" />
                             ) : (
-                                <LogOut className="w-5 h-5 text-gray-600" />
+                                <LogOut className="w-5 h-5 text-[var(--card-text-muted)]" />
                             )
                         ) : (
-                            <XCircle className="w-5 h-5 text-gray-600" />
+                            <XCircle className="w-5 h-5 text-[var(--card-text-muted)]" />
                         )}
                         <div className="flex-1">
-                            <p className="font-semibold text-gray-900">
+                            <p className="font-semibold text-[var(--card-text)] transition-colors">
                                 {sesion.exitoso ? (
                                     isActive ? 'Inicio de sesión' : 'Sesión cerrada'
                                 ) : (
@@ -140,30 +140,30 @@ function SesionCard({ sesion }: { sesion: SesionExtended }) {
                                     <span>{nombreUsuario}</span>
                                 )}
                                 {isActive && sesion.exitoso && (
-                                    <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">
+                                    <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-green-500/10 text-green-600 rounded-full">
                                         Activa
                                     </span>
                                 )}
                                 {!sesion.exitoso && (
-                                    <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full">
+                                    <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-red-500/10 text-red-600 rounded-full">
                                         Fallido
                                     </span>
                                 )}
                             </p>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-[var(--card-text-muted)]">
                                 IP: {sesion.ip_direccion || 'No registrada'} • {browser} / {os}
                             </p>
                         </div>
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">
+                    <p className="text-xs text-[var(--card-text-muted)] mt-2 transition-colors">
                         {formatDate(sesion.fecha_inicio)}
                     </p>
                 </div>
-                <div className="shrink-0 p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <div className="shrink-0 p-2 hover:bg-[var(--sidebar-hover)] rounded-full transition-colors">
                     {expanded ? (
-                        <ChevronUp className="w-5 h-5 text-gray-600" />
+                        <ChevronUp className="w-5 h-5 text-[var(--card-text-muted)]" />
                     ) : (
-                        <ChevronDown className="w-5 h-5 text-gray-600" />
+                        <ChevronDown className="w-5 h-5 text-[var(--card-text-muted)]" />
                     )}
                 </div>
             </div>
@@ -178,11 +178,11 @@ function SesionCard({ sesion }: { sesion: SesionExtended }) {
                         className="overflow-hidden"
                     >
                         {/* Details Section - mismo estilo que AuditRecordCard */}
-                        <div className="mt-4 space-y-3 pt-4 border-t border-gray-200">
+                        <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)] transition-colors">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <p className="text-sm font-semibold text-gray-700 mb-1">Usuario</p>
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Usuario</p>
+                                    <p className="text-sm text-[var(--card-text-muted)]">
                                         Nombre:{' '}
                                         {sesion.cedula_usuario ? (
                                             <Link
@@ -196,32 +196,32 @@ function SesionCard({ sesion }: { sesion: SesionExtended }) {
                                             nombreUsuario
                                         )}
                                     </p>
-                                    <p className="text-sm text-gray-600">Cédula: {sesion.cedula_usuario || 'N/A'}</p>
+                                    <p className="text-sm text-[var(--card-text-muted)]">Cédula: {sesion.cedula_usuario || 'N/A'}</p>
                                     {sesion.nombre_usuario && (
-                                        <p className="text-sm text-gray-600">Username: {sesion.nombre_usuario}</p>
+                                        <p className="text-sm text-[var(--card-text-muted)]">Username: {sesion.nombre_usuario}</p>
                                     )}
                                 </div>
                                 <div>
-                                    <p className="text-sm font-semibold text-gray-700 mb-1">Conexión</p>
-                                    <p className="text-sm text-gray-600">Dirección IP: {sesion.ip_direccion || 'No registrada'}</p>
-                                    <p className="text-sm text-gray-600">Navegador: {browser}</p>
-                                    <p className="text-sm text-gray-600">Sistema Operativo: {os}</p>
+                                    <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Conexión</p>
+                                    <p className="text-sm text-[var(--card-text-muted)]">Dirección IP: {sesion.ip_direccion || 'No registrada'}</p>
+                                    <p className="text-sm text-[var(--card-text-muted)]">Navegador: {browser}</p>
+                                    <p className="text-sm text-[var(--card-text-muted)]">Sistema Operativo: {os}</p>
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <p className="text-sm font-semibold text-gray-700 mb-1">Tiempos</p>
-                                    <p className="text-sm text-gray-600">Inicio: {formatDate(sesion.fecha_inicio)}</p>
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Tiempos</p>
+                                    <p className="text-sm text-[var(--card-text-muted)]">Inicio: {formatDate(sesion.fecha_inicio)}</p>
+                                    <p className="text-sm text-[var(--card-text-muted)]">
                                         Cierre: {sesion.fecha_cierre ? formatDate(sesion.fecha_cierre) : 'Sin cerrar (Activa)'}
                                     </p>
                                     {sesion.fecha_cierre && (
-                                        <p className="text-sm text-gray-600">Duración: {formatDuration(sesion.fecha_inicio, sesion.fecha_cierre)}</p>
+                                        <p className="text-sm text-[var(--card-text-muted)]">Duración: {formatDuration(sesion.fecha_inicio, sesion.fecha_cierre)}</p>
                                     )}
                                 </div>
                                 <div>
-                                    <p className="text-sm font-semibold text-gray-700 mb-1">Estado</p>
-                                    <p className={`text-sm ${sesion.exitoso ? 'text-green-600' : 'text-red-600'}`}>
+                                    <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Estado</p>
+                                    <p className={`text-sm ${sesion.exitoso ? 'text-[var(--success)]' : 'text-[var(--danger)]'} transition-colors`}>
                                         {sesion.exitoso
                                             ? (sesion.detalle || 'Autenticación exitosa')
                                             : (sesion.detalle || 'Credenciales incorrectas o usuario no encontrado')}
@@ -230,8 +230,8 @@ function SesionCard({ sesion }: { sesion: SesionExtended }) {
                             </div>
                             {sesion.dispositivo && (
                                 <div>
-                                    <p className="text-sm font-semibold text-gray-700 mb-1">User Agent</p>
-                                    <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded font-mono text-xs break-all">{sesion.dispositivo}</p>
+                                    <p className="text-sm font-semibold text-[var(--card-text)] mb-1">User Agent</p>
+                                    <p className="text-sm text-[var(--card-text-muted)] bg-[var(--ui-bg-muted)] p-2 rounded font-mono text-xs break-all transition-colors">{sesion.dispositivo}</p>
                                 </div>
                             )}
                         </div>
@@ -354,9 +354,9 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
                         title={(filters.orden || 'desc') === 'desc' ? 'Más reciente primero' : 'Más antiguo primero'}
                     >
                         {(filters.orden || 'desc') === 'desc' ? (
-                            <ArrowDown className="w-[18px] h-[18px] text-[#414040]" />
+                            <ArrowDown className="w-[18px] h-[18px] opacity-70" />
                         ) : (
-                            <ArrowUp className="w-[18px] h-[18px] text-[#414040]" />
+                            <ArrowUp className="w-[18px] h-[18px] opacity-70" />
                         )}
                         <span className="text-base text-center">
                             {(filters.orden || 'desc') === 'desc' ? 'Más reciente' : 'Más antiguo'}
@@ -387,9 +387,9 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
                         ))}
                     </div>
                 ) : sesiones.length === 0 ? (
-                    <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-                        <LogIn className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                        <p className="text-gray-500">No se encontraron registros de este tipo</p>
+                    <div className="text-center py-12 bg-[var(--card-bg)] rounded-lg border border-[var(--card-border)] transition-colors">
+                        <LogIn className="w-12 h-12 text-[var(--card-text-muted)] opacity-20 mx-auto mb-4" />
+                        <p className="text-[var(--card-text-muted)]">No se encontraron registros de este tipo</p>
                     </div>
                 ) : (
                     <div className="space-y-3">

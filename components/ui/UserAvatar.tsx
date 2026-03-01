@@ -14,7 +14,7 @@ export default function UserAvatar({ fotoPerfil, size = 20, className = '', nomb
   // Manejar el caso de string vacío como si fuera null
   if (fotoPerfil && fotoPerfil.trim() !== '') {
     return (
-      <div className={`relative flex-shrink-0 rounded-full overflow-hidden ${className}`} style={{ width: size, height: size }}>
+      <div className={`relative flex-shrink-0 rounded-full overflow-hidden border-2 border-[var(--card-bg)] ${className}`} style={{ width: size, height: size }}>
         <Image
           src={fotoPerfil}
           alt="Foto de perfil"
@@ -30,7 +30,7 @@ export default function UserAvatar({ fotoPerfil, size = 20, className = '', nomb
   if (nombre) {
     return (
       <div
-        className={`flex-shrink-0 rounded-full bg-[var(--sidebar-hover)] flex items-center justify-center font-medium text-[var(--foreground)] opacity-60 ${className}`}
+        className={`flex-shrink-0 rounded-full bg-[var(--sidebar-hover)] flex items-center justify-center font-medium text-[var(--foreground)] opacity-60 border-2 border-[var(--card-bg)] ${className}`}
         style={{ width: size, height: size, fontSize: size * 0.45 }}
       >
         {nombre.charAt(0).toUpperCase()}

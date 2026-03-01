@@ -17,23 +17,23 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
     <nav className="flex items-center gap-2 text-xl mb-6" aria-label="Breadcrumb">
       <Link
         href="/dashboard"
-        className="text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1"
+        className="text-[var(--card-text-muted)] hover:text-[var(--foreground)] transition-colors flex items-center gap-1"
       >
         <span className="hidden sm:inline">Dashboard</span>
       </Link>
 
       {items.map((item, index) => (
         <div key={`${item.label}-${index}`} className="flex items-center gap-2">
-          <ChevronRight className="w-4 h-4 text-gray-400" />
+          <ChevronRight className="w-4 h-4 text-[var(--card-text-muted)] opacity-60 transition-colors" />
           {item.href ? (
             <Link
               href={item.href}
-              className="text-gray-500 hover:text-gray-700 transition-colors"
+              className="text-[var(--card-text-muted)] hover:text-[var(--foreground)] transition-colors"
             >
               {item.label}
             </Link>
           ) : (
-            <span className="text-gray-900 font-medium">{item.label}</span>
+            <span className="text-[var(--foreground)] font-medium">{item.label}</span>
           )}
         </div>
       ))}

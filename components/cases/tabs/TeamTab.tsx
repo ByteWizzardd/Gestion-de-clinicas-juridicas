@@ -20,9 +20,9 @@ interface TeamTabProps {
 export default function TeamTab({ equipo }: TeamTabProps) {
   if (!equipo || equipo.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-        <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-500 text-lg">No hay equipo asignado a este caso</p>
+      <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-8 text-center transition-colors">
+        <Users className="w-12 h-12 text-[var(--card-text-muted)] opacity-20 mx-auto mb-4" />
+        <p className="text-[var(--card-text-muted)] text-lg transition-colors">No hay equipo asignado a este caso</p>
       </div>
     );
   }
@@ -34,53 +34,53 @@ export default function TeamTab({ equipo }: TeamTabProps) {
     <div className="space-y-6">
       {/* Profesores */}
       {profesores.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+        <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-4 sm:p-6 transition-colors">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2 text-[var(--card-text)] transition-colors">
             <Briefcase className="w-5 h-5 text-primary" />
             Profesores Supervisores ({profesores.length})
           </h3>
           <div className="space-y-4">
             {profesores.map((profesor) => (
-              <div key={`${profesor.cedula}-${profesor.term}`} className="border border-gray-200 rounded-lg p-4">
+              <div key={`${profesor.cedula}-${profesor.term}`} className="border border-[var(--card-border)] rounded-lg p-4 transition-colors">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Nombre Completo</label>
-                    <p className="text-base text-gray-900 mt-1">
+                    <label className="text-sm font-medium text-[var(--card-text-muted)]">Nombre Completo</label>
+                    <p className="text-base text-[var(--card-text)] mt-1">
                       {profesor.nombre_completo}
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Cédula</label>
-                    <p className="text-base text-gray-900 mt-1">{profesor.cedula}</p>
+                    <label className="text-sm font-medium text-[var(--card-text-muted)]">Cédula</label>
+                    <p className="text-base text-[var(--card-text)] mt-1">{profesor.cedula}</p>
                   </div>
                   {profesor.correo_electronico && (
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Correo Electrónico</label>
-                      <p className="text-base text-gray-900 mt-1">
+                      <label className="text-sm font-medium text-[var(--card-text-muted)]">Correo Electrónico</label>
+                      <p className="text-base text-[var(--card-text)] mt-1">
                         {profesor.correo_electronico}
                       </p>
                     </div>
                   )}
                   {profesor.telefono_celular && (
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Teléfono</label>
-                      <p className="text-base text-gray-900 mt-1">
+                      <label className="text-sm font-medium text-[var(--card-text-muted)]">Teléfono</label>
+                      <p className="text-base text-[var(--card-text)] mt-1">
                         {profesor.telefono_celular}
                       </p>
                     </div>
                   )}
                   {profesor.term && (
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Término</label>
-                      <p className="text-base text-gray-900 mt-1">{profesor.term}</p>
+                      <label className="text-sm font-medium text-[var(--card-text-muted)]">Término</label>
+                      <p className="text-base text-[var(--card-text)] mt-1">{profesor.term}</p>
                     </div>
                   )}
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Estado</label>
-                    <p className="text-base text-gray-900 mt-1">
+                    <label className="text-sm font-medium text-[var(--card-text-muted)]">Estado</label>
+                    <p className="text-base text-[var(--card-text)] mt-1">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${profesor.habilitado
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
+                        ? 'bg-green-500/10 text-green-600'
+                        : 'bg-[var(--sidebar-hover)] text-[var(--card-text-muted)]'
                         }`}>
                         {profesor.habilitado ? 'Activo' : 'Inactivo'}
                       </span>
@@ -95,51 +95,51 @@ export default function TeamTab({ equipo }: TeamTabProps) {
 
       {/* Estudiantes */}
       {estudiantes.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+        <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-4 sm:p-6 transition-colors">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2 text-[var(--card-text)] transition-colors">
             <GraduationCap className="w-5 h-5 text-primary" />
             Estudiantes ({estudiantes.length})
           </h3>
           <div className="space-y-4">
             {estudiantes.map((estudiante) => (
-              <div key={`${estudiante.cedula}-${estudiante.term}`} className="border border-gray-200 rounded-lg p-4">
+              <div key={`${estudiante.cedula}-${estudiante.term}`} className="border border-[var(--card-border)] rounded-lg p-4 transition-colors">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Nombre Completo</label>
-                    <p className="text-base text-gray-900 mt-1">
+                    <label className="text-sm font-medium text-[var(--card-text-muted)]">Nombre Completo</label>
+                    <p className="text-base text-[var(--card-text)] mt-1">
                       {estudiante.nombre_completo}
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Cédula</label>
-                    <p className="text-base text-gray-900 mt-1">{estudiante.cedula}</p>
+                    <label className="text-sm font-medium text-[var(--card-text-muted)]">Cédula</label>
+                    <p className="text-base text-[var(--card-text)] mt-1">{estudiante.cedula}</p>
                   </div>
                   {estudiante.correo_electronico && (
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Correo Electrónico</label>
-                      <p className="text-base text-gray-900 mt-1">
+                      <label className="text-sm font-medium text-[var(--card-text-muted)]">Correo Electrónico</label>
+                      <p className="text-base text-[var(--card-text)] mt-1">
                         {estudiante.correo_electronico}
                       </p>
                     </div>
                   )}
                   {estudiante.telefono_celular && (
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Teléfono</label>
-                      <p className="text-base text-gray-900 mt-1">
+                      <label className="text-sm font-medium text-[var(--card-text-muted)]">Teléfono</label>
+                      <p className="text-base text-[var(--card-text)] mt-1">
                         {estudiante.telefono_celular}
                       </p>
                     </div>
                   )}
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Rol</label>
-                    <p className="text-base text-gray-900 mt-1">{estudiante.rol}</p>
+                    <label className="text-sm font-medium text-[var(--card-text-muted)]">Rol</label>
+                    <p className="text-base text-[var(--card-text)] mt-1">{estudiante.rol}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Estado</label>
-                    <p className="text-base text-gray-900 mt-1">
+                    <label className="text-sm font-medium text-[var(--card-text-muted)]">Estado</label>
+                    <p className="text-base text-[var(--card-text)] mt-1">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${estudiante.habilitado
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
+                        ? 'bg-green-500/10 text-green-600'
+                        : 'bg-[var(--sidebar-hover)] text-[var(--card-text-muted)]'
                         }`}>
                         {estudiante.habilitado ? 'Activo' : 'Inactivo'}
                       </span>

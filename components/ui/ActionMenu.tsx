@@ -60,7 +60,7 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions, va
               Ver
             </button>
             {(onEdit || visibleCustomActions.length > 0 || onDelete) && (
-              <div className="border-t border-[var(--dropdown-border)] my-1"></div>
+              <div className="border-t border-[var(--dropdown-divider)] my-1"></div>
             )}
           </>
         )}
@@ -80,7 +80,7 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions, va
               Editar
             </button>
             {(visibleCustomActions.length > 0 || onDelete) && (
-              <div className="border-t border-[var(--dropdown-border)] my-1"></div>
+              <div className="border-t border-[var(--dropdown-divider)] my-1"></div>
             )}
           </>
         )}
@@ -100,10 +100,10 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions, va
                 {action.label}
               </button>
               {!isLast && idx < visibleCustomActions.length - 1 && (
-                <div className="border-t border-[var(--dropdown-border)] my-1"></div>
+                <div className="border-t border-[var(--dropdown-divider)] my-1"></div>
               )}
               {idx === visibleCustomActions.length - 1 && onDelete && (
-                <div className="border-t border-[var(--dropdown-border)] my-1"></div>
+                <div className="border-t border-[var(--dropdown-divider)] my-1"></div>
               )}
             </div>
           );

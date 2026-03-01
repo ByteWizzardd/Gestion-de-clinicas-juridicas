@@ -465,6 +465,14 @@ SELECT * FROM (
                     'nombre_completo_usuario_elimino', u.nombres || ' ' || u.apellidos
                 ) FROM usuarios u WHERE u.cedula = t.id_usuario_elimino),
                 '{}'::jsonb
+            ) ||
+            COALESCE(
+                (SELECT jsonb_build_object(
+                    'nombres_usuario_registro', u.nombres, 
+                    'apellidos_usuario_registro', u.apellidos, 
+                    'nombre_completo_usuario_registro', u.nombres || ' ' || u.apellidos
+                ) FROM public.usuarios u WHERE u.cedula = t.id_usuario_registro),
+                '{}'::jsonb
             )
         )::text as metadata
     FROM auditoria_eliminacion_citas t
