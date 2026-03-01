@@ -260,7 +260,7 @@ export default function InputGroup({
               disabled={disabled}
               className={`
                 w-full h-[40px] px-3 rounded-full border
-                ${error ? 'border-danger' : 'border-[var(--ui-border)]'} bg-[var(--input-bg)]
+                ${error ? 'border-danger' : 'border-transparent'} bg-[var(--input-bg)]
                 focus:outline-none focus:ring-1 
                 ${error ? 'focus:ring-danger' : 'focus:ring-primary'}
                 text-base text-foreground placeholder:text-[var(--input-placeholder)]
@@ -331,7 +331,7 @@ export default function InputGroup({
             disabled={disabled}
             className={`
               w-full h-[40px] px-4 rounded-full border
-              ${error ? 'border-danger' : 'border-[var(--ui-border)]'} bg-[var(--input-bg)]
+              ${error ? 'border-danger' : 'border-transparent'} bg-[var(--input-bg)]
               focus:outline-none focus:ring-1 
               ${error ? 'focus:ring-danger' : 'focus:ring-primary'}
               text-base text-foreground placeholder:text-[var(--input-placeholder)]
