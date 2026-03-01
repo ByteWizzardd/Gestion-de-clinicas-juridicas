@@ -219,7 +219,7 @@ export default function CatalogDetailClient({
                     <Button
                         variant="ghost"
                         onClick={() => router.push('/dashboard/administration')}
-                        className="flex items-center gap-2 px-2 hover:bg-gray-100"
+                        className="flex items-center gap-2 px-2 hover:bg-[var(--sidebar-hover)]"
                         size="sm"
                     >
                         <ArrowLeft className="w-4 h-4" />

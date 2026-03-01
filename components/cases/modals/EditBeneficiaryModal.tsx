@@ -318,12 +318,12 @@ export default function EditBeneficiaryModal({
             className="rounded-[30px] sm:rounded-[40px] lg:rounded-[50px] w-[95vw] sm:w-[90vw] lg:w-[85vw] max-w-[1100px] mx-auto"
             showCloseButton={false}
         >
-            <div className="flex flex-col h-full bg-white rounded-[50px] overflow-hidden max-h-[90vh]">
+            <div className="flex flex-col h-full bg-[var(--card-bg)] rounded-[50px] overflow-hidden max-h-[90vh]">
                 {/* Header fijo */}
-                <div className="shrink-0 p-8 pb-4 relative border-b border-gray-200">
+                <div className="shrink-0 p-8 pb-4 relative border-b border-[var(--card-border)]">
                     <button
                         onClick={handleClose}
-                        className="absolute top-6 right-6 cursor-pointer p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
+                        className="absolute top-6 right-6 cursor-pointer p-2 text-[var(--card-text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--sidebar-hover)] rounded-md transition-colors z-10"
                         disabled={isSubmitting}
                     >
                         <X className="w-6 h-6" />
@@ -471,7 +471,7 @@ export default function EditBeneficiaryModal({
                 </div>
 
                 {/* Footer fijo */}
-                <div className="shrink-0 flex flex-col border-t border-gray-200 px-8 py-4 bg-white">
+                <div className="shrink-0 flex flex-col border-t border-[var(--card-border)] px-8 py-4 bg-[var(--card-bg)]">
                     <div className="flex items-center gap-1 mb-4">
                         <span className="text-danger font-medium text-sm">*</span>
                         <span className="text-sm text-gray-600">Campo obligatorio</span>

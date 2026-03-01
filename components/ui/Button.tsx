@@ -19,7 +19,7 @@ export default function Button({ children, className = "", variant = 'primary', 
         outline: "bg-transparent text-primary border border-primary hover:bg-primary-light",
         danger: "bg-danger text-white hover:bg-danger-dark",
         success: "bg-success text-white hover:bg-success-dark",
-        ghost: "bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+        ghost: "bg-transparent text-[var(--card-text-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--foreground)]"
     }
 
     //estilos para los tamaños

@@ -90,7 +90,7 @@ export default function ChangeStatusModal({
                     {/* Botón de cerrar */}
                     <button
                         onClick={handleClose}
-                        className="absolute top-4 sm:top-6 right-4 sm:right-6 cursor-pointer p-2 text-gray-400 hover:text-gray-600 dark:hover:text-[var(--foreground)] hover:bg-gray-100 dark:hover:bg-[var(--sidebar-hover)] rounded-md transition-colors z-10"
+                        className="absolute top-4 sm:top-6 right-4 sm:right-6 cursor-pointer p-2 text-[var(--card-text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--sidebar-hover)] rounded-md transition-colors z-10"
                         aria-label="Cerrar modal"
                         disabled={isSubmitting}
                     >
