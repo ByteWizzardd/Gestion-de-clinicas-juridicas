@@ -30,11 +30,11 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions, va
   if (!hasActions) return null;
 
   const trigger = () => (
-    <div className="inline-flex items-center justify-center p-1 rounded-full hover:bg-gray-200 transition-colors cursor-pointer">
+    <div className="inline-flex items-center justify-center p-1 rounded-full hover:bg-[var(--dropdown-hover)] transition-colors cursor-pointer">
       {variant === 'horizontal' ? (
         <MoreHorizontal className="bg-on-primary-dots mx-auto text-on-primary rounded-full w-5 h-5 sm:w-6 sm:h-6" />
       ) : (
-        <MoreVertical className="text-gray-500 mx-auto w-5 h-5 sm:w-6 sm:h-6" />
+        <MoreVertical className="text-[var(--card-text-muted)] mx-auto w-5 h-5 sm:w-6 sm:h-6" />
       )}
     </div>
   );
@@ -43,7 +43,7 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions, va
     <DropdownMenu
       trigger={trigger}
       align="right"
-      menuClassName="w-48 bg-white rounded-xl shadow-xl border border-gray-200 py-1"
+      menuClassName="w-48 bg-[var(--dropdown-bg)] rounded-xl shadow-xl border border-[var(--dropdown-border)] py-1 transition-colors"
     >
       <div className="flex flex-col">
         {onView && (
@@ -54,13 +54,13 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions, va
                 e.stopPropagation();
                 handleAction(onView);
               }}
-              className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 flex items-center gap-3 transition-colors cursor-pointer"
+              className="group w-full px-4 py-2.5 text-left text-base text-[var(--card-text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--dropdown-hover)] flex items-center gap-3 transition-colors cursor-pointer"
             >
-              <Eye className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
+              <Eye className="w-4 h-4 text-[var(--card-text-muted)] group-hover:text-[var(--foreground)] transition-colors" />
               Ver
             </button>
             {(onEdit || visibleCustomActions.length > 0 || onDelete) && (
-              <div className="border-t border-gray-100 my-1"></div>
+              <div className="border-t border-[var(--dropdown-border)] my-1"></div>
             )}
           </>
         )}
@@ -74,13 +74,13 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions, va
                 e.stopPropagation();
                 handleAction(onEdit);
               }}
-              className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 flex items-center gap-3 transition-colors cursor-pointer"
+              className="group w-full px-4 py-2.5 text-left text-base text-[var(--card-text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--dropdown-hover)] flex items-center gap-3 transition-colors cursor-pointer"
             >
-              <Pencil className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
+              <Pencil className="w-4 h-4 text-[var(--card-text-muted)] group-hover:text-[var(--foreground)] transition-colors" />
               Editar
             </button>
             {(visibleCustomActions.length > 0 || onDelete) && (
-              <div className="border-t border-gray-100 my-1"></div>
+              <div className="border-t border-[var(--dropdown-border)] my-1"></div>
             )}
           </>
         )}
@@ -95,15 +95,15 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions, va
                   e.stopPropagation();
                   action.onClick();
                 }}
-                className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-yellow-600 flex items-center gap-3 transition-colors cursor-pointer"
+                className="group w-full px-4 py-2.5 text-left text-base text-[var(--card-text-muted)] hover:text-yellow-600 hover:bg-[var(--dropdown-hover)] flex items-center gap-3 transition-colors cursor-pointer"
               >
                 {action.label}
               </button>
               {!isLast && idx < visibleCustomActions.length - 1 && (
-                <div className="border-t border-gray-100 my-1"></div>
+                <div className="border-t border-[var(--dropdown-border)] my-1"></div>
               )}
               {idx === visibleCustomActions.length - 1 && onDelete && (
-                <div className="border-t border-gray-100 my-1"></div>
+                <div className="border-t border-[var(--dropdown-border)] my-1"></div>
               )}
             </div>
           );
@@ -116,9 +116,9 @@ export default function ActionMenu({ onView, onEdit, onDelete, customActions, va
               e.stopPropagation();
               handleAction(onDelete);
             }}
-            className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors cursor-pointer"
+            className="group w-full px-4 py-2.5 text-left text-base text-[var(--card-text-muted)] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-3 transition-colors cursor-pointer"
           >
-            <Trash2 className="w-4 h-4 text-gray-500 group-hover:text-red-600 transition-colors" />
+            <Trash2 className="w-4 h-4 text-[var(--card-text-muted)] group-hover:text-red-600 transition-colors" />
             Eliminar
           </button>
         )}

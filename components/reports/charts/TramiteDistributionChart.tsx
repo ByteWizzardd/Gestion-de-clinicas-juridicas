@@ -1,6 +1,8 @@
 'use client';
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { useTheme } from 'next-themes';
+import { useState, useEffect } from 'react';
 
 interface TramiteData {
     name: string;
@@ -34,9 +36,9 @@ export default function TramiteDistributionChart({ data }: TramiteDistributionCh
             const percent = total > 0 ? (value / total) : 0;
 
             return (
-                <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg z-50">
-                    <p className="text-sm font-medium text-gray-700 mb-1">{payload[0].name}</p>
-                    <p className="text-base font-semibold text-gray-900">
+                <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-3 shadow-lg z-50 transition-colors">
+                    <p className="text-sm font-medium text-[var(--card-text-muted)] mb-1">{payload[0].name}</p>
+                    <p className="text-base font-semibold text-[var(--card-text)]">
                         {value} ({(percent * 100).toFixed(1)}%)
                     </p>
                 </div>
@@ -45,12 +47,21 @@ export default function TramiteDistributionChart({ data }: TramiteDistributionCh
         return null;
     };
 
+    const { theme } = useTheme();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const isDark = mounted && theme === 'dark';
+
     return (
-        <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm flex flex-col h-full min-h-[400px] w-full min-w-0 overflow-hidden">
-            <h3 className="text-lg sm:text-xl font-medium text-foreground mb-6 text-center">Distribución por Trámite</h3>
+        <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-4 sm:p-6 shadow-sm flex flex-col h-full min-h-[400px] w-full min-w-0 overflow-hidden transition-colors">
+            <h3 className="text-lg sm:text-xl font-medium text-[var(--foreground)] mb-6 text-center transition-colors">Distribución por Trámite</h3>
             {(!data || data.length === 0 || data.every(item => item.value === 0)) ? (
                 <div className="grow flex items-center justify-center">
-                    <p className="text-gray-500 text-sm">No hay casos con los filtros seleccionados</p>
+                    <p className="text-[var(--card-text-muted)] text-sm transition-colors">No hay casos con los filtros seleccionados</p>
                 </div>
             ) : (
                 <div className="grow w-full">
@@ -76,6 +87,7 @@ export default function TramiteDistributionChart({ data }: TramiteDistributionCh
                                 verticalAlign="bottom"
                                 align="center"
                                 wrapperStyle={{ fontSize: '12px', marginTop: '20px' }}
+                                formatter={(value) => <span className="text-[var(--card-text)] transition-colors">{value}</span>}
                             />
                         </PieChart>
                     </ResponsiveContainer>

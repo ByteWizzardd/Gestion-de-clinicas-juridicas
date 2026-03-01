@@ -165,7 +165,7 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
           <h1 className="text-2xl md:text-3xl font-medium text-foreground mb-1" style={{ fontFamily: 'var(--font-league-spartan)' }}>
             Bienvenido al dashboard
           </h1>
-          <p className="text-sm md:text-base text-gray-600" style={{ fontFamily: 'var(--font-urbanist)' }}>
+          <p className="text-sm md:text-base text-[var(--card-text-muted)] transition-colors" style={{ fontFamily: 'var(--font-urbanist)' }}>
             Aquí podrás ver el estado de las citas y los casos.
           </p>
         </div>
@@ -173,16 +173,16 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
         <div className="flex flex-col lg:flex-row gap-4 md:gap-6 mt-4 md:mt-6 h-[calc(100vh-8rem)] md:h-[calc(100vh-10rem)]">
           <div className="flex flex-col gap-4 md:gap-6 flex-1 max-w-full">
             <motion.div
-              className="bg-white rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] p-4 md:p-6 flex-1 flex flex-col min-h-0"
+              className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] p-4 md:p-6 flex-1 flex flex-col min-h-0 transition-colors"
               initial={{ opacity: 0.5 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.1, ease: "easeOut" }}
             >
-              <div className="flex items-center justify-between mb-4 shrink-0">
-                <h3 className="text-xl md:text-2xl font-semibold text-neutral-800">
+              <div className="flex items-center justify-between mb-4 shrink-0 px-2">
+                <h3 className="text-xl md:text-2xl font-semibold text-[var(--card-text)] transition-colors">
                   Mis Casos
                 </h3>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-[var(--card-text-muted)] transition-colors">
                   {casos.length} {casos.length === 1 ? 'caso' : 'casos'}
                 </span>
               </div>
@@ -196,14 +196,14 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
             </motion.div>
 
             <motion.div
-              className="bg-white rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] p-4 md:p-6 w-full flex-1 flex flex-col min-h-0"
+              className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] p-4 md:p-6 w-full flex-1 flex flex-col min-h-0 transition-colors"
               initial={{ opacity: 0.5 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.1, ease: "easeOut" }}
             >
               <div className="flex flex-col md:flex-row gap-4 md:gap-6 flex-1 min-h-0">
-                <div className="w-full md:w-1/2 flex flex-col min-h-0">
-                  <h3 className="text-xl md:text-2xl font-semibold text-neutral-800 mb-3 md:mb-4 shrink-0">
+                <div className="w-full md:w-1/2 flex flex-col min-h-0 px-2">
+                  <h3 className="text-xl md:text-2xl font-semibold text-[var(--card-text)] mb-3 md:mb-4 shrink-0 transition-colors">
                     Mi Agenda
                   </h3>
                   <div className="flex-1 overflow-y-auto pr-2 min-h-[200px] md:min-h-0">
@@ -232,12 +232,12 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
 
           <div className="flex-1 w-full lg:min-w-94 lg:max-w-116 2xl:max-w-md">
             <motion.div
-              className="bg-white rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] p-4 md:p-6 h-full min-h-[200px] lg:min-h-0 flex flex-col"
+              className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] p-4 md:p-6 h-full min-h-[200px] lg:min-h-0 flex flex-col transition-colors"
               initial={{ opacity: 0.5 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.1, ease: "easeOut" }}
             >
-              <h3 className="text-xl md:text-2xl font-semibold text-center text-neutral-800 mb-4 md:mb-6 shrink-0">
+              <h3 className="text-xl md:text-2xl font-semibold text-center text-[var(--card-text)] mb-4 md:mb-6 shrink-0 transition-colors">
                 Historial de Acciones
               </h3>
               <div className="flex-1 overflow-y-auto">

@@ -69,13 +69,13 @@ export function TablePagination({ currentPage, totalPages, rowsPerPage, onPageCh
                 <button
                     onClick={() => onPageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="p-2 sm:p-2.5 rounded-xl bg-white border border-gray-100 shadow-sm hover:border-primary hover:text-primary transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-gray-100 disabled:hover:text-neutral-600"
+                    className="p-2 sm:p-2.5 rounded-xl bg-[var(--card-bg)] border border-[var(--card-border)] shadow-sm hover:border-primary hover:text-primary transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-[var(--card-border)] disabled:hover:text-[var(--card-text-muted)]"
                 >
-                    <ChevronLeft className="w-5 h-5" />
+                    <ChevronLeft className="w-5 h-5 text-foreground opacity-70" />
                 </button>
 
                 {/* Números de página */}
-                <div className="flex items-center gap-1 p-1 bg-white border border-gray-100 shadow-sm rounded-2xl">
+                <div className="flex items-center gap-1 p-1 bg-[var(--card-bg)] border border-[var(--card-border)] shadow-sm rounded-2xl transition-colors">
                     {pageNumbers.map((page, index) => {
                         const isActive = page === currentPage;
                         // En móviles muy pequeños, ocultar casi todo excepto la actual y las adyacentes si es posible
@@ -87,7 +87,7 @@ export function TablePagination({ currentPage, totalPages, rowsPerPage, onPageCh
                         return page === '...' ? (
                             <span
                                 key={`dots-${index}`}
-                                className="w-8 sm:w-10 h-8 sm:h-10 hidden sm:flex items-center justify-center text-neutral-400 text-sm font-bold"
+                                className="w-8 sm:w-10 h-8 sm:h-10 hidden sm:flex items-center justify-center text-[var(--card-text-muted)] opacity-50 text-sm font-bold"
                             >
                                 ···
                             </span>
@@ -98,7 +98,7 @@ export function TablePagination({ currentPage, totalPages, rowsPerPage, onPageCh
                                 className={`w-8 sm:w-10 h-8 sm:h-10 flex items-center justify-center text-xs sm:text-sm rounded-xl transition-all duration-300 cursor-pointer
                                     ${isActive
                                         ? 'bg-primary text-white font-bold shadow-lg shadow-primary/30 scale-105'
-                                        : 'text-neutral-500 hover:bg-primary-light hover:text-primary font-medium'
+                                        : 'text-[var(--card-text-muted)] hover:bg-primary-light hover:text-primary font-medium'
                                     }
                                     ${isHiddenOnMobile ? 'hidden sm:flex' : 'flex'}
                                 `}
@@ -113,19 +113,19 @@ export function TablePagination({ currentPage, totalPages, rowsPerPage, onPageCh
                 <button
                     onClick={() => onPageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="p-2 sm:p-2.5 rounded-xl bg-white border border-gray-100 shadow-sm hover:border-primary hover:text-primary transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-gray-100 disabled:hover:text-neutral-600"
+                    className="p-2 sm:p-2.5 rounded-xl bg-[var(--card-bg)] border border-[var(--card-border)] shadow-sm hover:border-primary hover:text-primary transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-[var(--card-border)] disabled:hover:text-[var(--card-text-muted)]"
                 >
-                    <ChevronRight className="w-5 h-5" />
+                    <ChevronRight className="w-5 h-5 text-foreground opacity-70" />
                 </button>
             </div>
 
             {/* Selector de filas por página (alineado a la derecha en pantallas grandes) */}
             <div className="flex justify-center lg:justify-end lg:flex-1 w-full lg:w-auto order-2 lg:order-3">
-                <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-100">
-                    <span className="text-[10px] sm:text-xs font-semibold text-neutral-400 uppercase tracking-wider">Filas</span>
+                <div className="flex items-center gap-3 bg-[var(--card-bg)] px-4 py-2 rounded-full shadow-sm border border-[var(--card-border)] transition-colors">
+                    <span className="text-[10px] sm:text-xs font-semibold text-[var(--card-text-muted)] opacity-60 uppercase tracking-wider">Filas</span>
                     <div className="relative flex items-center">
                         <select
-                            className="appearance-none bg-transparent border-none pr-6 text-sm focus:outline-none focus:ring-0 cursor-pointer text-neutral-700 font-bold"
+                            className="appearance-none bg-transparent border-none pr-6 text-sm focus:outline-none focus:ring-0 cursor-pointer text-[var(--foreground)] font-bold transition-colors"
                             value={rowsPerPage}
                             onChange={e => onRowsPerPageChange(Number(e.target.value))}
                         >
@@ -135,7 +135,7 @@ export function TablePagination({ currentPage, totalPages, rowsPerPage, onPageCh
                                 </option>
                             ))}
                         </select>
-                        <ChevronDown className="absolute right-0 w-3.5 h-3.5 text-neutral-500 pointer-events-none" />
+                        <ChevronDown className="absolute right-0 w-3.5 h-3.5 text-[var(--card-text-muted)] opacity-70 pointer-events-none" />
                     </div>
                 </div>
             </div>

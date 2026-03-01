@@ -29,10 +29,84 @@
   --success-dark: #009900;
   --success-light: #99FF99;
 
+  /* Tarjetas */
+  --card-bg: #ffffff;
+  --card-text: #262626;
+  /* text-neutral-800 */
+  --card-text-muted: #525252;
+  /* text-neutral-600 */
+  --card-border: #f5f5f5;
+  /* neutral-100 */
+  --table-row-even-bg: #F2E5E6;
+  /* on-primary-light original */
+
+  /* Dropdowns & Navigation */
+  --dropdown-bg: #ffffff;
+  --dropdown-border: #e5e5e5;
+  /* border-gray-200 */
+  --dropdown-hover: #f9fafb;
+  /* bg-gray-50 */
+  --sidebar-hover: #f3f4f6;
+  /* bg-gray-100 */
+  --dropdown-text: #4b5563;
+  /* text-gray-600 */
+  --dropdown-text-hover: #111827;
+  /* text-gray-900 */
+
+  /* Calendario & UI Elements */
+  --ui-border: #d1d5db;
+  /* gray-300 */
+  --ui-bg-muted: #f9fafb;
+  /* gray-50 */
+  --ui-bg-inactive: #dde2e8;
+  /* El azuloso del calendario */
+}
+
+.dark {
+  --background: #121212;
+  --foreground: #f3f4f6;
+
+  /* Tarjetas en oscuro */
+  --card-bg: #171717;
+  /* neutral-900 */
+  --card-text: #e5e5e5;
+  /* neutral-200 */
+  --card-text-muted: #a3a3a3;
+  /* neutral-400 */
+  --card-border: #262626;
+  /* neutral-800 */
+
+  /* Dropdowns & Navigation en oscuro */
+  --dropdown-bg: #171717;
+  --dropdown-border: #262626;
+  --dropdown-hover: #262626;
+  --sidebar-hover: #1f2937;
+  /* neutral-800 aprox */
+  --dropdown-text: #a3a3a3;
+  /* neutral-400 */
+  --dropdown-text-hover: #f3f4f6;
+  /* foreground */
+
+  /* Calendario & UI Elements en oscuro */
+  --ui-border: #404040;
+  /* neutral-700 approx */
+  --ui-bg-muted: #1a1a1a;
+  --ui-bg-inactive: #262626;
+
+  /* Colores secundarios en oscuro */
+  --secondary: #d16b11;
+  --secondary-light: #4a2608;
+  --secondary-dark: #8a470b;
+
+  /* Tablas en oscuro */
+  --table-row-even-bg: #3b1214;
+  --table-row-selected-bg: rgba(156, 35, 39, 0.15);
 }
 
 
+
 @theme inline {
+  --dark-mode: selector(.dark);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);

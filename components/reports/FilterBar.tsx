@@ -64,7 +64,7 @@ export default function FilterBar({
                         onChange={(e) => handleFilterUpdate('dateRange', e.target.value)}
                         placeholder="Rango de Fechas"
                         className="text-md w-full"
-                        icon={<Calendar className="w-5 h-5 text-neutral-700" />}
+                        icon={<Calendar className="w-5 h-5 text-[var(--card-text-muted)] opacity-70" />}
                     />
                 </div>
 
@@ -75,7 +75,7 @@ export default function FilterBar({
                         onChange={(e) => handleFilterUpdate('nucleo', e.target.value)}
                         placeholder="Núcleo"
                         className="text-md w-full"
-                        icon={<Building className="w-5 h-5 text-neutral-700" />}
+                        icon={<Building className="w-5 h-5 text-[var(--card-text-muted)] opacity-70" />}
                     />
                 </div>
 
@@ -86,7 +86,7 @@ export default function FilterBar({
                         onChange={(e) => handleFilterUpdate('term', e.target.value)}
                         placeholder="TERM - Periodo"
                         className="text-md w-full"
-                        icon={<Calendar className="w-5 h-5 text-neutral-700" />}
+                        icon={<Calendar className="w-5 h-5 text-[var(--card-text-muted)] opacity-70" />}
                     />
                 </div>
             </div>

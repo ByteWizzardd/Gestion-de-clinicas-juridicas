@@ -9,12 +9,12 @@ export default function DateTime() {
   useEffect(() => {
     const updateDateTime = () => {
       const now = new Date();
-      
+
       // Formatear hora (HH:MM)
       const hours = now.getHours().toString().padStart(2, '0');
       const minutes = now.getMinutes().toString().padStart(2, '0');
       setCurrentTime(`${hours}:${minutes}`);
-      
+
       // Formatear fecha (DD-MM-YYYY)
       const day = now.getDate().toString().padStart(2, '0');
       const month = (now.getMonth() + 1).toString().padStart(2, '0');
@@ -24,7 +24,7 @@ export default function DateTime() {
 
     // Actualizar inmediatamente
     updateDateTime();
-    
+
     // Actualizar cada minuto
     const interval = setInterval(updateDateTime, 60000);
 

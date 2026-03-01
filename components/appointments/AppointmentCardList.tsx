@@ -88,9 +88,9 @@ export default function AppointmentCardList({
     <div className="space-y-4 pb-6">
       {/* Lista de cards */}
       {appointments.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-          <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 text-lg">No hay citas registradas</p>
+        <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-8 text-center transition-colors">
+          <Calendar className="w-12 h-12 text-[var(--card-text-muted)] opacity-50 mx-auto mb-4" />
+          <p className="text-[var(--card-text-muted)] text-lg">No hay citas registradas</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -100,7 +100,7 @@ export default function AppointmentCardList({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2 }}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow relative"
+              className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--card-border)] p-5 hover:shadow-md transition-all relative"
             >
               {/* Menú de acciones */}
               <div className="absolute top-4 right-4">
@@ -116,7 +116,7 @@ export default function AppointmentCardList({
                 {/* Fecha */}
                 <div className="flex items-center gap-2 mb-3">
                   <Calendar className="w-5 h-5 text-primary" />
-                  <p className="text-lg font-semibold text-gray-900">
+                  <p className="text-lg font-semibold text-[var(--foreground)] transition-colors">
                     {formatDate(appointment.date)}
                   </p>
                 </div>
@@ -124,8 +124,8 @@ export default function AppointmentCardList({
                 {/* Caso relacionado */}
                 <div className="mb-3">
                   <div className="flex items-start gap-2">
-                    <FileText className="w-4 h-4 text-gray-400 mt-1 shrink-0" />
-                    <p className="text-sm text-gray-600 line-clamp-2">
+                    <FileText className="w-4 h-4 text-[var(--card-text-muted)] opacity-70 mt-1 shrink-0 transition-colors" />
+                    <p className="text-sm text-[var(--card-text-muted)] line-clamp-2 transition-colors">
                       {appointment.caseDetail}
                     </p>
                   </div>
@@ -134,8 +134,8 @@ export default function AppointmentCardList({
                 {/* Cliente */}
                 <div className="mb-3">
                   <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-gray-400 shrink-0" />
-                    <p className="text-sm text-gray-600 truncate">
+                    <User className="w-4 h-4 text-[var(--card-text-muted)] opacity-70 shrink-0 transition-colors" />
+                    <p className="text-sm text-[var(--card-text-muted)] truncate transition-colors">
                       {appointment.client}
                     </p>
                   </div>
@@ -145,8 +145,8 @@ export default function AppointmentCardList({
                 {appointment.attendingUsers && (
                   <div className="mb-3">
                     <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-gray-400 shrink-0" />
-                      <p className="text-xs text-gray-500 line-clamp-2">
+                      <Users className="w-4 h-4 text-[var(--card-text-muted)] opacity-70 shrink-0 transition-colors" />
+                      <p className="text-xs text-[var(--card-text-muted)] opacity-80 line-clamp-2 transition-colors">
                         {appointment.isMultiplePeople ? 'Atendido por: ' : 'Atendido por: '}
                         {appointment.attendingUsers}
                       </p>
@@ -156,8 +156,8 @@ export default function AppointmentCardList({
 
                 {/* Botones para citas programadas */}
                 {appointment.orientation === "Cita programada" && (
-                  <div className="mt-4 pt-3 border-t border-gray-100">
-                    <p className="text-xs text-gray-500 mb-3">¿Se realizó la cita?</p>
+                  <div className="mt-4 pt-3 border-t border-[var(--card-border)] transition-colors">
+                    <p className="text-xs text-[var(--card-text-muted)] mb-3 transition-colors">¿Se realizó la cita?</p>
                     <div className="flex gap-2">
                       <Button
                         variant="primary"

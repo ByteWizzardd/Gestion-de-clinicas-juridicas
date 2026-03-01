@@ -41,25 +41,25 @@ export default function ActionHistoryCard({
       <div className="flex-1 min-w-0 pt-0.5">
         {/* Fecha */}
         <div className="mb-1.5">
-          <span className="text-xs md:text-sm font-semibold text-gray-700">
+          <span className="text-xs md:text-sm font-semibold text-[var(--card-text)] opacity-80 transition-colors">
             {date}
           </span>
         </div>
 
         {/* Acción principal */}
-        <div className="text-sm md:text-base font-semibold text-gray-900 mb-1 truncate" title={mainText}>
+        <div className="text-sm md:text-base font-semibold text-[var(--card-text)] mb-1 truncate transition-colors" title={mainText}>
           {mainText}
         </div>
 
         {/* Subtexto opcional */}
         {subText && (
-          <div className="text-xs md:text-sm text-gray-600 mb-1.5 truncate" title={subText}>
+          <div className="text-xs md:text-sm text-[var(--card-text-muted)] mb-1.5 truncate transition-colors" title={subText}>
             {subText}
           </div>
         )}
 
         {/* Información del caso */}
-        <div className="text-xs md:text-sm text-gray-500 font-medium truncate" title={caseInfo}>
+        <div className="text-xs md:text-sm text-[var(--card-text-muted)] opacity-70 font-medium truncate transition-colors" title={caseInfo}>
           {caseInfo}
         </div>
       </div>

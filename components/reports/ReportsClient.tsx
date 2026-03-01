@@ -895,9 +895,9 @@ export default function ReportsPage() {
     return (
         <div className="w-full overflow-x-hidden max-w-full">
             {/* Header */}
-            <div className="mb-4 md:mb-6 mt-4">
-                <h1 className="text-4xl m-3 font-semibold font-primary">Reportes</h1>
-                <p className="mb-6 ml-3 text-base text-gray-600">Presentación de las métricas clave a través de gráficas y cuadros.</p>
+            <div className="mb-0">
+                <h1 className="text-2xl sm:text-3xl font-medium text-[var(--foreground)] mb-1 ml-3 transition-colors">Reportes</h1>
+                <p className="mb-6 ml-3 text-base text-[var(--card-text-muted)] transition-colors">Presentación de las métricas clave a través de gráficas y cuadros.</p>
             </div>
 
             <div className="px-3 md:px-1 space-y-6">
@@ -978,9 +978,9 @@ export default function ReportsPage() {
                     {loading ? (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {[1, 2, 3, 4].map((i) => (
-                                <div key={i} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm h-96 animate-pulse">
-                                    <div className="h-6 bg-gray-200 rounded w-1/2 mx-auto mb-4"></div>
-                                    <div className="h-64 bg-gray-100 rounded"></div>
+                                <div key={i} className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-6 shadow-sm h-96 animate-pulse transition-colors">
+                                    <div className="h-6 bg-[var(--sidebar-hover)] rounded w-1/2 mx-auto mb-4 opacity-50"></div>
+                                    <div className="h-64 bg-[var(--ui-bg-muted)] rounded opacity-50"></div>
                                 </div>
                             ))}
                         </div>
@@ -1147,7 +1147,7 @@ export default function ReportsPage() {
                                                 setDateError(null);
                                             }}
                                             placeholder="Seleccionar Semestre"
-                                            icon={<Calendar className="w-5 h-5 text-neutral-700" />}
+                                            icon={<Calendar className="w-5 h-5 text-[var(--card-text-muted)] opacity-70 transition-colors" />}
                                         />
                                     </div>
                                 </div>
@@ -1155,9 +1155,9 @@ export default function ReportsPage() {
 
                             {tipoReporteActual !== 'Historial de Casos del Solicitante' && tipoReporteActual !== 'Ficha Resumen del Solicitante' && (
                                 <div className="relative py-2 flex items-center">
-                                    <div className="grow border-t border-gray-200"></div>
-                                    <span className="shrink mx-4 text-gray-400 text-sm">O por rango de fechas</span>
-                                    <div className="grow border-t border-gray-200"></div>
+                                    <div className="grow border-t border-[var(--card-border)] transition-colors"></div>
+                                    <span className="shrink mx-4 text-[var(--card-text-muted)] text-sm transition-colors">O por rango de fechas</span>
+                                    <div className="grow border-t border-[var(--card-border)] transition-colors"></div>
                                 </div>
                             )}
 
@@ -1214,7 +1214,7 @@ export default function ReportsPage() {
                                     {Object.entries(RESUMEN_SECCIONES_LABELS).map(([key, label]) => {
                                         const isChecked = selectedResumenSections[key as keyof ResumenSectionsData];
                                         return (
-                                            <label key={key} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-50 rounded-md border border-gray-100 transition-colors select-none group">
+                                            <label key={key} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-[var(--sidebar-hover)] rounded-md border border-[var(--card-border)] transition-colors select-none group">
                                                 <div className="relative flex items-center justify-center">
                                                     <input
                                                         type="checkbox"
@@ -1226,7 +1226,7 @@ export default function ReportsPage() {
                                                         w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
                                                         ${isChecked
                                                             ? 'bg-primary border-primary'
-                                                            : 'bg-white border-gray-300 group-hover:border-gray-400'
+                                                            : 'bg-[var(--card-bg)] border-[var(--card-border)] group-hover:border-[var(--card-text-muted)]'
                                                         }
                                                     `}>
                                                         {isChecked && (
@@ -1236,21 +1236,21 @@ export default function ReportsPage() {
                                                         )}
                                                     </div>
                                                 </div>
-                                                <span className={`text-sm transition-colors ${isChecked ? 'text-gray-900 font-medium' : 'text-gray-700 group-hover:text-gray-900'}`}>{label}</span>
+                                                <span className={`text-sm transition-colors ${isChecked ? 'text-[var(--foreground)] font-medium' : 'text-[var(--card-text)] group-hover:text-[var(--foreground)]'}`}>{label}</span>
                                             </label>
                                         );
                                     })}
                                 </div>
                                 <div className="flex gap-3 mt-3 text-xs font-medium px-1">
                                     <span
-                                        className="text-primary hover:text-red-700 cursor-pointer"
+                                        className="text-primary hover:opacity-80 cursor-pointer transition-opacity"
                                         onClick={() => setSelectedResumenSections(Object.keys(RESUMEN_SECCIONES_LABELS).reduce((acc, key) => ({ ...acc, [key]: true }), {} as ResumenSectionsData))}
                                     >
                                         Marcar todas
                                     </span>
-                                    <span className="text-gray-300">|</span>
+                                    <span className="text-[var(--card-border)] transition-colors">|</span>
                                     <span
-                                        className="text-gray-500 hover:text-gray-700 cursor-pointer"
+                                        className="text-[var(--card-text-muted)] hover:text-[var(--foreground)] cursor-pointer transition-colors"
                                         onClick={() => setSelectedResumenSections(Object.keys(RESUMEN_SECCIONES_LABELS).reduce((acc, key) => ({ ...acc, [key]: false }), {} as ResumenSectionsData))}
                                     >
                                         Desmarcar todas
@@ -1266,8 +1266,8 @@ export default function ReportsPage() {
                                     Secciones a incluir en el reporte
                                 </label>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-2">
-                                    <div className="md:col-span-2 pb-2 mb-2 border-b border-gray-100">
-                                        <h4 className="font-semibold text-gray-800">Datos Demográficos</h4>
+                                    <div className="md:col-span-2 pb-2 mb-2 border-b border-[var(--card-border)] transition-colors">
+                                        <h4 className="font-semibold text-[var(--foreground)] transition-colors">Datos Demográficos</h4>
                                     </div>
                                     {[
                                         { key: 'genero', label: 'Género' },
@@ -1277,7 +1277,7 @@ export default function ReportsPage() {
                                     ].map(({ key, label }) => {
                                         const isChecked = selectedSocioeconomicoSections[key as keyof SocioeconomicoSectionsData];
                                         return (
-                                            <label key={key} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-50 rounded-md border border-gray-100 transition-colors select-none group">
+                                            <label key={key} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-[var(--sidebar-hover)] rounded-md border border-[var(--card-border)] transition-colors select-none group">
                                                 <div className="relative flex items-center justify-center">
                                                     <input
                                                         type="checkbox"
@@ -1289,7 +1289,7 @@ export default function ReportsPage() {
                                                         w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
                                                         ${isChecked
                                                             ? 'bg-primary border-primary'
-                                                            : 'bg-white border-gray-300 group-hover:border-gray-400'
+                                                            : 'bg-[var(--card-bg)] border-[var(--card-border)] group-hover:border-[var(--card-text-muted)]'
                                                         }
                                                     `}>
                                                         {isChecked && (
@@ -1299,13 +1299,13 @@ export default function ReportsPage() {
                                                         )}
                                                     </div>
                                                 </div>
-                                                <span className={`text-sm transition-colors ${isChecked ? 'text-gray-900 font-medium' : 'text-gray-700 group-hover:text-gray-900'}`}>{label}</span>
+                                                <span className={`text-sm transition-colors ${isChecked ? 'text-[var(--foreground)] font-medium' : 'text-[var(--card-text)] group-hover:text-[var(--foreground)]'}`}>{label}</span>
                                             </label>
                                         );
                                     })}
 
-                                    <div className="md:col-span-2 pb-2 mb-2 mt-4 border-b border-gray-100">
-                                        <h4 className="font-semibold text-gray-800">Situación Económica</h4>
+                                    <div className="md:col-span-2 pb-2 mb-2 mt-4 border-b border-[var(--card-border)] transition-colors">
+                                        <h4 className="font-semibold text-[var(--foreground)] transition-colors">Situación Económica</h4>
                                     </div>
                                     {[
                                         { key: 'condicionTrabajo', label: 'Condición de Trabajo' },
@@ -1313,7 +1313,7 @@ export default function ReportsPage() {
                                     ].map(({ key, label }) => {
                                         const isChecked = selectedSocioeconomicoSections[key as keyof SocioeconomicoSectionsData];
                                         return (
-                                            <label key={key} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-50 rounded-md border border-gray-100 transition-colors select-none group">
+                                            <label key={key} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-[var(--sidebar-hover)] rounded-md border border-[var(--card-border)] transition-colors select-none group">
                                                 <div className="relative flex items-center justify-center">
                                                     <input
                                                         type="checkbox"
@@ -1325,7 +1325,7 @@ export default function ReportsPage() {
                                                         w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
                                                         ${isChecked
                                                             ? 'bg-primary border-primary'
-                                                            : 'bg-white border-gray-300 group-hover:border-gray-400'
+                                                            : 'bg-[var(--card-bg)] border-[var(--card-border)] group-hover:border-[var(--card-text-muted)]'
                                                         }
                                                     `}>
                                                         {isChecked && (
@@ -1335,13 +1335,13 @@ export default function ReportsPage() {
                                                         )}
                                                     </div>
                                                 </div>
-                                                <span className={`text-sm transition-colors ${isChecked ? 'text-gray-900 font-medium' : 'text-gray-700 group-hover:text-gray-900'}`}>{label}</span>
+                                                <span className={`text-sm transition-colors ${isChecked ? 'text-[var(--foreground)] font-medium' : 'text-[var(--card-text)] group-hover:text-[var(--foreground)]'}`}>{label}</span>
                                             </label>
                                         );
                                     })}
 
-                                    <div className="md:col-span-2 pb-2 mb-2 mt-4 border-b border-gray-100">
-                                        <h4 className="font-semibold text-gray-800">Vivienda y Hogar</h4>
+                                    <div className="md:col-span-2 pb-2 mb-2 mt-4 border-b border-[var(--card-border)] transition-colors">
+                                        <h4 className="font-semibold text-[var(--foreground)] transition-colors">Vivienda y Hogar</h4>
                                     </div>
                                     {[
                                         { key: 'tamanoHogar', label: 'Tamaño del Hogar' },
@@ -1361,7 +1361,7 @@ export default function ReportsPage() {
                                     ].map(({ key, label }) => {
                                         const isChecked = selectedSocioeconomicoSections[key as keyof SocioeconomicoSectionsData];
                                         return (
-                                            <label key={key} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-50 rounded-md border border-gray-100 transition-colors select-none group">
+                                            <label key={key} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-[var(--sidebar-hover)] rounded-md border border-[var(--card-border)] transition-colors select-none group">
                                                 <div className="relative flex items-center justify-center">
                                                     <input
                                                         type="checkbox"
@@ -1373,7 +1373,7 @@ export default function ReportsPage() {
                                                         w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
                                                         ${isChecked
                                                             ? 'bg-primary border-primary'
-                                                            : 'bg-white border-gray-300 group-hover:border-gray-400'
+                                                            : 'bg-[var(--card-bg)] border-[var(--card-border)] group-hover:border-[var(--card-text-muted)]'
                                                         }
                                                     `}>
                                                         {isChecked && (
@@ -1383,21 +1383,21 @@ export default function ReportsPage() {
                                                         )}
                                                     </div>
                                                 </div>
-                                                <span className={`text-sm transition-colors ${isChecked ? 'text-gray-900 font-medium' : 'text-gray-700 group-hover:text-gray-900'}`}>{label}</span>
+                                                <span className={`text-sm transition-colors ${isChecked ? 'text-[var(--foreground)] font-medium' : 'text-[var(--card-text)] group-hover:text-[var(--foreground)]'}`}>{label}</span>
                                             </label>
                                         );
                                     })}
                                 </div>
                                 <div className="flex gap-3 mt-3 text-xs font-medium px-1">
                                     <span
-                                        className="text-primary hover:text-red-700 cursor-pointer"
+                                        className="text-primary hover:opacity-80 cursor-pointer transition-opacity"
                                         onClick={() => setSelectedSocioeconomicoSections(Object.keys(selectedSocioeconomicoSections).reduce((acc, key) => ({ ...acc, [key]: true }), {} as SocioeconomicoSectionsData))}
                                     >
                                         Marcar todas
                                     </span>
-                                    <span className="text-gray-300">|</span>
+                                    <span className="text-[var(--card-border)] transition-colors">|</span>
                                     <span
-                                        className="text-gray-500 hover:text-gray-700 cursor-pointer"
+                                        className="text-[var(--card-text-muted)] hover:text-[var(--foreground)] cursor-pointer transition-colors"
                                         onClick={() => setSelectedSocioeconomicoSections(Object.keys(selectedSocioeconomicoSections).reduce((acc, key) => ({ ...acc, [key]: false }), {} as SocioeconomicoSectionsData))}
                                     >
                                         Desmarcar todas

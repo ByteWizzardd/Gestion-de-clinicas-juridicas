@@ -43,26 +43,25 @@ export default function Select({ label, error, options, placeholder = "Seleccion
             type="button"
             disabled={disabled}
             className={`
-                w-full h-10 ${icon ? 'pl-4 pr-4' : 'pl-5 pr-4'} rounded-3xl border overflow-hidden flex items-center gap-3 justify-between
-                ${error ? 'border-danger' : 'border-transparent shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)]'}
+                w-full h-10 ${icon ? 'pl-4 pr-4' : 'pl-5 pr-4'} rounded-3xl border overflow-hidden flex items-center gap-3 justify-between transition-all
+                ${error ? 'border-danger focus:ring-1 focus:ring-danger' : 'border-[var(--dropdown-border)]'}
                 outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0
-                ${error ? 'focus:ring-1 focus:ring-danger' : ''}
                 ${disabled
-                    ? 'bg-gray-100 cursor-not-allowed opacity-60'
-                    : 'bg-white cursor-pointer'
+                    ? 'bg-[var(--ui-bg-inactive)] cursor-not-allowed text-[var(--card-text-muted)] opacity-70'
+                    : 'bg-[var(--card-bg)] cursor-pointer text-[var(--foreground)]'
                 }
-                text-neutral-800/90 text-left font-normal
+                text-left font-normal
                 ${className || 'text-base'}
             `}
         >
             <div className="flex items-center gap-3 flex-1 min-w-0">
-                {icon && <span className="shrink-0">{icon}</span>}
-                <span className={`truncate ${selectedOption ? 'text-neutral-800/90' : 'text-neutral-600'} ${disabled ? 'text-gray-500' : ''}`}>
+                {icon && <span className="shrink-0 opacity-70">{icon}</span>}
+                <span className={`truncate ${selectedOption ? 'text-[var(--foreground)]' : 'text-[var(--card-text-muted)]'} ${disabled ? 'opacity-80' : ''}`}>
                     {selectedOption ? selectedOption.label : placeholder}
                 </span>
             </div>
             <ChevronDown
-                className={`w-4 h-4 transition-transform shrink-0 ${disabled ? 'text-gray-400' : 'text-neutral-700'} ${isOpenState ? 'transform rotate-180' : ''}`}
+                className={`w-4 h-4 transition-transform shrink-0 ${disabled ? 'opacity-30' : 'text-[var(--card-text-muted)]'} ${isOpenState ? 'transform rotate-180' : ''}`}
             />
         </button>
     );
@@ -95,7 +94,7 @@ export default function Select({ label, error, options, placeholder = "Seleccion
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
                         transition={{ duration: 0.2, ease: 'easeOut' }}
-                        className="bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-auto py-1"
+                        className="bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)] rounded-xl shadow-xl max-h-60 overflow-auto py-1 transition-colors"
                     >
                         {options.length > 0 ? (
                             options.map((option, index) => {
@@ -104,7 +103,7 @@ export default function Select({ label, error, options, placeholder = "Seleccion
                                     return (
                                         <div
                                             key={option.value}
-                                            className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50 border-b border-gray-200 cursor-default select-none"
+                                            className="px-4 py-2 text-xs font-semibold text-[var(--card-text-muted)] opacity-60 uppercase tracking-wide bg-[var(--ui-bg-muted)] border-b border-[var(--dropdown-border)] cursor-default select-none transition-colors"
                                         >
                                             {option.label}
                                         </div>
@@ -118,7 +117,7 @@ export default function Select({ label, error, options, placeholder = "Seleccion
                                         data-close-menu
                                         onClick={() => handleSelect(option.value)}
                                         className={`
-                                            w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer
+                                            w-full px-4 py-2.5 text-left text-base text-[var(--dropdown-text)] hover:text-[var(--dropdown-text-hover)] hover:bg-[var(--dropdown-hover)] transition-colors cursor-pointer
                                             ${value === option.value ? 'bg-primary-light text-primary font-medium' : ''}
                                             ${index === options.length - 1 ? 'rounded-b-xl' : ''}
                                         `}
@@ -128,7 +127,7 @@ export default function Select({ label, error, options, placeholder = "Seleccion
                                 );
                             })
                         ) : (
-                            <div className="px-4 py-2.5 text-base text-gray-500 text-center">
+                            <div className="px-4 py-2.5 text-base text-[var(--card-text-muted)] text-center">
                                 No hay opciones disponibles
                             </div>
                         )}

@@ -28,9 +28,9 @@ export default function ReportCard({
     };
 
     return (
-        <div className={`bg-neutral-50 rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.3)] h-full min-h-40 w-full relative overflow-hidden p-4 flex flex-col ${className}`}>
+        <div className={`bg-[var(--card-bg)] border-[var(--card-border)] border rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.3)] h-full min-h-40 w-full relative overflow-hidden p-4 flex flex-col transition-colors ${className}`}>
             {/* Título */}
-            <h3 className="text-xl text-neutral-800/85 font-normal leading-tight pr-20 my-auto">
+            <h3 className="text-xl text-[var(--card-text)] font-normal leading-tight pr-20 my-auto transition-colors">
                 {title}
             </h3>
 

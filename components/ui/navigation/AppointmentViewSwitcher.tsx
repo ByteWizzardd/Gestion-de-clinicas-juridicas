@@ -13,7 +13,7 @@ export default function AppointmentViewSwitcher({ activeView, onViewChange }: Ap
     const isCalendarActive = activeView === 'calendar';
 
     return (
-        <div className="w-full sm:w-[200px] h-[45px] rounded-lg border border-gray-300 overflow-hidden bg-white">
+        <div className="w-full sm:w-[200px] h-[45px] rounded-lg border border-[var(--ui-border)] overflow-hidden bg-[var(--card-bg)] transition-colors">
             <label className="inline-flex items-center cursor-pointer w-full h-full">
                 <input
                     type="checkbox"

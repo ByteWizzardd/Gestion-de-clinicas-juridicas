@@ -76,7 +76,7 @@ export default function DashboardAppointmentList({
   return (
     <div className="flex flex-col gap-2 md:gap-2.5 h-full">
       {dayAppointments.length === 0 ? (
-        <div className="text-xs md:text-sm text-gray-500 text-center py-4">
+        <div className="text-xs md:text-sm text-[var(--card-text-muted)] text-center py-4 transition-colors">
           No hay citas programadas para este día
         </div>
       ) : (

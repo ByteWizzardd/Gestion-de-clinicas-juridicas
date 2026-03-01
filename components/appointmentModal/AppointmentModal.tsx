@@ -556,7 +556,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
         {/* Botón de cerrar */}
         <button
           onClick={handleClose}
-          className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10 cursor-pointer"
+          className="absolute top-6 right-6 p-2 text-[var(--card-text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--sidebar-hover)] rounded-md transition-colors z-10 cursor-pointer"
           aria-label="Cerrar modal"
         >
           <X className="w-6 h-6" />
@@ -660,9 +660,9 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
                 Orientación <span className="text-danger">*</span>
               </label>
               <textarea
-                className={`w-full px-4 py-3 rounded-lg border bg-[#E5E7EB] ${errors.orientacion ? 'border-danger' : 'border-transparent'
+                className={`w-full px-4 py-3 rounded-lg border bg-[var(--ui-bg-muted)] ${errors.orientacion ? 'border-danger' : 'border-[var(--dropdown-border)]'
                   } focus:outline-none focus:ring-1 ${errors.orientacion ? 'focus:ring-danger' : 'focus:ring-primary'
-                  } text-base placeholder:text-[#717171] resize-none`}
+                  } text-base text-[var(--foreground)] placeholder:text-[var(--card-text-muted)] resize-none transition-colors`}
                 placeholder="Escribe aquí la orientación..."
                 maxLength={500}
                 value={orientacion}
@@ -672,7 +672,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
               {errors.orientacion && (
                 <p className="text-xs text-danger mt-1">{errors.orientacion}</p>
               )}
-              <div className="text-xs text-gray-500 text-right mt-1 select-none">
+              <div className="text-xs text-[var(--card-text-muted)] text-right mt-1 select-none transition-colors">
                 {(orientacion || "").length}/500
               </div>
             </div>
@@ -683,11 +683,11 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
         </form>
 
         {/* Footer con botón */}
-        <div className="flex flex-col border-t border-gray-200">
+        <div className="flex flex-col border-t border-[var(--dropdown-border)] transition-colors">
           {/* Nota sobre campos obligatorios */}
           <div className="flex items-center gap-1 pt-2 pb-2">
             <span className="text-danger font-medium text-sm">*</span>
-            <span className="text-sm text-gray-600">Campo obligatorio</span>
+            <span className="text-sm text-[var(--card-text-muted)] transition-colors">Campo obligatorio</span>
           </div>
 
           <div className="flex justify-end">

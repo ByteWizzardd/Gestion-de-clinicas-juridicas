@@ -96,8 +96,8 @@ export default function Modal({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.1, ease: 'easeOut' }}
             className={`
-                bg-white rounded-xl shadow-xl w-full relative ${sizeStyles[size]} 
-                flex flex-col my-auto
+                bg-[var(--card-bg)] rounded-xl shadow-xl w-full relative ${sizeStyles[size]} 
+                flex flex-col my-auto border border-[var(--card-border)]
                 ${className}
               `}
             onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
@@ -109,7 +109,7 @@ export default function Modal({
             {showCloseButton && !title && (
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-50 cursor-pointer"
+                className="absolute top-4 right-4 p-2 text-[var(--card-text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--sidebar-hover)] rounded-md transition-colors z-50 cursor-pointer"
                 aria-label="Cerrar modal"
                 type="button"
               >
@@ -119,17 +119,17 @@ export default function Modal({
 
             {/* Header con título (solo si se proporciona title) */}
             {title && (
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white rounded-t-xl sticky top-0 z-20">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--card-border)] bg-[var(--card-bg)] rounded-t-xl sticky top-0 z-20">
                 <h2
                   id="modal-title"
-                  className="text-lg font-semibold text-gray-900"
+                  className="text-lg font-semibold text-[var(--foreground)]"
                 >
                   {title}
                 </h2>
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+                    className="p-2 text-[var(--card-text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--sidebar-hover)] rounded-md transition-colors cursor-pointer"
                     aria-label="Cerrar modal"
                     type="button"
                   >
@@ -146,7 +146,7 @@ export default function Modal({
 
             {/* Footer */}
             {footer && (
-              <div className="border-t border-gray-100 px-6 py-4 bg-gray-50 rounded-b-xl sticky bottom-0 z-20">
+              <div className="border-t border-[var(--card-border)] px-6 py-4 bg-[var(--ui-bg-muted)] rounded-b-xl sticky bottom-0 z-20 transition-colors">
                 {footer}
               </div>
             )}

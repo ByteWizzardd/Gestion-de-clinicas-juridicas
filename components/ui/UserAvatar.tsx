@@ -30,7 +30,7 @@ export default function UserAvatar({ fotoPerfil, size = 20, className = '', nomb
   if (nombre) {
     return (
       <div
-        className={`flex-shrink-0 rounded-full bg-gray-200 flex items-center justify-center font-medium text-gray-500 ${className}`}
+        className={`flex-shrink-0 rounded-full bg-[var(--sidebar-hover)] flex items-center justify-center font-medium text-[var(--foreground)] opacity-60 ${className}`}
         style={{ width: size, height: size, fontSize: size * 0.45 }}
       >
         {nombre.charAt(0).toUpperCase()}
@@ -40,6 +40,6 @@ export default function UserAvatar({ fotoPerfil, size = 20, className = '', nomb
 
   // Fallback por defecto: Icono de usuario
   return (
-    <User className={`text-gray-600 flex-shrink-0 ${className}`} style={{ width: size, height: size }} />
+    <User className={`text-[var(--foreground)] opacity-60 flex-shrink-0 ${className}`} style={{ width: size, height: size }} />
   );
 }

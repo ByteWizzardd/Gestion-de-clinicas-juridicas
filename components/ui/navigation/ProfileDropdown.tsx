@@ -69,6 +69,14 @@ export default function ProfileDropdown({
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
   const handleAction = (action: () => void) => {
     action();
     setIsOpen(false);
@@ -92,32 +100,32 @@ export default function ProfileDropdown({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: showAbove ? 10 : -10, scale: 0.95 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className={`absolute left-full ml-1 md:ml-2 w-48 sm:w-56 bg-white rounded-xl shadow-xl border border-gray-200 z-50 py-2 ${showAbove ? 'bottom-0' : 'top-0'
+            className={`absolute left-full ml-1 md:ml-2 w-48 sm:w-56 bg-[var(--dropdown-bg)] rounded-xl shadow-xl border border-[var(--dropdown-border)] z-50 py-2 transition-colors ${showAbove ? 'bottom-0' : 'top-0'
               } max-w-[calc(100vw-4rem)]`}
           >
             {/* Opciones del menú */}
             <div className="py-1">
               <button
                 onClick={() => handleAction(onProfileClick)}
-                className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 hover:bg-gray-50 flex items-center gap-3 transition-colors cursor-pointer"
+                className="group w-full px-4 py-2.5 text-left text-base text-[var(--dropdown-text)] hover:text-[var(--dropdown-text-hover)] hover:bg-[var(--dropdown-hover)] flex items-center gap-3 transition-colors cursor-pointer"
               >
-                <User className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
+                <User className="w-4 h-4 text-[var(--dropdown-text)] group-hover:text-[var(--dropdown-text-hover)] transition-colors" />
                 Perfil
               </button>
 
               <button
                 onClick={() => handleAction(onPasswordClick)}
-                className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 hover:bg-gray-50 flex items-center gap-3 transition-colors cursor-pointer"
+                className="group w-full px-4 py-2.5 text-left text-base text-[var(--dropdown-text)] hover:text-[var(--dropdown-text-hover)] hover:bg-[var(--dropdown-hover)] flex items-center gap-3 transition-colors cursor-pointer"
               >
-                <Key className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
+                <Key className="w-4 h-4 text-[var(--dropdown-text)] group-hover:text-[var(--dropdown-text-hover)] transition-colors" />
                 Cambiar contraseña
               </button>
 
               <button
                 onClick={() => handleAction(onHelpClick)}
-                className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 hover:bg-gray-50 flex items-center gap-3 transition-colors cursor-pointer"
+                className="group w-full px-4 py-2.5 text-left text-base text-[var(--dropdown-text)] hover:text-[var(--dropdown-text-hover)] hover:bg-[var(--dropdown-hover)] flex items-center gap-3 transition-colors cursor-pointer"
               >
-                <HelpCircle className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
+                <HelpCircle className="w-4 h-4 text-[var(--dropdown-text)] group-hover:text-[var(--dropdown-text-hover)] transition-colors" />
                 Preguntas frecuentes
               </button>
 
@@ -126,28 +134,28 @@ export default function ProfileDropdown({
                   e.stopPropagation();
                   setIsDarkMode(!isDarkMode);
                 }}
-                className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-gray-900 hover:bg-gray-50 flex items-center justify-between transition-colors cursor-pointer"
+                className="group w-full px-4 py-2.5 text-left text-base text-[var(--dropdown-text)] hover:text-[var(--dropdown-text-hover)] hover:bg-[var(--dropdown-hover)] flex items-center justify-between transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <Moon className="w-4 h-4 text-gray-500 group-hover:text-gray-900 transition-colors" />
+                  <Moon className="w-4 h-4 text-[var(--dropdown-text)] group-hover:text-[var(--dropdown-text-hover)] transition-colors" />
                   Modo oscuro
                 </div>
-                <div className={`w-8 h-4 rounded-full flex items-center transition-colors px-0.5 ${isDarkMode ? 'bg-primary' : 'bg-gray-300'}`}>
-                    <div className={`w-3 h-3 rounded-full bg-white transform transition-transform ${isDarkMode ? 'translate-x-4' : 'translate-x-0'}`} />
+                <div className={`w-8 h-4 rounded-full flex items-center transition-colors px-0.5 ${isDarkMode ? 'bg-primary' : 'bg-gray-200'}`}>
+                  <div className={`w-3 h-3 rounded-full bg-white transform transition-transform ${isDarkMode ? 'translate-x-4' : 'translate-x-0'}`} />
                 </div>
               </button>
             </div>
 
             {/* Separador antes de cerrar sesión */}
-            <div className="border-t border-gray-100 my-1"></div>
+            <div className="border-t border-[var(--dropdown-border)] my-1"></div>
 
             {/* Cerrar sesión */}
             <div className="py-1">
               <button
                 onClick={() => handleAction(onLogoutClick)}
-                className="group w-full px-4 py-2.5 text-left text-base text-gray-600 hover:text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors cursor-pointer"
+                className="group w-full px-4 py-2.5 text-left text-base text-[var(--dropdown-text)] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-3 transition-colors cursor-pointer"
               >
-                <LogOut className="w-4 h-4 text-gray-500 group-hover:text-red-600 transition-colors" />
+                <LogOut className="w-4 h-4 text-[var(--dropdown-text)] group-hover:text-red-600 transition-colors" />
                 Cerrar sesión
               </button>
             </div>

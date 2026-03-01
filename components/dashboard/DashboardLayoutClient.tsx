@@ -90,13 +90,13 @@ export default function DashboardLayoutClient({ user, children, initialSidebarCo
             <div className="h-14 flex items-center justify-between gap-3">
               <button
                 type="button"
-                className="inline-flex items-center justify-center rounded-xl bg-white p-2 shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] shrink-0 transition-transform active:scale-95 cursor-pointer"
+                className="inline-flex items-center justify-center rounded-xl bg-[var(--card-bg)] p-2 shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] shrink-0 transition-transform active:scale-95 cursor-pointer border border-[var(--card-border)]"
                 aria-label={isMobileSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
                 aria-controls="mobile-sidebar"
                 aria-expanded={isMobileSidebarOpen}
                 onClick={() => setIsMobileSidebarOpen((v: boolean) => !v)}
               >
-                {isMobileSidebarOpen ? <X className="w-8 h-8 text-gray-700" /> : <Menu className="w-8 h-8 text-gray-700" />}
+                {isMobileSidebarOpen ? <X className="w-8 h-8 text-[var(--foreground)] opacity-70" /> : <Menu className="w-8 h-8 text-[var(--foreground)] opacity-70" />}
               </button>
 
               <div className="min-w-0">
@@ -104,7 +104,7 @@ export default function DashboardLayoutClient({ user, children, initialSidebarCo
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.2, ease: "easeOut" }}
-                  className="flex items-center gap-3 text-base bg-white rounded-3xl shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] px-3 py-2 max-w-[calc(100vw-5rem)] overflow-hidden"
+                  className="flex items-center gap-3 text-base bg-[var(--card-bg)] rounded-3xl shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] px-3 py-2 max-w-[calc(100vw-5rem)] overflow-hidden border border-[var(--card-border)]"
                 >
                   <Notification />
                   <DateTime />
@@ -118,7 +118,7 @@ export default function DashboardLayoutClient({ user, children, initialSidebarCo
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="hidden lg:flex absolute top-6 right-6 items-center gap-4 z-30 text-lg bg-white rounded-3xl shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] px-4 py-2"
+          className="hidden lg:flex absolute top-6 right-6 items-center gap-4 z-30 text-lg bg-[var(--card-bg)] rounded-3xl shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] px-4 py-2 border border-[var(--card-border)] transition-colors"
         >
           <Notification />
           <DateTime />

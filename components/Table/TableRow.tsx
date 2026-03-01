@@ -78,7 +78,7 @@ export function TableRow<T extends Record<string, unknown>>({
         : Object.values(data);
     const shouldHideEdit = hideEdit ? hideEdit(data) : false;
     const shouldHideDelete = hideDelete ? hideDelete(data) : false;
-    const rowBgClass = isSelected ? 'bg-primary/5' : rowIndex % 2 === 1 ? 'bg-on-primary-light' : '';
+    const rowBgClass = isSelected ? 'bg-primary/5' : rowIndex % 2 === 1 ? 'bg-[var(--table-row-even-bg)]' : 'bg-transparent';
 
     return (
         <tr className="border-none">

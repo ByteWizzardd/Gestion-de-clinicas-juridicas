@@ -111,7 +111,7 @@ export default function AppointmentList({
 
   return (
     <div className="relative h-full">
-      <div className="bg-white rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] h-full flex flex-col">
+      <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] h-full flex flex-col transition-colors">
         {/* Header con título y botón */}
         <div className="pt-6 px-6 pb-0">
           <div className="flex items-center justify-between gap-3 mb-4">
@@ -119,23 +119,23 @@ export default function AppointmentList({
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <button
                   onClick={onShowAllMonth}
-                  className="p-1.5 hover:bg-gray-100 rounded-md transition-colors shrink-0 cursor-pointer"
+                  className="p-1.5 hover:bg-[var(--sidebar-hover)] rounded-md transition-colors shrink-0 cursor-pointer"
                   aria-label="Ver todas las citas del mes"
                   title="Ver todas las citas del mes"
                 >
-                  <ArrowLeft className="w-4 h-4 text-foreground" />
+                  <ArrowLeft className="w-4 h-4 text-[var(--foreground)]" />
                 </button>
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-xl font-medium text-foreground truncate" title={formatDate(selectedDate)}>
+                  <h2 className="text-xl font-medium text-[var(--foreground)] truncate" title={formatDate(selectedDate)}>
                     Citas - {formatDateShort(selectedDate)}
                   </h2>
-                  <p className="text-sm text-gray-500 truncate">
+                  <p className="text-sm text-[var(--card-text-muted)] truncate transition-colors">
                     {dayNames[selectedDate.getDay()]}, {selectedDate.getFullYear()}
                   </p>
                 </div>
               </div>
             ) : (
-              <h2 className="text-xl font-medium text-foreground flex-1 min-w-0 truncate">
+              <h2 className="text-xl font-medium text-[var(--foreground)] flex-1 min-w-0 truncate">
                 Citas - {monthYear}
               </h2>
             )}
@@ -150,7 +150,7 @@ export default function AppointmentList({
         {/* Lista de citas dentro del contenedor único */}
         <div className="flex-1 overflow-y-auto min-h-0">
           {sortedAppointments.length === 0 ? (
-            <div className="text-center text-gray-500 py-8 px-6">
+            <div className="text-center text-[var(--card-text-muted)] py-8 px-6 transition-colors">
               <p>
                 {isFilteredByDate
                   ? 'No hay citas para este día'
@@ -163,7 +163,7 @@ export default function AppointmentList({
                 <div
                   key={appointment.id}
                   className={`${index === 0 ? 'pt-6 pb-4' : 'pt-4 pb-4'
-                    } ${index !== sortedAppointments.length - 1 ? 'border-b border-gray-200' : ''
+                    } ${index !== sortedAppointments.length - 1 ? 'border-b border-[var(--card-border)]' : ''
                     }`}
                 >
                   <AppointmentCard

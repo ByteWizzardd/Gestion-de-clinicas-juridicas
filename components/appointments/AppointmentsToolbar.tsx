@@ -212,7 +212,7 @@ export default function AppointmentsToolbar({
               zIndex: 10000,
               width: submenuPosition.width || undefined,
             }}
-            className="bg-white border border-gray-300 rounded-2xl shadow-lg w-auto p-4"
+            className="bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)] rounded-2xl shadow-lg w-auto p-4 transition-colors"
           >
             <div className="space-y-3">
               {/* Opciones rápidas de fecha */}
@@ -230,7 +230,7 @@ export default function AppointmentsToolbar({
                   }}
                   className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end ${dateRangeFilter === range
                     ? 'bg-primary-light text-primary font-medium'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    : 'text-[var(--card-text-muted)] hover:bg-[var(--dropdown-hover)] hover:text-[var(--foreground)]'
                     }`}
                 >
                   {range === 'all' && 'Todas las fechas'}
@@ -247,7 +247,7 @@ export default function AppointmentsToolbar({
                 onClick={() => onDateRangeFilterChange('custom')}
                 className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end ${dateRangeFilter === 'custom'
                   ? 'bg-primary-light text-primary font-medium'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  : 'text-[var(--card-text-muted)] hover:bg-[var(--dropdown-hover)] hover:text-[var(--foreground)]'
                   }`}
               >
                 Rango personalizado
@@ -305,7 +305,7 @@ export default function AppointmentsToolbar({
       case 'semestre':
         options = semestreOptions;
         filterValue = termFilter || '';
-        handler = onTermChange || (() => {});
+        handler = onTermChange || (() => { });
         allLabel = 'Todos los semestres';
         break;
     }
@@ -326,7 +326,7 @@ export default function AppointmentsToolbar({
             zIndex: 10000,
             width: submenuPosition.width || undefined,
           }}
-          className="bg-white border border-gray-300 rounded-2xl shadow-lg w-auto p-2 max-h-[300px] overflow-y-auto"
+          className="bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)] rounded-2xl shadow-lg w-auto p-2 max-h-[300px] overflow-y-auto transition-colors"
         >
           {/* Opción "Todos" */}
           <motion.button
@@ -343,7 +343,7 @@ export default function AppointmentsToolbar({
             }}
             className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end ${(isMultiple ? (filterValue as string[]).length === 0 : filterValue === '')
               ? 'bg-primary-light text-primary font-medium'
-              : 'text-gray-600 hover:bg-gray-100'
+              : 'text-[var(--card-text-muted)] hover:bg-[var(--dropdown-hover)] hover:text-[var(--foreground)]'
               }`}
           >
             <div className="flex-1" />
@@ -377,7 +377,7 @@ export default function AppointmentsToolbar({
                 }}
                 className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center gap-2 ${isSelected
                   ? 'bg-primary-light text-primary font-medium'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  : 'text-[var(--card-text-muted)] hover:bg-[var(--dropdown-hover)] hover:text-[var(--foreground)]'
                   }`}
               >
                 {isMultiple && (
@@ -433,10 +433,10 @@ export default function AppointmentsToolbar({
 
           setIsOpen(true);
         }}
-        className={`h-10 w-full sm:w-auto px-4 cursor-pointer rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors ${hasActiveFilter ? 'bg-primary-light border-primary-dark' : ''
+        className={`h-10 w-full sm:w-auto px-4 cursor-pointer rounded-full bg-transparent border border-primary text-[var(--foreground)] flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors ${hasActiveFilter ? 'bg-primary-light border-primary-dark' : ''
           }`}
       >
-        <FilterIcon className="w-[18px] h-[18px] text-[#414040]" />
+        <FilterIcon className="w-[18px] h-[18px] text-[var(--foreground)] opacity-70" />
         <span className="text-base text-center">Filtro</span>
         {hasActiveFilter && (
           <span className="ml-1 bg-primary text-on-primary rounded-full w-5 h-5 flex items-center justify-center text-xs font-medium">
@@ -462,7 +462,7 @@ export default function AppointmentsToolbar({
                 zIndex: 9999,
                 width: menuPosition.width || undefined,
               }}
-              className="bg-white border border-gray-300 rounded-2xl shadow-lg w-auto p-2"
+              className="bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)] rounded-2xl shadow-lg w-auto p-2 transition-colors"
             >
               {/* Opción: Rango de Fechas */}
               <motion.button
@@ -474,8 +474,8 @@ export default function AppointmentsToolbar({
                 className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'fechas'
                   ? 'bg-primary-light text-primary'
                   : dateRangeFilter !== 'all'
-                    ? 'text-primary hover:bg-gray-100'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'text-primary hover:bg-[var(--dropdown-hover)]'
+                    : 'text-[var(--card-text)] hover:bg-[var(--dropdown-hover)]'
                   }`}
               >
                 <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'fechas' ? '-rotate-90' : ''}`} />
@@ -483,7 +483,7 @@ export default function AppointmentsToolbar({
                 <span>Rango de fechas</span>
                 <Calendar className="w-4 h-4" />
               </motion.button>
-              <div className="border-t border-gray-200 my-2"></div>
+              <div className="border-t border-[var(--dropdown-border)] my-2"></div>
 
               {/* Opción: Semestre */}
               <motion.button
@@ -495,8 +495,8 @@ export default function AppointmentsToolbar({
                 className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'semestre'
                   ? 'bg-primary-light text-primary'
                   : (termFilter && termFilter !== 'all')
-                    ? 'text-primary hover:bg-gray-100'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'text-primary hover:bg-[var(--dropdown-hover)]'
+                    : 'text-[var(--card-text)] hover:bg-[var(--dropdown-hover)]'
                   }`}
               >
                 <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'semestre' ? '-rotate-90' : ''}`} />
@@ -504,7 +504,7 @@ export default function AppointmentsToolbar({
                 <span>Semestre</span>
                 <BookOpen className="w-4 h-4" />
               </motion.button>
-              <div className="border-t border-gray-200 my-2"></div>
+              <div className="border-t border-[var(--dropdown-border)] my-2"></div>
 
               {/* Opción: Núcleo */}
               <motion.button
@@ -516,8 +516,8 @@ export default function AppointmentsToolbar({
                 className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'nucleo'
                   ? 'bg-primary-light text-primary'
                   : nucleoFilter
-                    ? 'text-primary hover:bg-gray-100'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'text-primary hover:bg-[var(--dropdown-hover)]'
+                    : 'text-[var(--card-text)] hover:bg-[var(--dropdown-hover)]'
                   }`}
               >
                 <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'nucleo' ? '-rotate-90' : ''}`} />
@@ -525,7 +525,7 @@ export default function AppointmentsToolbar({
                 <span>Núcleo</span>
                 <Layers className="w-4 h-4" />
               </motion.button>
-              <div className="border-t border-gray-200 my-2"></div>
+              <div className="border-t border-[var(--dropdown-border)] my-2"></div>
 
               {/* Opción: Usuario que Atendió */}
               <motion.button
@@ -537,8 +537,8 @@ export default function AppointmentsToolbar({
                 className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'usuario'
                   ? 'bg-primary-light text-primary'
                   : usuarioFilter.length > 0
-                    ? 'text-primary hover:bg-gray-100'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'text-primary hover:bg-[var(--dropdown-hover)]'
+                    : 'text-[var(--card-text)] hover:bg-[var(--dropdown-hover)]'
                   }`}
               >
                 <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'usuario' ? '-rotate-90' : ''}`} />
@@ -546,7 +546,7 @@ export default function AppointmentsToolbar({
                 <span>Usuario que Atendió</span>
                 <Users className="w-4 h-4" />
               </motion.button>
-              <div className="border-t border-gray-200 my-2"></div>
+              <div className="border-t border-[var(--dropdown-border)] my-2"></div>
 
               {/* Opción: Caso */}
               <motion.button
@@ -558,8 +558,8 @@ export default function AppointmentsToolbar({
                 className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'caso'
                   ? 'bg-primary-light text-primary'
                   : caseFilter.length > 0
-                    ? 'text-primary hover:bg-gray-100'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'text-primary hover:bg-[var(--dropdown-hover)]'
+                    : 'text-[var(--card-text)] hover:bg-[var(--dropdown-hover)]'
                   }`}
               >
                 <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'caso' ? '-rotate-90' : ''}`} />
@@ -567,7 +567,7 @@ export default function AppointmentsToolbar({
                 <span>Caso</span>
                 <FileText className="w-4 h-4" />
               </motion.button>
-              <div className="border-t border-gray-200 my-2"></div>
+              <div className="border-t border-[var(--dropdown-border)] my-2"></div>
 
               {/* Opción: Mis Casos (toggle) */}
               <motion.button
@@ -575,14 +575,14 @@ export default function AppointmentsToolbar({
                 whileTap={{ scale: 0.95 }}
                 whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
                 onClick={() => onMisCasosFilterChange(!misCasosFilter)}
-                className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 group ${misCasosFilter ? 'text-red-600' : 'text-gray-600'
+                className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 group ${misCasosFilter ? 'text-red-600' : 'text-[var(--card-text-muted)] hover:bg-[var(--dropdown-hover)] hover:text-[var(--foreground)]'
                   }`}
               >
                 <div className="flex-1" />
                 <span>Mis casos</span>
-                <UserCheck className={`w-4 h-4 ${misCasosFilter ? 'text-red-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
+                <UserCheck className={`w-4 h-4 ${misCasosFilter ? 'text-red-600' : 'text-[var(--card-text-muted)] opacity-70 group-hover:text-[var(--foreground)]'}`} />
               </motion.button>
-              <div className="border-t border-gray-200 my-2"></div>
+              <div className="border-t border-[var(--dropdown-border)] my-2"></div>
 
               {/* Botón limpiar filtros */}
               {hasActiveFilter && (

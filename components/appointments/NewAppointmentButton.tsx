@@ -111,7 +111,7 @@ export default function NewAppointmentButton({
       onOpenChange={setIsOpen}
       align="right"
       className="relative"
-      menuClassName="bg-white border border-gray-300 rounded-2xl shadow-xl min-w-[200px] overflow-hidden py-2"
+      menuClassName="bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)] rounded-2xl shadow-xl min-w-[200px] overflow-hidden py-2 transition-colors"
     >
       <div onClick={(e) => e.stopPropagation()}>
         <button
@@ -126,7 +126,7 @@ export default function NewAppointmentButton({
               onSchedule();
             });
           }}
-          className="w-full px-4 py-3 text-left text-sm text-gray-700 cursor-pointer hover:bg-gray-50 transition-colors flex items-center gap-3"
+          className="w-full px-4 py-3 text-left text-sm text-[var(--foreground)] cursor-pointer hover:bg-[var(--dropdown-hover)] transition-colors flex items-center gap-3"
         >
           <Calendar className="w-5 h-5 text-primary" />
           <span>Programar cita</span>
@@ -143,7 +143,7 @@ export default function NewAppointmentButton({
               onRegister();
             });
           }}
-          className="w-full px-4 py-3 text-left text-sm text-gray-700 cursor-pointer hover:bg-gray-50 transition-colors flex items-center gap-3"
+          className="w-full px-4 py-3 text-left text-sm text-[var(--foreground)] cursor-pointer hover:bg-[var(--dropdown-hover)] transition-colors flex items-center gap-3"
         >
           <FileText className="w-5 h-5 text-primary" />
           <span>Registrar cita</span>

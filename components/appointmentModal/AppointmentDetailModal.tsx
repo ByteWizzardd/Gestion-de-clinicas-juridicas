@@ -50,7 +50,7 @@ export function AppointmentDetailModal({ appointment, isOpen, onClose }: Appoint
         {/* Botón de cerrar */}
         <button
           onClick={handleClose}
-          className="absolute top-6 right-6 cursor-pointer p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors z-10"
+          className="absolute top-6 right-6 cursor-pointer p-2 text-[var(--card-text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--sidebar-hover)] rounded-md transition-colors z-10"
           aria-label="Cerrar modal"
         >
           <X className="w-6 h-6" />
@@ -77,7 +77,7 @@ export function AppointmentDetailModal({ appointment, isOpen, onClose }: Appoint
                     <Calendar className="w-5 h-5 text-primary" />
                     Fecha de Encuentro
                   </label>
-                  <p className="text-base text-gray-900">
+                  <p className="text-base text-[var(--foreground)]">
                     {formatDate(appointment.date)}
                   </p>
                 </div>
@@ -94,7 +94,7 @@ export function AppointmentDetailModal({ appointment, isOpen, onClose }: Appoint
                       <User className="w-5 h-5 text-primary" />
                       {appointment.isMultiplePeople ? 'Personas que atenderán' : 'Persona que atenderá'}
                     </label>
-                    <p className="text-base text-gray-900">
+                    <p className="text-base text-[var(--foreground)]">
                       {appointment.attendingUsers}
                     </p>
                   </div>
@@ -109,7 +109,7 @@ export function AppointmentDetailModal({ appointment, isOpen, onClose }: Appoint
                   <FileText className="w-5 h-5 text-primary" />
                   Caso relacionado
                 </label>
-                <p className="text-base text-gray-900">
+                <p className="text-base text-[var(--foreground)]">
                   {appointment.caseDetail}
                 </p>
               </div>
@@ -127,7 +127,7 @@ export function AppointmentDetailModal({ appointment, isOpen, onClose }: Appoint
                     <Calendar className="w-5 h-5 text-primary" />
                     Fecha de la cita
                   </label>
-                  <p className="text-base text-gray-900">
+                  <p className="text-base text-[var(--foreground)]">
                     {formatDate(appointment.date)}
                   </p>
                 </div>
@@ -141,7 +141,7 @@ export function AppointmentDetailModal({ appointment, isOpen, onClose }: Appoint
                       <User className="w-5 h-5 text-primary" />
                       {appointment.isMultiplePeople ? 'Personas que atendieron' : 'Persona que atendió'}
                     </label>
-                    <p className="text-base text-gray-900">
+                    <p className="text-base text-[var(--foreground)]">
                       {appointment.attendingUsers}
                     </p>
                   </div>
@@ -158,7 +158,7 @@ export function AppointmentDetailModal({ appointment, isOpen, onClose }: Appoint
                     <FileText className="w-5 h-5 text-primary" />
                     Caso relacionado
                   </label>
-                  <p className="text-base text-gray-900">
+                  <p className="text-base text-[var(--foreground)]">
                     {appointment.caseDetail}
                   </p>
                 </div>
@@ -172,7 +172,7 @@ export function AppointmentDetailModal({ appointment, isOpen, onClose }: Appoint
                       <Calendar className="w-5 h-5 text-primary" />
                       Fecha de próxima cita
                     </label>
-                    <p className="text-base text-gray-900">
+                    <p className="text-base text-[var(--foreground)]">
                       {appointment.nextAppointmentDate}
                     </p>
                   </div>
@@ -187,7 +187,7 @@ export function AppointmentDetailModal({ appointment, isOpen, onClose }: Appoint
                   <FileText className="w-5 h-5 text-primary" />
                   Orientación
                 </label>
-                <p className="text-base text-gray-900">
+                <p className="text-base text-[var(--foreground)]">
                   {appointment.orientation}
                 </p>
               </div>

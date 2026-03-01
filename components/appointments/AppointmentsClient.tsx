@@ -615,10 +615,10 @@ export default function AppointmentsClient({
   return (
     <div className="h-full relative ">
       <div className="mb-4 md:mb-6 mt-4">
-        <h1 className="text-4xl m-3 font-semibold font-primary">
+        <h1 className="text-4xl m-3 font-semibold font-primary text-[var(--foreground)] transition-colors">
           Citas
         </h1>
-        <p className="mb-6 ml-3 text-gray-600">
+        <p className="mb-6 ml-3 text-[var(--card-text-muted)] transition-colors">
           Vista de programación de las citas.
         </p>
       </div>
@@ -706,9 +706,9 @@ export default function AppointmentsClient({
                               placeholder="Buscar cita..."
                               value={searchValue}
                               onChange={(e) => setSearchValue(e.target.value)}
-                              className="flex-1 px-4 py-2.5 h-full focus:outline-none bg-transparent text-base text-foreground placeholder:text-gray-500"
+                              className="flex-1 px-4 py-2.5 h-full focus:outline-none bg-transparent text-base text-[var(--foreground)] placeholder:text-[var(--card-text-muted)]"
                             />
-                            <SearchIcon className="w-[18px] h-[18px] text-[#414040] mr-3 shrink-0" />
+                            <SearchIcon className="w-[18px] h-[18px] text-[var(--foreground)] opacity-70 mr-3 shrink-0" />
                           </label>
                         </form>
                       </search>

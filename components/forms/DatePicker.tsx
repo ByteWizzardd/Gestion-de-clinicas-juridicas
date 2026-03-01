@@ -336,7 +336,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
   return (
     <div className="relative" ref={dropdownRef}>
       {label && (
-        <label className="block text-xs font-medium text-gray-700 mb-1">
+        <label className="block text-xs font-medium text-[var(--card-text)] mb-1 transition-colors">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -347,16 +347,16 @@ export default function DatePicker({ value, onChange, error, required, disabled 
           if (!disabled) setIsOpen(!isOpen);
         }}
         className={`
-          w-full h-[40px] pl-12 pr-4 rounded-full border flex items-center relative
-          ${error ? 'border-danger' : 'border-gray-300'}
+          w-full h-[40px] pl-12 pr-4 rounded-full border flex items-center relative transition-all
+          ${error ? 'border-danger' : 'border-[var(--card-border)]'}
           focus-within:ring-1 
           ${error ? 'focus-within:ring-danger' : 'focus-within:ring-primary'}
-          bg-white
+          bg-[var(--card-bg)]
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         `}
       >
-        <Calendar className="absolute left-4 w-5 h-5 text-gray-400" />
-        <span className={`text-base ${value ? 'text-gray-600' : 'text-gray-400'}`}>
+        <Calendar className="absolute left-4 w-5 h-5 text-[var(--card-text-muted)] transition-colors" />
+        <span className={`text-base transition-colors ${value ? 'text-[var(--card-text)]' : 'text-[var(--card-text-muted)]'}`}>
           {formatDisplayDate(value)}
         </span>
       </div>
@@ -377,11 +377,12 @@ export default function DatePicker({ value, onChange, error, required, disabled 
             zIndex: isInsideModal ? 99999 : 10001,
             pointerEvents: 'auto',
             transform: openUpward ? 'translateY(-100%)' : 'none',
-            backgroundColor: 'white',
-            border: '1px solid #D1D5DB',
+            backgroundColor: 'var(--card-bg)',
+            border: '1px solid var(--card-border)',
             borderRadius: '1rem',
             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-            padding: '0.5rem'
+            padding: '0.5rem',
+            transition: 'background-color 0s, border-color 0s'
           }}
         >
           {/* Header con navegación */}
@@ -389,16 +390,16 @@ export default function DatePicker({ value, onChange, error, required, disabled 
             <button
               type="button"
               onClick={viewMode === 'calendar' ? handlePrevMonth : viewMode === 'month' ? handlePrevYear : handlePrevYearRange}
-              className="p-1 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+              className="p-1 hover:bg-[var(--sidebar-hover)] rounded-md transition-colors cursor-pointer"
             >
-              <ChevronLeft className="w-4 h-4 text-foreground" />
+              <ChevronLeft className="w-4 h-4 text-[var(--foreground)]" />
             </button>
             <button
               type="button"
               onClick={handleHeaderClick}
-              className="px-2 py-1 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+              className="px-2 py-1 hover:bg-[var(--sidebar-hover)] rounded-md transition-colors cursor-pointer"
             >
-              <h3 className="text-sm font-semibold text-foreground">
+              <h3 className="text-sm font-semibold text-[var(--foreground)] transition-colors">
                 {viewMode === 'calendar' && `${monthNames[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`}
                 {viewMode === 'month' && `${currentMonth.getFullYear()}`}
                 {viewMode === 'year' && `${yearRange.start} - ${yearRange.end}`}
@@ -407,9 +408,9 @@ export default function DatePicker({ value, onChange, error, required, disabled 
             <button
               type="button"
               onClick={viewMode === 'calendar' ? handleNextMonth : viewMode === 'month' ? handleNextYear : handleNextYearRange}
-              className="p-1 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+              className="p-1 hover:bg-[var(--sidebar-hover)] rounded-md transition-colors cursor-pointer"
             >
-              <ChevronRight className="w-4 h-4 text-foreground" />
+              <ChevronRight className="w-4 h-4 text-[var(--foreground)]" />
             </button>
           </div>
 
@@ -417,12 +418,12 @@ export default function DatePicker({ value, onChange, error, required, disabled 
           {viewMode === 'calendar' && (
             <div className="grid grid-cols-7 gap-0.5">
               {dayNames.map((day) => (
-                <div key={day} className="text-[10px] font-medium text-gray-500 text-center py-1">{day}</div>
+                <div key={day} className="text-[10px] font-medium text-[var(--card-text-muted)] text-center py-1 transition-colors">{day}</div>
               ))}
               {Array.from({ length: startingDayOfWeek }, (_, i) => {
                 const day = daysInPrevMonth - startingDayOfWeek + i + 1;
                 return (
-                  <button key={`prev-${day}`} type="button" onClick={() => handleDayClick(day, false)} className="text-sm text-gray-400 hover:bg-gray-100 rounded-md py-1 cursor-pointer">
+                  <button key={`prev-${day}`} type="button" onClick={() => handleDayClick(day, false)} className="text-sm text-[var(--card-text-muted)] opacity-50 hover:bg-[var(--sidebar-hover)] rounded-md py-1 cursor-pointer transition-colors">
                     {day}
                   </button>
                 );
@@ -430,9 +431,9 @@ export default function DatePicker({ value, onChange, error, required, disabled 
               {Array.from({ length: daysInMonth }, (_, i) => {
                 const day = i + 1;
                 const todayClass = isToday(day, true) ? 'font-semibold' : '';
-                const selectedClass = isSelected(day, true) ? 'bg-primary text-white' : 'hover:bg-gray-100';
+                const selectedClass = isSelected(day, true) ? 'bg-primary text-white shadow-sm' : 'text-[var(--card-text)] hover:bg-[var(--sidebar-hover)]';
                 return (
-                  <button key={day} type="button" onClick={() => handleDayClick(day, true)} className={`text-sm ${todayClass} ${selectedClass} rounded-md py-1 cursor-pointer`}>
+                  <button key={day} type="button" onClick={() => handleDayClick(day, true)} className={`text-sm ${todayClass} ${selectedClass} rounded-md py-1 cursor-pointer transition-colors`}>
                     {day}
                   </button>
                 );
@@ -440,7 +441,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
               {Array.from({ length: daysInNextMonth }, (_, i) => {
                 const day = i + 1;
                 return (
-                  <button key={`next-${day}`} type="button" onClick={() => handleDayClick(day, false)} className="text-sm text-gray-400 hover:bg-gray-100 rounded-md py-1 cursor-pointer">
+                  <button key={`next-${day}`} type="button" onClick={() => handleDayClick(day, false)} className="text-sm text-[var(--card-text-muted)] opacity-50 hover:bg-[var(--sidebar-hover)] rounded-md py-1 cursor-pointer transition-colors">
                     {day}
                   </button>
                 );
@@ -456,7 +457,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
                   key={month}
                   type="button"
                   onClick={() => handleMonthClick(index)}
-                  className={`px-1 py-1.5 text-sm text-center rounded-md transition-colors cursor-pointer ${index === currentMonth.getMonth() ? 'bg-primary text-white font-semibold' : 'hover:bg-gray-100'}`}
+                  className={`px-1 py-1.5 text-sm text-center rounded-md transition-colors cursor-pointer ${index === currentMonth.getMonth() ? 'bg-primary text-white font-semibold' : 'text-[var(--card-text)] hover:bg-[var(--sidebar-hover)]'}`}
                 >
                   {month.slice(0, 3)}
                 </button>
@@ -475,7 +476,7 @@ export default function DatePicker({ value, onChange, error, required, disabled 
                     key={year}
                     type="button"
                     onClick={() => handleYearClick(year)}
-                    className={`px-2 py-1.5 text-sm rounded-md transition-colors cursor-pointer ${isCurrentYear ? 'bg-primary text-white font-semibold' : 'hover:bg-gray-100'}`}
+                    className={`px-2 py-1.5 text-sm rounded-md transition-colors cursor-pointer ${isCurrentYear ? 'bg-primary text-white font-semibold' : 'text-[var(--card-text)] hover:bg-[var(--sidebar-hover)]'}`}
                   >
                     {year}
                   </button>

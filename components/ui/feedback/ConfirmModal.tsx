@@ -42,20 +42,20 @@ export default function ConfirmModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} showCloseButton={false} size="lg">
-      <div className="bg-white p-6 relative">
+      <div className="bg-[var(--card-bg)] p-6 relative transition-colors">
         {/* Botón de cerrar */}
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors z-10 cursor-pointer"
+          className="absolute top-6 right-6 p-2 text-[var(--card-text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--sidebar-hover)] rounded-full transition-colors z-10 cursor-pointer"
           aria-label="Cerrar modal"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <h2 className="text-2xl font-normal text-foreground mb-4 pr-8" style={{ fontFamily: 'var(--font-league-spartan)' }}>
+        <h2 className="text-2xl font-normal text-[var(--foreground)] mb-4 pr-8" style={{ fontFamily: 'var(--font-league-spartan)' }}>
           {title}
         </h2>
-        <div className="text-base text-gray-600 mb-6 leading-relaxed">
+        <div className="text-base text-[var(--card-text-muted)] mb-6 leading-relaxed">
           {message}
         </div>
 
@@ -65,16 +65,16 @@ export default function ConfirmModal({
               Motivo
             </label>
             <textarea
-              className="w-full p-4 rounded-lg border bg-[#E5E7EB] border-transparent
+              className="w-full p-4 rounded-lg border bg-[var(--ui-bg-muted)] border-[var(--dropdown-border)]
                          focus:outline-none focus:ring-1 focus:ring-primary
-                         text-base placeholder:text-[#717171] resize-none"
+                         text-[var(--foreground)] placeholder:text-[var(--card-text-muted)] resize-none transition-colors"
               rows={4}
               maxLength={250}
               value={motiveValue}
               onChange={(e) => onMotiveChange?.(e.target.value)}
               placeholder={motivePlaceholder}
             />
-            <div className="text-right text-xs text-gray-500 mt-1">
+            <div className="text-right text-xs text-[var(--card-text-muted)] mt-1 transition-colors">
               {motiveValue.length} / 250 caracteres
             </div>
           </div>

@@ -185,31 +185,31 @@ export default function CompactCalendar({
       <div className="flex items-center justify-between mb-2 md:mb-3 shrink-0">
         <button
           onClick={handlePrevMonth}
-          className="p-0.5 md:p-1 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+          className="p-0.5 md:p-1 hover:bg-[var(--sidebar-hover)] rounded-md transition-colors cursor-pointer"
           aria-label="Mes anterior"
         >
-          <ChevronLeft className="w-3 h-3 md:w-4 md:h-4 text-foreground" />
+          <ChevronLeft className="w-3 h-3 md:w-4 md:h-4 text-[var(--foreground)] opacity-70" />
         </button>
         <h2 className="text-xs md:text-sm font-semibold text-foreground">
           {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
         </h2>
         <button
           onClick={handleNextMonth}
-          className="p-0.5 md:p-1 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+          className="p-0.5 md:p-1 hover:bg-[var(--sidebar-hover)] rounded-md transition-colors cursor-pointer"
           aria-label="Mes siguiente"
         >
-          <ChevronRight className="w-3 h-3 md:w-4 md:h-4 text-foreground" />
+          <ChevronRight className="w-3 h-3 md:w-4 md:h-4 text-[var(--foreground)] opacity-70" />
         </button>
       </div>
 
       {/* Tabla de calendario con bordes - más compacta */}
-      <div className="border border-gray-300 rounded-lg md:rounded-xl overflow-hidden flex-1 flex flex-col">
+      <div className="border border-[var(--ui-border)] rounded-lg md:rounded-xl overflow-hidden flex-1 flex flex-col transition-colors">
         {/* Header de días de la semana - más compacto */}
-        <div className="grid grid-cols-7 border-b border-gray-300 shrink-0">
+        <div className="grid grid-cols-7 border-b border-[var(--ui-border)] shrink-0 transition-colors">
           {dayNames.map((day, index) => (
             <div
               key={day}
-              className={`text-center text-[9px] md:text-[10px] font-medium text-gray-600 py-0.5 md:py-1 border-r border-gray-300 bg-gray-50 ${index === dayNames.length - 1 ? 'border-r-0' : ''
+              className={`text-center text-[9px] md:text-[10px] font-medium text-[var(--card-text-muted)] py-0.5 md:py-1 border-r border-[var(--ui-border)] bg-[var(--ui-bg-muted)] transition-colors ${index === dayNames.length - 1 ? 'border-r-0' : ''
                 }`}
             >
               {day}
@@ -230,7 +230,7 @@ export default function CompactCalendar({
               <button
                 key={`prev-${day}`}
                 onClick={() => handleDayClick(day, false)}
-                className={`p-0.5 md:p-1 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-[10px] md:text-xs text-center cursor-pointer ${isLastInRow ? 'border-r-0' : ''
+                className={`p-0.5 md:p-1 text-[var(--card-text-muted)] opacity-50 bg-[var(--ui-bg-inactive)] border-r border-b border-[var(--ui-border)] hover:bg-opacity-80 transition-all text-[10px] md:text-xs text-center cursor-pointer ${isLastInRow ? 'border-r-0' : ''
                   }`}
               >
                 {day}
@@ -253,7 +253,7 @@ export default function CompactCalendar({
                 key={day}
                 onClick={() => handleDayClick(day, true)}
                 className={`
-                    p-0.5 md:p-1 border-r border-b border-gray-300 transition-colors text-[10px] md:text-xs text-center relative cursor-pointer
+                    p-0.5 md:p-1 border-r border-b border-[var(--ui-border)] transition-colors text-[10px] md:text-xs text-center relative cursor-pointer
                     ${isLastInRow ? 'border-r-0' : ''}
                     ${isSelectedDay
                     ? isCurrentDay
@@ -263,7 +263,7 @@ export default function CompactCalendar({
                       ? 'text-primary font-bold border border-primary shadow-sm'
                       : hasApts
                         ? 'bg-primary-light text-primary font-medium hover:bg-primary-light/80'
-                        : 'text-foreground hover:bg-gray-50'
+                        : 'text-[var(--foreground)] hover:bg-[var(--ui-bg-muted)]'
                   }
                   `}
               >
@@ -285,7 +285,7 @@ export default function CompactCalendar({
               <button
                 key={`next-${day}`}
                 onClick={() => handleDayClick(day, false)}
-                className={`p-0.5 md:p-1 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-[10px] md:text-xs text-center cursor-pointer ${isLastInRow ? 'border-r-0' : ''
+                className={`p-0.5 md:p-1 text-[var(--card-text-muted)] opacity-50 bg-[var(--ui-bg-inactive)] border-r border-b border-[var(--ui-border)] hover:bg-opacity-80 transition-all text-[10px] md:text-xs text-center cursor-pointer ${isLastInRow ? 'border-r-0' : ''
                   }`}
               >
                 {day}

@@ -17,16 +17,16 @@ export default function AppointmentCard({ appointment, onClick }: AppointmentCar
 
 
   return (
-    <div className="relative cursor-pointer hover:bg-gray-100 rounded-lg p-2 -m-2 transition-colors" onClick={onClick}>
+    <div className="relative cursor-pointer hover:bg-[var(--sidebar-hover)] rounded-lg p-2 -m-2 transition-colors" onClick={onClick}>
       {/* Primera línea: Caso y Fecha */}
       <div className="mb-1">
-        <p className="text-base text-black font-normal">
+        <p className="text-base text-[var(--foreground)] font-normal">
           {appointment.caseDetail.split('(')[0].trim()} ({appointment.client}) {formatDate(appointment.date)}
         </p>
       </div>
 
       {/* Segunda línea: Materia */}
-      <p className="text-base text-gray-600 font-normal">
+      <p className="text-base text-[var(--card-text-muted)] font-normal transition-colors">
         {appointment.title}
       </p>
     </div>

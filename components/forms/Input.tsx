@@ -23,13 +23,13 @@ export default function Input({ label, error, className = "", disabled, endConte
             <div className="relative">
                 <input
                     className={`
-                        w-full h-[40px] px-4 rounded-full border
-                        ${error ? 'border-danger' : 'border-transparent'}
-                        ${disabled ? 'bg-gray-200 text-gray-600 cursor-not-allowed' : 'bg-[#E5E7EB]'}
+                        w-full h-[40px] px-4 rounded-full border transition-all
+                        ${error ? 'border-danger' : 'border-[var(--dropdown-border)]'}
+                        ${disabled ? 'bg-[var(--ui-bg-inactive)] text-[var(--card-text-muted)] cursor-not-allowed' : 'bg-[var(--ui-bg-muted)] text-[var(--foreground)]'}
                         focus:outline-none focus:ring-1 focus:ring-primary
-                        ${error ? 'focus:ring-danger' : 'focus:ring-primary'}
+                        ${error ? 'focus:ring-danger border-danger' : 'focus:ring-primary'}
                         ${disabled ? 'focus:ring-0' : ''}
-                        text-base placeholder:text-[#717171]
+                        text-base placeholder:text-[var(--card-text-muted)]
                         ${endContent ? 'pr-10' : ''}
                         ${className}
                     `}

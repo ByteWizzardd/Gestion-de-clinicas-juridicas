@@ -175,31 +175,31 @@ export default function CalendarWidget({
       <div className="flex items-center justify-between mb-6 shrink-0">
         <button
           onClick={handlePrevMonth}
-          className="p-2 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+          className="p-2 hover:bg-[var(--sidebar-hover)] rounded-md transition-colors cursor-pointer"
           aria-label="Mes anterior"
         >
-          <ChevronLeft className="w-5 h-5 text-foreground" />
+          <ChevronLeft className="w-5 h-5 text-[var(--foreground)] opacity-70" />
         </button>
         <h2 className="text-xl font-semibold text-foreground">
           {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
         </h2>
         <button
           onClick={handleNextMonth}
-          className="p-2 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+          className="p-2 hover:bg-[var(--sidebar-hover)] rounded-md transition-colors cursor-pointer"
           aria-label="Mes siguiente"
         >
-          <ChevronRight className="w-5 h-5 text-foreground" />
+          <ChevronRight className="w-5 h-5 text-[var(--foreground)] opacity-70" />
         </button>
       </div>
 
       {/* Tabla de calendario con bordes */}
-      <div className="border border-gray-300 rounded-2xl overflow-hidden flex-1 flex flex-col">
+      <div className="border border-[var(--ui-border)] rounded-2xl overflow-hidden flex-1 flex flex-col transition-colors">
         {/* Header de días de la semana */}
-        <div className="grid grid-cols-7 border-b border-gray-300 shrink-0">
+        <div className="grid grid-cols-7 border-b border-[var(--ui-border)] shrink-0 transition-colors">
           {dayNames.map((day, index) => (
             <div
               key={day}
-              className={`text-center text-xs font-medium text-gray-600 py-2 border-r border-gray-300 bg-gray-50 ${index === dayNames.length - 1 ? 'border-r-0' : ''
+              className={`text-center text-xs font-medium text-[var(--card-text-muted)] py-2 border-r border-[var(--ui-border)] bg-[var(--ui-bg-muted)] transition-colors ${index === dayNames.length - 1 ? 'border-r-0' : ''
                 }`}
             >
               {day}
@@ -225,7 +225,7 @@ export default function CalendarWidget({
                 <button
                   key={`prev-${day}`}
                   onClick={() => handleDayClick(day, false)}
-                  className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-base text-left cursor-pointer ${isLastInRow ? 'border-r-0' : ''
+                  className={` p-2 text-[var(--card-text-muted)] opacity-50 bg-[var(--ui-bg-inactive)] border-r border-b border-[var(--ui-border)] hover:bg-opacity-80 transition-all text-base text-left cursor-pointer ${isLastInRow ? 'border-r-0' : ''
                     }`}
                 >
                   {day}
@@ -248,7 +248,7 @@ export default function CalendarWidget({
                   key={day}
                   onClick={() => handleDayClick(day, true)}
                   className={`
- p-2 border-r border-b border-gray-300 transition-all duration-200 ease-in-out text-base text-left relative cursor-pointer
+ p-2 border-r border-b border-[var(--ui-border)] transition-all duration-200 ease-in-out text-base text-left relative cursor-pointer
                     ${isLastInRow ? 'border-r-0' : ''}
                     ${isSelectedDay
                       ? isCurrentDay
@@ -258,7 +258,7 @@ export default function CalendarWidget({
                         ? 'text-primary font-bold border border-primary shadow-sm'
                         : hasApts
                           ? 'bg-primary-light text-primary font-medium hover:bg-primary-light/80'
-                          : 'text-foreground hover:bg-gray-200 hover:font-medium'
+                          : 'text-[var(--foreground)] hover:bg-[var(--ui-bg-muted)] hover:font-medium'
                     }
                   `}
                 >
@@ -280,7 +280,7 @@ export default function CalendarWidget({
                 <button
                   key={`next-${day}`}
                   onClick={() => handleDayClick(day, false)}
-                  className={` p-2 text-gray-400 bg-[#DDE2E8] border-r border-b border-gray-300 hover:bg-gray-300 transition-colors text-base text-left cursor-pointer ${isLastInRow ? 'border-r-0' : ''
+                  className={` p-2 text-[var(--card-text-muted)] opacity-50 bg-[var(--ui-bg-inactive)] border-r border-b border-[var(--ui-border)] hover:bg-opacity-80 transition-all text-base text-left cursor-pointer ${isLastInRow ? 'border-r-0' : ''
                     }`}
                 >
                   {day}

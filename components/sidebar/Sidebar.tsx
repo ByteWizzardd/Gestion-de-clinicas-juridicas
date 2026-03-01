@@ -161,7 +161,7 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
       {/* Botón de toggle (visible al hacer hover o siempre visible) */}
       <button
         onClick={toggleSidebar}
-        className="absolute -right-2 lg:-right-3 top-6 lg:top-8 bg-white rounded-full p-1 lg:p-1.5 shadow-md border border-gray-100 text-gray-500 hover:text-primary transition-all duration-300 z-50 lg:opacity-0 lg:group-hover:opacity-100 focus:opacity-100 cursor-pointer hidden lg:flex items-center justify-center"
+        className="absolute -right-2 lg:-right-3 top-6 lg:top-8 bg-[var(--dropdown-bg)] rounded-full p-1 lg:p-1.5 shadow-md border border-[var(--dropdown-border)] text-[var(--foreground)] opacity-60 hover:opacity-100 hover:text-primary transition-all duration-300 z-50 lg:opacity-0 lg:group-hover:opacity-100 focus:opacity-100 cursor-pointer hidden lg:flex items-center justify-center"
         aria-label={isCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
       >
         {isCollapsed ? (
@@ -175,7 +175,7 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
       {onNavigate && (
         <button
           onClick={onNavigate}
-          className="absolute right-3 top-5 bg-gray-100/80 backdrop-blur-sm rounded-full p-1.5 text-gray-600 hover:text-primary hover:bg-gray-200 transition-all duration-300 z-50 lg:hidden flex items-center justify-center cursor-pointer shadow-sm"
+          className="absolute right-3 top-5 bg-[var(--sidebar-hover)] opacity-80 backdrop-blur-sm rounded-full p-1.5 text-[var(--foreground)] hover:text-primary transition-all duration-300 z-50 lg:hidden flex items-center justify-center cursor-pointer shadow-sm"
           aria-label="Cerrar menú"
         >
           <X className="w-4 h-4" />
@@ -240,7 +240,7 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
                   onClick={onNavigate}
                   className={`flex items-center gap-3 px-3 md:px-4 py-2.5 md:py-3 transition-all duration-200 whitespace-nowrap
                       ${isActive ? 'bg-primary text-white font-semibold rounded-3xl'
-                      : 'text-foreground hover:bg-gray-100 rounded-lg hover:rounded-3xl'}
+                      : 'text-foreground hover:bg-[var(--sidebar-hover)] rounded-lg hover:rounded-3xl'}
                       ${isCollapsed ? 'justify-center px-2' : ''}
                   `}
                   title={isCollapsed ? item.label : undefined}
@@ -297,8 +297,8 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
                 className="w-10 h-10 rounded-full object-cover shrink-0 border-2 border-gray-200"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-gray-200 shrink-0 flex items-center justify-center">
-                <span className="text-gray-500 text-sm font-medium">
+              <div className="w-10 h-10 rounded-full bg-[var(--sidebar-hover)] shrink-0 flex items-center justify-center transition-colors">
+                <span className="text-[var(--foreground)] opacity-60 text-sm font-medium">
                   {displayName.charAt(0).toUpperCase()}
                 </span>
               </div>

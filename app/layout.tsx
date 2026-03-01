@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Urbanist, League_Spartan } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from '@/components/ui/feedback/ToastProvider';
+import { ThemeProvider } from "../components/providers/ThemeProvider";
 
 //font secundaria
 const urbanist = Urbanist({
@@ -30,13 +31,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${urbanist.className} ${leagueSpartan.className} antialiased`}
       >
-        <ToastProvider>
-          {children}
-        </ToastProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+          disableTransitionOnChange
+        >
+          <ToastProvider>
+            {children}
+          </ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

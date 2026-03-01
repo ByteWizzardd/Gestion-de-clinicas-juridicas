@@ -415,11 +415,6 @@ function Filter({
   const renderSubmenu = () => {
     if (!isBrowser) return null;
 
-    // Usar opciones guardadas si se está cerrando
-    // Si hay un submenú activo, ya se habrá actualizado el efecto o se usará currentOptions del render anterior si coincide
-    // Pero mejor recalcular si está activo para reactividad instantánea, o confiar en el efecto.
-    // El efecto puede tener un ligero retraso. Para evitar parpadeo al abrir, calculamos si está activo.
-
     let options: { value: string; label: string }[] = [];
     let filterValue = '';
     let handler: (value: string) => void = () => { };
@@ -580,7 +575,7 @@ function Filter({
                 width: submenuPosition.width || undefined,
                 maxHeight: isBrowser ? `calc(100vh - ${submenuPosition.top + 16}px)` : '450px',
               }}
-              className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[200px] p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent shadow-xl"
+              className="bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)] rounded-2xl shadow-lg w-[200px] p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent shadow-xl transition-colors"
             >
               <div className="space-y-3">
                 {/* Opciones rápidas de fecha (mismo patrón que Citas) */}
@@ -589,7 +584,7 @@ function Filter({
                     key={range}
                     type="button"
                     whileTap={{ scale: 0.95 }}
-                    whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                    whileHover={{ x: 4, backgroundColor: 'var(--dropdown-hover)' }}
                     onClick={() => {
                       if (!onFechaInicioChange || !onFechaFinChange) return;
 
@@ -623,7 +618,7 @@ function Filter({
                     }}
                     className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end ${dateRangeFilter === range
                       ? 'bg-primary-light text-primary font-medium'
-                      : 'text-gray-600 hover:bg-gray-100'
+                      : 'text-[var(--card-text-muted)] hover:bg-[var(--dropdown-hover)]'
                       }`}
                   >
                     {range === 'all' && 'Todas las fechas'}
@@ -637,13 +632,13 @@ function Filter({
                 <motion.button
                   type="button"
                   whileTap={{ scale: 0.95 }}
-                  whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                  whileHover={{ x: 4, backgroundColor: 'var(--dropdown-hover)' }}
                   onClick={() => {
                     setDateRangeFilter('custom');
                   }}
                   className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end ${dateRangeFilter === 'custom'
                     ? 'bg-primary-light text-primary font-medium'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    : 'text-[var(--card-text-muted)] hover:bg-[var(--dropdown-hover)]'
                     }`}
                 >
                   Rango personalizado
@@ -708,19 +703,19 @@ function Filter({
               width: submenuPosition.width || undefined,
               maxHeight: isBrowser ? `calc(100vh - ${submenuPosition.top + 16}px)` : '350px',
             }}
-            className="bg-white border border-gray-300 rounded-2xl shadow-lg w-[180px] p-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent shadow-xl"
+            className="bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)] rounded-2xl shadow-lg w-[180px] p-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent shadow-xl transition-colors"
           >
             <motion.button
               type="button"
               whileTap={{ scale: 0.95 }}
-              whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+              whileHover={{ x: 4, backgroundColor: 'var(--dropdown-hover)' }}
               onClick={() => {
                 handler('');
                 setActiveSubmenu(null);
               }}
               className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end text-right ${filterValue === ''
                 ? 'bg-primary-light text-primary font-medium'
-                : 'text-gray-600 hover:bg-gray-100'
+                : 'text-[var(--card-text-muted)] hover:bg-[var(--dropdown-hover)]'
                 }`}
             >
               <div className="flex-1" />
@@ -731,14 +726,14 @@ function Filter({
                 key={option.value}
                 type="button"
                 whileTap={{ scale: 0.95 }}
-                whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                whileHover={{ x: 4, backgroundColor: 'var(--dropdown-hover)' }}
                 onClick={() => {
                   handler(option.value);
                   setActiveSubmenu(null);
                 }}
                 className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end text-right ${filterValue === option.value
                   ? 'bg-primary-light text-primary font-medium'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  : 'text-[var(--card-text-muted)] hover:bg-[var(--dropdown-hover)]'
                   }`}
               >
                 <div className="flex-1" />
@@ -771,9 +766,9 @@ function Filter({
           setIsOpen(!isOpen);
           if (isOpen) setActiveSubmenu(null);
         }}
-        className={`h-10 w-full sm:w-auto px-4 cursor-pointer rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-colors ${hasActiveFilter ? 'bg-primary-light border-primary-dark' : ''}`}
+        className={`h-10 w-full sm:w-auto px-4 cursor-pointer rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap hover:bg-primary-light transition-all ${hasActiveFilter ? 'bg-primary-light border-primary-dark' : ''}`}
       >
-        <FilterIcon className="w-[18px] h-[18px] text-[#414040]" />
+        <FilterIcon className="w-[18px] h-[18px] text-foreground opacity-60" />
         <span className="text-base text-right">Filtro</span>
         {hasActiveFilter && (
           <span className="ml-1 bg-primary text-on-primary rounded-full w-5 h-5 flex items-center justify-center text-xs font-medium">
@@ -801,7 +796,7 @@ function Filter({
                   width: menuPosition.width || undefined,
                   maxHeight: isBrowser ? `calc(100vh - ${menuPosition.top + 16}px)` : '450px',
                 }}
-                className="bg-white border border-gray-300 rounded-2xl shadow-lg w-auto min-w-[180px] p-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent shadow-xl"
+                className="bg-[var(--dropdown-bg)] border border-[var(--dropdown-border)] rounded-2xl shadow-lg w-auto min-w-[180px] p-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent shadow-xl transition-colors"
               >
                 {/* Opción: Rango de Fechas */}
                 {showDateRange && (onFechaInicioChange || onFechaFinChange) && (

@@ -21,12 +21,12 @@ export default function EmptyState({ icon: Icon, title, description, action }: E
             </div>
 
             {/* Título */}
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            <h3 className="text-lg font-semibold text-[var(--card-text)] mb-2 transition-colors">
                 {title}
             </h3>
 
             {/* Descripción */}
-            <p className="text-sm text-gray-600 mb-6 text-center max-w-sm">
+            <p className="text-sm text-[var(--card-text-muted)] mb-6 text-center max-w-sm transition-colors">
                 {description}
             </p>
 

@@ -154,13 +154,13 @@ export default function ReportPreview({
         <div className="flex flex-col h-full w-full">
             {/* Toolbar - Only shown when preview is ready */}
             {state === 'ready' && (
-                <div className="flex items-center justify-center gap-3 px-4 py-2 border-b border-gray-200 bg-white z-10 shadow-sm select-none">
+                <div className="flex items-center justify-center gap-3 px-4 py-2 border-b border-[var(--card-border)] bg-[var(--card-bg)] z-10 shadow-sm select-none transition-colors">
 
                     {/* Block 1: Zoom Controls */}
-                    <div className="flex items-center bg-gray-50 rounded-lg p-1 border border-gray-200 shadow-sm">
+                    <div className="flex items-center bg-[var(--ui-bg-muted)] rounded-lg p-1 border border-[var(--card-border)] shadow-sm">
                         <button
                             onClick={handleZoomOut}
-                            className="p-1.5 rounded-md text-gray-500 hover:text-primary hover:bg-white hover:shadow-sm transition-all disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none"
+                            className="p-1.5 rounded-md text-[var(--card-text-muted)] hover:text-primary hover:bg-[var(--card-bg)] hover:shadow-sm transition-all disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none"
                             title="Reducir zoom"
                             disabled={zoomLevel <= 50}
                             type="button"
@@ -168,13 +168,13 @@ export default function ReportPreview({
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /><line x1="8" y1="11" x2="14" y2="11" /></svg>
                         </button>
 
-                        <span className="text-xs font-semibold w-12 text-center text-gray-700 mx-1 font-mono">
+                        <span className="text-xs font-semibold w-12 text-center text-[var(--card-text)] mx-1 font-mono">
                             {zoomLevel}%
                         </span>
 
                         <button
                             onClick={handleZoomIn}
-                            className="p-1.5 rounded-md text-gray-500 hover:text-primary hover:bg-white hover:shadow-sm transition-all disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none"
+                            className="p-1.5 rounded-md text-[var(--card-text-muted)] hover:text-primary hover:bg-[var(--card-bg)] hover:shadow-sm transition-all disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none"
                             title="Aumentar zoom"
                             disabled={zoomLevel >= 200}
                             type="button"
@@ -182,11 +182,11 @@ export default function ReportPreview({
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /><line x1="11" y1="8" x2="11" y2="14" /><line x1="8" y1="11" x2="14" y2="11" /></svg>
                         </button>
 
-                        <div className="w-px h-4 bg-gray-300 mx-1"></div>
+                        <div className="w-px h-4 bg-[var(--card-border)] mx-1"></div>
 
                         <button
                             onClick={handleResetZoom}
-                            className="px-2 py-1 text-[10px] font-medium text-gray-500 hover:text-primary hover:bg-white hover:shadow-sm rounded transition-all uppercase tracking-wide"
+                            className="px-2 py-1 text-[10px] font-medium text-[var(--card-text-muted)] hover:text-primary hover:bg-[var(--card-bg)] hover:shadow-sm rounded transition-all uppercase tracking-wide"
                             title="Restablecer zoom (100%)"
                             type="button"
                         >
@@ -197,7 +197,7 @@ export default function ReportPreview({
                     {/* Block 2: Regenerate Button */}
                     <button
                         onClick={handleGeneratePreview}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200 shadow-sm hover:text-primary hover:bg-white hover:shadow transition-all h-[34px]"
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-[var(--card-text-muted)] bg-[var(--ui-bg-muted)] border border-[var(--card-border)] shadow-sm hover:text-primary hover:bg-[var(--card-bg)] hover:shadow transition-all h-[34px]"
                         title="Regenerar vista previa"
                         type="button"
                     >
@@ -208,7 +208,7 @@ export default function ReportPreview({
             )}
 
             {/* Preview Area */}
-            <div className="flex-1 relative overflow-hidden bg-gray-100/50">
+            <div className="flex-1 relative overflow-hidden bg-[var(--ui-bg-muted)] transition-colors">
                 <AnimatePresence mode="wait">
                     {/* Idle State */}
                     {state === 'idle' && (
@@ -220,14 +220,14 @@ export default function ReportPreview({
                             className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center"
                         >
                             <div
-                                className="w-20 h-20 rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-gray-100 bg-white"
+                                className="w-20 h-20 rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-[var(--card-border)] bg-[var(--card-bg)] transition-colors"
                             >
                                 {icon || <FileText className="w-10 h-10 opacity-80" style={{ color: accentColor }} />}
                             </div>
-                            <h3 className="text-xl font-semibold text-gray-800 mb-2 font-primary opacity-90">
+                            <h3 className="text-xl font-semibold text-[var(--card-text)] mb-2 font-primary opacity-90 transition-colors">
                                 {reportType}
                             </h3>
-                            <p className="text-sm text-gray-500 mb-8 max-w-[280px] leading-relaxed">
+                            <p className="text-sm text-[var(--card-text-muted)] mb-8 max-w-[280px] leading-relaxed transition-colors">
                                 Configure los parámetros necesarios en el panel izquierdo y genere la vista previa del documento.
                             </p>
                             <Button
@@ -248,14 +248,14 @@ export default function ReportPreview({
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-white/50 backdrop-blur-sm"
+                            className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-[var(--card-bg)]/50 backdrop-blur-sm transition-colors"
                         >
                             <div className="relative mb-10">
                                 <Spinner size="lg" className="w-12 h-12" />
                             </div>
                             <div className="flex flex-col items-center text-center gap-1">
-                                <p className="text-base font-medium text-gray-700 font-primary">Generando vista previa...</p>
-                                <p className="text-sm text-gray-400">Esto puede tomar unos segundos</p>
+                                <p className="text-base font-medium text-[var(--card-text)] font-primary transition-colors">Generando vista previa...</p>
+                                <p className="text-sm text-[var(--card-text-muted)] transition-colors">Esto puede tomar unos segundos</p>
                             </div>
                         </motion.div>
                     )}
@@ -268,7 +268,7 @@ export default function ReportPreview({
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.4, ease: "easeOut" }}
-                            className="absolute inset-0 overflow-auto bg-gray-200 flex flex-col items-center p-4 transition-all"
+                            className="absolute inset-0 overflow-auto bg-[var(--sidebar-hover)] flex flex-col items-center p-4 transition-all"
                         >
                             <div
                                 style={{
@@ -277,11 +277,11 @@ export default function ReportPreview({
                                     minHeight: '100%',
                                     transition: 'width 0.2s ease-out'
                                 }}
-                                className="shadow-lg bg-white relative"
+                                className="shadow-lg bg-[var(--card-bg)] relative transition-colors"
                             >
                                 <iframe
                                     src={`${blobUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
-                                    className="w-full h-full border-0 bg-white"
+                                    className="w-full h-full border-0 bg-[var(--card-bg)] transition-colors"
                                     title="Vista previa del reporte"
                                 />
                             </div>
@@ -297,13 +297,13 @@ export default function ReportPreview({
                             exit={{ opacity: 0, scale: 0.95 }}
                             className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center"
                         >
-                            <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mb-6 border border-red-100">
+                            <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mb-6 border border-red-500/20">
                                 <AlertCircle className="w-8 h-8 text-red-500" />
                             </div>
-                            <h3 className="text-lg font-semibold text-gray-800 mb-2 font-primary">
+                            <h3 className="text-lg font-semibold text-[var(--card-text)] mb-2 font-primary transition-colors">
                                 Error al generar vista previa
                             </h3>
-                            <p className="text-sm text-gray-500 mb-6 max-w-[300px]">
+                            <p className="text-sm text-[var(--card-text-muted)] mb-6 max-w-[300px] transition-colors">
                                 {errorMsg}
                             </p>
                             <Button
@@ -326,13 +326,13 @@ export default function ReportPreview({
                             exit={{ opacity: 0, scale: 0.95 }}
                             className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center"
                         >
-                            <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mb-6 border border-gray-100">
-                                <FileText className="w-8 h-8 text-gray-400" />
+                            <div className="w-16 h-16 rounded-2xl bg-[var(--ui-bg-muted)] flex items-center justify-center mb-6 border border-[var(--card-border)] transition-colors">
+                                <FileText className="w-8 h-8 text-[var(--card-text-muted)] opacity-50 transition-colors" />
                             </div>
-                            <h3 className="text-lg font-semibold text-gray-800 mb-2 font-primary">
+                            <h3 className="text-lg font-semibold text-[var(--card-text)] mb-2 font-primary transition-colors">
                                 Sin resultados
                             </h3>
-                            <p className="text-sm text-gray-500 mb-6 max-w-[300px]">
+                            <p className="text-sm text-[var(--card-text-muted)] mb-6 max-w-[300px] transition-colors">
                                 No se encontraron datos para los filtros seleccionados. Intente con otros criterios.
                             </p>
                             <Button
@@ -355,13 +355,13 @@ export default function ReportPreview({
                             exit={{ opacity: 0, scale: 0.95 }}
                             className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center"
                         >
-                            <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mb-6 border border-red-100">
+                            <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mb-6 border border-red-500/20 transition-colors">
                                 <AlertCircle className="w-8 h-8" style={{ color: '#9c2327' }} />
                             </div>
-                            <h3 className="text-lg font-semibold text-gray-800 mb-2 font-primary">
+                            <h3 className="text-lg font-semibold text-[var(--card-text)] mb-2 font-primary transition-colors">
                                 Sin secciones seleccionadas
                             </h3>
-                            <p className="text-sm text-gray-500 mb-6 max-w-[300px]">
+                            <p className="text-sm text-[var(--card-text-muted)] mb-6 max-w-[300px] transition-colors">
                                 Por favor seleccione al menos una sección para generar la vista previa.
                             </p>
                         </motion.div>

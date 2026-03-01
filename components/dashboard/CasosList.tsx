@@ -75,30 +75,30 @@ export default function CasosList({ casos, loading, error }: CasosListProps) {
   const getEstatusColor = (estatus: string) => {
     switch (estatus) {
       case 'En proceso':
-        return 'bg-blue-100 text-blue-700';
+        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
       case 'Archivado':
-        return 'bg-gray-100 text-gray-700';
+        return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
       case 'Entregado':
-        return 'bg-green-100 text-green-700';
+        return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
       case 'Asesoría':
-        return 'bg-purple-100 text-purple-700';
+        return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300';
       default:
-        return 'bg-gray-100 text-gray-700';
+        return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
     }
   };
 
   const getRolColor = (rol: string) => {
     switch (rol) {
       case 'Supervisor':
-        return 'bg-primary/10 text-primary';
+        return 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light';
       case 'Asignado':
-        return 'bg-blue-50 text-blue-700';
+        return 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300';
       case 'Ejecutor':
-        return 'bg-orange-50 text-orange-700';
+        return 'bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300';
       case 'Atiende':
-        return 'bg-green-50 text-green-700';
+        return 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300';
       default:
-        return 'bg-gray-50 text-gray-700';
+        return 'bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
     }
   };
 
@@ -121,7 +121,7 @@ export default function CasosList({ casos, loading, error }: CasosListProps) {
           >
             <Link
               href={`/dashboard/cases/${caso.id_caso}`}
-              className="block bg-white rounded-xl p-4 hover:shadow-md transition-shadow border border-gray-200 hover:border-primary/30"
+              className="block bg-[var(--card-bg)] rounded-xl p-4 hover:shadow-md transition-all border border-[var(--card-border)] hover:border-primary/30"
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
@@ -136,10 +136,10 @@ export default function CasosList({ casos, loading, error }: CasosListProps) {
                       </span>
                     )}
                   </div>
-                  <h4 className="font-medium text-foreground mb-1">
+                  <h4 className="font-medium text-[var(--foreground)] mb-1">
                     {caso.tramite || 'Sin trámite'}
                   </h4>
-                  <p className="text-sm text-gray-600 mb-2">
+                  <p className="text-sm text-[var(--card-text-muted)] mb-2 transition-colors">
                     {(() => {
                       const materia = caso.nombre_materia || 'Sin materia';
                       const categoria = caso.nombre_categoria?.trim() || '';
@@ -167,7 +167,7 @@ export default function CasosList({ casos, loading, error }: CasosListProps) {
                 )}
               </div>
 
-              <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+              <div className="flex flex-wrap gap-4 text-sm text-[var(--card-text-muted)] transition-colors">
                 {caso.nombre_completo_solicitante && (
                   <div className="flex items-center gap-1">
                     <User className="w-4 h-4" />
