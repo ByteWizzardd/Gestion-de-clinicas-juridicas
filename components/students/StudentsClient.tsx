@@ -168,8 +168,8 @@ export default function StudentsClient({ initialEstudiantes = [] }: StudentsClie
     return (
         <>
             <div className="mb-4 md:mb-6 mt-4">
-                <h1 className="text-4xl m-3 font-semibold font-primary">Estudiantes</h1>
-                <p className="mb-6 ml-3 text-gray-600">
+                <h1 className="text-4xl m-3 font-semibold text-[var(--foreground)] transition-colors" style={{ fontFamily: 'var(--font-league-spartan)' }}>Estudiantes</h1>
+                <p className="mb-6 ml-3 text-sm sm:text-base text-[var(--card-text-muted)] transition-colors" style={{ fontFamily: 'var(--font-urbanist)' }}>
                     Visualización y gestión de estudiantes registrados en el sistema.
                 </p>
             </div>

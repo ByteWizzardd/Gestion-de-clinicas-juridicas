@@ -35,8 +35,8 @@
   --card-text: #111827;
   /* gray-900 */
   /* text-neutral-800 original: #262626 */
-  --card-text-muted: #6B7280;
-  /* gray-500 */
+  --card-text-muted: #4b5563;
+  /* gray-600 */
   /* text-neutral-600 original: #525252 */
   --card-border: #f5f5f5;
   /* neutral-100 */
@@ -69,7 +69,7 @@
   --ui-border: #d1d5db;
   /* gray-300 */
   --ui-bg-muted: #f9fafb;
-  --ui-bg-inactive: #dde2e8;
+  --ui-bg-inactive: #e2e8f0;
   --input-bg: #E5E7EB;
   --input-placeholder: #717171;
   --select-placeholder: #9BA1B7;

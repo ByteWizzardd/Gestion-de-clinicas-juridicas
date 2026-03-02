@@ -193,7 +193,7 @@ export default function CalendarWidget({
       </div>
 
       {/* Tabla de calendario con bordes */}
-      <div className="border border-[var(--ui-border)] rounded-2xl overflow-hidden flex-1 flex flex-col transition-colors">
+      <div className="border border-[var(--ui-border)] rounded-2xl overflow-hidden flex-1 flex flex-col transition-colors bg-[var(--card-bg)]">
         {/* Header de días de la semana */}
         <div className="grid grid-cols-7 border-b border-[var(--ui-border)] shrink-0 transition-colors">
           {dayNames.map((day, index) => (
@@ -225,7 +225,7 @@ export default function CalendarWidget({
                 <button
                   key={`prev-${day}`}
                   onClick={() => handleDayClick(day, false)}
-                  className={` p-2 text-[var(--card-text-muted)] opacity-50 bg-[var(--ui-bg-inactive)] border-r border-b border-[var(--ui-border)] hover:bg-opacity-80 transition-all text-base text-left cursor-pointer ${isLastInRow ? 'border-r-0' : ''
+                  className={` p-2 text-[var(--card-text-muted)] bg-[var(--ui-bg-inactive)] border-r border-b border-[var(--ui-border)] hover:bg-opacity-80 transition-all text-base text-left cursor-pointer ${isLastInRow ? 'border-r-0' : ''
                     }`}
                 >
                   {day}
@@ -280,7 +280,7 @@ export default function CalendarWidget({
                 <button
                   key={`next-${day}`}
                   onClick={() => handleDayClick(day, false)}
-                  className={` p-2 text-[var(--card-text-muted)] opacity-50 bg-[var(--ui-bg-inactive)] border-r border-b border-[var(--ui-border)] hover:bg-opacity-80 transition-all text-base text-left cursor-pointer ${isLastInRow ? 'border-r-0' : ''
+                  className={` p-2 text-[var(--card-text-muted)] bg-[var(--ui-bg-inactive)] border-r border-b border-[var(--ui-border)] hover:bg-opacity-80 transition-all text-base text-left cursor-pointer ${isLastInRow ? 'border-r-0' : ''
                     }`}
                 >
                   {day}

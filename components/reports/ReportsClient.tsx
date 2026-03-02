@@ -895,9 +895,13 @@ export default function ReportsPage() {
     return (
         <div className="w-full overflow-x-hidden max-w-full">
             {/* Header */}
-            <div className="mb-0">
-                <h1 className="text-2xl sm:text-3xl font-medium text-[var(--foreground)] mb-1 ml-3 transition-colors">Reportes</h1>
-                <p className="mb-6 ml-3 text-base text-[var(--card-text-muted)] transition-colors">Presentación de las métricas clave a través de gráficas y cuadros.</p>
+            <div className="mb-4 md:mb-6 mt-4">
+                <h1 className="text-4xl m-3 font-semibold text-[var(--foreground)] transition-colors" style={{ fontFamily: 'var(--font-league-spartan)' }}>
+                    Reportes
+                </h1>
+                <p className="mb-6 ml-3 text-sm sm:text-base text-[var(--card-text-muted)] transition-colors" style={{ fontFamily: 'var(--font-urbanist)' }}>
+                    Presentación de las métricas clave a través de gráficas y cuadros.
+                </p>
             </div>
 
             <div className="px-3 md:px-1 space-y-6">
