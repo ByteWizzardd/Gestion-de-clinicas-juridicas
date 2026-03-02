@@ -3796,7 +3796,6 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               const setNuevos = new Set(nuevos);
               const eliminados = anteriores.filter(a => !setNuevos.has(a));
               const agregados = nuevos.filter(a => !setAnteriores.has(a));
-              const sinCambio = nuevos.filter(a => setAnteriores.has(a));
 
               if (eliminados.length === 0 && agregados.length === 0) return null;
 
@@ -3813,11 +3812,6 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     <p className="text-sm text-[var(--card-text-muted)] ml-2">
                       <span className="text-green-600 font-medium">Agregados:</span>{' '}
                       {agregados.join(', ')}
-                    </p>
-                  )}
-                  {sinCambio.length > 0 && (
-                    <p className="text-sm text-[var(--card-text-muted)] ml-2">
-                      Sin cambio: {sinCambio.join(', ')}
                     </p>
                   )}
                 </div>

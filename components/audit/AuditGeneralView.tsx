@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 
 import {
     FileText, Calendar, User, Users, UserX, FolderOpen, AlertCircle, Hash, Search,
@@ -13,6 +13,7 @@ import AuditRecordCard from './AuditRecordCard';
 import type { AuditRecordType } from '@/types/audit';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import { getUsuariosAction } from '@/app/actions/usuarios';
+import { filterLogsByVisibleContent } from '@/lib/utils/audit-search';
 
 import { TablePagination } from '@/components/Table/TablePagination';
 
@@ -23,6 +24,7 @@ export default function AuditGeneralView() {
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [totalCount, setTotalCount] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
     const [selectedEntity, setSelectedEntity] = useState<string>('');
     const [selectedUser, setSelectedUser] = useState<string>('');
     const [selectedOperation, setSelectedOperation] = useState<string>('');
@@ -31,6 +33,14 @@ export default function AuditGeneralView() {
     const [sortOrder, setSortOrder] = useState<string>('desc');
     const [usuariosOptions, setUsuariosOptions] = useState<{ value: string; label: string }[]>([]);
     const { toast } = useToast();
+
+    // Debounce del término de búsqueda (400ms) para no saturar el servidor
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
 
     const fetchLogs = useCallback(async () => {
         try {
@@ -42,7 +52,7 @@ export default function AuditGeneralView() {
                 fechaInicio: startDate || undefined,
                 fechaFin: endDate || undefined,
                 orden: sortOrder,
-                busqueda: searchTerm || undefined
+                busqueda: debouncedSearchTerm || undefined
             });
             setLogs(newLogs);
             setTotalCount(count);
@@ -52,7 +62,7 @@ export default function AuditGeneralView() {
         } finally {
             setLoading(false);
         }
-    }, [page, rowsPerPage, selectedEntity, selectedUser, selectedOperation, startDate, endDate, sortOrder, searchTerm, toast]);
+    }, [page, rowsPerPage, selectedEntity, selectedUser, selectedOperation, startDate, endDate, sortOrder, debouncedSearchTerm, toast]);
 
     useEffect(() => {
         fetchLogs();
@@ -61,7 +71,7 @@ export default function AuditGeneralView() {
     // Resetear a página 1 cuando cambian los filtros
     useEffect(() => {
         setPage(1);
-    }, [selectedEntity, selectedUser, selectedOperation, startDate, endDate, sortOrder, searchTerm]);
+    }, [selectedEntity, selectedUser, selectedOperation, startDate, endDate, sortOrder, debouncedSearchTerm]);
 
 
     useEffect(() => {
@@ -81,8 +91,13 @@ export default function AuditGeneralView() {
         loadUsuarios();
     }, []);
 
-    // Los logs ya vienen filtrados por servidor
-    const displayLogs = logs;
+    // Filtrado híbrido: el servidor retorna un superset (metadata::text match),
+    // luego el cliente filtra dejando solo registros donde el término aparece
+    // en datos realmente visibles (campos que cambiaron para actualizaciones).
+    const displayLogs = useMemo(() => {
+        if (!debouncedSearchTerm) return logs;
+        return filterLogsByVisibleContent(logs, debouncedSearchTerm);
+    }, [logs, debouncedSearchTerm]);
 
     // Lista de entidades disponibles para filtrar
     const availableEntitiesOptions = [
