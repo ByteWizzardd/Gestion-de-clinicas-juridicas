@@ -1118,8 +1118,8 @@ export default function ReportsPage() {
                                                         setShowSolicitanteDropdown(false);
                                                     }}
                                                 >
-                                                    <span className="font-medium text-gray-800">{solicitante.nombre_completo}</span>
-                                                    <span className="text-xs text-gray-500">{solicitante.cedula}</span>
+                                                    <span className="font-medium text-[var(--card-text)] transition-colors">{solicitante.nombre_completo}</span>
+                                                    <span className="text-xs text-[var(--card-text-muted)] transition-colors">{solicitante.cedula}</span>
                                                 </div>
                                             ))}
                                         </div>
