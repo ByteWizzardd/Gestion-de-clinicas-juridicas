@@ -643,6 +643,17 @@ SELECT * FROM (
                     'nombre_completo_eliminado_por', u.nombres || ' ' || u.apellidos
                 ) FROM usuarios u WHERE u.cedula = t.eliminado_por),
                 '{}'::jsonb
+            ) ||
+            jsonb_build_object(
+                'ejecutores', (
+                    SELECT json_agg(json_build_object(
+                        'cedula', aeae.id_usuario_ejecutor,
+                        'nombre', CONCAT(aeae.nombres_ejecutor, ' ', aeae.apellidos_ejecutor),
+                        'fecha_ejecucion', TO_CHAR(aeae.fecha_ejecucion, 'YYYY-MM-DD')
+                    ))
+                    FROM auditoria_eliminacion_acciones_ejecutores aeae
+                    WHERE aeae.id_auditoria_eliminacion = t.id
+                )
             )
         )::text as metadata
     FROM auditoria_eliminacion_acciones t

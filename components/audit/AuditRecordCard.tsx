@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ChevronDown, ChevronUp, FileText, Calendar, User, X, Check, BookOpen, GraduationCap, Building, Briefcase, Activity, Tag, Tags, Scale, MapPin, Building2, Home, FolderTree, FolderOpen, UserCircle, Users, ArrowRight, UserX, ArrowDown, FileBarChart, LogIn, LogOut, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import UserAvatar from '@/components/ui/UserAvatar';
-import { formatDateTime } from '@/lib/utils/date-formatter';
 import type {
   SoporteAuditRecord,
   SoporteCreadoAuditRecord,
@@ -1459,7 +1458,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
             <div>
               <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
-              <p className="text-sm text-[var(--card-text-muted)]">Fecha de asignación: {formatDateTime(r.fecha_creacion)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha de asignación: {formatDate(r.fecha_creacion)}</p>
               <p className="text-sm text-[var(--card-text-muted)]">
                 Asignado por:{' '}
                 {renderUserLink(
@@ -1526,7 +1525,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             </div>
             <div>
               <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
-              <p className="text-sm text-[var(--card-text-muted)]">Fecha creación: {formatDateTime(r.fecha_creacion)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha creación: {formatDate(r.fecha_creacion)}</p>
               <p className="text-sm text-[var(--card-text-muted)]">
                 Creada por:{' '}
                 {renderUserLink(
@@ -1692,7 +1691,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             </div>
             <div>
               <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
-              <p className="text-sm text-[var(--card-text-muted)]">Fecha actualización: {formatDateTime(r.fecha_actualizacion)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha actualización: {formatDate(r.fecha_actualizacion)}</p>
               <p className="text-sm text-[var(--card-text-muted)]">
                 Actualizada por:{' '}
                 {renderUserLink(
@@ -1767,7 +1766,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             </div>
             <div>
               <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Datos de Eliminación</p>
-              <p className="text-sm text-[var(--card-text-muted)]">Fecha eliminación: {formatDateTime(r.fecha)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha eliminación: {formatDate(r.fecha)}</p>
               <p className="text-sm text-[var(--card-text-muted)]">
                 Eliminada por:{' '}
                 {renderUserLink(
@@ -1880,7 +1879,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               </div>
               <div>
                 <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Fecha</p>
-                <p className="text-sm text-[var(--card-text-muted)]">Creación: {formatDateTime(r.fecha_creacion)}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Creación: {formatDate(r.fecha_creacion)}</p>
               </div>
             </div>
             <div>
@@ -1920,7 +1919,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               </div>
               <div>
                 <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Fecha</p>
-                <p className="text-sm text-[var(--card-text-muted)]">Descarga: {formatDateTime(r.fecha_descarga, { timeZone: 'UTC' })}</p>
+                <p className="text-sm text-[var(--card-text-muted)]">Descarga: {formatDate(r.fecha_descarga)}</p>
                 {r.ip_direccion && (
                   <p className="text-sm text-[var(--card-text-muted)]">IP: {r.ip_direccion}</p>
                 )}
@@ -1973,7 +1972,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             </div>
             <div>
               <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
-              <p className="text-sm text-[var(--card-text-muted)]">Fecha: {formatDateTime(r.fecha_registro)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha: {formatDate(r.fecha_registro)}</p>
               <p className="text-sm text-[var(--card-text-muted)]">
                 Inscrito por:{' '}
                 {renderUserLink(
@@ -2086,7 +2085,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             </div>
             <div>
               <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
-              <p className="text-sm text-[var(--card-text-muted)]">Fecha: {formatDateTime(r.fecha_actualizacion)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha: {formatDate(r.fecha_actualizacion)}</p>
               <p className="text-sm text-[var(--card-text-muted)]">
                 Actualizado por:{' '}
                 {renderUserLink(
@@ -2127,7 +2126,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             </div>
             <div>
               <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
-              <p className="text-sm text-[var(--card-text-muted)]">Fecha: {formatDateTime(r.fecha_eliminacion)}</p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha: {formatDate(r.fecha_eliminacion)}</p>
               <p className="text-sm text-[var(--card-text-muted)]">
                 Eliminado por:{' '}
                 {renderUserLink(
