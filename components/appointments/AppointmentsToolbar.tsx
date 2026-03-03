@@ -17,8 +17,8 @@ interface AppointmentsToolbarProps {
   viewMode: AppointmentViewMode;
   onViewModeChange: (view: AppointmentViewMode) => void;
   nucleoFilter: string;
-  usuarioFilter: string[];
-  caseFilter: string[];
+  usuarioFilter: string;
+  caseFilter: string;
   misCasosFilter: boolean;
   dateRangeFilter: string;
   customDateStart: string;
@@ -26,8 +26,8 @@ interface AppointmentsToolbarProps {
   termFilter?: string;
   semestresOptions?: Array<{ term: string; fecha_inicio: string; fecha_fin: string }>;
   onNucleoFilterChange: (value: string) => void;
-  onUsuarioFilterChange: (value: string[]) => void;
-  onCaseFilterChange: (value: string[]) => void;
+  onUsuarioFilterChange: (value: string) => void;
+  onCaseFilterChange: (value: string) => void;
   onMisCasosFilterChange: (value: boolean) => void;
   onDateRangeFilterChange: (value: string) => void;
   onCustomDateStartChange: (value: string) => void;
@@ -146,8 +146,8 @@ export default function AppointmentsToolbar({
 
   const activeFilterCount =
     (nucleoFilter ? 1 : 0) +
-    (usuarioFilter.length > 0 ? 1 : 0) +
-    (caseFilter.length > 0 ? 1 : 0) +
+    (usuarioFilter ? 1 : 0) +
+    (caseFilter ? 1 : 0) +
     (misCasosFilter ? 1 : 0) +
     (dateRangeFilter !== 'all' ? 1 : 0) +
     (termFilter && termFilter !== 'all' ? 1 : 0);
@@ -156,8 +156,8 @@ export default function AppointmentsToolbar({
 
   const handleClearFilters = () => {
     onNucleoFilterChange('');
-    onUsuarioFilterChange([]);
-    onCaseFilterChange([]);
+    onUsuarioFilterChange('');
+    onCaseFilterChange('');
     onMisCasosFilterChange(false);
     onDateRangeFilterChange('all');
     onCustomDateStartChange('');
@@ -291,14 +291,12 @@ export default function AppointmentsToolbar({
       case 'usuario':
         options = usuarioOptions;
         filterValue = usuarioFilter;
-        isMultiple = true;
         handler = onUsuarioFilterChange;
         allLabel = 'Todos los usuarios';
         break;
       case 'caso':
         options = casoOptions;
         filterValue = caseFilter;
-        isMultiple = true;
         handler = onCaseFilterChange;
         allLabel = 'Todos los casos';
         break;
@@ -334,14 +332,10 @@ export default function AppointmentsToolbar({
             whileTap={{ scale: 0.95 }}
             whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
             onClick={() => {
-              if (isMultiple) {
-                (handler as (values: string[]) => void)([]);
-              } else {
-                (handler as (value: string) => void)('');
-                setActiveSubmenu(null);
-              }
+              (handler as (value: string) => void)('');
+              setActiveSubmenu(null);
             }}
-            className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end ${(isMultiple ? (filterValue as string[]).length === 0 : filterValue === '')
+            className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end ${filterValue === ''
               ? 'bg-primary-light text-primary font-medium'
               : 'text-[var(--card-text-muted)] hover:bg-[var(--dropdown-hover)] hover:text-[var(--foreground)]'
               }`}
@@ -350,11 +344,8 @@ export default function AppointmentsToolbar({
             {allLabel}
           </motion.button>
 
-          {/* Opciones */}
           {options.map((option) => {
-            const isSelected = isMultiple
-              ? (filterValue as string[]).includes(option.value)
-              : filterValue === option.value;
+            const isSelected = filterValue === option.value;
 
             return (
               <motion.button
@@ -363,31 +354,14 @@ export default function AppointmentsToolbar({
                 whileTap={{ scale: 0.95 }}
                 whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
                 onClick={() => {
-                  if (isMultiple) {
-                    const currentValues = filterValue as string[];
-                    if (isSelected) {
-                      (handler as (values: string[]) => void)(currentValues.filter(v => v !== option.value));
-                    } else {
-                      (handler as (values: string[]) => void)([...currentValues, option.value]);
-                    }
-                  } else {
-                    (handler as (value: string) => void)(option.value);
-                    setActiveSubmenu(null);
-                  }
+                  (handler as (value: string) => void)(option.value);
+                  setActiveSubmenu(null);
                 }}
-                className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center gap-2 ${isSelected
+                className={`w-full px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end text-right ${isSelected
                   ? 'bg-primary-light text-primary font-medium'
                   : 'text-[var(--card-text-muted)] hover:bg-[var(--dropdown-hover)] hover:text-[var(--foreground)]'
                   }`}
               >
-                {isMultiple && (
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => { }}
-                    className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer"
-                  />
-                )}
                 <div className="flex-1" />
                 <span className="truncate">{option.label}</span>
               </motion.button>
@@ -536,7 +510,7 @@ export default function AppointmentsToolbar({
                 onClick={(e) => handleSubmenuToggle('usuario', e)}
                 className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'usuario'
                   ? 'bg-primary-light text-primary'
-                  : usuarioFilter.length > 0
+                  : usuarioFilter
                     ? 'text-primary hover:bg-[var(--dropdown-hover)]'
                     : 'text-[var(--card-text)] hover:bg-[var(--dropdown-hover)]'
                   }`}
@@ -557,7 +531,7 @@ export default function AppointmentsToolbar({
                 onClick={(e) => handleSubmenuToggle('caso', e)}
                 className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'caso'
                   ? 'bg-primary-light text-primary'
-                  : caseFilter.length > 0
+                  : caseFilter
                     ? 'text-primary hover:bg-[var(--dropdown-hover)]'
                     : 'text-[var(--card-text)] hover:bg-[var(--dropdown-hover)]'
                   }`}

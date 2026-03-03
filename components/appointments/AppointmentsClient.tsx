@@ -68,8 +68,8 @@ export default function AppointmentsClient({
 
   // Filtros
   const [nucleoFilter, setNucleoFilter] = useState<string>('');
-  const [usuarioFilter, setUsuarioFilter] = useState<string[]>([]);
-  const [caseFilter, setCaseFilter] = useState<string[]>([]);
+  const [usuarioFilter, setUsuarioFilter] = useState<string>('');
+  const [caseFilter, setCaseFilter] = useState<string>('');
   const [misCasosFilter, setMisCasosFilter] = useState<boolean>(false);
   const [dateRangeFilter, setDateRangeFilter] = useState<string>('all'); // 'all', 'today', 'week', 'month', 'custom'
   const [customDateStart, setCustomDateStart] = useState<string>('');
@@ -95,13 +95,12 @@ export default function AppointmentsClient({
       filtered = filtered.filter((apt) => normalizeText(apt.location || '').includes(nucleoNeedle));
     }
 
-    // Usuario(s) que atendió (AND: todos los seleccionados deben estar en la cita)
-    if (usuarioFilter.length > 0) {
+    // Usuario que atendió (Filtro simple: la cita incluye al usuario seleccionado)
+    if (usuarioFilter) {
       filtered = filtered.filter((apt) => {
         const list = apt.attendingUsersList || [];
         if (list.length === 0) return false;
-        const userIdsInAppointment = list.map((u) => u.id_usuario);
-        return usuarioFilter.every((selectedUserId) => userIdsInAppointment.includes(selectedUserId));
+        return list.some((u) => u.id_usuario === usuarioFilter);
       });
     }
 
@@ -171,12 +170,11 @@ export default function AppointmentsClient({
     };
   }, [initialFilterOptions, availableCaseIdsForFilter]);
 
-  // Si el usuario cambia y deja seleccionados casos que ya no están asociados, limpiarlos.
+  // Si el usuario cambia y el caso seleccionado ya no es válido, limpiarlo.
   useEffect(() => {
-    if (caseFilter.length === 0) return;
-    const next = caseFilter.filter((id) => availableCaseIdsForFilter.has(String(id)));
-    if (next.length !== caseFilter.length) {
-      setCaseFilter(next);
+    if (!caseFilter) return;
+    if (!availableCaseIdsForFilter.has(String(caseFilter))) {
+      setCaseFilter('');
     }
   }, [caseFilter, availableCaseIdsForFilter]);
 
@@ -216,23 +214,20 @@ export default function AppointmentsClient({
       });
     }
 
-    // Filtro por usuario que atendió (múltiple) - todos los usuarios seleccionados deben estar en la cita
-    if (usuarioFilter.length > 0) {
+    // Filtro por usuario que atendió (simple)
+    if (usuarioFilter) {
       filtered = filtered.filter((apt) => {
         if (!apt.attendingUsersList || apt.attendingUsersList.length === 0) {
           return false;
         }
-        // Verificar que TODOS los usuarios seleccionados estén en la cita
-        const userIdsInAppointment = apt.attendingUsersList.map(user => user.id_usuario);
-        return usuarioFilter.every(selectedUserId => userIdsInAppointment.includes(selectedUserId));
+        return apt.attendingUsersList.some(user => user.id_usuario === usuarioFilter);
       });
     }
 
-    // Filtro por caso (múltiple) - la cita debe estar en uno de los casos seleccionados
-    if (caseFilter.length > 0) {
+    // Filtro por caso (simple)
+    if (caseFilter) {
       filtered = filtered.filter((apt) => {
-        const caseIdStr = String(apt.caseId);
-        return caseFilter.includes(caseIdStr);
+        return String(apt.caseId) === String(caseFilter);
       });
     }
 
@@ -306,24 +301,19 @@ export default function AppointmentsClient({
       });
     }
 
-    // Filtro por usuario que atendió (múltiple) - todos los usuarios seleccionados deben estar en la cita
-    if (usuarioFilter.length > 0) {
+    // Filtro por usuario que atendió
+    if (usuarioFilter) {
       filtered = filtered.filter((apt) => {
         if (!apt.attendingUsersList || apt.attendingUsersList.length === 0) {
           return false;
         }
-        // Verificar que TODOS los usuarios seleccionados estén en la cita
-        const userIdsInAppointment = apt.attendingUsersList.map(user => user.id_usuario);
-        return usuarioFilter.every(selectedUserId => userIdsInAppointment.includes(selectedUserId));
+        return apt.attendingUsersList.some(user => user.id_usuario === usuarioFilter);
       });
     }
 
-    // Filtro por caso (múltiple) - la cita debe estar en uno de los casos seleccionados
-    if (caseFilter.length > 0) {
-      filtered = filtered.filter((apt) => {
-        const caseIdStr = String(apt.caseId);
-        return caseFilter.includes(caseIdStr);
-      });
+    // Filtro por caso
+    if (caseFilter) {
+      filtered = filtered.filter((apt) => String(apt.caseId) === String(caseFilter));
     }
 
     // Filtro por semestre (termFilter)
