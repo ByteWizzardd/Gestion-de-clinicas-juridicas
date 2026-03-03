@@ -116,6 +116,7 @@ export interface GetAppointmentFilterOptionsResult {
   data?: {
     nucleos: Array<{ id_nucleo: number; nombre_nucleo: string }>;
     usuarios: Array<{ cedula: string; nombres: string; apellidos: string; nombre_completo: string }>;
+    solicitantes: Array<{ cedula: string; nombre_completo: string }>;
   };
   error?: {
     message: string;
@@ -140,11 +141,13 @@ export async function getAppointmentFilterOptionsAction(): Promise<GetAppointmen
     // Importar las queries necesarias
     const { nucleosQueries } = await import('@/lib/db/queries/nucleos.queries');
     const { usuariosQueries } = await import('@/lib/db/queries/usuarios.queries');
+    const { solicitantesQueries } = await import('@/lib/db/queries/solicitantes.queries');
 
-    // Obtener núcleos y usuarios en paralelo (solo habilitados)
-    const [nucleos, usuarios] = await Promise.all([
+    // Obtener núcleos, usuarios y solicitantes en paralelo
+    const [nucleos, usuarios, solicitantes] = await Promise.all([
       nucleosQueries.getAll(),
       usuariosQueries.getAll(true),
+      solicitantesQueries.getAllSolicitantes(),
     ]);
 
     // Formatear usuarios con nombre completo
@@ -160,6 +163,10 @@ export async function getAppointmentFilterOptionsAction(): Promise<GetAppointmen
       data: {
         nucleos,
         usuarios: usuariosFormateados,
+        solicitantes: solicitantes.map(s => ({
+          cedula: s.cedula,
+          nombre_completo: s.nombre_completo
+        })),
       },
     };
   } catch (error) {

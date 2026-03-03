@@ -1,6 +1,6 @@
 'use client';
 
-import { Filter as FilterIcon, ChevronLeft, Layers, UserCheck, Calendar, FileText, X, Users, BookOpen } from 'lucide-react';
+import { Filter as FilterIcon, ChevronLeft, Layers, UserCheck, Calendar, FileText, X, Users, BookOpen, User } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { AppointmentViewMode } from '@/components/ui/navigation/AppointmentViewSwitcher';
 import DatePicker from '@/components/forms/DatePicker';
@@ -11,6 +11,7 @@ interface AppointmentFilterOptions {
   nucleos: Array<{ id_nucleo: number; nombre_nucleo: string }>;
   usuarios: Array<{ cedula: string; nombres: string; apellidos: string; nombre_completo: string }>;
   casos: Array<{ id_caso: number; tramite: string }>;
+  solicitantes: Array<{ cedula: string; nombre_completo: string }>;
 }
 
 interface AppointmentsToolbarProps {
@@ -19,6 +20,7 @@ interface AppointmentsToolbarProps {
   nucleoFilter: string;
   usuarioFilter: string;
   caseFilter: string;
+  solicitanteFilter: string;
   misCasosFilter: boolean;
   dateRangeFilter: string;
   customDateStart: string;
@@ -28,6 +30,7 @@ interface AppointmentsToolbarProps {
   onNucleoFilterChange: (value: string) => void;
   onUsuarioFilterChange: (value: string) => void;
   onCaseFilterChange: (value: string) => void;
+  onSolicitanteFilterChange: (value: string) => void;
   onMisCasosFilterChange: (value: boolean) => void;
   onDateRangeFilterChange: (value: string) => void;
   onCustomDateStartChange: (value: string) => void;
@@ -41,6 +44,7 @@ export default function AppointmentsToolbar({
   nucleoFilter,
   usuarioFilter,
   caseFilter,
+  solicitanteFilter,
   misCasosFilter,
   dateRangeFilter,
   customDateStart,
@@ -50,6 +54,7 @@ export default function AppointmentsToolbar({
   onNucleoFilterChange,
   onUsuarioFilterChange,
   onCaseFilterChange,
+  onSolicitanteFilterChange,
   onMisCasosFilterChange,
   onDateRangeFilterChange,
   onCustomDateStartChange,
@@ -58,7 +63,7 @@ export default function AppointmentsToolbar({
   filterOptions,
 }: AppointmentsToolbarProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeSubmenu, setActiveSubmenu] = useState<'nucleo' | 'usuario' | 'caso' | 'fechas' | 'semestre' | null>(null);
+  const [activeSubmenu, setActiveSubmenu] = useState<'nucleo' | 'usuario' | 'caso' | 'solicitante' | 'fechas' | 'semestre' | null>(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 });
   const [submenuPosition, setSubmenuPosition] = useState({ top: 0, left: 0, width: 0 });
 
@@ -70,7 +75,7 @@ export default function AppointmentsToolbar({
   const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
   const isMobileViewport = () => window.innerWidth < 640; // Tailwind sm
 
-  const handleSubmenuToggle = (type: 'nucleo' | 'usuario' | 'caso' | 'fechas' | 'semestre', e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleSubmenuToggle = (type: 'nucleo' | 'usuario' | 'caso' | 'solicitante' | 'fechas' | 'semestre', e: React.MouseEvent<HTMLButtonElement>) => {
     if (activeSubmenu === type) {
       setActiveSubmenu(null);
     } else {
@@ -148,6 +153,7 @@ export default function AppointmentsToolbar({
     (nucleoFilter ? 1 : 0) +
     (usuarioFilter ? 1 : 0) +
     (caseFilter ? 1 : 0) +
+    (solicitanteFilter ? 1 : 0) +
     (misCasosFilter ? 1 : 0) +
     (dateRangeFilter !== 'all' ? 1 : 0) +
     (termFilter && termFilter !== 'all' ? 1 : 0);
@@ -158,6 +164,7 @@ export default function AppointmentsToolbar({
     onNucleoFilterChange('');
     onUsuarioFilterChange('');
     onCaseFilterChange('');
+    onSolicitanteFilterChange('');
     onMisCasosFilterChange(false);
     onDateRangeFilterChange('all');
     onCustomDateStartChange('');
@@ -182,6 +189,11 @@ export default function AppointmentsToolbar({
   const casoOptions = filterOptions.casos.map((c) => ({
     value: c.id_caso.toString(),
     label: `C-${c.id_caso} - ${c.tramite}`,
+  }));
+
+  const solicitanteOptions = (filterOptions.solicitantes || []).map((s) => ({
+    value: s.cedula,
+    label: s.nombre_completo,
   }));
 
   const semestreOptions = (semestresOptions || []).map((s) => ({
@@ -299,6 +311,12 @@ export default function AppointmentsToolbar({
         filterValue = caseFilter;
         handler = onCaseFilterChange;
         allLabel = 'Todos los casos';
+        break;
+      case 'solicitante':
+        options = solicitanteOptions;
+        filterValue = solicitanteFilter;
+        handler = onSolicitanteFilterChange;
+        allLabel = 'Todos los solicitantes';
         break;
       case 'semestre':
         options = semestreOptions;
@@ -519,6 +537,27 @@ export default function AppointmentsToolbar({
                 <div className="flex-1" />
                 <span>Usuario que Atendió</span>
                 <Users className="w-4 h-4" />
+              </motion.button>
+              <div className="border-t border-[var(--dropdown-border)] my-2"></div>
+
+              {/* Opción: Solicitante */}
+              <motion.button
+                ref={activeSubmenu === 'solicitante' ? activeButtonRef : undefined}
+                type="button"
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
+                onClick={(e) => handleSubmenuToggle('solicitante', e)}
+                className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 ${activeSubmenu === 'solicitante'
+                  ? 'bg-primary-light text-primary'
+                  : solicitanteFilter
+                    ? 'text-primary hover:bg-[var(--dropdown-hover)]'
+                    : 'text-[var(--card-text)] hover:bg-[var(--dropdown-hover)]'
+                  }`}
+              >
+                <ChevronLeft className={`w-4 h-4 transition-transform ${activeSubmenu === 'solicitante' ? '-rotate-90' : ''}`} />
+                <div className="flex-1" />
+                <span>Solicitante</span>
+                <User className="w-4 h-4" />
               </motion.button>
               <div className="border-t border-[var(--dropdown-border)] my-2"></div>
 

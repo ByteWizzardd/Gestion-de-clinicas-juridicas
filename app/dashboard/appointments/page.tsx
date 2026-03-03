@@ -32,7 +32,7 @@ export default async function AppointmentsPage() {
 
   const baseFilterOptions = filterOptionsResult.success && filterOptionsResult.data
     ? filterOptionsResult.data
-    : { nucleos: [], usuarios: [] };
+    : { nucleos: [], usuarios: [], solicitantes: [] };
 
   const casos = casosResult.success && Array.isArray(casosResult.data)
     ? (casosResult.data as any[]).map(caso => ({

@@ -14,6 +14,7 @@ export interface Appointment {
   caseId: number; // ID numérico del caso para filtrado preciso
   caseDetail: string;
   client: string;
+  clientCedula: string;
   location: string;
   orientation: string; // Orientación de la cita
   attendingUsers: string; // String con nombres separados por comas (para display)

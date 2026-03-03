@@ -21,6 +21,7 @@ interface AppointmentFilterOptions {
   nucleos: Array<{ id_nucleo: number; nombre_nucleo: string }>;
   usuarios: Array<{ cedula: string; nombres: string; apellidos: string; nombre_completo: string }>;
   casos: Array<{ id_caso: number; tramite: string }>;
+  solicitantes: Array<{ cedula: string; nombre_completo: string }>;
 }
 
 interface AppointmentsClientProps {
@@ -34,7 +35,7 @@ interface AppointmentsClientProps {
 export default function AppointmentsClient({
   initialAppointments,
   initialUserAppointments,
-  initialFilterOptions = { nucleos: [], usuarios: [], casos: [] },
+  initialFilterOptions = { nucleos: [], usuarios: [], casos: [], solicitantes: [] },
   semestresData = [],
   initialTermFilter = '',
 }: AppointmentsClientProps) {
@@ -70,6 +71,7 @@ export default function AppointmentsClient({
   const [nucleoFilter, setNucleoFilter] = useState<string>('');
   const [usuarioFilter, setUsuarioFilter] = useState<string>('');
   const [caseFilter, setCaseFilter] = useState<string>('');
+  const [solicitanteFilter, setSolicitanteFilter] = useState<string>('');
   const [misCasosFilter, setMisCasosFilter] = useState<boolean>(false);
   const [dateRangeFilter, setDateRangeFilter] = useState<string>('all'); // 'all', 'today', 'week', 'month', 'custom'
   const [customDateStart, setCustomDateStart] = useState<string>('');
@@ -102,6 +104,11 @@ export default function AppointmentsClient({
         if (list.length === 0) return false;
         return list.some((u) => u.id_usuario === usuarioFilter);
       });
+    }
+
+    // Solicitante
+    if (solicitanteFilter) {
+      filtered = filtered.filter((apt) => apt.clientCedula === solicitanteFilter);
     }
 
     // Filtro por semestre (termFilter)
@@ -231,6 +238,11 @@ export default function AppointmentsClient({
       });
     }
 
+    // Filtro por solicitante
+    if (solicitanteFilter) {
+      filtered = filtered.filter((apt) => apt.clientCedula === solicitanteFilter);
+    }
+
     // Filtro por semestre (termFilter)
     if (termFilter && termFilter !== 'all') {
       const selectedSemester = semestresData.find((s) => s.term === termFilter);
@@ -269,7 +281,7 @@ export default function AppointmentsClient({
     }
 
     return filtered;
-  }, [userAppointments, selectedMonth, selectedDate, filterByDate, nucleoFilter, usuarioFilter, caseFilter, termFilter, semestresData]);
+  }, [userAppointments, selectedMonth, selectedDate, filterByDate, nucleoFilter, usuarioFilter, caseFilter, solicitanteFilter, termFilter, semestresData]);
 
   // Filtrar citas por búsqueda y filtros (solo para vista de lista)
   const filteredAppointmentsForList = useMemo(() => {
@@ -314,6 +326,11 @@ export default function AppointmentsClient({
     // Filtro por caso
     if (caseFilter) {
       filtered = filtered.filter((apt) => String(apt.caseId) === String(caseFilter));
+    }
+
+    // Filtro por solicitante
+    if (solicitanteFilter) {
+      filtered = filtered.filter((apt) => apt.clientCedula === solicitanteFilter);
     }
 
     // Filtro por semestre (termFilter)
@@ -375,7 +392,7 @@ export default function AppointmentsClient({
     }
 
     return filtered;
-  }, [appointments, userAppointments, misCasosFilter, searchValue, nucleoFilter, usuarioFilter, caseFilter, dateRangeFilter, customDateStart, customDateEnd, termFilter, semestresData]);
+  }, [appointments, userAppointments, misCasosFilter, searchValue, nucleoFilter, usuarioFilter, caseFilter, solicitanteFilter, dateRangeFilter, customDateStart, customDateEnd, termFilter, semestresData]);
 
   // Filtrar citas agendadas (citas programadas)
   const scheduledAppointments = useMemo(() => {
@@ -715,6 +732,7 @@ export default function AppointmentsClient({
                         nucleoFilter={nucleoFilter}
                         usuarioFilter={usuarioFilter}
                         caseFilter={caseFilter}
+                        solicitanteFilter={solicitanteFilter}
                         misCasosFilter={misCasosFilter}
                         dateRangeFilter={dateRangeFilter}
                         customDateStart={customDateStart}
@@ -724,6 +742,7 @@ export default function AppointmentsClient({
                         onNucleoFilterChange={setNucleoFilter}
                         onUsuarioFilterChange={setUsuarioFilter}
                         onCaseFilterChange={setCaseFilter}
+                        onSolicitanteFilterChange={setSolicitanteFilter}
                         onMisCasosFilterChange={setMisCasosFilter}
                         onDateRangeFilterChange={setDateRangeFilter}
                         onCustomDateStartChange={setCustomDateStart}
@@ -801,6 +820,7 @@ export default function AppointmentsClient({
                         nucleoFilter={nucleoFilter}
                         usuarioFilter={usuarioFilter}
                         caseFilter={caseFilter}
+                        solicitanteFilter={solicitanteFilter}
                         misCasosFilter={misCasosFilter}
                         dateRangeFilter={dateRangeFilter}
                         customDateStart={customDateStart}
@@ -810,6 +830,7 @@ export default function AppointmentsClient({
                         onNucleoFilterChange={setNucleoFilter}
                         onUsuarioFilterChange={setUsuarioFilter}
                         onCaseFilterChange={setCaseFilter}
+                        onSolicitanteFilterChange={setSolicitanteFilter}
                         onMisCasosFilterChange={setMisCasosFilter}
                         onDateRangeFilterChange={setDateRangeFilter}
                         onCustomDateStartChange={setCustomDateStart}
