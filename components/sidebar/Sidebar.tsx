@@ -163,12 +163,12 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
         transitionDuration: "300ms",
         transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)"
       }}
-      className={`bg-background flex flex-col h-[calc(100vh-2rem)] rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] m-2 md:m-4 relative group transition-all duration-300 ease-in-out ${isCollapsed ? 'w-16 md:w-20' : 'w-52 md:w-56'}`}
+      className={`bg-(--glass-bg) backdrop-blur-md flex flex-col h-[calc(100vh-2rem)] rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.20)] border border-(--glass-border) m-2 md:m-4 relative group transition-all duration-300 ease-in-out ${isCollapsed ? 'w-16 md:w-20' : 'w-52 md:w-56'}`}
     >
       {/* Botón de toggle (visible al hacer hover o siempre visible) */}
       <button
         onClick={toggleSidebar}
-        className="absolute -right-2 lg:-right-3 top-6 lg:top-8 bg-[var(--dropdown-bg)] rounded-full p-1 lg:p-1.5 shadow-md border border-[var(--dropdown-border)] text-[var(--foreground)] opacity-60 hover:opacity-100 hover:text-primary transition-all duration-300 z-50 lg:opacity-0 lg:group-hover:opacity-100 focus:opacity-100 cursor-pointer hidden lg:flex items-center justify-center"
+        className="absolute -right-2 lg:-right-3 top-6 lg:top-8 bg-(--dropdown-bg) rounded-full p-1 lg:p-1.5 shadow-md border border-(--dropdown-border) text-foreground opacity-60 hover:opacity-100 hover:text-primary transition-all duration-300 z-50 lg:opacity-0 lg:group-hover:opacity-100 focus:opacity-100 cursor-pointer hidden lg:flex items-center justify-center"
         aria-label={isCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
       >
         {isCollapsed ? (
@@ -182,7 +182,7 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
       {onNavigate && (
         <button
           onClick={onNavigate}
-          className="absolute right-3 top-5 bg-[var(--sidebar-hover)] opacity-80 backdrop-blur-sm rounded-full p-1.5 text-[var(--foreground)] hover:text-primary transition-all duration-300 z-50 lg:hidden flex items-center justify-center cursor-pointer shadow-sm"
+          className="absolute right-3 top-5 bg-(--sidebar-hover) opacity-80 backdrop-blur-sm rounded-full p-1.5 text-foreground hover:text-primary transition-all duration-300 z-50 lg:hidden flex items-center justify-center cursor-pointer shadow-sm"
           aria-label="Cerrar menú"
         >
           <X className="w-4 h-4" />
@@ -253,7 +253,7 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
                   onClick={onNavigate}
                   className={`flex items-center gap-3 px-3 md:px-4 py-2.5 md:py-3 transition-all duration-200 whitespace-nowrap
                       ${isActive ? 'bg-primary text-white font-semibold rounded-3xl'
-                      : 'text-foreground hover:bg-[var(--sidebar-hover)] rounded-lg hover:rounded-3xl'}
+                      : 'text-foreground hover:bg-(--sidebar-hover) rounded-lg hover:rounded-3xl'}
                       ${isCollapsed ? 'justify-center px-2' : ''}
                   `}
                   title={isCollapsed ? item.label : undefined}
@@ -308,11 +308,11 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
                 alt="Foto de perfil"
                 width={40}
                 height={40}
-                className="w-10 h-10 rounded-full object-cover shrink-0 border-2 border-[var(--background)]"
+                className="w-10 h-10 rounded-full object-cover shrink-0 border-2 border-background"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-[var(--sidebar-hover)] shrink-0 flex items-center justify-center transition-colors border-2 border-[var(--background)]">
-                <span className="text-[var(--foreground)] opacity-60 text-sm font-medium">
+              <div className="w-10 h-10 rounded-full bg-(--sidebar-hover) shrink-0 flex items-center justify-center transition-colors border-2 border-background">
+                <span className="text-foreground opacity-60 text-sm font-medium">
                   {displayName.charAt(0).toUpperCase()}
                 </span>
               </div>

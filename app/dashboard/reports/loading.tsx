@@ -8,8 +8,8 @@ export default function ReportsLoading() {
         <div className="w-full">
             {/* Header */}
             <div className="mb-4 md:mb-6 mt-4">
-                <h1 className="text-4xl m-3 font-semibold font-primary text-[var(--foreground)] transition-colors">Reportes</h1>
-                <p className="mb-6 ml-3 text-base text-[var(--card-text-muted)] transition-colors">Presentación de las métricas clave a través de gráficas y cuadros.</p>
+                <h1 className="text-4xl m-3 font-semibold font-primary text-foreground transition-colors">Reportes</h1>
+                <p className="mb-6 ml-3 text-base text-(--card-text-muted) transition-colors">Presentación de las métricas clave a través de gráficas y cuadros.</p>
             </div>
 
             <div className="px-3 md:px-1 space-y-6">
@@ -20,7 +20,7 @@ export default function ReportsLoading() {
                         return (
                             <div
                                 key={i}
-                                className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] h-full min-h-40 w-full relative overflow-hidden p-4 flex flex-col transition-colors"
+                                className="bg-(--card-bg) border border-(--card-border) rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] h-full min-h-40 w-full relative overflow-hidden p-4 flex flex-col transition-colors"
                             >
                                 {/* Título del card */}
                                 <div className="my-auto pr-20">
@@ -65,7 +65,7 @@ export default function ReportsLoading() {
                     {Array.from({ length: 4 }).map((_, i) => (
                         <div
                             key={i}
-                            className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-6 shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] h-96 flex flex-col transition-colors"
+                            className="bg-(--card-bg) border border-(--card-border) rounded-lg p-6 shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] h-96 flex flex-col transition-colors"
                         >
                             {/* Chart title */}
                             <div className="flex justify-center mb-4">
