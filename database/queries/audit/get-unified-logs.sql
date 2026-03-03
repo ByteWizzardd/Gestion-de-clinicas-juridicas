@@ -508,6 +508,31 @@ SELECT * FROM (
                     'nombre_completo_usuario_actualizo', u.nombres || ' ' || u.apellidos
                 ) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo),
                 '{}'::jsonb
+            ) ||
+            jsonb_build_object(
+                -- Fechas como texto para evitar que JS las parsee como UTC y reste 1 día
+                'fecha_encuentro_anterior', to_char(t.fecha_encuentro_anterior, 'YYYY-MM-DD'),
+                'fecha_encuentro_nuevo', to_char(t.fecha_encuentro_nuevo, 'YYYY-MM-DD'),
+                'fecha_proxima_cita_anterior', to_char(t.fecha_proxima_cita_anterior, 'YYYY-MM-DD'),
+                'fecha_proxima_cita_nuevo', to_char(t.fecha_proxima_cita_nuevo, 'YYYY-MM-DD'),
+                'usuarios_atenciones_anterior', COALESCE(
+                    (SELECT json_agg(json_build_object(
+                        'cedula', u.cedula,
+                        'nombre', CONCAT(u.nombres, ' ', u.apellidos)
+                    ))
+                    FROM usuarios u
+                    WHERE u.cedula = ANY(string_to_array(t.atenciones_anterior, ','))),
+                    '[]'::json  -- Devuelve JSON nulo o arreglo vacío si no hay
+                ),
+                'usuarios_atenciones_nuevo', COALESCE(
+                    (SELECT json_agg(json_build_object(
+                        'cedula', u.cedula,
+                        'nombre', CONCAT(u.nombres, ' ', u.apellidos)
+                    ))
+                    FROM usuarios u
+                    WHERE u.cedula = ANY(string_to_array(t.atenciones_nuevo, ','))),
+                    '[]'::json
+                )
             )
         )::text as metadata
     FROM auditoria_actualizacion_citas t

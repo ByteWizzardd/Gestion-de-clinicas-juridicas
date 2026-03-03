@@ -5,8 +5,8 @@ SELECT
     a.num_cita,
     a.id_caso,
     -- Valores anteriores
-    a.fecha_encuentro_anterior,
-    a.fecha_proxima_cita_anterior,
+    to_char(a.fecha_encuentro_anterior, 'YYYY-MM-DD') AS fecha_encuentro_anterior,
+    to_char(a.fecha_proxima_cita_anterior, 'YYYY-MM-DD') AS fecha_proxima_cita_anterior,
     a.orientacion_anterior,
     a.atenciones_anterior,
     -- Resolver cédulas anteriores a usuarios con nombre
@@ -22,8 +22,8 @@ SELECT
         '[]'::json
     ) AS usuarios_atenciones_anterior,
     -- Valores nuevos
-    a.fecha_encuentro_nuevo,
-    a.fecha_proxima_cita_nuevo,
+    to_char(a.fecha_encuentro_nuevo, 'YYYY-MM-DD') AS fecha_encuentro_nuevo,
+    to_char(a.fecha_proxima_cita_nuevo, 'YYYY-MM-DD') AS fecha_proxima_cita_nuevo,
     a.orientacion_nuevo,
     a.atenciones_nuevo,
     -- Resolver cédulas nuevas a usuarios con nombre

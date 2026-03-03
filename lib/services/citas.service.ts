@@ -367,18 +367,28 @@ export const citasService = {
 
         // 3. Auditoría Manual Centralizada
         // Verificar si hubo cambios en los campos de la cita O en las atenciones
-        const nuevaFecha = params.date ? new Date(params.date) : new Date(citaInfo.fecha_encuentro);
+        // Normalizar las fechas a string YYYY-MM-DD para evitar que new Date() las parsee como UTC medianoche y reste 1 día en zonas negativas
+        const normalizeDate = (d: Date | string | null | undefined): string | null => {
+          if (!d) return null;
+          if (typeof d === 'string') return d.slice(0, 10); // ya es YYYY-MM-DD
+          return d.toISOString().slice(0, 10);
+        };
+
+        const nuevaFecha = params.date ? params.date : normalizeDate(citaInfo.fecha_encuentro);
         const nuevaProxima = params.endDate !== undefined
-          ? (params.endDate === null || params.endDate === 'NULL' ? null : new Date(params.endDate))
-          : (citaInfo.fecha_proxima_cita ? new Date(citaInfo.fecha_proxima_cita) : null);
+          ? (params.endDate === null || params.endDate === 'NULL' ? null : params.endDate)
+          : normalizeDate(citaInfo.fecha_proxima_cita);
         const nuevaOrientacion = params.orientacion !== undefined ? params.orientacion : citaInfo.orientacion;
 
+        const fechaAnteriorNorm = normalizeDate(citaInfo.fecha_encuentro);
+        const proximaAnteriorNorm = normalizeDate(citaInfo.fecha_proxima_cita);
+
         const huboCambiosCita =
-          (params.date && new Date(citaInfo.fecha_encuentro).getTime() !== new Date(params.date).getTime()) ||
+          (params.date && fechaAnteriorNorm !== params.date) ||
           (params.endDate !== undefined && (
-            (citaInfo.fecha_proxima_cita === null && params.endDate !== null && params.endDate !== 'NULL') ||
-            (citaInfo.fecha_proxima_cita !== null && (params.endDate === null || params.endDate === 'NULL')) ||
-            (citaInfo.fecha_proxima_cita !== null && params.endDate !== null && params.endDate !== 'NULL' && new Date(citaInfo.fecha_proxima_cita).getTime() !== new Date(params.endDate).getTime())
+            (proximaAnteriorNorm === null && params.endDate !== null && params.endDate !== 'NULL') ||
+            (proximaAnteriorNorm !== null && (params.endDate === null || params.endDate === 'NULL')) ||
+            (proximaAnteriorNorm !== null && params.endDate !== null && params.endDate !== 'NULL' && proximaAnteriorNorm !== params.endDate)
           )) ||
           (params.orientacion !== undefined && citaInfo.orientacion !== params.orientacion);
 
@@ -388,7 +398,7 @@ export const citasService = {
           const insertAuditQuery = loadSQL('auditoria-actualizacion-citas/create.sql');
           await client.query(insertAuditQuery, [
             num_cita, id_caso,
-            citaInfo.fecha_encuentro, citaInfo.fecha_proxima_cita, citaInfo.orientacion,
+            fechaAnteriorNorm, proximaAnteriorNorm, citaInfo.orientacion,
             nuevaFecha,
             nuevaProxima,
             nuevaOrientacion,
@@ -453,10 +463,8 @@ export const citasService = {
 
                   // Si cambió la fecha, actualizar el detalle
                   if (params.date) {
-                    const nuevaFechaObj = new Date(params.date);
-                    const nuevoDia = String(nuevaFechaObj.getDate()).padStart(2, '0');
-                    const nuevoMes = String(nuevaFechaObj.getMonth() + 1).padStart(2, '0');
-                    const nuevoAnio = nuevaFechaObj.getFullYear();
+                    // Parsear YYYY-MM-DD directamente sin new Date() para evitar desfase UTC
+                    const [nuevoAnio, nuevoMes, nuevoDia] = params.date.split('-');
                     const nuevaFechaFormateada = `${nuevoDia}/${nuevoMes}/${nuevoAnio}`;
                     nuevoDetalle = `Cita realizada el ${nuevaFechaFormateada}`;
                   }
@@ -594,10 +602,11 @@ export const citasService = {
         try {
           if (cita) {
             // Convertir fecha al formato español DD/MM/YYYY para matching
-            const fechaObj = new Date(cita.fecha_encuentro);
-            const dia = String(fechaObj.getDate()).padStart(2, '0');
-            const mes = String(fechaObj.getMonth() + 1).padStart(2, '0');
-            const anio = fechaObj.getFullYear();
+            // Parsear YYYY-MM-DD directamente como string para evitar desfase UTC
+            const fechaStr: string = typeof cita.fecha_encuentro === 'string'
+              ? cita.fecha_encuentro.slice(0, 10)
+              : (cita.fecha_encuentro as Date).toISOString().slice(0, 10);
+            const [anio, mes, dia] = fechaStr.split('-');
             const fechaFormateada = `${dia}/${mes}/${anio}`;
 
             // DEBUG: Log de la cita que se va a eliminar

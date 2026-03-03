@@ -366,14 +366,25 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
 
         // Incluir fecha si está presente (siempre se envía si hay fecha)
         if (date) {
-          updateParams.date = date.toISOString().slice(0, 10);
+          // Usar fecha local (no toISOString que convierte a UTC y resta 1 día en zona -04:00)
+          const yyyy = date.getFullYear();
+          const mm = String(date.getMonth() + 1).padStart(2, '0');
+          const dd = String(date.getDate()).padStart(2, '0');
+          updateParams.date = `${yyyy}-${mm}-${dd}`;
         }
 
         // Manejar fecha de próxima cita
         // Si endDate es null, significa que el usuario quiere eliminar la fecha
         // Si endDate es undefined, no se envía (no se modifica)
         if (endDate !== undefined) {
-          updateParams.endDate = endDate ? endDate.toISOString().slice(0, 10) : null;
+          if (endDate) {
+            const yyyy = endDate.getFullYear();
+            const mm = String(endDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(endDate.getDate()).padStart(2, '0');
+            updateParams.endDate = `${yyyy}-${mm}-${dd}`;
+          } else {
+            updateParams.endDate = null;
+          }
         }
 
         // Incluir orientación si está presente y no está vacía
@@ -391,8 +402,18 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
         // Modo creación
         result = await createCitaAction({
           caseId: Number(selectedCaseID),
-          date: date ? date.toISOString().slice(0, 10) : "",
-          endDate: endDate ? endDate.toISOString().slice(0, 10) : undefined,
+          date: date ? (() => {
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+          })() : "",
+          endDate: endDate ? (() => {
+            const yyyy = endDate.getFullYear();
+            const mm = String(endDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(endDate.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+          })() : undefined,
           orientacion,
           usuariosAtienden: usuariosAtienden,
         });
@@ -414,7 +435,12 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
             // Mostrar modal de confirmación para crear acción
             const citaData = {
               id_caso: Number(selectedCaseID),
-              fecha: date ? date.toISOString().slice(0, 10) : "",
+              fecha: date ? (() => {
+                const yyyy = date.getFullYear();
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const dd = String(date.getDate()).padStart(2, '0');
+                return `${yyyy}-${mm}-${dd}`;
+              })() : "",
               orientacion: orientacion.trim(),
               usuariosAtienden: usuariosAtienden,
             };
