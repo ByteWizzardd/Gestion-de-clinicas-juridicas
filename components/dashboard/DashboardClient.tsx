@@ -49,11 +49,17 @@ interface DashboardClientProps {
   initialAppointments: Appointment[];
   initialCasos: Caso[];
   initialAcciones?: AccionReciente[];
+  isCoordinator?: boolean;
 }
 
 import { triggerInactiveCasesCheckAction } from '@/app/actions/automation';
 
-export default function DashboardClient({ initialAppointments, initialCasos, initialAcciones = [] }: DashboardClientProps) {
+export default function DashboardClient({ 
+  initialAppointments, 
+  initialCasos, 
+  initialAcciones = [],
+  isCoordinator = false
+}: DashboardClientProps) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [appointments, setAppointments] = useState<Appointment[]>(
@@ -180,7 +186,7 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
             >
               <div className="flex items-center justify-between mb-4 shrink-0 px-2">
                 <h3 className="text-xl md:text-2xl font-semibold text-[var(--card-text)] transition-colors">
-                  Mis Casos
+                  {isCoordinator ? 'Casos' : 'Mis Casos'}
                 </h3>
                 <span className="text-sm text-[var(--card-text-muted)] transition-colors">
                   {casos.length} {casos.length === 1 ? 'caso' : 'casos'}
@@ -204,7 +210,7 @@ export default function DashboardClient({ initialAppointments, initialCasos, ini
               <div className="flex flex-col md:flex-row gap-4 md:gap-6 flex-1 min-h-0">
                 <div className="w-full md:w-1/2 flex flex-col min-h-0 px-2">
                   <h3 className="text-xl md:text-2xl font-semibold text-[var(--card-text)] mb-3 md:mb-4 shrink-0 transition-colors">
-                    Mi Agenda
+                    {isCoordinator ? 'Agenda General' : 'Mi Agenda'}
                   </h3>
                   <div className="flex-1 overflow-y-auto pr-2 min-h-[200px] md:min-h-0">
                     <DashboardAppointmentList

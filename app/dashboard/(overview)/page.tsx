@@ -33,5 +33,12 @@ export default async function DashboardPage() {
     console.error('Error al obtener acciones:', JSON.stringify(accionesResult.error));
   }
 
-  return <DashboardClient initialAppointments={appointments} initialCasos={casos} initialAcciones={acciones} />;
+  return (
+    <DashboardClient 
+      initialAppointments={appointments} 
+      initialCasos={casos} 
+      initialAcciones={acciones} 
+      isCoordinator={isCoordinator}
+    />
+  );
 }
