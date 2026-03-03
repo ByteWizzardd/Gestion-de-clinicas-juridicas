@@ -435,8 +435,6 @@ export const casosService = {
                 // 2. Si la acción comienza con "Cita realizada el", buscar y eliminar la cita correspondiente
                 // Aplicar EXACTAMENTE la misma lógica que en citas.service.ts (buscar por ejecutores)
                 if (accion.detalle_accion.startsWith('Cita realizada el')) {
-                    console.log('[DEBUG deleteAccion] Acción es de cita, iniciando eliminación bidireccional:', accion.detalle_accion);
-
                     // Buscar TODAS las citas para este caso
                     const findCitasQuery = `
                         SELECT c.num_cita, c.id_caso, c.fecha_encuentro, c.orientacion
@@ -445,15 +443,6 @@ export const casosService = {
                     `;
 
                     const citasResult = await client.query(findCitasQuery, [idCaso]);
-
-                    console.log('[DEBUG deleteAccion] Citas encontradas para el caso:', {
-                        totalCitas: citasResult.rows.length,
-                        citas: citasResult.rows.map(c => ({
-                            num_cita: c.num_cita,
-                            fecha_encuentro: c.fecha_encuentro,
-                            orientacion: c.orientacion
-                        }))
-                    });
 
                     // Obtener ejecutores de la acción
                     const ejecutoresAccionQuery = `
@@ -465,8 +454,6 @@ export const casosService = {
 
                     const ejecutoresAccionResult = await client.query(ejecutoresAccionQuery, [numAccion, idCaso]);
                     const ejecutoresAccion = ejecutoresAccionResult.rows.map(r => r.id_usuario).sort();
-
-                    console.log('[DEBUG deleteAccion] Ejecutores de la acción:', ejecutoresAccion);
 
                     // Para cada cita, verificar si corresponde a esta acción por ejecutores
                     let citaRelacionada = null;
@@ -482,32 +469,18 @@ export const casosService = {
                         const ejecutoresCitaResult = await client.query(ejecutoresCitaQuery, [cita.num_cita, idCaso]);
                         const ejecutoresCita = ejecutoresCitaResult.rows.map(r => r.id_usuario).sort();
 
-                        console.log('[DEBUG deleteAccion] Comparando ejecutores:', {
-                            num_cita: cita.num_cita,
-                            ejecutoresCita,
-                            ejecutoresAccion,
-                            coinciden: JSON.stringify(ejecutoresCita) === JSON.stringify(ejecutoresAccion)
-                        });
-
                         // Comparar listas de ejecutores
                         const ejecutoresCoinciden = JSON.stringify(ejecutoresCita) === JSON.stringify(ejecutoresAccion);
 
                         if (ejecutoresCoinciden) {
                             // ¡Esta cita corresponde a la acción!
                             citaRelacionada = cita;
-                            console.log('[DEBUG deleteAccion] ¡CITA ENCONTRADA! Se eliminará:', {
-                                num_cita: citaRelacionada.num_cita,
-                                id_caso: citaRelacionada.id_caso,
-                                fecha_encuentro: citaRelacionada.fecha_encuentro
-                            });
                             break; // Salir del loop, ya encontramos la cita correcta
                         }
                     }
 
                     // Eliminar la cita encontrada (si existe)
                     if (citaRelacionada) {
-                        console.log('[DEBUG deleteAccion] Eliminando cita relacionada');
-
                         // Eliminar registros de atienden primero
                         const deleteAtiendenQuery = loadSQL('atienden/delete-by-cita.sql');
                         await client.query(deleteAtiendenQuery, [citaRelacionada.num_cita, idCaso]);
@@ -515,10 +488,6 @@ export const casosService = {
                         // Eliminar la cita
                         const deleteCitaQuery = loadSQL('citas/delete.sql');
                         await client.query(deleteCitaQuery, [citaRelacionada.num_cita, idCaso]);
-
-                        console.log('[DEBUG deleteAccion] Cita eliminada exitosamente');
-                    } else {
-                        console.log('[DEBUG deleteAccion] No se encontró ninguna cita que corresponda exactamente a esta acción');
                     }
                 }
 

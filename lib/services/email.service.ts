@@ -94,7 +94,6 @@ async function sendEmailViaGmail(options: EmailOptions): Promise<boolean> {
   }
 
   try {
-    console.log(`📤 Enviando email desde ${fromEmail} hacia ${options.to}`);
 
     const info = await transporter.sendMail({
       from: `"Sistema de Recuperación" <${fromEmail}>`,
@@ -104,7 +103,6 @@ async function sendEmailViaGmail(options: EmailOptions): Promise<boolean> {
       text: options.text || options.html.replace(/<[^>]*>/g, ''),
     });
 
-    console.log(`✅ Email enviado exitosamente (Message ID: ${info.messageId}) a ${options.to}`);
     return true;
   } catch (error) {
     console.error('❌ Error al enviar email vía Gmail SMTP:');
@@ -143,8 +141,6 @@ export const emailService = {
     codigo: string,
     nombre: string
   ): Promise<boolean> => {
-    console.log(`📧 Intentando enviar código a: ${email}`);
-    
     const subject = 'Código de Verificación - Recuperación de Contraseña';
     const html = generateResetPasswordEmail(codigo, nombre);
     const text = `Hola ${nombre},\n\nHas solicitado restablecer tu contraseña. Utiliza el siguiente código de verificación:\n\n${codigo}\n\nEste código expirará en 24 horas.\n\nSi no solicitaste este cambio, puedes ignorar este correo.`;
