@@ -69,7 +69,7 @@ export default function DashboardLayoutClient({ user, children, initialSidebarCo
   return (
     <div className="flex h-screen bg-background relative overflow-x-hidden">
       {/* Sidebar escritorio */}
-      <div className="shrink-0 hidden lg:block">
+      <div className="shrink-0 hidden lg:block z-40">
         <Sidebar role={userRole} userName={userName} initialCollapsed={initialSidebarCollapsed} userCedula={user.cedula} />
       </div>
 
