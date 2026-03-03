@@ -2619,7 +2619,7 @@ export default function ApplicantFormModal({
           <label className="text-base font-normal text-foreground mb-1">
             Artefactos Domésticos
           </label>
-          <div className="grid grid-cols-4 gap-x-4 gap-y-1">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-3 mt-1">
             {artefactosDomesticos
               .filter((artefacto) => artefacto.habilitado !== false)
               .map((artefacto) => {
@@ -2627,7 +2627,7 @@ export default function ApplicantFormModal({
                 return (
                   <label
                     key={artefacto.num_caracteristica}
-                    className="flex items-center gap-2 cursor-pointer py-0.5 px-2 rounded-full transition-colors"
+                    className="flex items-center gap-3 cursor-pointer py-1.5 px-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                   >
                     <div className="relative flex items-center justify-center">
                       <input
@@ -2667,7 +2667,7 @@ export default function ApplicantFormModal({
                         )}
                       </div>
                     </div>
-                    <span className="text-base text-foreground">{artefacto.descripcion}</span>
+                    <span className="text-base text-foreground leading-tight">{artefacto.descripcion}</span>
                   </label>
                 );
               })}
