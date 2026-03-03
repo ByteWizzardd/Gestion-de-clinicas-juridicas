@@ -479,6 +479,9 @@ export const citasService = {
                     nuevoComentario
                   });
 
+                  // Establecer la variable de sesión para que el trigger sepa quién actualizó la acción
+                  await client.query("SELECT set_config('app.usuario_actualiza_accion', $1, true)", [params.idUsuarioActualizo]);
+
                   // Actualizar la acción usando client de la transacción
                   const updateAccionQuery = loadSQL('acciones/update.sql');
                   await client.query(updateAccionQuery, [accion.num_accion, id_caso, nuevoDetalle, nuevoComentario]);
