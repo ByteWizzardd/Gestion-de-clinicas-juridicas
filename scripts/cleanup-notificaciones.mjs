@@ -23,9 +23,6 @@ async function main() {
   try {
     const result = await pool.query(deleteOlderThanSql, [ttlDays]);
 
-    console.log(
-      `[cleanup-notificaciones] Eliminadas: ${result.rowCount ?? 0} (TTL: ${ttlDays} days)`,
-    );
   } finally {
     await pool.end();
   }

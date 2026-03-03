@@ -11,14 +11,6 @@ const DEBUG_SEND_CITA_REMINDERS = ["1", "true", "yes"].includes(
   String(process.env.DEBUG_SEND_CITA_REMINDERS || "").toLowerCase()
 );
 
-function logInfo(message, ...args) {
-  console.log(`${SCRIPT_TAG} ${message}`, ...args);
-}
-
-function logDebug(message, ...args) {
-  if (!DEBUG_SEND_CITA_REMINDERS) return;
-  console.log(`${SCRIPT_TAG} ${message}`, ...args);
-}
 
 logInfo(`boot: node=${process.version} debug=${DEBUG_SEND_CITA_REMINDERS}`);
 

@@ -40,7 +40,6 @@ async function main() {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
   try {
-    console.log("Iniciando verificación de casos inactivos...");
 
     // 1. Cargar Queries
     const getInactiveCasesSql = readFileSync(
@@ -65,7 +64,6 @@ async function main() {
     const coordinadores = coordsResult.rows;
 
     if (coordinadores.length === 0) {
-      console.log("No se encontraron coordinadores activos. Abortando.");
       return;
     }
 
@@ -77,10 +75,8 @@ async function main() {
     const inactiveResult = await pool.query(getInactiveCasesSql);
     const inactiveCases = inactiveResult.rows;
 
-    console.log(`Se encontraron ${inactiveCases.length} casos inactivos.`);
 
     if (inactiveCases.length === 0) {
-      console.log("No hay casos inactivos. Nada que notificar.");
       return;
     }
 
@@ -96,9 +92,6 @@ async function main() {
           titulo,
         ]);
         if (existeResultado.rowCount > 0) {
-          console.log(
-            `[SKIP] El coordinador ${coord.cedula} ya tiene una notificación resumen pendiente.`,
-          );
           continue;
         }
         await pool.query(createNotificationSql, [
@@ -107,9 +100,6 @@ async function main() {
           titulo,
           mensaje,
         ]);
-        console.log(
-          `[ENVIADO] Notificación resumen enviada al coordinador ${coord.cedula}.`,
-        );
       } catch (notifError) {
         console.error(
           `Error enviando notificación a ${coord.cedula}:`,
@@ -148,9 +138,6 @@ async function main() {
           tituloProf,
         ]);
         if (existeProf.rowCount > 0) {
-          console.log(
-            `[SKIP] El profesor ${cedulaProfesor} ya tiene alerta pendiente para el caso ${caso.id_caso}.`,
-          );
           continue;
         }
         await pool.query(createNotificationSql, [
@@ -159,13 +146,9 @@ async function main() {
           tituloProf,
           mensajeProf,
         ]);
-        console.log(
-          `[ENVIADO] Notificación enviada al profesor ${cedulaProfesor} sobre caso ${caso.id_caso}.`,
-        );
       }
     }
 
-    console.log("Verificación completada exitosamente.");
   } catch (err) {
     console.error("Error en el script:", err);
   } finally {
