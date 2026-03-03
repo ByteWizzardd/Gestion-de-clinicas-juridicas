@@ -1366,12 +1366,12 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         else if (ua.includes('Chrome')) browser = 'Chrome';
         else if (ua.includes('Firefox')) browser = 'Firefox';
         else if (ua.includes('Safari')) browser = 'Safari';
-        if (ua.includes('Windows NT 10')) os = 'Windows 10/11';
+        if (ua.includes('Android')) os = 'Android';
+        else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+        else if (ua.includes('Windows NT 10')) os = 'Windows 10/11';
         else if (ua.includes('Windows')) os = 'Windows';
         else if (ua.includes('Mac OS X')) os = 'macOS';
         else if (ua.includes('Linux')) os = 'Linux';
-        else if (ua.includes('Android')) os = 'Android';
-        else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
 
         // Build user name
         let nombreUsuario = (r as any).nombre_completo_usuario_accion;
@@ -4867,12 +4867,12 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         else if (ua.includes('Chrome')) browser = 'Chrome';
         else if (ua.includes('Firefox')) browser = 'Firefox';
         else if (ua.includes('Safari')) browser = 'Safari';
-        if (ua.includes('Windows NT 10')) os = 'Windows 10/11';
+        if (ua.includes('Android')) os = 'Android';
+        else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+        else if (ua.includes('Windows NT 10')) os = 'Windows 10/11';
         else if (ua.includes('Windows')) os = 'Windows';
         else if (ua.includes('Mac OS X')) os = 'macOS';
         else if (ua.includes('Linux')) os = 'Linux';
-        else if (ua.includes('Android')) os = 'Android';
-        else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
 
         // Build user name
         let nombreUsuario = (r as any).nombre_completo_usuario_accion;

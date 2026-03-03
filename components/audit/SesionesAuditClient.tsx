@@ -78,12 +78,12 @@ function parseUserAgent(ua: string | null): { browser: string; os: string } {
     else if (ua.includes('Firefox')) browser = 'Firefox';
     else if (ua.includes('Safari')) browser = 'Safari';
 
-    if (ua.includes('Windows NT 10')) os = 'Windows 10/11';
+    if (ua.includes('Android')) os = 'Android';
+    else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+    else if (ua.includes('Windows NT 10')) os = 'Windows 10/11';
     else if (ua.includes('Windows')) os = 'Windows';
     else if (ua.includes('Mac OS X')) os = 'macOS';
     else if (ua.includes('Linux')) os = 'Linux';
-    else if (ua.includes('Android')) os = 'Android';
-    else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
 
     return { browser, os };
 }
