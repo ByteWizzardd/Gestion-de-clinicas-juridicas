@@ -239,10 +239,75 @@ SELECT * FROM (
 
     UNION ALL
 
+    -- Estudiantes (Inscripción)
+    SELECT 
+        'Estudiante' as entidad, 
+        'Inscripción' as accion, 
+        t.fecha_creacion as fecha, 
+        t.id_usuario_creo as usuario_id, 
+        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre, 
+        'Inscripción estudiante: ' || t.cedula_estudiante as detalles, 
+        (row_to_json(t.*)::jsonb || 
+            COALESCE(
+                (SELECT jsonb_build_object(
+                    'nombres_usuario_creo', u.nombres, 
+                    'apellidos_usuario_creo', u.apellidos, 
+                    'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos
+                ) FROM usuarios u WHERE u.cedula = t.id_usuario_creo),
+                '{}'::jsonb
+            ) ||
+            COALESCE(
+                (SELECT jsonb_build_object(
+                    'cedula', u.cedula,
+                    'nombres', u.nombres, 
+                    'apellidos', u.apellidos, 
+                    'nombre_completo', u.nombres || ' ' || u.apellidos
+                ) FROM usuarios u WHERE u.cedula = t.cedula_estudiante),
+                '{}'::jsonb
+            )
+        )::text as metadata 
+    FROM auditoria_insercion_estudiantes t
+
+    UNION ALL
+
+    -- Profesores (Asignación)
+    SELECT 
+        'Profesor' as entidad, 
+        'Asignación' as accion, 
+        t.fecha_creacion as fecha, 
+        t.id_usuario_creo as usuario_id, 
+        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre, 
+        'Asignación profesor: ' || t.cedula_profesor as detalles, 
+        (row_to_json(t.*)::jsonb || 
+            COALESCE(
+                (SELECT jsonb_build_object(
+                    'nombres_usuario_creo', u.nombres, 
+                    'apellidos_usuario_creo', u.apellidos, 
+                    'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos
+                ) FROM usuarios u WHERE u.cedula = t.id_usuario_creo),
+                '{}'::jsonb
+            ) ||
+            COALESCE(
+                (SELECT jsonb_build_object(
+                    'cedula', u.cedula,
+                    'nombres', u.nombres, 
+                    'apellidos', u.apellidos, 
+                    'nombre_completo', u.nombres || ' ' || u.apellidos
+                ) FROM usuarios u WHERE u.cedula = t.cedula_profesor),
+                '{}'::jsonb
+            )
+        )::text as metadata 
+    FROM auditoria_insercion_profesores t
+
+    UNION ALL
+
     -- Usuarios (Actualización)
     SELECT
         'Usuario' as entidad,
-        'Actualización' as accion,
+        CASE 
+            WHEN (t.habilitado_sistema_anterior IS DISTINCT FROM t.habilitado_sistema_nuevo) THEN 'Habilitación'
+            ELSE 'Actualización'
+        END as accion,
         t.fecha_actualizacion as fecha,
         t.id_usuario_actualizo as usuario_id,
         COALESCE(
@@ -495,6 +560,25 @@ SELECT * FROM (
                     'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos
                 ) FROM usuarios u WHERE u.cedula = t.id_usuario_creo),
                 '{}'::jsonb
+            ) ||
+            jsonb_build_object(
+                'ejecutores', COALESCE(
+                    (SELECT json_agg(json_build_object(
+                        'cedula', aiae.id_usuario_ejecutor,
+                        'nombre', CONCAT(aiae.nombres_ejecutor, ' ', aiae.apellidos_ejecutor),
+                        'fecha_ejecucion', TO_CHAR(aiae.fecha_ejecucion, 'YYYY-MM-DD')
+                    ))
+                    FROM auditoria_insercion_acciones_ejecutores aiae
+                    WHERE aiae.id_auditoria_insercion = t.id),
+                    (SELECT json_agg(json_build_object(
+                        'cedula', u.cedula,
+                        'nombre', CONCAT(u.nombres, ' ', u.apellidos),
+                        'fecha_ejecucion', TO_CHAR(e.fecha_ejecucion, 'YYYY-MM-DD')
+                    ))
+                    FROM ejecutan e
+                    JOIN usuarios u ON e.id_usuario_ejecuta = u.cedula
+                    WHERE e.num_accion = t.num_accion AND e.id_caso = t.id_caso)
+                )
             )
         )::text as metadata
     FROM auditoria_insercion_acciones t
@@ -517,6 +601,26 @@ SELECT * FROM (
                     'nombre_completo_usuario_actualizo', u.nombres || ' ' || u.apellidos
                 ) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo),
                 '{}'::jsonb
+            ) ||
+            jsonb_build_object(
+                'ejecutores_anterior', (
+                    SELECT json_agg(json_build_object(
+                        'cedula', aaae.id_usuario_ejecutor,
+                        'nombre', CONCAT(aaae.nombres_ejecutor, ' ', aaae.apellidos_ejecutor),
+                        'fecha_ejecucion', TO_CHAR(aaae.fecha_ejecucion, 'YYYY-MM-DD')
+                    ))
+                    FROM auditoria_actualizacion_acciones_ejecutores aaae
+                    WHERE aaae.id_auditoria_actualizacion = t.id AND aaae.tipo = 'anterior'
+                ),
+                'ejecutores_nuevo', (
+                    SELECT json_agg(json_build_object(
+                        'cedula', aaae.id_usuario_ejecutor,
+                        'nombre', CONCAT(aaae.nombres_ejecutor, ' ', aaae.apellidos_ejecutor),
+                        'fecha_ejecucion', TO_CHAR(aaae.fecha_ejecucion, 'YYYY-MM-DD')
+                    ))
+                    FROM auditoria_actualizacion_acciones_ejecutores aaae
+                    WHERE aaae.id_auditoria_actualizacion = t.id AND aaae.tipo = 'nuevo'
+                )
             )
         )::text as metadata
     FROM auditoria_actualizacion_acciones t

@@ -530,7 +530,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       case 'usuario-habilitado': {
         const r = record as UsuarioHabilitadoAuditRecord;
         return renderRow(
-          <UserCircle className="w-5 h-5 text-green-600" />,
+          <UserCircle className="w-5 h-5 text-[var(--bulk-success-text)]" />,
           <>
             {r.usuario_habilitado ? (
               <Link
@@ -1403,12 +1403,12 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <span>{nombreUsuario}</span>
             )}
             {isActive && exitoso && (
-              <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">
+              <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-[var(--bulk-success-bg)] text-[var(--bulk-success-text)] rounded-full">
                 Activa
               </span>
             )}
             {!exitoso && (
-              <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full">
+              <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-[var(--bulk-error-bg)] text-[var(--bulk-error-text)] rounded-full">
                 Fallido
               </span>
             )}
@@ -1607,11 +1607,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Detalle:{' '}
-                    <span className="line-through text-red-500">
+                    <span className="line-through text-[var(--bulk-error-text)]">
                       {r.detalle_accion_anterior || 'N/A'}
                     </span>
                     {' → '}
-                    <span className="text-green-600">
+                    <span className="text-[var(--bulk-success-text)]">
                       {r.detalle_accion_nuevo || 'N/A'}
                     </span>
                   </p>
@@ -1621,11 +1621,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Comentario:{' '}
-                    <span className="line-through text-red-500">
+                    <span className="line-through text-[var(--bulk-error-text)]">
                       {r.comentario_anterior || 'Sin comentario'}
                     </span>
                     {' → '}
-                    <span className="text-green-600">
+                    <span className="text-[var(--bulk-success-text)]">
                       {r.comentario_nuevo || 'Sin comentario'}
                     </span>
                   </p>
@@ -1635,13 +1635,13 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Ejecutores:{' '}
-                    <span className="line-through text-red-500">
+                    <span className="line-through text-[var(--bulk-error-text)]">
                       {ejecutoresAnteriorArray && ejecutoresAnteriorArray.length > 0
                         ? ejecutoresAnteriorArray.map((e, idx) => (
                           <span key={e.cedula}>
                             <Link
                               href={`/dashboard/users/${e.cedula}`}
-                              className="text-red-500 hover:underline"
+                              className="text-[var(--bulk-error-text)] hover:underline"
                               onClick={(ev) => ev.stopPropagation()}
                             >
                               {e.nombre}
@@ -1652,13 +1652,13 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                         : 'Ninguno'}
                     </span>
                     {' → '}
-                    <span className="text-green-600">
+                    <span className="text-[var(--bulk-success-text)]">
                       {ejecutoresNuevoArray && ejecutoresNuevoArray.length > 0
                         ? ejecutoresNuevoArray.map((e, idx) => (
                           <span key={e.cedula}>
                             <Link
                               href={`/dashboard/users/${e.cedula}`}
-                              className="text-green-600 hover:underline"
+                              className="text-[var(--bulk-success-text)] hover:underline"
                               onClick={(ev) => ev.stopPropagation()}
                             >
                               {e.nombre}
@@ -1675,13 +1675,13 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Fecha de Ejecución:{' '}
-                    <span className="line-through text-red-500">
+                    <span className="line-through text-[var(--bulk-error-text)]">
                       {fechasAnterior.length > 0
                         ? fechasAnterior.map((d: string) => formatOnlyDate(d)).join(', ')
                         : 'Ninguna'}
                     </span>
                     {' → '}
-                    <span className="text-green-600">
+                    <span className="text-[var(--bulk-success-text)]">
                       {fechasNuevo.length > 0
                         ? fechasNuevo.map((d: string) => formatOnlyDate(d)).join(', ')
                         : 'Ninguna'}
@@ -2005,81 +2005,81 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {r.cedula_anterior !== r.cedula_nuevo && (
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
-                    Cédula: <span className="line-through text-red-500">{r.cedula_anterior || 'N/A'}</span>
+                    Cédula: <span className="line-through text-[var(--bulk-error-text)]">{r.cedula_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.cedula_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.cedula_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
               {r.nombres_anterior !== r.nombres_nuevo && (
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
-                    Nombres: <span className="line-through text-red-500">{r.nombres_anterior || 'N/A'}</span>
+                    Nombres: <span className="line-through text-[var(--bulk-error-text)]">{r.nombres_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.nombres_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.nombres_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
               {r.apellidos_anterior !== r.apellidos_nuevo && (
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
-                    Apellidos: <span className="line-through text-red-500">{r.apellidos_anterior || 'N/A'}</span>
+                    Apellidos: <span className="line-through text-[var(--bulk-error-text)]">{r.apellidos_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.apellidos_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.apellidos_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
               {r.sexo_anterior !== r.sexo_nuevo && (
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
-                    Sexo: <span className="line-through text-red-500">{r.sexo_anterior || 'N/A'}</span>
+                    Sexo: <span className="line-through text-[var(--bulk-error-text)]">{r.sexo_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.sexo_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.sexo_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
               {r.tipo_beneficiario_anterior !== r.tipo_beneficiario_nuevo && (
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
-                    Tipo: <span className="line-through text-red-500">{r.tipo_beneficiario_anterior || 'N/A'}</span>
+                    Tipo: <span className="line-through text-[var(--bulk-error-text)]">{r.tipo_beneficiario_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.tipo_beneficiario_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.tipo_beneficiario_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
               {r.parentesco_anterior !== r.parentesco_nuevo && (
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
-                    Parentesco: <span className="line-through text-red-500">{r.parentesco_anterior || 'N/A'}</span>
+                    Parentesco: <span className="line-through text-[var(--bulk-error-text)]">{r.parentesco_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.parentesco_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.parentesco_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
               {r.edad_mental_anterior !== r.edad_mental_nuevo && (
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
-                    Edad Mental: <span className="line-through text-red-500">{r.edad_mental_anterior || 'N/A'}</span>
+                    Edad Mental: <span className="line-through text-[var(--bulk-error-text)]">{r.edad_mental_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.edad_mental_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.edad_mental_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
               {r.ingresos_anterior !== r.ingresos_nuevo && (
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
-                    Ingresos: <span className="line-through text-red-500">{r.ingresos_anterior || 'N/A'}</span>
+                    Ingresos: <span className="line-through text-[var(--bulk-error-text)]">{r.ingresos_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.ingresos_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.ingresos_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
               {!areDatesEqual(r.fecha_nacimiento_anterior, r.fecha_nacimiento_nuevo) && (
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
-                    Fecha Nacimiento: <span className="line-through text-red-500">{formatOnlyDate(r.fecha_nacimiento_anterior)}</span>
+                    Fecha Nacimiento: <span className="line-through text-[var(--bulk-error-text)]">{formatOnlyDate(r.fecha_nacimiento_anterior)}</span>
                     {' → '}
-                    <span className="text-green-600">{formatOnlyDate(r.fecha_nacimiento_nuevo)}</span>
+                    <span className="text-[var(--bulk-success-text)]">{formatOnlyDate(r.fecha_nacimiento_nuevo)}</span>
                   </p>
                 </div>
               )}
@@ -2311,11 +2311,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   <div className="mb-2">
                     <p className="text-sm text-[var(--card-text-muted)]">
                       Fecha encuentro:{' '}
-                      <span className="line-through text-red-500">
+                      <span className="line-through text-[var(--bulk-error-text)]">
                         {r.fecha_encuentro_anterior ? formatDateOnly(r.fecha_encuentro_anterior) : 'N/A'}
                       </span>
                       {' → '}
-                      <span className="text-green-600">
+                      <span className="text-[var(--bulk-success-text)]">
                         {r.fecha_encuentro_nuevo ? formatDateOnly(r.fecha_encuentro_nuevo) : 'N/A'}
                       </span>
                     </p>
@@ -2325,11 +2325,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   <div className="mb-2">
                     <p className="text-sm text-[var(--card-text-muted)]">
                       Próxima cita:{' '}
-                      <span className="line-through text-red-500">
+                      <span className="line-through text-[var(--bulk-error-text)]">
                         {r.fecha_proxima_cita_anterior ? formatDateOnly(r.fecha_proxima_cita_anterior) : 'N/A'}
                       </span>
                       {' → '}
-                      <span className="text-green-600">
+                      <span className="text-[var(--bulk-success-text)]">
                         {r.fecha_proxima_cita_nuevo ? formatDateOnly(r.fecha_proxima_cita_nuevo) : 'N/A'}
                       </span>
                     </p>
@@ -2339,11 +2339,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   <div className="mb-2">
                     <p className="text-sm text-[var(--card-text-muted)]">
                       Orientación:{' '}
-                      <span className="line-through text-red-500">
+                      <span className="line-through text-[var(--bulk-error-text)]">
                         {r.orientacion_anterior || 'N/A'}
                       </span>
                       {' → '}
-                      <span className="text-green-600">
+                      <span className="text-[var(--bulk-success-text)]">
                         {r.orientacion_nuevo || 'N/A'}
                       </span>
                     </p>
@@ -2355,7 +2355,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                       Personas que atendieron:
                     </p>
                     <p className="text-sm">
-                      <span className="line-through text-red-500">
+                      <span className="line-through text-[var(--bulk-error-text)]">
                         {r.usuarios_atenciones_anterior && Array.isArray(r.usuarios_atenciones_anterior) && r.usuarios_atenciones_anterior.length > 0
                           ? r.usuarios_atenciones_anterior.map((u, i) => (
                             <span key={i}>
@@ -2372,7 +2372,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                           : 'Ninguno'}
                       </span>
                       {' → '}
-                      <span className="text-green-600">
+                      <span className="text-[var(--bulk-success-text)]">
                         {r.usuarios_atenciones_nuevo && Array.isArray(r.usuarios_atenciones_nuevo) && r.usuarios_atenciones_nuevo.length > 0
                           ? r.usuarios_atenciones_nuevo.map((u, i) => (
                             <span key={i}>
@@ -2674,11 +2674,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Nombres:{' '}
-                    <span className="line-through text-red-500">
+                    <span className="line-through text-[var(--bulk-error-text)]">
                       {r.nombres_anterior || 'N/A'}
                     </span>
                     {' → '}
-                    <span className="text-green-600">
+                    <span className="text-[var(--bulk-success-text)]">
                       {r.nombres_nuevo || 'N/A'}
                     </span>
                   </p>
@@ -2689,11 +2689,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Apellidos:{' '}
-                    <span className="line-through text-red-500">
+                    <span className="line-through text-[var(--bulk-error-text)]">
                       {r.apellidos_anterior || 'N/A'}
                     </span>
                     {' → '}
-                    <span className="text-green-600">
+                    <span className="text-[var(--bulk-success-text)]">
                       {r.apellidos_nuevo || 'N/A'}
                     </span>
                   </p>
@@ -2704,11 +2704,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Correo electrónico:{' '}
-                    <span className="line-through text-red-500">
+                    <span className="line-through text-[var(--bulk-error-text)]">
                       {r.correo_electronico_anterior || 'N/A'}
                     </span>
                     {' → '}
-                    <span className="text-green-600">
+                    <span className="text-[var(--bulk-success-text)]">
                       {r.correo_electronico_nuevo || 'N/A'}
                     </span>
                   </p>
@@ -2719,11 +2719,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Nombre de usuario:{' '}
-                    <span className="line-through text-red-500">
+                    <span className="line-through text-[var(--bulk-error-text)]">
                       {r.nombre_usuario_anterior || 'N/A'}
                     </span>
                     {' → '}
-                    <span className="text-green-600">
+                    <span className="text-[var(--bulk-success-text)]">
                       {r.nombre_usuario_nuevo || 'N/A'}
                     </span>
                   </p>
@@ -2734,11 +2734,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Teléfono celular:{' '}
-                    <span className="line-through text-red-500">
+                    <span className="line-through text-[var(--bulk-error-text)]">
                       {r.telefono_celular_anterior || 'N/A'}
                     </span>
                     {' → '}
-                    <span className="text-green-600">
+                    <span className="text-[var(--bulk-success-text)]">
                       {r.telefono_celular_nuevo || 'N/A'}
                     </span>
                   </p>
@@ -2749,11 +2749,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Habilitado en sistema:{' '}
-                    <span className="line-through text-red-500">
+                    <span className="line-through text-[var(--bulk-error-text)]">
                       {r.habilitado_sistema_anterior ? 'Sí' : 'No'}
                     </span>
                     {' → '}
-                    <span className="text-green-600">
+                    <span className="text-[var(--bulk-success-text)]">
                       {r.habilitado_sistema_nuevo ? 'Sí' : 'No'}
                     </span>
                   </p>
@@ -2764,11 +2764,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Tipo de usuario:{' '}
-                    <span className="line-through text-red-500">
+                    <span className="line-through text-[var(--bulk-error-text)]">
                       {r.tipo_usuario_anterior || 'N/A'}
                     </span>
                     {' → '}
-                    <span className="text-green-600">
+                    <span className="text-[var(--bulk-success-text)]">
                       {r.tipo_usuario_nuevo || 'N/A'}
                     </span>
                   </p>
@@ -2780,11 +2780,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Tipo de estudiante:{' '}
-                    <span className="line-through text-red-500">
+                    <span className="line-through text-[var(--bulk-error-text)]">
                       {r.tipo_estudiante_anterior || 'N/A'}
                     </span>
                     {' → '}
-                    <span className="text-green-600">
+                    <span className="text-[var(--bulk-success-text)]">
                       {r.tipo_estudiante_nuevo || 'N/A'}
                     </span>
                   </p>
@@ -2796,11 +2796,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Tipo de profesor:{' '}
-                    <span className="line-through text-red-500">
+                    <span className="line-through text-[var(--bulk-error-text)]">
                       {r.tipo_profesor_anterior || 'N/A'}
                     </span>
                     {' → '}
-                    <span className="text-green-600">
+                    <span className="text-[var(--bulk-success-text)]">
                       {r.tipo_profesor_nuevo || 'N/A'}
                     </span>
                   </p>
@@ -3333,9 +3333,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Nombres:{' '}
-                    <span className="line-through text-red-500">{r.nombres_anterior || 'N/A'}</span>
+                    <span className="line-through text-[var(--bulk-error-text)]">{r.nombres_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.nombres_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.nombres_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
@@ -3345,9 +3345,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Apellidos:{' '}
-                    <span className="line-through text-red-500">{r.apellidos_anterior || 'N/A'}</span>
+                    <span className="line-through text-[var(--bulk-error-text)]">{r.apellidos_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.apellidos_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.apellidos_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
@@ -3357,11 +3357,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Fecha Nacimiento:{' '}
-                    <span className="line-through text-red-500">
+                    <span className="line-through text-[var(--bulk-error-text)]">
                       {r.fecha_nacimiento_anterior ? formatOnlyDate(r.fecha_nacimiento_anterior) : 'N/A'}
                     </span>
                     {' → '}
-                    <span className="text-green-600">
+                    <span className="text-[var(--bulk-success-text)]">
                       {r.fecha_nacimiento_nuevo ? formatOnlyDate(r.fecha_nacimiento_nuevo) : 'N/A'}
                     </span>
                   </p>
@@ -3373,9 +3373,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Sexo:{' '}
-                    <span className="line-through text-red-500">{r.sexo_anterior || 'N/A'}</span>
+                    <span className="line-through text-[var(--bulk-error-text)]">{r.sexo_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.sexo_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.sexo_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
@@ -3385,9 +3385,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Estado Civil:{' '}
-                    <span className="line-through text-red-500">{r.estado_civil_anterior || 'N/A'}</span>
+                    <span className="line-through text-[var(--bulk-error-text)]">{r.estado_civil_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.estado_civil_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.estado_civil_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
@@ -3397,11 +3397,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Concubinato:{' '}
-                    <span className="line-through text-red-500">
+                    <span className="line-through text-[var(--bulk-error-text)]">
                       {r.concubinato_anterior === true ? 'Sí' : (r.concubinato_anterior === false ? 'No' : 'N/A')}
                     </span>
                     {' → '}
-                    <span className="text-green-600">
+                    <span className="text-[var(--bulk-success-text)]">
                       {r.concubinato_nuevo === true ? 'Sí' : (r.concubinato_nuevo === false ? 'No' : 'N/A')}
                     </span>
                   </p>
@@ -3413,9 +3413,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Nacionalidad:{' '}
-                    <span className="line-through text-red-500">{formatNacionalidad(r.nacionalidad_anterior)}</span>
+                    <span className="line-through text-[var(--bulk-error-text)]">{formatNacionalidad(r.nacionalidad_anterior)}</span>
                     {' → '}
-                    <span className="text-green-600">{formatNacionalidad(r.nacionalidad_nuevo)}</span>
+                    <span className="text-[var(--bulk-success-text)]">{formatNacionalidad(r.nacionalidad_nuevo)}</span>
                   </p>
                 </div>
               )}
@@ -3425,9 +3425,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Teléfono Local:{' '}
-                    <span className="line-through text-red-500">{r.telefono_local_anterior || 'N/A'}</span>
+                    <span className="line-through text-[var(--bulk-error-text)]">{r.telefono_local_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.telefono_local_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.telefono_local_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
@@ -3437,9 +3437,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Teléfono Celular:{' '}
-                    <span className="line-through text-red-500">{r.telefono_celular_anterior || 'N/A'}</span>
+                    <span className="line-through text-[var(--bulk-error-text)]">{r.telefono_celular_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.telefono_celular_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.telefono_celular_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
@@ -3449,9 +3449,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Correo:{' '}
-                    <span className="line-through text-red-500">{r.correo_electronico_anterior || 'N/A'}</span>
+                    <span className="line-through text-[var(--bulk-error-text)]">{r.correo_electronico_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.correo_electronico_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.correo_electronico_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
@@ -3461,9 +3461,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Nivel Educativo:{' '}
-                    <span className="line-through text-red-500">{r.nivel_educativo_anterior || 'N/A'}</span>
+                    <span className="line-through text-[var(--bulk-error-text)]">{r.nivel_educativo_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.nivel_educativo_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.nivel_educativo_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
@@ -3473,11 +3473,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Tiempo de Estudio:{' '}
-                    <span className="line-through text-red-500">
+                    <span className="line-through text-[var(--bulk-error-text)]">
                       {r.tiempo_estudio_anterior ? `${r.tiempo_estudio_anterior} ${r.tipo_tiempo_estudio_anterior || ''}` : 'N/A'}
                     </span>
                     {' → '}
-                    <span className="text-green-600">
+                    <span className="text-[var(--bulk-success-text)]">
                       {r.tiempo_estudio_nuevo ? `${r.tiempo_estudio_nuevo} ${r.tipo_tiempo_estudio_nuevo || ''}` : 'N/A'}
                     </span>
                   </p>
@@ -3489,9 +3489,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Dirección:{' '}
-                    <span className="line-through text-red-500">{r.direccion_habitacion_anterior || 'N/A'}</span>
+                    <span className="line-through text-[var(--bulk-error-text)]">{r.direccion_habitacion_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.direccion_habitacion_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.direccion_habitacion_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
@@ -3501,9 +3501,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Condición Trabajo:{' '}
-                    <span className="line-through text-red-500">{r.condicion_trabajo_anterior || 'N/A'}</span>
+                    <span className="line-through text-[var(--bulk-error-text)]">{r.condicion_trabajo_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.condicion_trabajo_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.condicion_trabajo_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
@@ -3513,9 +3513,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Actividad:{' '}
-                    <span className="line-through text-red-500">{r.condicion_actividad_anterior || 'N/A'}</span>
+                    <span className="line-through text-[var(--bulk-error-text)]">{r.condicion_actividad_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.condicion_actividad_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.condicion_actividad_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
@@ -3525,9 +3525,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Estado:{' '}
-                    <span className="line-through text-red-500">{r.estado_anterior || 'N/A'}</span>
+                    <span className="line-through text-[var(--bulk-error-text)]">{r.estado_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.estado_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.estado_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
@@ -3537,9 +3537,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Municipio:{' '}
-                    <span className="line-through text-red-500">{r.municipio_anterior || 'N/A'}</span>
+                    <span className="line-through text-[var(--bulk-error-text)]">{r.municipio_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.municipio_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.municipio_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
@@ -3549,9 +3549,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Parroquia:{' '}
-                    <span className="line-through text-red-500">{r.parroquia_anterior || 'N/A'}</span>
+                    <span className="line-through text-[var(--bulk-error-text)]">{r.parroquia_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600">{r.parroquia_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)]">{r.parroquia_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
@@ -3562,9 +3562,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <div className="mb-2">
                 <p className="text-sm text-[var(--card-text-muted)]">
                   Jefe del Hogar:{' '}
-                  <span className="line-through text-red-500">{r.jefe_hogar_anterior ? 'Sí' : 'No'}</span>
+                  <span className="line-through text-[var(--bulk-error-text)]">{r.jefe_hogar_anterior ? 'Sí' : 'No'}</span>
                   {' → '}
-                  <span className="text-green-600">{r.jefe_hogar_nuevo ? 'Sí' : 'No'}</span>
+                  <span className="text-[var(--bulk-success-text)]">{r.jefe_hogar_nuevo ? 'Sí' : 'No'}</span>
                 </p>
               </div>
             )}
@@ -3574,9 +3574,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <div className="mb-2">
                 <p className="text-sm text-[var(--card-text-muted)]">
                   Nivel Educativo del Jefe:{' '}
-                  <span className="line-through text-red-500">{r.nivel_educativo_jefe_anterior || 'N/A'}</span>
+                  <span className="line-through text-[var(--bulk-error-text)]">{r.nivel_educativo_jefe_anterior || 'N/A'}</span>
                   {' → '}
-                  <span className="text-green-600">{r.nivel_educativo_jefe_nuevo || 'N/A'}</span>
+                  <span className="text-[var(--bulk-success-text)]">{r.nivel_educativo_jefe_nuevo || 'N/A'}</span>
                 </p>
               </div>
             )}
@@ -3586,11 +3586,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <div className="mb-2">
                 <p className="text-sm text-[var(--card-text-muted)]">
                   Tiempo Estudio Jefe:{' '}
-                  <span className="line-through text-red-500">
+                  <span className="line-through text-[var(--bulk-error-text)]">
                     {r.tiempo_estudio_jefe_anterior ? `${r.tiempo_estudio_jefe_anterior} ${r.tipo_tiempo_estudio_jefe_anterior || ''}` : 'N/A'}
                   </span>
                   {' → '}
-                  <span className="text-green-600">
+                  <span className="text-[var(--bulk-success-text)]">
                     {r.tiempo_estudio_jefe_nuevo ? `${r.tiempo_estudio_jefe_nuevo} ${r.tipo_tiempo_estudio_jefe_nuevo || ''}` : 'N/A'}
                   </span>
                 </p>
@@ -3602,11 +3602,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <div className="mb-2">
                 <p className="text-sm text-[var(--card-text-muted)]">
                   Ingresos Mensuales:{' '}
-                  <span className="line-through text-red-500">
+                  <span className="line-through text-[var(--bulk-error-text)]">
                     {r.ingresos_mensuales_anterior != null ? `Bs. ${Number(r.ingresos_mensuales_anterior).toLocaleString('es-VE', { minimumFractionDigits: 2 })}` : 'N/A'}
                   </span>
                   {' → '}
-                  <span className="text-green-600">
+                  <span className="text-[var(--bulk-success-text)]">
                     {r.ingresos_mensuales_nuevo != null ? `Bs. ${Number(r.ingresos_mensuales_nuevo).toLocaleString('es-VE', { minimumFractionDigits: 2 })}` : 'N/A'}
                   </span>
                 </p>
@@ -3618,9 +3618,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <div className="mb-2">
                 <p className="text-sm text-[var(--card-text-muted)]">
                   Habitaciones:{' '}
-                  <span className="line-through text-red-500">{r.cant_habitaciones_anterior ?? 'N/A'}</span>
+                  <span className="line-through text-[var(--bulk-error-text)]">{r.cant_habitaciones_anterior ?? 'N/A'}</span>
                   {' → '}
-                  <span className="text-green-600">{r.cant_habitaciones_nuevo ?? 'N/A'}</span>
+                  <span className="text-[var(--bulk-success-text)]">{r.cant_habitaciones_nuevo ?? 'N/A'}</span>
                 </p>
               </div>
             )}
@@ -3630,9 +3630,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <div className="mb-2">
                 <p className="text-sm text-[var(--card-text-muted)]">
                   Baños:{' '}
-                  <span className="line-through text-red-500">{r.cant_banos_anterior ?? 'N/A'}</span>
+                  <span className="line-through text-[var(--bulk-error-text)]">{r.cant_banos_anterior ?? 'N/A'}</span>
                   {' → '}
-                  <span className="text-green-600">{r.cant_banos_nuevo ?? 'N/A'}</span>
+                  <span className="text-[var(--bulk-success-text)]">{r.cant_banos_nuevo ?? 'N/A'}</span>
                 </p>
               </div>
             )}
@@ -3642,9 +3642,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <div className="mb-2">
                 <p className="text-sm text-[var(--card-text-muted)]">
                   Tipo Vivienda:{' '}
-                  <span className="line-through text-red-500">{r.tipo_vivienda_anterior || 'N/A'}</span>
+                  <span className="line-through text-[var(--bulk-error-text)]">{r.tipo_vivienda_anterior || 'N/A'}</span>
                   {' → '}
-                  <span className="text-green-600">{r.tipo_vivienda_nuevo || 'N/A'}</span>
+                  <span className="text-[var(--bulk-success-text)]">{r.tipo_vivienda_nuevo || 'N/A'}</span>
                 </p>
               </div>
             )}
@@ -3654,9 +3654,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <div className="mb-2">
                 <p className="text-sm text-[var(--card-text-muted)]">
                   Piso:{' '}
-                  <span className="line-through text-red-500">{r.material_piso_anterior || 'N/A'}</span>
+                  <span className="line-through text-[var(--bulk-error-text)]">{r.material_piso_anterior || 'N/A'}</span>
                   {' → '}
-                  <span className="text-green-600">{r.material_piso_nuevo || 'N/A'}</span>
+                  <span className="text-[var(--bulk-success-text)]">{r.material_piso_nuevo || 'N/A'}</span>
                 </p>
               </div>
             )}
@@ -3666,9 +3666,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <div className="mb-2">
                 <p className="text-sm text-[var(--card-text-muted)]">
                   Paredes:{' '}
-                  <span className="line-through text-red-500">{r.material_paredes_anterior || 'N/A'}</span>
+                  <span className="line-through text-[var(--bulk-error-text)]">{r.material_paredes_anterior || 'N/A'}</span>
                   {' → '}
-                  <span className="text-green-600">{r.material_paredes_nuevo || 'N/A'}</span>
+                  <span className="text-[var(--bulk-success-text)]">{r.material_paredes_nuevo || 'N/A'}</span>
                 </p>
               </div>
             )}
@@ -3678,9 +3678,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <div className="mb-2">
                 <p className="text-sm text-[var(--card-text-muted)]">
                   Techo:{' '}
-                  <span className="line-through text-red-500">{r.material_techo_anterior || 'N/A'}</span>
+                  <span className="line-through text-[var(--bulk-error-text)]">{r.material_techo_anterior || 'N/A'}</span>
                   {' → '}
-                  <span className="text-green-600">{r.material_techo_nuevo || 'N/A'}</span>
+                  <span className="text-[var(--bulk-success-text)]">{r.material_techo_nuevo || 'N/A'}</span>
                 </p>
               </div>
             )}
@@ -3690,9 +3690,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <div className="mb-2">
                 <p className="text-sm text-[var(--card-text-muted)]">
                   Agua Potable:{' '}
-                  <span className="line-through text-red-500">{r.agua_potable_anterior || 'N/A'}</span>
+                  <span className="line-through text-[var(--bulk-error-text)]">{r.agua_potable_anterior || 'N/A'}</span>
                   {' → '}
-                  <span className="text-green-600">{r.agua_potable_nuevo || 'N/A'}</span>
+                  <span className="text-[var(--bulk-success-text)]">{r.agua_potable_nuevo || 'N/A'}</span>
                 </p>
               </div>
             )}
@@ -3702,9 +3702,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <div className="mb-2">
                 <p className="text-sm text-[var(--card-text-muted)]">
                   Aguas Negras:{' '}
-                  <span className="line-through text-red-500">{r.eliminacion_aguas_negras_anterior || 'N/A'}</span>
+                  <span className="line-through text-[var(--bulk-error-text)]">{r.eliminacion_aguas_negras_anterior || 'N/A'}</span>
                   {' → '}
-                  <span className="text-green-600">{r.eliminacion_aguas_negras_nuevo || 'N/A'}</span>
+                  <span className="text-[var(--bulk-success-text)]">{r.eliminacion_aguas_negras_nuevo || 'N/A'}</span>
                 </p>
               </div>
             )}
@@ -3714,9 +3714,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <div className="mb-2">
                 <p className="text-sm text-[var(--card-text-muted)]">
                   Aseo:{' '}
-                  <span className="line-through text-red-500">{r.aseo_anterior || 'N/A'}</span>
+                  <span className="line-through text-[var(--bulk-error-text)]">{r.aseo_anterior || 'N/A'}</span>
                   {' → '}
-                  <span className="text-green-600">{r.aseo_nuevo || 'N/A'}</span>
+                  <span className="text-[var(--bulk-success-text)]">{r.aseo_nuevo || 'N/A'}</span>
                 </p>
               </div>
             )}
@@ -3726,9 +3726,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <div className="mb-2">
                 <p className="text-sm text-[var(--card-text-muted)]">
                   Personas en el hogar:{' '}
-                  <span className="line-through text-red-500">{r.cant_personas_anterior ?? 'N/A'}</span>
+                  <span className="line-through text-[var(--bulk-error-text)]">{r.cant_personas_anterior ?? 'N/A'}</span>
                   {' → '}
-                  <span className="text-green-600">{r.cant_personas_nuevo ?? 'N/A'}</span>
+                  <span className="text-[var(--bulk-success-text)]">{r.cant_personas_nuevo ?? 'N/A'}</span>
                 </p>
               </div>
             )}
@@ -3738,9 +3738,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <div className="mb-2">
                 <p className="text-sm text-[var(--card-text-muted)]">
                   Trabajadores:{' '}
-                  <span className="line-through text-red-500">{r.cant_trabajadores_anterior ?? 'N/A'}</span>
+                  <span className="line-through text-[var(--bulk-error-text)]">{r.cant_trabajadores_anterior ?? 'N/A'}</span>
                   {' → '}
-                  <span className="text-green-600">{r.cant_trabajadores_nuevo ?? 'N/A'}</span>
+                  <span className="text-[var(--bulk-success-text)]">{r.cant_trabajadores_nuevo ?? 'N/A'}</span>
                 </p>
               </div>
             )}
@@ -3750,9 +3750,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <div className="mb-2">
                 <p className="text-sm text-[var(--card-text-muted)]">
                   No trabajadores:{' '}
-                  <span className="line-through text-red-500">{r.cant_no_trabajadores_anterior ?? 'N/A'}</span>
+                  <span className="line-through text-[var(--bulk-error-text)]">{r.cant_no_trabajadores_anterior ?? 'N/A'}</span>
                   {' → '}
-                  <span className="text-green-600">{r.cant_no_trabajadores_nuevo ?? 'N/A'}</span>
+                  <span className="text-[var(--bulk-success-text)]">{r.cant_no_trabajadores_nuevo ?? 'N/A'}</span>
                 </p>
               </div>
             )}
@@ -3762,9 +3762,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <div className="mb-2">
                 <p className="text-sm text-[var(--card-text-muted)]">
                   Niños:{' '}
-                  <span className="line-through text-red-500">{r.cant_ninos_anterior ?? 'N/A'}</span>
+                  <span className="line-through text-[var(--bulk-error-text)]">{r.cant_ninos_anterior ?? 'N/A'}</span>
                   {' → '}
-                  <span className="text-green-600">{r.cant_ninos_nuevo ?? 'N/A'}</span>
+                  <span className="text-[var(--bulk-success-text)]">{r.cant_ninos_nuevo ?? 'N/A'}</span>
                 </p>
               </div>
             )}
@@ -3774,9 +3774,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <div className="mb-2">
                 <p className="text-sm text-[var(--card-text-muted)]">
                   Niños estudiando:{' '}
-                  <span className="line-through text-red-500">{r.cant_ninos_estudiando_anterior ?? 'N/A'}</span>
+                  <span className="line-through text-[var(--bulk-error-text)]">{r.cant_ninos_estudiando_anterior ?? 'N/A'}</span>
                   {' → '}
-                  <span className="text-green-600">{r.cant_ninos_estudiando_nuevo ?? 'N/A'}</span>
+                  <span className="text-[var(--bulk-success-text)]">{r.cant_ninos_estudiando_nuevo ?? 'N/A'}</span>
                 </p>
               </div>
             )}
@@ -3804,13 +3804,13 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Artefactos Domésticos:</p>
                   {eliminados.length > 0 && (
                     <p className="text-sm text-[var(--card-text-muted)] ml-2">
-                      <span className="text-red-500 font-medium">Eliminados:</span>{' '}
+                      <span className="text-[var(--bulk-error-text)] font-medium">Eliminados:</span>{' '}
                       {eliminados.join(', ')}
                     </p>
                   )}
                   {agregados.length > 0 && (
                     <p className="text-sm text-[var(--card-text-muted)] ml-2">
-                      <span className="text-green-600 font-medium">Agregados:</span>{' '}
+                      <span className="text-[var(--bulk-success-text)] font-medium">Agregados:</span>{' '}
                       {agregados.join(', ')}
                     </p>
                   )}
@@ -3956,13 +3956,13 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   <div className="mb-2">
                     <p className="text-sm text-[var(--card-text-muted)]">
                       <span className="font-semibold text-[var(--card-text)]">Profesores:</span>{' '}
-                      <span className="line-through text-red-500">
+                      <span className="line-through text-[var(--bulk-error-text)]">
                         {profesoresAnteriores.length > 0 ? (
                           profesoresAnteriores.map((m: MiembroEquipoAudit, i: number) => (
                             <span key={i}>
                               <Link
                                 href={`/dashboard/users/${m.cedula}`}
-                                className="text-red-500 hover:underline"
+                                className="text-[var(--bulk-error-text)] hover:underline"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 {m.nombre_completo}
@@ -3973,13 +3973,13 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                         ) : 'Ninguno'}
                       </span>
                       {' → '}
-                      <span className="text-green-600">
+                      <span className="text-[var(--bulk-success-text)]">
                         {profesoresNuevos.length > 0 ? (
                           profesoresNuevos.map((m: MiembroEquipoAudit, i: number) => (
                             <span key={i}>
                               <Link
                                 href={`/dashboard/users/${m.cedula}`}
-                                className="text-green-600 hover:underline"
+                                className="text-[var(--bulk-success-text)] hover:underline"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 {m.nombre_completo}
@@ -3998,13 +3998,13 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   <div className="mb-2">
                     <p className="text-sm text-[var(--card-text-muted)]">
                       <span className="font-semibold text-[var(--card-text)]">Estudiantes:</span>{' '}
-                      <span className="line-through text-red-500">
+                      <span className="line-through text-[var(--bulk-error-text)]">
                         {estudiantesAnteriores.length > 0 ? (
                           estudiantesAnteriores.map((m: MiembroEquipoAudit, i: number) => (
                             <span key={i}>
                               <Link
                                 href={`/dashboard/users/${m.cedula}`}
-                                className="text-red-500 hover:underline"
+                                className="text-[var(--bulk-error-text)] hover:underline"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 {m.nombre_completo}
@@ -4015,13 +4015,13 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                         ) : 'Ninguno'}
                       </span>
                       {' → '}
-                      <span className="text-green-600">
+                      <span className="text-[var(--bulk-success-text)]">
                         {estudiantesNuevos.length > 0 ? (
                           estudiantesNuevos.map((m: MiembroEquipoAudit, i: number) => (
                             <span key={i}>
                               <Link
                                 href={`/dashboard/users/${m.cedula}`}
-                                className="text-green-600 hover:underline"
+                                className="text-[var(--bulk-success-text)] hover:underline"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 {m.nombre_completo}
@@ -4081,9 +4081,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)] mb-2">
                     Estatus:{' '}
-                    <span className="line-through text-red-500">{r.estatus_anterior || 'N/A'}</span>
+                    <span className="line-through text-[var(--bulk-error-text)]">{r.estatus_anterior || 'N/A'}</span>
                     {' → '}
-                    <span className="text-green-600 font-medium">{r.estatus_nuevo || 'N/A'}</span>
+                    <span className="text-[var(--bulk-success-text)] font-medium">{r.estatus_nuevo || 'N/A'}</span>
                   </p>
                 </div>
               )}
@@ -4095,9 +4095,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     <div className="mb-2">
                       <p className="text-sm text-[var(--card-text-muted)]">
                         Fecha Solicitud:{' '}
-                        <span className="line-through text-red-500">{r.fecha_solicitud_anterior ? formatOnlyDate(r.fecha_solicitud_anterior) : 'N/A'}</span>
+                        <span className="line-through text-[var(--bulk-error-text)]">{r.fecha_solicitud_anterior ? formatOnlyDate(r.fecha_solicitud_anterior) : 'N/A'}</span>
                         {' → '}
-                        <span className="text-green-600">{r.fecha_solicitud_nuevo ? formatOnlyDate(r.fecha_solicitud_nuevo) : 'N/A'}</span>
+                        <span className="text-[var(--bulk-success-text)]">{r.fecha_solicitud_nuevo ? formatOnlyDate(r.fecha_solicitud_nuevo) : 'N/A'}</span>
                       </p>
                     </div>
                   )}
@@ -4106,9 +4106,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     <div className="mb-2">
                       <p className="text-sm text-[var(--card-text-muted)]">
                         Fecha Inicio Caso:{' '}
-                        <span className="line-through text-red-500">{r.fecha_inicio_caso_anterior ? formatOnlyDate(r.fecha_inicio_caso_anterior) : 'N/A'}</span>
+                        <span className="line-through text-[var(--bulk-error-text)]">{r.fecha_inicio_caso_anterior ? formatOnlyDate(r.fecha_inicio_caso_anterior) : 'N/A'}</span>
                         {' → '}
-                        <span className="text-green-600">{r.fecha_inicio_caso_nuevo ? formatOnlyDate(r.fecha_inicio_caso_nuevo) : 'N/A'}</span>
+                        <span className="text-[var(--bulk-success-text)]">{r.fecha_inicio_caso_nuevo ? formatOnlyDate(r.fecha_inicio_caso_nuevo) : 'N/A'}</span>
                       </p>
                     </div>
                   )}
@@ -4117,9 +4117,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     <div className="mb-2">
                       <p className="text-sm text-[var(--card-text-muted)]">
                         Fecha Fin Caso:{' '}
-                        <span className="line-through text-red-500">{r.fecha_fin_caso_anterior ? formatOnlyDate(r.fecha_fin_caso_anterior) : 'N/A'}</span>
+                        <span className="line-through text-[var(--bulk-error-text)]">{r.fecha_fin_caso_anterior ? formatOnlyDate(r.fecha_fin_caso_anterior) : 'N/A'}</span>
                         {' → '}
-                        <span className="text-green-600">{r.fecha_fin_caso_nuevo ? formatOnlyDate(r.fecha_fin_caso_nuevo) : 'N/A'}</span>
+                        <span className="text-[var(--bulk-success-text)]">{r.fecha_fin_caso_nuevo ? formatOnlyDate(r.fecha_fin_caso_nuevo) : 'N/A'}</span>
                       </p>
                     </div>
                   )}
@@ -4128,9 +4128,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     <div className="mb-2">
                       <p className="text-sm text-[var(--card-text-muted)]">
                         Trámite:{' '}
-                        <span className="line-through text-red-500">{r.tramite_anterior || 'N/A'}</span>
+                        <span className="line-through text-[var(--bulk-error-text)]">{r.tramite_anterior || 'N/A'}</span>
                         {' → '}
-                        <span className="text-green-600">{r.tramite_nuevo || 'N/A'}</span>
+                        <span className="text-[var(--bulk-success-text)]">{r.tramite_nuevo || 'N/A'}</span>
                       </p>
                     </div>
                   )}
@@ -4139,17 +4139,17 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     <div className="mb-2">
                       <p className="text-sm text-[var(--card-text-muted)]">
                         Solicitante:{' '}
-                        <span className="line-through text-red-500">
+                        <span className="line-through text-[var(--bulk-error-text)]">
                           {r.cedula_solicitante_anterior ? (
-                            <Link href={`/dashboard/applicants/${r.cedula_solicitante_anterior}`} className="text-red-500 hover:underline" onClick={(e) => e.stopPropagation()}>
+                            <Link href={`/dashboard/applicants/${r.cedula_solicitante_anterior}`} className="text-[var(--bulk-error-text)] hover:underline" onClick={(e) => e.stopPropagation()}>
                               {(r as any).nombre_solicitante_anterior || r.cedula_solicitante_anterior}
                             </Link>
                           ) : 'N/A'}
                         </span>
                         {' → '}
-                        <span className="text-green-600">
+                        <span className="text-[var(--bulk-success-text)]">
                           {r.cedula_solicitante_nuevo ? (
-                            <Link href={`/dashboard/applicants/${r.cedula_solicitante_nuevo}`} className="text-green-600 hover:underline" onClick={(e) => e.stopPropagation()}>
+                            <Link href={`/dashboard/applicants/${r.cedula_solicitante_nuevo}`} className="text-[var(--bulk-success-text)] hover:underline" onClick={(e) => e.stopPropagation()}>
                               {(r as any).nombre_solicitante_nuevo || r.cedula_solicitante_nuevo}
                             </Link>
                           ) : 'N/A'}
@@ -4162,9 +4162,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     <div className="mb-2">
                       <p className="text-sm text-[var(--card-text-muted)]">
                         Núcleo:{' '}
-                        <span className="line-through text-red-500">{r.nombre_nucleo_anterior || r.id_nucleo_anterior || 'N/A'}</span>
+                        <span className="line-through text-[var(--bulk-error-text)]">{r.nombre_nucleo_anterior || r.id_nucleo_anterior || 'N/A'}</span>
                         {' → '}
-                        <span className="text-green-600">{r.nombre_nucleo_nuevo || r.id_nucleo_nuevo || 'N/A'}</span>
+                        <span className="text-[var(--bulk-success-text)]">{r.nombre_nucleo_nuevo || r.id_nucleo_nuevo || 'N/A'}</span>
                       </p>
                     </div>
                   )}
@@ -4173,9 +4173,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     <div className="mb-2">
                       <p className="text-sm text-[var(--card-text-muted)]">
                         Materia:{' '}
-                        <span className="line-through text-red-500">{r.nombre_materia_anterior || r.id_materia_anterior || 'N/A'}</span>
+                        <span className="line-through text-[var(--bulk-error-text)]">{r.nombre_materia_anterior || r.id_materia_anterior || 'N/A'}</span>
                         {' → '}
-                        <span className="text-green-600">{r.nombre_materia_nuevo || r.id_materia_nuevo || 'N/A'}</span>
+                        <span className="text-[var(--bulk-success-text)]">{r.nombre_materia_nuevo || r.id_materia_nuevo || 'N/A'}</span>
                       </p>
                     </div>
                   )}
@@ -4184,9 +4184,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     <div className="mb-2">
                       <p className="text-sm text-[var(--card-text-muted)]">
                         Categoría:{' '}
-                        <span className="line-through text-red-500">{r.nombre_categoria_anterior || (r.num_categoria_anterior !== null ? `#${r.num_categoria_anterior}` : 'N/A')}</span>
+                        <span className="line-through text-[var(--bulk-error-text)]">{r.nombre_categoria_anterior || (r.num_categoria_anterior !== null ? `#${r.num_categoria_anterior}` : 'N/A')}</span>
                         {' → '}
-                        <span className="text-green-600">{r.nombre_categoria_nuevo || (r.num_categoria_nuevo !== null ? `#${r.num_categoria_nuevo}` : 'N/A')}</span>
+                        <span className="text-[var(--bulk-success-text)]">{r.nombre_categoria_nuevo || (r.num_categoria_nuevo !== null ? `#${r.num_categoria_nuevo}` : 'N/A')}</span>
                       </p>
                     </div>
                   )}
@@ -4195,9 +4195,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     <div className="mb-2">
                       <p className="text-sm text-[var(--card-text-muted)]">
                         Subcategoría:{' '}
-                        <span className="line-through text-red-500">{r.nombre_subcategoria_anterior || (r.num_subcategoria_anterior !== null ? `#${r.num_subcategoria_anterior}` : 'N/A')}</span>
+                        <span className="line-through text-[var(--bulk-error-text)]">{r.nombre_subcategoria_anterior || (r.num_subcategoria_anterior !== null ? `#${r.num_subcategoria_anterior}` : 'N/A')}</span>
                         {' → '}
-                        <span className="text-green-600">{r.nombre_subcategoria_nuevo || (r.num_subcategoria_nuevo !== null ? `#${r.num_subcategoria_nuevo}` : 'N/A')}</span>
+                        <span className="text-[var(--bulk-success-text)]">{r.nombre_subcategoria_nuevo || (r.num_subcategoria_nuevo !== null ? `#${r.num_subcategoria_nuevo}` : 'N/A')}</span>
                       </p>
                     </div>
                   )}
@@ -4206,9 +4206,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     <div className="mb-2">
                       <p className="text-sm text-[var(--card-text-muted)]">
                         Ámbito Legal:{' '}
-                        <span className="line-through text-red-500">{r.nombre_ambito_legal_anterior || (r.num_ambito_legal_anterior !== null ? `#${r.num_ambito_legal_anterior}` : 'N/A')}</span>
+                        <span className="line-through text-[var(--bulk-error-text)]">{r.nombre_ambito_legal_anterior || (r.num_ambito_legal_anterior !== null ? `#${r.num_ambito_legal_anterior}` : 'N/A')}</span>
                         {' → '}
-                        <span className="text-green-600">{r.nombre_ambito_legal_nuevo || (r.num_ambito_legal_nuevo !== null ? `#${r.num_ambito_legal_nuevo}` : 'N/A')}</span>
+                        <span className="text-[var(--bulk-success-text)]">{r.nombre_ambito_legal_nuevo || (r.num_ambito_legal_nuevo !== null ? `#${r.num_ambito_legal_nuevo}` : 'N/A')}</span>
                       </p>
                     </div>
                   )}
@@ -4216,10 +4216,10 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   {hasObservacionesChange && (
                     <div className="mb-2">
                       <p className="text-sm text-[var(--card-text-muted)] mb-1">Observaciones:</p>
-                      <p className="text-sm line-through text-red-500 bg-red-50 p-2 rounded mb-1">
+                      <p className="text-sm line-through text-[var(--bulk-error-text)] bg-[var(--bulk-error-bg)] p-2 rounded mb-1">
                         {r.observaciones_anterior || 'Sin observaciones'}
                       </p>
-                      <p className="text-sm text-green-600 bg-green-50 p-2 rounded">
+                      <p className="text-sm text-[var(--bulk-success-text)] bg-[var(--bulk-success-bg)] p-2 rounded">
                         {r.observaciones_nuevo || 'Sin observaciones'}
                       </p>
                     </div>
@@ -4360,11 +4360,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Nombre:{' '}
-                    <span className="line-through text-red-500">
+                    <span className="line-through text-[var(--bulk-error-text)]">
                       {nameFieldAnterior}
                     </span>
                     {' → '}
-                    <span className="text-green-600">
+                    <span className="text-[var(--bulk-success-text)]">
                       {nameFieldNuevo}
                     </span>
                   </p>
@@ -4375,11 +4375,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     Habilitado:{' '}
-                    <span className="line-through text-red-500">
+                    <span className="line-through text-[var(--bulk-error-text)]">
                       {r.habilitado_anterior ? 'Sí' : 'No'}
                     </span>
                     {' → '}
-                    <span className="text-green-600">
+                    <span className="text-[var(--bulk-success-text)]">
                       {r.habilitado_nuevo ? 'Sí' : 'No'}
                     </span>
                   </p>
@@ -4393,11 +4393,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     <div className="mb-2">
                       <p className="text-sm text-[var(--card-text-muted)]">
                         TERM:{' '}
-                        <span className="line-through text-red-500">
+                        <span className="line-through text-[var(--bulk-error-text)]">
                           {r.term_anterior}
                         </span>
                         {' → '}
-                        <span className="text-green-600">
+                        <span className="text-[var(--bulk-success-text)]">
                           {r.term}
                         </span>
                       </p>
@@ -4407,11 +4407,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     <div className="mb-2">
                       <p className="text-sm text-[var(--card-text-muted)]">
                         Fecha inicio:{' '}
-                        <span className="line-through text-red-500">
+                        <span className="line-through text-[var(--bulk-error-text)]">
                           {r.fecha_inicio_anterior ? formatOnlyDate(r.fecha_inicio_anterior) : 'N/A'}
                         </span>
                         {' → '}
-                        <span className="text-green-600">
+                        <span className="text-[var(--bulk-success-text)]">
                           {r.fecha_inicio_nuevo ? formatOnlyDate(r.fecha_inicio_nuevo) : 'N/A'}
                         </span>
                       </p>
@@ -4421,11 +4421,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     <div className="mb-2">
                       <p className="text-sm text-[var(--card-text-muted)]">
                         Fecha fin:{' '}
-                        <span className="line-through text-red-500">
+                        <span className="line-through text-[var(--bulk-error-text)]">
                           {r.fecha_fin_anterior ? formatOnlyDate(r.fecha_fin_anterior) : 'N/A'}
                         </span>
                         {' → '}
-                        <span className="text-green-600">
+                        <span className="text-[var(--bulk-success-text)]">
                           {r.fecha_fin_nuevo ? formatOnlyDate(r.fecha_fin_nuevo) : 'N/A'}
                         </span>
                       </p>
@@ -4443,11 +4443,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                         <div className="mb-2">
                           <p className="text-sm text-[var(--card-text-muted)]">
                             Estado:{' '}
-                            <span className="line-through text-red-500">
+                            <span className="line-through text-[var(--bulk-error-text)]">
                               {r.nombre_estado_anterior || 'N/A'}
                             </span>
                             {' → '}
-                            <span className="text-green-600">
+                            <span className="text-[var(--bulk-success-text)]">
                               {r.nombre_estado_nuevo || 'N/A'}
                             </span>
                           </p>
@@ -4457,11 +4457,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                         <div className="mb-2">
                           <p className="text-sm text-[var(--card-text-muted)]">
                             Municipio:{' '}
-                            <span className="line-through text-red-500">
+                            <span className="line-through text-[var(--bulk-error-text)]">
                               {r.nombre_municipio_anterior || 'N/A'}
                             </span>
                             {' → '}
-                            <span className="text-green-600">
+                            <span className="text-[var(--bulk-success-text)]">
                               {r.nombre_municipio_nuevo || 'N/A'}
                             </span>
                           </p>
@@ -4471,11 +4471,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                         <div className="mb-2">
                           <p className="text-sm text-[var(--card-text-muted)]">
                             Parroquia:{' '}
-                            <span className="line-through text-red-500">
+                            <span className="line-through text-[var(--bulk-error-text)]">
                               {r.nombre_parroquia_anterior || 'N/A'}
                             </span>
                             {' → '}
-                            <span className="text-green-600">
+                            <span className="text-[var(--bulk-success-text)]">
                               {r.nombre_parroquia_nuevo || 'N/A'}
                             </span>
                           </p>
@@ -4495,11 +4495,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                         <div className="mb-2">
                           <p className="text-sm text-[var(--card-text-muted)]">
                             Estado:{' '}
-                            <span className="line-through text-red-500">
+                            <span className="line-through text-[var(--bulk-error-text)]">
                               {r.nombre_estado_anterior || 'N/A'}
                             </span>
                             {' → '}
-                            <span className="text-green-600">
+                            <span className="text-[var(--bulk-success-text)]">
                               {r.nombre_estado_nuevo || 'N/A'}
                             </span>
                           </p>
@@ -4509,11 +4509,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                         <div className="mb-2">
                           <p className="text-sm text-[var(--card-text-muted)]">
                             Municipio:{' '}
-                            <span className="line-through text-red-500">
+                            <span className="line-through text-[var(--bulk-error-text)]">
                               {r.nombre_municipio_anterior || 'N/A'}
                             </span>
                             {' → '}
-                            <span className="text-green-600">
+                            <span className="text-[var(--bulk-success-text)]">
                               {r.nombre_municipio_nuevo || 'N/A'}
                             </span>
                           </p>
@@ -4531,11 +4531,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     <div className="mb-2">
                       <p className="text-sm text-[var(--card-text-muted)]">
                         Materia:{' '}
-                        <span className="line-through text-red-500">
+                        <span className="line-through text-[var(--bulk-error-text)]">
                           {r.nombre_materia_anterior || 'N/A'}
                         </span>
                         {' → '}
-                        <span className="text-green-600">
+                        <span className="text-[var(--bulk-success-text)]">
                           {r.nombre_materia_nuevo || 'N/A'}
                         </span>
                       </p>
@@ -4545,11 +4545,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     <div className="mb-2">
                       <p className="text-sm text-[var(--card-text-muted)]">
                         Categoría:{' '}
-                        <span className="line-through text-red-500">
+                        <span className="line-through text-[var(--bulk-error-text)]">
                           {r.nombre_categoria_anterior || 'N/A'}
                         </span>
                         {' → '}
-                        <span className="text-green-600">
+                        <span className="text-[var(--bulk-success-text)]">
                           {r.nombre_categoria_nuevo || 'N/A'}
                         </span>
                       </p>
@@ -4629,13 +4629,13 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     <span className="font-semibold text-[var(--card-text)]">Profesores:</span>{' '}
-                    <span className="line-through text-red-500">
+                    <span className="line-through text-[var(--bulk-error-text)]">
                       {profesoresAnteriores.length > 0 ? (
                         profesoresAnteriores.map((m: MiembroEquipoAudit, i: number) => (
                           <span key={i}>
                             <Link
                               href={`/dashboard/users/${m.cedula}`}
-                              className="text-red-500 hover:underline"
+                              className="text-[var(--bulk-error-text)] hover:underline"
                               onClick={(e) => e.stopPropagation()}
                             >
                               {m.nombre_completo}
@@ -4646,13 +4646,13 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                       ) : 'Ninguno'}
                     </span>
                     {' → '}
-                    <span className="text-green-600">
+                    <span className="text-[var(--bulk-success-text)]">
                       {profesoresNuevos.length > 0 ? (
                         profesoresNuevos.map((m: MiembroEquipoAudit, i: number) => (
                           <span key={i}>
                             <Link
                               href={`/dashboard/users/${m.cedula}`}
-                              className="text-green-600 hover:underline"
+                              className="text-[var(--bulk-success-text)] hover:underline"
                               onClick={(e) => e.stopPropagation()}
                             >
                               {m.nombre_completo}
@@ -4671,13 +4671,13 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)]">
                     <span className="font-semibold text-[var(--card-text)]">Estudiantes:</span>{' '}
-                    <span className="line-through text-red-500">
+                    <span className="line-through text-[var(--bulk-error-text)]">
                       {estudiantesAnteriores.length > 0 ? (
                         estudiantesAnteriores.map((m: MiembroEquipoAudit, i: number) => (
                           <span key={i}>
                             <Link
                               href={`/dashboard/users/${m.cedula}`}
-                              className="text-red-500 hover:underline"
+                              className="text-[var(--bulk-error-text)] hover:underline"
                               onClick={(e) => e.stopPropagation()}
                             >
                               {m.nombre_completo}
@@ -4688,13 +4688,13 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                       ) : 'Ninguno'}
                     </span>
                     {' → '}
-                    <span className="text-green-600">
+                    <span className="text-[var(--bulk-success-text)]">
                       {estudiantesNuevos.length > 0 ? (
                         estudiantesNuevos.map((m: MiembroEquipoAudit, i: number) => (
                           <span key={i}>
                             <Link
                               href={`/dashboard/users/${m.cedula}`}
-                              className="text-green-600 hover:underline"
+                              className="text-[var(--bulk-success-text)] hover:underline"
                               onClick={(e) => e.stopPropagation()}
                             >
                               {m.nombre_completo}
@@ -4939,7 +4939,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               </div>
               <div>
                 <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Estado</p>
-                <p className={`text-sm ${exitoso ? 'text-green-600' : 'text-red-600'}`}>
+                <p className={`text-sm ${exitoso ? 'text-[var(--bulk-success-text)]' : 'text-[var(--bulk-error-text)]'}`}>
                   {exitoso ? (r.detalle || 'Autenticación exitosa') : (r.detalle || 'Credenciales incorrectas o usuario no encontrado')}
                 </p>
               </div>

@@ -105,7 +105,7 @@
   /* red-50 */
   --bulk-error-border: #fecaca;
   /* red-200 */
-  --bulk-error-text: #b91c1c;
+  --bulk-error-text: #ef4444;
   /* red-700 */
   --bulk-preview-bg: #f9fafb;
   /* gray-50 */
@@ -117,7 +117,7 @@
   /* green-50 */
   --bulk-success-border: #bbf7d0;
   /* green-200 */
-  --bulk-success-text: #15803d;
+  --bulk-success-text: #16a34a;
   /* green-700 */
 
   --catalog-modal-border: #e5e7eb;

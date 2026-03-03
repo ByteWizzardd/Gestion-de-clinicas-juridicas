@@ -96,10 +96,23 @@ SELECT COUNT(*) FROM (
 
     UNION ALL
 
+    -- Estudiantes (Inscripción)
+    SELECT 'Estudiante' as entidad, 'Inscripción' as accion, t.fecha_creacion as fecha, t.id_usuario_creo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre, 'Inscripción estudiante: ' || t.cedula_estudiante as detalles, row_to_json(t.*)::text as metadata FROM auditoria_insercion_estudiantes t
+
+    UNION ALL
+
+    -- Profesores (Asignación)
+    SELECT 'Profesor' as entidad, 'Asignación' as accion, t.fecha_creacion as fecha, t.id_usuario_creo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre, 'Asignación profesor: ' || t.cedula_profesor as detalles, row_to_json(t.*)::text as metadata FROM auditoria_insercion_profesores t
+
+    UNION ALL
+
     -- Usuarios (Actualización)
     SELECT
         'Usuario' as entidad,
-        'Actualización' as accion,
+        CASE 
+            WHEN (t.habilitado_sistema_anterior IS DISTINCT FROM t.habilitado_sistema_nuevo) THEN 'Habilitación'
+            ELSE 'Actualización'
+        END as accion,
         t.fecha_actualizacion as fecha,
         t.id_usuario_actualizo as usuario_id,
         COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_actualizo), t.id_usuario_actualizo) as usuario_nombre,

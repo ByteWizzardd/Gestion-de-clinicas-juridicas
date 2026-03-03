@@ -645,9 +645,9 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
               </label>
               <textarea
                 className={`
-                  w-full p-4 rounded-lg border bg-[#E5E7EB] border-transparent
+                  w-full p-4 rounded-lg border border-[var(--card-border)] bg-[var(--input-bg)]
                   focus:outline-none focus:ring-1 focus:ring-primary
-                  text-base placeholder:text-[#717171] resize-none
+                  text-base text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] resize-none
                   ${deleteLoading ? 'opacity-50 cursor-not-allowed' : ''}
                 `}
                 rows={4}

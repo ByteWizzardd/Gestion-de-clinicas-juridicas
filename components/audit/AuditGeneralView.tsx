@@ -102,7 +102,7 @@ export default function AuditGeneralView() {
     // Lista de entidades disponibles para filtrar
     const availableEntitiesOptions = [
         'Sesión', 'Reporte', 'Caso', 'Usuario', 'Solicitante', 'Beneficiario',
-        'Cita', 'Acción', 'Equipo', 'Soporte',
+        'Cita', 'Acción', 'Estudiante', 'Profesor', 'Equipo', 'Soporte',
         'Estado', 'Municipio', 'Parroquia', 'Núcleo', 'Materia', 'Semestre',
         'Categoría', 'Subcategoría', 'Ámbito Legal', 'Nivel Educativo',
         'Condición Trabajo', 'Condición Actividad', 'Tipo Característica', 'Característica'
@@ -111,6 +111,7 @@ export default function AuditGeneralView() {
     // Lista de tipos de operación
     const operationOptions = [
         'Creación', 'Actualización', 'Eliminación',
+        'Habilitación', 'Inscripción', 'Asignación',
         'Inicio de Sesión', 'Cierre de Sesión', 'Intento Fallido',
         'Generación', 'Descarga'
     ].map(o => ({ value: o, label: o }));
@@ -149,6 +150,13 @@ export default function AuditGeneralView() {
             if (a.includes('creación')) type = 'usuario-creado';
             else if (a.includes('actualización')) type = 'usuario-actualizado-campos';
             else if (a.includes('eliminación')) type = 'usuario-eliminado';
+            else if (a.includes('habilitación')) type = 'usuario-actualizado-campos';
+        }
+        else if (e === 'Estudiante') {
+            type = 'estudiante-inscrito';
+        }
+        else if (e === 'Profesor') {
+            type = 'profesor-asignado';
         }
         else if (e === 'Solicitante') {
             if (a.includes('creación')) type = 'solicitante-creado';
