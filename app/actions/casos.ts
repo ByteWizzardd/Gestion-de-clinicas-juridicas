@@ -1031,7 +1031,10 @@ export interface GetAccionesRecientesResult {
 /**
  * Server Action para obtener acciones recientes del usuario
  */
-export async function getAccionesRecientesAction(limite: number = 10): Promise<GetAccionesRecientesResult> {
+export async function getAccionesRecientesAction(
+  limite: number = 10,
+  options?: { onlyMine?: boolean }
+): Promise<GetAccionesRecientesResult> {
   try {
     // Verificar autenticación
     const authResult = await requireAuthInServerActionWithCode();
@@ -1043,7 +1046,13 @@ export async function getAccionesRecientesAction(limite: number = 10): Promise<G
     }
 
     const cedulaUsuario = authResult.user.cedula;
-    const acciones = await accionesQueries.getRecentByUsuario(cedulaUsuario, limite);
+    
+    let acciones;
+    if (options?.onlyMine === false) {
+      acciones = await accionesQueries.getRecentAll(limite);
+    } else {
+      acciones = await accionesQueries.getRecentByUsuario(cedulaUsuario, limite);
+    }
 
     return {
       success: true,
