@@ -1299,7 +1299,6 @@ export default function ApplicantFormModal({
 
           if (tipoViviendaResult.success && tipoViviendaResult.data) {
             setTiposVivienda(tipoViviendaResult.data);
-            console.log('Tipos de vivienda cargados:', tipoViviendaResult.data);
           } else {
             console.error('Error al cargar tipos de vivienda:', tipoViviendaResult.error);
           }

@@ -63,8 +63,6 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
       fecha_ejecucion: string;
     }>;
   }) => {
-    console.log('DEBUG ActionsHistoryTab - handleEditAccion called with:', accion);
-
     // Mapear ejecutores de la estructura de BD a la estructura que espera el modal
     const ejecutoresMapeados = accion.ejecutores?.map(ejecutor => ({
       id_usuario_ejecuta: ejecutor.id_usuario,

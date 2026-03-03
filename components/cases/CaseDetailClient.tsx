@@ -285,7 +285,6 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
   };
 
   const handleEditAppointment = (cita: any) => {
-    console.log('DEBUG CaseDetailClient - Editing appointment:', cita);
     // Convertir la cita al formato que espera el AppointmentModal (Appointment interface)
     const appointmentData = {
       id: `cita-${cita.num_cita}-${cita.id_caso}-${new Date(cita.fecha_encuentro).getTime()}`,

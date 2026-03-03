@@ -62,7 +62,6 @@ export default function AppointmentCardList({
       );
       if (confirmDelete) {
         // Aquí se llamaría a la acción de eliminar
-        console.log('Eliminar cita:', appointment);
       }
     }
   };

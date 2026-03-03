@@ -37,7 +37,6 @@ export default function MateriasPage() {
         const result = await createMateria(data as { nombre_materia: string });
 
         if (result.success) {
-            console.log('✅ Materia añadida, recargando lista...');
             setIsModalOpen(false);
             await loadMaterias();
         } else {

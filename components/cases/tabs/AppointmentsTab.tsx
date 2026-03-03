@@ -61,7 +61,6 @@ export default function AppointmentsTab({ citas, onRefresh, onEditAppointment }:
       fecha_registro: string;
     }>;
   }) => {
-    console.log('DEBUG AppointmentsTab - handleEditAppointment called with:', cita);
     onEditAppointment?.(cita);
   };
 
