@@ -123,6 +123,10 @@
   --catalog-modal-border: #e5e7eb;
   --catalog-modal-close-hover: #f3f4f6;
   --catalog-view-value: #111827;
+  
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(229, 231, 235, 0.5);
 }
 
 .dark {
@@ -212,6 +216,10 @@
   --catalog-modal-border: #262626;
   --catalog-modal-close-hover: #1f2937;
   --catalog-view-value: #e5e5e5;
+
+  /* Glassmorphism Dark */
+  --glass-bg: rgba(23, 23, 23, 0.7);
+  --glass-border: rgba(38, 38, 38, 0.5);
 }
 
 
