@@ -1,5 +1,5 @@
 import { getCitasAction } from '@/app/actions/citas';
-import { getCasosByUsuarioAction, getAccionesRecientesAction } from '@/app/actions/casos';
+import { getCasosByUsuarioAction, getAccionesRecientesAction, getCasosAction } from '@/app/actions/casos';
 import DashboardClient from '@/components/dashboard/DashboardClient';
 import type { Appointment } from '@/types/appointment';
 import { authorizeRole } from '@/lib/utils/auth-utils';
@@ -8,13 +8,15 @@ export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
   // Permitir a todos los roles autenticados
-  await authorizeRole(['coordinator', 'professor', 'student']);
+  const user = await authorizeRole(['coordinator', 'professor', 'student']);
+  const isCoordinator = user.rol === 'Coordinador' || user.rol === 'coordinator';
 
   // Cargar citas, casos y acciones en el servidor
+  // Si es coordinador, ve TODO. Si no, solo lo suyo.
   const [citasResult, casosResult, accionesResult] = await Promise.all([
-    getCitasAction({ onlyMine: true }),
-    getCasosByUsuarioAction(),
-    getAccionesRecientesAction(10),
+    getCitasAction({ onlyMine: !isCoordinator }),
+    isCoordinator ? getCasosAction() : getCasosByUsuarioAction(),
+    getAccionesRecientesAction(10, { onlyMine: !isCoordinator }),
   ]);
 
   const appointments = citasResult.success && Array.isArray(citasResult.data) ? citasResult.data : [];

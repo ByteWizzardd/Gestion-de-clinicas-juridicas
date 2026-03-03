@@ -138,4 +138,41 @@ export const accionesQueries = {
         : row.ejecutores || []
     }));
   },
+
+  /**
+   * Obtiene todas las acciones más recientes de todos los casos (vista global)
+   */
+  getRecentAll: async (
+    limite: number = 10
+  ): Promise<Array<{
+    num_accion: number;
+    id_caso: number;
+    detalle_accion: string;
+    comentario: string | null;
+    id_usuario_registra: string;
+    fecha_registro: string;
+    nombres_usuario_registra: string;
+    apellidos_usuario_registra: string;
+    nombre_completo_usuario_registra: string;
+    caso_id: number;
+    nombre_solicitante: string;
+    nombre_nucleo: string;
+    ejecutores: Array<{
+      id_usuario: string;
+      nombres: string;
+      apellidos: string;
+      nombre_completo: string;
+      fecha_ejecucion: string;
+    }>;
+  }>> => {
+    const query = loadSQL('acciones/get-recent-all.sql');
+    const result: QueryResult = await pool.query(query, [limite]);
+    // Parsear el JSON de ejecutores
+    return result.rows.map(row => ({
+      ...row,
+      ejecutores: typeof row.ejecutores === 'string'
+        ? JSON.parse(row.ejecutores)
+        : row.ejecutores || []
+    }));
+  },
 };
