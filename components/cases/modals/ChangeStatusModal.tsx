@@ -68,12 +68,12 @@ export default function ChangeStatusModal({
     // Status badge helper
     const getStatusColor = (estatus: string) => {
         const colors: Record<string, string> = {
-            'En proceso': 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-400',
-            'Archivado': 'bg-gray-100 text-gray-800 dark:bg-gray-800/60 dark:text-gray-400',
-            'Entregado': 'bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-400',
-            'Asesoría': 'bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-400',
+            'En proceso': 'bg-blue-100 text-blue-800',
+            'Archivado': 'bg-gray-100 text-gray-800',
+            'Entregado': 'bg-green-100 text-green-800',
+            'Asesoría': 'bg-purple-100 text-purple-800',
         };
-        return colors[estatus] || 'bg-gray-100 text-gray-800 dark:bg-gray-800/60 dark:text-gray-400';
+        return colors[estatus] || 'bg-gray-100 text-gray-800';
     };
 
     return (
@@ -90,7 +90,7 @@ export default function ChangeStatusModal({
                     {/* Botón de cerrar */}
                     <button
                         onClick={handleClose}
-                        className="absolute top-4 sm:top-6 right-4 sm:right-6 cursor-pointer p-2 text-[var(--card-text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--sidebar-hover)] rounded-md transition-colors z-10"
+                        className="absolute top-4 sm:top-6 right-4 sm:right-6 cursor-pointer p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:text-[var(--card-text-muted)] dark:hover:text-[var(--foreground)] dark:hover:bg-[var(--sidebar-hover)] rounded-md transition-colors z-10"
                         aria-label="Cerrar modal"
                         disabled={isSubmitting}
                     >

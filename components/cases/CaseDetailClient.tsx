@@ -243,14 +243,14 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
   };
 
   const getStatusColor = (estatus: string | null) => {
-    if (!estatus) return 'bg-gray-500/10 text-gray-500';
+    if (!estatus) return 'bg-gray-100 text-gray-800';
     const colors: Record<string, string> = {
-      'En proceso': 'bg-blue-500/10 text-blue-500',
-      'Archivado': 'bg-gray-500/10 text-gray-500',
-      'Entregado': 'bg-green-500/10 text-green-500',
-      'Asesoría': 'bg-purple-500/10 text-purple-500',
+      'En proceso': 'bg-blue-100 text-blue-800',
+      'Archivado': 'bg-gray-100 text-gray-800',
+      'Entregado': 'bg-green-100 text-green-800',
+      'Asesoría': 'bg-purple-100 text-purple-800',
     };
-    return colors[estatus] || 'bg-gray-500/10 text-gray-500';
+    return colors[estatus] || 'bg-gray-100 text-gray-800';
   };
 
   // Abre el modal para cambiar estatus
@@ -388,7 +388,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
         transition={{ duration: 0.2, ease: 'easeOut' }}
       >
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-[var(--foreground)] transition-colors" style={{ fontFamily: 'var(--font-league-spartan)' }}>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold dark:text-[var(--foreground)]" style={{ fontFamily: 'var(--font-league-spartan)' }}>
             {codigoCaso}
           </h1>
           {caso.estatus && (
@@ -442,9 +442,9 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
                         className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-primary-light'}`}
                       >
                         {caso.equipo && caso.equipo.length > 0 ? (
-                          <Pencil className="w-[18px] h-[18px] opacity-70" />
+                          <Pencil className="w-[18px] h-[18px] text-[#414040] dark:text-[var(--card-text-muted)]" />
                         ) : (
-                          <Plus className="w-[18px] h-[18px] opacity-70" />
+                          <Plus className="w-[18px] h-[18px] text-[#414040] dark:text-[var(--card-text-muted)]" />
                         )}
                         <span className="text-base text-center">
                           {caso.equipo && caso.equipo.length > 0 ? 'Modificar Equipo' : 'Asignar Equipo'}
@@ -467,7 +467,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
                       disabled={isClosed}
                       className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-primary-light'}`}
                     >
-                      <Plus className="w-[18px] h-[18px] opacity-70" />
+                      <Plus className="w-[18px] h-[18px] text-[#414040] dark:text-[var(--card-text-muted)]" />
                       <span className="text-base text-center">Agregar Documento</span>
                     </button>
                     {isClosed && (
@@ -486,7 +486,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
                       disabled={isClosed}
                       className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-primary-light'}`}
                     >
-                      <Plus className="w-[18px] h-[18px] opacity-70" />
+                      <Plus className="w-[18px] h-[18px] text-[#414040] dark:text-[var(--card-text-muted)]" />
                       <span className="text-base text-center">Registrar Acción</span>
                     </button>
                     {isClosed && (
@@ -505,7 +505,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
                       disabled={isClosed}
                       className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-primary-light'}`}
                     >
-                      <Plus className="w-[18px] h-[18px] opacity-70" />
+                      <Plus className="w-[18px] h-[18px] text-[#414040] dark:text-[var(--card-text-muted)]" />
                       <span className="text-base text-center">Agregar Beneficiario</span>
                     </button>
                     {isClosed && (
@@ -522,7 +522,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
                       }}
                       className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer hover:bg-primary-light`}
                     >
-                      <RefreshCw className="w-[18px] h-[18px] opacity-70" />
+                      <RefreshCw className="w-[18px] h-[18px] text-[#414040] dark:text-[var(--card-text-muted)]" />
                       <span className="text-base text-center">Cambiar Estatus</span>
                     </button>
                   </div>
@@ -539,7 +539,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
         transition={{ duration: 0.2, ease: 'easeOut' }}
       >
         {nombreSolicitante && (
-          <p className="text-sm sm:text-base text-[var(--card-text-muted)] mb-6 sm:mb-8 flex items-center gap-1.5 transition-colors">
+          <p className="text-sm sm:text-base text-gray-500 dark:text-[var(--card-text-muted)] mb-6 sm:mb-8 flex items-center gap-1.5">
             Solicitante:
             {caso.cedula ? (
               <>
@@ -549,7 +549,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
                 >
                   {nombreSolicitante}
                 </Link>
-                <span className="text-gray-400">({caso.cedula})</span>
+                <span className="text-gray-400 dark:text-gray-500">({caso.cedula})</span>
               </>
             ) : (
               <span>{nombreSolicitante}</span>
@@ -671,4 +671,3 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
     </div>
   );
 }
-

@@ -68,7 +68,7 @@ export const authQueries = {
       }
       logger.error('Error en getUserByNombreUsuario', error);
       throw new DatabaseError(
-        'Error al buscar usuario por nombre_usuario',
+        'Credenciales inválidas',
         error
       );
     }
@@ -93,7 +93,7 @@ export const authQueries = {
       }
       logger.error('Error en getUserByEmail', error);
       throw new DatabaseError(
-        'Error al buscar usuario por correo',
+        'Credenciales inválidas',
         error
       );
     }
@@ -118,7 +118,7 @@ export const authQueries = {
       }
       logger.error('Error en getUserByCedula', error);
       throw new DatabaseError(
-        'Error al buscar usuario por cédula',
+        'Credenciales inválidas',
         error
       );
     }
