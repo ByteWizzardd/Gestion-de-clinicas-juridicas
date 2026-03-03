@@ -210,11 +210,17 @@ Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
 ## 👤 Roles del Sistema
 
-| Rol | Permisos |
-|---|---|
-| **Administrador** | Acceso total al sistema, gestión de usuarios y configuración |
-| **Supervisor** | Gestión de casos, equipos, solicitantes y reportes |
-| **Estudiante** | Consulta de casos asignados, registro de citas y acciones |
+| Módulo | Coordinador | Profesor | Estudiante |
+|---|---|---|---|
+| Dashboard | ✅ | ✅ | ✅ |
+| Casos | ✅ | ✅ | ✅ |
+| Solicitantes | ✅ | ✅ | ✅ |
+| Citas | ✅ | ✅ | ✅ |
+| Reportes | ✅ | ✅ | ❌ |
+| Estudiantes | ✅ | ✅ | ❌ |
+| Usuarios | ✅ | ❌ | ❌ |
+| Administración | ✅ | ❌ | ❌ |
+| Auditoría | ✅ | ❌ | ❌ |
 
 ---
 
@@ -222,10 +228,3 @@ Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
 Este proyecto fue desarrollado con fines académicos para la asignatura de **Bases de Datos** — 7mo semestre, **UCAB Guayana**.
 
----
-
-<div align="center">
-
-Desarrollado con ❤️ en **UCAB Guayana** · 2025-2026
-
-</div>
