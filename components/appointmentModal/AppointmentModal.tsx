@@ -47,7 +47,11 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
   );
   const [endDate, setEndDate] = useState<Date | null>(
     appointment && appointment.nextAppointmentDate
-      ? new Date(appointment.nextAppointmentDate.split('/').reverse().join('-'))
+      ? (() => {
+        // nextAppointmentDate viene DD/MM/YYYY → parsear localmente para evitar desfase UTC
+        const [dd, mm, yyyy] = appointment.nextAppointmentDate.split('/');
+        return new Date(parseInt(yyyy, 10), parseInt(mm, 10) - 1, parseInt(dd, 10));
+      })()
       : null
   );
   const [selectedCaseID, setSelectedCaseID] = useState<string>(
