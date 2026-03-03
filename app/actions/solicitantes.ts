@@ -356,9 +356,7 @@ export async function updateSolicitanteAction(cedulaOriginal: string, data: Appl
                 await client.query(updateQuery, [cedulaOriginal, data.nombres, data.apellidos, data.correoElectronico, telefono, authResult.user.cedula]);
 
                 await client.query('COMMIT');
-                console.log('[Sync Usuario] Datos sincronizados para usuario:', cedulaOriginal);
               } else {
-                console.log('[Sync Usuario] Solicitante NO es usuario, omitiendo sincronización:', cedulaOriginal);
               }
             } catch (e) {
               await client.query('ROLLBACK');
@@ -383,21 +381,15 @@ export async function updateSolicitanteAction(cedulaOriginal: string, data: Appl
 
         const sexo = data.sexo;
 
-        console.log('[Sync Beneficiario] Intentando sincronizar con cédula:', cedulaOriginal);
-        console.log('[Sync Beneficiario] Datos disponibles:', { nombres, apellidos, fechaNac, sexo });
-
         if (nombres && apellidos && fechaNac && sexo) {
           const { beneficiariosQueries } = await import('@/lib/db/queries/beneficiarios.queries');
 
           // Verificar si existe algún beneficiario con esta cédula
           const beneficiarioExistente = await beneficiariosQueries.getByCedula(cedulaOriginal);
-          console.log('[Sync Beneficiario] Beneficiario encontrado:', beneficiarioExistente ? 'Sí' : 'No');
 
           if (beneficiarioExistente) {
             promises.push(beneficiariosQueries.updateBasicInfoByCedula(cedulaOriginal, nombres, apellidos, fechaNac, sexo, authResult.user.cedula));
-            console.log('[Sync Beneficiario] Actualización programada para cédula:', cedulaOriginal);
           } else {
-            console.log('[Sync Beneficiario] No existe beneficiario con cédula:', cedulaOriginal, '- No se actualizará');
           }
         } else {
           console.warn('[Sync Beneficiario] Campos faltantes:', {
@@ -411,7 +403,6 @@ export async function updateSolicitanteAction(cedulaOriginal: string, data: Appl
 
         if (promises.length > 0) {
           await Promise.all(promises);
-          console.log('[Sync Beneficiario] Sincronización completada');
         }
       } catch (error) {
         console.error('Error sincronizando datos de solicitante con usuarios/beneficiarios:', error);

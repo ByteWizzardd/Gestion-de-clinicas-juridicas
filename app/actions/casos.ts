@@ -741,7 +741,6 @@ export async function createAccionAction(
       fechaRegistroStr, // Fecha de registro explícita
     ]);
     const accion = accionResult.rows[0];
-    console.log('[DEBUG] createAccionAction - Acción creada:', accion);
 
     // Crear registros de ejecutores si se proporcionaron
     if (ejecutores && ejecutores.length > 0) {

@@ -322,20 +322,11 @@ export async function forgotPasswordAction(formData: FormData): Promise<ForgotPa
     // Normalizar el correo: trim, lowercase, y eliminar espacios extra
     const normalizedEmail = email.trim().toLowerCase().replace(/\s+/g, '');
 
-    console.log(`🔍 Buscando usuario con correo: "${normalizedEmail}" (original: "${email}")`);
-
     // Verificar que el correo existe y obtener la cédula
     const { usuariosQueries } = await import('@/lib/db/queries/usuarios.queries');
     const usuarios = await usuariosQueries.searchByEmail(normalizedEmail);
 
-    console.log(`📊 Resultados encontrados: ${usuarios.length} usuario(s)`);
-    if (usuarios.length > 0) {
-      console.log(`   Usuario encontrado: ${usuarios[0].nombre_completo} (${usuarios[0].cedula})`);
-      console.log(`   Correo en BD: "${usuarios[0].correo_electronico}"`);
-    }
-
     if (usuarios.length === 0) {
-      console.log(`⚠️  Correo "${normalizedEmail}" NO existe en la base de datos`);
       return {
         success: true,
         data: {
@@ -371,7 +362,6 @@ export async function forgotPasswordAction(formData: FormData): Promise<ForgotPa
     const { emailService } = await import('@/lib/services/email.service');
     // Usar el correo de la BD para asegurar que coincida exactamente
     const emailToSend = usuario.correo_electronico || normalizedEmail;
-    console.log(`📧 Enviando código a: "${emailToSend}"`);
     await emailService.sendPasswordResetCode(emailToSend, codigo, nombre);
 
     return {
