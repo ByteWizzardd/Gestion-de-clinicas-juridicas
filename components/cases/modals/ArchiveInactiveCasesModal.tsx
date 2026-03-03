@@ -117,11 +117,11 @@ export default function ArchiveInactiveCasesModal({
         >
             <div className="p-6 space-y-6 overflow-y-auto max-h-[70vh]">
                 {/* Información */}
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
-                    <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-lg p-4 flex items-start gap-3 transition-colors">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                     <div>
-                        <h4 className="font-medium text-amber-800">Casos inactivos por más de 2 semestres</h4>
-                        <p className="text-sm text-amber-700 mt-1">
+                        <h4 className="font-medium text-amber-800 dark:text-amber-300">Casos inactivos por más de 2 semestres</h4>
+                        <p className="text-sm text-amber-700 dark:text-amber-400/90 mt-1">
                             Los siguientes casos no han tenido ninguna actividad (cambios de estatus, citas, acciones, documentos o actualizaciones)
                             en los últimos 12 meses. Se recomienda archivarlos para mantener organizado el sistema.
                         </p>
@@ -132,7 +132,7 @@ export default function ArchiveInactiveCasesModal({
                 {loading && (
                     <div className="flex flex-col items-center justify-center py-12">
                         <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
-                        <p className="text-gray-500">Buscando casos inactivos...</p>
+                        <p className="text-[var(--card-text-muted)]">Buscando casos inactivos...</p>
                     </div>
                 )}
 
@@ -153,8 +153,8 @@ export default function ArchiveInactiveCasesModal({
                 {!loading && !error && inactiveCases.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-12 text-center">
                         <CheckCircle2 className="w-16 h-16 text-green-500 mb-4" />
-                        <h4 className="text-lg font-medium text-gray-800">¡Excelente!</h4>
-                        <p className="text-gray-500 mt-2">
+                        <h4 className="text-lg font-medium text-[var(--foreground)]">¡Excelente!</h4>
+                        <p className="text-[var(--card-text-muted)] mt-2">
                             No hay casos inactivos que requieran archivo.
                         </p>
                     </div>
@@ -170,13 +170,13 @@ export default function ArchiveInactiveCasesModal({
                                     type="checkbox"
                                     checked={selectedCases.size === inactiveCases.length}
                                     onChange={toggleSelectAll}
-                                    className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                                    className="w-4 h-4 text-primary border-[var(--ui-border)] bg-[var(--background)] rounded focus:ring-primary transition-colors"
                                 />
-                                <span className="text-sm font-medium text-gray-700">
+                                <span className="text-sm font-medium text-[var(--foreground)]">
                                     Seleccionar todos ({inactiveCases.length} casos)
                                 </span>
                             </label>
-                            <span className="text-sm text-gray-500">
+                            <span className="text-sm text-[var(--card-text-muted)]">
                                 {selectedCases.size} seleccionado(s)
                             </span>
                         </div>
@@ -194,8 +194,8 @@ export default function ArchiveInactiveCasesModal({
                                         className={`
                       border rounded-lg p-4 cursor-pointer transition-all
                       ${selectedCases.has(caso.id_caso)
-                                                ? 'border-primary bg-primary/5'
-                                                : 'border-gray-200 hover:border-gray-300 bg-white'
+                                                ? 'border-primary bg-primary-light/20 dark:bg-primary/20'
+                                                : 'border-[var(--card-border)] hover:border-[var(--ui-border)] bg-[var(--card-bg)]'
                                             }
                     `}
                                         onClick={() => toggleCaseSelection(caso.id_caso)}
@@ -211,25 +211,25 @@ export default function ArchiveInactiveCasesModal({
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <Briefcase className="w-4 h-4 text-primary" />
-                                                    <span className="font-semibold text-gray-900">
+                                                    <span className="font-semibold text-[var(--foreground)]">
                                                         Caso #{caso.id_caso}
                                                     </span>
                                                     <span className={`
                             px-2 py-0.5 rounded-full text-xs font-medium
-                            ${caso.estatus === 'En proceso' ? 'bg-blue-100 text-blue-700' : ''}
-                            ${caso.estatus === 'Asesoría' ? 'bg-purple-100 text-purple-700' : ''}
-                            ${caso.estatus === 'Entregado' ? 'bg-green-100 text-green-700' : ''}
+                            ${caso.estatus === 'En proceso' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : ''}
+                            ${caso.estatus === 'Asesoría' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' : ''}
+                            ${caso.estatus === 'Entregado' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : ''}
                           `}>
                                                         {caso.estatus}
                                                     </span>
-                                                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                                                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                                                         {Math.floor(caso.meses_inactividad)} meses inactivo
                                                     </span>
                                                 </div>
-                                                <p className="text-sm text-gray-600 mb-2">
+                                                <p className="text-sm text-[var(--card-text-muted)] mb-2">
                                                     {caso.tramite} • {caso.nombre_materia}
                                                 </p>
-                                                <div className="flex flex-wrap gap-4 text-xs text-gray-500">
+                                                <div className="flex flex-wrap gap-4 text-xs text-[var(--card-text-muted)] opacity-80">
                                                     <div className="flex items-center gap-1">
                                                         <User className="w-3 h-3" />
                                                         <span>{caso.nombre_completo_solicitante}</span>
@@ -251,10 +251,10 @@ export default function ArchiveInactiveCasesModal({
 
             {/* Footer */}
             {!loading && !error && inactiveCases.length > 0 && (
-                <div className="border-t border-gray-200 p-4 flex justify-end gap-3">
+                <div className="border-t border-[var(--card-border)] p-4 flex justify-end gap-3 transition-colors">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                        className="px-4 py-2 text-[var(--card-text-muted)] bg-[var(--ui-bg-inactive)] dark:bg-[var(--sidebar-hover)] rounded-lg hover:bg-[var(--sidebar-hover)] transition-colors cursor-pointer"
                         disabled={archiving}
                     >
                         Cancelar

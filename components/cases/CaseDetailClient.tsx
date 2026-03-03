@@ -636,7 +636,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
             <p className="mb-4 text-base text-foreground">
               ¿Estás seguro de que deseas eliminar el caso <strong>{codigoCaso}</strong>?
             </p>
-            <p className="mb-6 text-red-600 font-semibold text-base">
+            <p className="mb-6 text-red-500 font-semibold text-base dark:text-red-400">
               Esta acción es irreversible. Se eliminarán todas las referencias asociadas (citas, acciones, soportes, etc.).
             </p>
             <div className="flex flex-col gap-1">
@@ -645,7 +645,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
               </label>
               <textarea
                 className={`
-                  w-full p-4 rounded-lg border border-[var(--card-border)] bg-[var(--input-bg)]
+                  w-full p-4 rounded-lg border border-transparent bg-[var(--input-bg)]
                   focus:outline-none focus:ring-1 focus:ring-primary
                   text-base text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] resize-none
                   ${deleteLoading ? 'opacity-50 cursor-not-allowed' : ''}
@@ -657,7 +657,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
                 placeholder="Describe el motivo de la eliminación..."
                 disabled={deleteLoading}
               />
-              <div className="text-right text-xs text-gray-500 mt-1">
+              <div className="text-right text-xs text-[var(--card-text-muted)] mt-1">
                 {deleteMotivo.length} / 250 caracteres
               </div>
             </div>

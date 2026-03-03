@@ -786,9 +786,9 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
               </label>
               <textarea
                 className={`
-                  w-full p-4 rounded-lg border bg-[var(--sidebar-hover)] border-[var(--card-border)]
+                  w-full p-4 rounded-lg border bg-[var(--input-bg)] border-transparent
                   focus:outline-none focus:ring-1 focus:ring-primary
-                  text-base text-[var(--card-text)] placeholder:text-[var(--card-text-muted)] resize-none transition-colors
+                  text-base text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] resize-none transition-colors
                   ${deleteLoading ? 'opacity-50 cursor-not-allowed' : ''}
                 `}
                 rows={4}

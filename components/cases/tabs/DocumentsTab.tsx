@@ -165,9 +165,9 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
               </label>
               <textarea
                 className={`
-                  w-full p-4 rounded-lg border bg-[#E5E7EB] border-transparent
+                  w-full p-4 rounded-lg border bg-[var(--input-bg)] border-transparent
                   focus:outline-none focus:ring-1 focus:ring-primary
-                  text-base placeholder:text-[#717171] resize-none
+                  text-base text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] resize-none transition-colors
                   ${deleting ? 'opacity-50 cursor-not-allowed' : ''}
                 `}
                 rows={4}

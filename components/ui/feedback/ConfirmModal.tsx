@@ -65,7 +65,7 @@ export default function ConfirmModal({
               Motivo
             </label>
             <textarea
-              className="w-full p-4 rounded-lg border bg-[var(--input-bg)] border-transparent
+              className="w-full p-4 rounded-lg border border-transparent bg-[var(--input-bg)]
                          focus:outline-none focus:ring-1 focus:ring-primary
                          text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] resize-none transition-colors"
               rows={4}
