@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FileText } from 'lucide-react';
+import { FileText, Download, History, ClipboardCheck } from 'lucide-react';
 import { formatDate } from '@/lib/utils/date-formatter';
 import Table from '@/components/Table/Table';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
@@ -12,6 +12,9 @@ import CaseTools from '@/components/CaseTools/CaseTools';
 import { getMateriasAction } from '@/app/actions/materias';
 import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
 import CaseFormModal from '@/components/forms/CaseFormModal';
+import { descargarHistorialCasoAction } from '@/app/actions/reports';
+import { generateCasoHistorialZip } from '@/lib/utils/case-history-pdf-generator';
+import type { CasoHistorialData } from '@/lib/types/report-types';
 
 interface CasesTabProps {
   cedulaSolicitante?: string;
@@ -314,6 +317,48 @@ export default function CasesTab({ casos, cedulaSolicitante }: CasesTabProps) {
     }
   };
 
+  const handleDownloadHistorial = async (data: Record<string, unknown>) => {
+    const idCaso = data.id_caso as number;
+    if (!idCaso) return;
+
+    try {
+      const result = await descargarHistorialCasoAction(idCaso);
+      if (result.success && result.data) {
+        await generateCasoHistorialZip(result.data as CasoHistorialData);
+      } else {
+        toast.error(`Error al descargar el historial: ${result.error || 'Error desconocido'}`);
+      }
+    } catch (error) {
+      console.error('Error al descargar historial:', error);
+      toast.error('Ocurrió un error al descargar el historial del caso');
+    }
+  };
+
+  const handleDownloadRegistro = async (data: Record<string, unknown>) => {
+    const idCaso = data.id_caso as number;
+    if (!idCaso) return;
+
+    try {
+      // Necesitamos el caso completo para este reporte
+      const result = await getCasoByIdAction(idCaso);
+      if (!result.success || !result.data) {
+        toast.error(result.error?.message || 'Error al obtener datos del caso');
+        return;
+      }
+
+      const casoCompleto = result.data;
+      const { generateRegistroControlCasosPDF } = await import('@/lib/utils/case-registration-pdf-generator');
+      await generateRegistroControlCasosPDF({
+        caso: casoCompleto,
+        equipo: casoCompleto.equipo || [],
+        beneficiarios: casoCompleto.beneficiarios || []
+      });
+    } catch (error) {
+      console.error('Error al generar registro:', error);
+      toast.error('Error al generar el documento');
+    }
+  };
+
   return (
     <div className="space-y-4">
       <CaseTools
@@ -370,6 +415,26 @@ export default function CasesTab({ casos, cedulaSolicitante }: CasesTabProps) {
         onView={handleView}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        actions={[
+          {
+            label: (
+              <>
+                <Download className="w-4 h-4 text-gray-500 group-hover:text-yellow-600 transition-colors" />
+                Descargar historial de caso
+              </>
+            ),
+            onClick: handleDownloadHistorial,
+          },
+          {
+            label: (
+              <>
+                <Download className="w-4 h-4 text-gray-500 group-hover:text-yellow-600 transition-colors" />
+                Descargar registro y control
+              </>
+            ),
+            onClick: handleDownloadRegistro,
+          },
+        ]}
         rowsPerPage={10}
       />
       <ConfirmModal
