@@ -101,6 +101,8 @@ export default function CaseFormModal({
   }>>([]);
   const [loadingCatalogos, setLoadingCatalogos] = useState(false);
   const [loadingCaseNumber, setLoadingCaseNumber] = useState(false);
+
+  const isLoadingData = isEditing && loadingCatalogos;
   const [archivos, setArchivos] = useState<File[]>([]);
   const [fileError, setFileError] = useState<string | null>(null);
   const [checkingSolicitante, setCheckingSolicitante] = useState(false);
@@ -614,22 +616,28 @@ export default function CaseFormModal({
             <div className="flex flex-col gap-1">
               <label className="text-base font-normal text-[var(--foreground)] mb-1">Fecha del Caso <span className="text-danger">*</span></label>
               <div className="relative">
-                <DatePicker
-                  value={formData.fechaCaso}
-                  onChange={(value) => updateField('fechaCaso', value)}
-                  error={errors.fechaCaso}
-                  required
-                />
+                {isLoadingData ? (
+                  <div className="w-full h-[40px] px-4 rounded-full border border-[var(--dropdown-border)] bg-[var(--ui-bg-inactive)] flex items-center opacity-50 cursor-not-allowed">
+                    <span className="text-base text-[var(--card-text-muted)]">Cargando...</span>
+                  </div>
+                ) : (
+                  <DatePicker
+                    value={formData.fechaCaso}
+                    onChange={(value) => updateField('fechaCaso', value)}
+                    error={errors.fechaCaso}
+                    required
+                  />
+                )}
               </div>
             </div>
           </div>
           <div className="col-span-1">
             <Input
               label="Caso N°"
-              value={isEditing ? (formData.casoNumero || '') : (loadingCaseNumber ? 'Cargando...' : (formData.casoNumero || ''))}
+              value={isLoadingData ? 'Cargando...' : (isEditing ? (formData.casoNumero || '') : (loadingCaseNumber ? 'Cargando...' : (formData.casoNumero || '')))}
               readOnly
               disabled
-              placeholder={loadingCaseNumber ? "Cargando..." : ""}
+              placeholder={isLoadingData || loadingCaseNumber ? "Cargando..." : ""}
             />
           </div>
           <div className="col-span-1">
@@ -637,11 +645,12 @@ export default function CaseFormModal({
               label="Cédula de Solicitante *"
               tipoValue={formData.cedulaSolicitanteTipo}
               onTipoChange={(value) => updateField('cedulaSolicitanteTipo', value)}
-              value={formData.cedulaSolicitante}
+              value={isLoadingData ? '' : formData.cedulaSolicitante}
               onChange={(e) => updateField('cedulaSolicitante', e.target.value)}
-              placeholder="Ingrese cédula de solicitante"
+              placeholder={isLoadingData ? "Cargando..." : "Ingrese cédula de solicitante"}
               error={errors.cedulaSolicitante}
               required
+              disabled={isLoadingData}
             />
           </div>
 
@@ -656,9 +665,10 @@ export default function CaseFormModal({
                 { value: TRAMITES.REDACCION_DOCUMENTOS, label: TRAMITES.REDACCION_DOCUMENTOS },
                 { value: TRAMITES.ASISTENCIA_JUDICIAL, label: TRAMITES.ASISTENCIA_JUDICIAL },
               ]}
-              placeholder="Seleccionar trámite"
+              placeholder={isLoadingData ? "Cargando..." : "Seleccionar trámite"}
               error={errors.tramite}
               required
+              disabled={isLoadingData}
             />
           </div>
           <div className="col-span-1">
@@ -675,6 +685,7 @@ export default function CaseFormModal({
               placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar núcleo"}
               error={errors.nucleo}
               required
+              disabled={loadingCatalogos}
             />
           </div>
           <div className="col-span-1">
@@ -689,6 +700,7 @@ export default function CaseFormModal({
               placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar materia"}
               error={errors.materia}
               required
+              disabled={loadingCatalogos}
             />
           </div>
 
@@ -708,6 +720,7 @@ export default function CaseFormModal({
                   placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar categoría"}
                   error={errors.categoria}
                   required
+                  disabled={loadingCatalogos}
                 />
               </div>
               <div className="col-span-1">
@@ -721,10 +734,10 @@ export default function CaseFormModal({
                       value: sub.num_subcategoria.toString(),
                       label: sub.nombre_subcategoria,
                     }))}
-                  placeholder={formData.categoria ? "Seleccionar subcategoría" : "Primero seleccione categoría"}
+                  placeholder={loadingCatalogos ? "Cargando..." : (formData.categoria ? "Seleccionar subcategoría" : "Primero seleccione categoría")}
                   error={errors.subcategoria}
                   required
-                  disabled={!formData.categoria}
+                  disabled={!formData.categoria || loadingCatalogos}
                 />
               </div>
               <div className="col-span-1">
@@ -738,10 +751,10 @@ export default function CaseFormModal({
                       value: ambito.num_ambito_legal.toString(),
                       label: ambito.nombre_ambito_legal,
                     }))}
-                  placeholder={formData.subcategoria ? "Seleccionar ámbito legal" : "Primero seleccione subcategoría"}
+                  placeholder={loadingCatalogos ? "Cargando..." : (formData.subcategoria ? "Seleccionar ámbito legal" : "Primero seleccione subcategoría")}
                   error={errors.ambitoLegal}
                   required
-                  disabled={!formData.subcategoria}
+                  disabled={!formData.subcategoria || loadingCatalogos}
                 />
               </div>
             </>
@@ -762,6 +775,7 @@ export default function CaseFormModal({
                 placeholder={loadingCatalogos ? "Cargando..." : "Seleccionar ámbito legal"}
                 error={errors.ambitoLegal}
                 required
+                disabled={loadingCatalogos}
               />
             </div>
           )}
@@ -769,10 +783,11 @@ export default function CaseFormModal({
           <div className="col-span-full">
             <TextArea
               label="Observaciones"
-              value={formData.observaciones}
+              value={isLoadingData ? '' : formData.observaciones}
               onChange={(e) => updateField('observaciones', e.target.value)}
-              placeholder="Ingrese observaciones del caso"
+              placeholder={isLoadingData ? "Cargando..." : "Ingrese observaciones del caso"}
               error={errors.observaciones}
+              disabled={isLoadingData}
             />
           </div>
 
