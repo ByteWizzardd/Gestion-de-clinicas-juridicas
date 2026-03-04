@@ -26,6 +26,7 @@ import {
 import { formatDate, base64ToUint8Array, createEmptyPortraitPage } from './docx-utils';
 import {
     generateTitleImage,
+    generateSubtitleImage,
     generateBannerImage,
     generateChartImage,
     generateLegendImage,
@@ -298,6 +299,7 @@ export async function generateResumenCasosDOCX(
         const barCharts = [
             {
                 title: 'Casos por Materia',
+                totalPrefix: 'Total de Casos',
                 labels: Array.from(new Set(filteredData.casosPorMateria.map(item => item.nombre_materia))),
                 getValues: () => {
                     const map = new Map();
@@ -309,21 +311,25 @@ export async function generateResumenCasosDOCX(
             },
             {
                 title: 'Solicitantes por Género',
+                totalPrefix: 'Total de Solicitantes',
                 labels: filteredData.solicitantesPorGenero.map(item => item.genero === 'M' ? 'Masculino' : 'Femenino'),
                 values: filteredData.solicitantesPorGenero.map(item => item.cantidad_solicitantes)
             },
             {
                 title: 'Solicitantes por Estado',
+                totalPrefix: 'Total de Solicitantes',
                 labels: filteredData.solicitantesPorEstado.map(item => item.nombre_estado),
                 values: filteredData.solicitantesPorEstado.map(item => item.cantidad_solicitantes)
             },
             {
                 title: 'Solicitantes por Parroquia',
+                totalPrefix: 'Total de Solicitantes',
                 labels: filteredData.solicitantesPorParroquia.map(item => item.nombre_parroquia),
                 values: filteredData.solicitantesPorParroquia.map(item => item.cantidad_solicitantes)
             },
             {
                 title: 'Beneficiarios Directos',
+                totalPrefix: 'Total de Beneficiarios Directos',
                 labels: Array.from(new Set(filteredData.beneficiariosPorTipo.filter(i => i.tipo_beneficiario === 'Directo').map(i => i.nombre_materia))),
                 getValues: () => {
                     const map = new Map();
@@ -335,6 +341,7 @@ export async function generateResumenCasosDOCX(
             },
             {
                 title: 'Beneficiarios Indirectos',
+                totalPrefix: 'Total de Beneficiarios Indirectos',
                 labels: Array.from(new Set(filteredData.beneficiariosPorTipo.filter(i => i.tipo_beneficiario === 'Indirecto').map(i => i.nombre_materia))),
                 getValues: () => {
                     const map = new Map();
@@ -346,11 +353,13 @@ export async function generateResumenCasosDOCX(
             },
             {
                 title: 'Beneficiarios por Parentesco',
+                totalPrefix: 'Total de Beneficiarios',
                 labels: filteredData.beneficiariosPorParentesco.map(item => item.parentesco),
                 values: filteredData.beneficiariosPorParentesco.map(item => item.cantidad_beneficiarios)
             },
             {
                 title: 'Estudiantes Involucrados',
+                totalPrefix: 'Total de Participaciones de Estudiantes',
                 labels: Array.from(new Set(filteredData.estudiantesPorMateria.map(item => item.nombre_materia))),
                 getValues: () => {
                     const map = new Map();
@@ -362,6 +371,7 @@ export async function generateResumenCasosDOCX(
             },
             {
                 title: 'Profesores Involucrados',
+                totalPrefix: 'Total de Participaciones de Profesores',
                 labels: Array.from(new Set(filteredData.profesoresPorMateria.map(item => item.nombre_materia))),
                 getValues: () => {
                     const map = new Map();
@@ -415,12 +425,22 @@ export async function generateResumenCasosDOCX(
             const titleImg = await generateTitleImage(chart.title);
             topContent.push(new Paragraph({
                 alignment: AlignmentType.CENTER,
-                spacing: { after: 50 },
+                spacing: { after: 30 },
                 children: [new ImageRun({ data: base64ToUint8Array(titleImg.split(',')[1]), transformation: { width: 800, height: 44 } } as any)],
             }));
 
+            // Subtítulo (Total)
+            const total = values.reduce((sum, v) => sum + Number(v || 0), 0);
+            const subtitleText = `${(chart as any).totalPrefix}: ${total}`;
+            const subtitleImg = await generateSubtitleImage(subtitleText);
+            topContent.push(new Paragraph({
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 50 },
+                children: [new ImageRun({ data: base64ToUint8Array(subtitleImg.split(',')[1]), transformation: { width: 800, height: 35 } } as any)],
+            }));
+
             // Espacio vacío para bajar la gráfica considerablemente
-            topContent.push(new Paragraph({ spacing: { before: 1200 } }));
+            topContent.push(new Paragraph({ spacing: { before: 1000 } }));
 
             // Gráfica (Aspect ratio corregido para evitar distorsión)
             topContent.push(new Paragraph({

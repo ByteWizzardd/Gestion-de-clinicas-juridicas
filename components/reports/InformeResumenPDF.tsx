@@ -857,7 +857,7 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
             <Text style={styles.sectionTitleCentered}>Estudiantes Involucrados</Text>
             {/* @ts-ignore */}
             <Text style={styles.totalText}>
-              Total de Estudiantes Involucrados: {data.estudiantesPorMateria.reduce((sum, item) => sum + Number(item.cantidad_estudiantes || 0), 0)}
+              Total de Participaciones de Estudiantes: {data.estudiantesPorMateria.reduce((sum, item) => sum + Number(item.cantidad_estudiantes || 0), 0)}
             </Text>
             {/* @ts-ignore */}
             <View style={styles.chartContainerBarChart}>
@@ -884,7 +884,7 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
             <Text style={styles.sectionTitleCentered}>Profesores Involucrados</Text>
             {/* @ts-ignore */}
             <Text style={styles.totalText}>
-              Total de Profesores Involucrados: {data.profesoresPorMateria.reduce((sum, item) => sum + Number(item.cantidad_profesores || 0), 0)}
+              Total de Participaciones de Profesores: {data.profesoresPorMateria.reduce((sum, item) => sum + Number(item.cantidad_profesores || 0), 0)}
             </Text>
             {/* @ts-ignore */}
             <View style={styles.chartContainerBarChart}>
