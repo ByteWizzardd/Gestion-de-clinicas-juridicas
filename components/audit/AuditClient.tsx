@@ -29,10 +29,10 @@ export default function AuditClient() {
           <button
             onClick={() => handleTabChange('general')}
             className={`
-              px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-medium whitespace-nowrap shrink border-b-2 transition-all duration-200 cursor-pointer
+              px-4 sm:px-4 md:px-6 py-2 sm:py-3 text-sm sm:text-sm md:text-base font-medium whitespace-nowrap flex-none border-b-2 transition-colors duration-200 cursor-pointer
               ${activeTab === 'general'
                 ? 'border-primary text-primary'
-                : 'border-transparent text-[var(--card-text-muted)] hover:text-[var(--foreground)] hover:border-[var(--card-border)]'
+                : 'border-transparent text-[var(--card-text-muted)] hover:text-[var(--foreground)] hover:border-[var(--ui-border)]'
               }
             `}
           >
@@ -41,10 +41,10 @@ export default function AuditClient() {
           <button
             onClick={() => handleTabChange('modules')}
             className={`
-              px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-medium whitespace-nowrap shrink border-b-2 transition-all duration-200 cursor-pointer
+              px-4 sm:px-4 md:px-6 py-2 sm:py-3 text-sm sm:text-sm md:text-base font-medium whitespace-nowrap flex-none border-b-2 transition-colors duration-200 cursor-pointer
               ${activeTab === 'modules'
                 ? 'border-primary text-primary'
-                : 'border-transparent text-[var(--card-text-muted)] hover:text-[var(--foreground)] hover:border-[var(--card-border)]'
+                : 'border-transparent text-[var(--card-text-muted)] hover:text-[var(--foreground)] hover:border-[var(--ui-border)]'
               }
             `}
           >
