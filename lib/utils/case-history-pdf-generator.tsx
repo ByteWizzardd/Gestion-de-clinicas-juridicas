@@ -3,6 +3,7 @@
 import React from 'react';
 import { pdf } from '@react-pdf/renderer';
 import JSZip from 'jszip';
+import { logger } from './logger';
 import { CasoHistorialData } from '../types/report-types';
 import { CasoHistorialPDF as CasoHistorialDocument } from '../../components/cases/CasoHistorialPDF';
 import { generateCasoHistorialExcelFormatoUCAB } from './case-history-excel-generator';
@@ -48,7 +49,7 @@ export async function generateCasoHistorialPDF(data: CasoHistorialData): Promise
         URL.revokeObjectURL(url);
 
     } catch (error) {
-        console.error('Error al generar PDF de historial de caso:', error);
+        logger.error('Error al generar PDF de historial de caso:', error);
         alert('Error al generar el PDF');
         throw error;
     }
@@ -74,7 +75,7 @@ export async function generateCasoHistorialExcelUCAB(data: CasoHistorialData): P
         URL.revokeObjectURL(url);
 
     } catch (error) {
-        console.error('Error al generar Excel UCAB de historial de caso:', error);
+        logger.error('Error al generar Excel UCAB de historial de caso:', error);
         alert('Error al generar el Excel');
         throw error;
     }
@@ -118,7 +119,7 @@ export async function generateCasoHistorialZip(data: CasoHistorialData): Promise
             const excelBuffer = await generateCasoHistorialExcelFormatoUCAB(data);
             zip.file(`Historial_Caso_${idCaso}.xlsx`, excelBuffer);
         } catch (excelError) {
-            console.error('Error generando Excel para ZIP:', excelError);
+            logger.error('Error generando Excel para ZIP:', excelError);
             // Continuamos aunque falle el excel, para al menos entregar el PDF
         }
 
@@ -136,7 +137,7 @@ export async function generateCasoHistorialZip(data: CasoHistorialData): Promise
         URL.revokeObjectURL(url);
 
     } catch (error) {
-        console.error('Error al generar ZIP de expediente:', error);
+        logger.error('Error al generar ZIP de expediente:', error);
         alert('Error al generar el Expediente (ZIP)');
         throw error;
     }
@@ -186,7 +187,7 @@ export async function generateHistorialSolicitanteZIP(
                 const excelBuffer = await generateCasoHistorialExcelFormatoUCAB(casoData);
                 caseFolder.file(`Historial_Caso_${idCaso}.xlsx`, excelBuffer);
             } catch (excelError) {
-                console.error(`Error generando Excel para caso ${idCaso}:`, excelError);
+                logger.error(`Error generando Excel para caso ${idCaso}:`, excelError);
             }
         }));
 
@@ -208,7 +209,7 @@ export async function generateHistorialSolicitanteZIP(
         URL.revokeObjectURL(url);
 
     } catch (error) {
-        console.error('Error al generar ZIP de historial de solicitante:', error);
+        logger.error('Error al generar ZIP de historial de solicitante:', error);
         alert('Error al generar el archivo ZIP del solicitante');
         throw error;
     }
@@ -252,7 +253,7 @@ export async function generateExpedienteSolicitanteZIP(
             const fichaExcelBuffer = await generateSolicitanteFichaExcel(solicitanteData);
             zip.file(`Ficha_Solicitante_${cedula}.xlsx`, fichaExcelBuffer);
         } catch (excelError) {
-            console.error('Error generando Excel de ficha solicitante para ZIP:', excelError);
+            logger.error('Error generando Excel de ficha solicitante para ZIP:', excelError);
         }
 
         // --- 2. Agregar Historial de Casos (Carpeta "Casos") ---
@@ -288,7 +289,7 @@ export async function generateExpedienteSolicitanteZIP(
                     const excelBuffer = await generateCasoHistorialExcelFormatoUCAB(casoData);
                     caseSubFolder.file(`Historial_Caso_${idCaso}.xlsx`, excelBuffer);
                 } catch (excelError) {
-                    console.error(`Error generando Excel para caso ${idCaso}:`, excelError);
+                    logger.error(`Error generando Excel para caso ${idCaso}:`, excelError);
                 }
             }));
         }
@@ -312,7 +313,7 @@ export async function generateExpedienteSolicitanteZIP(
         URL.revokeObjectURL(url);
 
     } catch (error) {
-        console.error('Error al generar Expediente Completo (ZIP):', error);
+        logger.error('Error al generar Expediente Completo (ZIP):', error);
         alert('Error al generar el Expediente Completo');
         throw error;
     }

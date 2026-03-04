@@ -1,6 +1,7 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
+import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllNivelesEducativos } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
@@ -21,7 +22,7 @@ export async function getNivelesEducativos() {
         const nivelesEducativos = await getAllNivelesEducativos();
         return { success: true, data: nivelesEducativos };
     } catch (error) {
-        console.error('Error getting niveles educativos:', error);
+        logger.error('Error getting niveles educativos:', error);
         return { success: false, error: 'Error al obtener niveles educativos' };
     }
 }
@@ -50,7 +51,7 @@ export async function createNivelEducativo(data: { descripcion: string }) {
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('❌ Error creating nivel educativo:', error);
+        logger.error('❌ Error creating nivel educativo:', error);
         return { success: false, error: 'Error al crear nivel educativo' };
     } finally {
         client.release();
@@ -86,7 +87,7 @@ export async function updateNivelEducativo(id: number, data: { descripcion: stri
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error updating nivel educativo:', error);
+        logger.error('Error updating nivel educativo:', error);
         const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
         return { success: false, error: `Error al actualizar nivel educativo: ${errorMessage}` };
     } finally {
@@ -123,7 +124,7 @@ export async function toggleNivelEducativoHabilitado(id: number) {
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error toggling nivel educativo habilitado:', error);
+        logger.error('Error toggling nivel educativo habilitado:', error);
         const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
         return { success: false, error: `Error al cambiar estado: ${errorMessage}` };
     } finally {
@@ -175,7 +176,7 @@ export async function deleteNivelEducativo(id: number, motivo?: string) {
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error deleting nivel educativo:', error);
+        logger.error('Error deleting nivel educativo:', error);
         const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
         return { success: false, error: `Error al eliminar nivel educativo: ${errorMessage}` };
     } finally {

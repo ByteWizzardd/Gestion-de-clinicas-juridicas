@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Upload, X, User, Edit, Trash2 } from 'lucide-react';
 import { uploadFotoPerfilAction } from '@/app/actions/usuarios';
+import { logger } from '@/lib/utils/logger';
 import { motion, AnimatePresence } from 'motion/react';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
 
@@ -95,7 +96,7 @@ export default function PhotoUploadHeader({ currentPhoto, onPhotoUpdated, nombre
       }
     } catch (err) {
       setError('Error inesperado al subir la foto');
-      console.error(err);
+      logger.error(err);
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -130,7 +131,7 @@ export default function PhotoUploadHeader({ currentPhoto, onPhotoUpdated, nombre
       }
     } catch (err) {
       setError('Error inesperado al eliminar la foto');
-      console.error(err);
+      logger.error(err);
     } finally {
       setIsDeleting(false);
     }

@@ -1,6 +1,7 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
+import { logger } from '@/lib/utils/logger';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -20,7 +21,7 @@ export async function fixDatabaseSequences() {
         return { success: true, message: 'Todas las secuencias han sido corregidas.' };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error fixing sequences:', error);
+        logger.error('Error fixing sequences:', error);
         return { success: false, error: 'Error al corregir secuencias' };
     } finally {
         client.release();

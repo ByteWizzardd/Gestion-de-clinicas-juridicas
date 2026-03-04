@@ -1,4 +1,5 @@
 import { pool } from '../pool';
+import { logger } from '@/lib/utils/logger';
 import { loadSQL } from '../sql-loader';
 import { QueryResult } from 'pg';
 import { z } from 'zod';
@@ -254,13 +255,13 @@ export const solicitantesQueries = {
                     return c;
                 });
             } catch (error) {
-                console.error('Error obteniendo casos:', error);
+                logger.error('Error obteniendo casos:', error);
                 solicitante.casos = [];
             }
 
             return solicitante;
         } catch (error) {
-            console.error('Error en getSolicitanteCompleto:', error);
+            logger.error('Error en getSolicitanteCompleto:', error);
             throw error;
         }
     },

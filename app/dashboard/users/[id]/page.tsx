@@ -18,6 +18,7 @@ import ActionMenu from "@/components/ui/ActionMenu";
 import EditUserModal from "@/components/users/EditUserModal";
 import ConfirmModal from "@/components/ui/feedback/ConfirmModal";
 import { useToast } from "@/components/ui/feedback/ToastProvider";
+import { logger } from "@/lib/utils/logger";
 import { toggleHabilitadoUsuarioAction, deleteUsuarioFisicoAction } from "@/app/actions/usuarios";
 import { UserX, UserCheck } from "lucide-react";
 
@@ -92,7 +93,7 @@ export default function UserDetailPage() {
         } catch (err) {
           const errorMessage = err instanceof Error ? err.message : "Error desconocido";
           setError(errorMessage);
-          console.error("Error fetching usuario:", err);
+          logger.error("Error fetching usuario:", err);
         } finally {
           setLoading(false);
         }
@@ -264,7 +265,7 @@ export default function UserDetailPage() {
                     setUsuario(result.data);
                   }
                 } catch (err) {
-                  console.error('Error al actualizar usuario:', err);
+                  logger.error('Error al actualizar usuario:', err);
                 }
               };
               fetchUsuario();

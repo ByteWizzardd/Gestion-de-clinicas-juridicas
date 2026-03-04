@@ -1,6 +1,7 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
+import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllCondicionesActividad } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
@@ -10,7 +11,7 @@ export async function getCondicionesActividad() {
         const condiciones = await getAllCondicionesActividad();
         return { success: true, data: condiciones };
     } catch (error) {
-        console.error('Error getting condiciones de actividad:', error);
+        logger.error('Error getting condiciones de actividad:', error);
         return { success: false, error: 'Error al obtener condiciones de actividad' };
     }
 }
@@ -38,7 +39,7 @@ export async function createCondicionActividad(data: { nombre_actividad: string 
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error creating condicion actividad:', error);
+        logger.error('Error creating condicion actividad:', error);
         return { success: false, error: 'Error al crear condición de actividad' };
     } finally {
         client.release();
@@ -72,7 +73,7 @@ export async function updateCondicionActividad(id: number, data: { nombre_activi
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error updating condicion actividad:', error);
+        logger.error('Error updating condicion actividad:', error);
         return { success: false, error: 'Error al actualizar condición' };
     } finally {
         client.release();
@@ -106,7 +107,7 @@ export async function toggleCondicionActividadHabilitado(id: number) {
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error toggling condicion actividad habilitado:', error);
+        logger.error('Error toggling condicion actividad habilitado:', error);
         return { success: false, error: 'Error al cambiar estado' };
     } finally {
         client.release();
@@ -151,7 +152,7 @@ export async function deleteCondicionActividad(id: number, motivo?: string) {
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error deleting condicion actividad:', error);
+        logger.error('Error deleting condicion actividad:', error);
         return { success: false, error: 'Error al eliminar condición' };
     } finally {
         client.release();

@@ -101,7 +101,7 @@ async function main() {
           mensaje,
         ]);
       } catch (notifError) {
-        console.error(
+        logger.error(
           `Error enviando notificación a ${coord.cedula}:`,
           notifError.message,
         );
@@ -150,13 +150,13 @@ async function main() {
     }
 
   } catch (err) {
-    console.error("Error en el script:", err);
+    logger.error("Error en el script:", err);
   } finally {
     await pool.end();
   }
 }
 
 main().catch((error) => {
-  console.error("[check-inactive-cases] Error:", error?.message ?? error);
+  logger.error("[check-inactive-cases] Error:", error?.message ?? error);
   process.exit(1);
 });

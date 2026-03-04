@@ -1,6 +1,7 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
+import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllSemestres } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
@@ -10,7 +11,7 @@ export async function getSemestres() {
         const semestres = await getAllSemestres();
         return { success: true, data: semestres };
     } catch (error) {
-        console.error('Error getting semestres:', error);
+        logger.error('Error getting semestres:', error);
         return { success: false, error: 'Error al obtener semestres' };
     }
 }
@@ -21,7 +22,7 @@ export async function checkSemestreExists(term: string) {
         const result = await client.query('SELECT 1 FROM semestres WHERE term = $1', [term]);
         return { exists: result.rows.length > 0 };
     } catch (error) {
-        console.error('Error checking semestre exists:', error);
+        logger.error('Error checking semestre exists:', error);
         return { exists: false };
     } finally {
         client.release();
@@ -56,7 +57,7 @@ export async function createSemestre(data: { term: string; fecha_inicio: string;
         return { success: true, data: result.rows[0] };
     } catch (error: any) {
         await client.query('ROLLBACK');
-        console.error('Error creating semestre:', error);
+        logger.error('Error creating semestre:', error);
         if (error.code === '23505') {
             return { success: false, error: 'Este semestre ya existe' };
         }
@@ -102,7 +103,7 @@ export async function updateSemestre(term: string, data: { fecha_inicio: string;
         return { success: true, data: result.rows[0] };
     } catch (error: any) {
         await client.query('ROLLBACK');
-        console.error('Error updating semestre:', error);
+        logger.error('Error updating semestre:', error);
 
         if (error.code === '23505') {
             return { success: false, error: 'Este semestre ya existe' };
@@ -144,7 +145,7 @@ export async function toggleSemestreHabilitado(term: string) {
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error toggling semestre:', error);
+        logger.error('Error toggling semestre:', error);
         return { success: false, error: 'Error al cambiar estado' };
     } finally {
         client.release();
@@ -199,7 +200,7 @@ export async function cerrarSemestre(term: string) {
         return { success: true, count: cedulas.length };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error cerrando semestre:', error);
+        logger.error('Error cerrando semestre:', error);
         return { success: false, error: 'Error al cerrar semestre' };
     } finally {
         client.release();
@@ -250,7 +251,7 @@ export async function deleteSemestre(term: string, motivo?: string) {
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error deleting semestre:', error);
+        logger.error('Error deleting semestre:', error);
         return { success: false, error: 'Error al eliminar semestre' };
     } finally {
         client.release();

@@ -11,6 +11,7 @@ import { useToast } from '@/components/ui/feedback/ToastProvider';
 import { generateCasoHistorialZip } from '@/lib/utils/case-history-pdf-generator';
 import type { CasoHistorialData } from '@/lib/types/report-types';
 import CaseFormModal from '@/components/forms/CaseFormModal';
+import { logger } from '@/lib/utils/logger';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 
 interface UserCasesTabProps {
@@ -101,7 +102,7 @@ export default function UserCasesTab({ casos: initialCasos }: UserCasesTabProps)
                 toast.error('No se pudieron obtener los datos del caso');
             }
         } catch (error) {
-            console.error('Error fetching case:', error);
+            logger.error('Error fetching case:', error);
             toast.error('Error al cargar datos del caso');
         } finally {
             setIsLoadingCase(false);
@@ -189,7 +190,7 @@ export default function UserCasesTab({ casos: initialCasos }: UserCasesTabProps)
                 toast.error(`Error al descargar el historial: ${result.error || 'Error desconocido'}`);
             }
         } catch (error) {
-            console.error('Error al descargar historial:', error);
+            logger.error('Error al descargar historial:', error);
             toast.error('Ocurrió un error al descargar el historial del caso');
         }
     };
@@ -211,7 +212,7 @@ export default function UserCasesTab({ casos: initialCasos }: UserCasesTabProps)
                 toast.error('Error al obtener los datos del caso para el reporte.');
             }
         } catch (error) {
-            console.error('Error al generar registro:', error);
+            logger.error('Error al generar registro:', error);
             toast.error('Error al generar el documento');
         }
     };

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Eye, RefreshCw, FileText, AlertCircle } from 'lucide-react';
+import { logger } from '@/lib/utils/logger';
 import Spinner from '@/components/ui/feedback/Spinner';
 import Button from '@/components/ui/Button';
 
@@ -125,7 +126,7 @@ export default function ReportPreview({
             // If aborted, silently ignore (user closed modal or changed params)
             if (controller.signal.aborted) return;
 
-            console.error('Error generating preview:', err);
+            logger.error('Error generating preview:', err);
             setState('error');
             setErrorMsg('Error al generar la vista previa. Intente nuevamente.');
         }

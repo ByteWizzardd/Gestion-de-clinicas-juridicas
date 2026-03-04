@@ -1,6 +1,7 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
+import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllTiposCaracteristicas } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
@@ -10,7 +11,7 @@ export async function getTiposCaracteristicas() {
         const tipos = await getAllTiposCaracteristicas();
         return { success: true, data: tipos };
     } catch (error) {
-        console.error('Error getting tipos de caracteristicas:', error);
+        logger.error('Error getting tipos de caracteristicas:', error);
         return { success: false, error: 'Error al obtener tipos de características' };
     }
 }
@@ -42,7 +43,7 @@ export async function createTipoCaracteristica(data: { nombre_tipo_caracteristic
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error creating tipo caracteristica:', error);
+        logger.error('Error creating tipo caracteristica:', error);
         return { success: false, error: 'Error al crear tipo de característica' };
     } finally {
         client.release();
@@ -76,7 +77,7 @@ export async function updateTipoCaracteristica(id: number, data: { nombre_tipo_c
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error updating tipo caracteristica:', error);
+        logger.error('Error updating tipo caracteristica:', error);
         return { success: false, error: 'Error al actualizar tipo' };
     } finally {
         client.release();
@@ -110,7 +111,7 @@ export async function toggleTipoCaracteristicaHabilitado(id: number) {
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error toggling tipo caracteristica habilitado:', error);
+        logger.error('Error toggling tipo caracteristica habilitado:', error);
         return { success: false, error: 'Error al cambiar estado' };
     } finally {
         client.release();
@@ -155,7 +156,7 @@ export async function deleteTipoCaracteristica(id: number, motivo?: string) {
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error deleting tipo caracteristica:', error);
+        logger.error('Error deleting tipo caracteristica:', error);
         return { success: false, error: 'Error al eliminar tipo' };
     } finally {
         client.release();

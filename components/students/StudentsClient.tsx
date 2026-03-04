@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
+import { logger } from '@/lib/utils/logger';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import TableSkeleton from '@/components/ui/skeletons/TableSkeleton';
@@ -73,7 +74,7 @@ export default function StudentsClient({ initialEstudiantes = [] }: StudentsClie
                 setSemestreFilter(currentTermResult.data.term);
             }
         } catch (error) {
-            console.error('Error al cargar semestres:', error);
+            logger.error('Error al cargar semestres:', error);
         }
     };
 
@@ -91,7 +92,7 @@ export default function StudentsClient({ initialEstudiantes = [] }: StudentsClie
                 setUsuarios(estudiantesData);
             }
         } catch (error) {
-            console.error('Error al cargar estudiantes:', error);
+            logger.error('Error al cargar estudiantes:', error);
         } finally {
             setLoading(false);
         }

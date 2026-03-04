@@ -1,6 +1,7 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
+import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllSubcategorias } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
@@ -10,7 +11,7 @@ export async function getSubcategorias() {
         const subcategorias = await getAllSubcategorias();
         return { success: true, data: subcategorias };
     } catch (error) {
-        console.error('Error getting subcategorias:', error);
+        logger.error('Error getting subcategorias:', error);
         return { success: false, error: 'Error al obtener subcategorías' };
     }
 }
@@ -47,7 +48,7 @@ export async function createSubcategoria(data: { id_materia: string; num_categor
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error creating subcategoria:', error);
+        logger.error('Error creating subcategoria:', error);
         return { success: false, error: 'Error al crear subcategoría' };
     } finally {
         client.release();
@@ -55,10 +56,10 @@ export async function createSubcategoria(data: { id_materia: string; num_categor
 }
 
 export async function updateSubcategoria(
-    id_materia: number, 
-    num_categoria: number, 
-    num_subcategoria: number, 
-    data: { 
+    id_materia: number,
+    num_categoria: number,
+    num_subcategoria: number,
+    data: {
         nombre_subcategoria: string;
         new_id_materia?: number;
         new_num_categoria?: number;
@@ -90,7 +91,7 @@ export async function updateSubcategoria(
                 'SELECT 1 FROM subcategorias WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3',
                 [newIdMateria, newNumCategoria, num_subcategoria]
             );
-            
+
             // Si ya existe, asignar un nuevo número
             let newNumSubcategoria = num_subcategoria;
             if (existCheck.rows.length > 0) {
@@ -134,7 +135,7 @@ export async function updateSubcategoria(
         }
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error updating subcategoria:', error);
+        logger.error('Error updating subcategoria:', error);
         return { success: false, error: 'Error al actualizar subcategoría' };
     } finally {
         client.release();
@@ -168,7 +169,7 @@ export async function toggleSubcategoriaHabilitado(id_materia: number, num_categ
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error toggling subcategoria habilitado:', error);
+        logger.error('Error toggling subcategoria habilitado:', error);
         return { success: false, error: 'Error al cambiar estado' };
     } finally {
         client.release();
@@ -218,7 +219,7 @@ export async function deleteSubcategoria(id_materia: number, num_categoria: numb
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error deleting subcategoria:', error);
+        logger.error('Error deleting subcategoria:', error);
         return { success: false, error: 'Error al eliminar subcategoría' };
     } finally {
         client.release();

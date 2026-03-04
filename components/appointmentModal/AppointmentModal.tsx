@@ -13,6 +13,7 @@ import Button from "../ui/Button";
 import ConfirmModal from "../ui/feedback/ConfirmModal";
 import { X, Calendar, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/feedback/ToastProvider";
+import { logger } from "@/lib/utils/logger";
 import { formatDate } from "@/lib/utils/date-formatter";
 import type { Appointment } from "@/types/appointment";
 import { useRouter } from "next/navigation";
@@ -130,7 +131,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
           setUsuarioOptions([]);
         }
       } catch (error) {
-        console.error("Error loading options", error);
+        logger.error("Error loading options", error);
         toast.error("Error al cargar las opciones del formulario");
       } finally {
         setAreOptionsLoading(false);
@@ -479,7 +480,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
         toast.error(result.error?.message || (isEditing ? "Error al actualizar la cita" : "Error al crear la cita"));
       }
     } catch (error) {
-      console.error('Error al guardar cita:', error);
+      logger.error('Error al guardar cita:', error);
       setLoading(false);
       toast.error('Error al guardar la cita. Por favor, inténtelo de nuevo.');
     }

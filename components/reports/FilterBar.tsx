@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Select from '@/components/forms/Select';
+import { logger } from '@/lib/utils/logger';
 import { Calendar, Building } from 'lucide-react';
 
 export interface ReportFilters {
@@ -42,7 +43,7 @@ export default function FilterBar({
                     setFilterOptions(result.data);
                 }
             } catch (error) {
-                console.error('Error fetching filter options:', error);
+                logger.error('Error fetching filter options:', error);
             }
         };
 

@@ -3,6 +3,7 @@ import { AppError } from '@/lib/utils/errors';
 import { withTransaction } from '@/lib/db/transactions';
 import { loadSQL } from '@/lib/db/sql-loader';
 import { atiendenQueries } from '@/lib/db/queries/atienden.queries';
+import { logger } from '@/lib/utils/logger';
 
 /**
  * Servicio para la entidad Citas
@@ -261,7 +262,7 @@ export const citasService = {
       });
     } catch (error) {
       // Log detallado para depuración
-      console.error('Error al crear la cita (detalle DB):', error);
+      logger.error('Error al crear la cita (detalle DB):', error);
       throw new AppError(
         "Error al crear la cita",
         500,
@@ -527,7 +528,7 @@ export const citasService = {
         return { num_cita, id_caso, fecha: finalDate || new Date().toISOString().split('T')[0] };
       });
     } catch (error) {
-      console.error('Error al actualizar la cita (detalle DB):', error);
+      logger.error('Error al actualizar la cita (detalle DB):', error);
       throw new AppError(
         "Error al actualizar la cita",
         500,
@@ -662,11 +663,11 @@ export const citasService = {
               const deleteAccionQuery = loadSQL('acciones/delete.sql');
               await client.query(deleteAccionQuery, [accionRelacionada.num_accion, id_caso]);
 
+            }
           }
+        } catch {
+          // No fallar la eliminación de la cita por error en eliminación de acción
         }
-      } catch {
-        // No fallar la eliminación de la cita por error en eliminación de acción
-      }
 
         // 4. Eliminar todos los registros de atienden relacionados con esta cita
         const deleteAtiendenQuery = loadSQL('atienden/delete-by-cita.sql');
@@ -687,7 +688,7 @@ export const citasService = {
         return { num_cita, id_caso };
       });
     } catch (error) {
-      console.error('Error al eliminar la cita (detalle DB):', error);
+      logger.error('Error al eliminar la cita (detalle DB):', error);
       throw new AppError(
         "Error al eliminar la cita",
         500,

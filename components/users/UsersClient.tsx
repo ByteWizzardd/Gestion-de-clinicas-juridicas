@@ -12,6 +12,7 @@ import { getUsuariosAction, deleteUsuarioFisicoAction, getUsuarioInfoByCedulaAct
 import { getSemestresAction, getCurrentTermAction, deshabilitarUsuariosSemestreFinalizadoAction } from '@/app/actions/estudiantes';
 import EditUserModal from './EditUserModal';
 import CreateUserModal from './CreateUserModal';
+import { logger } from '@/lib/utils/logger';
 import DropdownMenu from '@/components/ui/navigation/DropdownMenu';
 import TableSkeleton from '@/components/ui/skeletons/TableSkeleton';
 import Modal from '@/components/ui/feedback/Modal';
@@ -155,7 +156,7 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
         setSemestreFilter(currentTermResult.data.term);
       }
     } catch (error) {
-      console.error('Error al cargar semestres:', error);
+      logger.error('Error al cargar semestres:', error);
     }
   };
 
@@ -167,7 +168,7 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
         setUsuarios(result.data);
       }
     } catch (error) {
-      console.error('Error al cargar usuarios:', error);
+      logger.error('Error al cargar usuarios:', error);
     } finally {
       setLoading(false);
     }
@@ -335,7 +336,7 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
         alert(result.error?.message || 'Error al deshabilitar usuarios');
       }
     } catch (error) {
-      console.error('Error batch disable:', error);
+      logger.error('Error batch disable:', error);
       alert('Error inesperado al procesar la solicitud');
     } finally {
       setIsBatchDisabling(false);
@@ -363,7 +364,7 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
         alert(result.error?.message || 'Error al habilitar usuarios');
       }
     } catch (error) {
-      console.error('Error batch enable:', error);
+      logger.error('Error batch enable:', error);
       alert('Error inesperado al procesar la solicitud');
     } finally {
       setIsBatchEnabling(false);
@@ -408,7 +409,7 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
         });
       }
     } catch (error) {
-      console.error('Error al cerrar semestre:', error);
+      logger.error('Error al cerrar semestre:', error);
       setResultadoCerrarSemestre({
         title: "Error",
         type: "error",

@@ -10,6 +10,7 @@ import { getUsuariosAction } from "@/app/actions/usuarios";
 import { createCitaAction } from "@/app/actions/citas";
 import Button from "../ui/Button";
 import { X, Loader2 } from "lucide-react";
+import { logger } from "@/lib/utils/logger";
 import { useToast } from "@/components/ui/feedback/ToastProvider";
 
 interface AppointmentScheduleModalProps {
@@ -224,7 +225,7 @@ export function AppointmentScheduleModal({
         toast.error(result.error?.message || "Error al programar la cita");
       }
     } catch (error) {
-      console.error("Error creating scheduled appointment:", error);
+      logger.error("Error creating scheduled appointment:", error);
       toast.error("Error inesperado al programar la cita");
     } finally {
       setLoading(false);

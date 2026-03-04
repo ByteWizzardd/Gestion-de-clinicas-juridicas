@@ -16,6 +16,7 @@ import {
   getSolicitantesByNacionalidadAction,
 } from '@/app/actions/solicitantes';
 import { descargarFichaSolicitanteAction } from '@/app/actions/reports';
+import { logger } from '@/lib/utils/logger';
 import { generateSolicitanteFichaZip } from '@/lib/utils/applicant-file-pdf-generator';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
 
@@ -186,7 +187,7 @@ export default function ApplicantsClient({
 
       setSolicitantes(rows);
     } catch (e) {
-      console.error(e);
+      logger.error(e);
       toast.error('Ocurrió un error al aplicar el filtro');
     } finally {
       setIsFiltering(false);
@@ -358,7 +359,7 @@ export default function ApplicantsClient({
         toast.error('No se pudo cargar la información completa del solicitante.');
       }
     } catch (e) {
-      console.error(e);
+      logger.error(e);
       toast.error('Ocurrió un error al cargar los datos.');
     }
   };
@@ -388,7 +389,7 @@ export default function ApplicantsClient({
         toast.error(getErrorMessage(result.error) || 'Error desconocido', 'Error al eliminar');
       }
     } catch (e) {
-      console.error(e);
+      logger.error(e);
       toast.error('Ocurrió un error al intentar eliminar el solicitante');
     } finally {
       setIsDeleting(false);
@@ -419,7 +420,7 @@ export default function ApplicantsClient({
         toast.error(result.error || 'Error desconocido', 'Error al descargar la ficha');
       }
     } catch (error) {
-      console.error('Error al descargar ficha:', error);
+      logger.error('Error al descargar ficha:', error);
       toast.error('Ocurrió un error al descargar la ficha del solicitante');
     }
   };

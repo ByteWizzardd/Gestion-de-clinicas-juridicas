@@ -7,6 +7,7 @@ import { appointmentSchema } from '@/lib/validations/appointment.schema';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 import { revalidatePath } from 'next/cache';
+import { logger } from '@/lib/utils/logger';
 
 
 export interface GetCitasResult {
@@ -180,7 +181,7 @@ export async function getAppointmentFilterOptionsAction(): Promise<GetAppointmen
       };
     }
 
-    console.error('Error en getAppointmentFilterOptionsAction:', error);
+    logger.error('Error en getAppointmentFilterOptionsAction:', error);
     return {
       success: false,
       error: {
@@ -371,7 +372,7 @@ export async function updateCitaAction(params: UpdateCitaParams): Promise<GetCit
       };
     }
 
-    console.error('Error en updateCitaAction:', error);
+    logger.error('Error en updateCitaAction:', error);
     return {
       success: false,
       error: {

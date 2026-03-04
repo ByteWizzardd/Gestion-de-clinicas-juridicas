@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ChevronDown, ChevronUp, FileText, Calendar, User, X, Check, BookOpen, GraduationCap, Building, Briefcase, Activity, Tag, Tags, Scale, MapPin, Building2, Home, FolderTree, FolderOpen, UserCircle, Users, ArrowRight, UserX, ArrowDown, FileBarChart, LogIn, LogOut, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import UserAvatar from '@/components/ui/UserAvatar';
+import { logger } from '@/lib/utils/logger';
 import type {
   SoporteAuditRecord,
   SoporteCreadoAuditRecord,
@@ -1417,7 +1418,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       }
 
       default:
-        console.warn('Tipo de auditoría no reconocido en renderSummary:', type);
+        logger.warn('Tipo de auditoría no reconocido en renderSummary:', type);
         return renderRow(
           <FileText className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>Tipo: {type}</>,

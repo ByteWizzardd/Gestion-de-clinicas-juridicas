@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
 import { UnifiedAuditLog, getUnifiedAuditLogsAction } from '@/app/actions/audit-general';
+import { logger } from '@/lib/utils/logger';
 import AuditRecordCardSkeleton from '@/components/ui/skeletons/AuditRecordCardSkeleton';
 import AuditRecordCard from './AuditRecordCard';
 import type { AuditRecordType } from '@/types/audit';
@@ -57,7 +58,7 @@ export default function AuditGeneralView() {
             setLogs(newLogs);
             setTotalCount(count);
         } catch (error) {
-            console.error(error);
+            logger.error(error);
             toast.error('Error al cargar los registros de auditoría');
         } finally {
             setLoading(false);
@@ -85,7 +86,7 @@ export default function AuditGeneralView() {
                     })));
                 }
             } catch (error) {
-                console.error('Error al cargar usuarios para filtro:', error);
+                logger.error('Error al cargar usuarios para filtro:', error);
             }
         };
         loadUsuarios();
@@ -128,7 +129,7 @@ export default function AuditGeneralView() {
         try {
             metadata = typeof log.metadata === 'string' ? JSON.parse(log.metadata) : log.metadata;
         } catch (e) {
-            console.error("Error parsing metadata", e);
+            logger.error("Error parsing metadata", e);
             return null;
         }
 
@@ -284,7 +285,7 @@ export default function AuditGeneralView() {
         if (!type) {
             // Fallback para tipos desconocidos (Sesiones, etc no están en AuditRecordCard explícitamente como cards visuales complejas, o sí?)
             // Sesiones no parece estar en AuditRecordCard.
-            console.warn(`Tipo de auditoría desconocido: ${e} - ${a}`);
+            logger.warn(`Tipo de auditoría desconocido: ${e} - ${a}`);
             return null;
         }
 

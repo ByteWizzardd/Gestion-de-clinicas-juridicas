@@ -20,6 +20,7 @@ import { descargarHistorialCasoAction } from '@/app/actions/reports';
 import { generateCasoHistorialZip } from '@/lib/utils/case-history-pdf-generator';
 import type { CasoHistorialData } from '@/lib/types/report-types';
 import { getSemestres } from '@/app/actions/catalogos/semestres.actions';
+import { logger } from '@/lib/utils/logger';
 import { getCurrentTermAction } from '@/app/actions/estudiantes';
 interface Caso {
   id_caso: number;
@@ -140,7 +141,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
           setTermFilter(currentTermResult.data.term);
         }
       } catch (error) {
-        console.error('Error cargando datos de catálogo:', error);
+        logger.error('Error cargando datos de catálogo:', error);
       }
     };
 
@@ -366,7 +367,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
         casosAsignados: checked,
       });
     } catch (error) {
-      console.error('Error al cambiar filtro de asignación:', error);
+      logger.error('Error al cambiar filtro de asignación:', error);
       toast.error('No se pudo aplicar el filtro de casos asignados');
     } finally {
       setLoading(false);
@@ -388,7 +389,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       casosAsignados: casosAsignadosFilter,
     })
       .catch((e) => {
-        console.error(e);
+        logger.error(e);
         toast.error('Ocurrió un error al aplicar el filtro de fechas');
       })
       .finally(() => setLoading(false));
@@ -690,7 +691,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
         toast.error(`Error al descargar el historial: ${result.error || 'Error desconocido'}`);
       }
     } catch (error) {
-      console.error('Error al descargar historial:', error);
+      logger.error('Error al descargar historial:', error);
       alert(`Ocurrió un error al descargar el historial del caso: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
   };
@@ -717,7 +718,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       }
 
     } catch (error) {
-      console.error('Error al generar registro:', error);
+      logger.error('Error al generar registro:', error);
       alert('Error al generar el documento');
     }
   };

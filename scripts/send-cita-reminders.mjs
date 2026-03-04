@@ -11,6 +11,16 @@ const DEBUG_SEND_CITA_REMINDERS = ["1", "true", "yes"].includes(
   String(process.env.DEBUG_SEND_CITA_REMINDERS || "").toLowerCase()
 );
 
+const logger = {
+  info: (m, d = "") => console.log(`ℹ️ [${new Date().toISOString()}] ${m}`, d),
+  warn: (m, d = "") => console.warn(`⚠️ [${new Date().toISOString()}] ${m}`, d),
+  error: (m, d = "") => console.error(`❌ [${new Date().toISOString()}] ${m}`, d),
+  debug: (m, d = "") => { if (DEBUG_SEND_CITA_REMINDERS) console.log(`🔍 [${new Date().toISOString()}] ${m}`, d); }
+};
+
+const logInfo = (m, d = "") => logger.info(`${SCRIPT_TAG} ${m}`, d);
+const logDebug = (m, d = "") => logger.debug(`${SCRIPT_TAG} ${m}`, d);
+
 
 logInfo(`boot: node=${process.version} debug=${DEBUG_SEND_CITA_REMINDERS}`);
 
@@ -212,11 +222,11 @@ main().catch((error) => {
           ? String(error.name)
           : String(error);
 
-  console.error(`${SCRIPT_TAG} Error:`, message);
+  logger.error(`${SCRIPT_TAG} Error:`, message);
 
-  if (error?.code) console.error(`${SCRIPT_TAG} code:`, error.code);
-  if (error?.detail) console.error(`${SCRIPT_TAG} detail:`, error.detail);
-  if (error?.hint) console.error(`${SCRIPT_TAG} hint:`, error.hint);
+  if (error?.code) logger.error(`${SCRIPT_TAG} code:`, error.code);
+  if (error?.detail) logger.error(`${SCRIPT_TAG} detail:`, error.detail);
+  if (error?.hint) logger.error(`${SCRIPT_TAG} hint:`, error.hint);
 
   // AggregateError (p.ej. ETIMEDOUT) puede contener errores internos más específicos
   if (error instanceof AggregateError && Array.isArray(error.errors)) {
@@ -227,12 +237,12 @@ main().catch((error) => {
           : inner?.code
             ? String(inner.code)
             : String(inner);
-      console.error(`${SCRIPT_TAG} inner[${i}]`, innerMsg);
-      if (inner?.code) console.error(`${SCRIPT_TAG} inner[${i}].code`, inner.code);
-      if (inner?.stack) console.error(inner.stack);
+      logger.error(`${SCRIPT_TAG} inner[${i}]`, innerMsg);
+      if (inner?.code) logger.error(`${SCRIPT_TAG} inner[${i}].code`, inner.code);
+      if (inner?.stack) logger.error(inner.stack);
     }
   }
 
-  if (error?.stack) console.error(error.stack);
+  if (error?.stack) logger.error(error.stack);
   process.exit(1);
 });

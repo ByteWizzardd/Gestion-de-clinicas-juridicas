@@ -4,6 +4,7 @@ import Input from "../forms/Input";
 import Select from "../forms/Select";
 import { useEffect, useState, useRef } from 'react';
 import { createUsuarioAction } from '@/app/actions/usuarios';
+import { logger } from '@/lib/utils/logger';
 import { getSemestres } from '@/app/actions/catalogos/semestres.actions';
 
 import PhoneInput from '../forms/PhoneInput';
@@ -94,7 +95,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
             setSemesters(enabledSemesters);
           }
         })
-        .catch(console.error);
+        .catch(logger.error);
     }
   }, [isOpen]);
 
@@ -148,7 +149,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
       }
     } catch (err) {
       // En caso de error, no mostrar nada (puede ser un error de red, etc.)
-      console.error('Error al verificar cédula:', err);
+      logger.error('Error al verificar cédula:', err);
     }
   };
 
@@ -190,7 +191,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
       }
     } catch (err) {
       // En caso de error, no mostrar nada (puede ser un error de red, etc.)
-      console.error('Error al verificar correo:', err);
+      logger.error('Error al verificar correo:', err);
     }
   };
 
@@ -226,7 +227,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
       }
     } catch (err) {
       // En caso de error, no mostrar nada (puede ser un error de red, etc.)
-      console.error('Error al verificar nombre de usuario:', err);
+      logger.error('Error al verificar nombre de usuario:', err);
     }
   };
 

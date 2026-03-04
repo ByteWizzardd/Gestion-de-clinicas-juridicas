@@ -1,5 +1,6 @@
 import { validateEmailFormat } from './email-validation';
 import { promises as dns } from 'node:dns';
+import { logger } from '@/lib/utils/logger';
 
 /**
  * Verifica si un dominio de email tiene registros MX válidos
@@ -11,7 +12,7 @@ async function verifyDomainMX(domain: string): Promise<boolean> {
         const addresses = await dns.resolveMx(domain);
         return addresses && addresses.length > 0;
     } catch (error) {
-        console.error(`Error verificando MX records para ${domain}:`, error);
+        logger.error(`Error verificando MX records para ${domain}:`, error);
         return false;
     }
 }

@@ -1,6 +1,7 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
+import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllNucleos } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
@@ -10,7 +11,7 @@ export async function getNucleos() {
         const nucleos = await getAllNucleos();
         return { success: true, data: nucleos };
     } catch (error) {
-        console.error('Error getting nucleos:', error);
+        logger.error('Error getting nucleos:', error);
         return { success: false, error: 'Error al obtener núcleos' };
     }
 }
@@ -42,14 +43,14 @@ export async function createNucleo(data: { id_estado: string; id_municipio: stri
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error creating nucleo:', error);
+        logger.error('Error creating nucleo:', error);
         return { success: false, error: 'Error al crear núcleo' };
     } finally {
         client.release();
     }
 }
 
-export async function updateNucleo(id_nucleo: number, data: { 
+export async function updateNucleo(id_nucleo: number, data: {
     nombre_nucleo?: string;
     id_estado?: string;
     id_municipio?: string;
@@ -96,7 +97,7 @@ export async function updateNucleo(id_nucleo: number, data: {
 
         values.push(id_nucleo);
         const query = `UPDATE nucleos SET ${updates.join(', ')} WHERE id_nucleo = $${paramIndex} RETURNING *`;
-        
+
         const result = await client.query(query, values);
         if (result.rows.length === 0) {
             await client.query('ROLLBACK');
@@ -108,7 +109,7 @@ export async function updateNucleo(id_nucleo: number, data: {
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error updating nucleo:', error);
+        logger.error('Error updating nucleo:', error);
         return { success: false, error: 'Error al actualizar núcleo' };
     } finally {
         client.release();
@@ -142,7 +143,7 @@ export async function toggleNucleoHabilitado(id_nucleo: number) {
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error in toggleNucleoHabilitado:', error);
+        logger.error('Error in toggleNucleoHabilitado:', error);
         return { success: false, error: 'Error al cambiar estado' };
     } finally {
         client.release();
@@ -192,7 +193,7 @@ export async function deleteNucleo(id_nucleo: number, motivo?: string) {
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error deleting nucleo:', error);
+        logger.error('Error deleting nucleo:', error);
         return { success: false, error: 'Error al eliminar núcleo' };
     } finally {
         client.release();

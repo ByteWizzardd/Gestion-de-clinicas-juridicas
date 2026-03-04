@@ -4,6 +4,7 @@
  */
 
 import { put, del, list } from '@vercel/blob';
+import { logger } from '@/lib/utils/logger';
 
 // Tipos de archivos soportados
 export type StorageFolder = 'profile-photos' | 'soportes';
@@ -61,7 +62,7 @@ export async function uploadFile(
             url: blob.url,
         };
     } catch (error) {
-        console.error('Error uploading file to Vercel Blob:', error);
+        logger.error('Error uploading file to Vercel Blob:', error);
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Error al subir archivo',
@@ -106,7 +107,7 @@ export async function deleteFile(url: string): Promise<DeleteResult> {
         await del(url);
         return { success: true };
     } catch (error) {
-        console.error('Error deleting file from Vercel Blob:', error);
+        logger.error('Error deleting file from Vercel Blob:', error);
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Error al eliminar archivo',
@@ -125,7 +126,7 @@ export async function listFiles(folder: StorageFolder, prefix?: string): Promise
         const { blobs } = await list({ prefix: path });
         return blobs.map(blob => blob.url);
     } catch (error) {
-        console.error('Error listing files from Vercel Blob:', error);
+        logger.error('Error listing files from Vercel Blob:', error);
         return [];
     }
 }

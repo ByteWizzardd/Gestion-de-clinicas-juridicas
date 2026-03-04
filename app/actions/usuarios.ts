@@ -3,6 +3,7 @@
 import { usuariosQueries } from '@/lib/db/queries/usuarios.queries';
 import { solicitantesQueries } from '@/lib/db/queries/solicitantes.queries';
 import { beneficiariosQueries } from '@/lib/db/queries/beneficiarios.queries';
+import { logger } from '@/lib/utils/logger';
 import { AppError } from '@/lib/utils/errors';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { handleServerActionError } from '@/lib/utils/server-action-helpers';
@@ -217,7 +218,7 @@ export async function toggleHabilitadoUsuarioAction(
 
       // Best-effort: no revertimos el toggle si falla la notificación
       if (!notif.success) {
-        console.error('Error al notificar deshabilitación:', notif.error);
+        logger.error('Error al notificar deshabilitación:', notif.error);
       }
 
       revalidatePath('/dashboard/notificaciones');
@@ -378,7 +379,7 @@ export async function getUsuarioInfoByCedulaAction(
         },
       };
     }
-    console.error("Error en getUsuarioInfoByCedulaAction:", error);
+    logger.error("Error en getUsuarioInfoByCedulaAction:", error);
     return {
       success: false,
       error: {
@@ -437,7 +438,7 @@ export async function checkEmailExistsUsuarioAction(
       data: result.length > 0 ? result[0] : null,
     };
   } catch (error) {
-    console.error('Error en checkEmailExistsUsuarioAction:', error);
+    logger.error('Error en checkEmailExistsUsuarioAction:', error);
     return {
       success: false,
       exists: false,
@@ -494,7 +495,7 @@ export async function checkUsernameExistsUsuarioAction(
       data: result.length > 0 ? result[0] : null,
     };
   } catch (error) {
-    console.error('Error en checkUsernameExistsUsuarioAction:', error);
+    logger.error('Error en checkUsernameExistsUsuarioAction:', error);
     return {
       success: false,
       exists: false,
@@ -672,7 +673,7 @@ export async function updateUsuarioByCedulaAction(
         }
 
       } catch (error) {
-        console.error('Error sincronizando datos de usuario con solicitantes/beneficiarios:', error);
+        logger.error('Error sincronizando datos de usuario con solicitantes/beneficiarios:', error);
       }
     }
 
@@ -689,7 +690,7 @@ export async function updateUsuarioByCedulaAction(
         },
       };
     }
-    console.error("Error en updateUsuarioByCedulaAction:", error);
+    logger.error("Error en updateUsuarioByCedulaAction:", error);
     return {
       success: false,
       error: {
@@ -792,7 +793,7 @@ export async function createUsuarioAction(
         },
       };
     }
-    console.error("Error en createUsuarioAction:", error);
+    logger.error("Error en createUsuarioAction:", error);
     return {
       success: false,
       error: {
@@ -895,7 +896,7 @@ export async function uploadFotoPerfilAction(
       try {
         await deleteFile(urlAnterior);
       } catch (e) {
-        console.error('Error al eliminar foto anterior:', e);
+        logger.error('Error al eliminar foto anterior:', e);
       }
     }
 
@@ -934,7 +935,7 @@ export async function deleteFotoPerfilAction(): Promise<DeleteFotoPerfilResult> 
       try {
         await deleteFile(urlFoto);
       } catch (e) {
-        console.error('Error al eliminar foto de Vercel Blob:', e);
+        logger.error('Error al eliminar foto de Vercel Blob:', e);
       }
     }
 
@@ -1049,7 +1050,7 @@ export async function uploadFotoPerfilUsuarioAction(
       try {
         await deleteFile(urlAnterior);
       } catch (e) {
-        console.error('Error al eliminar foto anterior:', e);
+        logger.error('Error al eliminar foto anterior:', e);
       }
     }
 
@@ -1155,7 +1156,7 @@ export async function disableUsuariosLoteAction(
         cedulaUsuarioDeshabilitado,
       });
       if (!notif.success) {
-        console.error('Error al notificar deshabilitación (lote):', {
+        logger.error('Error al notificar deshabilitación (lote):', {
           cedulaUsuarioDeshabilitado,
           error: notif.error,
         });
@@ -1166,7 +1167,7 @@ export async function disableUsuariosLoteAction(
 
     return { success: true };
   } catch (error) {
-    console.error("Error en disableUsuariosLoteAction:", error);
+    logger.error("Error en disableUsuariosLoteAction:", error);
     return {
       success: false,
       error: {
@@ -1201,7 +1202,7 @@ export async function enableUsuariosLoteAction(
 
     return { success: true };
   } catch (error) {
-    console.error("Error en enableUsuariosLoteAction:", error);
+    logger.error("Error en enableUsuariosLoteAction:", error);
     return {
       success: false,
       error: {
@@ -1305,7 +1306,7 @@ export async function lookupPersonByCedulaAction(
       data: null,
     };
   } catch (error) {
-    console.error("Error en lookupPersonByCedulaAction:", error);
+    logger.error("Error en lookupPersonByCedulaAction:", error);
     return {
       success: false,
       error: {

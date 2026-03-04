@@ -19,6 +19,7 @@ import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/feedback/Spinner';
 import { useCallback } from 'react';
 import { saveAs } from 'file-saver';
+import { logger } from '@/lib/utils/logger';
 import type { DistributionData, TopCasesData, StatusDistributionData, CaseLoadTrendData } from '@/lib/utils/reports-data-mapper';
 import type { CasoHistorialData, SolicitanteFichaData } from '@/lib/types/report-types';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
@@ -190,7 +191,7 @@ export default function ReportsPage() {
                     // Also load solicitantes proactively if needed, or lazy load on modal open
                 }
             } catch (err) {
-                console.error('Error loading term options:', err);
+                logger.error('Error loading term options:', err);
             }
         };
         loadTermOptions();
@@ -212,7 +213,7 @@ export default function ReportsPage() {
                         setFilteredSolicitantes(result.data);
                     }
                 } catch (error) {
-                    console.error('Error loading solicitantes:', error);
+                    logger.error('Error loading solicitantes:', error);
                 } finally {
                     setIsLoadingSolicitantes(false);
                 }
@@ -296,7 +297,7 @@ export default function ReportsPage() {
                 }
 
             } catch (err) {
-                console.error('Error fetching reports data:', err);
+                logger.error('Error fetching reports data:', err);
                 setError('Error al cargar datos de reportes');
             } finally {
                 setLoading(false);
@@ -437,7 +438,7 @@ export default function ReportsPage() {
             return null;
         } catch (error) {
             if (signal.aborted) return null;
-            console.error('Error generating preview blob:', error);
+            logger.error('Error generating preview blob:', error);
             return null;
         }
     }, [tipoReporteActual, fechaInicioReporte, fechaFinReporte, selectedTermReporte, selectedSolicitante, formatoReporte, selectedResumenSections, selectedSocioeconomicoSections]);
@@ -487,7 +488,7 @@ export default function ReportsPage() {
             });
         } catch (err) {
             // No bloquear la vista previa por un error de auditoría
-            console.error('Error registrando auditoría de vista previa:', err);
+            logger.error('Error registrando auditoría de vista previa:', err);
         }
     }, [tipoReporteActual, fechaInicioReporte, fechaFinReporte, selectedTermReporte, selectedSolicitante]);
 
@@ -860,7 +861,7 @@ export default function ReportsPage() {
                     }
                 }
             } catch (error) {
-                console.error('Error al generar reporte:', error);
+                logger.error('Error al generar reporte:', error);
                 toast.error('Error al generar el reporte. Por favor, intente nuevamente.');
             } finally {
                 setIsGeneratingReport(false);

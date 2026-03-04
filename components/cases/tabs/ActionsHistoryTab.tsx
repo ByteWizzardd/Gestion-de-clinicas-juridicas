@@ -7,6 +7,7 @@ import { formatDate } from '@/lib/utils/date-formatter';
 import { deleteAccionAction } from '@/app/actions/casos';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 import AddActionModal from '@/components/cases/modals/AddActionModal';
+import { logger } from '@/lib/utils/logger';
 
 interface ActionsHistoryTabProps {
   acciones?: Array<{
@@ -123,7 +124,7 @@ export default function ActionsHistoryTab({ acciones, onRefresh }: ActionsHistor
       }
     } catch (error) {
       alert('Error inesperado al eliminar la acción');
-      console.error('Error al eliminar acción:', error);
+      logger.error('Error al eliminar acción:', error);
     } finally {
       setIsDeleting(false);
     }

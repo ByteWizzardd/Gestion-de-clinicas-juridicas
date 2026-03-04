@@ -10,6 +10,7 @@ import Button from '../ui/Button';
 import CedulaInput from './CedulaInput';
 import { X, Calendar, Upload, File, XCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
+import { logger } from '@/lib/utils/logger';
 import { TRAMITES, ESTATUS_CASO } from '@/lib/constants/status';
 
 interface CaseData {
@@ -121,7 +122,7 @@ export default function CaseFormModal({
         }));
       }
     } catch (error) {
-      console.error("Error loading next case number", error);
+      logger.error("Error loading next case number", error);
     } finally {
       setLoadingCaseNumber(false);
     }
@@ -145,7 +146,7 @@ export default function CaseFormModal({
         setMaterias(materiasResult.data);
       }
     } catch (error) {
-      console.error("Error loading catalogs", error);
+      logger.error("Error loading catalogs", error);
     }
   };
 
@@ -165,7 +166,7 @@ export default function CaseFormModal({
         setCategorias(result.data);
       }
     } catch (error) {
-      console.error("Error loading categories", error);
+      logger.error("Error loading categories", error);
     }
   };
 
@@ -184,7 +185,7 @@ export default function CaseFormModal({
         setSubcategorias(result.data);
       }
     } catch (error) {
-      console.error("Error loading subcategories", error);
+      logger.error("Error loading subcategories", error);
     }
   };
 
@@ -347,7 +348,7 @@ export default function CaseFormModal({
             });
           }
         } catch (err) {
-          console.error('Error verificando solicitante:', err);
+          logger.error('Error verificando solicitante:', err);
         } finally {
           setCheckingSolicitante(false);
         }
@@ -463,7 +464,7 @@ export default function CaseFormModal({
         setIsSubmitting(true);
         await onSubmit(apiData);
       } catch (error) {
-        console.error('Error submitting case:', error);
+        logger.error('Error submitting case:', error);
 
         // Parsear el error para mostrar mensaje apropiado
         if (error instanceof Error) {

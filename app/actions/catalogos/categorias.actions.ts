@@ -1,6 +1,7 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
+import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllCategorias } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
@@ -10,7 +11,7 @@ export async function getCategorias() {
         const categorias = await getAllCategorias();
         return { success: true, data: categorias };
     } catch (error) {
-        console.error('Error getting categorias:', error);
+        logger.error('Error getting categorias:', error);
         return { success: false, error: `Error al obtener categorías: ${error instanceof Error ? error.message : String(error)}` };
     }
 }
@@ -44,7 +45,7 @@ export async function createCategoria(data: { id_materia: string; nombre_categor
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error creating categoria:', error);
+        logger.error('Error creating categoria:', error);
         return { success: false, error: 'Error al crear categoría' };
     } finally {
         client.release();
@@ -190,7 +191,7 @@ export async function updateCategoria(
             client.release();
         }
     } catch (error) {
-        console.error('Error updating categoria:', error);
+        logger.error('Error updating categoria:', error);
         return { success: false, error: 'Error al actualizar categoría' };
     }
 }
@@ -222,7 +223,7 @@ export async function toggleCategoriaHabilitado(id_materia: number, num_categori
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error toggling categoria habilitado:', error);
+        logger.error('Error toggling categoria habilitado:', error);
         return { success: false, error: 'Error al cambiar estado' };
     } finally {
         client.release();

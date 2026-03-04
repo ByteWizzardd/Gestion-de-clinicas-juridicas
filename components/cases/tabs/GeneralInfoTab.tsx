@@ -15,6 +15,7 @@ import Modal from '@/components/ui/feedback/Modal';
 import Select from '@/components/forms/Select';
 import Button from '@/components/ui/Button';
 import { useEffect } from 'react';
+import { logger } from '@/lib/utils/logger';
 
 interface GeneralInfoTabProps {
   caso: {
@@ -83,7 +84,7 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
         setSemesters(result.data);
       }
     } catch (error) {
-      console.error('Error fetching semesters:', error);
+      logger.error('Error fetching semesters:', error);
     } finally {
       setLoadingSemesters(false);
     }
@@ -183,7 +184,7 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
         toast.error(result.error?.message || 'Error desconocido', 'Error al eliminar');
       }
     } catch (error) {
-      console.error('Error al eliminar beneficiario:', error);
+      logger.error('Error al eliminar beneficiario:', error);
       toast.error('Error al procesar la solicitud');
     } finally {
       setDeleteModalOpen(false);

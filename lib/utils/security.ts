@@ -9,6 +9,7 @@
 
 import bcrypt from 'bcryptjs';
 import jwt, { TokenExpiredError, JsonWebTokenError, SignOptions } from 'jsonwebtoken';
+import { logger } from './logger';
 
 const JWT_SECRET: string = process.env.JWT_SECRET || 'tu-secreto-super-seguro-cambiar-en-produccion';
 // Por defecto: 30 días. Formato: número seguido de unidad (d=days, h=hours, m=minutes, s=seconds)
@@ -25,10 +26,10 @@ export function jwtExpiresInToSeconds(expiresIn: string): number {
     // Si no coincide el formato, asumir que es en segundos
     return parseInt(expiresIn, 10) || 60 * 60 * 24 * 30; // Por defecto 30 días
   }
-  
+
   const value = parseInt(match[1], 10);
   const unit = match[2];
-  
+
   switch (unit) {
     case 'd': // días
       return value * 24 * 60 * 60;
@@ -56,28 +57,28 @@ export async function verifyToken(token: string): Promise<{
 }> {
   try {
     if (!JWT_SECRET || JWT_SECRET === 'tu-secreto-super-seguro-cambiar-en-produccion') {
-      console.warn('[verifyToken] JWT_SECRET no está configurado o usa el valor por defecto');
+      logger.warn('[verifyToken] JWT_SECRET no está configurado o usa el valor por defecto');
     }
-    
+
     const decoded = jwt.verify(token, JWT_SECRET) as { cedula: string; rol: string };
-    
+
     if (!decoded.cedula || !decoded.rol) {
       throw new Error('Token no contiene información válida del usuario');
     }
-    
+
     return decoded;
   } catch (error) {
     if (error instanceof TokenExpiredError) {
-      console.error('[verifyToken] Token expirado');
+      logger.error('[verifyToken] Token expirado');
       throw new Error('Token expirado. Por favor, inicia sesión nuevamente.');
     } else if (error instanceof JsonWebTokenError) {
-      console.error('[verifyToken] Token inválido:', error.message);
+      logger.error('[verifyToken] Token inválido:', error.message);
       throw new Error('Token inválido. Por favor, inicia sesión nuevamente.');
     } else if (error instanceof Error) {
-      console.error('[verifyToken] Error al verificar token:', error.message);
+      logger.error('[verifyToken] Error al verificar token:', error.message);
       throw error;
     }
-    console.error('[verifyToken] Error desconocido al verificar token:', error);
+    logger.error('[verifyToken] Error desconocido al verificar token:', error);
     throw new Error('Token inválido o expirado');
   }
 }

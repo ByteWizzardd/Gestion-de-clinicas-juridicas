@@ -8,6 +8,7 @@ import ActionHistoryList from "@/components/cards/ActionHistoryList";
 import CasosList from "@/components/dashboard/CasosList";
 import { AppointmentDetailModal } from "@/components/appointmentModal/AppointmentDetailModal";
 import type { Appointment } from '@/types/appointment';
+import { logger } from "@/lib/utils/logger";
 
 interface Caso {
   id_caso: number;
@@ -54,9 +55,9 @@ interface DashboardClientProps {
 
 import { triggerInactiveCasesCheckAction } from '@/app/actions/automation';
 
-export default function DashboardClient({ 
-  initialAppointments, 
-  initialCasos, 
+export default function DashboardClient({
+  initialAppointments,
+  initialCasos,
   initialAcciones = [],
   isCoordinator = false
 }: DashboardClientProps) {
@@ -79,7 +80,7 @@ export default function DashboardClient({
         // Fire and forget - logs handled in action/server
         await triggerInactiveCasesCheckAction();
       } catch (error) {
-        console.error('Automation background check failed', error);
+        logger.error('Automation background check failed', error);
       }
     };
     runAutomation();

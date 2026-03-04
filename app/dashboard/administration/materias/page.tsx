@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/utils/logger';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
 import CatalogFormModal from "@/components/catalogs/CatalogFormModal";
 import CatalogActionsMenu from "@/components/catalogs/CatalogActionsMenu";
@@ -40,7 +41,7 @@ export default function MateriasPage() {
             setIsModalOpen(false);
             await loadMaterias();
         } else {
-            console.error('Error al añadir materia:', result.error);
+            logger.error('Error al añadir materia:', result.error);
             toast.error(result.error || 'Error al añadir materia');
         }
     };

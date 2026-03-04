@@ -32,6 +32,7 @@ import { ChevronDown, Plus, Pencil, RefreshCw, Download } from 'lucide-react';
 import { getCurrentUserAction } from '@/app/actions/auth';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
 import DetailPageSkeleton from '@/components/ui/skeletons/DetailPageSkeleton';
+import { logger } from '@/lib/utils/logger';
 
 interface CaseDetailClientProps {
   id?: string;
@@ -96,7 +97,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
       setError(errorMessage);
-      console.error('Error fetching caso:', err);
+      logger.error('Error fetching caso:', err);
     } finally {
       setLoading(false);
     }
@@ -116,7 +117,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
           setUserRol(result.data.rol);
         }
       } catch (err) {
-        console.error('Error al obtener rol del usuario:', err);
+        logger.error('Error al obtener rol del usuario:', err);
       }
     };
     loadUserRol();
@@ -223,7 +224,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
         toast.error(`Error al descargar el historial: ${result.error || 'Error desconocido'}`);
       }
     } catch (error) {
-      console.error('Error al descargar historial:', error);
+      logger.error('Error al descargar historial:', error);
       toast.error('Ocurrió un error al descargar el historial del caso');
     }
   };
@@ -237,7 +238,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
         beneficiarios: caso.beneficiarios || []
       });
     } catch (error) {
-      console.error('Error al generar registro:', error);
+      logger.error('Error al generar registro:', error);
       toast.error('Error al generar el documento');
     }
   };

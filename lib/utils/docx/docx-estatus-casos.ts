@@ -17,6 +17,7 @@ import {
     BorderStyle
 } from 'docx';
 import { saveAs } from 'file-saver';
+import { logger } from '@/lib/utils/logger';
 import { EstatusGroupedData } from '@/components/reports/EstatusCasosPDF';
 import {
     imageToBase64,
@@ -272,7 +273,7 @@ export async function generateEstatusCasosDOCX(
         const periodLabel = term ? `Semestre_${term}` : (fechaInicio && fechaFin ? `${fechaInicio}_${fechaFin}` : 'Historico');
         saveAs(blob, `Reporte_Estatus_Casos_${periodLabel}.docx`);
     } catch (error) {
-        console.error('Error al generar DOCX de estatus:', error);
+        logger.error('Error al generar DOCX de estatus:', error);
         throw error;
     }
 }

@@ -10,6 +10,7 @@ import Button from '../../ui/Button';
 import DatePicker from '../../forms/DatePicker';
 import { X, Calendar, User, Search } from 'lucide-react';
 import { updateBeneficiarioAction, searchBeneficiariosByCedulaAction } from '@/app/actions/beneficiarios';
+import { logger } from '@/lib/utils/logger';
 
 interface EditBeneficiaryModalProps {
     isOpen: boolean;
@@ -193,7 +194,7 @@ export default function EditBeneficiaryModal({
                     }
                 }
             } catch (error) {
-                console.error('Error searching beneficiary:', error);
+                logger.error('Error searching beneficiary:', error);
             } finally {
                 setIsSearching(false);
             }
@@ -295,7 +296,7 @@ export default function EditBeneficiaryModal({
                 alert(result.error?.message || 'Error al actualizar beneficiario');
             }
         } catch (error) {
-            console.error('Error submitting beneficiary:', error);
+            logger.error('Error submitting beneficiary:', error);
             alert('Error inesperado al actualizar beneficiario');
         } finally {
             setIsSubmitting(false);

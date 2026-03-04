@@ -1,6 +1,7 @@
 'use server';
 
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { logger } from '@/lib/utils/logger';
 import { mapSystemRoleToSidebarRole } from '@/lib/utils/role-mapper';
 import { auditoriaEliminacionSoportesQueries } from '@/lib/db/queries/auditoria-eliminacion-soportes.queries';
 import { auditoriaInsercionSoportesQueries } from '@/lib/db/queries/auditoria-insercion-soportes.queries';
@@ -327,10 +328,10 @@ export async function getAuditCountsAction(): Promise<AuditCounts> {
       lastActivities: lastActivityData
     };
   } catch (error) {
-    console.error('Error obteniendo contadores de auditoría:', error);
+    logger.error('Error obteniendo contadores de auditoría:', error);
     // Log detallado del error para debugging
     if (error instanceof Error) {
-      console.error('Error details:', error.message, error.stack);
+      logger.error('Error details:', { message: error.message, stack: error.stack });
     }
     throw new Error(`Error al obtener contadores de auditoría: ${error instanceof Error ? error.message : 'Error desconocido'}`);
   }
@@ -361,7 +362,7 @@ export async function getSoportesAuditAction(filters?: AuditFilters) {
       nombre_completo_usuario_accion: r.nombre_completo_usuario_elimino || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de soportes:', error);
+    logger.error('Error obteniendo auditoría de soportes:', error);
     throw new Error('Error al obtener auditoría de soportes');
   }
 }
@@ -391,7 +392,7 @@ export async function getSoportesCreadosAuditAction(filters?: AuditFilters) {
       nombre_completo_usuario_accion: r.nombre_completo_usuario_subio || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de soportes creados:', error);
+    logger.error('Error obteniendo auditoría de soportes creados:', error);
     throw new Error('Error al obtener auditoría de soportes creados');
   }
 }
@@ -421,7 +422,7 @@ export async function getCitasEliminadasAuditAction(filters?: AuditFilters) {
       nombre_completo_usuario_accion: r.nombre_completo_usuario_elimino || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de citas eliminadas:', error);
+    logger.error('Error obteniendo auditoría de citas eliminadas:', error);
     throw new Error('Error al obtener auditoría de citas eliminadas');
   }
 }
@@ -451,7 +452,7 @@ export async function getCitasActualizadasAuditAction(filters?: AuditFilters) {
       nombre_completo_usuario_accion: r.nombre_completo_usuario_actualizo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de citas actualizadas:', error);
+    logger.error('Error obteniendo auditoría de citas actualizadas:', error);
     throw new Error('Error al obtener auditoría de citas actualizadas');
   }
 }
@@ -481,7 +482,7 @@ export async function getCitasCreadasAuditAction(filters?: AuditFilters) {
       nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de citas creadas:', error);
+    logger.error('Error obteniendo auditoría de citas creadas:', error);
     throw new Error('Error al obtener auditoría de citas creadas');
   }
 }
@@ -504,7 +505,7 @@ export async function getUsuariosEliminadosAuditAction(filters?: AuditFilters) {
   try {
     return await auditoriaEliminacionUsuarioQueries.getAll(filters);
   } catch (error) {
-    console.error('Error obteniendo auditoría de usuarios eliminados:', error);
+    logger.error('Error obteniendo auditoría de usuarios eliminados:', error);
     throw new Error('Error al obtener auditoría de usuarios eliminados');
   }
 }
@@ -533,7 +534,7 @@ export async function getUsuariosHabilitadosAuditAction(filters?: AuditFilters) 
       nombre_completo_usuario_accion: r.nombre_completo_habilitado_por || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de usuarios habilitados:', error);
+    logger.error('Error obteniendo auditoría de usuarios habilitados:', error);
     throw new Error('Error al obtener auditoría de usuarios habilitados');
   }
 }
@@ -563,7 +564,7 @@ export async function getUsuariosActualizadosCamposAuditAction(filters?: AuditFi
       nombre_completo_usuario_accion: r.nombre_completo_usuario_actualizo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de usuarios actualizados (campos):', error);
+    logger.error('Error obteniendo auditoría de usuarios actualizados (campos):', error);
     throw new Error('Error al obtener auditoría de usuarios actualizados (campos)');
   }
 }
@@ -596,7 +597,7 @@ export async function getUsuariosCreadosAuditAction(filters?: AuditFilters) {
       // y coinciden con los del frontend, todo bien.
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de usuarios creados:', error);
+    logger.error('Error obteniendo auditoría de usuarios creados:', error);
     throw new Error('Error al obtener auditoría de usuarios creados');
   }
 }
@@ -625,7 +626,7 @@ export async function getEstudiantesInscritosAuditAction(filters?: AuditFilters)
       nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de estudiantes inscritos:', error);
+    logger.error('Error obteniendo auditoría de estudiantes inscritos:', error);
     throw new Error('Error al obtener auditoría de estudiantes inscritos');
   }
 }
@@ -654,7 +655,7 @@ export async function getProfesoresInscritosAuditAction(filters?: AuditFilters) 
       nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de profesores inscritos:', error);
+    logger.error('Error obteniendo auditoría de profesores inscritos:', error);
     throw new Error('Error al obtener auditoría de profesores inscritos');
   }
 }
@@ -687,7 +688,7 @@ export async function getCasosEliminadosAuditAction(filters?: AuditFilters) {
       nombre_completo_usuario_accion: r.nombre_completo_usuario_elimino || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de casos eliminados:', error);
+    logger.error('Error obteniendo auditoría de casos eliminados:', error);
     throw new Error('Error al obtener auditoría de casos eliminados');
   }
 }
@@ -744,7 +745,7 @@ export async function getCasosActualizadosAuditAction(filters?: AuditFilters) {
 
     return allRecords;
   } catch (error) {
-    console.error('Error obteniendo auditoría de casos actualizados:', error);
+    logger.error('Error obteniendo auditoría de casos actualizados:', error);
     throw new Error('Error al obtener auditoría de casos actualizados');
   }
 }
@@ -773,7 +774,7 @@ export async function getCasosCreadosAuditAction(filters?: AuditFilters) {
       nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de casos creados:', error);
+    logger.error('Error obteniendo auditoría de casos creados:', error);
     throw new Error('Error al obtener auditoría de casos creados');
   }
 }
@@ -806,7 +807,7 @@ export async function getSolicitantesEliminadosAuditAction(filters?: AuditFilter
       nombre_completo_usuario_accion: r.nombre_completo_usuario_elimino || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de solicitantes eliminados:', error);
+    logger.error('Error obteniendo auditoría de solicitantes eliminados:', error);
     throw new Error('Error al obtener auditoría de solicitantes eliminados');
   }
 }
@@ -835,7 +836,7 @@ export async function getSolicitantesActualizadosAuditAction(filters?: AuditFilt
       nombre_completo_usuario_accion: r.nombre_completo_usuario_actualizo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de solicitantes actualizados:', error);
+    logger.error('Error obteniendo auditoría de solicitantes actualizados:', error);
     throw new Error('Error al obtener auditoría de solicitantes actualizados');
   }
 }
@@ -864,7 +865,7 @@ export async function getSolicitantesCreadosAuditAction(filters?: AuditFilters) 
       nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de solicitantes creados:', error);
+    logger.error('Error obteniendo auditoría de solicitantes creados:', error);
     throw new Error('Error al obtener auditoría de solicitantes creados');
   }
 }
@@ -893,7 +894,7 @@ export async function getEstadosEliminadosAuditAction(filters?: AuditFilters) {
       nombre_completo_usuario_accion: r.nombre_completo_usuario_elimino || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de estados eliminados:', error);
+    logger.error('Error obteniendo auditoría de estados eliminados:', error);
     throw new Error('Error al obtener auditoría de estados eliminados');
   }
 }
@@ -922,7 +923,7 @@ export async function getEstadosActualizadosAuditAction(filters?: AuditFilters) 
       nombre_completo_usuario_accion: r.nombre_completo_usuario_actualizo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de estados actualizados:', error);
+    logger.error('Error obteniendo auditoría de estados actualizados:', error);
     throw new Error('Error al obtener auditoría de estados actualizados');
   }
 }
@@ -952,7 +953,7 @@ export async function getMateriasEliminadasAuditAction(filters?: AuditFilters) {
       nombre_completo_usuario_accion: r.nombre_completo_usuario_elimino || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de materias eliminadas:', error);
+    logger.error('Error obteniendo auditoría de materias eliminadas:', error);
     throw new Error('Error al obtener auditoría de materias eliminadas');
   }
 }
@@ -978,7 +979,7 @@ export async function getMateriasActualizadasAuditAction(filters?: AuditFilters)
       nombre_completo_usuario_accion: r.nombre_completo_usuario_actualizo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de materias actualizadas:', error);
+    logger.error('Error obteniendo auditoría de materias actualizadas:', error);
     throw new Error('Error al obtener auditoría de materias actualizadas');
   }
 }
@@ -1004,7 +1005,7 @@ export async function getNivelesEducativosEliminadosAuditAction(filters?: AuditF
       nombre_completo_usuario_accion: r.nombre_completo_usuario_elimino || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de niveles educativos eliminados:', error);
+    logger.error('Error obteniendo auditoría de niveles educativos eliminados:', error);
     throw new Error('Error al obtener auditoría de niveles educativos eliminados');
   }
 }
@@ -1030,7 +1031,7 @@ export async function getNivelesEducativosActualizadosAuditAction(filters?: Audi
       nombre_completo_usuario_accion: r.nombre_completo_usuario_actualizo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de niveles educativos actualizados:', error);
+    logger.error('Error obteniendo auditoría de niveles educativos actualizados:', error);
     throw new Error('Error al obtener auditoría de niveles educativos actualizados');
   }
 }
@@ -1056,7 +1057,7 @@ export async function getNucleosEliminadosAuditAction(filters?: AuditFilters) {
       nombre_completo_usuario_accion: r.nombre_completo_usuario_elimino || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de nucleos eliminados:', error);
+    logger.error('Error obteniendo auditoría de nucleos eliminados:', error);
     throw new Error('Error al obtener auditoría de nucleos eliminados');
   }
 }
@@ -1082,7 +1083,7 @@ export async function getNucleosActualizadosAuditAction(filters?: AuditFilters) 
       nombre_completo_usuario_accion: r.nombre_completo_usuario_actualizo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de nucleos actualizados:', error);
+    logger.error('Error obteniendo auditoría de nucleos actualizados:', error);
     throw new Error('Error al obtener auditoría de nucleos actualizados');
   }
 }
@@ -1108,7 +1109,7 @@ export async function getCondicionesTrabajoEliminadasAuditAction(filters?: Audit
       nombre_completo_usuario_accion: r.nombre_completo_usuario_elimino || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de condiciones de trabajo eliminadas:', error);
+    logger.error('Error obteniendo auditoría de condiciones de trabajo eliminadas:', error);
     throw new Error('Error al obtener auditoría de condiciones de trabajo eliminadas');
   }
 }
@@ -1134,7 +1135,7 @@ export async function getCondicionesTrabajoActualizadasAuditAction(filters?: Aud
       nombre_completo_usuario_accion: r.nombre_completo_usuario_actualizo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de condiciones de trabajo actualizadas:', error);
+    logger.error('Error obteniendo auditoría de condiciones de trabajo actualizadas:', error);
     throw new Error('Error al obtener auditoría de condiciones de trabajo actualizadas');
   }
 }
@@ -1160,7 +1161,7 @@ export async function getCondicionesActividadEliminadasAuditAction(filters?: Aud
       nombre_completo_usuario_accion: r.nombre_completo_usuario_elimino || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de condiciones de actividad eliminadas:', error);
+    logger.error('Error obteniendo auditoría de condiciones de actividad eliminadas:', error);
     throw new Error('Error al obtener auditoría de condiciones de actividad eliminadas');
   }
 }
@@ -1186,7 +1187,7 @@ export async function getCondicionesActividadActualizadasAuditAction(filters?: A
       nombre_completo_usuario_accion: r.nombre_completo_usuario_actualizo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de condiciones de actividad actualizadas:', error);
+    logger.error('Error obteniendo auditoría de condiciones de actividad actualizadas:', error);
     throw new Error('Error al obtener auditoría de condiciones de actividad actualizadas');
   }
 }
@@ -1212,7 +1213,7 @@ export async function getTiposCaracteristicasEliminadosAuditAction(filters?: Aud
       nombre_completo_usuario_accion: r.nombre_completo_usuario_elimino || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de tipos de características eliminados:', error);
+    logger.error('Error obteniendo auditoría de tipos de características eliminados:', error);
     throw new Error('Error al obtener auditoría de tipos de características eliminados');
   }
 }
@@ -1238,7 +1239,7 @@ export async function getTiposCaracteristicasActualizadosAuditAction(filters?: A
       nombre_completo_usuario_accion: r.nombre_completo_usuario_actualizo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de tipos de características actualizados:', error);
+    logger.error('Error obteniendo auditoría de tipos de características actualizados:', error);
     throw new Error('Error al obtener auditoría de tipos de características actualizados');
   }
 }
@@ -1264,7 +1265,7 @@ export async function getSemestresEliminadosAuditAction(filters?: AuditFilters) 
       nombre_completo_usuario_accion: r.nombre_completo_usuario_elimino || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de semestres eliminados:', error);
+    logger.error('Error obteniendo auditoría de semestres eliminados:', error);
     throw new Error('Error al obtener auditoría de semestres eliminados');
   }
 }
@@ -1290,7 +1291,7 @@ export async function getSemestresActualizadosAuditAction(filters?: AuditFilters
       nombre_completo_usuario_accion: r.nombre_completo_usuario_actualizo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de semestres actualizados:', error);
+    logger.error('Error obteniendo auditoría de semestres actualizados:', error);
     throw new Error('Error al obtener auditoría de semestres actualizados');
   }
 }
@@ -1316,7 +1317,7 @@ export async function getMunicipiosEliminadosAuditAction(filters?: AuditFilters)
       nombre_completo_usuario_accion: r.nombre_completo_usuario_elimino || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de municipios eliminados:', error);
+    logger.error('Error obteniendo auditoría de municipios eliminados:', error);
     throw new Error('Error al obtener auditoría de municipios eliminados');
   }
 }
@@ -1342,7 +1343,7 @@ export async function getMunicipiosActualizadosAuditAction(filters?: AuditFilter
       nombre_completo_usuario_accion: r.nombre_completo_usuario_actualizo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de municipios actualizados:', error);
+    logger.error('Error obteniendo auditoría de municipios actualizados:', error);
     throw new Error('Error al obtener auditoría de municipios actualizados');
   }
 }
@@ -1368,7 +1369,7 @@ export async function getParroquiasEliminadasAuditAction(filters?: AuditFilters)
       nombre_completo_usuario_accion: r.nombre_completo_usuario_elimino || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de parroquias eliminadas:', error);
+    logger.error('Error obteniendo auditoría de parroquias eliminadas:', error);
     throw new Error('Error al obtener auditoría de parroquias eliminadas');
   }
 }
@@ -1394,7 +1395,7 @@ export async function getParroquiasActualizadasAuditAction(filters?: AuditFilter
       nombre_completo_usuario_accion: r.nombre_completo_usuario_actualizo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de parroquias actualizadas:', error);
+    logger.error('Error obteniendo auditoría de parroquias actualizadas:', error);
     throw new Error('Error al obtener auditoría de parroquias actualizadas');
   }
 }
@@ -1420,7 +1421,7 @@ export async function getCategoriasEliminadasAuditAction(filters?: AuditFilters)
       nombre_completo_usuario_accion: r.nombre_completo_usuario_elimino || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de categorias eliminadas:', error);
+    logger.error('Error obteniendo auditoría de categorias eliminadas:', error);
     throw new Error('Error al obtener auditoría de categorias eliminadas');
   }
 }
@@ -1446,7 +1447,7 @@ export async function getCategoriasActualizadasAuditAction(filters?: AuditFilter
       nombre_completo_usuario_accion: r.nombre_completo_usuario_actualizo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de categorias actualizadas:', error);
+    logger.error('Error obteniendo auditoría de categorias actualizadas:', error);
     throw new Error('Error al obtener auditoría de categorias actualizadas');
   }
 }
@@ -1472,7 +1473,7 @@ export async function getSubcategoriasEliminadasAuditAction(filters?: AuditFilte
       nombre_completo_usuario_accion: r.nombre_completo_usuario_elimino || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de subcategorias eliminadas:', error);
+    logger.error('Error obteniendo auditoría de subcategorias eliminadas:', error);
     throw new Error('Error al obtener auditoría de subcategorias eliminadas');
   }
 }
@@ -1498,7 +1499,7 @@ export async function getSubcategoriasActualizadasAuditAction(filters?: AuditFil
       nombre_completo_usuario_accion: r.nombre_completo_usuario_actualizo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de subcategorias actualizadas:', error);
+    logger.error('Error obteniendo auditoría de subcategorias actualizadas:', error);
     throw new Error('Error al obtener auditoría de subcategorias actualizadas');
   }
 }
@@ -1524,7 +1525,7 @@ export async function getAmbitosLegalesEliminadosAuditAction(filters?: AuditFilt
       nombre_completo_usuario_accion: r.nombre_completo_usuario_elimino || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de ambitos legales eliminados:', error);
+    logger.error('Error obteniendo auditoría de ambitos legales eliminados:', error);
     throw new Error('Error al obtener auditoría de ambitos legales eliminados');
   }
 }
@@ -1550,7 +1551,7 @@ export async function getAmbitosLegalesActualizadosAuditAction(filters?: AuditFi
       nombre_completo_usuario_accion: r.nombre_completo_usuario_actualizo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de ambitos legales actualizados:', error);
+    logger.error('Error obteniendo auditoría de ambitos legales actualizados:', error);
     throw new Error('Error al obtener auditoría de ambitos legales actualizados');
   }
 }
@@ -1576,7 +1577,7 @@ export async function getCaracteristicasEliminadasAuditAction(filters?: AuditFil
       nombre_completo_usuario_accion: r.nombre_completo_usuario_elimino || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de caracteristicas eliminadas:', error);
+    logger.error('Error obteniendo auditoría de caracteristicas eliminadas:', error);
     throw new Error('Error al obtener auditoría de caracteristicas eliminadas');
   }
 }
@@ -1602,7 +1603,7 @@ export async function getCaracteristicasActualizadasAuditAction(filters?: AuditF
       nombre_completo_usuario_accion: r.nombre_completo_usuario_actualizo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de caracteristicas actualizadas:', error);
+    logger.error('Error obteniendo auditoría de caracteristicas actualizadas:', error);
     throw new Error('Error al obtener auditoría de caracteristicas actualizadas');
   }
 }
@@ -1632,7 +1633,7 @@ export async function getEstadosInsertadosAuditAction(filters?: AuditFilters) {
       nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de estados insertados:', error);
+    logger.error('Error obteniendo auditoría de estados insertados:', error);
     throw new Error('Error al obtener auditoría de estados insertados');
   }
 }
@@ -1658,7 +1659,7 @@ export async function getMateriasInsertadasAuditAction(filters?: AuditFilters) {
       nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de materias insertadas:', error);
+    logger.error('Error obteniendo auditoría de materias insertadas:', error);
     throw new Error('Error al obtener auditoría de materias insertadas');
   }
 }
@@ -1684,7 +1685,7 @@ export async function getNivelesEducativosInsertadosAuditAction(filters?: AuditF
       nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de niveles educativos insertados:', error);
+    logger.error('Error obteniendo auditoría de niveles educativos insertados:', error);
     throw new Error('Error al obtener auditoría de niveles educativos insertados');
   }
 }
@@ -1710,7 +1711,7 @@ export async function getNucleosInsertadosAuditAction(filters?: AuditFilters) {
       nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de nucleos insertados:', error);
+    logger.error('Error obteniendo auditoría de nucleos insertados:', error);
     throw new Error('Error al obtener auditoría de nucleos insertados');
   }
 }
@@ -1736,7 +1737,7 @@ export async function getCondicionesTrabajoInsertadasAuditAction(filters?: Audit
       nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de condiciones trabajo insertadas:', error);
+    logger.error('Error obteniendo auditoría de condiciones trabajo insertadas:', error);
     throw new Error('Error al obtener auditoría de condiciones trabajo insertadas');
   }
 }
@@ -1762,7 +1763,7 @@ export async function getCondicionesActividadInsertadasAuditAction(filters?: Aud
       nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de condiciones actividad insertadas:', error);
+    logger.error('Error obteniendo auditoría de condiciones actividad insertadas:', error);
     throw new Error('Error al obtener auditoría de condiciones actividad insertadas');
   }
 }
@@ -1788,7 +1789,7 @@ export async function getTiposCaracteristicasInsertadosAuditAction(filters?: Aud
       nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de tipos caracteristicas insertados:', error);
+    logger.error('Error obteniendo auditoría de tipos caracteristicas insertados:', error);
     throw new Error('Error al obtener auditoría de tipos caracteristicas insertados');
   }
 }
@@ -1814,7 +1815,7 @@ export async function getSemestresInsertadosAuditAction(filters?: AuditFilters) 
       nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de semestres insertados:', error);
+    logger.error('Error obteniendo auditoría de semestres insertados:', error);
     throw new Error('Error al obtener auditoría de semestres insertados');
   }
 }
@@ -1840,7 +1841,7 @@ export async function getMunicipiosInsertadosAuditAction(filters?: AuditFilters)
       nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de municipios insertados:', error);
+    logger.error('Error obteniendo auditoría de municipios insertados:', error);
     throw new Error('Error al obtener auditoría de municipios insertados');
   }
 }
@@ -1866,7 +1867,7 @@ export async function getParroquiasInsertadasAuditAction(filters?: AuditFilters)
       nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de parroquias insertadas:', error);
+    logger.error('Error obteniendo auditoría de parroquias insertadas:', error);
     throw new Error('Error al obtener auditoría de parroquias insertadas');
   }
 }
@@ -1892,7 +1893,7 @@ export async function getCategoriasInsertadasAuditAction(filters?: AuditFilters)
       nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de categorias insertadas:', error);
+    logger.error('Error obteniendo auditoría de categorias insertadas:', error);
     throw new Error('Error al obtener auditoría de categorias insertadas');
   }
 }
@@ -1918,7 +1919,7 @@ export async function getSubcategoriasInsertadasAuditAction(filters?: AuditFilte
       nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de subcategorias insertadas:', error);
+    logger.error('Error obteniendo auditoría de subcategorias insertadas:', error);
     throw new Error('Error al obtener auditoría de subcategorias insertadas');
   }
 }
@@ -1944,7 +1945,7 @@ export async function getAmbitosLegalesInsertadosAuditAction(filters?: AuditFilt
       nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de ambitos legales insertados:', error);
+    logger.error('Error obteniendo auditoría de ambitos legales insertados:', error);
     throw new Error('Error al obtener auditoría de ambitos legales insertados');
   }
 }
@@ -1970,7 +1971,7 @@ export async function getCaracteristicasInsertadasAuditAction(filters?: AuditFil
       nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de caracteristicas insertadas:', error);
+    logger.error('Error obteniendo auditoría de caracteristicas insertadas:', error);
     throw new Error('Error al obtener auditoría de caracteristicas insertadas');
   }
 }
@@ -2009,7 +2010,7 @@ export async function getBeneficiariosInscritosAuditAction(filters?: AuditFilter
       id_usuario_registro: r.id_usuario_registro || null,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de beneficiarios inscritos:', error);
+    logger.error('Error obteniendo auditoría de beneficiarios inscritos:', error);
     throw new Error('Error al obtener auditoría de beneficiarios inscritos');
   }
 }
@@ -2041,7 +2042,7 @@ export async function getBeneficiariosActualizadosAuditAction(filters?: AuditFil
       fecha_nacimiento_nuevo: typeof r.fecha_nacimiento_nuevo === 'string' ? r.fecha_nacimiento_nuevo : r.fecha_nacimiento_nuevo.toISOString().split('T')[0],
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de beneficiarios actualizados:', error);
+    logger.error('Error obteniendo auditoría de beneficiarios actualizados:', error);
     throw new Error('Error al obtener auditoría de beneficiarios actualizados');
   }
 }
@@ -2071,7 +2072,7 @@ export async function getBeneficiariosEliminadosAuditAction(filters?: AuditFilte
       nombre_completo_usuario_accion: r.usuario_nombre_completo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de beneficiarios eliminados:', error);
+    logger.error('Error obteniendo auditoría de beneficiarios eliminados:', error);
     throw new Error('Error al obtener auditoría de beneficiarios eliminados');
   }
 }
@@ -2104,7 +2105,7 @@ export async function getAccionesCreadasAuditAction(filters?: AuditFilters) {
       nombre_completo_usuario_accion: r.nombre_completo_usuario_creo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de acciones creadas:', error);
+    logger.error('Error obteniendo auditoría de acciones creadas:', error);
     throw new Error('Error al obtener auditoría de acciones creadas');
   }
 }
@@ -2133,7 +2134,7 @@ export async function getAccionesActualizadasAuditAction(filters?: AuditFilters)
       nombre_completo_usuario_accion: r.nombre_completo_usuario_actualizo || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de acciones actualizadas:', error);
+    logger.error('Error obteniendo auditoría de acciones actualizadas:', error);
     throw new Error('Error al obtener auditoría de acciones actualizadas');
   }
 }
@@ -2162,7 +2163,7 @@ export async function getAccionesEliminadasAuditAction(filters?: AuditFilters) {
       nombre_completo_usuario_accion: r.nombre_completo_eliminado_por || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de acciones eliminadas:', error);
+    logger.error('Error obteniendo auditoría de acciones eliminadas:', error);
     throw new Error('Error al obtener auditoría de acciones eliminadas');
   }
 }
@@ -2202,7 +2203,7 @@ export async function getEquiposActualizadosAuditAction(filters?: AuditFilters) 
 
     return mappedRecords;
   } catch (error) {
-    console.error('Error obteniendo auditoría de equipos actualizados:', error);
+    logger.error('Error obteniendo auditoría de equipos actualizados:', error);
     throw new Error('Error al obtener auditoría de equipos actualizados');
   }
 }
@@ -2236,7 +2237,7 @@ export async function getEquiposCreadosAuditAction(filters?: AuditFilters) {
 
     return mappedRecords;
   } catch (error) {
-    console.error('Error obteniendo auditoría de equipos creados:', error);
+    logger.error('Error obteniendo auditoría de equipos creados:', error);
     throw new Error('Error al obtener auditoría de equipos creados');
   }
 }
@@ -2335,7 +2336,7 @@ export async function getSesionesAuditAction(filters?: AuditFilters & { limit?: 
       offset
     };
   } catch (error) {
-    console.error('Error obteniendo auditoría de sesiones:', error);
+    logger.error('Error obteniendo auditoría de sesiones:', error);
     throw new Error('Error al obtener auditoría de sesiones');
   }
 }
@@ -2398,7 +2399,7 @@ export async function getDescargasSoportesAuditAction(filters?: AuditFilters & {
       offset
     };
   } catch (error) {
-    console.error('Error obteniendo auditoría de descargas de soportes:', error);
+    logger.error('Error obteniendo auditoría de descargas de soportes:', error);
     throw new Error('Error al obtener auditoría de descargas de soportes');
   }
 }
@@ -2434,7 +2435,7 @@ export async function getReportesGeneradosAuditAction(filters?: AuditFilters) {
       nombre_completo_usuario_accion: r.nombre_completo_usuario_genero || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de reportes generados:', error);
+    logger.error('Error obteniendo auditoría de reportes generados:', error);
     throw new Error('Error al obtener auditoría de reportes generados');
   }
 }
@@ -2467,7 +2468,7 @@ export async function getReportesVistaPreviaAuditAction(filters?: AuditFilters) 
       nombre_completo_usuario_accion: r.nombre_completo_usuario_genero || undefined,
     }));
   } catch (error) {
-    console.error('Error obteniendo auditoría de vistas previas:', error);
+    logger.error('Error obteniendo auditoría de vistas previas:', error);
     throw new Error('Error al obtener auditoría de vistas previas');
   }
 }

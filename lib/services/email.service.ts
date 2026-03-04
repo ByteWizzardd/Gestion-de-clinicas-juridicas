@@ -4,6 +4,7 @@
  */
 
 import nodemailer from 'nodemailer';
+import { logger } from '@/lib/utils/logger';
 
 interface EmailOptions {
   to: string;
@@ -61,7 +62,7 @@ function createTransporter() {
   const smtpPass = process.env.SMTP_PASS;
 
   if (!smtpUser || !smtpPass) {
-    console.error('❌ SMTP_USER y SMTP_PASS deben estar configurados en las variables de entorno');
+    logger.error('❌ SMTP_USER y SMTP_PASS deben estar configurados en las variables de entorno');
     return null;
   }
 
@@ -84,7 +85,7 @@ async function sendEmailViaGmail(options: EmailOptions): Promise<boolean> {
   const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER;
 
   if (!fromEmail) {
-    console.error('❌ SMTP_FROM o SMTP_USER debe estar configurado');
+    logger.error('❌ SMTP_FROM o SMTP_USER debe estar configurado');
     return false;
   }
 
@@ -105,26 +106,28 @@ async function sendEmailViaGmail(options: EmailOptions): Promise<boolean> {
 
     return true;
   } catch (error) {
-    console.error('❌ Error al enviar email vía Gmail SMTP:');
-    console.error('   Destinatario:', options.to);
-    
+    logger.error('❌ Error al enviar email vía Gmail SMTP:', {
+      to: options.to,
+      subject: options.subject
+    });
+
     if (error instanceof Error) {
-      console.error('   Error:', error.message);
-      
+      logger.error('   Error:', error.message);
+
       // Errores comunes de Gmail
       if (error.message.includes('Invalid login')) {
-        console.error('   💡 Posible problema: Usuario o contraseña de aplicación incorrectos');
+        logger.error('   💡 Posible problema: Usuario o contraseña de aplicación incorrectos');
       }
       if (error.message.includes('Connection timeout')) {
-        console.error('   💡 Posible problema: Problema de conexión con el servidor SMTP');
+        logger.error('   💡 Posible problema: Problema de conexión con el servidor SMTP');
       }
       if (error.message.includes('rate limit') || error.message.includes('quota')) {
-        console.error('   💡 Posible problema: Límite de emails alcanzado (500/día en Gmail)');
+        logger.error('   💡 Posible problema: Límite de emails alcanzado (500/día en Gmail)');
       }
     } else {
-      console.error('   Error:', error);
+      logger.error('   Error:', error);
     }
-    
+
     return false;
   }
 }
@@ -153,11 +156,11 @@ export const emailService = {
     };
 
     const result = await sendEmailViaGmail(emailOptions);
-    
+
     if (!result) {
-      console.error(`❌ No se pudo enviar el email a ${email}`);
+      logger.error(`❌ No se pudo enviar el email a ${email}`);
     }
-    
+
     return result;
   },
 };

@@ -1,6 +1,7 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
+import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllMunicipios } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
@@ -10,7 +11,7 @@ export async function getMunicipios() {
         const municipios = await getAllMunicipios();
         return { success: true, data: municipios };
     } catch (error) {
-        console.error('Error getting municipios:', error);
+        logger.error('Error getting municipios:', error);
         return { success: false, error: 'Error al obtener municipios' };
     }
 }
@@ -43,7 +44,7 @@ export async function createMunicipio(data: { id_estado: string; nombre_municipi
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error creating municipio:', error);
+        logger.error('Error creating municipio:', error);
         return { success: false, error: 'Error al crear municipio' };
     } finally {
         client.release();
@@ -145,7 +146,7 @@ export async function updateMunicipio(id_estado: number, num_municipio: number, 
         return { success: true, data: result.rows[0] };
     } catch (error: any) {
         await client.query('ROLLBACK');
-        console.error('Error updating municipio:', error);
+        logger.error('Error updating municipio:', error);
         if (error.code === '23503') { // ForeignKeyViolation
             return { success: false, error: 'No se puede mover el municipio porque tiene registros asociados.' };
         }
@@ -182,7 +183,7 @@ export async function toggleMunicipioHabilitado(id_estado: number, num_municipio
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error toggling municipio habilitado:', error);
+        logger.error('Error toggling municipio habilitado:', error);
         return { success: false, error: 'Error al cambiar estado' };
     } finally {
         client.release();
@@ -234,7 +235,7 @@ export async function deleteMunicipio(id_estado: number, num_municipio: number, 
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error deleting municipio:', error);
+        logger.error('Error deleting municipio:', error);
         return { success: false, error: 'Error al eliminar municipio' };
     } finally {
         client.release();

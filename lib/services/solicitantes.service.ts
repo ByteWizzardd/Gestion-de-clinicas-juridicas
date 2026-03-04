@@ -170,9 +170,9 @@ export class SolicitantesService {
     try {
       return await solicitantesQueries.getAllSolicitantes();
     } catch (error) {
-      console.error("[SolicitantesService] Error fetching solicitantes:", error);
+      logger.error("[SolicitantesService] Error fetching solicitantes:", error);
       if (error instanceof Error) {
-        console.error(`Error details: ${error.message}`);
+        logger.error(`Error details: ${error.message}`);
       }
       throw new AppError(
         "No se pudieron obtener los solicitantes. Por favor, intente más tarde.",
@@ -192,9 +192,9 @@ export class SolicitantesService {
     try {
       return await solicitantesQueries.getSolicitanteById(cedula);
     } catch (error) {
-      console.error("[SolicitantesService] Error fetching solicitante by id:", error);
+      logger.error("[SolicitantesService] Error fetching solicitante by id:", error);
       if (error instanceof Error) {
-        console.error(`Error details: ${error.message}`);
+        logger.error(`Error details: ${error.message}`);
       }
       throw new AppError(
         "No se pudo obtener el solicitante. Por favor, intente más tarde.",
@@ -215,9 +215,9 @@ export class SolicitantesService {
     try {
       return await solicitantesQueries.getSolicitanteCompleto(cedula);
     } catch (error) {
-      console.error('[SolicitantesService] Error fetching solicitante completo:', error);
+      logger.error('[SolicitantesService] Error fetching solicitante completo:', error);
       if (error instanceof Error) {
-        console.error(`Error details: ${error.message}`);
+        logger.error(`Error details: ${error.message}`);
       }
       throw new AppError(
         'No se pudo obtener la información completa del solicitante. Por favor, intente más tarde.',

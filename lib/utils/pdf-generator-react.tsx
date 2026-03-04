@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { logger } from '@/lib/utils/logger';
 import { pdf } from '@react-pdf/renderer/lib/react-pdf.browser';
 import { TiposCasosPDF } from '../../components/reports/TiposCasosPDF';
 import { EstatusCasosPDF, EstatusGroupedData } from '../../components/reports/EstatusCasosPDF';
@@ -526,7 +527,7 @@ export async function imageToBase64(imagePath: string): Promise<string> {
       reader.readAsDataURL(blob);
     });
   } catch (error) {
-    console.error('Error al cargar imagen:', error);
+    logger.error('Error al cargar imagen:', error);
     return imagePath; // Fallback a la ruta original
   }
 }
@@ -585,7 +586,7 @@ export async function generateTiposCasosPDFReact(
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   } catch (error) {
-    console.error('Error al generar PDF:', error);
+    logger.error('Error al generar PDF:', error);
     throw error;
   }
 }
@@ -643,7 +644,7 @@ export async function generateEstatusCasosPDFReact(
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   } catch (error) {
-    console.error('Error al generar PDF de estatus:', error);
+    logger.error('Error al generar PDF de estatus:', error);
     throw error;
   }
 }
@@ -890,7 +891,7 @@ export async function generateInformeResumenPDFReact(
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   } catch (error) {
-    console.error('Error al generar PDF del informe resumen:', error);
+    logger.error('Error al generar PDF del informe resumen:', error);
     throw error;
   }
 }
@@ -1141,7 +1142,7 @@ export async function generateInformeSocioeconomicoPDF(
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   } catch (error) {
-    console.error('Error al generar PDF socioeconómico:', error);
+    logger.error('Error al generar PDF socioeconómico:', error);
     throw error;
   }
 }

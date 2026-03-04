@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { logger } from '@/lib/utils/logger';
 import { casosQueries } from '@/lib/db/queries/casos.queries';
 import { solicitantesQueries } from '@/lib/db/queries/solicitantes.queries';
 import { estudiantesQueries } from '@/lib/db/queries/estudiantes.queries';
@@ -484,7 +485,7 @@ export async function getInformeResumenData(
       },
     };
   } catch (error) {
-    console.error('Error al obtener datos del informe resumen:', error);
+    logger.error('Error al obtener datos del informe resumen:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Error desconocido',
@@ -763,7 +764,7 @@ export async function getHistorialCasosBySolicitante(
           const casoCompleto = await casosService.getCasoByIdCompleto(casoBasico.id_caso);
           return casoCompleto;
         } catch (err) {
-          console.error(`Error obteniendo detalles del caso ${casoBasico.id_caso}:`, err);
+          logger.error(`Error obteniendo detalles del caso ${casoBasico.id_caso}:`, err);
           return null;
         }
       })
@@ -808,7 +809,7 @@ export async function getHistorialCasosBySolicitante(
       data
     };
   } catch (error) {
-    console.error('Error al obtener historial de casos del solicitante:', error);
+    logger.error('Error al obtener historial de casos del solicitante:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Error desconocido'
@@ -848,7 +849,7 @@ export async function registrarAuditoriaReporteAction(params: {
     revalidatePath('/dashboard');
     return { success: true, id };
   } catch (error) {
-    console.error('Error al registrar auditoría de reporte:', error);
+    logger.error('Error al registrar auditoría de reporte:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Error al registrar auditoría'

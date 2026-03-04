@@ -1,8 +1,4 @@
-/**
- * Helpers para Server Actions
- * Funciones auxiliares para manejo de errores y respuestas consistentes
- */
-
+import { logger } from './logger';
 import { AppError } from './errors';
 
 export interface ServerActionError {
@@ -34,7 +30,7 @@ export function handleServerActionError(
     };
   }
 
-  console.error(`Error en ${context}:`, error);
+  logger.error(`Error en ${context}:`, error);
   return {
     success: false,
     error: {

@@ -27,6 +27,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { createPortal } from 'react-dom';
 import { getNucleosAction } from '@/app/actions/nucleos';
 import DatePicker from '@/components/forms/DatePicker';
+import { logger } from '@/lib/utils/logger';
 
 interface FilterProps {
   nucleoFilter?: string;
@@ -405,7 +406,7 @@ function Filter({
         if (onRecentActivityChange) onRecentActivityChange(false);
       }
     } catch (e) {
-      console.error('Error al limpiar filtros:', e);
+      logger.error('Error al limpiar filtros:', e);
     } finally {
       setActiveSubmenu(null);
       setIsOpen(false);

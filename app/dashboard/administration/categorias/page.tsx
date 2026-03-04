@@ -9,6 +9,7 @@ import { Hash, FileText, CheckCircle2 } from "lucide-react";
 import { getCategorias, createCategoria, updateCategoria, toggleCategoriaHabilitado, deleteCategoria } from "@/app/actions/catalogos/categorias.actions";
 import { getMaterias } from "@/app/actions/catalogos/materias.actions";
 import { useToast } from "@/components/ui/feedback/ToastProvider";
+import { logger } from "@/lib/utils/logger";
 
 export default function CategoriasPage() {
     const [categorias, setCategorias] = useState<any[]>([]);
@@ -33,7 +34,7 @@ export default function CategoriasPage() {
             if (categoriasResult.success && categoriasResult.data) setCategorias(categoriasResult.data);
             if (materiasResult.success && materiasResult.data) setMaterias(materiasResult.data);
         } catch (error) {
-            console.error('Error in loadData:', error);
+            logger.error('Error in loadData:', error);
         }
         setLoading(false);
     };

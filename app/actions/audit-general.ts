@@ -4,6 +4,7 @@ import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { mapSystemRoleToSidebarRole } from '@/lib/utils/role-mapper';
 import { loadSQL } from '@/lib/db/sql-loader';
 import { pool } from '@/lib/db/pool';
+import { logger } from '@/lib/utils/logger';
 
 export interface UnifiedAuditLog {
     entidad: string;
@@ -77,7 +78,7 @@ export async function getUnifiedAuditLogsAction(
         return { logs, totalCount };
 
     } catch (error: any) {
-        console.error('Error fetching unified audit logs:', error);
+        logger.error('Error fetching unified audit logs:', error);
         throw new Error(`Error al obtener logs unificados de auditoría: ${error.message}`);
     }
 }

@@ -22,6 +22,7 @@ import { generateSolicitanteFichaZip } from '@/lib/utils/applicant-file-pdf-gene
 import type { SolicitanteFichaData } from '@/lib/types/report-types';
 import ApplicantFormModal from '@/components/forms/ApplicantFormModal';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
+import { logger } from '@/lib/utils/logger';
 
 type GetSolicitanteByIdAction = typeof import('@/app/actions/solicitantes').getSolicitanteByIdAction;
 type GetSolicitanteByIdResult = Awaited<ReturnType<GetSolicitanteByIdAction>>;
@@ -107,7 +108,7 @@ export default function ApplicantDetailClient() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
       setError(errorMessage);
-      console.error('Error fetching solicitante:', err);
+      logger.error('Error fetching solicitante:', err);
     } finally {
       setLoading(false);
     }
@@ -127,7 +128,7 @@ export default function ApplicantDetailClient() {
           setUserRol(result.data.rol);
         }
       } catch (err) {
-        console.error('Error al obtener rol del usuario:', err);
+        logger.error('Error al obtener rol del usuario:', err);
       }
     };
     loadUserRol();
@@ -172,7 +173,7 @@ export default function ApplicantDetailClient() {
         toast.error('Error al descargar la ficha');
       }
     } catch (error) {
-      console.error('Error al descargar ficha:', error);
+      logger.error('Error al descargar ficha:', error);
       toast.error('Ocurrió un error al descargar la ficha del solicitante');
     }
   };

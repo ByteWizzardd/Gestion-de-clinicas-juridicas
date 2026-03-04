@@ -1,6 +1,7 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
+import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllCaracteristicas } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
@@ -10,7 +11,7 @@ export async function getCaracteristicas() {
         const caracteristicas = await getAllCaracteristicas();
         return { success: true, data: caracteristicas };
     } catch (error) {
-        console.error('Error getting caracteristicas:', error);
+        logger.error('Error getting caracteristicas:', error);
         return { success: false, error: 'Error al obtener características' };
     }
 }
@@ -44,7 +45,7 @@ export async function createCaracteristica(data: { id_tipo_caracteristica: strin
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error creating caracteristica:', error);
+        logger.error('Error creating caracteristica:', error);
         return { success: false, error: 'Error al crear característica' };
     } finally {
         client.release();
@@ -81,7 +82,7 @@ export async function updateCaracteristica(id_tipo_caracteristica: number, num_c
                 return { success: true, data: result.rows[0] };
             } catch (error) {
                 await client.query('ROLLBACK');
-                console.error('Error updating caracteristica:', error);
+                logger.error('Error updating caracteristica:', error);
                 return { success: false, error: 'Error al actualizar característica' };
             } finally {
                 client.release();
@@ -163,7 +164,7 @@ export async function updateCaracteristica(id_tipo_caracteristica: number, num_c
         }
 
     } catch (error: any) {
-        console.error('Error updating caracteristica:', error);
+        logger.error('Error updating caracteristica:', error);
         return { success: false, error: error.message || 'Error al actualizar característica' };
     }
 }
@@ -195,7 +196,7 @@ export async function toggleCaracteristicaHabilitado(id_tipo_caracteristica: num
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error toggling caracteristica habilitado:', error);
+        logger.error('Error toggling caracteristica habilitado:', error);
         return { success: false, error: 'Error al cambiar estado' };
     } finally {
         client.release();
@@ -245,7 +246,7 @@ export async function deleteCaracteristica(id_tipo_caracteristica: number, num_c
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error deleting caracteristica:', error);
+        logger.error('Error deleting caracteristica:', error);
         return { success: false, error: 'Error al eliminar característica' };
     } finally {
         client.release();

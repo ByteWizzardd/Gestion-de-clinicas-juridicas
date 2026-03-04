@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { formatDate } from '@/lib/utils/date-formatter';
 import { deleteCitaAction } from '@/app/actions/citas';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
+import { logger } from '@/lib/utils/logger';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
 
 interface AppointmentsTabProps {
@@ -108,11 +109,11 @@ export default function AppointmentsTab({ citas, onRefresh, onEditAppointment }:
 
         toast.success("Cita eliminada correctamente");
       } else {
-        console.error('Error deleting appointment:', result.error);
+        logger.error('Error deleting appointment:', result.error);
         toast.error(result.error?.message || 'Error al eliminar la cita');
       }
     } catch (error) {
-      console.error('Error deleting appointment:', error);
+      logger.error('Error deleting appointment:', error);
       toast.error('Error inesperado al eliminar la cita');
     } finally {
       setIsDeleting(false);

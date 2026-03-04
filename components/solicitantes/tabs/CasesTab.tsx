@@ -11,6 +11,7 @@ import { useToast } from '@/components/ui/feedback/ToastProvider';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import { getMateriasAction } from '@/app/actions/materias';
 import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
+import { logger } from '@/lib/utils/logger';
 import CaseFormModal from '@/components/forms/CaseFormModal';
 import { descargarHistorialCasoAction } from '@/app/actions/reports';
 import { generateCasoHistorialZip } from '@/lib/utils/case-history-pdf-generator';
@@ -70,7 +71,7 @@ export default function CasesTab({ casos, cedulaSolicitante }: CasesTabProps) {
           setMaterias(result.data);
         }
       } catch (error) {
-        console.error('Error cargando materias:', error);
+        logger.error('Error cargando materias:', error);
       }
     };
 
@@ -259,7 +260,7 @@ export default function CasesTab({ casos, cedulaSolicitante }: CasesTabProps) {
         toast.error(result.error?.message || 'No se pudo cargar la información del caso');
       }
     } catch (error) {
-      console.error('Error al obtener caso:', error);
+      logger.error('Error al obtener caso:', error);
       toast.error('Ocurrió un error al cargar el caso');
     } finally {
       setIsFetchingCase(false);
@@ -280,7 +281,7 @@ export default function CasesTab({ casos, cedulaSolicitante }: CasesTabProps) {
         toast.error(result.error?.message || 'Error al actualizar el caso');
       }
     } catch (error) {
-      console.error('Error al actualizar caso:', error);
+      logger.error('Error al actualizar caso:', error);
       toast.error('Ocurrió un error al actualizar el caso');
     }
   };
@@ -310,7 +311,7 @@ export default function CasesTab({ casos, cedulaSolicitante }: CasesTabProps) {
         toast.error(result.error?.message || 'Error desconocido', 'Error al eliminar');
       }
     } catch (e) {
-      console.error(e);
+      logger.error(e);
       toast.error('Ocurrió un error al intentar eliminar el caso');
     } finally {
       setIsDeleting(false);
@@ -329,7 +330,7 @@ export default function CasesTab({ casos, cedulaSolicitante }: CasesTabProps) {
         toast.error(`Error al descargar el historial: ${result.error || 'Error desconocido'}`);
       }
     } catch (error) {
-      console.error('Error al descargar historial:', error);
+      logger.error('Error al descargar historial:', error);
       toast.error('Ocurrió un error al descargar el historial del caso');
     }
   };
@@ -354,7 +355,7 @@ export default function CasesTab({ casos, cedulaSolicitante }: CasesTabProps) {
         beneficiarios: casoCompleto.beneficiarios || []
       });
     } catch (error) {
-      console.error('Error al generar registro:', error);
+      logger.error('Error al generar registro:', error);
       toast.error('Error al generar el documento');
     }
   };

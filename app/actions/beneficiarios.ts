@@ -3,6 +3,7 @@
 import { beneficiariosQueries } from '@/lib/db/queries/beneficiarios.queries';
 import { usuariosQueries } from '@/lib/db/queries/usuarios.queries';
 import { solicitantesQueries } from '@/lib/db/queries/solicitantes.queries';
+import { logger } from '@/lib/utils/logger';
 import { AppError } from '@/lib/utils/errors';
 import { revalidatePath } from 'next/cache';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
@@ -244,7 +245,7 @@ export async function updateBeneficiarioAction(data: {
           )
         ]);
       } catch (error) {
-        console.error('Error sincronizando datos de beneficiario con usuarios/solicitantes:', error);
+        logger.error('Error sincronizando datos de beneficiario con usuarios/solicitantes:', error);
         // No lanzamos error para nodetener la respuesta exitosa de la actualización del beneficiario
       }
     }

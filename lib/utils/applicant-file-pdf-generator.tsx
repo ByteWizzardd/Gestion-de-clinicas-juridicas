@@ -3,6 +3,7 @@
 import React from 'react';
 import { pdf } from '@react-pdf/renderer';
 import JSZip from 'jszip';
+import { logger } from './logger';
 import { SolicitanteFichaData } from '../types/report-types';
 import { SolicitanteFichaPDF as SolicitanteFichaDocument } from '../../components/applicants/SolicitanteFichaPDF';
 import { generateSolicitanteFichaExcel } from './applicant-file-excel-generator';
@@ -42,7 +43,7 @@ export async function generateSolicitanteFichaPDF(data: SolicitanteFichaData): P
         URL.revokeObjectURL(url);
 
     } catch (error) {
-        console.error('Error al generar PDF de ficha de solicitante:', error);
+        logger.error('Error al generar PDF de ficha de solicitante:', error);
         alert('Error al generar el PDF');
         throw error;
     }
@@ -82,7 +83,7 @@ export async function generateSolicitanteFichaZip(data: SolicitanteFichaData): P
             const excelBuffer = await generateSolicitanteFichaExcel(data);
             zip.file(`Ficha_Solicitante_${cedula}.xlsx`, excelBuffer);
         } catch (excelError) {
-            console.error('Error generando Excel para ZIP:', excelError);
+            logger.error('Error generando Excel para ZIP:', excelError);
         }
 
         // 3. Generar archivo ZIP
@@ -99,7 +100,7 @@ export async function generateSolicitanteFichaZip(data: SolicitanteFichaData): P
         URL.revokeObjectURL(url);
 
     } catch (error) {
-        console.error('Error al generar ZIP de solicitante:', error);
+        logger.error('Error al generar ZIP de solicitante:', error);
         alert('Error al generar el Expediente (ZIP)');
         throw error;
     }

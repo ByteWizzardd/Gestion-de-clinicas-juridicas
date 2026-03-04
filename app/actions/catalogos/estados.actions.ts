@@ -1,6 +1,7 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
+import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllEstados } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
@@ -13,7 +14,7 @@ export async function getEstados() {
         const estados = await getAllEstados();
         return { success: true, data: estados };
     } catch (error) {
-        console.error('Error getting estados:', error);
+        logger.error('Error getting estados:', error);
         return { success: false, error: 'Error al obtener estados' };
     }
 }
@@ -44,7 +45,7 @@ export async function createEstado(data: { nombre_estado: string }) {
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('❌ Error creating estado:', error);
+        logger.error('❌ Error creating estado:', error);
         return { success: false, error: 'Error al crear estado' };
     } finally {
         client.release();
@@ -84,7 +85,7 @@ export async function updateEstado(id: number, data: { nombre_estado: string }) 
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error updating estado:', error);
+        logger.error('Error updating estado:', error);
         const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
         return { success: false, error: `Error al actualizar estado: ${errorMessage}` };
     } finally {
@@ -125,7 +126,7 @@ export async function toggleEstadoHabilitado(id: number) {
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error toggling estado habilitado:', error);
+        logger.error('Error toggling estado habilitado:', error);
         const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
         return { success: false, error: `Error al cambiar estado: ${errorMessage}` };
     } finally {
@@ -187,7 +188,7 @@ export async function deleteEstado(id: number, motivo?: string) {
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error deleting estado:', error);
+        logger.error('Error deleting estado:', error);
         const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
         return { success: false, error: `Error al eliminar estado: ${errorMessage}` };
     } finally {

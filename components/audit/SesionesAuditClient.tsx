@@ -8,6 +8,7 @@ import Search from '@/components/CaseTools/search';
 import Tabs from '@/components/ui/Tabs';
 import Filter from '@/components/CaseTools/Filter';
 import { TablePagination } from '@/components/Table/TablePagination';
+import { logger } from '@/lib/utils/logger';
 import { getSesionesAuditAction } from '@/app/actions/audit';
 import { getUsuariosAction } from '@/app/actions/usuarios';
 import type { SesionAuditRecord, AuditFilters } from '@/types/audit';
@@ -268,7 +269,7 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
                     );
                 }
             } catch (err) {
-                console.error('Error loading usuarios:', err);
+                logger.error('Error loading usuarios:', err);
             }
         }
         loadUsuarios();
@@ -299,7 +300,7 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
             setTotal(result.total);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error al cargar sesiones');
-            console.error('Error loading sesiones:', err);
+            logger.error('Error loading sesiones:', err);
         } finally {
             setLoading(false);
         }

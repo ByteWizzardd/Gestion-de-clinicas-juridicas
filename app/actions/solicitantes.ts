@@ -7,6 +7,7 @@ import { loadSQL } from '@/lib/db/sql-loader';
 import { SolicitantesService } from '@/lib/services/solicitantes.service';
 import { AppError } from '@/lib/utils/errors';
 import { revalidatePath } from 'next/cache';
+import { logger } from '@/lib/utils/logger';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 
@@ -117,7 +118,7 @@ export async function getSolicitantesAction(): Promise<GetSolicitantesResult> {
       };
     }
 
-    console.error('Error en getSolicitantesAction:', error);
+    logger.error('Error en getSolicitantesAction:', error);
     return {
       success: false,
       error: {
@@ -290,7 +291,7 @@ export async function checkEmailExistsAction(
       data: result || undefined,
     };
   } catch (error) {
-    console.error('Error en checkEmailExistsAction:', error);
+    logger.error('Error en checkEmailExistsAction:', error);
     return {
       success: false,
       exists: false,
@@ -360,12 +361,12 @@ export async function updateSolicitanteAction(cedulaOriginal: string, data: Appl
               }
             } catch (e) {
               await client.query('ROLLBACK');
-              console.error('Error sincronizando usuario:', e);
+              logger.error('Error sincronizando usuario:', e);
             } finally {
               client.release();
             }
           } catch (error) {
-            console.error('Error obteniendo cliente para sync:', error);
+            logger.error('Error obteniendo cliente para sync:', error);
           }
         }
 
@@ -392,7 +393,7 @@ export async function updateSolicitanteAction(cedulaOriginal: string, data: Appl
           } else {
           }
         } else {
-          console.warn('[Sync Beneficiario] Campos faltantes:', {
+          logger.warn('[Sync Beneficiario] Campos faltantes:', {
             nombres: !!nombres,
             apellidos: !!apellidos,
             fechaNac: !!fechaNac,
@@ -405,7 +406,7 @@ export async function updateSolicitanteAction(cedulaOriginal: string, data: Appl
           await Promise.all(promises);
         }
       } catch (error) {
-        console.error('Error sincronizando datos de solicitante con usuarios/beneficiarios:', error);
+        logger.error('Error sincronizando datos de solicitante con usuarios/beneficiarios:', error);
       }
     }
 

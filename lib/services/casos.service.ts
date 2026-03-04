@@ -14,6 +14,7 @@ import { withTransaction } from '@/lib/db/transactions';
 import { loadSQL } from '@/lib/db/sql-loader';
 import { CreateCasoSchema, CreateCasoInput } from '@/lib/validations/casos.schema';
 import { ESTATUS_CASO } from '@/lib/constants/status';
+import { logger } from '@/lib/utils/logger';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -345,7 +346,7 @@ export const casosService = {
                 }
                 const reason = results[index].reason;
                 const msg = reason instanceof Error ? reason.message : String(reason || 'Error desconocido');
-                console.warn(`[getCasoByIdCompleto] Query "${queryNames[index]}" falló para caso ${idCaso}: ${msg}`);
+                logger.warn(`[getCasoByIdCompleto] Query "${queryNames[index]}" falló para caso ${idCaso}: ${msg}`);
                 return [];
             };
 
@@ -557,8 +558,7 @@ export const casosService = {
                 return result.rows[0];
             });
         } catch (error) {
-            // eslint-disable-next-line no-console
-            console.error('Error al eliminar la acción (detalle DB):', error);
+            logger.error('Error al eliminar la acción (detalle DB):', error);
             throw new AppError(
                 "Error al eliminar la acción",
                 500,

@@ -15,6 +15,7 @@ import { AppointmentModal } from '../appointmentModal/AppointmentModal';
 import { AppointmentDetailModal } from '../appointmentModal/AppointmentDetailModal';
 import { AppointmentScheduleModal } from '../appointmentModal/AppointmentScheduleModal';
 import NewAppointmentButton from './NewAppointmentButton';
+import { logger } from '@/lib/utils/logger';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 
 interface AppointmentFilterOptions {
@@ -583,7 +584,7 @@ export default function AppointmentsClient({
       }
     } catch (error) {
       alert('Error inesperado al eliminar la cita');
-      console.error('Error al eliminar cita:', error);
+      logger.error('Error al eliminar cita:', error);
     } finally {
       setIsDeleting(false);
     }

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Edit, Upload, Trash2, X } from 'lucide-react';
 import { uploadFotoPerfilUsuarioAction, deleteFotoPerfilUsuarioAction } from '@/app/actions/usuarios';
+import { logger } from '@/lib/utils/logger';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface EditableAvatarProps {
@@ -90,7 +91,7 @@ export default function EditableAvatar({ fotoPerfil, cedula, nombreInicial, onPh
       }
     } catch (err) {
       setError('Error inesperado al subir la foto');
-      console.error(err);
+      logger.error(err);
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -127,7 +128,7 @@ export default function EditableAvatar({ fotoPerfil, cedula, nombreInicial, onPh
       }
     } catch (err) {
       setError('Error inesperado al eliminar la foto');
-      console.error(err);
+      logger.error(err);
     } finally {
       setIsDeleting(false);
     }

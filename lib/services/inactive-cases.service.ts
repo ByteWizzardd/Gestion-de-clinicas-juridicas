@@ -1,6 +1,7 @@
 import { pool } from '@/lib/db/pool';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { logger } from '@/lib/utils/logger';
 
 /**
  * Servicio para detectar casos inactivos y notificar a los usuarios correspondientes.
@@ -123,7 +124,7 @@ export async function checkAndNotifyInactiveCases() {
         };
 
     } catch (error) {
-        console.error('Error en checkAndNotifyInactiveCases:', error);
+        logger.error('Error en checkAndNotifyInactiveCases:', error);
         return { success: false, error };
     }
 }

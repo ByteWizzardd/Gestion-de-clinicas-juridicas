@@ -13,10 +13,10 @@ interface LogEntry {
  * En producción: puede extenderse para enviar a servicios externos (Sentry, LogRocket, etc.)
  */
 class Logger {
-  private log(level: LogLevel, message: string, data?: any) {
+  private log(level: LogLevel, message: any, data?: any) {
     const entry: LogEntry = {
       level,
-      message,
+      message: typeof message === 'string' ? message : String(message),
       timestamp: new Date().toISOString(),
       ...(data && { data }),
     };
@@ -31,7 +31,7 @@ class Logger {
       }[level];
 
       console[level === 'error' ? 'error' : 'log'](
-        `${emoji} [${entry.timestamp}] ${message}`,
+        `${emoji} [${entry.timestamp}] ${entry.message}`,
         data || ''
       );
     }
@@ -40,38 +40,34 @@ class Logger {
     // Ejemplo: Sentry, LogRocket, CloudWatch, etc.
     if (process.env.NODE_ENV === 'production') {
       // TODO: Implementar envío a servicio de logging
-      // Ejemplo:
-      // if (level === 'error') {
-      //   Sentry.captureException(new Error(message), { extra: data });
-      // }
     }
   }
 
   /**
    * Log de información general
    */
-  info(message: string, data?: any) {
+  info(message: any, data?: any) {
     this.log('info', message, data);
   }
 
   /**
    * Log de advertencia
    */
-  warn(message: string, data?: any) {
+  warn(message: any, data?: any) {
     this.log('warn', message, data);
   }
 
   /**
    * Log de error
    */
-  error(message: string, data?: any) {
+  error(message: any, data?: any) {
     this.log('error', message, data);
   }
 
   /**
    * Log de debug (solo en desarrollo)
    */
-  debug(message: string, data?: any) {
+  debug(message: any, data?: any) {
     if (process.env.NODE_ENV === 'development') {
       this.log('debug', message, data);
     }

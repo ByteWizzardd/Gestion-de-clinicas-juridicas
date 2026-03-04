@@ -1,6 +1,7 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
+import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllCondicionesTrabajo } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
@@ -10,7 +11,7 @@ export async function getCondicionesTrabajo() {
         const condiciones = await getAllCondicionesTrabajo();
         return { success: true, data: condiciones };
     } catch (error) {
-        console.error('Error getting condiciones de trabajo:', error);
+        logger.error('Error getting condiciones de trabajo:', error);
         return { success: false, error: 'Error al obtener condiciones de trabajo' };
     }
 }
@@ -38,7 +39,7 @@ export async function createCondicionTrabajo(data: { nombre_trabajo: string }) {
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error creating condicion trabajo:', error);
+        logger.error('Error creating condicion trabajo:', error);
         return { success: false, error: 'Error al crear condición de trabajo' };
     } finally {
         client.release();
@@ -72,7 +73,7 @@ export async function updateCondicionTrabajo(id: number, data: { nombre_trabajo:
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error updating condicion trabajo:', error);
+        logger.error('Error updating condicion trabajo:', error);
         return { success: false, error: 'Error al actualizar condición' };
     } finally {
         client.release();
@@ -106,7 +107,7 @@ export async function toggleCondicionTrabajoHabilitado(id: number) {
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error toggling condicion trabajo habilitado:', error);
+        logger.error('Error toggling condicion trabajo habilitado:', error);
         return { success: false, error: 'Error al cambiar estado' };
     } finally {
         client.release();
@@ -151,7 +152,7 @@ export async function deleteCondicionTrabajo(id: number, motivo?: string) {
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error deleting condicion trabajo:', error);
+        logger.error('Error deleting condicion trabajo:', error);
         return { success: false, error: 'Error al eliminar condición' };
     } finally {
         client.release();

@@ -12,6 +12,7 @@ import Button from '../ui/Button';
 import { ArrowRight, ArrowLeft, Calendar, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
 import DatePicker from './DatePicker';
+import { logger } from '@/lib/utils/logger';
 import { validateEmailFormat } from '@/lib/utils/email-validation';
 
 interface ApplicantFormModalProps {
@@ -236,7 +237,7 @@ const loadFormDataFromStorage = (): FormData | null => {
       return JSON.parse(stored) as FormData;
     }
   } catch (error) {
-    console.error('Error al cargar datos del formulario desde localStorage:', error);
+    logger.error('Error al cargar datos del formulario desde localStorage:', error);
   }
   return null;
 };
@@ -251,7 +252,7 @@ const loadCurrentStepFromStorage = (): number => {
       return isNaN(step) ? 0 : Math.max(0, Math.min(step, STEPS.length - 1));
     }
   } catch (error) {
-    console.error('Error al cargar el paso actual desde localStorage:', error);
+    logger.error('Error al cargar el paso actual desde localStorage:', error);
   }
   return 0;
 };
@@ -262,7 +263,7 @@ const saveFormDataToStorage = (data: FormData) => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (error) {
-    console.error('Error al guardar datos del formulario en localStorage:', error);
+    logger.error('Error al guardar datos del formulario en localStorage:', error);
   }
 };
 
@@ -272,7 +273,7 @@ const saveCurrentStepToStorage = (step: number) => {
   try {
     localStorage.setItem(STORAGE_STEP_KEY, step.toString());
   } catch (error) {
-    console.error('Error al guardar el paso actual en localStorage:', error);
+    logger.error('Error al guardar el paso actual en localStorage:', error);
   }
 };
 
@@ -283,7 +284,7 @@ const clearFormDataFromStorage = () => {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(STORAGE_STEP_KEY);
   } catch (error) {
-    console.error('Error al limpiar datos del formulario de localStorage:', error);
+    logger.error('Error al limpiar datos del formulario de localStorage:', error);
   }
 };
 
@@ -1200,7 +1201,7 @@ export default function ApplicantFormModal({
             }
           }
         } catch (error) {
-          console.error('Error al cargar datos de ubicación:', error);
+          logger.error('Error al cargar datos de ubicación:', error);
         }
       }
     };
@@ -1300,64 +1301,64 @@ export default function ApplicantFormModal({
           if (tipoViviendaResult.success && tipoViviendaResult.data) {
             setTiposVivienda(tipoViviendaResult.data);
           } else {
-            console.error('Error al cargar tipos de vivienda:', tipoViviendaResult.error);
+            logger.error('Error al cargar tipos de vivienda:', tipoViviendaResult.error);
           }
 
           if (materialPisoResult.success && materialPisoResult.data) {
             setMaterialesPiso(materialPisoResult.data);
           } else {
-            console.error('Error al cargar materiales de piso:', materialPisoResult.error);
+            logger.error('Error al cargar materiales de piso:', materialPisoResult.error);
           }
 
           if (materialParedesResult.success && materialParedesResult.data) {
             setMaterialesParedes(materialParedesResult.data);
           } else {
-            console.error('Error al cargar materiales de paredes:', materialParedesResult.error);
+            logger.error('Error al cargar materiales de paredes:', materialParedesResult.error);
           }
 
           if (materialTechoResult.success && materialTechoResult.data) {
             setMaterialesTecho(materialTechoResult.data);
           } else {
-            console.error('Error al cargar materiales de techo:', materialTechoResult.error);
+            logger.error('Error al cargar materiales de techo:', materialTechoResult.error);
           }
 
           if (aguaPotableResult.success && aguaPotableResult.data) {
             setAguaPotable(aguaPotableResult.data);
           } else {
-            console.error('Error al cargar agua potable:', aguaPotableResult.error);
+            logger.error('Error al cargar agua potable:', aguaPotableResult.error);
           }
 
           if (aseoResult.success && aseoResult.data) {
             setAseo(aseoResult.data);
           } else {
-            console.error('Error al cargar aseo:', aseoResult.error);
+            logger.error('Error al cargar aseo:', aseoResult.error);
           }
 
           if (eliminacionAguasNResult.success && eliminacionAguasNResult.data) {
             setEliminacionAguasN(eliminacionAguasNResult.data);
           } else {
-            console.error('Error al cargar eliminación de aguas negras:', eliminacionAguasNResult.error);
+            logger.error('Error al cargar eliminación de aguas negras:', eliminacionAguasNResult.error);
           }
 
           if (artefactosDomesticosResult.success && artefactosDomesticosResult.data) {
             setArtefactosDomesticos(artefactosDomesticosResult.data);
           } else {
-            console.error('Error al cargar artefactos domésticos:', artefactosDomesticosResult.error);
+            logger.error('Error al cargar artefactos domésticos:', artefactosDomesticosResult.error);
           }
 
           if (nivelesEducativosResult.success && nivelesEducativosResult.data) {
             setNivelesEducativos(nivelesEducativosResult.data);
           } else {
-            console.error('Error al cargar niveles educativos:', nivelesEducativosResult.error);
+            logger.error('Error al cargar niveles educativos:', nivelesEducativosResult.error);
           }
 
           if (estadosResult.success && estadosResult.data) {
             setEstados(estadosResult.data);
           } else {
-            console.error('Error al cargar estados:', estadosResult.error);
+            logger.error('Error al cargar estados:', estadosResult.error);
           }
         } catch (error) {
-          console.error('Error al cargar catálogos:', error);
+          logger.error('Error al cargar catálogos:', error);
         } finally {
           setLoadingCatalogos(false);
         }
@@ -2360,7 +2361,7 @@ export default function ApplicantFormModal({
             setMunicipios([]);
           }
         } catch (error) {
-          console.error('Error al cargar municipios:', error);
+          logger.error('Error al cargar municipios:', error);
           setMunicipios([]);
         }
       } else {
@@ -2389,7 +2390,7 @@ export default function ApplicantFormModal({
             setParroquias([]);
           }
         } catch (error) {
-          console.error('Error al cargar parroquias:', error);
+          logger.error('Error al cargar parroquias:', error);
           setParroquias([]);
         }
       } else {

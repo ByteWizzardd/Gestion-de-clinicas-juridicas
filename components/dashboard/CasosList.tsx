@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Briefcase, Calendar, User, MapPin } from 'lucide-react';
 import EmptyState from '@/components/ui/EmptyState';
 import CasosListSkeleton from '@/components/ui/skeletons/CasosListSkeleton';
+import { logger } from '@/lib/utils/logger';
 
 interface Caso {
   id_caso: number;
@@ -107,7 +108,7 @@ export default function CasosList({ casos, loading, error }: CasosListProps) {
       {casos.map((caso, index) => {
         // Validar que el caso tenga los datos necesarios
         if (!caso || !caso.id_caso) {
-          console.warn('Caso inválido en índice', index, caso);
+          logger.warn('Caso inválido en índice', { index, caso });
           return null;
         }
 

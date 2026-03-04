@@ -8,6 +8,7 @@ import Filter from '@/components/CaseTools/Filter';
 import AuditList from '../AuditList';
 import AuditRecordCard from '../AuditRecordCard';
 import AuditRecordCardSkeleton from '@/components/ui/skeletons/AuditRecordCardSkeleton';
+import { logger } from "@/lib/utils/logger";
 import type { AuditFilters, AuditRecordType } from '@/types/audit';
 
 type AuditType = 'soportes' | 'soportes-creados' | 'soportes-descargados' | 'citas-eliminadas' | 'citas-actualizadas' | 'citas-creadas' | 'usuarios-eliminados' | 'usuarios-habilitados' | 'usuarios-actualizados-campos' | 'usuarios-creados'
@@ -148,7 +149,7 @@ export default function AuditDetailClient({
           );
         }
       } catch (err) {
-        console.error('Error loading usuarios:', err);
+        logger.error('Error loading usuarios:', err);
       }
     }
     loadUsuarios();
@@ -464,7 +465,7 @@ export default function AuditDetailClient({
         setRecords(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error al cargar datos');
-        console.error('Error loading audit data:', err);
+        logger.error('Error loading audit data:', err);
       } finally {
         setLoading(false);
       }

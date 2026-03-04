@@ -1,6 +1,7 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
+import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllAmbitosLegales } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
@@ -10,7 +11,7 @@ export async function getAmbitosLegales() {
         const ambitos = await getAllAmbitosLegales();
         return { success: true, data: ambitos };
     } catch (error) {
-        console.error('Error getting ambitos legales:', error);
+        logger.error('Error getting ambitos legales:', error);
         return { success: false, error: 'Error al obtener ámbitos legales' };
     }
 }
@@ -48,7 +49,7 @@ export async function createAmbitoLegal(data: { id_materia: string; num_categori
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error creating ambito legal:', error);
+        logger.error('Error creating ambito legal:', error);
         return { success: false, error: 'Error al crear ámbito legal' };
     } finally {
         client.release();
@@ -165,7 +166,7 @@ export async function updateAmbitoLegal(
             client.release();
         }
     } catch (error) {
-        console.error('Error updating ambito legal:', error);
+        logger.error('Error updating ambito legal:', error);
         return { success: false, error: 'Error al actualizar ámbito legal' };
     }
 }
@@ -197,7 +198,7 @@ export async function toggleAmbitoLegalHabilitado(id_materia: number, num_catego
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error toggling ambito legal habilitado:', error);
+        logger.error('Error toggling ambito legal habilitado:', error);
         return { success: false, error: 'Error al cambiar estado' };
     } finally {
         client.release();
@@ -247,7 +248,7 @@ export async function deleteAmbitoLegal(id_materia: number, num_categoria: numbe
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error deleting ambito legal:', error);
+        logger.error('Error deleting ambito legal:', error);
         return { success: false, error: 'Error al eliminar ámbito legal' };
     } finally {
         client.release();

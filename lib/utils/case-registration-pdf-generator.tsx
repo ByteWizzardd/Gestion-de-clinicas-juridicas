@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { pdf } from '@react-pdf/renderer';
+import { logger } from '@/lib/utils/logger';
 import { RegistroControlCasosPDF } from '@/components/cases/RegistroControlCasosPDF';
 import { imageToBase64 } from '@/lib/utils/pdf-generator-react';
 
@@ -27,7 +28,7 @@ export async function generateRegistroControlCasosPDF(data: { caso: any; equipo:
         URL.revokeObjectURL(url);
 
     } catch (error) {
-        console.error('Error al generar PDF de Registro y Control:', error);
+        logger.error('Error al generar PDF de Registro y Control:', error);
         alert('Error al generar el PDF de Registro y Control');
         throw error;
     }

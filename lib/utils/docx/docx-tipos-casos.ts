@@ -17,6 +17,7 @@ import {
     BorderStyle
 } from 'docx';
 import { saveAs } from 'file-saver';
+import { logger } from '@/lib/utils/logger';
 import { CasosGroupedData } from '@/types/reports';
 import {
     groupDataByMateriaSubcategoria,
@@ -299,7 +300,7 @@ export async function generateTiposCasosDOCX(
         const periodLabel = term ? `Semestre_${term}` : (fechaInicio && fechaFin ? `${fechaInicio}_${fechaFin}` : 'Historico');
         saveAs(blob, `Tipos_de_Casos_${periodLabel}.docx`);
     } catch (error) {
-        console.error('Error al generar DOCX:', error);
+        logger.error('Error al generar DOCX:', error);
         throw error;
     }
 }

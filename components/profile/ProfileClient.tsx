@@ -6,6 +6,7 @@ import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import PhotoUploadHeader from '@/components/profile/PhotoUploadHeader';
 import GeneralInfoTab from '@/components/profile/tabs/GeneralInfoTab';
 import { getCurrentUserAction } from '@/app/actions/auth';
+import { logger } from '@/lib/utils/logger';
 import ProfileSkeleton from '@/components/ui/skeletons/ProfileSkeleton';
 
 interface User {
@@ -34,7 +35,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
             setUser(result.data);
           }
         } catch (error) {
-          console.error('Error al obtener usuario:', error);
+          logger.error('Error al obtener usuario:', error);
         } finally {
           setLoading(false);
         }

@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { getMenuByRole, type UserRole } from './menu-config';
 import ProfileDropdown from '@/components/ui/navigation/ProfileDropdown';
 import { getCurrentUserAction } from '@/app/actions/auth';
+import { logger } from '@/lib/utils/logger';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
@@ -55,7 +56,7 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
       // Guardar en cookie para que el servidor lo sepa en la próxima carga
       document.cookie = `${storageKey}=${newState}; path=/; max-age=31536000`; // 1 año
     } catch (error) {
-      console.error('Error al guardar preferencia del sidebar:', error);
+      logger.error('Error al guardar preferencia del sidebar:', error);
     }
   };
 
@@ -83,7 +84,7 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
         setFotoPerfil(result.data.fotoPerfil || null);
       }
     } catch (error) {
-      console.error('Error al obtener datos del usuario:', error);
+      logger.error('Error al obtener datos del usuario:', error);
     }
   };
 
@@ -132,7 +133,7 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
         }
         keysToRemove.forEach(key => localStorage.removeItem(key));
       } catch (error) {
-        console.error('Error al limpiar localStorage:', error);
+        logger.error('Error al limpiar localStorage:', error);
       }
 
       const { logoutAction } = await import('@/app/actions/auth');
@@ -141,10 +142,10 @@ const Sidebar = memo(function Sidebar({ role, userName = 'Nombre Apellido', onNa
       if (result.success) {
         router.push('/auth/login');
       } else {
-        console.error('Error al cerrar sesión');
+        logger.error('Error al cerrar sesión');
       }
     } catch (error) {
-      console.error('Error al cerrar sesión:', error);
+      logger.error('Error al cerrar sesión:', error);
     } finally {
       setIsLoggingOut(false);
     }

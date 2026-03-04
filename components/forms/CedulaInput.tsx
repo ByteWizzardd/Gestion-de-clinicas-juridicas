@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ChevronDown } from 'lucide-react';
+import { logger } from '@/lib/utils/logger';
 
 interface Solicitante {
   cedula: string;
@@ -208,7 +209,7 @@ export default function CedulaInput({
           setShowSuggestions(false);
         }
       } catch (error) {
-        console.error('Error al buscar cédulas:', error);
+        logger.error('Error al buscar cédulas:', error);
         setSuggestions([]);
         setShowSuggestions(false);
       } finally {

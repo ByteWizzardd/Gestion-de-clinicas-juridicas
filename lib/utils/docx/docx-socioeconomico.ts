@@ -19,6 +19,7 @@ import {
 } from 'docx';
 import { saveAs } from 'file-saver';
 import { SocioeconomicoData } from '@/types/reports';
+import { logger } from '@/lib/utils/logger';
 import {
     imageToBase64
 } from '../pdf-generator-react';
@@ -308,7 +309,7 @@ export async function generateSocioeconomicoDOCX(
         saveAs(blob, `Informe_Socioeconomico_${periodLabel}.docx`);
 
     } catch (error) {
-        console.error('Error al generar DOCX Socioeconómico:', error);
+        logger.error('Error al generar DOCX Socioeconómico:', error);
         throw error;
     }
 }

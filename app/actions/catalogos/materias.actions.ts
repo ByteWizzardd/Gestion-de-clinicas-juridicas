@@ -1,6 +1,7 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
+import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllMaterias } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
@@ -13,7 +14,7 @@ export async function getMaterias() {
         const materias = await getAllMaterias();
         return { success: true, data: materias };
     } catch (error) {
-        console.error('Error getting materias:', error);
+        logger.error('Error getting materias:', error);
         return { success: false, error: 'Error al obtener materias' };
     }
 }
@@ -44,7 +45,7 @@ export async function createMateria(data: { nombre_materia: string }) {
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('❌ Error creating materia:', error);
+        logger.error('❌ Error creating materia:', error);
         const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
         return { success: false, error: `Error al crear materia: ${errorMessage}` };
     } finally {
@@ -83,7 +84,7 @@ export async function updateMateria(id: number, data: { nombre_materia: string }
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error updating materia:', error);
+        logger.error('Error updating materia:', error);
         const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
         return { success: false, error: `Error al actualizar materia: ${errorMessage}` };
     } finally {
@@ -122,7 +123,7 @@ export async function toggleMateriaHabilitado(id: number) {
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error toggling materia habilitado:', error);
+        logger.error('Error toggling materia habilitado:', error);
         const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
         return { success: false, error: `Error al cambiar estado: ${errorMessage}` };
     } finally {
@@ -182,7 +183,7 @@ export async function deleteMateria(id: number, motivo?: string) {
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error deleting materia:', error);
+        logger.error('Error deleting materia:', error);
         const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
         return { success: false, error: `Error al eliminar materia: ${errorMessage}` };
     } finally {

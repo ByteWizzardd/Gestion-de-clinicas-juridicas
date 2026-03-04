@@ -2,6 +2,7 @@ import { getCitasAction } from '@/app/actions/citas';
 import { getCasosByUsuarioAction, getAccionesRecientesAction, getCasosAction, type GetCasosResult } from '@/app/actions/casos';
 import DashboardClient from '@/components/dashboard/DashboardClient';
 import { authorizeRole } from '@/lib/utils/auth-utils';
+import { logger } from '@/lib/utils/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,8 +15,8 @@ export default async function DashboardPage() {
   // Si es coordinador, ve TODO en citas y acciones, pero no cargamos casos para el dashboard
   const [citasResult, casosResult, accionesResult] = await Promise.all([
     getCitasAction({ onlyMine: !isCoordinator }),
-    isCoordinator 
-      ? Promise.resolve({ success: true, data: [] } as GetCasosResult) 
+    isCoordinator
+      ? Promise.resolve({ success: true, data: [] } as GetCasosResult)
       : getCasosByUsuarioAction(),
     getAccionesRecientesAction(10, { onlyMine: !isCoordinator }),
   ]);
@@ -26,18 +27,18 @@ export default async function DashboardPage() {
 
   // Solo loguear errores reales en el servidor si no es un problema de sesión (que maneja el layout)
   if (!casosResult.success && casosResult.error && (casosResult.error as any).code !== 'UNAUTHORIZED') {
-    console.error('Error al obtener casos:', JSON.stringify(casosResult.error));
+    logger.error('Error al obtener casos:', JSON.stringify(casosResult.error));
   }
 
   if (!accionesResult.success && accionesResult.error && (accionesResult.error as any).code !== 'UNAUTHORIZED') {
-    console.error('Error al obtener acciones:', JSON.stringify(accionesResult.error));
+    logger.error('Error al obtener acciones:', JSON.stringify(accionesResult.error));
   }
 
   return (
-    <DashboardClient 
-      initialAppointments={appointments} 
-      initialCasos={casos} 
-      initialAcciones={acciones} 
+    <DashboardClient
+      initialAppointments={appointments}
+      initialCasos={casos}
+      initialAcciones={acciones}
       isCoordinator={isCoordinator}
     />
   );

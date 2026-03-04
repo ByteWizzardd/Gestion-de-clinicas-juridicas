@@ -6,6 +6,7 @@ import Button from '../ui/Button';
 import Select from '../forms/Select';
 import DatePicker from '../forms/DatePicker';
 import { X } from 'lucide-react';
+import { logger } from '@/lib/utils/logger';
 
 interface CatalogFormModalProps {
     isOpen: boolean;
@@ -157,7 +158,7 @@ export default function CatalogFormModal({
                             return newErrors;
                         });
                     } catch (err) {
-                        console.error("Async validation error", err);
+                        logger.error("Async validation error", err);
                     } finally {
                         setValidatingFields(prev => ({ ...prev, [name]: false }));
                     }

@@ -2,6 +2,7 @@
  * Helpers para funciones de reportes
  * Centraliza lógica común de manejo de fechas y términos
  */
+import { logger } from '@/lib/utils/logger';
 
 /**
  * Obtiene las fechas de inicio y fin basadas en un término (semestre)
@@ -34,7 +35,7 @@ export function handleReportError(
   error: unknown,
   context: string
 ): { success: false; error: string } {
-  console.error(`Error en ${context}:`, error);
+  logger.error(`Error en ${context}:`, error);
   return {
     success: false,
     error: error instanceof Error ? error.message : 'Error desconocido',

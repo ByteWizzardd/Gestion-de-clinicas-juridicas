@@ -1,6 +1,7 @@
 import React from 'react';
 // @ts-ignore - React PDF types issue with React 19
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
+import { logger } from '@/lib/utils/logger';
 import { CasosGroupedData } from '@/types/reports';
 
 // Registrar League Spartan desde archivos locales
@@ -40,7 +41,7 @@ try {
     ],
   });
 } catch (error) {
-  console.warn('No se pudo cargar League Spartan, usando Helvetica como fallback');
+  logger.warn('No se pudo cargar League Spartan, usando Helvetica como fallback');
 }
 
 interface TiposCasosPDFProps {

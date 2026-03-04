@@ -5,6 +5,7 @@ import { FileText, Download, Calendar, File, Loader2, Image, FileEdit, FileSprea
 import { formatDateTime } from '@/lib/utils/date-formatter';
 import { downloadSoporteAction, deleteSoporteAction } from '@/app/actions/casos';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
+import { logger } from '@/lib/utils/logger';
 
 interface DocumentsTabProps {
   soportes?: Array<{
@@ -57,7 +58,7 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
       link.click();
       document.body.removeChild(link);
     } catch (error) {
-      console.error('Error al descargar:', error);
+      logger.error('Error al descargar:', error);
       alert('Error al descargar el archivo');
     } finally {
       setDownloading(null);
@@ -92,7 +93,7 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
       // Notificar al padre para que recargue los datos
       onSoporteDeleted?.();
     } catch (error) {
-      console.error('Error al eliminar:', error);
+      logger.error('Error al eliminar:', error);
       alert('Error al eliminar el archivo');
     } finally {
       setDeleting(null);

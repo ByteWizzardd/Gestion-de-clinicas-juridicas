@@ -1,6 +1,7 @@
 'use server';
 
 import { casosService } from '@/lib/services/casos.service';
+import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { soportesQueries } from '@/lib/db/queries/soportes.queries';
 import { accionesQueries } from '@/lib/db/queries/acciones.queries';
@@ -341,7 +342,7 @@ export async function downloadSoporteAction(
       );
     } catch (auditError) {
       // Log el error pero no bloquear la descarga
-      console.error('Error al registrar descarga en auditoría:', auditError);
+      logger.error('Error al registrar descarga en auditoría:', auditError);
     }
 
     // Ahora el documento contiene la URL directamente
@@ -429,7 +430,7 @@ export async function deleteSoporteAction(
         await deleteFile(urlDocumento);
       } catch (blobError) {
         // Log el error pero no fallar la operación (el registro en DB ya fue eliminado)
-        console.error('Error al eliminar archivo de Vercel Blob:', blobError);
+        logger.error('Error al eliminar archivo de Vercel Blob:', blobError);
       }
     }
 
@@ -1045,7 +1046,7 @@ export async function getAccionesRecientesAction(
     }
 
     const cedulaUsuario = authResult.user.cedula;
-    
+
     let acciones;
     if (options?.onlyMine === false) {
       acciones = await accionesQueries.getRecentAll(limite);

@@ -1,6 +1,7 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
+import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllParroquias } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
@@ -10,7 +11,7 @@ export async function getParroquias() {
         const parroquias = await getAllParroquias();
         return { success: true, data: parroquias };
     } catch (error) {
-        console.error('Error getting parroquias:', error);
+        logger.error('Error getting parroquias:', error);
         return { success: false, error: 'Error al obtener parroquias' };
     }
 }
@@ -47,7 +48,7 @@ export async function createParroquia(data: { id_estado: string; id_municipio: s
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error creating parroquia:', error);
+        logger.error('Error creating parroquia:', error);
         return { success: false, error: 'Error al crear parroquia' };
     } finally {
         client.release();
@@ -174,7 +175,7 @@ export async function updateParroquia(id_estado: number, num_municipio: number, 
         }
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error updating parroquia:', error);
+        logger.error('Error updating parroquia:', error);
         return { success: false, error: 'Error al actualizar parroquia' };
     } finally {
         client.release();
@@ -208,7 +209,7 @@ export async function toggleParroquiaHabilitado(id_estado: number, num_municipio
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error toggling parroquia habilitado:', error);
+        logger.error('Error toggling parroquia habilitado:', error);
         return { success: false, error: 'Error al cambiar estado' };
     } finally {
         client.release();
@@ -260,7 +261,7 @@ export async function deleteParroquia(id_estado: number, num_municipio: number, 
         return { success: true, data: result.rows[0] };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error deleting parroquia:', error);
+        logger.error('Error deleting parroquia:', error);
         return { success: false, error: 'Error al eliminar parroquia' };
     } finally {
         client.release();

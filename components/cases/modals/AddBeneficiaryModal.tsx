@@ -9,6 +9,7 @@ import Select from '../../forms/Select';
 import Button from '../../ui/Button';
 import DatePicker from '../../forms/DatePicker';
 import { X, Calendar, User, Users, Search } from 'lucide-react';
+import { logger } from '@/lib/utils/logger';
 import { createBeneficiarioAction, searchBeneficiariosByCedulaAction, getBeneficiarioByCedulaAction } from '@/app/actions/beneficiarios';
 
 interface AddBeneficiaryModalProps {
@@ -150,7 +151,7 @@ export default function AddBeneficiaryModal({
           }
         }
       } catch (error) {
-        console.error('Error searching beneficiary:', error);
+        logger.error('Error searching beneficiary:', error);
       } finally {
         setIsSearching(false);
       }
@@ -255,7 +256,7 @@ export default function AddBeneficiaryModal({
         alert(result.error?.message || 'Error al registrar beneficiario');
       }
     } catch (error) {
-      console.error('Error submitting beneficiary:', error);
+      logger.error('Error submitting beneficiary:', error);
       alert('Error inesperado al registrar beneficiario');
     } finally {
       setIsSubmitting(false);
