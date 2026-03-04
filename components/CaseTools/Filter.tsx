@@ -748,7 +748,7 @@ function Filter({
   };
 
   return (
-    <div className="relative">
+    <div className="relative w-full sm:w-auto">
       {/* Botón trigger */}
       <button
         ref={triggerRef}
