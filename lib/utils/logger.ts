@@ -36,10 +36,23 @@ class Logger {
       );
     }
 
-    // En producción: aquí podrías enviar a un servicio de logging
-    // Ejemplo: Sentry, LogRocket, CloudWatch, etc.
+    // En producción: enviamos un formato JSON estructurado
+    // limpio para que plataformas como Vercel/Railway o Axiom puedan categorizar los logs.
     if (process.env.NODE_ENV === 'production') {
-      // TODO: Implementar envío a servicio de logging
+      // Helper para serializar errores correctamente, ya que JSON.stringify ignora las propiedades de Error
+      const logData = data instanceof Error
+        ? { name: data.name, message: data.message, stack: data.stack }
+        : data;
+
+      const prodEntry = {
+        level: entry.level,
+        message: entry.message,
+        timestamp: entry.timestamp,
+        ...(logData && { data: logData }),
+      };
+
+      // Solo usamos el nivel 'error' o 'log' (para todo lo demás)
+      console[level === 'error' ? 'error' : 'log'](JSON.stringify(prodEntry));
     }
   }
 
