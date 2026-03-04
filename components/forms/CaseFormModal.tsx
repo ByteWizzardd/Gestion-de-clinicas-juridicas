@@ -217,6 +217,7 @@ export default function CaseFormModal({
 
       const initializeForm = async () => {
         setLoadingCatalogos(true);
+        if (!isEditing) setLoadingCaseNumber(true);
         // 1. Cargar catálogos base (Nucleos y Materias)
         await loadCatalogos();
 
@@ -625,7 +626,7 @@ export default function CaseFormModal({
           <div className="col-span-1">
             <Input
               label="Caso N°"
-              value={loadingCaseNumber ? '' : (formData.casoNumero || '')}
+              value={isEditing ? (formData.casoNumero || '') : (loadingCaseNumber ? 'Cargando...' : (formData.casoNumero || ''))}
               readOnly
               disabled
               placeholder={loadingCaseNumber ? "Cargando..." : ""}
