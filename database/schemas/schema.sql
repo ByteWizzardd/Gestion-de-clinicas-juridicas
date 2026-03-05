@@ -1216,7 +1216,7 @@ CREATE TABLE citas (
     fecha_encuentro DATE NOT NULL,
     orientacion TEXT NOT NULL,
     id_usuario_registro VARCHAR(20) REFERENCES usuarios(cedula),
-    PRIMARY KEY (num_cita, id_caso),
+    PRIMARY KEY (id_caso, num_cita),
     CHECK (fecha_proxima_cita IS NULL OR fecha_proxima_cita > fecha_encuentro)
 );
 
@@ -1273,9 +1273,9 @@ CREATE TABLE atienden (
     id_caso INTEGER NOT NULL,
     fecha_registro DATE NOT NULL DEFAULT CURRENT_DATE CHECK (fecha_registro <= CURRENT_DATE),
     
-    PRIMARY KEY (num_cita, id_caso, id_usuario),
+    PRIMARY KEY (id_caso, num_cita, id_usuario),
     FOREIGN KEY (id_usuario) REFERENCES usuarios(cedula),
-    FOREIGN KEY (num_cita, id_caso) REFERENCES citas(num_cita, id_caso)
+    FOREIGN KEY (id_caso, num_cita) REFERENCES citas(id_caso, num_cita)
 );
 
 -- 24) ACCIONES
@@ -1286,7 +1286,7 @@ CREATE TABLE acciones (
     comentario TEXT,
     id_usuario_registra VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
     fecha_registro DATE NOT NULL DEFAULT CURRENT_DATE CHECK (fecha_registro <= CURRENT_DATE),
-    PRIMARY KEY (num_accion, id_caso)
+    PRIMARY KEY (id_caso, num_accion)
 );
 
 -- 24.1) AUDITORÍA DE INSERCIÓN DE ACCIONES
@@ -1374,9 +1374,9 @@ CREATE TABLE ejecutan (
     id_caso INTEGER NOT NULL,
     fecha_ejecucion DATE NOT NULL DEFAULT CURRENT_DATE CHECK (fecha_ejecucion <= CURRENT_DATE),
     
-    PRIMARY KEY (id_usuario_ejecuta, num_accion, id_caso),
+    PRIMARY KEY (id_caso, num_accion, id_usuario_ejecuta),
     FOREIGN KEY (id_usuario_ejecuta) REFERENCES usuarios(cedula),
-    FOREIGN KEY (num_accion, id_caso) REFERENCES acciones(num_accion, id_caso)
+    FOREIGN KEY (id_caso, num_accion) REFERENCES acciones(id_caso, num_accion)
 );
 
 -- 25) CAMBIO ESTATUS
@@ -1387,7 +1387,7 @@ CREATE TABLE cambio_estatus (
     nuevo_estatus VARCHAR(50) NOT NULL CHECK (nuevo_estatus IN ('En proceso', 'Archivado', 'Entregado', 'Asesoría')),
     fecha TIMESTAMP NOT NULL DEFAULT (NOW() AT TIME ZONE 'America/Caracas'),
     id_usuario_cambia VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
-    PRIMARY KEY (num_cambio, id_caso)
+    PRIMARY KEY (id_caso, num_cambio)
 );
 
 -- 26) SOPORTES
@@ -1405,7 +1405,7 @@ CREATE TABLE soportes (
     -- Campos de auditoría: quién subió el archivo
     id_usuario_subio VARCHAR(20) REFERENCES usuarios(cedula),
     
-    PRIMARY KEY (num_soporte, id_caso)
+    PRIMARY KEY (id_caso, num_soporte)
 );
 
 -- 26.1) AUDITORÍA DE INSERCIÓN DE SOPORTES
@@ -1462,7 +1462,7 @@ CREATE TABLE beneficiarios (
     
     id_usuario_registro VARCHAR(20) REFERENCES usuarios(cedula) ON UPDATE RESTRICT ON DELETE RESTRICT,
     
-    PRIMARY KEY (num_beneficiario, id_caso)
+    PRIMARY KEY (id_caso, num_beneficiario)
 );
 
 -- 27.1) AUDITORÍA DE INSERCIÓN DE BENEFICIARIOS

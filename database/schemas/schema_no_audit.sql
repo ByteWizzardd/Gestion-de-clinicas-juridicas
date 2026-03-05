@@ -112,8 +112,8 @@ CREATE TABLE solicitantes (
     telefono_celular VARCHAR(20) NOT NULL CHECK (LENGTH(telefono_celular) <= 20),
     correo_electronico VARCHAR(100) NOT NULL UNIQUE,
     
-    sexo VARCHAR(20) NOT NULL CHECK (sexo IN ('M', 'F')),
-    nacionalidad VARCHAR(20) NOT NULL CHECK (nacionalidad IN ('V', 'E')),
+    sexo VARCHAR(1) NOT NULL CHECK (sexo IN ('M', 'F')),
+    nacionalidad VARCHAR(1) NOT NULL CHECK (nacionalidad IN ('V', 'E')),
     estado_civil VARCHAR(20) NOT NULL CHECK (estado_civil IN ('Soltero', 'Casado', 'Divorciado', 'Viudo')),
     
     concubinato BOOLEAN NOT NULL,
@@ -312,7 +312,7 @@ CREATE TABLE citas (
     orientacion TEXT NOT NULL,
     id_usuario_registro VARCHAR(20),
     
-    PRIMARY KEY (num_cita, id_caso),
+    PRIMARY KEY (id_caso, num_cita),
     FOREIGN KEY (id_caso) REFERENCES casos(id_caso) 
         ON UPDATE CASCADE ON DELETE RESTRICT,
     FOREIGN KEY (id_usuario_registro) REFERENCES usuarios(cedula) 
@@ -328,10 +328,10 @@ CREATE TABLE atienden (
     id_caso INTEGER NOT NULL,
     fecha_registro DATE NOT NULL DEFAULT CURRENT_DATE CHECK (fecha_registro <= CURRENT_DATE),
     
-    PRIMARY KEY (num_cita, id_caso, id_usuario),
+    PRIMARY KEY (id_caso, num_cita, id_usuario),
     FOREIGN KEY (id_usuario) REFERENCES usuarios(cedula) 
         ON UPDATE RESTRICT ON DELETE RESTRICT,
-    FOREIGN KEY (num_cita, id_caso) REFERENCES citas(num_cita, id_caso) 
+    FOREIGN KEY (id_caso, num_cita) REFERENCES citas(id_caso, num_cita) 
         ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
@@ -344,7 +344,7 @@ CREATE TABLE acciones (
     id_usuario_registra VARCHAR(20) NOT NULL,
     fecha_registro DATE NOT NULL DEFAULT CURRENT_DATE CHECK (fecha_registro <= CURRENT_DATE),
     
-    PRIMARY KEY (num_accion, id_caso),
+    PRIMARY KEY (id_caso, num_accion),
     FOREIGN KEY (id_caso) REFERENCES casos(id_caso) 
         ON UPDATE CASCADE ON DELETE RESTRICT,
     FOREIGN KEY (id_usuario_registra) REFERENCES usuarios(cedula) 
@@ -358,10 +358,10 @@ CREATE TABLE ejecutan (
     id_caso INTEGER NOT NULL,
     fecha_ejecucion DATE NOT NULL DEFAULT CURRENT_DATE CHECK (fecha_ejecucion <= CURRENT_DATE),
     
-    PRIMARY KEY (id_usuario_ejecuta, num_accion, id_caso),
+    PRIMARY KEY (id_caso, num_accion, id_usuario_ejecuta),
     FOREIGN KEY (id_usuario_ejecuta) REFERENCES usuarios(cedula) 
         ON UPDATE RESTRICT ON DELETE RESTRICT,
-    FOREIGN KEY (num_accion, id_caso) REFERENCES acciones(num_accion, id_caso) 
+    FOREIGN KEY (id_caso, num_accion) REFERENCES acciones(id_caso, num_accion) 
         ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
@@ -374,7 +374,7 @@ CREATE TABLE cambio_estatus (
     fecha TIMESTAMP NOT NULL DEFAULT (NOW() AT TIME ZONE 'America/Caracas'),
     id_usuario_cambia VARCHAR(20) NOT NULL,
     
-    PRIMARY KEY (num_cambio, id_caso),
+    PRIMARY KEY (id_caso, num_cambio),
     FOREIGN KEY (id_caso) REFERENCES casos(id_caso) 
         ON UPDATE CASCADE ON DELETE RESTRICT,
     FOREIGN KEY (id_usuario_cambia) REFERENCES usuarios(cedula) 
@@ -395,7 +395,7 @@ CREATE TABLE soportes (
     
     id_usuario_subio VARCHAR(20),
     
-    PRIMARY KEY (num_soporte, id_caso),
+    PRIMARY KEY (id_caso, num_soporte),
     FOREIGN KEY (id_caso) REFERENCES casos(id_caso) 
         ON UPDATE CASCADE ON DELETE RESTRICT,
     FOREIGN KEY (id_usuario_subio) REFERENCES usuarios(cedula) 
@@ -417,7 +417,7 @@ CREATE TABLE beneficiarios (
     
     id_usuario_registro VARCHAR(20),
     
-    PRIMARY KEY (num_beneficiario, id_caso),
+    PRIMARY KEY (id_caso, num_beneficiario),
     FOREIGN KEY (id_caso) REFERENCES casos(id_caso) 
         ON UPDATE CASCADE ON DELETE RESTRICT,
     FOREIGN KEY (id_usuario_registro) REFERENCES usuarios(cedula)
