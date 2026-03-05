@@ -36,7 +36,7 @@ export default function Tabs({ tabs, defaultTab, onTabChange }: TabsProps) {
   return (
     <div className="w-full">
       {/* Tab Headers */}
-      <div className="border-b border-[var(--card-border)] mb-4 sm:mb-6 overflow-x-auto scrollbar-thin scrollbar-thumb-[var(--card-border)] scrollbar-track-transparent">
+      <div className="border-b border-(--card-border) mb-4 sm:mb-6 overflow-x-auto scrollbar-thin scrollbar-thumb-[var(--card-border)] scrollbar-track-transparent">
         <div className="flex w-full min-w-max">
           {tabs.map((tab) => (
             <button
@@ -47,7 +47,7 @@ export default function Tabs({ tabs, defaultTab, onTabChange }: TabsProps) {
                 border-b-2 transition-colors duration-200 cursor-pointer
                 ${activeTab === tab.id
                   ? 'border-primary text-primary'
-                  : 'border-transparent text-[var(--card-text-muted)] hover:text-[var(--foreground)] hover:border-[var(--ui-border)]'
+                  : 'border-transparent text-(--card-text-muted) hover:text-foreground hover:border-(--ui-border)'
                 }
               `}
             >
