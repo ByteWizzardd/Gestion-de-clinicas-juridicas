@@ -382,7 +382,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
       </motion.div>
 
       <motion.div
-        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6"
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 flex-wrap"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
@@ -423,7 +423,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
           />
         </div>
 
-        <div className="w-full sm:w-auto pb-2 sm:pb-0">
+        <div className="w-full sm:w-auto pb-2 sm:pb-0 order-2 sm:order-none">
           <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:flex-wrap sm:justify-end">
             {(() => {
               const isClosed = caso.estatus === 'Entregado' || caso.estatus === 'Archivado';
@@ -531,31 +531,26 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
             })()}
           </div>
         </div>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.2, ease: 'easeOut' }}
-      >
-        {nombreSolicitante && (
-          <p className="text-sm sm:text-base text-gray-500 dark:text-[var(--card-text-muted)] mb-6 sm:mb-8 flex items-center gap-1.5">
-            Solicitante:
-            {caso.cedula ? (
-              <>
-                <Link
-                  href={`/dashboard/applicants/${caso.cedula}`}
-                  className="text-primary hover:underline font-medium transition-colors"
-                >
-                  {nombreSolicitante}
-                </Link>
-                <span className="text-gray-400 dark:text-gray-500">({caso.cedula})</span>
-              </>
-            ) : (
-              <span>{nombreSolicitante}</span>
-            )}
-          </p>
-        )}
+        <div className="w-full order-1 sm:order-none">
+          {nombreSolicitante && (
+            <p className="text-sm sm:text-base text-gray-500 dark:text-[var(--card-text-muted)] mb-2 sm:mb-0 flex items-center gap-1.5 flex-wrap">
+              Solicitante:
+              {caso.cedula ? (
+                <>
+                  <Link
+                    href={`/dashboard/applicants/${caso.cedula}`}
+                    className="text-primary hover:underline font-medium transition-colors"
+                  >
+                    {nombreSolicitante}
+                  </Link>
+                  <span className="text-gray-400 dark:text-gray-500">({caso.cedula})</span>
+                </>
+              ) : (
+                <span>{nombreSolicitante}</span>
+              )}
+            </p>
+          )}
+        </div>
       </motion.div>
 
       <AddDocumentModal
