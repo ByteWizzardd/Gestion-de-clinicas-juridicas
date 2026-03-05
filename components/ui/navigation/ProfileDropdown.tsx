@@ -115,8 +115,8 @@ export default function ProfileDropdown({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: showAbove ? 10 : -10, scale: 0.95 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className={`absolute left-full ml-1 md:ml-2 w-48 sm:w-56 bg-(--dropdown-bg) rounded-xl shadow-xl border border-(--dropdown-border) z-50 py-2 transition-colors ${showAbove ? 'bottom-0' : 'top-0'
-              } max-w-[calc(100vw-4rem)]`}
+            className={`absolute left-[30%] sm:left-full ml-0 sm:ml-2 mt-2 sm:mt-0 w-48 sm:w-56 bg-(--dropdown-bg) rounded-xl shadow-xl border border-(--dropdown-border) z-50 py-2 transition-colors ${showAbove ? 'bottom-full sm:bottom-0 mb-2 sm:mb-0' : 'top-full sm:top-0'
+              } max-w-[calc(100vw-2rem)]`}
           >
             {/* Opciones del menú */}
             <div className="py-1">
