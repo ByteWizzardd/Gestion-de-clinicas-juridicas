@@ -341,11 +341,11 @@ export const casosService = {
             // Procesar resultados: usar datos obtenidos o arrays vacíos si fallaron
             // No lanzar error para permitir que el caso se incluya con datos parciales
             const extractResult = (index: number) => {
-                if (results[index].status === 'fulfilled') {
-                    return results[index].value;
+                const result = results[index];
+                if (result.status === 'fulfilled') {
+                    return result.value;
                 }
-                const reason = results[index].reason;
-                const msg = reason instanceof Error ? reason.message : String(reason || 'Error desconocido');
+                const msg = result.reason instanceof Error ? result.reason.message : String(result.reason || 'Error desconocido');
                 logger.warn(`[getCasoByIdCompleto] Query "${queryNames[index]}" falló para caso ${idCaso}: ${msg}`);
                 return [];
             };
