@@ -423,8 +423,8 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
           />
         </div>
 
-        <div className="w-full sm:w-auto overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar">
-          <div className="flex items-center gap-2 min-w-max sm:min-w-0 sm:flex-wrap sm:justify-end">
+        <div className="w-full sm:w-auto pb-2 sm:pb-0">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:flex-wrap sm:justify-end">
             {(() => {
               const isClosed = caso.estatus === 'Entregado' || caso.estatus === 'Archivado';
               const tooltipText = isClosed ? `No disponible: Caso ${caso.estatus}` : undefined;
@@ -439,14 +439,14 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
                           setShowAssignTeamModal(true);
                         }}
                         disabled={isClosed}
-                        className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-primary-light'}`}
+                        className={`w-full sm:w-auto h-9 sm:h-10 px-3 sm:px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-primary-light'}`}
                       >
                         {caso.equipo && caso.equipo.length > 0 ? (
-                          <Pencil className="w-[18px] h-[18px] text-[#414040] dark:text-[var(--card-text-muted)]" />
+                          <Pencil className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#414040] dark:text-[var(--card-text-muted)] shrink-0" />
                         ) : (
-                          <Plus className="w-[18px] h-[18px] text-[#414040] dark:text-[var(--card-text-muted)]" />
+                          <Plus className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#414040] dark:text-[var(--card-text-muted)] shrink-0" />
                         )}
-                        <span className="text-base text-center">
+                        <span className="text-xs sm:text-base text-center">
                           {caso.equipo && caso.equipo.length > 0 ? 'Modificar Equipo' : 'Asignar Equipo'}
                         </span>
                       </button>
@@ -465,10 +465,10 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
                         setShowAddDocumentModal(true);
                       }}
                       disabled={isClosed}
-                      className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-primary-light'}`}
+                      className={`w-full sm:w-auto h-9 sm:h-10 px-3 sm:px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-primary-light'}`}
                     >
-                      <Plus className="w-[18px] h-[18px] text-[#414040] dark:text-[var(--card-text-muted)]" />
-                      <span className="text-base text-center">Agregar Documento</span>
+                      <Plus className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#414040] dark:text-[var(--card-text-muted)] shrink-0" />
+                      <span className="text-xs sm:text-base text-center">Agregar Documento</span>
                     </button>
                     {isClosed && (
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-red-50 text-red-700 text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-[0px_4px_12px_rgba(0,0,0,0.1)] border border-red-100 font-medium tracking-wide">
@@ -484,10 +484,10 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
                         setShowAddActionModal(true);
                       }}
                       disabled={isClosed}
-                      className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-primary-light'}`}
+                      className={`w-full sm:w-auto h-9 sm:h-10 px-3 sm:px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-primary-light'}`}
                     >
-                      <Plus className="w-[18px] h-[18px] text-[#414040] dark:text-[var(--card-text-muted)]" />
-                      <span className="text-base text-center">Registrar Acción</span>
+                      <Plus className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#414040] dark:text-[var(--card-text-muted)] shrink-0" />
+                      <span className="text-xs sm:text-base text-center">Registrar Acción</span>
                     </button>
                     {isClosed && (
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-red-50 text-red-700 text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-[0px_4px_12px_rgba(0,0,0,0.1)] border border-red-100 font-medium tracking-wide">
@@ -503,10 +503,10 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
                         setShowAddBeneficiaryModal(true);
                       }}
                       disabled={isClosed}
-                      className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-primary-light'}`}
+                      className={`w-full sm:w-auto h-9 sm:h-10 px-3 sm:px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-primary-light'}`}
                     >
-                      <Plus className="w-[18px] h-[18px] text-[#414040] dark:text-[var(--card-text-muted)]" />
-                      <span className="text-base text-center">Agregar Beneficiario</span>
+                      <Plus className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#414040] dark:text-[var(--card-text-muted)] shrink-0" />
+                      <span className="text-xs sm:text-base text-center">Agregar Beneficiario</span>
                     </button>
                     {isClosed && (
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-red-50 text-red-700 text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-[0px_4px_12px_rgba(0,0,0,0.1)] border border-red-100 font-medium tracking-wide">
@@ -515,15 +515,15 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
                     )}
                   </div>
 
-                  <div className="relative group">
+                  <div className="relative group col-span-2 sm:col-span-1">
                     <button
                       onClick={() => {
                         handleOpenStatusModal();
                       }}
-                      className={`h-10 px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer hover:bg-primary-light`}
+                      className={`w-full h-9 sm:h-10 px-3 sm:px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap transition-colors cursor-pointer hover:bg-primary-light`}
                     >
-                      <RefreshCw className="w-[18px] h-[18px] text-[#414040] dark:text-[var(--card-text-muted)]" />
-                      <span className="text-base text-center">Cambiar Estatus</span>
+                      <RefreshCw className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#414040] dark:text-[var(--card-text-muted)] shrink-0" />
+                      <span className="text-xs sm:text-base text-center">Cambiar Estatus</span>
                     </button>
                   </div>
                 </>
