@@ -449,7 +449,7 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
             termOptions={semestreOptions}
           />
         </div>
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center shrink-0 w-full lg:w-auto">
+        <div className="flex flex-col lg:flex-row gap-3 lg:gap-4 items-center shrink-0 w-full lg:w-auto">
           {isSelectionMode ? (
             <div className="flex flex-wrap gap-2 items-center w-full justify-end">
               <button
@@ -489,16 +489,16 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3 w-full sm:w-auto">
+            <div className="grid grid-cols-2 gap-3 w-full lg:w-auto">
               <DropdownMenu
                 trigger={(isOpen) => (
                   <div
                     className="h-10 px-4 w-full flex items-center cursor-pointer justify-center gap-2 bg-[var(--card-bg)] text-[var(--card-text)] border border-[var(--ui-border)] rounded-full hover:bg-[var(--sidebar-hover)] transition-colors font-medium whitespace-nowrap"
                   >
-                    <UserX className="w-5 h-5 text-[var(--card-text-muted)]" />
+                    <UserX className="hidden sm:block w-5 h-5 text-[var(--card-text-muted)]" />
                     <span>Gestión en lote</span>
                     <svg
-                      className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                      className={`hidden sm:block w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2.5"
@@ -546,12 +546,12 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
                   <div
                     className="h-10 px-4 w-full flex items-center cursor-pointer justify-center gap-2 bg-primary text-white rounded-full hover:bg-primary-dark transition-colors font-medium whitespace-nowrap"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <svg className="hidden sm:block w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
                     <span>Registrar Usuario</span>
                     <svg
-                      className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                      className={`hidden sm:block w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2.5"

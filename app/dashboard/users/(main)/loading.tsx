@@ -8,7 +8,7 @@ export default function UsersLoading() {
     return (
         <div className="animate-pulse">
 
-            <div className="flex flex-col md:flex-row md:items-center gap-3 sm:gap-4 w-full px-3 text-[var(--foreground)] transition-colors">
+            <div className="flex flex-col lg:flex-row lg:items-center gap-4 w-full px-3 text-[var(--foreground)] transition-colors">
                 <div className="flex-1 min-w-0">
                     <CaseTools
                         searchValue=""
@@ -34,18 +34,18 @@ export default function UsersLoading() {
                         nucleoOptions={[]}
                     />
                 </div>
-                <div className="flex gap-3 sm:gap-4 items-center shrink-0">
+                <div className="grid grid-cols-2 gap-3 w-full lg:w-auto">
                     {/* Gestión en lote */}
-                    <div className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-[var(--card-bg)] text-[var(--card-text)] border border-[var(--ui-border)] rounded-full shadow-sm font-medium whitespace-nowrap transition-colors">
-                        <UserX className="w-5 h-5 text-[var(--card-text-muted)] transition-colors" />
+                    <div className="h-10 px-4 w-full flex items-center cursor-pointer justify-center gap-2 bg-[var(--card-bg)] text-[var(--card-text)] border border-[var(--ui-border)] rounded-full shadow-sm font-medium whitespace-nowrap transition-colors">
+                        <UserX className="hidden sm:block w-5 h-5 text-[var(--card-text-muted)] transition-colors" />
                         <span className="text-[var(--card-text)]">Gestión en lote</span>
-                        <ChevronDown className="w-4 h-4 text-[var(--card-text-muted)] transition-colors" strokeWidth={2.5} />
+                        <ChevronDown className="hidden sm:block w-4 h-4 text-[var(--card-text-muted)] transition-colors" strokeWidth={2.5} />
                     </div>
                     {/* Registrar Usuario */}
-                    <div className="h-10 px-4 flex items-center cursor-pointer justify-center gap-2 bg-primary text-white rounded-full font-medium whitespace-nowrap shadow-sm hover:opacity-90 transition-all">
-                        <Plus className="w-5 h-5" strokeWidth={2.5} />
+                    <div className="h-10 px-4 w-full flex items-center cursor-pointer justify-center gap-2 bg-primary text-white rounded-full font-medium whitespace-nowrap shadow-sm hover:opacity-90 transition-all">
+                        <Plus className="hidden sm:block w-5 h-5" strokeWidth={2.5} />
                         <span>Registrar Usuario</span>
-                        <ChevronDown className="w-4 h-4 opacity-80" strokeWidth={2.5} />
+                        <ChevronDown className="hidden sm:block w-4 h-4 opacity-80" strokeWidth={2.5} />
                     </div>
                 </div>
             </div>
