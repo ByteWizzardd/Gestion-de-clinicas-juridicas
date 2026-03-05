@@ -37,13 +37,13 @@ export default function Tabs({ tabs, defaultTab, onTabChange }: TabsProps) {
     <div className="w-full">
       {/* Tab Headers */}
       <div className="border-b border-[var(--card-border)] mb-4 sm:mb-6 overflow-x-auto scrollbar-thin scrollbar-thumb-[var(--card-border)] scrollbar-track-transparent">
-        <div className="flex gap-1 w-full min-w-max">
+        <div className="flex w-full min-w-max">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
               className={`
-                px-4 sm:px-4 md:px-6 py-2 sm:py-3 text-sm sm:text-sm md:text-base font-medium whitespace-nowrap flex-none
+                px-2 sm:px-4 md:px-6 py-1.5 sm:py-3 text-[11px] sm:text-sm md:text-base font-medium whitespace-nowrap flex-none
                 border-b-2 transition-colors duration-200 cursor-pointer
                 ${activeTab === tab.id
                   ? 'border-primary text-primary'
