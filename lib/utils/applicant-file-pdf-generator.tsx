@@ -8,6 +8,8 @@ import { SolicitanteFichaData } from '../types/report-types';
 import { SolicitanteFichaPDF as SolicitanteFichaDocument } from '../../components/applicants/SolicitanteFichaPDF';
 import { generateSolicitanteFichaExcel } from './applicant-file-excel-generator';
 import { imageToBase64 } from './pdf-generator-react';
+import { formatDateTimeForFilename } from './date-formatter';
+
 
 /**
  * Genera y descarga un PDF con la ficha completa de un solicitante (versión simple)
@@ -35,8 +37,18 @@ export async function generateSolicitanteFichaPDF(data: SolicitanteFichaData): P
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `Ficha_Solicitante_${data.solicitante?.cedula || 'N/A'}.pdf`;
+
+        const primerNombre = (data.solicitante?.nombres || '').trim().split(' ')[0];
+        const primerApellido = (data.solicitante?.apellidos || '').trim().split(' ')[0];
+        const nombreSimple = `${primerNombre} ${primerApellido}`.trim();
+        const safeName = nombreSimple ? nombreSimple.replace(/[^a-zA-Z0-9]/g, '_') : 'N_A';
+
+        link.download = `Ficha_Solicitante_${safeName}_${formatDateTimeForFilename()}.pdf`;
+
+
+
         document.body.appendChild(link);
+
         link.click();
         document.body.removeChild(link);
 
@@ -75,13 +87,19 @@ export async function generateSolicitanteFichaZip(data: SolicitanteFichaData): P
         // @ts-ignore - React PDF types issue with React 19
         const pdfBlob = await pdf(doc).toBlob();
 
+        const timestamp = formatDateTimeForFilename();
+        const primerNombre = (data.solicitante?.nombres || '').trim().split(' ')[0];
+        const primerApellido = (data.solicitante?.apellidos || '').trim().split(' ')[0];
+        const nombreSimple = `${primerNombre} ${primerApellido}`.trim();
+        const safeName = nombreSimple ? nombreSimple.replace(/[^a-zA-Z0-9]/g, '_') : 'N_A';
+
         // Agregar PDF al ZIP
-        zip.file(`Ficha_Solicitante_${cedula}.pdf`, pdfBlob);
+        zip.file(`Ficha_Solicitante_${safeName}_${timestamp}.pdf`, pdfBlob);
 
         // 2. Generar Excel
         try {
             const excelBuffer = await generateSolicitanteFichaExcel(data);
-            zip.file(`Ficha_Solicitante_${cedula}.xlsx`, excelBuffer);
+            zip.file(`Ficha_Solicitante_${safeName}_${timestamp}.xlsx`, excelBuffer);
         } catch (excelError) {
             logger.error('Error generando Excel para ZIP:', excelError);
         }
@@ -93,8 +111,16 @@ export async function generateSolicitanteFichaZip(data: SolicitanteFichaData): P
         const url = URL.createObjectURL(zipContent);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `Expediente_Solicitante_${cedula}.zip`;
+
+        link.download = `Ficha_Solicitante_${safeName}_${timestamp}.zip`;
+
+
+
+
+
+
         document.body.appendChild(link);
+
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);

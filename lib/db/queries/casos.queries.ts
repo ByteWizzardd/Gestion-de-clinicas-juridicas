@@ -70,16 +70,19 @@ export const casosQueries = {
   getHistorialBySolicitante: async (
     cedula: string,
     fechaInicio?: string,
-    fechaFin?: string
+    fechaFin?: string,
+    term?: string
   ): Promise<unknown[]> => {
     const query = loadSQL('casos/get-casos-by-cedula-fecha.sql');
     const result: QueryResult = await pool.query(query, [
       cedula,
       fechaInicio || null,
-      fechaFin || null
+      fechaFin || null,
+      term || null
     ]);
     return result.rows;
   },
+
 
   /**
    * Obtiene todos los casos donde el usuario participa

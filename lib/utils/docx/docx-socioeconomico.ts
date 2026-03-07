@@ -24,6 +24,8 @@ import {
     imageToBase64
 } from '../pdf-generator-react';
 import { formatDate, base64ToUint8Array, createEmptyPortraitPage } from './docx-utils';
+import { formatDateTimeForFilename } from '../date-formatter';
+
 import {
     generateTitleImage,
     generateBannerImage,
@@ -125,7 +127,10 @@ export async function generateSocioeconomicoDOCX(
         const logoUint8 = base64ToUint8Array(logoBase64.split(',')[1]);
 
         const sections: any[] = [];
+        const emissionStr = formatDateTimeForFilename();
         const reportTitle = `Datos Socioeconómicos${term ? ` Semestre ${term}` : (fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : '')}`;
+
+
 
         // 1. Primera Hoja Vacía (Estándar para impresión)
         sections.push(createEmptyPortraitPage());
@@ -306,7 +311,8 @@ export async function generateSocioeconomicoDOCX(
         const doc = new Document({ sections: sections });
         const blob = await Packer.toBlob(doc);
         const periodLabel = term ? `Semestre_${term}` : (fechaInicio && fechaFin ? `${fechaInicio}_${fechaFin}` : 'Historico');
-        saveAs(blob, `Informe_Socioeconomico_${periodLabel}.docx`);
+        saveAs(blob, `Informe_Socioeconomico_${periodLabel}_${emissionStr}.docx`);
+
 
     } catch (error) {
         logger.error('Error al generar DOCX Socioeconómico:', error);

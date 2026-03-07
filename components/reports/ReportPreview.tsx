@@ -24,7 +24,8 @@ interface ReportPreviewProps {
     onPreviewGenerated?: () => void;
 }
 
-type PreviewState = 'idle' | 'loading' | 'ready' | 'error' | 'empty' | 'no_sections';
+type PreviewState = 'idle' | 'loading' | 'ready' | 'error' | 'empty' | 'no_sections' | 'invalid_dates';
+
 
 export default function ReportPreview({
     generatePreviewBlob,
@@ -108,6 +109,12 @@ export default function ReportPreview({
                 setState('no_sections');
                 return;
             }
+
+            if (blob?.type === 'application/invalid-dates') {
+                setState('invalid_dates');
+                return;
+            }
+
 
             if (!blob || blob.size === 0) {
                 setState('empty');
@@ -367,6 +374,28 @@ export default function ReportPreview({
                             </p>
                         </motion.div>
                     )}
+
+                    {/* Invalid Dates State */}
+                    {state === 'invalid_dates' && (
+                        <motion.div
+                            key="invalid_dates"
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center"
+                        >
+                            <div className="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center mb-6 border border-amber-500/20 transition-colors">
+                                <AlertCircle className="w-8 h-8 text-amber-500" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-[var(--card-text)] mb-2 font-primary transition-colors">
+                                Parámetros incompletos
+                            </h3>
+                            <p className="text-sm text-[var(--card-text-muted)] mb-6 max-w-[300px] transition-colors">
+                                Si selecciona una fecha, debe seleccionar ambas.
+                            </p>
+                        </motion.div>
+                    )}
+
                 </AnimatePresence>
             </div>
         </div >

@@ -759,7 +759,8 @@ export async function descargarHistorialCasoAction(idCaso: number): Promise<{
 export async function getHistorialCasosBySolicitante(
   cedula: string,
   fechaInicio?: string,
-  fechaFin?: string
+  fechaFin?: string,
+  term?: string
 ): Promise<{ success: boolean; data?: unknown[]; error?: string }> {
   try {
     const authResult = await requireAuthInServerAction();
@@ -768,7 +769,8 @@ export async function getHistorialCasosBySolicitante(
     }
 
     // 1. Obtener los casos básicos filtrados
-    const casosBasicos = await casosQueries.getHistorialBySolicitante(cedula, fechaInicio, fechaFin);
+    const casosBasicos = await casosQueries.getHistorialBySolicitante(cedula, fechaInicio, fechaFin, term);
+
 
     if (!casosBasicos || casosBasicos.length === 0) {
       return { success: true, data: [] };

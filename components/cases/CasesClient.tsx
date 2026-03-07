@@ -687,12 +687,13 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
       if (result.success && result.data) {
         await generateCasoHistorialZip(result.data as CasoHistorialData);
+        toast.success('Historial del caso descargado correctamente');
       } else {
         toast.error(`Error al descargar el historial: ${result.error || 'Error desconocido'}`);
       }
     } catch (error) {
       logger.error('Error al descargar historial:', error);
-      alert(`Ocurrió un error al descargar el historial del caso: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      toast.error(`Ocurrió un error al descargar el historial del caso: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
   };
 
@@ -713,13 +714,14 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
           equipo: result.data.equipo || [],
           beneficiarios: result.data.beneficiarios || []
         });
+        toast.success('Registro y control descargado correctamente');
       } else {
-        alert('Error al obtener los datos del caso para el reporte.');
+        toast.error('Error al obtener los datos del caso para el reporte.');
       }
 
     } catch (error) {
       logger.error('Error al generar registro:', error);
-      alert('Error al generar el documento');
+      toast.error('Error al generar el documento');
     }
   };
 

@@ -30,7 +30,7 @@ export function calculateAge(birthDate: Date | string | null | undefined): numbe
  */
 export function formatDate(date: Date | string | null | undefined): string {
     if (!date) return '';
-    
+
     if (typeof date === 'string') {
         const match = date.match(/^(\d{4})-(\d{2})-(\d{2})/);
         if (match) {
@@ -81,3 +81,23 @@ export function formatDateTime(date: Date | string | null | undefined, _options?
 
     return '';
 }
+
+/**
+ * Formatea la fecha y hora actual para usar en nombres de archivos.
+ * Formato: DD-MM-YYYY_HH-mm
+ */
+export function formatDateTimeForFilename(): string {
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    let hoursNum = now.getHours();
+    const ampm = hoursNum >= 12 ? 'pm' : 'am';
+    hoursNum = hoursNum % 12;
+    hoursNum = hoursNum ? hoursNum : 12; // la hora '0' debe ser '12'
+    const hours = String(hoursNum).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${day}-${month}-${year}_${hours}.${minutes}${ampm}`;
+}
+
+

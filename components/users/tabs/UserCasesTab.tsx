@@ -186,6 +186,7 @@ export default function UserCasesTab({ casos: initialCasos }: UserCasesTabProps)
             const result = await descargarHistorialCasoAction(idCaso);
             if (result.success && result.data) {
                 await generateCasoHistorialZip(result.data as CasoHistorialData);
+                toast.success('Historial del caso descargado correctamente');
             } else {
                 toast.error(`Error al descargar el historial: ${result.error || 'Error desconocido'}`);
             }
@@ -208,6 +209,7 @@ export default function UserCasesTab({ casos: initialCasos }: UserCasesTabProps)
                     equipo: result.data.equipo || [],
                     beneficiarios: result.data.beneficiarios || []
                 });
+                toast.success('Registro y control descargado correctamente');
             } else {
                 toast.error('Error al obtener los datos del caso para el reporte.');
             }

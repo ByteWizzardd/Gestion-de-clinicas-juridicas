@@ -9,6 +9,8 @@ import { InformeResumenPDF, InformeResumenData } from '../../components/reports/
 import { CasosGroupedData, SocioeconomicoData } from '../../types/reports';
 import InformeSocioeconomicoPDF from '../../components/reports/InformeSocioeconomicoPDF';
 import { generateBarChartImage } from './bar-chart-generator';
+import { formatDateTimeForFilename } from './date-formatter';
+
 
 export const CHART_COLORS = [
   '#8979ff', // Solicitud de Naturalización
@@ -580,7 +582,8 @@ export async function generateTiposCasosPDFReact(
     const link = document.createElement('a');
     link.href = url;
     const periodLabel = term ? `Semestre_${term}` : (fechaInicio && fechaFin ? `${fechaInicio}_${fechaFin}` : 'Historico');
-    link.download = `Tipos_de_Casos_${periodLabel}.pdf`;
+    link.download = `Tipos_de_Casos_${periodLabel}_${formatDateTimeForFilename()}.pdf`;
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -638,7 +641,8 @@ export async function generateEstatusCasosPDFReact(
     const link = document.createElement('a');
     link.href = url;
     const periodLabel = term ? `Semestre_${term}` : (fechaInicio && fechaFin ? `${fechaInicio}_${fechaFin}` : 'Historico');
-    link.download = `Reporte_Estatus_Casos_${periodLabel}.pdf`;
+    link.download = `Reporte_Estatus_Casos_${periodLabel}_${formatDateTimeForFilename()}.pdf`;
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -885,7 +889,8 @@ export async function generateInformeResumenPDFReact(
     const link = document.createElement('a');
     link.href = url;
     const periodLabel = term ? `Semestre_${term}` : (fechaInicio && fechaFin ? `${fechaInicio}_${fechaFin}` : 'Historico');
-    link.download = `Informe_Resumen_${periodLabel}.pdf`;
+    link.download = `Informe_Resumen_${periodLabel}_${formatDateTimeForFilename()}.pdf`;
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1136,7 +1141,8 @@ export async function generateInformeSocioeconomicoPDF(
     const link = document.createElement('a');
     link.href = url;
     const periodLabel = term ? `Semestre_${term}` : (fechaInicio && fechaFin ? `${fechaInicio}_${fechaFin}` : 'Historico');
-    link.download = `Informe_Socioeconomico_${periodLabel}.pdf`;
+    link.download = `Informe_Socioeconomico_${periodLabel}_${formatDateTimeForFilename()}.pdf`;
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

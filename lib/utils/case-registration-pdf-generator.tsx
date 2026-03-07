@@ -5,6 +5,8 @@ import { pdf } from '@react-pdf/renderer';
 import { logger } from '@/lib/utils/logger';
 import { RegistroControlCasosPDF } from '@/components/cases/RegistroControlCasosPDF';
 import { imageToBase64 } from '@/lib/utils/pdf-generator-react';
+import { formatDateTimeForFilename } from './date-formatter';
+
 
 import { registrarAuditoriaReporteAction } from '@/app/actions/reports';
 import { TIPOS_REPORTE } from '../constants/reports';
@@ -32,9 +34,16 @@ export async function generateRegistroControlCasosPDF(data: { caso: any; equipo:
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `Registro_Control_Caso_${data.caso?.id_caso || 'N/A'}.pdf`;
+
+        const idCaso = data.caso?.id_caso || 'N/A';
+        link.download = `Registro_Control_Caso_${idCaso}_${formatDateTimeForFilename()}.pdf`;
+
+
         document.body.appendChild(link);
+
+
         link.click();
+
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
 

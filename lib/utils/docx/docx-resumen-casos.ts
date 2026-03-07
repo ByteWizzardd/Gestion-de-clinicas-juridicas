@@ -25,6 +25,8 @@ import {
     formatGroupTitle
 } from '../pdf-generator-react';
 import { formatDate, base64ToUint8Array, createEmptyPortraitPage } from './docx-utils';
+import { formatDateTimeForFilename } from '../date-formatter';
+
 import {
     generateTitleImage,
     generateSubtitleImage,
@@ -179,7 +181,10 @@ export async function generateResumenCasosDOCX(
         if (!isSectionSelected('beneficiariosPorParentesco')) filteredData.beneficiariosPorParentesco = [];
 
         const sections: any[] = [];
+        const emissionStr = formatDateTimeForFilename();
         const reportTitle = `Informe Resumen de Casos${term ? ` Semestre ${term}` : (fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : ' Histórico')}`;
+
+
 
         // 1. Primera Hoja con Portada (con fecha sobrepuesta)
         const portadaBase64 = await imageToBase64('/portada reporte.png');
@@ -456,7 +461,8 @@ export async function generateResumenCasosDOCX(
         const doc = new Document({ sections: sections });
         const blob = await Packer.toBlob(doc);
         const periodLabel = term ? `Semestre_${term}` : (fechaInicio && fechaFin ? `${fechaInicio}_${fechaFin}` : 'Historico');
-        saveAs(blob, `Informe_Resumen_Casos_${periodLabel}.docx`);
+        saveAs(blob, `Informe_Resumen_Casos_${periodLabel}_${emissionStr}.docx`);
+
     } catch (error) {
         logger.error('Error al generar DOCX:', error);
         throw error;

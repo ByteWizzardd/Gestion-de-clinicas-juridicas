@@ -220,6 +220,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
       const result = await descargarHistorialCasoAction(parseInt(id));
       if (result.success && result.data) {
         await generateCasoHistorialZip(result.data as CasoHistorialData);
+        toast.success('Historial del caso descargado correctamente');
       } else {
         toast.error(`Error al descargar el historial: ${result.error || 'Error desconocido'}`);
       }
@@ -237,6 +238,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
         equipo: caso.equipo || [],
         beneficiarios: caso.beneficiarios || []
       });
+      toast.success('Registro y control descargado correctamente');
     } catch (error) {
       logger.error('Error al generar registro:', error);
       toast.error('Error al generar el documento');

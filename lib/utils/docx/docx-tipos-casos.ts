@@ -26,6 +26,8 @@ import {
     formatGroupTitle
 } from '../pdf-generator-react';
 import { formatDate, base64ToUint8Array } from './docx-utils';
+import { formatDateTimeForFilename } from '../date-formatter';
+
 import {
     generateTitleImage,
     generateBannerImage,
@@ -252,7 +254,10 @@ export async function generateTiposCasosDOCX(
         const groupedData = groupDataByMateriaSubcategoria(data);
         const sections: any[] = [];
 
+        const emissionStr = formatDateTimeForFilename();
         const reportTitle = `Tipos de Caso${term ? ` Semestre ${term}` : (fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : '')}`;
+
+
 
         // Primera hoja vacía con orientación vertical y márgenes estándar de Word
         sections.push(createEmptyPortraitPage());
@@ -298,7 +303,8 @@ export async function generateTiposCasosDOCX(
         const doc = new Document({ sections: sections });
         const blob = await Packer.toBlob(doc);
         const periodLabel = term ? `Semestre_${term}` : (fechaInicio && fechaFin ? `${fechaInicio}_${fechaFin}` : 'Historico');
-        saveAs(blob, `Tipos_de_Casos_${periodLabel}.docx`);
+        saveAs(blob, `Tipos_de_Casos_${periodLabel}_${emissionStr}.docx`);
+
     } catch (error) {
         logger.error('Error al generar DOCX:', error);
         throw error;
