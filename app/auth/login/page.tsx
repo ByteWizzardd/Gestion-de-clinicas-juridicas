@@ -113,7 +113,7 @@ export default function LoginPage() {
                     {!isExiting && (
                         <motion.div
                             key="login-form"
-                            className="w-full max-w-md mx-auto sm:mx-0 sm:pl-15"
+                            className="w-full max-w-md mx-auto sm:mx-0 sm:pl-15 relative z-10"
                             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
@@ -186,14 +186,14 @@ export default function LoginPage() {
                     {!isExiting && (
                         <motion.div
                             key="circle"
-                            className="hidden lg:block absolute right-5 top-1/2 -translate-y-1/2 translate-x-1/2 font-primary"
+                            className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-0 font-primary"
                             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}>
-                            <div className="lg:w-[1200px] lg:h-[1200px] xl:w-[1620px] xl:h-[1620px] flex flex-col justify-center items-start rounded-full border-4 border-primary bg-primary">
-                                <p className="text-white w-1/2 font-semibold text-5xl xl:text-7xl text-right pl-50 pr-20">Juntos por la Justicia Social.</p>
-                                <p className="text-white text-right w-1/2 text-3xl/8 xl:text-4xl/8 pl-30 pr-20 mt-2">ODS 16 - Promoviendo la paz y la inclusión en Ciudad Guayana.</p>
+                            <div className="lg:w-[900px] lg:h-[900px] xl:w-[1300px] xl:h-[1300px] 2xl:w-[1620px] 2xl:h-[1620px] flex flex-col justify-center items-start rounded-full border-4 border-primary bg-primary">
+                                <p className="text-white w-1/2 font-semibold text-3xl xl:text-6xl 2xl:text-7xl text-right pl-10 xl:pl-40 2xl:pl-50 pr-10 xl:pr-20">Juntos por la Justicia Social.</p>
+                                <p className="text-white text-right w-1/2 text-xl/7 xl:text-3xl/8 2xl:text-4xl/8 pl-10 xl:pl-32 2xl:pl-40 pr-10 xl:pr-20 mt-2">ODS 16 - Promoviendo la paz y la inclusión en Ciudad Guayana.</p>
                             </div>
                         </motion.div>)}
                 </AnimatePresence>
