@@ -47,16 +47,10 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
         return;
       }
 
-      // Ahora el resultado contiene la URL directa del archivo en Vercel Blob
-      // Abrir la URL en una nueva pestaña para descargar
-      const link = document.createElement('a');
-      link.href = result.data.url_documento;
-      link.download = result.data.nombre_archivo;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // Usar window.open() para compatibilidad con navegadores móviles (iOS Safari, Chrome Android)
+      // El approach de crear un <a> dinámico y hacer .click() es bloqueado por navegadores móviles
+      // cuando el click no proviene directamente de un gesto del usuario.
+      window.open(result.data.url_documento, '_blank', 'noopener,noreferrer');
     } catch (error) {
       logger.error('Error al descargar:', error);
       alert('Error al descargar el archivo');
@@ -103,34 +97,51 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
   const getFileIcon = (mimeType: string) => {
     const mimeLower = mimeType.toLowerCase();
 
-    // PDF: application/pdf
     if (mimeLower === 'application/pdf' || mimeLower.includes('pdf')) {
       return <FileText className="w-8 h-8 text-[var(--card-text-muted)] opacity-60" />;
     }
-
-    // Imágenes: image/*
     if (mimeLower.startsWith('image/')) {
       return <Image className="w-8 h-8 text-[var(--card-text-muted)] opacity-60" />;
     }
-
-    // Word: application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document
-    if (mimeLower.includes('msword') ||
-      mimeLower.includes('wordprocessingml') ||
-      mimeLower.includes('application/vnd.ms-word') ||
-      mimeLower.includes('docx')) {
+    if (mimeLower.includes('msword') || mimeLower.includes('wordprocessingml') || mimeLower.includes('docx')) {
       return <FileEdit className="w-8 h-8 text-[var(--card-text-muted)] opacity-60" />;
     }
-
-    // Excel: application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
-    if (mimeLower.includes('ms-excel') ||
-      mimeLower.includes('spreadsheetml') ||
-      mimeLower.includes('application/vnd.ms-excel') ||
-      mimeLower.includes('xlsx')) {
+    if (mimeLower.includes('ms-excel') || mimeLower.includes('spreadsheetml') || mimeLower.includes('xlsx')) {
       return <FileSpreadsheet className="w-8 h-8 text-[var(--card-text-muted)] opacity-60" />;
     }
-
-    // Por defecto
     return <File className="w-8 h-8 text-[var(--card-text-muted)] opacity-60" />;
+  };
+
+  const getFileTypeName = (mimeType: string): string => {
+    const mimeLower = mimeType.toLowerCase();
+
+    if (mimeLower === 'application/pdf' || mimeLower.includes('pdf'))
+      return 'Documento PDF';
+    if (mimeLower.includes('wordprocessingml') || mimeLower.includes('msword') || mimeLower.includes('docx'))
+      return 'Documento Word (DOCX)';
+    if (mimeLower.includes('spreadsheetml') || mimeLower.includes('ms-excel') || mimeLower.includes('xlsx'))
+      return 'Hoja de cálculo Excel (XLSX)';
+    if (mimeLower.includes('presentationml') || mimeLower.includes('powerpoint') || mimeLower.includes('pptx'))
+      return 'Presentación PowerPoint (PPTX)';
+    if (mimeLower === 'image/jpeg' || mimeLower === 'image/jpg')
+      return 'Imagen JPEG';
+    if (mimeLower === 'image/png')
+      return 'Imagen PNG';
+    if (mimeLower === 'image/gif')
+      return 'Imagen GIF';
+    if (mimeLower === 'image/webp')
+      return 'Imagen WebP';
+    if (mimeLower.startsWith('image/'))
+      return 'Imagen';
+    if (mimeLower === 'text/plain')
+      return 'Archivo de texto (TXT)';
+    if (mimeLower === 'text/csv')
+      return 'Archivo CSV';
+    if (mimeLower === 'application/zip' || mimeLower === 'application/x-zip-compressed')
+      return 'Archivo ZIP';
+    // Fallback: mostrar la parte final del MIME de forma legible
+    const parts = mimeType.split('/');
+    return parts[parts.length - 1].toUpperCase();
   };
 
   if (!soportes || soportes.length === 0) {
@@ -225,7 +236,7 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
                 <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label className="text-sm font-medium text-[var(--card-text-muted)]">Tipo de Archivo</label>
-                    <p className="text-base text-[var(--card-text)] mt-1">{soporte.tipo_mime.replace(/^application\//, '')}</p>
+                    <p className="text-base text-[var(--card-text)] mt-1">{getFileTypeName(soporte.tipo_mime)}</p>
                   </div>
                 </div>
 
