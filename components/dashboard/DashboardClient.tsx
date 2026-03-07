@@ -203,17 +203,17 @@ export default function DashboardClient({
             </motion.div>
 
             <motion.div
-              className="bg-(--card-bg) border border-(--card-border) rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] p-4 md:p-6 w-full flex-1 flex flex-col min-h-0 transition-colors"
+              className="bg-(--card-bg) border border-(--card-border) rounded-2xl md:rounded-3xl shadow-[0px_4px_10px_0px_rgba(0,0,0,0.30)] p-4 md:p-6 w-full flex-1 flex flex-col overflow-y-auto scrollbar-thin transition-colors"
               initial={{ opacity: 0.5 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.1, ease: "easeOut" }}
             >
-              <div className="flex flex-col md:flex-row gap-4 md:gap-6 flex-1 min-h-0">
-                <div className="w-full md:w-1/2 flex flex-col min-h-0 px-2">
+              <div className="flex flex-col md:flex-row gap-4 md:gap-6 flex-1">
+                <div className="w-full md:w-1/2 flex flex-col px-2">
                   <h3 className="text-xl md:text-2xl font-semibold text-(--card-text) mb-3 md:mb-4 shrink-0 transition-colors">
                     {isCoordinator ? 'Agenda General' : 'Mi Agenda'}
                   </h3>
-                  <div className="flex-1 overflow-y-auto pr-2 min-h-[200px] md:min-h-0">
+                  <div className="flex-1 overflow-y-visible md:overflow-y-auto pr-2 min-h-[200px] md:min-h-0">
                     <DashboardAppointmentList
                       appointments={appointments}
                       selectedDate={selectedDate}
@@ -223,8 +223,8 @@ export default function DashboardClient({
                     />
                   </div>
                 </div>
-                <div className="w-full md:w-1/2 flex items-center justify-center min-h-[300px] md:min-h-0">
-                  <div className="w-full h-full">
+                <div className="w-full md:w-1/2 flex items-center justify-center min-h-[320px] md:min-h-0">
+                  <div className="w-full h-full max-w-[400px] md:max-w-none">
                     <CompactCalendar
                       selectedDate={selectedDate}
                       onDateChange={setSelectedDate}
