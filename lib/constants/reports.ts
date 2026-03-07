@@ -11,6 +11,7 @@ export const TIPOS_REPORTE = {
     DISTRIBUCION_ESTATUS: 'distribucion-estatus',
     TENDENCIA_CASOS: 'tendencia-casos',
     TOP_CASOS: 'top-casos',
+    REGISTRO_CONTROL_CASO: 'registro-control-caso',
 } as const;
 
 export const DESCRIPCIONES_REPORTE: Record<string, string> = {
@@ -26,4 +27,5 @@ export const DESCRIPCIONES_REPORTE: Record<string, string> = {
     'distribucion-estatus': 'Distribución por Estatus',
     'tendencia-casos': 'Tendencia de Carga de Casos',
     'top-casos': 'Casos Más Frecuentes',
+    'registro-control-caso': 'Registro y Control de Caso',
 };

@@ -25,6 +25,7 @@ import type {
   BeneficiariosGroupedData,
   SocioeconomicoData
 } from '@/types/reports';
+import { TIPOS_REPORTE } from '@/lib/constants/reports';
 
 
 
@@ -700,6 +701,15 @@ export async function descargarFichaSolicitanteAction(cedula: string): Promise<{
       return { success: false, error: fichaData.error || 'Error al obtener datos del solicitante' };
     }
 
+    // Registrar auditoría
+    await registrarAuditoriaReporteAction({
+      tipoReporte: TIPOS_REPORTE.FICHA_SOLICITANTE,
+      filtrosAplicados: { cedulaSolicitante: cedula },
+      formato: 'ZIP',
+      cedulaSolicitante: cedula,
+      operacion: 'generacion',
+    });
+
     // Devolver los datos para que el cliente genere el PDF
     return {
       success: true,
@@ -724,6 +734,14 @@ export async function descargarHistorialCasoAction(idCaso: number): Promise<{
     if (!historialData.success || !historialData.data) {
       return { success: false, error: historialData.error || 'Error al obtener datos del caso' };
     }
+
+    // Registrar auditoría
+    await registrarAuditoriaReporteAction({
+      tipoReporte: TIPOS_REPORTE.HISTORIAL_CASO,
+      filtrosAplicados: { idCaso: idCaso },
+      formato: 'ZIP',
+      operacion: 'generacion',
+    });
 
     // Devolver los datos para que el cliente genere el PDF
     return {

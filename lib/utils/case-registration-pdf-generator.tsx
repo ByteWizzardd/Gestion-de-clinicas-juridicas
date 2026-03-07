@@ -6,8 +6,19 @@ import { logger } from '@/lib/utils/logger';
 import { RegistroControlCasosPDF } from '@/components/cases/RegistroControlCasosPDF';
 import { imageToBase64 } from '@/lib/utils/pdf-generator-react';
 
+import { registrarAuditoriaReporteAction } from '@/app/actions/reports';
+import { TIPOS_REPORTE } from '../constants/reports';
+
 export async function generateRegistroControlCasosPDF(data: { caso: any; equipo: any[]; beneficiarios: any[] }): Promise<void> {
     try {
+        // Registrar auditoria
+        await registrarAuditoriaReporteAction({
+            tipoReporte: TIPOS_REPORTE.REGISTRO_CONTROL_CASO,
+            filtrosAplicados: { idCaso: data.caso?.id_caso },
+            formato: 'PDF',
+            operacion: 'generacion',
+        });
+
         const logoBase64 = await imageToBase64('/logo escuela derecho.png');
 
         const doc = React.createElement(RegistroControlCasosPDF, {

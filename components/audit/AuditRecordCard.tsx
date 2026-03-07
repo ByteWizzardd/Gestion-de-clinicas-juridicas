@@ -1310,8 +1310,10 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             'listado-casos': 'Listado de Casos',
             'estadisticas-globales': 'Estadísticas Globales',
             'distribucion-tramite': 'Tipos de Caso',
-            'historial-solicitante': 'Historial de Casos',
-            'expediente-solicitante': 'Ficha Resumen del Solicitante'
+            'historial-solicitante': 'Historial de Casos del Solicitante',
+            'expediente-solicitante': 'Ficha Resumen del Solicitante',
+            'historial-caso': 'Historial del Caso',
+            'registro-control-caso': 'Registro Control Caso'
           };
           return map[tipo] || tipo
             .split('-')
@@ -1335,6 +1337,19 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                     (r.filtros_aplicados &&
                       (r.filtros_aplicados as any).nombreSolicitante) ||
                     r.cedula_solicitante}
+                </Link>
+              </span>
+            )}
+            {/* Si es un reporte específico de un caso, mostrar el ID y link */}
+            {r.filtros_aplicados && (r.filtros_aplicados as any).idCaso && (
+              <span className="font-normal text-[var(--card-text-muted)] flex items-center gap-1">
+                -
+                <Link
+                  href={`/dashboard/cases/${(r.filtros_aplicados as any).idCaso}`}
+                  className="text-primary hover:underline font-medium transition-colors"
+                  onClick={(e: any) => e.stopPropagation()}
+                >
+                  Caso #{(r.filtros_aplicados as any).idCaso}
                 </Link>
               </span>
             )}
@@ -4737,8 +4752,10 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
             'listado-casos': 'Listado de Casos',
             'estadisticas-globales': 'Estadísticas Globales',
             'distribucion-tramite': 'Tipos de Caso',
-            'historial-solicitante': 'Historial de Casos',
-            'expediente-solicitante': 'Ficha Resumen del Solicitante'
+            'historial-solicitante': 'Historial de Casos del Solicitante',
+            'expediente-solicitante': 'Ficha Resumen del Solicitante',
+            'historial-caso': 'Historial del Caso',
+            'registro-control-caso': 'Registro Control Caso'
           };
           return map[tipo] || tipo
             .split('-')
@@ -4794,6 +4811,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                           term: 'Período Académico',
                           solicitanteId: 'Solicitante',
                           casoId: 'Caso',
+                          idCaso: 'Id Caso',
                           formato: 'Formato',
                           tipoReporte: 'Tipo de Reporte',
                           estado: 'Estado',

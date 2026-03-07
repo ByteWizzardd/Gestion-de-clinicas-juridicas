@@ -2430,6 +2430,7 @@ export async function getReportesGeneradosAuditAction(filters?: AuditFilters) {
     });
     return records.map((r) => ({
       ...r,
+      filtros_aplicados: typeof r.filtros_aplicados === 'string' ? JSON.parse(r.filtros_aplicados) : r.filtros_aplicados,
       fecha: r.fecha_generacion,
       usuario_accion: r.id_usuario_genero,
       nombre_completo_usuario_accion: r.nombre_completo_usuario_genero || undefined,
@@ -2463,6 +2464,7 @@ export async function getReportesVistaPreviaAuditAction(filters?: AuditFilters) 
     });
     return records.map((r) => ({
       ...r,
+      filtros_aplicados: typeof r.filtros_aplicados === 'string' ? JSON.parse(r.filtros_aplicados) : r.filtros_aplicados,
       fecha: r.fecha_generacion,
       usuario_accion: r.id_usuario_genero,
       nombre_completo_usuario_accion: r.nombre_completo_usuario_genero || undefined,
