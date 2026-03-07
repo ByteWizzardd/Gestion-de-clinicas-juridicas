@@ -557,16 +557,11 @@ export default function AuditClient() {
     ];
 
     // Ordenar por fecha de última actividad
-    // Helper para parsear fechas de PostgreSQL correctamente
+    // El SQL ya devuelve las fechas en formato ISO 8601 (YYYY-MM-DDTHH24:MI:SS)
     const parseDate = (dateStr: string | null | undefined): number => {
       if (!dateStr) return 0;
-      // PostgreSQL devuelve "2026-02-03 21:32:53.167599+00" pero JS espera ISO con "T"
-      // Convertir a formato ISO: reemplazar espacio por T y normalizar timezone
-      const normalized = dateStr
-        .replace(' ', 'T')
-        .replace(/\+00$/, 'Z')
-        .replace(/\+00:00$/, 'Z');
-      const timestamp = new Date(normalized).getTime();
+      // El SQL usa to_char con formato 'YYYY-MM-DD"T"HH24:MI:SS', que new Date() parsea sin problemas
+      const timestamp = new Date(dateStr).getTime();
       return isNaN(timestamp) ? 0 : timestamp;
     };
 
