@@ -112,6 +112,15 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
     const ipDireccion = headersList.get('x-forwarded-for') || 'unknown';
     const dispositivo = headersList.get('user-agent') || 'unknown';
 
+    // Auto-cerrar sesiones expiradas. Esto limpiará cualquier sesión "zombie"
+    // cada vez que un usuario intente iniciar sesión, manteniendo limpia la BD.
+    try {
+      const { auditoriaSesionesQueries } = await import('@/lib/db/queries/auditoria-sesiones.queries');
+      await auditoriaSesionesQueries.closeExpiredSessions();
+    } catch (e) {
+      // Ignorar error para no interrumpir el login
+    }
+
     // Continuar con el login normal
     const result = await authService.login({
       nombreUsuario,

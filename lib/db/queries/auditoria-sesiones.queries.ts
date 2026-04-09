@@ -21,6 +21,28 @@ export type SortOrder = 'asc' | 'desc';
 
 export const auditoriaSesionesQueries = {
     // ==========================================
+    // AUTO-CIERRE DE SESIONES EXPIRADAS
+    // ==========================================
+    closeExpiredSessions: async (): Promise<void> => {
+        try {
+            const expiresEnv = process.env.JWT_EXPIRES_IN || '30d';
+            let intervalStr = '30 days';
+            if (expiresEnv.endsWith('d')) {
+                intervalStr = `${expiresEnv.replace('d', '')} days`;
+            } else if (expiresEnv.endsWith('h')) {
+                intervalStr = `${expiresEnv.replace('h', '')} hours`;
+            } else if (expiresEnv.endsWith('m')) {
+                intervalStr = `${expiresEnv.replace('m', '')} minutes`;
+            }
+            
+            const safeQuery = loadSQL('auditoria-sesiones/auto-close-expired.sql');
+            await pool.query(safeQuery, [intervalStr]);
+        } catch (error) {
+            logger.error('Error auto-cerrando sesiones expiradas', error);
+        }
+    },
+
+    // ==========================================
     // TODAS LAS SESIONES
     // ==========================================
     getAll: async (limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc', userId?: string, startDate?: Date, endDate?: Date): Promise<SesionAuditoria[]> => {

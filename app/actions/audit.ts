@@ -2259,6 +2259,9 @@ export async function getSesionesAuditAction(filters?: AuditFilters & { limit?: 
 
   try {
     const { auditoriaSesionesQueries } = await import('@/lib/db/queries/auditoria-sesiones.queries');
+    
+    // Auto-completar sesiones expiradas silenciosamente antes de cargar la información
+    await auditoriaSesionesQueries.closeExpiredSessions();
 
     const limit = filters?.limit || 50;
     const offset = filters?.offset || 0;
