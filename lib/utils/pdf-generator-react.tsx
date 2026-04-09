@@ -582,7 +582,7 @@ export async function generateTiposCasosPDFReact(
     const link = document.createElement('a');
     link.href = url;
     const periodLabel = term ? `Semestre_${term}` : (fechaInicio && fechaFin ? `${fechaInicio}_${fechaFin}` : 'Historico');
-    link.download = `Tipos_de_Casos_${periodLabel}_${formatDateTimeForFilename()}.pdf`;
+    link.download = `Tipos_de_Caso_${periodLabel}_${formatDateTimeForFilename()}.pdf`;
 
     document.body.appendChild(link);
     link.click();
@@ -641,7 +641,7 @@ export async function generateEstatusCasosPDFReact(
     const link = document.createElement('a');
     link.href = url;
     const periodLabel = term ? `Semestre_${term}` : (fechaInicio && fechaFin ? `${fechaInicio}_${fechaFin}` : 'Historico');
-    link.download = `Reporte_Estatus_Casos_${periodLabel}_${formatDateTimeForFilename()}.pdf`;
+    link.download = `Estatus_de_Casos_${periodLabel}_${formatDateTimeForFilename()}.pdf`;
 
     document.body.appendChild(link);
     link.click();
@@ -889,7 +889,7 @@ export async function generateInformeResumenPDFReact(
     const link = document.createElement('a');
     link.href = url;
     const periodLabel = term ? `Semestre_${term}` : (fechaInicio && fechaFin ? `${fechaInicio}_${fechaFin}` : 'Historico');
-    link.download = `Informe_Resumen_${periodLabel}_${formatDateTimeForFilename()}.pdf`;
+    link.download = `Resumen_de_Casos_${periodLabel}_${formatDateTimeForFilename()}.pdf`;
 
     document.body.appendChild(link);
     link.click();
@@ -1141,7 +1141,7 @@ export async function generateInformeSocioeconomicoPDF(
     const link = document.createElement('a');
     link.href = url;
     const periodLabel = term ? `Semestre_${term}` : (fechaInicio && fechaFin ? `${fechaInicio}_${fechaFin}` : 'Historico');
-    link.download = `Informe_Socioeconomico_${periodLabel}_${formatDateTimeForFilename()}.pdf`;
+    link.download = `Reporte_Socioeconomico_${periodLabel}_${formatDateTimeForFilename()}.pdf`;
 
     document.body.appendChild(link);
     link.click();

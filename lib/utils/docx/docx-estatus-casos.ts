@@ -276,7 +276,7 @@ export async function generateEstatusCasosDOCX(
         const doc = new Document({ sections: sections });
         const blob = await Packer.toBlob(doc);
         const periodLabel = term ? `Semestre_${term}` : (fechaInicio && fechaFin ? `${fechaInicio}_${fechaFin}` : 'Historico');
-        saveAs(blob, `Reporte_Estatus_Casos_${periodLabel}_${emissionStr}.docx`);
+        saveAs(blob, `Estatus_de_Casos_${periodLabel}_${emissionStr}.docx`);
 
     } catch (error) {
         logger.error('Error al generar DOCX de estatus:', error);

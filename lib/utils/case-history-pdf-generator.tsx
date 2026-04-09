@@ -269,7 +269,7 @@ export async function generateHistorialSolicitanteZIP(
         const nombreParaArchivo = apellidosArray.length > 1 ? `${apellidosArray[0]} ${apellidosArray[apellidosArray.length - 1]}` : apellidosArray[0];
 
         const safeName = nombreParaArchivo.replace(/[^a-zA-Z0-9]/g, '_');
-        link.download = `Historial_Solicitante_${safeName}_${emissionStr}.zip`;
+        link.download = `Historial_de_Casos_del_Solicitante_${safeName}_${emissionStr}.zip`;
 
 
 
@@ -381,7 +381,7 @@ export async function generateExpedienteSolicitanteZIP(
         const emissionStr = timestamp;
 
         // Nombre descriptivo: Ficha_Resumen_[Solicitante]_[Fecha].zip
-        link.download = `Ficha_Resumen_${safeName}_${emissionStr}.zip`;
+        link.download = `Ficha_Resumen_del_Solicitante_${safeName}_${emissionStr}.zip`;
 
 
 

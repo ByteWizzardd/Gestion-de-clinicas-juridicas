@@ -309,7 +309,7 @@ export default function ReportsPage() {
 
     const handleGenerateReport = async (reportType: string) => {
         if (reportType === 'Tipos de Caso' ||
-            reportType === 'Reporte de Estatus de Casos' ||
+            reportType === 'Estatus de Casos' ||
             reportType === 'Resumen de Casos' ||
             reportType === 'Reporte Socioeconómico' ||
             reportType === 'Historial de Casos del Solicitante' ||
@@ -377,7 +377,7 @@ export default function ReportsPage() {
                         selectedResumenSections as unknown as Record<string, boolean>
                     );
                 }
-            } else if (tipoReporteActual === 'Reporte de Estatus de Casos') {
+            } else if (tipoReporteActual === 'Estatus de Casos') {
                 const { getCasosGroupedByEstatus } = await import('@/app/actions/reports');
                 const result = await getCasosGroupedByEstatus(fechaInicio, fechaFin, term);
                 if (signal.aborted) return null;
@@ -473,7 +473,7 @@ export default function ReportsPage() {
         // Map tipoReporteActual label to constant
         const tipoReporteMap: Record<string, string> = {
             'Tipos de Caso': TIPOS_REPORTE.DISTRIBUCION_TRAMITE,
-            'Reporte de Estatus de Casos': TIPOS_REPORTE.DISTRIBUCION_ESTATUS,
+            'Estatus de Casos': TIPOS_REPORTE.DISTRIBUCION_ESTATUS,
             'Resumen de Casos': TIPOS_REPORTE.INFORME_RESUMEN,
             'Reporte Socioeconómico': TIPOS_REPORTE.INFORME_SOCIOECONOMICO,
             'Historial de Casos del Solicitante': TIPOS_REPORTE.HISTORIAL_SOLICITANTE,
@@ -728,7 +728,7 @@ export default function ReportsPage() {
                     } else {
                         toast.error('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
                     }
-                } else if (tipoReporteActual === 'Reporte de Estatus de Casos') {
+                } else if (tipoReporteActual === 'Estatus de Casos') {
                     // Generar reporte de estatus de casos
                     const { getCasosGroupedByEstatus } = await import('@/app/actions/reports');
                     const result = await getCasosGroupedByEstatus(
@@ -960,9 +960,9 @@ export default function ReportsPage() {
 
                     {/* 2. Estatus de Casos (Top Right) */}
                     <ReportCard
-                        title="Reporte de Estatus de Casos"
+                        title="Estatus de Casos"
                         icon={<Clock className="w-full h-full" strokeWidth={1.5} />}
-                        onGenerate={() => handleGenerateReport('Reporte de Estatus de Casos')}
+                        onGenerate={() => handleGenerateReport('Estatus de Casos')}
                         buttonColor="orange"
                     />
 
@@ -1074,7 +1074,7 @@ export default function ReportsPage() {
 
                         {/* Título */}
                         <h2 className="text-xl font-normal text-foreground mb-4">
-                            {tipoReporteActual === 'Reporte de Estatus de Casos'
+                            {tipoReporteActual === 'Estatus de Casos'
                                 ? 'Rango de Fechas - Estatus de Casos'
                                 : tipoReporteActual === 'Resumen de Casos'
                                     ? 'Rango de Fechas - Resumen de Casos'
@@ -1543,7 +1543,7 @@ export default function ReportsPage() {
                                 onPreviewGenerated={handlePreviewGenerated}
                                 icon={
                                     tipoReporteActual === 'Resumen de Casos' ? <FileBarChart className="w-10 h-10 opacity-80" style={{ color: '#9c2327' }} />
-                                        : tipoReporteActual === 'Reporte de Estatus de Casos' ? <Clock className="w-10 h-10 opacity-80" style={{ color: '#9c2327' }} />
+                                        : tipoReporteActual === 'Estatus de Casos' ? <Clock className="w-10 h-10 opacity-80" style={{ color: '#9c2327' }} />
                                             : tipoReporteActual === 'Tipos de Caso' ? <Briefcase className="w-10 h-10 opacity-80" style={{ color: '#9c2327' }} />
                                                 : tipoReporteActual === 'Historial de Casos del Solicitante' ? <History className="w-10 h-10 opacity-80" style={{ color: '#9c2327' }} />
                                                     : tipoReporteActual === 'Ficha Resumen del Solicitante' ? <User className="w-10 h-10 opacity-80" style={{ color: '#9c2327' }} />
