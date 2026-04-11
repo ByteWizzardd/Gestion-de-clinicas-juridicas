@@ -1,6 +1,7 @@
 'use client';
 
 import { Users, User, Mail, Phone, GraduationCap, Briefcase } from 'lucide-react';
+import Link from 'next/link';
 
 interface TeamTabProps {
   equipo?: Array<{
@@ -46,7 +47,12 @@ export default function TeamTab({ equipo }: TeamTabProps) {
                   <div>
                     <label className="text-sm font-medium text-[var(--card-text-muted)]">Nombre Completo</label>
                     <p className="text-base text-[var(--card-text)] mt-1">
-                      {profesor.nombre_completo}
+                      <Link
+                        href={`/dashboard/users/${profesor.cedula}`}
+                        className="text-primary hover:underline font-medium transition-colors cursor-pointer"
+                      >
+                        {profesor.nombre_completo}
+                      </Link>
                     </p>
                   </div>
                   <div>
@@ -107,7 +113,12 @@ export default function TeamTab({ equipo }: TeamTabProps) {
                   <div>
                     <label className="text-sm font-medium text-[var(--card-text-muted)]">Nombre Completo</label>
                     <p className="text-base text-[var(--card-text)] mt-1">
-                      {estudiante.nombre_completo}
+                      <Link
+                        href={`/dashboard/users/${estudiante.cedula}`}
+                        className="text-primary hover:underline font-medium transition-colors cursor-pointer"
+                      >
+                        {estudiante.nombre_completo}
+                      </Link>
                     </p>
                   </div>
                   <div>

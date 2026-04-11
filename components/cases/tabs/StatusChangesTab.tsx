@@ -2,6 +2,7 @@
 
 import { TrendingUp, User, Calendar, MessageSquare } from 'lucide-react';
 import { formatDate } from '@/lib/utils/date-formatter';
+import Link from 'next/link';
 
 interface StatusChangesTabProps {
   cambiosEstatus?: Array<{
@@ -72,7 +73,12 @@ export default function StatusChangesTab({ cambiosEstatus }: StatusChangesTabPro
             <div>
               <label className="text-sm font-medium text-gray-500 dark:text-[var(--card-text-muted)]">Cambiado por</label>
               <p className="text-base text-gray-900 dark:text-[var(--card-text)] mt-1">
-                {cambio.nombre_completo_usuario}
+                <Link
+                  href={`/dashboard/users/${cambio.id_usuario_cambia}`}
+                  className="text-primary hover:underline font-medium transition-colors cursor-pointer"
+                >
+                  {cambio.nombre_completo_usuario}
+                </Link>
               </p>
             </div>
           </div>
