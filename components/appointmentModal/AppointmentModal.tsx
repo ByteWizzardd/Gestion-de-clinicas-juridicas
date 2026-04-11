@@ -49,9 +49,15 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
   const [endDate, setEndDate] = useState<Date | null>(
     appointment && appointment.nextAppointmentDate
       ? (() => {
-        // nextAppointmentDate viene DD/MM/YYYY → parsear localmente para evitar desfase UTC
-        const [dd, mm, yyyy] = appointment.nextAppointmentDate.split('/');
-        return new Date(parseInt(yyyy, 10), parseInt(mm, 10) - 1, parseInt(dd, 10));
+        // nextAppointmentDate puede venir como DD/MM/YYYY o YYYY-MM-DD
+        if (appointment.nextAppointmentDate.includes('/')) {
+          const [dd, mm, yyyy] = appointment.nextAppointmentDate.split('/');
+          return new Date(parseInt(yyyy, 10), parseInt(mm, 10) - 1, parseInt(dd, 10));
+        } else if (appointment.nextAppointmentDate.includes('-')) {
+          const [yyyy, mm, dd] = appointment.nextAppointmentDate.split('-');
+          return new Date(parseInt(yyyy, 10), parseInt(mm, 10) - 1, parseInt(dd, 10));
+        }
+        return new Date(appointment.nextAppointmentDate);
       })()
       : null
   );
@@ -164,22 +170,26 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
     if (!isEditing && !date) {
       newErrors.date = 'Este campo es requerido';
     } else if (date) {
-      const dateString = date.toISOString().slice(0, 10);
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!dateRegex.test(dateString)) {
-        newErrors.date = 'Formato de fecha inválido';
+      if (isNaN(date.getTime())) {
+        newErrors.date = 'Fecha inválida';
       } else {
-        const dateObj = new Date(dateString);
-        if (isNaN(dateObj.getTime())) {
-          newErrors.date = 'Fecha inválida';
-        } else if (!isEditing) {
-          // Registrar Cita: la fecha debe ser hoy o en el pasado
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          dateObj.setHours(0, 0, 0, 0);
+        const dateString = date.toISOString().slice(0, 10);
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(dateString)) {
+          newErrors.date = 'Formato de fecha inválido';
+        } else {
+          const dateObj = new Date(dateString);
+          if (isNaN(dateObj.getTime())) {
+            newErrors.date = 'Fecha inválida';
+          } else if (!isEditing) {
+            // Registrar Cita: la fecha debe ser hoy o en el pasado
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            dateObj.setHours(0, 0, 0, 0);
 
-          if (dateObj > today) {
-            newErrors.date = 'La fecha del encuentro no puede ser posterior a hoy';
+            if (dateObj > today) {
+              newErrors.date = 'La fecha del encuentro no puede ser posterior a hoy';
+            }
           }
         }
       }
@@ -187,18 +197,22 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
 
     // Validación de Fecha de Próxima Cita (endDate) - OPCIONAL
     if (endDate) {
-      const endDateString = endDate.toISOString().slice(0, 10);
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!dateRegex.test(endDateString)) {
-        newErrors.endDate = 'Formato de fecha inválido';
+      if (isNaN(endDate.getTime())) {
+        newErrors.endDate = 'Fecha inválida';
       } else {
-        const endDateObj = new Date(endDateString);
-        if (isNaN(endDateObj.getTime())) {
-          newErrors.endDate = 'Fecha inválida';
-        } else if (date) {
-          const dateObj = new Date(date.toISOString().slice(0, 10));
-          if (endDateObj <= dateObj) {
-            newErrors.endDate = 'La fecha de la próxima cita debe ser posterior a la fecha de encuentro';
+        const endDateString = endDate.toISOString().slice(0, 10);
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(endDateString)) {
+          newErrors.endDate = 'Formato de fecha inválido';
+        } else {
+          const endDateObj = new Date(endDateString);
+          if (isNaN(endDateObj.getTime())) {
+            newErrors.endDate = 'Fecha inválida';
+          } else if (date && !isNaN(date.getTime())) {
+            const dateObj = new Date(date.toISOString().slice(0, 10));
+            if (endDateObj <= dateObj) {
+              newErrors.endDate = 'La fecha de la próxima cita debe ser posterior a la fecha de encuentro';
+            }
           }
         }
       }
@@ -302,7 +316,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
           : ''; // Fallback
 
       // La fecha en el estado "date"
-      const currentDateStr = date ? date.toISOString().slice(0, 10) : '';
+      const currentDateStr = date && !isNaN(date.getTime()) ? date.toISOString().slice(0, 10) : '';
 
       // Comparar Fecha Encuentro (ignorando hora si viene en Date)
       // Ajuste: si appointment.date viene como string DD/MM/YYYY, normalizar.
@@ -331,7 +345,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
           initialEndDateStr = appointment.nextAppointmentDate;
         }
       }
-      const currentEndDateStr = endDate ? endDate.toISOString().slice(0, 10) : null;
+      const currentEndDateStr = endDate && !isNaN(endDate.getTime()) ? endDate.toISOString().slice(0, 10) : null;
       const hasEndDateChange = initialEndDateStr !== currentEndDateStr;
 
       // Comparar Orientación
@@ -468,7 +482,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
           // Modo creación: guardar datos de la cita y mostrar modal de confirmación
           const citaData = {
             id_caso: Number(selectedCaseID),
-            fecha: date ? date.toISOString().slice(0, 10) : "",
+            fecha: date && !isNaN(date.getTime()) ? date.toISOString().slice(0, 10) : "",
             orientacion: orientacion.trim(),
             usuariosAtienden: usuariosAtienden,
           };
@@ -621,7 +635,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
               </label>
               <div className="relative">
                 <DatePicker
-                  value={date ? date.toISOString().slice(0, 10) : ""}
+                  value={date && !isNaN(date.getTime()) ? date.toISOString().slice(0, 10) : ""}
                   onChange={(value: string) => {
                     setDate(value ? new Date(value) : null);
                     // Limpiar error del campo cuando se modifica
@@ -649,7 +663,7 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
               </label>
               <div className="relative">
                 <DatePicker
-                  value={endDate ? endDate.toISOString().slice(0, 10) : ""}
+                  value={endDate && !isNaN(endDate.getTime()) ? endDate.toISOString().slice(0, 10) : ""}
                   onChange={(value: string) => {
                     setEndDate(value ? new Date(value) : null);
                     // Limpiar error del campo cuando se modifica
