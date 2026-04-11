@@ -355,9 +355,9 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
                         title={(filters.orden || 'desc') === 'desc' ? 'Más reciente primero' : 'Más antiguo primero'}
                     >
                         {(filters.orden || 'desc') === 'desc' ? (
-                            <ArrowDown className="w-[18px] h-[18px] opacity-70" />
+                            <ArrowDown className="w-[18px] h-[18px] text-[var(--card-text-muted)] transition-colors" />
                         ) : (
-                            <ArrowUp className="w-[18px] h-[18px] opacity-70" />
+                            <ArrowUp className="w-[18px] h-[18px] text-[var(--card-text-muted)] transition-colors" />
                         )}
                         <span className="text-base text-center">
                             {(filters.orden || 'desc') === 'desc' ? 'Más reciente' : 'Más antiguo'}

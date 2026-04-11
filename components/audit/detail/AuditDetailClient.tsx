@@ -502,7 +502,7 @@ export default function AuditDetailClient({
       {!hideHeader && (
         <div className="mb-4 md:mb-6 mt-4">
           <h1 className="text-4xl m-3 font-semibold font-primary">{title}</h1>
-          <p className="mb-6 ml-3 text-gray-600">{description}</p>
+          <p className="mb-6 ml-3 text-base text-[var(--card-text-muted)] transition-colors">{description}</p>
         </div>
       )}
 
@@ -523,9 +523,9 @@ export default function AuditDetailClient({
             title={(filters.orden || 'desc') === 'desc' ? 'Más reciente primero' : 'Más antiguo primero'}
           >
             {(filters.orden || 'desc') === 'desc' ? (
-              <ArrowDown className="w-[18px] h-[18px] text-[#414040]" />
+              <ArrowDown className="w-[18px] h-[18px] text-[var(--card-text-muted)] transition-colors" />
             ) : (
-              <ArrowUp className="w-[18px] h-[18px] text-[#414040]" />
+              <ArrowUp className="w-[18px] h-[18px] text-[var(--card-text-muted)] transition-colors" />
             )}
             <span className="text-base text-center">
               {(filters.orden || 'desc') === 'desc' ? 'Más reciente' : 'Más antiguo'}
