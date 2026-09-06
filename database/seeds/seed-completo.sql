@@ -19,6 +19,8 @@ ROLLBACK;
 
 -- Iniciar nueva transacción
 BEGIN;
+SET LOCAL app.usuario_registra = 'V-77777777';
+SET LOCAL app.current_user_id = 'V-77777777';
 
 -- ==========================================================
 -- 1. ESTADOS (Tabla maestra, sin dependencias)
@@ -222,40 +224,40 @@ ON CONFLICT DO NOTHING;
 -- ==========================================================
 INSERT INTO solicitantes (
     cedula, nombres, apellidos, fecha_nacimiento, telefono_local, telefono_celular,
-    correo_electronico, sexo, nacionalidad, estado_civil, concubinato, tiempo_estudio,
+    correo_electronico, sexo, nacionalidad, estado_civil, concubinato, tipo_tiempo_estudio, tiempo_estudio,
     id_nivel_educativo, id_trabajo, id_actividad, id_estado, num_municipio, num_parroquia
 ) VALUES
 -- Solicitante 1
-('V-12345678', 'María', 'González', '1985-05-15', '0212-5551234', '0412-1234567', 
- 'maria.gonzalez@email.com', 'F', 'V', 'Casado', false, 'Años',
+('V-12345678', 'María', 'González', '1985-05-15', '02125551234', '0412-1234567', 
+ 'maria.gonzalez@email.com', 'F', 'V', 'Casado', false, 'Años', 5,
  (SELECT id_nivel_educativo FROM niveles_educativos WHERE descripcion = 'Secundaria completa' LIMIT 1),
  (SELECT id_trabajo FROM condicion_trabajo WHERE nombre_trabajo = 'Empleado' LIMIT 1),
  (SELECT id_actividad FROM condicion_actividad WHERE nombre_actividad = 'Otra' LIMIT 1),
  (SELECT id_estado FROM estados WHERE nombre_estado = 'Distrito Capital' LIMIT 1), 1, 1),
 -- Solicitante 2
 ('V-23456789', 'Juan', 'Pérez', '1990-08-20', NULL, '0414-2345678', 
- 'juan.perez@email.com', 'M', 'V', 'Soltero', false, 'Años',
+ 'juan.perez@email.com', 'M', 'V', 'Soltero', false, 'Años', 5,
  (SELECT id_nivel_educativo FROM niveles_educativos WHERE descripcion = 'Primaria completa' LIMIT 1),
  (SELECT id_trabajo FROM condicion_trabajo WHERE nombre_trabajo = 'Cuenta propia' LIMIT 1),
  (SELECT id_actividad FROM condicion_actividad WHERE nombre_actividad = 'Ama de Casa' LIMIT 1),
  (SELECT id_estado FROM estados WHERE nombre_estado = 'Distrito Capital' LIMIT 1), 1, 2),
 -- Solicitante 3
-('V-34567890', 'Carmen', 'Rodríguez', '1978-12-03', '0212-5555678', '0416-3456789', 
- 'carmen.rodriguez@email.com', 'F', 'V', 'Divorciado', false, 'Semestres',
+('V-34567890', 'Carmen', 'Rodríguez', '1978-12-03', '02125555678', '0416-3456789', 
+ 'carmen.rodriguez@email.com', 'F', 'V', 'Divorciado', false, 'Semestres', 8,
  (SELECT id_nivel_educativo FROM niveles_educativos WHERE descripcion = 'Universitaria completa' LIMIT 1),
  (SELECT id_trabajo FROM condicion_trabajo WHERE nombre_trabajo = 'Empleado' LIMIT 1),
  (SELECT id_actividad FROM condicion_actividad WHERE nombre_actividad = 'Estudiante' LIMIT 1),
  (SELECT id_estado FROM estados WHERE nombre_estado = 'Miranda' LIMIT 1), 1, 1),
 -- Solicitante 4
 ('V-45678901', 'Carlos', 'Martínez', '1992-03-25', NULL, '0424-4567890', 
- 'carlos.martinez@email.com', 'M', 'V', 'Soltero', false, 'Años',
+ 'carlos.martinez@email.com', 'M', 'V', 'Soltero', false, 'Años', 5,
  (SELECT id_nivel_educativo FROM niveles_educativos WHERE descripcion = 'Secundaria incompleta' LIMIT 1),
  (SELECT id_trabajo FROM condicion_trabajo WHERE nombre_trabajo = 'no trabaja' LIMIT 1),
  (SELECT id_actividad FROM condicion_actividad WHERE nombre_actividad = 'Pensionado/Jubilado' LIMIT 1),
  (SELECT id_estado FROM estados WHERE nombre_estado = 'Miranda' LIMIT 1), 2, 1),
 -- Solicitante 5
-('V-56789012', 'Ana', 'López', '1987-07-10', '0212-5559012', '0412-5678901', 
- 'ana.lopez@email.com', 'F', 'V', 'Casado', true, 'Años',
+('V-56789012', 'Ana', 'López', '1987-07-10', '02125559012', '0412-5678901', 
+ 'ana.lopez@email.com', 'F', 'V', 'Casado', true, 'Años', 3,
  (SELECT id_nivel_educativo FROM niveles_educativos WHERE descripcion = 'Secundaria completa' LIMIT 1),
  (SELECT id_trabajo FROM condicion_trabajo WHERE nombre_trabajo = 'Patrono' LIMIT 1),
  (SELECT id_actividad FROM condicion_actividad WHERE nombre_actividad = 'Pensionado/Jubilado' LIMIT 1),
@@ -284,16 +286,16 @@ SET cant_habitaciones = EXCLUDED.cant_habitaciones,
 INSERT INTO familias_y_hogares (
     cedula_solicitante, cant_personas, cant_trabajadores, cant_no_trabajadores,
     cant_ninos, cant_ninos_estudiando, jefe_hogar, ingresos_mensuales,
-    tiempo_estudio_jefe, id_nivel_educativo_jefe
+    tipo_tiempo_estudio_jefe, tiempo_estudio_jefe, id_nivel_educativo_jefe
 ) VALUES
-('V-12345678', 4, 2, 2, 2, 2, true, 500000.00, 'Años',
+('V-12345678', 4, 2, 2, 2, 2, true, 500000.00, 'Años', 5,
  (SELECT id_nivel_educativo FROM niveles_educativos WHERE descripcion = 'Secundaria completa' LIMIT 1)),
-('V-23456789', 3, 1, 2, 1, 1, true, 300000.00, 'Años',
+('V-23456789', 3, 1, 2, 1, 1, true, 300000.00, 'Años', 6,
  (SELECT id_nivel_educativo FROM niveles_educativos WHERE descripcion = 'Primaria completa' LIMIT 1)),
-('V-34567890', 5, 2, 3, 3, 2, true, 800000.00, 'Semestres',
+('V-34567890', 5, 2, 3, 3, 2, true, 800000.00, 'Semestres', 8,
  (SELECT id_nivel_educativo FROM niveles_educativos WHERE descripcion = 'Universitaria completa' LIMIT 1)),
-('V-45678901', 2, 1, 1, 0, 0, true, 250000.00, NULL, NULL),
-('V-56789012', 6, 3, 3, 3, 3, true, 1200000.00, 'Años',
+('V-45678901', 2, 1, 1, 0, 0, true, 250000.00, NULL, NULL, NULL),
+('V-56789012', 6, 3, 3, 3, 3, true, 1200000.00, 'Años', 4,
  (SELECT id_nivel_educativo FROM niveles_educativos WHERE descripcion = 'Secundaria completa' LIMIT 1))
 ON CONFLICT (cedula_solicitante) DO UPDATE
 SET cant_personas = EXCLUDED.cant_personas,
@@ -438,11 +440,11 @@ ON CONFLICT DO NOTHING;
 
 -- Caso 1: Asesoría en proceso - Divorcio contencioso (Civil -> Familia -> Tribunales Ordinarios)
 INSERT INTO casos (
-    fecha_inicio_caso, fecha_fin_caso, tramite, observaciones,
+    fecha_solicitud, fecha_inicio_caso, fecha_fin_caso, tramite, observaciones,
     id_nucleo, cedula, id_materia, num_categoria, num_subcategoria, num_ambito_legal
 )
 SELECT 
-    '2024-01-15'::DATE, NULL, 'Asesoría', 'Cliente solicita asesoría para proceso de divorcio. Primera consulta realizada.',
+    '2024-01-15'::DATE, '2024-01-15'::DATE, NULL, 'Asesoría', 'Cliente solicita asesoría para proceso de divorcio. Primera consulta realizada.',
     (SELECT id_nucleo FROM nucleos WHERE nombre_nucleo = 'UCAB Guayana' LIMIT 1),
     'V-12345678',
     al.id_materia, al.num_categoria, al.num_subcategoria, al.num_ambito_legal
@@ -453,11 +455,11 @@ LIMIT 1;
 
 -- Caso 2: Conciliación en proceso - Obligación de Manutención (Civil -> Familia -> Tribunales Protección)
 INSERT INTO casos (
-    fecha_inicio_caso, fecha_fin_caso, tramite, observaciones,
+    fecha_solicitud, fecha_inicio_caso, fecha_fin_caso, tramite, observaciones,
     id_nucleo, cedula, id_materia, num_categoria, num_subcategoria, num_ambito_legal
 )
 SELECT 
-    '2024-02-20'::DATE, NULL, 'Conciliación y Mediación', 'Proceso de mediación para pensión alimentaria. En espera de respuesta de la contraparte.',
+    '2024-02-20'::DATE, '2024-02-20'::DATE, NULL, 'Conciliación y Mediación', 'Proceso de mediación para pensión alimentaria. En espera de respuesta de la contraparte.',
     (SELECT id_nucleo FROM nucleos WHERE nombre_nucleo = 'UCAB Caracas' LIMIT 1),
     'V-23456789',
     al.id_materia, al.num_categoria, al.num_subcategoria, al.num_ambito_legal
@@ -468,11 +470,11 @@ LIMIT 1;
 
 -- Caso 3: Redacción de documentos - Compra-venta de bienes inmuebles (Civil -> Contratos)
 INSERT INTO casos (
-    fecha_inicio_caso, fecha_fin_caso, tramite, observaciones,
+    fecha_solicitud, fecha_inicio_caso, fecha_fin_caso, tramite, observaciones,
     id_nucleo, cedula, id_materia, num_categoria, num_subcategoria, num_ambito_legal
 )
 SELECT 
-    '2024-03-05'::DATE, NULL, 'Redacción documentos y/o convenio', 'Redacción de contrato de compra-venta. Pendiente revisión.',
+    '2024-03-05'::DATE, '2024-03-05'::DATE, NULL, 'Redacción documentos y/o convenio', 'Redacción de contrato de compra-venta. Pendiente revisión.',
     (SELECT id_nucleo FROM nucleos WHERE nombre_nucleo = 'UCAB Guayana' LIMIT 1),
     'V-34567890',
     al.id_materia, al.num_categoria, al.num_subcategoria, al.num_ambito_legal
@@ -483,11 +485,11 @@ LIMIT 1;
 
 -- Caso 4: Asistencia Judicial - Calificación de Despido (Laboral)
 INSERT INTO casos (
-    fecha_inicio_caso, fecha_fin_caso, tramite, observaciones,
+    fecha_solicitud, fecha_inicio_caso, fecha_fin_caso, tramite, observaciones,
     id_nucleo, cedula, id_materia, num_categoria, num_subcategoria, num_ambito_legal
 )
 SELECT 
-    '2024-04-10'::DATE, NULL, 'Asistencia Judicial - Casos externos', 'Acompañamiento en audiencia de conciliación laboral.',
+    '2024-04-10'::DATE, '2024-04-10'::DATE, NULL, 'Asistencia Judicial - Casos externos', 'Acompañamiento en audiencia de conciliación laboral.',
     (SELECT id_nucleo FROM nucleos WHERE nombre_nucleo = 'UCAB Caracas' LIMIT 1),
     'V-45678901',
     al.id_materia, al.num_categoria, al.num_subcategoria, al.num_ambito_legal
@@ -498,11 +500,11 @@ LIMIT 1;
 
 -- Caso 5: Caso archivado - Rectificación de Actas (Civil -> Personas)
 INSERT INTO casos (
-    fecha_inicio_caso, fecha_fin_caso, tramite, observaciones,
+    fecha_solicitud, fecha_inicio_caso, fecha_fin_caso, tramite, observaciones,
     id_nucleo, cedula, id_materia, num_categoria, num_subcategoria, num_ambito_legal
 )
 SELECT 
-    '2023-12-01'::DATE, '2024-01-30'::DATE, 'Asesoría', 'Caso resuelto. Cliente satisfecho con la asesoría proporcionada.',
+    '2023-12-01'::DATE, '2023-12-01'::DATE, '2024-01-30'::DATE, 'Asesoría', 'Caso resuelto. Cliente satisfecho con la asesoría proporcionada.',
     (SELECT id_nucleo FROM nucleos WHERE nombre_nucleo = 'UCAB Guayana' LIMIT 1),
     'V-12345678',
     al.id_materia, al.num_categoria, al.num_subcategoria, al.num_ambito_legal

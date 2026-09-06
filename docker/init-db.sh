@@ -24,8 +24,23 @@ if [ -f /database/schemas/triggers.sql ]; then
 fi
 
 # 4. Cargar Semillas y Datos Iniciales de Prueba
+if [ -f /database/seeds/seed-materias-catalogos.sql ]; then
+    echo "==> [init-db] Ejecutando seed-materias-catalogos.sql..."
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f /database/seeds/seed-materias-catalogos.sql || true
+fi
+
 if [ -f /database/seeds/seed-completo.sql ]; then
+if [ -f /database/seeds/seed-materias-catalogos.sql ]; then
+    echo "==> [init-db] Ejecutando seed-materias-catalogos.sql..."
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f /database/seeds/seed-materias-catalogos.sql || true
+fi
+
     echo "==> [init-db] Ejecutando seed-completo.sql..."
+if [ -f /database/seeds/seed-materias-catalogos.sql ]; then
+    echo "==> [init-db] Ejecutando seed-materias-catalogos.sql..."
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f /database/seeds/seed-materias-catalogos.sql || true
+fi
+
     psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f /database/seeds/seed-completo.sql || true
 fi
 
