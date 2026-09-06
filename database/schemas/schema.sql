@@ -1233,3 +1233,29 @@ GRANT EXECUTE ON FUNCTION toggle_habilitado_usuario(VARCHAR, VARCHAR) TO rol_coo
 GRANT INSERT, UPDATE ON auditoria_eventos TO rol_coordinador, rol_profesor, rol_estudiante;
 GRANT SELECT ON auditoria_eventos TO rol_coordinador;
 GRANT USAGE, SELECT ON SEQUENCE auditoria_eventos_id_seq TO rol_coordinador, rol_profesor, rol_estudiante;
+
+-- Restaurando tablas especiales excluidas de la auditoría unificada
+CREATE TABLE auditoria_reportes (
+    id SERIAL PRIMARY KEY,
+    tipo_reporte VARCHAR(100) NOT NULL,
+    filtros_aplicados TEXT,
+    id_usuario_genero VARCHAR(20),
+    formato VARCHAR(20),
+    cedula_solicitante VARCHAR(20),
+    operacion VARCHAR(20) DEFAULT 'generacion' CHECK (operacion IN ('generacion', 'vista_previa')),
+    fecha_generacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+);
+
+CREATE TABLE auditoria_sesiones (
+    id_sesion SERIAL PRIMARY KEY,
+    cedula_usuario VARCHAR(20),
+    ip_direccion VARCHAR(50),
+    dispositivo TEXT,
+    detalle TEXT,
+    exitoso BOOLEAN DEFAULT TRUE,
+    fecha_inicio TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas'),
+    fecha_cierre TIMESTAMP
+);
+
+GRANT SELECT, INSERT ON auditoria_reportes TO rol_coordinador, rol_profesor, rol_estudiante;
+GRANT SELECT, INSERT, UPDATE ON auditoria_sesiones TO rol_coordinador, rol_profesor, rol_estudiante;
