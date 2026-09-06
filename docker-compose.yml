@@ -1,0 +1,58 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: clinica_juridica_app
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@db:5432/gestion_clinicas}
+      - JWT_SECRET=${JWT_SECRET:-clave-secreta-de-produccion-cambiar}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-30d}
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - SMTP_FROM=${SMTP_FROM:-}
+      - CITA_REMINDER_DAYS_AHEAD=${CITA_REMINDER_DAYS_AHEAD:-1}
+      - NOTIFICATIONS_TTL_DAYS=${NOTIFICATIONS_TTL_DAYS:-30}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - clinica_network
+
+  db:
+    image: postgres:16-alpine
+    container_name: clinica_juridica_db
+    restart: unless-stopped
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-gestion_clinicas}
+      TZ: "America/Caracas"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+      - ./database:/database:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-gestion_clinicas}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - clinica_network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  clinica_network:
+    driver: bridge
+

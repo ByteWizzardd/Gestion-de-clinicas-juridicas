@@ -157,6 +157,53 @@ Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
 ---
 
+## 🐳 Despliegue con Docker y Docker Compose
+
+La forma más rápida y reproducible de levantar todo el sistema (incluyendo Next.js 16 y PostgreSQL 16 con esquemas y datos iniciales automáticos) es mediante **Docker Compose**:
+
+### 1. Requisitos
+- **Docker** ≥ 20.10
+- **Docker Compose** ≥ 2.0
+
+### 2. Configurar variables de entorno para Docker
+Copia la plantilla preconfigurada para contenedores:
+```bash
+cp .env.docker.example .env
+```
+
+### 3. Construir y levantar los contenedores
+```bash
+docker compose up --build -d
+```
+
+Este comando:
+- Compila la aplicación Next.js en una imagen optimizada con **multi-stage build** y **modo standalone** (~180 MB).
+- Levanta un contenedor de **PostgreSQL 16** con volumen persistente (`postgres_data`).
+- Aplica automáticamente en la base de datos el esquema DDL (`schema.sql`), los triggers de auditoría (`triggers.sql`) y las semillas de prueba (`seed-completo.sql`).
+- Sincroniza el arranque de la app esperando a que PostgreSQL esté saludable (`healthcheck`).
+
+### 4. Acceder al sistema
+Abre en tu navegador: [http://localhost:3000](http://localhost:3000)
+
+> [!TIP]
+> **Usuario inicial de prueba (Cargado por semilla):**
+> - **Cédula / Usuario**: Disponible en [`database/seeds/seed-completo.sql`](database/seeds/seed-completo.sql)
+> - **Contraseña por defecto**: `password123`
+
+### 5. Comandos útiles de Docker
+
+| Acción | Comando |
+|---|---|
+| Ver estado de los contenedores | `docker compose ps` |
+| Ver logs en tiempo real | `docker compose logs -f app` |
+| Ver logs de la base de datos | `docker compose logs -f db` |
+| Detener los contenedores | `docker compose down` |
+| Reiniciar los contenedores | `docker compose restart` |
+| Detener y eliminar volúmenes (reiniciar BD limpia) | `docker compose down -v` |
+| Conectarse a PostgreSQL dentro del contenedor | `docker compose exec db psql -U postgres -d gestion_clinicas` |
+
+---
+
 ## 📂 Estructura del Proyecto
 
 ```
