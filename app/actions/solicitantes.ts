@@ -350,7 +350,7 @@ export async function updateSolicitanteAction(cedulaOriginal: string, data: Appl
 
                 // Variable para saltar el trigger de auditoría de usuarios (por si acaso)
                 await client.query("SELECT set_config('app.sync_solicitante_mode', 'true', true)");
-                await client.query("SELECT set_config('app.usuario_actualiza_usuario', $1, true)", [authResult.user.cedula]);
+                await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
                 // Ejecutar update
                 const updateQuery = loadSQL('usuarios/update-contact-info.sql');
