@@ -27,7 +27,7 @@ export async function createSubcategoria(data: { id_materia: string; num_categor
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const id_materia = parseInt(data.id_materia);
         const num_categoria = parseInt(data.num_categoria);
@@ -75,7 +75,7 @@ export async function updateSubcategoria(
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         // Verificar si cambia la materia o categoría
         const cambiaMateria = data.new_id_materia !== undefined && data.new_id_materia !== id_materia;
@@ -153,7 +153,7 @@ export async function toggleSubcategoriaHabilitado(id_materia: number, num_categ
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const result = await client.query(
             'UPDATE subcategorias SET habilitado = NOT habilitado WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3 RETURNING *',
@@ -202,8 +202,8 @@ export async function deleteSubcategoria(id_materia: number, num_categoria: numb
             };
         }
 
-        await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
-        await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [motivo || '']);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: motivo || '' })]);
 
         const result = await client.query(
             'DELETE FROM subcategorias WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3 RETURNING *',

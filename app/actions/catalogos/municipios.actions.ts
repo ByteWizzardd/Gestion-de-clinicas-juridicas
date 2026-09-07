@@ -27,7 +27,7 @@ export async function createMunicipio(data: { id_estado: string; nombre_municipi
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const maxResult = await client.query(
             'SELECT COALESCE(MAX(num_municipio), 0) + 1 as next_num FROM municipios WHERE id_estado = $1',
@@ -104,8 +104,8 @@ export async function updateMunicipio(id_estado: number, num_municipio: number, 
             const nombreEstadoDestino = destEstado.rows[0]?.nombre_estado || `Estado ID: ${data.id_estado}`;
 
             // 1. Delete from original state (triggers deletion audit)
-            await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
-            await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [`Movido al estado: ${nombreEstadoDestino}`]);
+            await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
+            await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: `Movido al estado: ${nombreEstadoDestino}` })]);
 
             await client.query(
                 'DELETE FROM municipios WHERE id_estado = $1 AND num_municipio = $2',
@@ -120,7 +120,7 @@ export async function updateMunicipio(id_estado: number, num_municipio: number, 
             const nextNum = maxResult.rows[0].next_num;
 
             // 3. Insert into new state (triggers insertion audit)
-            await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+            await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
             result = await client.query(
                 'INSERT INTO municipios (id_estado, num_municipio, nombre_municipio, habilitado) VALUES ($1, $2, $3, $4) RETURNING *',
@@ -128,7 +128,7 @@ export async function updateMunicipio(id_estado: number, num_municipio: number, 
             );
         } else {
             // Standard update (just name) - triggers update audit
-            await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+            await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
             result = await client.query(
                 'UPDATE municipios SET nombre_municipio = $3 WHERE id_estado = $1 AND num_municipio = $2 RETURNING *',
@@ -167,7 +167,7 @@ export async function toggleMunicipioHabilitado(id_estado: number, num_municipio
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const result = await client.query(
             'UPDATE municipios SET habilitado = NOT habilitado WHERE id_estado = $1 AND num_municipio = $2 RETURNING *',
@@ -218,8 +218,8 @@ export async function deleteMunicipio(id_estado: number, num_municipio: number, 
             };
         }
 
-        await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
-        await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [motivo || '']);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: motivo || '' })]);
 
         const result = await client.query(
             'DELETE FROM municipios WHERE id_estado = $1 AND num_municipio = $2 RETURNING *',

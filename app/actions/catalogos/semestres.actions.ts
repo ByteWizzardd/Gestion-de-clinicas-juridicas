@@ -45,7 +45,7 @@ export async function createSemestre(data: { term: string; fecha_inicio: string;
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const result = await client.query(
             'INSERT INTO semestres (term, fecha_inicio, fecha_fin) VALUES ($1, $2, $3) RETURNING *',
@@ -85,7 +85,7 @@ export async function updateSemestre(term: string, data: { fecha_inicio: string;
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const targetTerm = data.new_term || term;
 
@@ -129,7 +129,7 @@ export async function toggleSemestreHabilitado(term: string) {
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const result = await client.query(
             'UPDATE semestres SET habilitado = NOT habilitado WHERE term = $1 RETURNING *',
@@ -237,8 +237,8 @@ export async function deleteSemestre(term: string, motivo?: string) {
             };
         }
 
-        await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
-        await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [motivo || '']);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: motivo || '' })]);
 
         const result = await client.query('DELETE FROM semestres WHERE term = $1 RETURNING *', [term]);
         if (result.rows.length === 0) {

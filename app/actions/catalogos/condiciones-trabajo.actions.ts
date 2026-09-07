@@ -27,7 +27,7 @@ export async function createCondicionTrabajo(data: { nombre_trabajo: string }) {
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const result = await client.query(
             'INSERT INTO condicion_trabajo (nombre_trabajo) VALUES ($1) RETURNING *',
@@ -57,7 +57,7 @@ export async function updateCondicionTrabajo(id: number, data: { nombre_trabajo:
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const result = await client.query(
             'UPDATE condicion_trabajo SET nombre_trabajo = $2 WHERE id_trabajo = $1 RETURNING *',
@@ -91,7 +91,7 @@ export async function toggleCondicionTrabajoHabilitado(id: number) {
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const result = await client.query(
             'UPDATE condicion_trabajo SET habilitado = NOT habilitado WHERE id_trabajo = $1 RETURNING *',
@@ -138,8 +138,8 @@ export async function deleteCondicionTrabajo(id: number, motivo?: string) {
             };
         }
 
-        await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
-        await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [motivo || '']);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: motivo || '' })]);
 
         const result = await client.query('DELETE FROM condicion_trabajo WHERE id_trabajo = $1 RETURNING *', [id]);
         if (result.rows.length === 0) {

@@ -27,7 +27,7 @@ export async function createTipoCaracteristica(data: { nombre_tipo_caracteristic
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         // Obtenemos el siguiente ID manualmente por si no es autoincremental
         const maxResult = await client.query('SELECT COALESCE(MAX(id_tipo), 0) + 1 as next_id FROM tipo_caracteristicas');
@@ -61,7 +61,7 @@ export async function updateTipoCaracteristica(id: number, data: { nombre_tipo_c
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const result = await client.query(
             'UPDATE tipo_caracteristicas SET nombre_tipo_caracteristica = $2 WHERE id_tipo = $1 RETURNING *',
@@ -95,7 +95,7 @@ export async function toggleTipoCaracteristicaHabilitado(id: number) {
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const result = await client.query(
             'UPDATE tipo_caracteristicas SET habilitado = NOT habilitado WHERE id_tipo = $1 RETURNING *',
@@ -142,8 +142,8 @@ export async function deleteTipoCaracteristica(id: number, motivo?: string) {
             };
         }
 
-        await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
-        await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [motivo || '']);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: motivo || '' })]);
 
         const result = await client.query('DELETE FROM tipo_caracteristicas WHERE id_tipo = $1 RETURNING *', [id]);
         if (result.rows.length === 0) {

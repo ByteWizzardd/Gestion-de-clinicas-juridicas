@@ -33,7 +33,7 @@ export async function createEstado(data: { nombre_estado: string }) {
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const result = await client.query(
             'INSERT INTO estados (nombre_estado) VALUES ($1) RETURNING *',
@@ -68,7 +68,7 @@ export async function updateEstado(id: number, data: { nombre_estado: string }) 
         }
 
         // Establecer variable de sesión para el trigger de auditoría
-        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const result = await client.query(
             'UPDATE estados SET nombre_estado = $2 WHERE id_estado = $1 RETURNING *',
@@ -109,7 +109,7 @@ export async function toggleEstadoHabilitado(id: number) {
         }
 
         // Establecer variable de sesión para el trigger de auditoría
-        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const result = await client.query(
             'UPDATE estados SET habilitado = NOT habilitado WHERE id_estado = $1 RETURNING *',
@@ -169,8 +169,8 @@ export async function deleteEstado(id: number, motivo?: string) {
         }
 
         // Establecer variables de sesión para el trigger de auditoría
-        await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
-        await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [motivo || '']);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: motivo || '' })]);
 
         // No associations, safe to delete
         const result = await client.query(

@@ -27,7 +27,7 @@ export async function createParroquia(data: { id_estado: string; id_municipio: s
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const id_estado = parseInt(data.id_estado);
         const num_municipio = parseInt(data.id_municipio);
@@ -87,7 +87,7 @@ export async function updateParroquia(id_estado: number, num_municipio: number, 
                 return { success: false, error: 'No se proporcionaron campos para actualizar' };
             }
 
-            await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+            await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
             const result = await client.query(
                 'UPDATE parroquias SET nombre_parroquia = $4 WHERE id_estado = $1 AND num_municipio = $2 AND num_parroquia = $3 RETURNING *',
@@ -146,8 +146,8 @@ export async function updateParroquia(id_estado: number, num_municipio: number, 
             const nombreMunicipio = destLocation.rows[0]?.nombre_municipio || `Municipio #${target_num_municipio}`;
 
             // 1. Delete from original location (triggers deletion audit)
-            await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
-            await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [`Movido a: ${nombreEstado} - ${nombreMunicipio}`]);
+            await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
+            await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: `Movido a: ${nombreEstado} - ${nombreMunicipio}` })]);
 
             await client.query(
                 'DELETE FROM parroquias WHERE id_estado = $1 AND num_municipio = $2 AND num_parroquia = $3',
@@ -162,7 +162,7 @@ export async function updateParroquia(id_estado: number, num_municipio: number, 
             const nextNum = maxResult.rows[0].next_num;
 
             // 3. Insert into new location (triggers insertion audit)
-            await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+            await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
             const result = await client.query(
                 'INSERT INTO parroquias (id_estado, num_municipio, num_parroquia, nombre_parroquia, habilitado) VALUES ($1, $2, $3, $4, $5) RETURNING *',
@@ -193,7 +193,7 @@ export async function toggleParroquiaHabilitado(id_estado: number, num_municipio
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const result = await client.query(
             'UPDATE parroquias SET habilitado = NOT habilitado WHERE id_estado = $1 AND num_municipio = $2 AND num_parroquia = $3 RETURNING *',
@@ -244,8 +244,8 @@ export async function deleteParroquia(id_estado: number, num_municipio: number, 
             };
         }
 
-        await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
-        await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [motivo || '']);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: motivo || '' })]);
 
         const result = await client.query(
             'DELETE FROM parroquias WHERE id_estado = $1 AND num_municipio = $2 AND num_parroquia = $3 RETURNING *',

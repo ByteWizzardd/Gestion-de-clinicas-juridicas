@@ -27,7 +27,7 @@ export async function createCaracteristica(data: { id_tipo_caracteristica: strin
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const maxResult = await client.query(
             'SELECT COALESCE(MAX(num_caracteristica), 0) + 1 as next_num FROM caracteristicas WHERE id_tipo_caracteristica = $1',
@@ -66,7 +66,7 @@ export async function updateCaracteristica(id_tipo_caracteristica: number, num_c
                     return { success: false, error: 'No autorizado' };
                 }
 
-                await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+                await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
                 const result = await client.query(
                     'UPDATE caracteristicas SET descripcion = $3 WHERE id_tipo_caracteristica = $1 AND num_caracteristica = $2 RETURNING *',
@@ -135,7 +135,7 @@ export async function updateCaracteristica(id_tipo_caracteristica: number, num_c
             const isEnabled = currentResult.rows[0]?.habilitado ?? true;
 
             // Establecer variable de sesión para creación
-            await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+            await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
             const insertResult = await client.query(
                 'INSERT INTO caracteristicas (id_tipo_caracteristica, num_caracteristica, descripcion, habilitado) VALUES ($1, $2, $3, $4) RETURNING *',
@@ -143,8 +143,8 @@ export async function updateCaracteristica(id_tipo_caracteristica: number, num_c
             );
 
             // 3. Establecer variables de sesión para eliminación
-            await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
-            await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", ['Movido a nuevo tipo']);
+            await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
+            await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: 'Movido a nuevo tipo' })]);
 
             // 4. Borrar el viejo
             await client.query(
@@ -180,7 +180,7 @@ export async function toggleCaracteristicaHabilitado(id_tipo_caracteristica: num
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const result = await client.query(
             'UPDATE caracteristicas SET habilitado = NOT habilitado WHERE id_tipo_caracteristica = $1 AND num_caracteristica = $2 RETURNING *',
@@ -229,8 +229,8 @@ export async function deleteCaracteristica(id_tipo_caracteristica: number, num_c
             };
         }
 
-        await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
-        await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [motivo || '']);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: motivo || '' })]);
 
         const result = await client.query(
             'DELETE FROM caracteristicas WHERE id_tipo_caracteristica = $1 AND num_caracteristica = $2 RETURNING *',

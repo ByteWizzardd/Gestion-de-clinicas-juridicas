@@ -27,7 +27,7 @@ export async function createNucleo(data: { id_estado: string; id_municipio: stri
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const id_estado = parseInt(data.id_estado);
         const num_municipio = parseInt(data.id_municipio);
@@ -66,7 +66,7 @@ export async function updateNucleo(id_nucleo: number, data: {
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         // Construir la query dinámicamente basada en los campos proporcionados
         const updates: string[] = [];
@@ -127,7 +127,7 @@ export async function toggleNucleoHabilitado(id_nucleo: number) {
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const result = await client.query(
             'UPDATE nucleos SET habilitado = NOT habilitado WHERE id_nucleo = $1 RETURNING *',
@@ -176,8 +176,8 @@ export async function deleteNucleo(id_nucleo: number, motivo?: string) {
             };
         }
 
-        await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
-        await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [motivo || '']);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: motivo || '' })]);
 
         const result = await client.query(
             'DELETE FROM nucleos WHERE id_nucleo = $1 RETURNING *',

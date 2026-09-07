@@ -41,7 +41,7 @@ export async function createNivelEducativo(data: { descripcion: string }) {
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const query = loadQuery('create-nivel-educativo.sql');
         const result = await client.query(query, [data.descripcion]);
@@ -72,7 +72,7 @@ export async function updateNivelEducativo(id: number, data: { descripcion: stri
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const query = loadQuery('update-nivel-educativo.sql');
         const result = await client.query(query, [id, data.descripcion]);
@@ -109,7 +109,7 @@ export async function toggleNivelEducativoHabilitado(id: number) {
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const query = loadQuery('toggle-nivel-educativo-habilitado.sql');
         const result = await client.query(query, [id]);
@@ -159,8 +159,8 @@ export async function deleteNivelEducativo(id: number, motivo?: string) {
             };
         }
 
-        await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
-        await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [motivo || '']);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: motivo || '' })]);
 
         // No associations, safe to delete
         const query = loadQuery('delete-nivel-educativo.sql');

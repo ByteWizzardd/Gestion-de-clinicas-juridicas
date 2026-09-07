@@ -27,7 +27,7 @@ export async function createAmbitoLegal(data: { id_materia: string; num_categori
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const id_materia = parseInt(data.id_materia);
         const num_categoria = parseInt(data.num_categoria);
@@ -92,7 +92,7 @@ export async function updateAmbitoLegal(
                     return { success: false, error: 'No autorizado' };
                 }
 
-                await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+                await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
                 const result = await client.query(
                     'UPDATE ambitos_legales SET nombre_ambito_legal = $5 WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3 AND num_ambito_legal = $4 RETURNING *',
@@ -118,7 +118,7 @@ export async function updateAmbitoLegal(
                 const nextNum = maxResult.rows[0].next_num;
 
                 // 2. Insert new record
-                await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+                await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
                 const insertResult = await client.query(
                     'INSERT INTO ambitos_legales (id_materia, num_categoria, num_subcategoria, num_ambito_legal, nombre_ambito_legal) VALUES ($1, $2, $3, $4, $5) RETURNING *',
                     [target_id_materia, target_num_categoria, target_num_subcategoria, nextNum, data.nombre_ambito_legal]
@@ -148,8 +148,8 @@ export async function updateAmbitoLegal(
                 const nombreSubcategoria = destHierarchy.rows[0]?.nombre_subcategoria || `Subcategoría #${target_num_subcategoria}`;
 
                 // 4. Delete old record (set session variables for audit trigger)
-                await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
-                await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [`Movido a: ${nombreMateria} > ${nombreCategoria} > ${nombreSubcategoria}`]);
+                await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
+                await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: `Movido a: ${nombreMateria} > ${nombreCategoria} > ${nombreSubcategoria}` })]);
                 await client.query(
                     'DELETE FROM ambitos_legales WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3 AND num_ambito_legal = $4',
                     [id_materia, num_categoria, num_subcategoria, num_ambito_legal]
@@ -182,7 +182,7 @@ export async function toggleAmbitoLegalHabilitado(id_materia: number, num_catego
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const result = await client.query(
             'UPDATE ambitos_legales SET habilitado = NOT habilitado WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3 AND num_ambito_legal = $4 RETURNING *',
@@ -231,8 +231,8 @@ export async function deleteAmbitoLegal(id_materia: number, num_categoria: numbe
             };
         }
 
-        await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
-        await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [motivo || '']);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: motivo || '' })]);
 
         const result = await client.query(
             'DELETE FROM ambitos_legales WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3 AND num_ambito_legal = $4 RETURNING *',

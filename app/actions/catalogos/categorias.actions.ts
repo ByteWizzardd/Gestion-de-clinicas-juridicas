@@ -27,7 +27,7 @@ export async function createCategoria(data: { id_materia: string; nombre_categor
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const maxResult = await client.query(
             'SELECT COALESCE(MAX(num_categoria), 0) + 1 as next_num FROM categorias WHERE id_materia = $1',
@@ -83,7 +83,7 @@ export async function updateCategoria(
                 const nextNum = maxResult.rows[0].next_num;
 
                 // 2. Insert new category
-                await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+                await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
                 const insertResult = await client.query(
                     'INSERT INTO categorias (id_materia, num_categoria, nombre_categoria) VALUES ($1, $2, $3) RETURNING *',
                     [target_id_materia, nextNum, data.nombre_categoria]
@@ -98,8 +98,8 @@ export async function updateCategoria(
                 const nombreMateriaDestino = targetMateriaResult.rows[0]?.nombre_materia || `Materia ID: ${target_id_materia}`;
 
                 // Set session variables for deletions
-                await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
-                await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [`Movido a: ${nombreMateriaDestino}`]);
+                await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
+                await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: `Movido a: ${nombreMateriaDestino}` })]);
 
                 // 3. Move Subcategories
                 const subcategorias = await client.query(
@@ -110,7 +110,7 @@ export async function updateCategoria(
                 for (const sub of subcategorias.rows) {
                     const old_num_sub = sub.num_subcategoria;
 
-                    await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+                    await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
                     await client.query(
                         'INSERT INTO subcategorias (id_materia, num_categoria, num_subcategoria, nombre_subcategoria) VALUES ($1, $2, $3, $4)',
                         [target_id_materia, nextNum, sub.num_subcategoria, sub.nombre_subcategoria]
@@ -125,7 +125,7 @@ export async function updateCategoria(
                     for (const ambito of ambitos.rows) {
                         const old_num_ambito = ambito.num_ambito_legal;
 
-                        await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [authResult.user.cedula]);
+                        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
                         await client.query(
                             'INSERT INTO ambitos_legales (id_materia, num_categoria, num_subcategoria, num_ambito_legal, nombre_ambito_legal) VALUES ($1, $2, $3, $4, $5)',
                             [target_id_materia, nextNum, sub.num_subcategoria, ambito.num_ambito_legal, ambito.nombre_ambito_legal]
@@ -173,7 +173,7 @@ export async function updateCategoria(
                     return { success: false, error: 'No autorizado' };
                 }
 
-                await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+                await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
                 const result = await client.query(
                     'UPDATE categorias SET nombre_categoria = $3 WHERE id_materia = $1 AND num_categoria = $2 RETURNING *',
@@ -207,7 +207,7 @@ export async function toggleCategoriaHabilitado(id_materia: number, num_categori
             return { success: false, error: 'No autorizado' };
         }
 
-        await client.query("SELECT set_config('app.usuario_actualiza_catalogo', $1, true)", [authResult.user.cedula]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
         const result = await client.query(
             'UPDATE categorias SET habilitado = NOT habilitado WHERE id_materia = $1 AND num_categoria = $2 RETURNING *',
@@ -261,8 +261,8 @@ export async function deleteCategoria(id_materia: number, num_categoria: number,
             }
 
             // 2. Establecer variables de sesión para auditoría
-            await client.query("SELECT set_config('app.usuario_elimina_catalogo', $1, true)", [authResult.user.cedula]);
-            await client.query("SELECT set_config('app.motivo_eliminacion_catalogo', $1, true)", [motivo || '']);
+            await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
+            await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: motivo || '' })]);
 
             // 3. Cascading Delete (Safe because no cases exist)
 
