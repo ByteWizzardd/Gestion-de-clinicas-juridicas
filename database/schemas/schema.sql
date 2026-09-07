@@ -706,38 +706,32 @@ BEGIN
 
     BEGIN
         -- =========================================================
-        -- Establecer variables de sesión para TODOS los triggers de auditoría
+        -- Variables de sesión para el trigger genérico de auditoría: un solo
+        -- actor y un solo motivo (con contexto) para toda la cascada de deletes.
         -- =========================================================
-        
-        -- Variables para auditoría de CASOS (usa motivo original)
-        PERFORM set_config('app.usuario_elimina_caso', p_cedula_actor, true);
-        PERFORM set_config('app.motivo_eliminacion_caso', p_motivo, true);
-        
-        -- Variables para auditoría de CITAS (usa motivo con contexto)
-        PERFORM set_config('app.usuario_elimina_cita', p_cedula_actor, true);
-        PERFORM set_config('app.motivo_eliminacion_cita', v_motivo_relacionados, true);
-        
-        -- Variables para auditoría de BENEFICIARIOS
         PERFORM set_config('app.current_user_id', p_cedula_actor, true);
-        PERFORM set_config('app.motivo_eliminacion_beneficiario', v_motivo_relacionados, true);
-        
-        -- Variables para auditoría de ACCIONES (incluyendo ejecutores pre-capturados)
-        PERFORM set_config('app.usuario_elimina_accion', p_cedula_actor, true);
-        PERFORM set_config('app.motivo_eliminacion_accion', v_motivo_relacionados, true);
-        PERFORM set_config('app.ejecutores_acciones_json', v_ejecutores_json::text, true);
-        
-        -- Variables para auditoría de SOPORTES
-        PERFORM set_config('app.usuario_elimina_soporte', p_cedula_actor, true);
-        PERFORM set_config('app.motivo_eliminacion_soporte', v_motivo_relacionados, true);
+        PERFORM set_config('app.audit_metadata', jsonb_build_object('motivo', v_motivo_relacionados)::text, true);
+
+        -- Registrar los ejecutores de cada acción como su propio evento de auditoría
+        -- ANTES de borrarlos (una vez eliminado `ejecutan`, esta información se pierde).
+        INSERT INTO auditoria_eventos (entidad, operacion, id_entidad, id_usuario, datos_anteriores, metadata)
+        SELECT
+            'accion_ejecutores',
+            'eliminacion',
+            num_accion,
+            p_cedula_actor,
+            jsonb_build_object('ejecutores', detalle -> 'ejecutores_detalle'),
+            jsonb_build_object('motivo', v_motivo_relacionados)
+        FROM jsonb_each(v_ejecutores_json) AS t(num_accion, detalle);
 
         -- =========================================================
         -- Eliminar referencias en orden inverso de dependencias
         -- =========================================================
-        
+
         -- 1. Eliminar ejecutores (depende de acciones)
         DELETE FROM ejecutan WHERE id_caso = p_id_caso;
-        
-        -- 2. Eliminar acciones (depende de casos) - trigger lee ejecutores del JSON
+
+        -- 2. Eliminar acciones (depende de casos)
         DELETE FROM acciones WHERE id_caso = p_id_caso;
         
         -- 3. Eliminar atienden (depende de citas)
@@ -837,11 +831,12 @@ BEGIN
 
 
 
-        -- Auditoría de eliminación (guardar antes de eliminar)
-        -- Audit log manejado por el trigger genérico
+        -- Auditoría de eliminación: la captura el trigger genérico sobre `usuarios`,
+        -- que lee el actor de app.current_user_id y el motivo de app.audit_metadata.
+        PERFORM set_config('app.current_user_id', p_cedula_actor, true);
+        PERFORM set_config('app.audit_metadata', jsonb_build_object('motivo', p_motivo)::text, true);
 
-        -- Eliminar de usuarios (después de guardar la auditoría)
-        -- Las foreign keys de auditoría deben permitir la eliminación (ON DELETE SET NULL)
+        -- Eliminar de usuarios (después de dejar seteadas las variables de auditoría)
         DELETE FROM usuarios WHERE cedula = p_cedula_usuario;
 
     EXCEPTION
@@ -893,6 +888,11 @@ BEGIN
         SELECT tipo_profesor INTO v_tipo_profesor_anterior FROM profesores WHERE cedula_profesor = p_cedula_usuario AND habilitado = TRUE;
     END IF;
 
+    -- Auditoría de la actualización: la captura el trigger genérico sobre `usuarios`.
+    IF p_cedula_actor IS NOT NULL AND p_cedula_actor != '' THEN
+        PERFORM set_config('app.current_user_id', p_cedula_actor, true);
+    END IF;
+
     -- Actualizar habilitado_sistema
     UPDATE usuarios
     SET habilitado_sistema = NOT habilitado_sistema
@@ -900,11 +900,6 @@ BEGIN
 
     -- Obtener el nuevo valor
     SELECT habilitado_sistema INTO v_habilitado_nuevo FROM usuarios WHERE cedula = p_cedula_usuario;
-
-    -- REGISTRAR CUALQUIER CAMBIO DE ESTADO EN AUDITORIA DE ACTUALIZACIÓN
-    IF v_habilitado_nuevo != v_habilitado_anterior AND p_cedula_actor IS NOT NULL AND p_cedula_actor != '' THEN
-        -- Audit log manejado por el trigger genérico
-    END IF;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -961,10 +956,15 @@ AS $$
             SELECT tipo_profesor INTO v_tipo_profesor_anterior FROM profesores WHERE cedula_profesor = p_cedula AND habilitado = TRUE;
         END IF;
 
+        -- Auditoría de la actualización: la captura el trigger genérico sobre `usuarios`.
+        IF p_cedula_actor IS NOT NULL AND p_cedula_actor != '' THEN
+            PERFORM set_config('app.current_user_id', p_cedula_actor, true);
+        END IF;
+
         -- Actualizar tabla usuarios
         UPDATE usuarios
-        SET 
-            nombres = COALESCE(p_nombres, nombres), 
+        SET
+            nombres = COALESCE(p_nombres, nombres),
             apellidos = COALESCE(p_apellidos, apellidos), 
             correo_electronico = COALESCE(p_correo_electronico, correo_electronico), 
             nombre_usuario = COALESCE(p_nombre_usuario, nombre_usuario),
@@ -1027,10 +1027,8 @@ AS $$
             v_hubo_cambios := TRUE;
         END IF;
         
-        -- Insertar auditoría si hubo cambios
-        IF v_hubo_cambios AND p_cedula_actor IS NOT NULL AND p_cedula_actor != '' THEN
-            -- Audit log manejado por el trigger genérico
-        END IF;
+        -- La auditoría de los cambios en `usuarios` ya quedó registrada por el trigger
+        -- genérico al hacer el UPDATE de arriba (con el actor seteado más arriba).
     END;
 $$;
 
@@ -1092,7 +1090,7 @@ BEGIN
     -- Obtener la cédula del usuario desde la variable de sesión
     -- Esta variable se establece antes de insertar el caso
     BEGIN
-        cedula_usuario := current_setting('app.usuario_registra', true);
+        cedula_usuario := current_setting('app.current_user_id', true);
     EXCEPTION
         WHEN OTHERS THEN
             RAISE EXCEPTION 'No se puede crear cambio de estatus: no se proporcionó la cédula del usuario que registra el caso. Error: %', SQLERRM;
@@ -1127,6 +1125,121 @@ END;
 $function$
 ;
 
+-- =========================================================
+-- SINCRONIZACIÓN DE OCURREN_EN (semestre en que un caso tuvo actividad)
+-- =========================================================
+
+-- Función Auxiliar: ensure_case_semester_func
+-- Busca el semestre para una fecha y lo asocia al caso si no existe
+CREATE OR REPLACE FUNCTION public.ensure_case_semester_func(p_id_caso INT, p_fecha DATE)
+ RETURNS void
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+    v_term VARCHAR(20);
+BEGIN
+    IF p_fecha IS NULL THEN RETURN; END IF;
+
+    SELECT term INTO v_term
+    FROM semestres
+    WHERE p_fecha BETWEEN fecha_inicio AND fecha_fin
+    LIMIT 1;
+
+    IF v_term IS NOT NULL THEN
+        INSERT INTO ocurren_en (id_caso, term)
+        VALUES (p_id_caso, v_term)
+        ON CONFLICT (id_caso, term) DO NOTHING;
+    END IF;
+END;
+$function$
+;
+
+-- Trigger Function: sync_ocurren_en_asignacion (se_le_asigna / supervisa, que ya tienen 'term')
+CREATE OR REPLACE FUNCTION public.trigger_sync_ocurren_en_asignacion()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+    INSERT INTO ocurren_en (id_caso, term)
+    VALUES (NEW.id_caso, NEW.term)
+    ON CONFLICT (id_caso, term) DO NOTHING;
+    RETURN NEW;
+END;
+$function$
+;
+
+-- Trigger Function: sync_ocurren_en_caso (casos.fecha_inicio_caso)
+CREATE OR REPLACE FUNCTION public.trigger_sync_ocurren_en_caso()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+    PERFORM public.ensure_case_semester_func(NEW.id_caso, NEW.fecha_inicio_caso);
+    RETURN NEW;
+END;
+$function$
+;
+
+-- Trigger Function: sync_ocurren_en_accion (acciones.fecha_registro)
+CREATE OR REPLACE FUNCTION public.trigger_sync_ocurren_en_accion()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+    PERFORM public.ensure_case_semester_func(NEW.id_caso, NEW.fecha_registro::DATE);
+    RETURN NEW;
+END;
+$function$
+;
+
+-- Trigger Function: sync_ocurren_en_cita (citas.fecha_encuentro)
+CREATE OR REPLACE FUNCTION public.trigger_sync_ocurren_en_cita()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+    PERFORM public.ensure_case_semester_func(NEW.id_caso, NEW.fecha_encuentro::DATE);
+    RETURN NEW;
+END;
+$function$
+;
+
+-- Trigger Function: sync_ocurren_en_estatus (cambio_estatus.fecha)
+CREATE OR REPLACE FUNCTION public.trigger_sync_ocurren_en_estatus()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+    PERFORM public.ensure_case_semester_func(NEW.id_caso, NEW.fecha::DATE);
+    RETURN NEW;
+END;
+$function$
+;
+
+-- Trigger Function: sync_ocurren_en_soporte (soportes.fecha_consignacion)
+CREATE OR REPLACE FUNCTION public.trigger_sync_ocurren_en_soporte()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+    PERFORM public.ensure_case_semester_func(NEW.id_caso, NEW.fecha_consignacion);
+    RETURN NEW;
+END;
+$function$
+;
+
+-- Trigger Function: sync_ocurren_en_beneficiario (sin fecha propia, usa CURRENT_DATE)
+CREATE OR REPLACE FUNCTION public.trigger_sync_ocurren_en_beneficiario()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+    PERFORM public.ensure_case_semester_func(NEW.id_caso, CURRENT_DATE);
+    RETURN NEW;
+END;
+$function$
+;
+
 -- Tabla: usuarios
 DROP TRIGGER IF EXISTS trigger_assign_nombre_usuario ON usuarios;
 CREATE TRIGGER trigger_assign_nombre_usuario BEFORE INSERT OR UPDATE ON public.usuarios FOR EACH ROW WHEN (((new.nombre_usuario IS NULL) OR ((new.nombre_usuario)::text = ''::text))) EXECUTE FUNCTION assign_nombre_usuario_from_email();
@@ -1135,6 +1248,49 @@ CREATE TRIGGER trigger_assign_nombre_usuario BEFORE INSERT OR UPDATE ON public.u
 DROP TRIGGER IF EXISTS trigger_crear_cambio_estatus_inicial ON casos;
 CREATE TRIGGER trigger_crear_cambio_estatus_inicial AFTER INSERT ON public.casos FOR EACH ROW EXECUTE FUNCTION trigger_crear_cambio_estatus_inicial();
 
+-- =========================================================
+-- TRIGGERS DE SINCRONIZACIÓN (OCURREN_EN)
+-- =========================================================
+
+DROP TRIGGER IF EXISTS trigger_sync_semestre_asignacion ON se_le_asigna;
+CREATE TRIGGER trigger_sync_semestre_asignacion
+AFTER INSERT ON se_le_asigna
+FOR EACH ROW EXECUTE FUNCTION trigger_sync_ocurren_en_asignacion();
+
+DROP TRIGGER IF EXISTS trigger_sync_semestre_supervision ON supervisa;
+CREATE TRIGGER trigger_sync_semestre_supervision
+AFTER INSERT ON supervisa
+FOR EACH ROW EXECUTE FUNCTION trigger_sync_ocurren_en_asignacion();
+
+DROP TRIGGER IF EXISTS trigger_sync_semestre_caso ON casos;
+CREATE TRIGGER trigger_sync_semestre_caso
+AFTER INSERT OR UPDATE OF fecha_inicio_caso ON casos
+FOR EACH ROW EXECUTE FUNCTION trigger_sync_ocurren_en_caso();
+
+DROP TRIGGER IF EXISTS trigger_sync_semestre_accion ON acciones;
+CREATE TRIGGER trigger_sync_semestre_accion
+AFTER INSERT ON acciones
+FOR EACH ROW EXECUTE FUNCTION trigger_sync_ocurren_en_accion();
+
+DROP TRIGGER IF EXISTS trigger_sync_semestre_cita ON citas;
+CREATE TRIGGER trigger_sync_semestre_cita
+AFTER INSERT OR UPDATE OF fecha_encuentro ON citas
+FOR EACH ROW EXECUTE FUNCTION trigger_sync_ocurren_en_cita();
+
+DROP TRIGGER IF EXISTS trigger_sync_semestre_estatus ON cambio_estatus;
+CREATE TRIGGER trigger_sync_semestre_estatus
+AFTER INSERT ON cambio_estatus
+FOR EACH ROW EXECUTE FUNCTION trigger_sync_ocurren_en_estatus();
+
+DROP TRIGGER IF EXISTS trigger_sync_semestre_soporte ON soportes;
+CREATE TRIGGER trigger_sync_semestre_soporte
+AFTER INSERT ON soportes
+FOR EACH ROW EXECUTE FUNCTION trigger_sync_ocurren_en_soporte();
+
+DROP TRIGGER IF EXISTS trigger_sync_semestre_beneficiario ON beneficiarios;
+CREATE TRIGGER trigger_sync_semestre_beneficiario
+AFTER INSERT ON beneficiarios
+FOR EACH ROW EXECUTE FUNCTION trigger_sync_ocurren_en_beneficiario();
 
 
 -- =========================================================
