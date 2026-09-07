@@ -1303,23 +1303,23 @@ CREATE TRIGGER trg_audit_condicion_trabajo AFTER INSERT OR UPDATE OR DELETE ON c
 CREATE TRIGGER trg_audit_condicion_actividad AFTER INSERT OR UPDATE OR DELETE ON condicion_actividad FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('condicion_actividad', 'id_actividad');
 CREATE TRIGGER trg_audit_tipo_caracteristicas AFTER INSERT OR UPDATE OR DELETE ON tipo_caracteristicas FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('tipo_caracteristica', 'id_tipo');
 CREATE TRIGGER trg_audit_materias AFTER INSERT OR UPDATE OR DELETE ON materias FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('materia', 'id_materia');
-CREATE TRIGGER trg_audit_semestres AFTER INSERT OR UPDATE OR DELETE ON semestres FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('semestre', 'id_semestre');
+CREATE TRIGGER trg_audit_semestres AFTER INSERT OR UPDATE OR DELETE ON semestres FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('semestre', 'term');
 CREATE TRIGGER trg_audit_usuarios AFTER INSERT OR UPDATE OR DELETE ON usuarios FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('usuario', 'cedula');
-CREATE TRIGGER trg_audit_municipios AFTER INSERT OR UPDATE OR DELETE ON municipios FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('municipio', 'id_municipio');
-CREATE TRIGGER trg_audit_parroquias AFTER INSERT OR UPDATE OR DELETE ON parroquias FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('parroquia', 'id_parroquia');
+CREATE TRIGGER trg_audit_municipios AFTER INSERT OR UPDATE OR DELETE ON municipios FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('municipio', 'id_estado,num_municipio');
+CREATE TRIGGER trg_audit_parroquias AFTER INSERT OR UPDATE OR DELETE ON parroquias FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('parroquia', 'id_estado,num_municipio,num_parroquia');
 CREATE TRIGGER trg_audit_nucleos AFTER INSERT OR UPDATE OR DELETE ON nucleos FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('nucleo', 'id_nucleo');
 CREATE TRIGGER trg_audit_solicitantes AFTER INSERT OR UPDATE OR DELETE ON solicitantes FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('solicitante', 'cedula');
-CREATE TRIGGER trg_audit_viviendas AFTER INSERT OR UPDATE OR DELETE ON viviendas FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('vivienda', 'id_vivienda');
-CREATE TRIGGER trg_audit_familias_y_hogares AFTER INSERT OR UPDATE OR DELETE ON familias_y_hogares FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('familia_y_hogar', 'id_familia');
-CREATE TRIGGER trg_audit_caracteristicas AFTER INSERT OR UPDATE OR DELETE ON caracteristicas FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('caracteristica', 'id_caracteristica');
+CREATE TRIGGER trg_audit_viviendas AFTER INSERT OR UPDATE OR DELETE ON viviendas FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('vivienda', 'cedula_solicitante');
+CREATE TRIGGER trg_audit_familias_y_hogares AFTER INSERT OR UPDATE OR DELETE ON familias_y_hogares FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('familia_y_hogar', 'cedula_solicitante');
+CREATE TRIGGER trg_audit_caracteristicas AFTER INSERT OR UPDATE OR DELETE ON caracteristicas FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('caracteristica', 'id_tipo_caracteristica,num_caracteristica');
 CREATE TRIGGER trg_audit_categorias AFTER INSERT OR UPDATE OR DELETE ON categorias FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('categoria', 'num_categoria,id_materia');
 CREATE TRIGGER trg_audit_subcategorias AFTER INSERT OR UPDATE OR DELETE ON subcategorias FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('subcategoria', 'num_subcategoria,num_categoria,id_materia');
-CREATE TRIGGER trg_audit_ambitos_legales AFTER INSERT OR UPDATE OR DELETE ON ambitos_legales FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('ambito_legal', 'id_ambito');
+CREATE TRIGGER trg_audit_ambitos_legales AFTER INSERT OR UPDATE OR DELETE ON ambitos_legales FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('ambito_legal', 'id_materia,num_categoria,num_subcategoria,num_ambito_legal');
 CREATE TRIGGER trg_audit_casos AFTER INSERT OR UPDATE OR DELETE ON casos FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('caso', 'id_caso');
-CREATE TRIGGER trg_audit_citas AFTER INSERT OR UPDATE OR DELETE ON citas FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('cita', 'id_cita');
-CREATE TRIGGER trg_audit_acciones AFTER INSERT OR UPDATE OR DELETE ON acciones FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('accion', 'id_accion');
-CREATE TRIGGER trg_audit_soportes AFTER INSERT OR UPDATE OR DELETE ON soportes FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('soporte', 'id_soporte');
-CREATE TRIGGER trg_audit_beneficiarios AFTER INSERT OR UPDATE OR DELETE ON beneficiarios FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('beneficiario', 'id_beneficiario');
+CREATE TRIGGER trg_audit_citas AFTER INSERT OR UPDATE OR DELETE ON citas FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('cita', 'num_cita,id_caso');
+CREATE TRIGGER trg_audit_acciones AFTER INSERT OR UPDATE OR DELETE ON acciones FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('accion', 'num_accion,id_caso');
+CREATE TRIGGER trg_audit_soportes AFTER INSERT OR UPDATE OR DELETE ON soportes FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('soporte', 'num_soporte,id_caso');
+CREATE TRIGGER trg_audit_beneficiarios AFTER INSERT OR UPDATE OR DELETE ON beneficiarios FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('beneficiario', 'num_beneficiario,id_caso');
 
 -- NOTA: Las tablas asociativas (ejecutan, equipo, sesiones) NO llevan trigger aquí 
 -- porque se auditarán manualmente desde el código de la aplicación.
