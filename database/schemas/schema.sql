@@ -60,6 +60,7 @@ CREATE TABLE usuarios (
     nombre_usuario VARCHAR(50) NOT NULL UNIQUE,
     contrasena VARCHAR(255) NOT NULL,
     telefono_celular VARCHAR(20),
+    foto_perfil VARCHAR(500),
     habilitado_sistema BOOLEAN NOT NULL DEFAULT TRUE,
     tipo_usuario VARCHAR(20) NOT NULL CHECK (tipo_usuario IN ('Estudiante', 'Profesor', 'Coordinador'))
 );
@@ -243,6 +244,7 @@ CREATE TABLE ambitos_legales (
 CREATE TABLE coordinadores (
     id_coordinador VARCHAR(20) PRIMARY KEY,
     term VARCHAR(20) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     
     FOREIGN KEY (term) REFERENCES semestres(term) 
         ON UPDATE CASCADE ON DELETE RESTRICT,
@@ -256,6 +258,7 @@ CREATE TABLE estudiantes (
     cedula_estudiante VARCHAR(20) NOT NULL,
     tipo_estudiante VARCHAR(50) NOT NULL CHECK (tipo_estudiante IN ('Voluntario', 'Inscrito', 'Egresado', 'Servicio Comunitario')),
     nrc VARCHAR(20) NOT NULL,
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (term, cedula_estudiante),
     FOREIGN KEY (term) REFERENCES semestres(term) 
         ON UPDATE CASCADE ON DELETE RESTRICT,
@@ -268,6 +271,7 @@ CREATE TABLE profesores (
     term VARCHAR(20) NOT NULL,
     cedula_profesor VARCHAR(20) NOT NULL,
     tipo_profesor VARCHAR(50) NOT NULL CHECK (tipo_profesor IN ('Voluntario', 'Asesor')),
+    habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (term, cedula_profesor),
     FOREIGN KEY (term) REFERENCES semestres(term) 
         ON UPDATE CASCADE ON DELETE RESTRICT,
@@ -388,7 +392,7 @@ CREATE TABLE soportes (
     num_soporte INTEGER NOT NULL,
     id_caso INTEGER NOT NULL,
     
-    documento_data BYTEA,
+    url_documento VARCHAR(500),
     nombre_archivo VARCHAR(150) NOT NULL,
     tipo_mime VARCHAR(100) NOT NULL,
     descripcion TEXT,
@@ -1256,6 +1260,20 @@ CREATE TABLE auditoria_sesiones (
     fecha_inicio TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas'),
     fecha_cierre TIMESTAMP
 );
+
+CREATE TABLE auditoria_descarga_soportes (
+    id SERIAL PRIMARY KEY,
+    num_soporte INTEGER NOT NULL,
+    id_caso INTEGER NOT NULL,
+    nombre_archivo VARCHAR(150) NOT NULL,
+    cedula_descargo VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
+    ip_direccion VARCHAR(45),
+    fecha_descarga TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
+);
+
+CREATE INDEX idx_auditoria_descarga_soportes_caso ON auditoria_descarga_soportes(id_caso);
+CREATE INDEX idx_auditoria_descarga_soportes_usuario ON auditoria_descarga_soportes(cedula_descargo);
+CREATE INDEX idx_auditoria_descarga_soportes_fecha ON auditoria_descarga_soportes(fecha_descarga DESC);
 
 GRANT SELECT, INSERT ON auditoria_reportes TO rol_coordinador, rol_profesor, rol_estudiante;
 GRANT SELECT, INSERT, UPDATE ON auditoria_sesiones TO rol_coordinador, rol_profesor, rol_estudiante;

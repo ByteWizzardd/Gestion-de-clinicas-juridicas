@@ -20,7 +20,7 @@ export async function getAuditoriaEventosAction(limit = 1000): Promise<GetAudito
     const authResult = await requireAuthInServerActionWithCode();
     
     // Solo permitimos el acceso a coordinadores (o según tu lógica de roles)
-    if (!authResult.success || !authResult.user || authResult.user.tipo_usuario !== 'Coordinador') {
+    if (!authResult.success || !authResult.user || authResult.user.rol !== 'Coordinador') {
       return {
         success: false,
         error: { message: 'No autorizado para ver la auditoría', code: 'UNAUTHORIZED' }
@@ -39,5 +39,22 @@ export async function getAuditoriaEventosAction(limit = 1000): Promise<GetAudito
       success: false,
       error: { message: 'Error interno al obtener eventos de auditoría' }
     };
+  }
+}
+
+/**
+ * Obtiene los contadores de auditoría para el dashboard principal
+ */
+export async function getAuditCountsAction() {
+  try {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      throw new Error('No autorizado');
+    }
+
+    return await auditoriaQueries.getAuditCounts();
+  } catch (error) {
+    console.error('Error en getAuditCountsAction:', error);
+    throw new Error('Error al obtener los contadores de auditoría');
   }
 }

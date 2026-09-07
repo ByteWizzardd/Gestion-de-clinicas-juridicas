@@ -6,7 +6,7 @@ import AuditEntityCardSkeleton from '@/components/ui/skeletons/AuditEntityCardSk
 import Search from '@/components/CaseTools/search';
 
 import AuditEntityCard from './AuditEntityCard';
-import { getAuditCountsAction } from '@/app/actions/audit';
+import { getAuditoriaEventosAction } from '@/app/actions/audit';
 import { logger } from '@/lib/utils/logger';
 import type { AuditCounts } from '@/types/audit';
 import { LucideIcon, FileText, Calendar, Users, User, MapPin, BookOpen, FolderTree, Building2, Home, Building, Briefcase, Activity, GraduationCap, Tag, Tags, Scale, Calendar as CalendarIcon, Clock, ArrowDown, ArrowUp, FileBarChart } from 'lucide-react';
