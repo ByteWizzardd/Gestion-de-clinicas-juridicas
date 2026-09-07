@@ -68,38 +68,32 @@ BEGIN
 
     BEGIN
         -- =========================================================
-        -- Establecer variables de sesión para TODOS los triggers de auditoría
+        -- Variables de sesión para el trigger genérico de auditoría: un solo
+        -- actor y un solo motivo (con contexto) para toda la cascada de deletes.
         -- =========================================================
-        
-        -- Variables para auditoría de CASOS (usa motivo original)
-        PERFORM set_config('app.usuario_elimina_caso', p_cedula_actor, true);
-        PERFORM set_config('app.motivo_eliminacion_caso', p_motivo, true);
-        
-        -- Variables para auditoría de CITAS (usa motivo con contexto)
-        PERFORM set_config('app.usuario_elimina_cita', p_cedula_actor, true);
-        PERFORM set_config('app.motivo_eliminacion_cita', v_motivo_relacionados, true);
-        
-        -- Variables para auditoría de BENEFICIARIOS
         PERFORM set_config('app.current_user_id', p_cedula_actor, true);
-        PERFORM set_config('app.motivo_eliminacion_beneficiario', v_motivo_relacionados, true);
-        
-        -- Variables para auditoría de ACCIONES (incluyendo ejecutores pre-capturados)
-        PERFORM set_config('app.usuario_elimina_accion', p_cedula_actor, true);
-        PERFORM set_config('app.motivo_eliminacion_accion', v_motivo_relacionados, true);
-        PERFORM set_config('app.ejecutores_acciones_json', v_ejecutores_json::text, true);
-        
-        -- Variables para auditoría de SOPORTES
-        PERFORM set_config('app.usuario_elimina_soporte', p_cedula_actor, true);
-        PERFORM set_config('app.motivo_eliminacion_soporte', v_motivo_relacionados, true);
+        PERFORM set_config('app.audit_metadata', jsonb_build_object('motivo', v_motivo_relacionados)::text, true);
+
+        -- Registrar los ejecutores de cada acción como su propio evento de auditoría
+        -- ANTES de borrarlos (una vez eliminado `ejecutan`, esta información se pierde).
+        INSERT INTO auditoria_eventos (entidad, operacion, id_entidad, id_usuario, datos_anteriores, metadata)
+        SELECT
+            'accion_ejecutores',
+            'eliminacion',
+            num_accion,
+            p_cedula_actor,
+            jsonb_build_object('ejecutores', detalle -> 'ejecutores_detalle'),
+            jsonb_build_object('motivo', v_motivo_relacionados)
+        FROM jsonb_each(v_ejecutores_json) AS t(num_accion, detalle);
 
         -- =========================================================
         -- Eliminar referencias en orden inverso de dependencias
         -- =========================================================
-        
+
         -- 1. Eliminar ejecutores (depende de acciones)
         DELETE FROM ejecutan WHERE id_caso = p_id_caso;
-        
-        -- 2. Eliminar acciones (depende de casos) - trigger lee ejecutores del JSON
+
+        -- 2. Eliminar acciones (depende de casos)
         DELETE FROM acciones WHERE id_caso = p_id_caso;
         
         -- 3. Eliminar atienden (depende de citas)

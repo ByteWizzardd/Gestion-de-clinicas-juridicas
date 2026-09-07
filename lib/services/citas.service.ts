@@ -224,7 +224,7 @@ export const citasService = {
       // Usar transacción para crear cita y registros en atienden de forma atómica
       return await withTransaction(async (client) => {
         // Establecer la variable de sesión para el trigger de auditoría
-        await client.query("SELECT set_config('app.usuario_crea_cita', $1, true)", [params.idUsuarioRegistro]);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [params.idUsuarioRegistro]);
 
         // 1. Crear la cita
         const createQuery = loadSQL('citas/create.sql');
@@ -476,7 +476,7 @@ export const citasService = {
                   }
 
                   // Establecer la variable de sesión para que el trigger sepa quién actualizó la acción
-                  await client.query("SELECT set_config('app.usuario_actualiza_accion', $1, true)", [params.idUsuarioActualizo]);
+                  await client.query("SELECT set_config('app.current_user_id', $1, true)", [params.idUsuarioActualizo]);
 
                   // Actualizar la acción usando client de la transacción
                   const updateAccionQuery = loadSQL('acciones/update.sql');
@@ -675,8 +675,8 @@ export const citasService = {
 
         // 5. Eliminar la cita (el trigger capturará la auditoría usando OLD)
         // Establecer las variables de sesión para el trigger
-        await client.query("SELECT set_config('app.usuario_elimina_cita', $1, true)", [params.idUsuarioElimino]);
-        await client.query("SELECT set_config('app.motivo_eliminacion_cita', $1, true)", [params.motivo || '']);
+        await client.query("SELECT set_config('app.current_user_id', $1, true)", [params.idUsuarioElimino]);
+        await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: params.motivo || '' })]);
 
         const deleteCitaQuery = loadSQL('citas/delete.sql');
         const citaResult = await client.query(deleteCitaQuery, [num_cita, id_caso]);

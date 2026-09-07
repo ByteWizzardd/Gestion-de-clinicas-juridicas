@@ -446,7 +446,7 @@ export async function bulkCreateEstudiantes(
     await client.query('BEGIN');
     // Establecer usuario para auditoría
     if (cedulaActor) {
-      await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [cedulaActor]);
+      await client.query("SELECT set_config('app.current_user_id', $1, true)", [cedulaActor]);
     }
     // Cargar queries SQL
     const { loadSQL } = await import('@/lib/db/sql-loader');

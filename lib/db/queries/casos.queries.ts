@@ -124,8 +124,7 @@ export const casosQueries = {
         if (!/^[A-Za-z0-9.\-]+$/.test(data.cedulaUsuarioRegistra)) {
           throw new Error('Formato de cédula inválido');
         }
-        const cedulaEscapada = data.cedulaUsuarioRegistra.replace(/'/g, "''");
-        await db.query(`SET LOCAL app.usuario_registra = '${cedulaEscapada}'`);
+        await db.query(`SELECT set_config('app.current_user_id', $1, true)`, [data.cedulaUsuarioRegistra]);
       }
 
       const query = loadSQL('casos/create.sql');

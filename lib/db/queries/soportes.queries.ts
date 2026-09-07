@@ -116,8 +116,8 @@ export const soportesQueries = {
 
       // Establecer las variables de sesión para el trigger usando set_config
       // El tercer parámetro 'true' hace que sea local a la transacción
-      await client.query("SELECT set_config('app.usuario_elimina_soporte', $1, true)", [idUsuarioElimino]);
-      await client.query("SELECT set_config('app.motivo_eliminacion_soporte', $1, true)", [motivo || '']);
+      await client.query("SELECT set_config('app.current_user_id', $1, true)", [idUsuarioElimino]);
+      await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: motivo || '' })]);
 
       // Ejecutar el DELETE (el trigger capturará la auditoría usando OLD)
       const query = loadSQL('soportes/delete.sql');
