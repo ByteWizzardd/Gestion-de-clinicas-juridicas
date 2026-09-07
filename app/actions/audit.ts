@@ -2,6 +2,7 @@
 
 import { auditoriaQueries } from '@/lib/db/queries/auditoria/get-eventos';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { mapSystemRoleToSidebarRole } from '@/lib/utils/role-mapper';
 
 export interface GetAuditoriaResult {
   success: boolean;
@@ -12,20 +13,20 @@ export interface GetAuditoriaResult {
   };
 }
 
+async function requireCoordinador() {
+  const authResult = await requireAuthInServerActionWithCode();
+  if (!authResult.success || !authResult.user || mapSystemRoleToSidebarRole(authResult.user.rol) !== 'coordinator') {
+    throw new Error('No autorizado para ver la auditoría');
+  }
+  return authResult.user;
+}
+
 /**
  * Obtiene el historial global unificado de auditoría.
  */
 export async function getAuditoriaEventosAction(limit = 1000): Promise<GetAuditoriaResult> {
   try {
-    const authResult = await requireAuthInServerActionWithCode();
-    
-    // Solo permitimos el acceso a coordinadores (o según tu lógica de roles)
-    if (!authResult.success || !authResult.user || authResult.user.rol !== 'Coordinador') {
-      return {
-        success: false,
-        error: { message: 'No autorizado para ver la auditoría', code: 'UNAUTHORIZED' }
-      };
-    }
+    await requireCoordinador();
 
     const eventos = await auditoriaQueries.getAllEventos(limit);
 
@@ -37,20 +38,18 @@ export async function getAuditoriaEventosAction(limit = 1000): Promise<GetAudito
     console.error('Error en getAuditoriaEventosAction:', error);
     return {
       success: false,
-      error: { message: 'Error interno al obtener eventos de auditoría' }
+      error: { message: error?.message || 'Error interno al obtener eventos de auditoría', code: 'UNAUTHORIZED' }
     };
   }
 }
 
 /**
- * Obtiene los contadores de auditoría para el dashboard principal
+ * Obtiene los contadores de auditoría para el dashboard principal.
+ * Igual que getAuditoriaEventosAction, restringido a coordinadores.
  */
 export async function getAuditCountsAction() {
   try {
-    const authResult = await requireAuthInServerActionWithCode();
-    if (!authResult.success || !authResult.user) {
-      throw new Error('No autorizado');
-    }
+    await requireCoordinador();
 
     return await auditoriaQueries.getAuditCounts();
   } catch (error) {

@@ -4,9 +4,9 @@ SELECT COUNT(*) FROM (
     SELECT
         INITCAP(REGEXP_REPLACE(t.entidad, 's$', '')) as entidad,
         CASE 
-            WHEN t.operacion = 'INSERT' THEN 'Creación'
-            WHEN t.operacion = 'UPDATE' THEN 'Actualización'
-            WHEN t.operacion = 'DELETE' THEN 'Eliminación'
+            WHEN t.operacion = 'insercion' THEN 'Creación'
+            WHEN t.operacion = 'actualizacion' THEN 'Actualización'
+            WHEN t.operacion = 'eliminacion' THEN 'Eliminación'
             ELSE t.operacion
         END as accion,
         t.fecha_evento as fecha,
