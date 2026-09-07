@@ -200,7 +200,7 @@ export const usuariosQueries = {
 
       // Establecer variable de sesión para el trigger de auditoría
       if (data.cedula_actor) {
-        await db.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [data.cedula_actor]);
+        await db.query("SELECT set_config('app.current_user_id', $1, true)", [data.cedula_actor]);
       }
 
       // Insertar en tabla usuarios (el trigger capturará la auditoría automáticamente)
@@ -579,7 +579,7 @@ export const usuariosQueries = {
     try {
       await client.query('BEGIN');
       // Establecer variable de sesión para auditoría
-      await client.query("SELECT set_config('app.usuario_actualiza_usuario', $1, true)", [cedulaActor]);
+      await client.query("SELECT set_config('app.current_user_id', $1, true)", [cedulaActor]);
 
       const query = loadSQL('usuarios/update-foto-perfil.sql');
       await client.query(query, [cedula, fotoPerfilUrl]);
@@ -601,7 +601,7 @@ export const usuariosQueries = {
     try {
       await client.query('BEGIN');
       // Establecer variable de sesión para auditoría
-      await client.query("SELECT set_config('app.usuario_actualiza_usuario', $1, true)", [cedulaActor]);
+      await client.query("SELECT set_config('app.current_user_id', $1, true)", [cedulaActor]);
 
       const query = loadSQL('usuarios/delete-foto-perfil.sql');
       await client.query(query, [cedula]);
@@ -623,61 +623,10 @@ export const usuariosQueries = {
     try {
       await client.query('BEGIN');
 
-      // 1. Registrar en auditoría de actualización
-      const auditQuery = `
-        INSERT INTO auditoria_actualizacion_usuarios (
-          ci_usuario,
-          nombres_anterior,
-          apellidos_anterior,
-          correo_electronico_anterior,
-          nombre_usuario_anterior,
-          telefono_celular_anterior,
-          habilitado_sistema_anterior,
-          tipo_usuario_anterior,
-          tipo_estudiante_anterior,
-          tipo_profesor_anterior,
-          nombres_nuevo,
-          apellidos_nuevo,
-          correo_electronico_nuevo,
-          nombre_usuario_nuevo,
-          telefono_celular_nuevo,
-          habilitado_sistema_nuevo,
-          tipo_usuario_nuevo,
-          tipo_estudiante_nuevo,
-          tipo_profesor_nuevo,
-          id_usuario_actualizo,
-          fecha_actualizacion
-        )
-        SELECT 
-          u.cedula,
-          u.nombres,
-          u.apellidos,
-          u.correo_electronico,
-          u.nombre_usuario,
-          u.telefono_celular,
-          u.habilitado_sistema,
-          u.tipo_usuario,
-          e.tipo_estudiante,
-          p.tipo_profesor,
-          u.nombres,
-          u.apellidos,
-          u.correo_electronico,
-          u.nombre_usuario,
-          u.telefono_celular,
-          false, -- Nuevo estado: deshabilitado
-          u.tipo_usuario,
-          e.tipo_estudiante,
-          p.tipo_profesor,
-          $1,
-          (NOW() AT TIME ZONE 'America/Caracas')
-        FROM usuarios u
-        LEFT JOIN estudiantes e ON u.cedula = e.cedula_estudiante AND e.habilitado = true
-        LEFT JOIN profesores p ON u.cedula = p.cedula_profesor AND p.habilitado = true
-        WHERE u.cedula = ANY($2)
-      `;
-      await client.query(auditQuery, [cedula_actor, cedulas]);
+      // El trigger genérico sobre `usuarios` audita cada fila afectada por el UPDATE
+      // masivo de abajo (uno por cada cédula en el lote); solo hace falta el actor.
+      await client.query("SELECT set_config('app.current_user_id', $1, true)", [cedula_actor]);
 
-      // 2. Actualizar el estado en la tabla de usuarios
       const updateQuery = 'UPDATE usuarios SET habilitado_sistema = false WHERE cedula = ANY($1)';
       await client.query(updateQuery, [cedulas]);
 
@@ -698,61 +647,10 @@ export const usuariosQueries = {
     try {
       await client.query('BEGIN');
 
-      // 1. Registrar en auditoría de actualización
-      const auditQuery = `
-        INSERT INTO auditoria_actualizacion_usuarios (
-          ci_usuario,
-          nombres_anterior,
-          apellidos_anterior,
-          correo_electronico_anterior,
-          nombre_usuario_anterior,
-          telefono_celular_anterior,
-          habilitado_sistema_anterior,
-          tipo_usuario_anterior,
-          tipo_estudiante_anterior,
-          tipo_profesor_anterior,
-          nombres_nuevo,
-          apellidos_nuevo,
-          correo_electronico_nuevo,
-          nombre_usuario_nuevo,
-          telefono_celular_nuevo,
-          habilitado_sistema_nuevo,
-          tipo_usuario_nuevo,
-          tipo_estudiante_nuevo,
-          tipo_profesor_nuevo,
-          id_usuario_actualizo,
-          fecha_actualizacion
-        )
-        SELECT 
-          u.cedula,
-          u.nombres,
-          u.apellidos,
-          u.correo_electronico,
-          u.nombre_usuario,
-          u.telefono_celular,
-          u.habilitado_sistema,
-          u.tipo_usuario,
-          e.tipo_estudiante,
-          p.tipo_profesor,
-          u.nombres,
-          u.apellidos,
-          u.correo_electronico,
-          u.nombre_usuario,
-          u.telefono_celular,
-          true, -- Nuevo estado: habilitado
-          u.tipo_usuario,
-          e.tipo_estudiante,
-          p.tipo_profesor,
-          $1,
-          (NOW() AT TIME ZONE 'America/Caracas')
-        FROM usuarios u
-        LEFT JOIN estudiantes e ON u.cedula = e.cedula_estudiante AND e.habilitado = true
-        LEFT JOIN profesores p ON u.cedula = p.cedula_profesor AND p.habilitado = true
-        WHERE u.cedula = ANY($2)
-      `;
-      await client.query(auditQuery, [cedula_actor, cedulas]);
+      // El trigger genérico sobre `usuarios` audita cada fila afectada por el UPDATE
+      // masivo de abajo (uno por cada cédula en el lote); solo hace falta el actor.
+      await client.query("SELECT set_config('app.current_user_id', $1, true)", [cedula_actor]);
 
-      // 2. Actualizar el estado en la tabla de usuarios
       const updateQuery = 'UPDATE usuarios SET habilitado_sistema = true WHERE cedula = ANY($1)';
       await client.query(updateQuery, [cedulas]);
 
@@ -793,59 +691,15 @@ export const usuariosQueries = {
     try {
       await client.query('BEGIN');
 
-      // 1. Registrar auditoría para estudiantes
-      const auditStudentsQuery = `
-        INSERT INTO auditoria_actualizacion_usuarios (
-          ci_usuario, nombres_anterior, apellidos_anterior, correo_electronico_anterior, nombre_usuario_anterior,
-          telefono_celular_anterior, habilitado_sistema_anterior, tipo_usuario_anterior, tipo_estudiante_anterior, tipo_profesor_anterior,
-          nombres_nuevo, apellidos_nuevo, correo_electronico_nuevo, nombre_usuario_nuevo, telefono_celular_nuevo,
-          habilitado_sistema_nuevo, tipo_usuario_nuevo, tipo_estudiante_nuevo, tipo_profesor_nuevo,
-          id_usuario_actualizo, fecha_actualizacion
-        )
-        SELECT 
-          u.cedula, u.nombres, u.apellidos, u.correo_electronico, u.nombre_usuario,
-          u.telefono_celular, u.habilitado_sistema, u.tipo_usuario, e.tipo_estudiante, NULL,
-          u.nombres, u.apellidos, u.correo_electronico, u.nombre_usuario, u.telefono_celular,
-          false, u.tipo_usuario, e.tipo_estudiante, NULL,
-          $1, (NOW() AT TIME ZONE 'America/Caracas')
-        FROM usuarios u
-        JOIN estudiantes e ON u.cedula = e.cedula_estudiante
-        JOIN semestres s ON e.term = s.term
-        WHERE s.fecha_fin < CURRENT_DATE
-          AND u.habilitado_sistema = TRUE
-          AND u.tipo_usuario = 'Estudiante'
-      `;
-      await client.query(auditStudentsQuery, [cedula_actor]);
+      // El trigger genérico sobre `usuarios` audita cada fila afectada por los dos
+      // UPDATE masivos de abajo; solo hace falta dejar seteado el actor.
+      await client.query("SELECT set_config('app.current_user_id', $1, true)", [cedula_actor]);
 
-      // 2. Deshabilitar estudiantes
+      // 1. Deshabilitar estudiantes de semestres ya finalizados
       const estudiantesQuery = loadSQL('usuarios/disable-students-finished-term.sql');
       const estudiantesResult = await client.query(estudiantesQuery);
 
-      // 3. Registrar auditoría para profesores
-      const auditProfessorsQuery = `
-        INSERT INTO auditoria_actualizacion_usuarios (
-          ci_usuario, nombres_anterior, apellidos_anterior, correo_electronico_anterior, nombre_usuario_anterior,
-          telefono_celular_anterior, habilitado_sistema_anterior, tipo_usuario_anterior, tipo_estudiante_anterior, tipo_profesor_anterior,
-          nombres_nuevo, apellidos_nuevo, correo_electronico_nuevo, nombre_usuario_nuevo, telefono_celular_nuevo,
-          habilitado_sistema_nuevo, tipo_usuario_nuevo, tipo_estudiante_nuevo, tipo_profesor_nuevo,
-          id_usuario_actualizo, fecha_actualizacion
-        )
-        SELECT 
-          u.cedula, u.nombres, u.apellidos, u.correo_electronico, u.nombre_usuario,
-          u.telefono_celular, u.habilitado_sistema, u.tipo_usuario, NULL, p.tipo_profesor,
-          u.nombres, u.apellidos, u.correo_electronico, u.nombre_usuario, u.telefono_celular,
-          false, u.tipo_usuario, NULL, p.tipo_profesor,
-          $1, (NOW() AT TIME ZONE 'America/Caracas')
-        FROM usuarios u
-        JOIN profesores p ON u.cedula = p.cedula_profesor
-        JOIN semestres s ON p.term = s.term
-        WHERE s.fecha_fin < CURRENT_DATE
-          AND u.habilitado_sistema = TRUE
-          AND u.tipo_usuario = 'Profesor'
-      `;
-      await client.query(auditProfessorsQuery, [cedula_actor]);
-
-      // 4. Deshabilitar profesores
+      // 2. Deshabilitar profesores de semestres ya finalizados
       const profesoresQuery = loadSQL('usuarios/disable-professors-finished-term.sql');
       const profesoresResult = await client.query(profesoresQuery);
 
