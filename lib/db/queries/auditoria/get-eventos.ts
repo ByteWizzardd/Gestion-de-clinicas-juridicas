@@ -4,90 +4,74 @@ import { QueryResult } from 'pg';
 import { logger } from '@/lib/utils/logger';
 import { DatabaseError } from '@/lib/utils/errors';
 import type { AuditCounts } from '@/types/audit';
+import type { AuditoriaEvento, AuditoriaEventoFilters, AuditoriaEventosPage } from '@/types/audit-events';
+
+function buildFilterParams(filters?: AuditoriaEventoFilters) {
+    return [
+        filters?.entidad || null,
+        filters?.idUsuario || null,
+        filters?.operacion || null,
+        filters?.fechaInicio || null,
+        filters?.fechaFin || null,
+        filters?.busqueda || null,
+    ];
+}
+
+function mapRow(row: any): AuditoriaEvento {
+    return {
+        id: Number(row.id ?? 0),
+        entidad: row.entidad,
+        operacion: row.operacion,
+        id_entidad: row.id_entidad,
+        id_usuario: row.usuario_id,
+        nombre_completo_usuario: row.usuario_nombre,
+        datos_anteriores: row.datos_anteriores ?? null,
+        datos_nuevos: row.datos_nuevos ?? null,
+        metadata: row.metadata ?? null,
+        fecha_evento: row.fecha instanceof Date ? row.fecha.toISOString() : row.fecha,
+    };
+}
 
 export const auditoriaQueries = {
     /**
-     * Obtiene todos los eventos de auditoría unificados
+     * Obtiene una página de eventos de auditoría unificados, con filtros y total.
      */
-    getAllEventos: async (
-        limit: number = 1000,
-        offset: number = 0,
-        filters?: {
-            entidad?: string;
-            usuario_id?: string;
-            accion?: string;
-            fecha_inicio?: string;
-            fecha_fin?: string;
-            busqueda?: string;
-        }
-    ): Promise<any[]> => {
+    getEventos: async (filters?: AuditoriaEventoFilters): Promise<AuditoriaEventosPage> => {
+        const limit = filters?.limit ?? 20;
+        const offset = filters?.offset ?? 0;
         try {
             const query = loadSQL('audit/get-unified-logs.sql');
-            const result: QueryResult = await pool.query(query, [
-                limit,
-                offset,
-                filters?.entidad || null,
-                filters?.usuario_id || null,
-                filters?.accion || null,
-                filters?.fecha_inicio || null,
-                filters?.fecha_fin || null,
-                filters?.busqueda || null
+            const countQuery = loadSQL('audit/count-unified-logs.sql');
+            const [eventosResult, countResult]: [QueryResult, QueryResult] = await Promise.all([
+                pool.query(query, [limit, offset, ...buildFilterParams(filters)]),
+                pool.query(countQuery, buildFilterParams(filters)),
             ]);
-            return result.rows;
+            return {
+                eventos: eventosResult.rows.map(mapRow),
+                total: parseInt(countResult.rows[0]?.count || '0', 10),
+            };
         } catch (error) {
-            logger.error('Error en auditoriaQueries.getAllEventos', error);
+            logger.error('Error en auditoriaQueries.getEventos', error);
             throw new DatabaseError('Error al obtener eventos de auditoría', error);
         }
     },
 
     /**
-     * Cuenta el total de registros de auditoría unificados con filtros
-     */
-    countEventos: async (
-        filters?: {
-            entidad?: string;
-            usuario_id?: string;
-            accion?: string;
-            fecha_inicio?: string;
-            fecha_fin?: string;
-            busqueda?: string;
-        }
-    ): Promise<number> => {
-        try {
-            const query = loadSQL('audit/count-unified-logs.sql');
-            const result: QueryResult = await pool.query(query, [
-                filters?.entidad || null,
-                filters?.usuario_id || null,
-                filters?.accion || null,
-                filters?.fecha_inicio || null,
-                filters?.fecha_fin || null,
-                filters?.busqueda || null
-            ]);
-            return parseInt(result.rows[0]?.count || '0', 10);
-        } catch (error) {
-            logger.error('Error en auditoriaQueries.countEventos', error);
-            throw new DatabaseError('Error al contar eventos de auditoría', error);
-        }
-    },
-
-    /**
-     * Obtiene los contadores para el dashboard de auditoría
+     * Obtiene los contadores para el dashboard de auditoría (tarjetas por módulo).
      */
     getAuditCounts: async (): Promise<AuditCounts> => {
         try {
             const query = loadSQL('audit/get-audit-counts.sql');
             const result: QueryResult = await pool.query(query);
-            
-            // Map the big row back to numbers
+
             const row = result.rows[0];
             const counts: any = {};
             for (const key in row) {
                 counts[key] = parseInt(row[key] || '0', 10);
             }
-            
-            // lastActivities can be empty object or fetched separately if needed
+
             counts.lastActivities = {};
-            
+
             return counts as AuditCounts;
         } catch (error) {
             logger.error('Error en auditoriaQueries.getAuditCounts', error);
