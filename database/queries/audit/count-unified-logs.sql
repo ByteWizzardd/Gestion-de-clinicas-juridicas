@@ -15,9 +15,9 @@ SELECT COUNT(*) FROM (
                WHEN t.exitoso = FALSE THEN 'intento_fallido'
                ELSE 'inicio_sesion'
            END as operacion,
-           NULL::text as id_transaccion, NULL::jsonb as metadata,
            COALESCE(t.fecha_inicio, t.fecha_cierre) as fecha,
            t.cedula_usuario as usuario_id,
+           NULL::text as id_transaccion, NULL::jsonb as metadata,
            COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.cedula_usuario), t.cedula_usuario) as usuario_nombre,
            NULL::jsonb as datos_anteriores, to_jsonb(t.*) as datos_nuevos
     FROM auditoria_sesiones t
@@ -25,10 +25,13 @@ SELECT COUNT(*) FROM (
     UNION ALL
 
     SELECT 'reporte' as entidad,
-           CASE WHEN t.operacion = 'vista_previa' THEN 'vista_previa_reporte' ELSE 'generacion_reporte' END as operacion,
-           NULL::text as id_transaccion, NULL::jsonb as metadata,
+           CASE
+               WHEN t.parametros->>'operacion' = 'vista_previa' THEN 'vista_previa_reporte'
+               ELSE 'generacion_reporte'
+           END as operacion,
            t.fecha_generacion as fecha,
            t.id_usuario_genero as usuario_id,
+           NULL::text as id_transaccion, NULL::jsonb as metadata,
            COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_genero), t.id_usuario_genero) as usuario_nombre,
            NULL::jsonb as datos_anteriores, to_jsonb(t.*) as datos_nuevos
     FROM auditoria_reportes t
@@ -36,8 +39,8 @@ SELECT COUNT(*) FROM (
     UNION ALL
 
     SELECT 'soporte' as entidad, 'descarga_soporte' as operacion,
-           NULL::text as id_transaccion, NULL::jsonb as metadata,
            t.fecha_descarga as fecha, t.cedula_descargo as usuario_id,
+           NULL::text as id_transaccion, NULL::jsonb as metadata,
            COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.cedula_descargo), t.cedula_descargo) as usuario_nombre,
            NULL::jsonb as datos_anteriores, to_jsonb(t.*) as datos_nuevos
     FROM auditoria_descarga_soportes t

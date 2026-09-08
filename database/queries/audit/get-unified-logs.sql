@@ -43,11 +43,14 @@ SELECT * FROM (
 
     -- Reportes (auditoria_reportes)
     SELECT
-        t.id::text as id,
+        t.id_reporte::text as id,
         NULL::text as id_transaccion,
         'reporte' as entidad,
-        CASE WHEN t.operacion = 'vista_previa' THEN 'vista_previa_reporte' ELSE 'generacion_reporte' END as operacion,
-        t.id::text as id_entidad,
+        CASE
+            WHEN t.parametros->>'operacion' = 'vista_previa' THEN 'vista_previa_reporte'
+            ELSE 'generacion_reporte'
+        END as operacion,
+        t.id_reporte::text as id_entidad,
         t.fecha_generacion as fecha,
         t.id_usuario_genero as usuario_id,
         COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_genero), t.id_usuario_genero) as usuario_nombre,

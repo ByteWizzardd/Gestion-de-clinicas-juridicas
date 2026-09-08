@@ -136,37 +136,25 @@ const EXCLUDE_PATTERNS = [
     /^num_cambio$/,
 ];
 
+import type { AuditoriaEvento } from '@/types/audit-events';
+
 /**
  * Extrae el texto buscable visible de un registro de auditoría.
  */
-export function extractVisibleSearchText(log: {
-    entidad: string;
-    accion: string;
-    fecha: string;
-    usuario_id: string;
-    usuario_nombre: string;
-    detalles: string;
-    metadata: string;
-}): string {
+export function extractVisibleSearchText(log: AuditoriaEvento): string {
     // Campos básicos siempre visibles (summary de la card)
     const parts: string[] = [
         log.entidad,
-        log.accion,
-        log.usuario_nombre,
-        log.usuario_id,
-        log.detalles,
+        log.operacion,
+        log.nombre_completo_usuario || '',
+        log.id_usuario || '',
+        log.metadata?.accion_negocio || '',
     ];
 
     // Parsear metadata
-    let metadata: AnyRecord = {};
-    try {
-        metadata = typeof log.metadata === 'string' ? JSON.parse(log.metadata) : (log.metadata || {});
-    } catch {
-        return parts.filter(Boolean).join(' ').toLowerCase();
-    }
+    let metadata: AnyRecord = log.metadata || {};
 
-    const isUpdate = log.accion.toLowerCase().includes('actualización') ||
-        log.accion.toLowerCase().includes('modificación');
+    const isUpdate = log.operacion === 'actualizacion';
 
     // 1. Siempre incluir campos de identidad/contexto
     for (const field of IDENTITY_FIELDS) {
@@ -289,15 +277,7 @@ function normalizeText(text: string): string {
  * Solo retorna logs donde el término de búsqueda aparece en datos realmente visibles.
  */
 export function filterLogsByVisibleContent(
-    logs: Array<{
-        entidad: string;
-        accion: string;
-        fecha: string;
-        usuario_id: string;
-        usuario_nombre: string;
-        detalles: string;
-        metadata: string;
-    }>,
+    logs: AuditoriaEvento[],
     searchTerm: string
 ): typeof logs {
     if (!searchTerm || searchTerm.trim() === '') return logs;

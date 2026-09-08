@@ -7,7 +7,8 @@ import {
     Filter, CheckCircle2, Clock, MapPin, Building, Building2, BookOpen, GraduationCap, Briefcase, Activity, Tag, FolderTree, Scale, Layers
 } from 'lucide-react';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
-import { UnifiedAuditLog, getUnifiedAuditLogsAction } from '@/app/actions/audit-general';
+import { getAuditEventsAction } from '@/app/actions/audit-events.actions';
+import type { AuditoriaEvento, AuditOperacion, AuditEntidad } from '@/types/audit-events';
 import { logger } from '@/lib/utils/logger';
 import AuditRecordCardSkeleton from '@/components/ui/skeletons/AuditRecordCardSkeleton';
 import AuditRecordCard from './AuditRecordCard';
@@ -19,7 +20,7 @@ import { filterLogsByVisibleContent } from '@/lib/utils/audit-search';
 import { TablePagination } from '@/components/Table/TablePagination';
 
 export default function AuditGeneralView() {
-    const [logs, setLogs] = useState<UnifiedAuditLog[]>([]);
+    const [logs, setLogs] = useState<AuditoriaEvento[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -43,17 +44,38 @@ export default function AuditGeneralView() {
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
+    const entityMapToTechnical: Record<string, AuditEntidad> = {
+        'Sesión': 'sesion', 'Reporte': 'reporte', 'Caso': 'caso', 'Usuario': 'usuario',
+        'Solicitante': 'solicitante', 'Beneficiario': 'beneficiario', 'Cita': 'cita',
+        'Acción': 'accion_ejecutores', 'Estudiante': 'estudiante', 'Profesor': 'profesor',
+        'Equipo': 'equipo', 'Soporte': 'soporte', 'Estado': 'estado', 'Municipio': 'municipio',
+        'Parroquia': 'parroquia', 'Núcleo': 'nucleo', 'Materia': 'materia', 'Semestre': 'semestre',
+        'Categoría': 'categoria', 'Subcategoría': 'subcategoria', 'Ámbito Legal': 'ambito_legal',
+        'Nivel Educativo': 'nivel_educativo', 'Condición Trabajo': 'condicion_trabajo',
+        'Condición Actividad': 'condicion_actividad', 'Tipo Característica': 'tipo_caracteristica',
+        'Característica': 'caracteristica'
+    };
+
+    const operationMapToTechnical: Record<string, AuditOperacion> = {
+        'Creación': 'insercion', 'Actualización': 'actualizacion', 'Eliminación': 'eliminacion',
+        'Habilitación': 'actualizacion', 'Inscripción': 'insercion', 'Asignación': 'insercion',
+        'Inicio de Sesión': 'inicio_sesion', 'Cierre de Sesión': 'cierre_sesion', 'Intento Fallido': 'intento_fallido',
+        'Generación': 'generacion_reporte', 'Descarga': 'descarga_soporte'
+    };
+
     const fetchLogs = useCallback(async () => {
         try {
             setLoading(true);
-            const { logs: newLogs, totalCount: count } = await getUnifiedAuditLogsAction(page, rowsPerPage, {
-                entidad: selectedEntity || undefined,
-                usuarioId: selectedUser || undefined,
-                operacion: selectedOperation || undefined,
+            const { eventos: newLogs, total: count } = await getAuditEventsAction({
+                entidad: selectedEntity ? entityMapToTechnical[selectedEntity] : undefined,
+                idUsuario: selectedUser || undefined,
+                operacion: selectedOperation ? operationMapToTechnical[selectedOperation] : undefined,
                 fechaInicio: startDate || undefined,
                 fechaFin: endDate || undefined,
-                orden: sortOrder,
-                busqueda: debouncedSearchTerm || undefined
+                orden: sortOrder as 'asc' | 'desc',
+                busqueda: debouncedSearchTerm || undefined,
+                limit: rowsPerPage,
+                offset: (page - 1) * rowsPerPage
             });
             setLogs(newLogs);
             setTotalCount(count);
@@ -123,102 +145,109 @@ export default function AuditGeneralView() {
         { value: 'asc', label: 'Más antiguo' }
     ];
 
-    const mapUnifiedLogToAuditRecord = (log: UnifiedAuditLog): { record: any, type: AuditRecordType } | null => {
-        // Parsear metadata si es string
-        let metadata: any = {};
-        try {
-            metadata = typeof log.metadata === 'string' ? JSON.parse(log.metadata) : log.metadata;
-        } catch (e) {
-            logger.error("Error parsing metadata", e);
-            return null;
-        }
-
+    const mapUnifiedLogToAuditRecord = (log: AuditoriaEvento): { record: any, type: AuditRecordType } | null => {
         const e = log.entidad;
-        const a = log.accion.toLowerCase();
+        const a = log.operacion;
         let type: AuditRecordType | null = null;
-        let record: any = { ...metadata };
+        
+        let record: any = { ...(log.metadata || {}) };
+        
+        // Merge datos
+        if (a === 'insercion' || a === 'generacion_reporte' || a === 'descarga_soporte' || a === 'inicio_sesion' || a === 'cierre_sesion' || a === 'intento_fallido') {
+            record = { ...record, ...(log.datos_nuevos || {}) };
+        } else if (a === 'eliminacion') {
+            record = { ...record, ...(log.datos_anteriores || {}) };
+        } else if (a === 'actualizacion') {
+            const ant = log.datos_anteriores || {};
+            const nue = log.datos_nuevos || {};
+            
+            // Merge all keys with _anterior and _nuevo suffixes
+            const allKeys = new Set([...Object.keys(ant), ...Object.keys(nue)]);
+            allKeys.forEach(k => {
+                record[`${k}_anterior`] = ant[k];
+                record[`${k}_nuevo`] = nue[k];
+                // Also put raw keys in case some card parts rely on it
+                if (nue[k] !== undefined) record[k] = nue[k];
+                else record[k] = ant[k];
+            });
+        }
 
         // Mapeo de tipos
-        if (e === 'Sesión') {
+        if (e === 'sesion') {
             type = 'sesion';
         }
-        else if (e === 'Caso') {
-            if (a.includes('creación')) type = 'caso-creado';
-            else if (a.includes('actualización')) type = 'caso-actualizado';
-            else if (a.includes('eliminación')) type = 'caso-eliminado';
+        else if (e === 'caso') {
+            if (a === 'insercion') type = 'caso-creado';
+            else if (a === 'actualizacion') type = 'caso-actualizado';
+            else if (a === 'eliminacion') type = 'caso-eliminado';
         }
-        else if (e === 'Usuario') {
-            if (a.includes('creación')) type = 'usuario-creado';
-            else if (a.includes('actualización')) type = 'usuario-actualizado-campos';
-            else if (a.includes('eliminación')) type = 'usuario-eliminado';
-            else if (a.includes('habilitación')) type = 'usuario-actualizado-campos';
+        else if (e === 'usuario') {
+            if (a === 'insercion') type = 'usuario-creado';
+            else if (a === 'actualizacion') type = 'usuario-actualizado-campos';
+            else if (a === 'eliminacion') type = 'usuario-eliminado';
         }
-        else if (e === 'Estudiante') {
+        else if (e === 'estudiante') {
             type = 'estudiante-inscrito';
         }
-        else if (e === 'Profesor') {
+        else if (e === 'profesor') {
             type = 'profesor-asignado';
         }
-        else if (e === 'Solicitante') {
-            if (a.includes('creación')) type = 'solicitante-creado';
-            else if (a.includes('actualización')) type = 'solicitante-actualizado';
-            else if (a.includes('eliminación')) type = 'solicitante-eliminado';
+        else if (e === 'solicitante') {
+            if (a === 'insercion') type = 'solicitante-creado';
+            else if (a === 'actualizacion') type = 'solicitante-actualizado';
+            else if (a === 'eliminacion') type = 'solicitante-eliminado';
         }
-        else if (e === 'Beneficiario') {
-            if (a.includes('creación')) {
-                type = 'beneficiario-creado';
-                // AuditRecordCard espera 'beneficiario-creado' mapeado a 'BeneficiarioInscritoAuditRecord' ?
-                // Revisando AuditRecordCard switch line 4953: case 'beneficiario-creado'
-            }
-            else if (a.includes('actualización')) type = 'beneficiario-actualizado';
-            else if (a.includes('eliminación')) type = 'beneficiario-eliminado';
+        else if (e === 'beneficiario') {
+            if (a === 'insercion') type = 'beneficiario-creado';
+            else if (a === 'actualizacion') type = 'beneficiario-actualizado';
+            else if (a === 'eliminacion') type = 'beneficiario-eliminado';
         }
-        else if (e === 'Cita') {
-            if (a.includes('programación') || a.includes('creación')) type = 'cita-creada';
-            else if (a.includes('actualización')) type = 'cita-actualizada';
-            else if (a.includes('eliminación')) type = 'cita-eliminada';
+        else if (e === 'cita') {
+            if (a === 'insercion') type = 'cita-creada';
+            else if (a === 'actualizacion') type = 'cita-actualizada';
+            else if (a === 'eliminacion') type = 'cita-eliminada';
         }
-        else if (e === 'Acción') {
-            if (a.includes('registro') || a.includes('creación')) type = 'accion-creada';
-            else if (a.includes('actualización')) type = 'accion-actualizada';
-            else if (a.includes('eliminación')) type = 'accion-eliminada';
+        else if (e === 'accion_ejecutores') {
+            if (a === 'insercion') type = 'accion-creada';
+            else if (a === 'actualizacion') type = 'accion-actualizada';
+            else if (a === 'eliminacion') type = 'accion-eliminada';
         }
-        else if (e === 'Soporte') {
-            if (a.includes('subida')) type = 'soporte-creado';
-            else if (a.includes('eliminación')) type = 'soporte';
-            else if (a.includes('descarga')) type = 'soporte-descargado';
+        else if (e === 'soporte') {
+            if (a === 'insercion') type = 'soporte-creado';
+            else if (a === 'eliminacion') type = 'soporte';
+            else if (a === 'descarga_soporte') type = 'soporte-descargado';
         }
-        else if (e === 'Reporte') {
+        else if (e === 'reporte') {
             type = 'reporte-generado';
         }
-        else if (e === 'Equipo') {
+        else if (e === 'equipo') {
             type = 'equipo-actualizado';
         }
         // Catálogos
         else {
-            const entityMap: Record<string, string> = {
-                'Estado': 'estado',
-                'Municipio': 'municipio',
-                'Parroquia': 'parroquia',
-                'Núcleo': 'nucleo',
-                'Materia': 'materia',
-                'Semestre': 'semestre',
-                'Categoría': 'categoria',
-                'Subcategoría': 'subcategoria',
-                'Ámbito Legal': 'ambito-legal',
-                'Nivel Educativo': 'nivel-educativo',
-                'Condición Trabajo': 'condicion-trabajo',
-                'Condición Actividad': 'condicion-actividad',
-                'Tipo Característica': 'tipo-caracteristica',
-                'Característica': 'caracteristica'
+            const technicalToPrefix: Record<string, string> = {
+                'estado': 'estado',
+                'municipio': 'municipio',
+                'parroquia': 'parroquia',
+                'nucleo': 'nucleo',
+                'materia': 'materia',
+                'semestre': 'semestre',
+                'categoria': 'categoria',
+                'subcategoria': 'subcategoria',
+                'ambito_legal': 'ambito-legal',
+                'nivel_educativo': 'nivel-educativo',
+                'condicion_trabajo': 'condicion-trabajo',
+                'condicion_actividad': 'condicion-actividad',
+                'tipo_caracteristica': 'tipo-caracteristica',
+                'caracteristica': 'caracteristica'
             };
 
             const feminineEntities = [
-                'Materia', 'Parroquia', 'Categoría', 'Subcategoría',
-                'Condición Trabajo', 'Condición Actividad', 'Característica'
+                'materia', 'parroquia', 'categoria', 'subcategoria',
+                'condicion_trabajo', 'condicion_actividad', 'caracteristica'
             ];
 
-            const prefix = entityMap[e];
+            const prefix = technicalToPrefix[e];
             if (prefix) {
                 const isFeminine = feminineEntities.includes(e);
                 const suffix = {
@@ -227,37 +256,29 @@ export default function AuditGeneralView() {
                     delete: isFeminine ? 'eliminada' : 'eliminado'
                 };
 
-                if (a.includes('creación')) type = `${prefix}-${suffix.insert}` as AuditRecordType;
-                else if (a.includes('actualización')) type = `${prefix}-${suffix.update}` as AuditRecordType;
-                else if (a.includes('eliminación')) type = `${prefix}-${suffix.delete}` as AuditRecordType;
+                if (a === 'insercion') type = `${prefix}-${suffix.insert}` as AuditRecordType;
+                else if (a === 'actualizacion') type = `${prefix}-${suffix.update}` as AuditRecordType;
+                else if (a === 'eliminacion') type = `${prefix}-${suffix.delete}` as AuditRecordType;
             }
         }
 
         if (record) {
-            record.fecha = log.fecha;
-            record.fecha_actualizacion = log.fecha;
+            record.fecha = log.fecha_evento;
+            record.fecha_actualizacion = log.fecha_evento;
 
-            // Para sesiones, inyectar nombre completo directamente
-            if (e === 'Sesión') {
-                if (!record.nombre_completo_usuario_accion) {
-                    record.nombre_completo_usuario_accion = log.usuario_nombre;
-                }
-            }
-
-            // Inyectar información del actor si falta en metadata
-            // Mapear sufijos de acción a campos de usuario
+            // Inyectar nombres de actor según la operación
             let actorSuffix = '';
-            if (a.includes('creación') || a.includes('registro') || a.includes('programación') || a.includes('subida') || a.includes('inscripción') || a.includes('asignación')) {
+            if (a === 'insercion' || a === 'inicio_sesion' || a === 'intento_fallido' || a === 'cierre_sesion') {
                 actorSuffix = 'creo';
-                if (a.includes('subida')) actorSuffix = 'subio';
-            } else if (a.includes('actualización') || a.includes('modificación')) {
+                if (e === 'soporte') actorSuffix = 'subio';
+            } else if (a === 'actualizacion') {
                 actorSuffix = 'actualizo';
-                if (e === 'Equipo') actorSuffix = 'modifico';
-            } else if (a.includes('eliminación')) {
+                if (e === 'equipo') actorSuffix = 'modifico';
+            } else if (a === 'eliminacion') {
                 actorSuffix = 'elimino';
-            } else if (a.includes('descarga')) {
+            } else if (a === 'descarga_soporte') {
                 actorSuffix = 'descargo';
-            } else if (e === 'Reporte') {
+            } else if (a === 'generacion_reporte' || a === 'vista_previa_reporte') {
                 actorSuffix = 'genero';
             }
 
@@ -265,19 +286,19 @@ export default function AuditGeneralView() {
                 const idField = `id_usuario_${actorSuffix}`;
                 const nameField = `nombre_completo_usuario_${actorSuffix}`;
 
-                // Si cedula_descargo es usado en lugar de id_usuario_descargo
                 if (actorSuffix === 'descargo') {
-                    if (!record.cedula_descargo) record.cedula_descargo = log.usuario_id;
+                    if (!record.cedula_descargo) record.cedula_descargo = log.id_usuario;
                 } else {
-                    if (!record[idField]) record[idField] = log.usuario_id;
+                    if (!record[idField]) record[idField] = log.id_usuario;
                 }
 
-                if (!record[nameField]) record[nameField] = log.usuario_nombre;
+                if (!record[nameField]) record[nameField] = log.nombre_completo_usuario;
+            }
 
-                // Asegurar nombres/apellidos individuales si faltan
-                if (!record[`nombres_usuario_${actorSuffix}`] && log.usuario_nombre) {
-                    // Intento básico de split si es necesario, o dejar que renderUserLink use el nombre completo
-                    // renderUserLink prioriza nombre_completo, asi que con eso basta.
+            // Para sesiones, inyectar nombre completo directo en un campo extra
+            if (e === 'sesion') {
+                if (!record.nombre_completo_usuario_accion) {
+                    record.nombre_completo_usuario_accion = log.nombre_completo_usuario;
                 }
             }
         }
@@ -355,7 +376,7 @@ export default function AuditGeneralView() {
                         const mapped = mapUnifiedLogToAuditRecord(log);
                         if (!mapped) return null;
                         return (
-                            <div key={`${log.fecha}-${index}`}>
+                            <div key={`${log.fecha_evento}-${index}`}>
                                 <AuditRecordCard record={mapped.record} type={mapped.type} moduleName={log.entidad} />
                             </div>
                         );
