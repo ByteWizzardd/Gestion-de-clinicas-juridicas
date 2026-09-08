@@ -1,6 +1,7 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
+import { withAuditTransaction } from '@/lib/utils/audit-context';
 import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllCaracteristicas } from '@/lib/db/queries/catalogos.queries';
@@ -17,105 +18,70 @@ export async function getCaracteristicas() {
 }
 
 export async function createCaracteristica(data: { id_tipo_caracteristica: string; descripcion: string }) {
-    const client = await pool.connect();
-    try {
-        await client.query('BEGIN');
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+        return { success: false, error: 'No autorizado' };
+    }
 
-        const authResult = await requireAuthInServerActionWithCode();
-        if (!authResult.success || !authResult.user) {
-            await client.query('ROLLBACK');
-            return { success: false, error: 'No autorizado' };
+    return await withAuditTransaction(
+        authResult.user.cedula,
+        { accion_negocio: 'Creación en catálogo Características' },
+        async (client) => {
+            const maxResult = await client.query(
+                'SELECT COALESCE(MAX(num_caracteristica), 0) + 1 as next_num FROM caracteristicas WHERE id_tipo_caracteristica = $1',
+                [parseInt(data.id_tipo_caracteristica)]
+            );
+            const nextNum = maxResult.rows[0].next_num;
+
+            const result = await client.query(
+                'INSERT INTO caracteristicas (id_tipo_caracteristica, num_caracteristica, descripcion, habilitado) VALUES ($1, $2, $3, true) RETURNING *',
+                [parseInt(data.id_tipo_caracteristica), nextNum, data.descripcion]
+            );
+
+            revalidatePath('/dashboard/administration/caracteristicas');
+            return { success: true, data: result.rows[0] };
         }
-
-        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
-
-        const maxResult = await client.query(
-            'SELECT COALESCE(MAX(num_caracteristica), 0) + 1 as next_num FROM caracteristicas WHERE id_tipo_caracteristica = $1',
-            [parseInt(data.id_tipo_caracteristica)]
-        );
-        const nextNum = maxResult.rows[0].next_num;
-
-        const result = await client.query(
-            'INSERT INTO caracteristicas (id_tipo_caracteristica, num_caracteristica, descripcion, habilitado) VALUES ($1, $2, $3, true) RETURNING *',
-            [parseInt(data.id_tipo_caracteristica), nextNum, data.descripcion]
-        );
-
-        await client.query('COMMIT');
-        revalidatePath('/dashboard/administration/caracteristicas');
-        return { success: true, data: result.rows[0] };
-    } catch (error) {
-        await client.query('ROLLBACK');
+    ).catch(error => {
         logger.error('Error creating caracteristica:', error);
         return { success: false, error: 'Error al crear característica' };
-    } finally {
-        client.release();
-    }
+    });
 }
 
 export async function updateCaracteristica(id_tipo_caracteristica: number, num_caracteristica: number, data: { descripcion: string; new_id_tipo_caracteristica?: string }) {
-    try {
-        // Si no se proporciona un nuevo tipo o es el mismo, solo actualizamos la descripción
-        if (!data.new_id_tipo_caracteristica || parseInt(data.new_id_tipo_caracteristica) === id_tipo_caracteristica) {
-            const client = await pool.connect();
-            try {
-                await client.query('BEGIN');
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+        return { success: false, error: 'No autorizado' };
+    }
 
-                const authResult = await requireAuthInServerActionWithCode();
-                if (!authResult.success || !authResult.user) {
-                    await client.query('ROLLBACK');
-                    return { success: false, error: 'No autorizado' };
-                }
-
-                await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
-
+    return await withAuditTransaction(
+        authResult.user.cedula,
+        { accion_negocio: 'Actualización en catálogo Características' },
+        async (client) => {
+            // Si no se proporciona un nuevo tipo o es el mismo, solo actualizamos la descripción
+            if (!data.new_id_tipo_caracteristica || parseInt(data.new_id_tipo_caracteristica) === id_tipo_caracteristica) {
                 const result = await client.query(
                     'UPDATE caracteristicas SET descripcion = $3 WHERE id_tipo_caracteristica = $1 AND num_caracteristica = $2 RETURNING *',
                     [id_tipo_caracteristica, num_caracteristica, data.descripcion]
                 );
                 if (result.rows.length === 0) {
-                    await client.query('ROLLBACK');
-                    return { success: false, error: 'Característica no encontrada' };
+                    throw new Error('NOT_FOUND');
                 }
 
-                await client.query('COMMIT');
                 revalidatePath('/dashboard/administration/caracteristicas');
                 return { success: true, data: result.rows[0] };
-            } catch (error) {
-                await client.query('ROLLBACK');
-                logger.error('Error updating caracteristica:', error);
-                return { success: false, error: 'Error al actualizar característica' };
-            } finally {
-                client.release();
             }
-        }
 
-        // Si el tipo cambia, es una operación de "Mover": Crear nuevo + Borrar viejo
-        // 1. Verificamos si podemos borrar el viejo (si tiene asociaciones no deberíamos permitir moverlo fácilmente sin reasignar, 
-        // pero por simplicidad bloqueamos si tiene asociaciones o requeriríamos lógica más compleja)
+            // Si el tipo cambia, es una operación de "Mover": Crear nuevo + Borrar viejo
 
-        const checkResult = await pool.query(
-            `SELECT EXISTS (
-                SELECT 1 FROM asignadas_a WHERE id_tipo_caracteristica = $1 AND num_caracteristica = $2
-            ) AS has_associations`,
-            [id_tipo_caracteristica, num_caracteristica]
-        );
+            const checkResult = await client.query(
+                `SELECT EXISTS (
+                    SELECT 1 FROM asignadas_a WHERE id_tipo_caracteristica = $1 AND num_caracteristica = $2
+                ) AS has_associations`,
+                [id_tipo_caracteristica, num_caracteristica]
+            );
 
-        if (checkResult.rows[0]?.has_associations === true) {
-            return {
-                success: false,
-                error: 'HAS_ASSOCIATIONS',
-                message: 'No se puede cambiar el tipo porque esta característica ya está asociada a viviendas. Cree una nueva en su lugar.'
-            };
-        }
-
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
-
-            const authResult = await requireAuthInServerActionWithCode();
-            if (!authResult.success || !authResult.user) {
-                await client.query('ROLLBACK');
-                return { success: false, error: 'No autorizado' };
+            if (checkResult.rows[0]?.has_associations === true) {
+                throw new Error('HAS_ASSOCIATIONS');
             }
 
             // 2. Crear nueva en el nuevo tipo
@@ -134,17 +100,13 @@ export async function updateCaracteristica(id_tipo_caracteristica: number, num_c
             );
             const isEnabled = currentResult.rows[0]?.habilitado ?? true;
 
-            // Establecer variable de sesión para creación
-            await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
-
             const insertResult = await client.query(
                 'INSERT INTO caracteristicas (id_tipo_caracteristica, num_caracteristica, descripcion, habilitado) VALUES ($1, $2, $3, $4) RETURNING *',
                 [newTypeId, nextNum, data.descripcion, isEnabled]
             );
 
             // 3. Establecer variables de sesión para eliminación
-            await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
-            await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: 'Movido a nuevo tipo' })]);
+            await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: 'Movido a nuevo tipo', accion_negocio: 'Actualización en catálogo Características' })]);
 
             // 4. Borrar el viejo
             await client.query(
@@ -152,68 +114,53 @@ export async function updateCaracteristica(id_tipo_caracteristica: number, num_c
                 [id_tipo_caracteristica, num_caracteristica]
             );
 
-            await client.query('COMMIT');
             revalidatePath('/dashboard/administration/caracteristicas');
             return { success: true, data: insertResult.rows[0] };
-
-        } catch (e) {
-            await client.query('ROLLBACK');
-            throw e;
-        } finally {
-            client.release();
         }
-
-    } catch (error: any) {
+    ).catch(error => {
         logger.error('Error updating caracteristica:', error);
+        if (error.message === 'NOT_FOUND') return { success: false, error: 'Característica no encontrada' };
+        if (error.message === 'HAS_ASSOCIATIONS') return { success: false, error: 'HAS_ASSOCIATIONS', message: 'No se puede cambiar el tipo porque esta característica ya está asociada a viviendas. Cree una nueva en su lugar.' };
         return { success: false, error: error.message || 'Error al actualizar característica' };
-    }
+    });
 }
 
 export async function toggleCaracteristicaHabilitado(id_tipo_caracteristica: number, num_caracteristica: number) {
-    const client = await pool.connect();
-    try {
-        await client.query('BEGIN');
-
-        const authResult = await requireAuthInServerActionWithCode();
-        if (!authResult.success || !authResult.user) {
-            await client.query('ROLLBACK');
-            return { success: false, error: 'No autorizado' };
-        }
-
-        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
-
-        const result = await client.query(
-            'UPDATE caracteristicas SET habilitado = NOT habilitado WHERE id_tipo_caracteristica = $1 AND num_caracteristica = $2 RETURNING *',
-            [id_tipo_caracteristica, num_caracteristica]
-        );
-        if (result.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return { success: false, error: 'Característica no encontrada' };
-        }
-
-        await client.query('COMMIT');
-        revalidatePath('/dashboard/administration/caracteristicas');
-        return { success: true, data: result.rows[0] };
-    } catch (error) {
-        await client.query('ROLLBACK');
-        logger.error('Error toggling caracteristica habilitado:', error);
-        return { success: false, error: 'Error al cambiar estado' };
-    } finally {
-        client.release();
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+        return { success: false, error: 'No autorizado' };
     }
+
+    return await withAuditTransaction(
+        authResult.user.cedula,
+        { accion_negocio: 'Cambio de estado en catálogo Características' },
+        async (client) => {
+            const result = await client.query(
+                'UPDATE caracteristicas SET habilitado = NOT habilitado WHERE id_tipo_caracteristica = $1 AND num_caracteristica = $2 RETURNING *',
+                [id_tipo_caracteristica, num_caracteristica]
+            );
+            if (result.rows.length === 0) {
+                throw new Error('NOT_FOUND');
+            }
+
+            revalidatePath('/dashboard/administration/caracteristicas');
+            return { success: true, data: result.rows[0] };
+        }
+    ).catch(error => {
+        logger.error('Error toggling caracteristica habilitado:', error);
+        if (error.message === 'NOT_FOUND') return { success: false, error: 'Característica no encontrada' };
+        return { success: false, error: 'Error al cambiar estado' };
+    });
 }
 
 export async function deleteCaracteristica(id_tipo_caracteristica: number, num_caracteristica: number, motivo?: string) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+        return { success: false, error: 'No autorizado' };
+    }
+
     const client = await pool.connect();
     try {
-        await client.query('BEGIN');
-
-        const authResult = await requireAuthInServerActionWithCode();
-        if (!authResult.success || !authResult.user) {
-            await client.query('ROLLBACK');
-            return { success: false, error: 'No autorizado' };
-        }
-
         const checkResult = await client.query(
             `SELECT EXISTS (
                 SELECT 1 FROM asignadas_a WHERE id_tipo_caracteristica = $1 AND num_caracteristica = $2
@@ -221,34 +168,34 @@ export async function deleteCaracteristica(id_tipo_caracteristica: number, num_c
             [id_tipo_caracteristica, num_caracteristica]
         );
         if (checkResult.rows[0]?.has_associations === true) {
-            await client.query('ROLLBACK');
             return {
                 success: false,
                 error: 'HAS_ASSOCIATIONS',
                 message: 'No se puede eliminar porque está asociada a viviendas de clientes.'
             };
         }
-
-        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
-        await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: motivo || '' })]);
-
-        const result = await client.query(
-            'DELETE FROM caracteristicas WHERE id_tipo_caracteristica = $1 AND num_caracteristica = $2 RETURNING *',
-            [id_tipo_caracteristica, num_caracteristica]
-        );
-        if (result.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return { success: false, error: 'Característica no encontrada' };
-        }
-
-        await client.query('COMMIT');
-        revalidatePath('/dashboard/administration/caracteristicas');
-        return { success: true, data: result.rows[0] };
-    } catch (error) {
-        await client.query('ROLLBACK');
-        logger.error('Error deleting caracteristica:', error);
-        return { success: false, error: 'Error al eliminar característica' };
     } finally {
         client.release();
     }
+
+    return await withAuditTransaction(
+        authResult.user.cedula,
+        { accion_negocio: 'Eliminación en catálogo Características', motivo: motivo || '' },
+        async (client) => {
+            const result = await client.query(
+                'DELETE FROM caracteristicas WHERE id_tipo_caracteristica = $1 AND num_caracteristica = $2 RETURNING *',
+                [id_tipo_caracteristica, num_caracteristica]
+            );
+            if (result.rows.length === 0) {
+                throw new Error('NOT_FOUND');
+            }
+
+            revalidatePath('/dashboard/administration/caracteristicas');
+            return { success: true, data: result.rows[0] };
+        }
+    ).catch(error => {
+        logger.error('Error deleting caracteristica:', error);
+        if (error.message === 'NOT_FOUND') return { success: false, error: 'Característica no encontrada' };
+        return { success: false, error: 'Error al eliminar característica' };
+    });
 }

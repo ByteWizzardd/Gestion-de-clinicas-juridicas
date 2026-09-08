@@ -2,8 +2,8 @@ import ExcelJS from 'exceljs';
 import { pool } from '@/lib/db/pool';
 import { hashPassword } from '@/lib/utils/security';
 import { ValidationError } from '@/lib/utils/errors';
-
 import { validateEmailDomain as validateEmailDomainUtil } from '@/lib/utils/email-validation';
+import { withAuditTransaction } from '@/lib/utils/audit-context';
 
 export interface EstudianteRow {
   cedula: string;
@@ -202,7 +202,7 @@ async function parseExcel(file: File): Promise<EstudianteRow[]> {
   // Leer encabezados (primera fila)
   const headerRow = worksheet.getRow(1);
   const headers: string[] = [];
-  headerRow.eachCell({ includeEmpty: true }, (cell) => {
+  headerRow.eachCell({ includeEmpty: true }, (cell: any) => {
     headers.push(cell.value?.toString() || '');
   });
 
@@ -227,7 +227,7 @@ async function parseExcel(file: File): Promise<EstudianteRow[]> {
     const row = worksheet.getRow(i);
     const values: string[] = [];
 
-    row.eachCell({ includeEmpty: true }, (cell) => {
+    row.eachCell({ includeEmpty: true }, (cell: any) => {
       values.push(cell.value?.toString() || '');
     });
 
@@ -440,20 +440,17 @@ export async function bulkCreateEstudiantes(
   const defaultPasswordHash = await hashPassword('password123');
 
   // Procesar en transacción
-  const client = await pool.connect();
-
   try {
-    await client.query('BEGIN');
-    // Establecer usuario para auditoría
-    if (cedulaActor) {
-      await client.query("SELECT set_config('app.current_user_id', $1, true)", [cedulaActor]);
-    }
-    // Cargar queries SQL
-    const { loadSQL } = await import('@/lib/db/sql-loader');
-    const usuarioQuery = loadSQL('usuarios/create-or-update.sql');
-    const estudianteQuery = loadSQL('estudiantes/create-or-update.sql');
+    return await withAuditTransaction(
+      cedulaActor,
+      { accion_negocio: 'Carga masiva de estudiantes' },
+      async (client) => {
+        // Cargar queries SQL
+        const { loadSQL } = await import('@/lib/db/sql-loader');
+        const usuarioQuery = loadSQL('usuarios/create-or-update.sql');
+        const estudianteQuery = loadSQL('estudiantes/create-or-update.sql');
 
-    let successCount = 0;
+        let successCount = 0;
 
     for (const processedRow of validRows) {
       if (!processedRow.data) continue;
@@ -516,19 +513,16 @@ export async function bulkCreateEstudiantes(
       }
     }
 
-    await client.query('COMMIT');
-
-    return {
-      total: processed.length,
-      success: successCount,
-      errors: processed.filter(p => p.errors.length > 0 || p.data === null).length,
-      duplicates: processed.filter(p => p.isDuplicate).length,
-      details: processed,
-    };
+        return {
+          total: processed.length,
+          success: successCount,
+          errors: processed.filter(p => p.errors.length > 0 || p.data === null).length,
+          duplicates: processed.filter(p => p.isDuplicate).length,
+          details: processed,
+        };
+      }
+    );
   } catch (error) {
-    await client.query('ROLLBACK');
     throw error;
-  } finally {
-    client.release();
   }
 }

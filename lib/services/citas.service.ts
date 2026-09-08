@@ -1,6 +1,6 @@
 import { citasQueries, type CitaCompleta } from '@/lib/db/queries/citas.queries';
 import { AppError } from '@/lib/utils/errors';
-import { withTransaction } from '@/lib/db/transactions';
+import { withAuditTransaction } from '@/lib/utils/audit-context';
 import { loadSQL } from '@/lib/db/sql-loader';
 import { atiendenQueries } from '@/lib/db/queries/atienden.queries';
 import { logger } from '@/lib/utils/logger';
@@ -222,9 +222,10 @@ export const citasService = {
       }
 
       // Usar transacción para crear cita y registros en atienden de forma atómica
-      return await withTransaction(async (client) => {
-        // Establecer la variable de sesión para el trigger de auditoría
-        await client.query("SELECT set_config('app.current_user_id', $1, true)", [params.idUsuarioRegistro]);
+      return await withAuditTransaction(
+        params.idUsuarioRegistro,
+        { accion_negocio: 'Registro de cita' },
+        async (client) => {
 
         // 1. Crear la cita
         const createQuery = loadSQL('citas/create.sql');
@@ -298,7 +299,10 @@ export const citasService = {
       }
 
       // Usar transacción para actualizar cita y registros en atienden de forma atómica
-      return await withTransaction(async (client) => {
+      return await withAuditTransaction(
+        params.idUsuarioActualizo,
+        { accion_negocio: 'Actualización de cita' },
+        async (client) => {
         // 0. Recolectar estado inicial para comparar
         const getCitaInfoQuery = loadSQL('citas/get-by-id.sql');
         const citaInfoResult = await client.query(getCitaInfoQuery, [num_cita, id_caso]);
@@ -309,7 +313,7 @@ export const citasService = {
 
         const getAtiendenQuery = loadSQL('atienden/get-usuarios-by-cita.sql');
         const atiendenAnteriorResult = await client.query(getAtiendenQuery, [num_cita, id_caso]);
-        const cedulasAnteriores = atiendenAnteriorResult.rows.map(r => r.cedula).sort();
+        const cedulasAnteriores = atiendenAnteriorResult.rows.map((r: Record<string, any>) => r.cedula).sort();
         const atencioneAnteriorStr = cedulasAnteriores.join(',') || '';
 
         // 1. Actualizar la cita si hay cambios en campos básicos
@@ -452,8 +456,8 @@ export const citasService = {
                 ]);
 
                 // Comparar listas de ejecutores ordenadas
-                const ejecutoresCita = ejecutoresCitaResult.rows.map(r => r.id_usuario).sort();
-                const ejecutoresAccion = ejecutoresAccionResult.rows.map(r => r.id_usuario).sort();
+                const ejecutoresCita = ejecutoresCitaResult.rows.map((r: Record<string, any>) => r.id_usuario).sort();
+                const ejecutoresAccion = ejecutoresAccionResult.rows.map((r: Record<string, any>) => r.id_usuario).sort();
 
                 const ejecutoresCoinciden = JSON.stringify(ejecutoresCita) === JSON.stringify(ejecutoresAccion);
 
@@ -474,9 +478,6 @@ export const citasService = {
                   if (params.orientacion !== undefined) {
                     nuevoComentario = params.orientacion;
                   }
-
-                  // Establecer la variable de sesión para que el trigger sepa quién actualizó la acción
-                  await client.query("SELECT set_config('app.current_user_id', $1, true)", [params.idUsuarioActualizo]);
 
                   // Actualizar la acción usando client de la transacción
                   const updateAccionQuery = loadSQL('acciones/update.sql');
@@ -580,7 +581,10 @@ export const citasService = {
       }
 
       // Usar transacción para eliminar registros relacionados y la cita de forma atómica
-      return await withTransaction(async (client) => {
+      return await withAuditTransaction(
+        params.idUsuarioElimino,
+        { accion_negocio: 'Eliminación de cita', motivo: params.motivo },
+        async (client) => {
         // 1. Obtener información de la cita antes de eliminarla
         const getCitaQuery = loadSQL('citas/get-by-id.sql');
         const citaInfo = await client.query(getCitaQuery, [num_cita, id_caso]);
@@ -639,8 +643,8 @@ export const citasService = {
               ]);
 
               // Comparar listas de ejecutores
-              const ejecutoresCita = ejecutoresCitaResult.rows.map(r => r.id_usuario).sort();
-              const ejecutoresAccion = ejecutoresAccionResult.rows.map(r => r.id_usuario).sort();
+              const ejecutoresCita = ejecutoresCitaResult.rows.map((r: Record<string, any>) => r.id_usuario).sort();
+              const ejecutoresAccion = ejecutoresAccionResult.rows.map((r: Record<string, any>) => r.id_usuario).sort();
 
               const ejecutoresCoinciden = JSON.stringify(ejecutoresCita) === JSON.stringify(ejecutoresAccion);
 
@@ -674,10 +678,6 @@ export const citasService = {
         await client.query(deleteAtiendenQuery, [num_cita, id_caso]);
 
         // 5. Eliminar la cita (el trigger capturará la auditoría usando OLD)
-        // Establecer las variables de sesión para el trigger
-        await client.query("SELECT set_config('app.current_user_id', $1, true)", [params.idUsuarioElimino]);
-        await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: params.motivo || '' })]);
-
         const deleteCitaQuery = loadSQL('citas/delete.sql');
         const citaResult = await client.query(deleteCitaQuery, [num_cita, id_caso]);
 

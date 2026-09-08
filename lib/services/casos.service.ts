@@ -11,6 +11,7 @@ import { soportesQueries } from '@/lib/db/queries/soportes.queries';
 import { asignacionesQueries } from '@/lib/db/queries/asignaciones.queries';
 import { AppError, ValidationError, NotFoundError } from '@/lib/utils/errors';
 import { withTransaction } from '@/lib/db/transactions';
+import { withAuditTransaction } from '@/lib/utils/audit-context';
 import { loadSQL } from '@/lib/db/sql-loader';
 import { CreateCasoSchema, CreateCasoInput } from '@/lib/validations/casos.schema';
 import { ESTATUS_CASO } from '@/lib/constants/status';
@@ -259,21 +260,13 @@ export const casosService = {
 
             // Lógica de actualización (abstraída para reutilizar)
             const performUpdate = async (client: import('pg').PoolClient) => {
-                // Establecer variable de sesión para auditoría
                 // Validar cédula
                 if (!/^[A-Za-z0-9.\-]+$/.test(cedulaUsuario)) {
                     throw new Error('Formato de cédula inválido');
                 }
 
-                // Ejecutar set_config y UPDATE en la misma transacción y cliente
-                await client.query(`SELECT set_config('app.current_user_id', $1, true)`, [cedulaUsuario]);
-
-                // Usar casosQueries.update que ahora acepta client
-                // Nota: antes se usaba client.query directo aquí con loadSQL, ahora delegamos en casosQueries.update
-                // pero casosQueries.update espera los datos ya procesados.
-                // Como casosQueries.update ya está adaptado y hace loadSQL, lo llamamos directamente.
-                // Sin embargo, el código original hacía la query inline aquí.
-                // Para mantener la lógica exacta (y aprovechar que ya edité casosQueries.update), lo invoco.
+                // NOTA: Si se usa externalClient, asumimos que el llamador ya inyectó el contexto (withAuditTransaction).
+                // Si no, la llamada a withAuditTransaction más abajo lo hará.
 
                 const result = await casosQueries.update(idCaso, {
                     tramite: updateData.tramite || (existingCaso as any).tramite,
@@ -295,10 +288,14 @@ export const casosService = {
                 return await performUpdate(externalClient);
             }
 
-            // Si no, usar transacción local (legacy safe)
-            return await withTransaction(async (client) => {
-                return await performUpdate(client);
-            });
+            // Si no, usar transacción local auditada
+            return await withAuditTransaction(
+                cedulaUsuario,
+                { accion_negocio: 'Actualización de datos del caso' },
+                async (client) => {
+                    return await performUpdate(client);
+                }
+            );
 
         } catch (error) {
             if (error instanceof ValidationError || error instanceof NotFoundError) {
@@ -410,10 +407,10 @@ export const casosService = {
             const numAccion = Number(params.numAccion);
             const idCaso = Number(params.idCaso);
 
-            return await withTransaction(async (client) => {
-                // Establecer variables de sesión para auditoría
-                await client.query(`SELECT set_config('app.current_user_id', $1, true)`, [params.idUsuarioElimino]);
-                await client.query(`SELECT set_config('app.audit_metadata', $1, true)`, [JSON.stringify({ motivo: params.motivo })]);
+            return await withAuditTransaction(
+                params.idUsuarioElimino,
+                { accion_negocio: 'Eliminación de acción de caso', motivo: params.motivo },
+                async (client) => {
 
                 // 1. Obtener información completa de la acción antes de eliminarla
                 const getAccionQuery = `
@@ -451,7 +448,7 @@ export const casosService = {
                     `;
 
                     const ejecutoresAccionResult = await client.query(ejecutoresAccionQuery, [numAccion, idCaso]);
-                    const ejecutoresAccion = ejecutoresAccionResult.rows.map(r => r.id_usuario).sort();
+                    const ejecutoresAccion = ejecutoresAccionResult.rows.map((r: Record<string, any>) => r.id_usuario).sort();
 
                     // Para cada cita, verificar si corresponde a esta acción por ejecutores
                     let citaRelacionada = null;
@@ -465,7 +462,7 @@ export const casosService = {
                         `;
 
                         const ejecutoresCitaResult = await client.query(ejecutoresCitaQuery, [cita.num_cita, idCaso]);
-                        const ejecutoresCita = ejecutoresCitaResult.rows.map(r => r.id_usuario).sort();
+                        const ejecutoresCita = ejecutoresCitaResult.rows.map((r: Record<string, any>) => r.id_usuario).sort();
 
                         // Comparar listas de ejecutores
                         const ejecutoresCoinciden = JSON.stringify(ejecutoresCita) === JSON.stringify(ejecutoresAccion);
@@ -568,9 +565,10 @@ export const casosService = {
         idUsuarioActualizo: string;
         ejecutores?: Array<{ idUsuario: string; fechaEjecucion: string }>;
     }) => {
-        return await withTransaction(async (client) => {
-            // Establecer variable de sesión para auditoría
-            await client.query(`SELECT set_config('app.current_user_id', $1, true)`, [params.idUsuarioActualizo]);
+        return await withAuditTransaction(
+            params.idUsuarioActualizo,
+            { accion_negocio: 'Actualización de acción de caso' },
+            async (client) => {
 
             // Verificar que la acción existe antes de actualizar
             const checkQuery = 'SELECT num_accion, detalle_accion, comentario FROM acciones WHERE num_accion = $1 AND id_caso = $2';
@@ -612,7 +610,7 @@ export const casosService = {
                     const idsUsuarios = params.ejecutores.map(e => e.idUsuario);
                     const namesQuery = `SELECT cedula, nombres, apellidos FROM usuarios WHERE cedula = ANY($1)`;
                     const namesResult = await client.query(namesQuery, [idsUsuarios]);
-                    const usersMap = new Map(namesResult.rows.map((u: any) => [u.cedula, { nombres: u.nombres, apellidos: u.apellidos }]));
+                    const usersMap = new Map<string, { nombres: string, apellidos: string }>(namesResult.rows.map((u: Record<string, any>) => [u.cedula, { nombres: u.nombres, apellidos: u.apellidos }]));
 
                     const createEjecutanQuery = loadSQL('ejecutan/create.sql');
                     for (const ejecutor of params.ejecutores) {
@@ -634,7 +632,7 @@ export const casosService = {
                 }
             } else {
                 // Si no se modifican los ejecutores, los nuevos son igual a los anteriores
-                ejecutoresNuevos = ejecutoresAnteriores.map((e: any) => ({
+                ejecutoresNuevos = ejecutoresAnteriores.map((e: Record<string, any>) => ({
                     cedula: e.cedula,
                     nombres: e.nombres,
                     apellidos: e.apellidos,
@@ -714,7 +712,7 @@ export const casosService = {
         // withTransaction provee un cliente, es seguro
         return await withTransaction(async (client) => {
             const result = await client.query(query, [idCaso]);
-            return result.rows.map(row => ({
+            return result.rows.map((row: Record<string, any>) => ({
                 term: row.term,
                 fecha_inicio: row.fecha_inicio.toISOString().split('T')[0],
                 fecha_fin: row.fecha_fin.toISOString().split('T')[0]

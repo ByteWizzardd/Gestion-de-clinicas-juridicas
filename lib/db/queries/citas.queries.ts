@@ -53,7 +53,7 @@ export const citasQueries = {
     const query = loadSQL('citas/get-all.sql');
     const result: QueryResult = await pool.query(query);
     // Parsear el JSON de atenciones (similar a getByCaso)
-    return result.rows.map(row => ({
+    return result.rows.map((row: Record<string, any>) => ({
       ...row,
       atenciones: typeof row.atenciones === 'string'
         ? JSON.parse(row.atenciones)
@@ -68,7 +68,7 @@ export const citasQueries = {
     const query = loadSQL('citas/get-by-usuario.sql');
     const result: QueryResult = await pool.query(query, [cedulaUsuario]);
     // Parsear el JSON de atenciones
-    return result.rows.map(row => ({
+    return result.rows.map((row: Record<string, any>) => ({
       ...row,
       atenciones: typeof row.atenciones === 'string'
         ? JSON.parse(row.atenciones)
@@ -90,7 +90,7 @@ export const citasQueries = {
     const query = loadSQL('citas/get-by-caso.sql');
     const result: QueryResult = await pool.query(query, [idCaso]);
     // Parsear el JSON de atenciones
-    return result.rows.map(row => ({
+    return result.rows.map((row: Record<string, any>) => ({
       ...row,
       atenciones: typeof row.atenciones === 'string'
         ? JSON.parse(row.atenciones)

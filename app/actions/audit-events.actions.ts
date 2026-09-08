@@ -41,10 +41,8 @@ export async function getAuditEventsAction(
 ): Promise<AuditoriaEventosPage> {
   await requireCoordinador();
   try {
-    // TODO(backend): const { auditoriaEventosQueries } = await import('@/lib/db/queries/auditoria-eventos.queries');
-    // return auditoriaEventosQueries.getEventos(filters);
-    void filters;
-    return { eventos: [], total: 0 };
+    const { auditoriaEventosQueries } = await import('@/lib/db/queries/auditoria-eventos.queries');
+    return await auditoriaEventosQueries.getEventos(filters);
   } catch (error) {
     logger.error('Error en getAuditEventsAction', error);
     return { eventos: [], total: 0 };
@@ -55,13 +53,23 @@ export async function getAuditEventsAction(
 export async function getAuditEventDetailAction(id: number): Promise<AuditoriaEvento | null> {
   await requireCoordinador();
   try {
-    // TODO(backend): const { auditoriaEventosQueries } = await import('@/lib/db/queries/auditoria-eventos.queries');
-    // return auditoriaEventosQueries.getById(id);
-    void id;
-    return null;
+    const { auditoriaEventosQueries } = await import('@/lib/db/queries/auditoria-eventos.queries');
+    return await auditoriaEventosQueries.getById(id);
   } catch (error) {
     logger.error('Error en getAuditEventDetailAction', error);
     return null;
+  }
+}
+
+/** Eventos hermanos de una transacción de negocio. */
+export async function getAuditSiblingEventsAction(txId: string): Promise<AuditoriaEvento[]> {
+  await requireCoordinador();
+  try {
+    const { auditoriaEventosQueries } = await import('@/lib/db/queries/auditoria-eventos.queries');
+    return await auditoriaEventosQueries.getSiblingEvents(txId);
+  } catch (error) {
+    logger.error('Error en getAuditSiblingEventsAction', error);
+    return [];
   }
 }
 
@@ -69,9 +77,8 @@ export async function getAuditEventDetailAction(id: number): Promise<AuditoriaEv
 export async function getAuditModuleSummaryAction(): Promise<AuditoriaEventoResumen[]> {
   await requireCoordinador();
   try {
-    // TODO(backend): const { auditoriaEventosQueries } = await import('@/lib/db/queries/auditoria-eventos.queries');
-    // return auditoriaEventosQueries.getResumenPorEntidad();
-    return [];
+    const { auditoriaEventosQueries } = await import('@/lib/db/queries/auditoria-eventos.queries');
+    return await auditoriaEventosQueries.getResumenPorEntidad();
   } catch (error) {
     logger.error('Error en getAuditModuleSummaryAction', error);
     return [];

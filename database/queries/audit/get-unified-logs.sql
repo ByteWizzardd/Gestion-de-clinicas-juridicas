@@ -6,6 +6,7 @@ SELECT * FROM (
     -- Eventos Genéricos (auditoria_eventos)
     SELECT
         t.id::text as id,
+        t.id_transaccion::text as id_transaccion,
         t.entidad as entidad,
         t.operacion as operacion,
         t.id_entidad as id_entidad,
@@ -22,6 +23,7 @@ SELECT * FROM (
     -- Sesiones (auditoria_sesiones)
     SELECT
         t.id_sesion::text as id,
+        NULL::text as id_transaccion,
         'sesion' as entidad,
         CASE
             WHEN t.fecha_cierre IS NOT NULL THEN 'cierre_sesion'
@@ -42,6 +44,7 @@ SELECT * FROM (
     -- Reportes (auditoria_reportes)
     SELECT
         t.id::text as id,
+        NULL::text as id_transaccion,
         'reporte' as entidad,
         CASE WHEN t.operacion = 'vista_previa' THEN 'vista_previa_reporte' ELSE 'generacion_reporte' END as operacion,
         t.id::text as id_entidad,
@@ -58,6 +61,7 @@ SELECT * FROM (
     -- Soportes (Descargas)
     SELECT
         t.id::text as id,
+        NULL::text as id_transaccion,
         'soporte' as entidad,
         'descarga_soporte' as operacion,
         t.num_soporte::text || '-' || t.id_caso::text as id_entidad,
@@ -79,6 +83,8 @@ WHERE
         TRANSLATE(usuario_nombre, 'áéíóúÁÉÍÓÚäëïöüÄËÏÖÜ', 'aeiouAEIOUaeiouAEIOU') ILIKE '%' || TRANSLATE($8, 'áéíóúÁÉÍÓÚäëïöüÄËÏÖÜ', 'aeiouAEIOUaeiouAEIOU') || '%' OR
         TRANSLATE(COALESCE(datos_nuevos::text, ''), 'áéíóúÁÉÍÓÚäëïöüÄËÏÖÜ', 'aeiouAEIOUaeiouAEIOU') ILIKE '%' || TRANSLATE($8, 'áéíóúÁÉÍÓÚäëïöüÄËÏÖÜ', 'aeiouAEIOUaeiouAEIOU') || '%' OR
         TRANSLATE(COALESCE(datos_anteriores::text, ''), 'áéíóúÁÉÍÓÚäëïöüÄËÏÖÜ', 'aeiouAEIOUaeiouAEIOU') ILIKE '%' || TRANSLATE($8, 'áéíóúÁÉÍÓÚäëïöüÄËÏÖÜ', 'aeiouAEIOUaeiouAEIOU') || '%'
-    ))
+    )) AND
+    ($9::text IS NULL OR metadata->>'tx_id' = $9) AND
+    ($10::text IS NULL OR id_transaccion = $10)
 ORDER BY fecha DESC
 LIMIT $1 OFFSET $2;

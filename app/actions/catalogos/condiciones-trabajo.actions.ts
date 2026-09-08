@@ -1,6 +1,7 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
+import { withAuditTransaction } from '@/lib/utils/audit-context';
 import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllCondicionesTrabajo } from '@/lib/db/queries/catalogos.queries';
@@ -17,144 +18,123 @@ export async function getCondicionesTrabajo() {
 }
 
 export async function createCondicionTrabajo(data: { nombre_trabajo: string }) {
-    const client = await pool.connect();
-    try {
-        await client.query('BEGIN');
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+        return { success: false, error: 'No autorizado' };
+    }
 
-        const authResult = await requireAuthInServerActionWithCode();
-        if (!authResult.success || !authResult.user) {
-            await client.query('ROLLBACK');
-            return { success: false, error: 'No autorizado' };
+    return await withAuditTransaction(
+        authResult.user.cedula,
+        { accion_negocio: 'Creación en catálogo Condiciones de Trabajo' },
+        async (client) => {
+            const result = await client.query(
+                'INSERT INTO condicion_trabajo (nombre_trabajo) VALUES ($1) RETURNING *',
+                [data.nombre_trabajo]
+            );
+
+            revalidatePath('/dashboard/administration/condiciones-trabajo');
+            return { success: true, data: result.rows[0] };
         }
-
-        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
-
-        const result = await client.query(
-            'INSERT INTO condicion_trabajo (nombre_trabajo) VALUES ($1) RETURNING *',
-            [data.nombre_trabajo]
-        );
-
-        await client.query('COMMIT');
-        revalidatePath('/dashboard/administration/condiciones-trabajo');
-        return { success: true, data: result.rows[0] };
-    } catch (error) {
-        await client.query('ROLLBACK');
+    ).catch(error => {
         logger.error('Error creating condicion trabajo:', error);
         return { success: false, error: 'Error al crear condición de trabajo' };
-    } finally {
-        client.release();
-    }
+    });
 }
 
 export async function updateCondicionTrabajo(id: number, data: { nombre_trabajo: string }) {
-    const client = await pool.connect();
-    try {
-        await client.query('BEGIN');
-
-        const authResult = await requireAuthInServerActionWithCode();
-        if (!authResult.success || !authResult.user) {
-            await client.query('ROLLBACK');
-            return { success: false, error: 'No autorizado' };
-        }
-
-        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
-
-        const result = await client.query(
-            'UPDATE condicion_trabajo SET nombre_trabajo = $2 WHERE id_trabajo = $1 RETURNING *',
-            [id, data.nombre_trabajo]
-        );
-        if (result.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return { success: false, error: 'Condición no encontrada' };
-        }
-
-        await client.query('COMMIT');
-        revalidatePath('/dashboard/administration/condiciones-trabajo');
-        return { success: true, data: result.rows[0] };
-    } catch (error) {
-        await client.query('ROLLBACK');
-        logger.error('Error updating condicion trabajo:', error);
-        return { success: false, error: 'Error al actualizar condición' };
-    } finally {
-        client.release();
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+        return { success: false, error: 'No autorizado' };
     }
+
+    return await withAuditTransaction(
+        authResult.user.cedula,
+        { accion_negocio: 'Actualización en catálogo Condiciones de Trabajo' },
+        async (client) => {
+            const result = await client.query(
+                'UPDATE condicion_trabajo SET nombre_trabajo = $2 WHERE id_trabajo = $1 RETURNING *',
+                [id, data.nombre_trabajo]
+            );
+            if (result.rows.length === 0) {
+                throw new Error('NOT_FOUND');
+            }
+
+            revalidatePath('/dashboard/administration/condiciones-trabajo');
+            return { success: true, data: result.rows[0] };
+        }
+    ).catch(error => {
+        logger.error('Error updating condicion trabajo:', error);
+        if (error.message === 'NOT_FOUND') return { success: false, error: 'Condición no encontrada' };
+        return { success: false, error: 'Error al actualizar condición' };
+    });
 }
 
 export async function toggleCondicionTrabajoHabilitado(id: number) {
-    const client = await pool.connect();
-    try {
-        await client.query('BEGIN');
-
-        const authResult = await requireAuthInServerActionWithCode();
-        if (!authResult.success || !authResult.user) {
-            await client.query('ROLLBACK');
-            return { success: false, error: 'No autorizado' };
-        }
-
-        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
-
-        const result = await client.query(
-            'UPDATE condicion_trabajo SET habilitado = NOT habilitado WHERE id_trabajo = $1 RETURNING *',
-            [id]
-        );
-        if (result.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return { success: false, error: 'Condición no encontrada' };
-        }
-
-        await client.query('COMMIT');
-        revalidatePath('/dashboard/administration/condiciones-trabajo');
-        return { success: true, data: result.rows[0] };
-    } catch (error) {
-        await client.query('ROLLBACK');
-        logger.error('Error toggling condicion trabajo habilitado:', error);
-        return { success: false, error: 'Error al cambiar estado' };
-    } finally {
-        client.release();
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+        return { success: false, error: 'No autorizado' };
     }
+
+    return await withAuditTransaction(
+        authResult.user.cedula,
+        { accion_negocio: 'Cambio de estado en catálogo Condiciones de Trabajo' },
+        async (client) => {
+            const result = await client.query(
+                'UPDATE condicion_trabajo SET habilitado = NOT habilitado WHERE id_trabajo = $1 RETURNING *',
+                [id]
+            );
+            if (result.rows.length === 0) {
+                throw new Error('NOT_FOUND');
+            }
+
+            revalidatePath('/dashboard/administration/condiciones-trabajo');
+            return { success: true, data: result.rows[0] };
+        }
+    ).catch(error => {
+        logger.error('Error toggling condicion trabajo habilitado:', error);
+        if (error.message === 'NOT_FOUND') return { success: false, error: 'Condición no encontrada' };
+        return { success: false, error: 'Error al cambiar estado' };
+    });
 }
 
 export async function deleteCondicionTrabajo(id: number, motivo?: string) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+        return { success: false, error: 'No autorizado' };
+    }
+
     const client = await pool.connect();
     try {
-        await client.query('BEGIN');
-
-        const authResult = await requireAuthInServerActionWithCode();
-        if (!authResult.success || !authResult.user) {
-            await client.query('ROLLBACK');
-            return { success: false, error: 'No autorizado' };
-        }
-
         const checkResult = await client.query(
             `SELECT EXISTS (SELECT 1 FROM solicitantes WHERE id_trabajo = $1) AS has_associations`,
             [id]
         );
         if (checkResult.rows[0]?.has_associations === true) {
-            await client.query('ROLLBACK');
             return {
                 success: false,
                 error: 'HAS_ASSOCIATIONS',
                 message: 'No se puede eliminar porque tiene solicitantes asociados.'
             };
         }
-
-        await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
-        await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: motivo || '' })]);
-
-        const result = await client.query('DELETE FROM condicion_trabajo WHERE id_trabajo = $1 RETURNING *', [id]);
-        if (result.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return { success: false, error: 'Condición no encontrada' };
-        }
-
-        await client.query('COMMIT');
-        revalidatePath('/dashboard/administration/condiciones-trabajo');
-        return { success: true, data: result.rows[0] };
-    } catch (error) {
-        await client.query('ROLLBACK');
-        logger.error('Error deleting condicion trabajo:', error);
-        return { success: false, error: 'Error al eliminar condición' };
     } finally {
         client.release();
     }
+
+    return await withAuditTransaction(
+        authResult.user.cedula,
+        { accion_negocio: 'Eliminación en catálogo Condiciones de Trabajo', motivo: motivo || '' },
+        async (client) => {
+            const result = await client.query('DELETE FROM condicion_trabajo WHERE id_trabajo = $1 RETURNING *', [id]);
+            if (result.rows.length === 0) {
+                throw new Error('NOT_FOUND');
+            }
+
+            revalidatePath('/dashboard/administration/condiciones-trabajo');
+            return { success: true, data: result.rows[0] };
+        }
+    ).catch(error => {
+        logger.error('Error deleting condicion trabajo:', error);
+        if (error.message === 'NOT_FOUND') return { success: false, error: 'Condición no encontrada' };
+        return { success: false, error: 'Error al eliminar condición' };
+    });
 }

@@ -4,6 +4,7 @@ import { QueryResult, type PoolClient } from 'pg';
 import { logger } from '@/lib/utils/logger';
 import { solicitantesQueries, type Solicitante, type SolicitanteCompleto } from '@/lib/db/queries/solicitantes.queries';
 import { AppError } from '@/lib/utils/errors';
+import { withAuditTransaction } from '@/lib/utils/audit-context';
 
 interface ApplicantFormData {
   // Identificación
@@ -245,14 +246,11 @@ export const solicitantesService = {
       }
     }
 
-    const client = await pool.connect();
-
     try {
-      await client.query('BEGIN');
-      // Establecer variable de sesión para auditoría
-      if (usuarioActualizo) {
-        await client.query("SELECT set_config('app.current_user_id', $1, true)", [usuarioActualizo]);
-      }
+      return await withAuditTransaction(
+        usuarioActualizo,
+        { accion_negocio: 'Registro de solicitante' },
+        async (client) => {
 
       // 1. Crear o verificar solicitante básico
       // Construir cédula con formato V-XXXX (con guión)
@@ -329,7 +327,6 @@ export const solicitantesService = {
         const emailExistente = await client.query(checkEmailQuery, [data.correoElectronico, null]);
 
         if (emailExistente.rows.length > 0) {
-          await client.query('ROLLBACK');
           throw new AppError(
             `El correo electrónico ${data.correoElectronico} ya está asociado a otro solicitante`,
             400,
@@ -357,7 +354,6 @@ export const solicitantesService = {
           const pgError = error as { code?: string; constraint?: string };
           // Si es un error de unique constraint en correo_electronico
           if (pgError.code === '23505' && pgError.constraint === 'solicitantes_correo_electronico_unique') {
-            await client.query('ROLLBACK');
             throw new AppError(
               `El correo electrónico ${data.correoElectronico} ya está asociado a otro solicitante`,
               400,
@@ -379,7 +375,6 @@ export const solicitantesService = {
           if (nuevoEmailExistente.rows.length > 0) {
             const otroSolicitante = nuevoEmailExistente.rows[0];
             if (otroSolicitante.cedula !== cedula) {
-              await client.query('ROLLBACK');
               throw new AppError(
                 `El correo electrónico ${data.correoElectronico} ya está asociado a otro solicitante`,
                 400,
@@ -504,8 +499,6 @@ export const solicitantesService = {
       ]);
       const solicitanteActualizado = solicitanteResult.rows[0];
 
-      await client.query('COMMIT');
-
       return {
         solicitante: solicitanteActualizado,
         vivienda,
@@ -514,8 +507,8 @@ export const solicitantesService = {
         idActividad,
         hogar,
       };
+      });
     } catch (error: unknown) {
-      await client.query('ROLLBACK');
       logger.error('Error al registrar solicitante', error);
 
       // Mejorar el mensaje de error para debugging
@@ -533,8 +526,6 @@ export const solicitantesService = {
       });
 
       throw enhancedError;
-    } finally {
-      client.release();
     }
   },
 
@@ -572,14 +563,11 @@ export const solicitantesService = {
       }
     }
 
-    const client = await pool.connect();
-
     try {
-      await client.query('BEGIN');
-      // Establecer variable de sesión para auditoría
-      if (usuarioActualizo) {
-        await client.query("SELECT set_config('app.current_user_id', $1, true)", [usuarioActualizo]);
-      }
+      return await withAuditTransaction(
+        usuarioActualizo,
+        { accion_negocio: 'Actualización de solicitante' },
+        async (client) => {
 
       // ========== OBTENER DATOS ANTERIORES PARA AUDITORÍA ==========
       const datosAnterioresResult = await client.query(`
@@ -608,7 +596,7 @@ export const solicitantesService = {
 
       // Mapear características a un objeto para fácil acceso
       const caracteristicasMap: Record<number, string> = {};
-      caracteristicasResult.rows.forEach(row => {
+      caracteristicasResult.rows.forEach((row: Record<string, any>) => {
         caracteristicasMap[row.id_tipo_caracteristica] = row.descripcion;
       });
 
@@ -629,7 +617,7 @@ export const solicitantesService = {
         WHERE a.cedula_solicitante = $1 AND c.id_tipo_caracteristica = 8
         ORDER BY c.descripcion
       `, [cedulaOriginal]);
-      const artefactosAnteriores = artefactosAnterioresResult.rows.map(r => r.descripcion);
+      const artefactosAnteriores = artefactosAnterioresResult.rows.map((r: Record<string, any>) => r.descripcion);
       datosAnteriores.artefactos_domesticos = artefactosAnteriores.join(', ') || null;
 
       // 1. Preparar datos básicos
@@ -872,8 +860,8 @@ export const solicitantesService = {
            WHERE a.cedula_solicitante = $1 AND a.id_tipo_caracteristica = 8`,
           [cedula]
         );
-        const artefactosActuales = new Set(artefactosActualesResult.rows.map(r => r.descripcion));
-        const artefactosNuevos = new Set(data.artefactosDomesticos);
+        const artefactosActuales = new Set<string>(artefactosActualesResult.rows.map((r: Record<string, any>) => r.descripcion));
+        const artefactosNuevos = new Set<string>(data.artefactosDomesticos || []);
 
         // Encontrar los que se eliminaron (están en actuales pero no en nuevos)
         const artefactosAEliminar = [...artefactosActuales].filter(a => !artefactosNuevos.has(a));
@@ -901,16 +889,13 @@ export const solicitantesService = {
         }
       }
 
-      await client.query('COMMIT');
-
       return {
         solicitante: solicitanteActualizado,
         vivienda,
         hogar,
       };
-
+      });
     } catch (error: unknown) {
-      await client.query('ROLLBACK');
       logger.error('Error al actualizar solicitante', error);
       const err = error as { message?: string; code?: string };
       throw new AppError(
@@ -918,30 +903,22 @@ export const solicitantesService = {
         500,
         err?.code || 'UNKNOWN'
       );
-    } finally {
-      client.release();
     }
   },
 
   delete: async (cedula: string, usuarioElimino: string, motivo: string): Promise<void> => {
-    const client = await pool.connect();
     try {
-      await client.query('BEGIN');
-
-      // Establecer variables de auditoría
-      await client.query("SELECT set_config('app.current_user_id', $1, true)", [usuarioElimino]);
-      await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo })]);
-
-      const deleteQuery = loadSQL('solicitantes/delete-by-id.sql');
-      await client.query(deleteQuery, [cedula]);
-
-      await client.query('COMMIT');
+      await withAuditTransaction(
+        usuarioElimino,
+        { accion_negocio: 'Eliminación de solicitante', motivo },
+        async (client) => {
+          const deleteQuery = loadSQL('solicitantes/delete-by-id.sql');
+          await client.query(deleteQuery, [cedula]);
+        }
+      );
     } catch (error) {
-      await client.query('ROLLBACK');
       logger.error('Error al eliminar solicitante', error);
       throw error;
-    } finally {
-      client.release();
     }
   },
 };
