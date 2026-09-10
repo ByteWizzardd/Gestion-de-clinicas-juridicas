@@ -43,53 +43,6 @@ export const auditoriaSesionesQueries = {
     },
 
     // ==========================================
-    // TODAS LAS SESIONES
-    // ==========================================
-    getAll: async (limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc', userId?: string, startDate?: Date, endDate?: Date): Promise<SesionAuditoria[]> => {
-        try {
-            const query = loadSQL('auditoria-sesiones/get-all.sql');
-            const result = await pool.query(query, [limit, offset, sortOrder, userId || null, startDate || null, endDate || null]);
-            return result.rows;
-        } catch (error) {
-            logger.error('Error en auditoriaSesionesQueries.getAll', error);
-            throw new DatabaseError('Error al obtener sesiones', error);
-        }
-    },
-
-    count: async (userId?: string, startDate?: Date, endDate?: Date): Promise<number> => {
-        try {
-            const query = loadSQL('auditoria-sesiones/count.sql');
-            const result = await pool.query(query, [userId || null, startDate || null, endDate || null]);
-            return parseInt(result.rows[0]?.count || '0', 10);
-        } catch (error) {
-            logger.error('Error en auditoriaSesionesQueries.count', error);
-            throw new DatabaseError('Error al contar sesiones', error);
-        }
-    },
-
-    search: async (searchTerm: string, limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc', userId?: string, startDate?: Date, endDate?: Date): Promise<SesionAuditoria[]> => {
-        try {
-            const query = loadSQL('auditoria-sesiones/search.sql');
-            const result = await pool.query(query, [limit, offset, searchTerm, sortOrder, userId || null, startDate || null, endDate || null]);
-            return result.rows;
-        } catch (error) {
-            logger.error('Error en auditoriaSesionesQueries.search', error);
-            throw new DatabaseError('Error al buscar sesiones', error);
-        }
-    },
-
-    countSearch: async (searchTerm: string, userId?: string, startDate?: Date, endDate?: Date): Promise<number> => {
-        try {
-            const query = loadSQL('auditoria-sesiones/count-search.sql');
-            const result = await pool.query(query, [searchTerm, userId || null, startDate || null, endDate || null]);
-            return parseInt(result.rows[0]?.count || '0', 10);
-        } catch (error) {
-            logger.error('Error en auditoriaSesionesQueries.countSearch', error);
-            throw new DatabaseError('Error al contar sesiones buscadas', error);
-        }
-    },
-
-    // ==========================================
     // INICIOS DE SESIÓN (LOGINS - EXITOSOS)
     // ==========================================
     getLogins: async (limit: number = 50, offset: number = 0, sortOrder: SortOrder = 'desc', userId?: string, startDate?: Date, endDate?: Date): Promise<SesionAuditoria[]> => {

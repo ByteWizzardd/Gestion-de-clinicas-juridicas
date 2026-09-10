@@ -3,39 +3,6 @@ import { pool } from '../pool';
 import { QueryResult } from 'pg';
 
 /**
- * Interfaz para los filtros de auditoría aplicados a reportes
- */
-export interface AuditoriaReportesFilters {
-    fechaInicio?: string;
-    fechaFin?: string;
-    idUsuario?: string;
-    tipoReporte?: string;
-    orden?: 'asc' | 'desc';
-    operacion?: 'generacion' | 'vista_previa';
-}
-
-/**
- * Interfaz para el registro de auditoría de reportes
- */
-export interface AuditoriaReporteRecord {
-    id: number;
-    tipo_reporte: string;
-    filtros_aplicados: Record<string, unknown> | null;
-    formato: string;
-    cedula_solicitante: string | null;
-    operacion: 'generacion' | 'vista_previa';
-    fecha_generacion: string;
-    id_usuario_genero: string;
-    nombres_usuario_genero: string | null;
-    apellidos_usuario_genero: string | null;
-    nombre_completo_usuario_genero: string | null;
-    foto_perfil_usuario_genero: string | null;
-    nombres_solicitante: string | null;
-    apellidos_solicitante: string | null;
-    nombre_completo_solicitante: string | null;
-}
-
-/**
  * Interfaz para insertar un registro de auditoría de reporte
  */
 export interface InsertAuditoriaReporteParams {
@@ -48,12 +15,14 @@ export interface InsertAuditoriaReporteParams {
 }
 
 /**
- * Queries para la entidad AuditoriaReportes
- * Todas las queries SQL están en database/queries/auditoria-reportes/
+ * Queries para la auditoría de reportes.
+ * Escriben directamente en auditoria_eventos (entidad='reporte') — la lectura
+ * ya vive en auditoriaEventosQueries / getAuditEventsAction, ver
+ * app/actions/audit.ts (getEventosHelper('reporte', ...)).
  */
 export const auditoriaReportesQueries = {
     /**
-     * Inserta un nuevo registro de auditoría de reporte generado
+     * Inserta un evento de auditoría de reporte generado/previsualizado.
      */
     insert: async (params: InsertAuditoriaReporteParams): Promise<number> => {
         const query = loadSQL('auditoria-reportes/insert.sql');
@@ -66,36 +35,5 @@ export const auditoriaReportesQueries = {
             params.operacion || 'generacion'
         ]);
         return result.rows[0].id;
-    },
-
-    /**
-     * Obtiene todos los reportes generados con filtros opcionales
-     */
-    getAll: async (filters?: AuditoriaReportesFilters): Promise<AuditoriaReporteRecord[]> => {
-        const query = loadSQL('auditoria-reportes/get-all.sql');
-        const result: QueryResult = await pool.query(query, [
-            filters?.fechaInicio || null,
-            filters?.fechaFin || null,
-            filters?.idUsuario || null,
-            filters?.tipoReporte || null,
-            filters?.orden || 'desc',
-            filters?.operacion || null,
-        ]);
-        // Convertir foto_perfil de Buffer a base64
-        return result.rows.map(row => ({
-            ...row,
-            foto_perfil_usuario_genero: row.foto_perfil_usuario_genero
-                ? `data:image/jpeg;base64,${(row.foto_perfil_usuario_genero as Buffer).toString('base64')}`
-                : null,
-        }));
-    },
-
-    /**
-     * Obtiene el conteo total de reportes generados
-     */
-    getCount: async (): Promise<number> => {
-        const query = loadSQL('auditoria-reportes/get-count.sql');
-        const result: QueryResult = await pool.query(query);
-        return parseInt(result.rows[0].total, 10);
     },
 };

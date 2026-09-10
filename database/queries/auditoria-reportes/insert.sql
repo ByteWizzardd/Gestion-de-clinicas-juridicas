@@ -1,20 +1,19 @@
--- Insertar un registro de auditoría de reporte generado
--- Parámetros:
--- $1 = tipo_reporte (VARCHAR) - Identificador del tipo de reporte
--- $2 = descripcion (TEXT) - Descripción legible del reporte
--- $3 = filtros_aplicados (JSONB) - Filtros usados en formato JSON
--- $4 = id_usuario_genero (VARCHAR) - Cédula del usuario que generó
--- $5 = formato (VARCHAR) - Formato del reporte (PDF, Excel, etc.)
--- $6 = cedula_solicitante (VARCHAR, opcional) - Para reportes específicos de solicitante
--- $7 = operacion (VARCHAR, opcional) - 'generacion' o 'vista_previa' (default: 'generacion')
-INSERT INTO auditoria_reportes (
-    tipo_reporte,
-    filtros_aplicados,
-    id_usuario_genero,
-    formato,
-    cedula_solicitante,
-    operacion,
-    fecha_generacion
+-- Registra la generación/vista previa de un reporte como evento de
+-- auditoria_eventos (entidad='reporte'), en vez de una fila en la vieja
+-- tabla auditoria_reportes (que nunca llegó a crearse en la base real).
+-- $1 = tipo_reporte, $2 = filtros_aplicados (JSON texto u null),
+-- $3 = id_usuario_genero, $4 = formato, $5 = cedula_solicitante (opcional),
+-- $6 = operacion ('generacion' | 'vista_previa')
+INSERT INTO auditoria_eventos (
+    entidad, operacion, id_usuario, datos_nuevos, fecha_evento
 ) VALUES (
-    $1, $2, $3, $4, $5, COALESCE($6, 'generacion'), CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'
+    'reporte',
+    CASE WHEN $6 = 'vista_previa' THEN 'vista_previa_reporte' ELSE 'generacion_reporte' END,
+    $3,
+    jsonb_strip_nulls(jsonb_build_object(
+        'tipo_reporte', $1,
+        'formato', $4,
+        'cedula_solicitante', $5
+    )) || COALESCE($2::jsonb, '{}'::jsonb),
+    (CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas')
 ) RETURNING id;
