@@ -1,6 +1,7 @@
 import { loadSQL } from '../sql-loader';
 import { pool } from '../pool';
 import { QueryResult } from 'pg';
+import { convertFotoPerfilToString } from '@/lib/utils/foto-perfil-helper';
 
 /**
  * Queries para la entidad Usuarios
@@ -568,7 +569,7 @@ export const usuariosQueries = {
   getFotoPerfil: async (cedula: string): Promise<string | null> => {
     const query = loadSQL('usuarios/get-foto-perfil.sql');
     const result: QueryResult = await pool.query(query, [cedula]);
-    return result.rows[0]?.foto_perfil || null;
+    return convertFotoPerfilToString(result.rows[0]?.foto_perfil);
   },
 
   /**

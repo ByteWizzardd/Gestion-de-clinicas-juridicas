@@ -29,7 +29,7 @@ export default function CondicionesActividadPage() {
   };
 
   const handleAdd = async (data: Record<string, string>) => {
-    const result = await createCondicionActividad(data as { nombre_actividad: string });
+    const result: any = await createCondicionActividad(data as { nombre_actividad: string });
     if (result.success) { setIsModalOpen(false); await loadCondiciones(); }
     else toast.error(result.error || 'Error al añadir condición');
   };
@@ -43,19 +43,19 @@ export default function CondicionesActividadPage() {
 
   const handleUpdate = async (data: Record<string, string>) => {
     if (!editingItem) return;
-    const result = await updateCondicionActividad(editingItem.id_actividad, data as { nombre_actividad: string });
+    const result: any = await updateCondicionActividad(editingItem.id_actividad, data as { nombre_actividad: string });
     if (result.success) { setIsModalOpen(false); setIsEditMode(false); setEditingItem(null); await loadCondiciones(); }
     else toast.error(result.error || 'Error al actualizar');
   };
 
   const handleToggle = async (item: any) => {
-    const result = await toggleCondicionActividadHabilitado(item.id_actividad);
+    const result: any = await toggleCondicionActividadHabilitado(item.id_actividad);
     if (result.success) await loadCondiciones();
     else toast.error(result.error || 'Error al cambiar estado');
   };
 
   const handleDelete = async (item: any, motivo?: string) => {
-    const result = await deleteCondicionActividad(item.id_actividad, motivo);
+    const result: any = await deleteCondicionActividad(item.id_actividad, motivo);
     if (result.success) await loadCondiciones();
     else toast.error(result.error === 'HAS_ASSOCIATIONS' ? (result.message || 'No se puede eliminar') : (result.error || 'Error al eliminar'));
   };

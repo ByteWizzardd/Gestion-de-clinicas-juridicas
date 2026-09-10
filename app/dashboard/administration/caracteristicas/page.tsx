@@ -35,7 +35,7 @@ export default function CaracteristicasPage() {
   };
 
   const handleAdd = async (data: Record<string, string>) => {
-    const result = await createCaracteristica(data as { id_tipo_caracteristica: string; descripcion: string });
+    const result: any = await createCaracteristica(data as { id_tipo_caracteristica: string; descripcion: string });
     if (result.success) {
       handleCloseModal();
       await loadData();
@@ -57,7 +57,7 @@ export default function CaracteristicasPage() {
 
   const handleUpdate = async (data: Record<string, string>) => {
     if (!editingItem) return;
-    const result = await updateCaracteristica(
+    const result: any = await updateCaracteristica(
       editingItem.id_tipo_caracteristica,
       editingItem.num_caracteristica,
       {
@@ -69,18 +69,18 @@ export default function CaracteristicasPage() {
       handleCloseModal();
       await loadData();
     } else {
-      toast.error(result.error === 'HAS_ASSOCIATIONS' ? result.message : (result.error || 'Error al actualizar característica'));
+      toast.error(result.error === 'HAS_ASSOCIATIONS' ? (result.message || 'No se puede actualizar') : (result.error || 'Error al actualizar característica'));
     }
   };
 
   const handleToggle = async (item: any) => {
-    const result = await toggleCaracteristicaHabilitado(item.id_tipo_caracteristica, item.num_caracteristica);
+    const result: any = await toggleCaracteristicaHabilitado(item.id_tipo_caracteristica, item.num_caracteristica);
     if (result.success) await loadData();
     else toast.error(result.error || 'Error al cambiar estado');
   };
 
   const handleDelete = async (item: any, motivo?: string) => {
-    const result = await deleteCaracteristica(item.id_tipo_caracteristica, item.num_caracteristica, motivo);
+    const result: any = await deleteCaracteristica(item.id_tipo_caracteristica, item.num_caracteristica, motivo);
     if (result.success) await loadData();
     else toast.error(result.error === 'HAS_ASSOCIATIONS' ? (result.message || 'No se puede eliminar') : (result.error || 'Error al eliminar'));
   };

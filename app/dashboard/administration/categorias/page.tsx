@@ -40,7 +40,7 @@ export default function CategoriasPage() {
     };
 
     const handleAdd = async (data: Record<string, string>) => {
-        const result = await createCategoria(data as { id_materia: string; nombre_categoria: string });
+        const result: any = await createCategoria(data as { id_materia: string; nombre_categoria: string });
         if (result.success) {
             handleCloseModal();
             await loadData();
@@ -65,7 +65,7 @@ export default function CategoriasPage() {
 
         const new_id_materia = data.id_materia ? data.id_materia : editingItem.id_materia;
 
-        const result = await updateCategoria(
+        const result: any = await updateCategoria(
             editingItem.id_materia,
             editingItem.num_categoria,
             {
@@ -82,13 +82,13 @@ export default function CategoriasPage() {
     };
 
     const handleToggle = async (item: any) => {
-        const result = await toggleCategoriaHabilitado(item.id_materia, item.num_categoria);
+        const result: any = await toggleCategoriaHabilitado(item.id_materia, item.num_categoria);
         if (result.success) await loadData();
         else toast.error(result.error || 'Error al cambiar estado');
     };
 
     const handleDelete = async (item: any, motivo?: string) => {
-        const result = await deleteCategoria(item.id_materia, item.num_categoria, motivo);
+        const result: any = await deleteCategoria(item.id_materia, item.num_categoria, motivo);
         if (result.success) await loadData();
         else toast.error(result.error === 'HAS_IN_USE' ? (result.message || 'No se puede eliminar') : (result.error || 'Error al eliminar'));
     };

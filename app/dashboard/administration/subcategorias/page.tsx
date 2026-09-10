@@ -48,7 +48,7 @@ export default function SubcategoriasPage() {
     const handleAdd = async (data: Record<string, string>) => {
         // Parse the composite key "id_materia|num_categoria"
         const [id_materia, num_categoria] = data.id_categoria.split('|');
-        const result = await createSubcategoria({
+        const result: any = await createSubcategoria({
             id_materia,
             num_categoria,
             nombre_subcategoria: data.nombre_subcategoria
@@ -87,7 +87,7 @@ export default function SubcategoriasPage() {
             new_num_categoria = parseInt(categoria);
         }
 
-        const result = await updateSubcategoria(
+        const result: any = await updateSubcategoria(
             editingItem.id_materia,
             editingItem.num_categoria,
             editingItem.num_subcategoria,
@@ -106,13 +106,13 @@ export default function SubcategoriasPage() {
     };
 
     const handleToggle = async (item: any) => {
-        const result = await toggleSubcategoriaHabilitado(item.id_materia, item.num_categoria, item.num_subcategoria);
+        const result: any = await toggleSubcategoriaHabilitado(item.id_materia, item.num_categoria, item.num_subcategoria);
         if (result.success) await loadData();
         else toast.error(result.error || 'Error al cambiar estado');
     };
 
     const handleDelete = async (item: any, motivo?: string) => {
-        const result = await deleteSubcategoria(item.id_materia, item.num_categoria, item.num_subcategoria, motivo);
+        const result: any = await deleteSubcategoria(item.id_materia, item.num_categoria, item.num_subcategoria, motivo);
         if (result.success) await loadData();
         else toast.error(result.error === 'HAS_ASSOCIATIONS' ? (result.message || 'No se puede eliminar') : (result.error || 'Error al eliminar'));
     };

@@ -40,3 +40,7 @@ next-env.d.ts
 /uploads
 github
 /x
+
+# claude / agent metadata
+.claude/
+skills-lock.json

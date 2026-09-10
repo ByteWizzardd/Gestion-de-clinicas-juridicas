@@ -34,7 +34,7 @@ export default function EstadosPage() {
 
     const handleAdd = async (data: Record<string, string>) => {
         const { createEstado } = await import('@/app/actions/catalogos/estados.actions');
-        const result = await createEstado(data as { nombre_estado: string });
+        const result: any = await createEstado(data as { nombre_estado: string });
 
         if (result.success) {
             setIsModalOpen(false);
@@ -57,7 +57,7 @@ export default function EstadosPage() {
 
     const handleUpdate = async (data: Record<string, string>) => {
         if (!editingItem) return;
-        const result = await updateEstado(editingItem.id_estado, data as { nombre_estado: string });
+        const result: any = await updateEstado(editingItem.id_estado, data as { nombre_estado: string });
         if (result.success) {
             setIsModalOpen(false);
             setIsEditMode(false);
@@ -69,7 +69,7 @@ export default function EstadosPage() {
     };
 
     const handleToggleHabilitado = async (item: any) => {
-        const result = await toggleEstadoHabilitado(item.id_estado);
+        const result: any = await toggleEstadoHabilitado(item.id_estado);
         if (result.success) {
             await loadEstados();
         } else {
@@ -78,7 +78,7 @@ export default function EstadosPage() {
     };
 
     const handleDelete = async (item: any, motivo?: string) => {
-        const result = await deleteEstado(item.id_estado, motivo);
+        const result: any = await deleteEstado(item.id_estado, motivo);
         if (result.success) {
             await loadEstados();
         } else {

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
@@ -33,7 +33,7 @@ export default function SemestresPage() {
   };
 
   const handleAdd = async (data: Record<string, string>) => {
-    const result = await createSemestre(data as { term: string; fecha_inicio: string; fecha_fin: string });
+    const result: any = await createSemestre(data as { term: string; fecha_inicio: string; fecha_fin: string });
     if (result.success) {
       setIsModalOpen(false);
       await loadSemestres();
@@ -55,7 +55,7 @@ export default function SemestresPage() {
 
   const handleUpdate = async (data: Record<string, string>) => {
     if (!editingItem) return;
-    const result = await updateSemestre(editingItem.term, {
+    const result: any = await updateSemestre(editingItem.term, {
       fecha_inicio: data.fecha_inicio,
       fecha_fin: data.fecha_fin,
       new_term: data.term
@@ -71,13 +71,13 @@ export default function SemestresPage() {
   };
 
   const handleToggleHabilitado = async (item: any) => {
-    const result = await toggleSemestreHabilitado(item.term);
+    const result: any = await toggleSemestreHabilitado(item.term);
     if (result.success) await loadSemestres();
     else toast.error(result.error || 'Error al cambiar estado');
   };
 
   const handleDelete = async (item: any, motivo?: string) => {
-    const result = await deleteSemestre(item.term, motivo);
+    const result: any = await deleteSemestre(item.term, motivo);
     if (result.success) {
       await loadSemestres();
     } else {

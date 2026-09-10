@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
@@ -29,7 +29,7 @@ export default function CondicionesTrabajoPage() {
   };
 
   const handleAdd = async (data: Record<string, string>) => {
-    const result = await createCondicionTrabajo(data as { nombre_trabajo: string });
+    const result: any = await createCondicionTrabajo(data as { nombre_trabajo: string });
     if (result.success) { setIsModalOpen(false); await loadCondiciones(); }
     else toast.error(result.error || 'Error al añadir condición');
   };
@@ -43,19 +43,19 @@ export default function CondicionesTrabajoPage() {
 
   const handleUpdate = async (data: Record<string, string>) => {
     if (!editingItem) return;
-    const result = await updateCondicionTrabajo(editingItem.id_trabajo, data as { nombre_trabajo: string });
+    const result: any = await updateCondicionTrabajo(editingItem.id_trabajo, data as { nombre_trabajo: string });
     if (result.success) { setIsModalOpen(false); setIsEditMode(false); setEditingItem(null); await loadCondiciones(); }
     else toast.error(result.error || 'Error al actualizar');
   };
 
   const handleToggle = async (item: any) => {
-    const result = await toggleCondicionTrabajoHabilitado(item.id_trabajo);
+    const result: any = await toggleCondicionTrabajoHabilitado(item.id_trabajo);
     if (result.success) await loadCondiciones();
     else toast.error(result.error || 'Error al cambiar estado');
   };
 
   const handleDelete = async (item: any, motivo?: string) => {
-    const result = await deleteCondicionTrabajo(item.id_trabajo, motivo);
+    const result: any = await deleteCondicionTrabajo(item.id_trabajo, motivo);
     if (result.success) await loadCondiciones();
     else toast.error(result.error === 'HAS_ASSOCIATIONS' ? (result.message || 'No se puede eliminar') : (result.error || 'Error al eliminar'));
   };

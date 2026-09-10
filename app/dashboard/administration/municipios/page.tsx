@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import CatalogDetailClient from "@/components/catalogs/CatalogDetailClient";
@@ -33,7 +33,7 @@ export default function MunicipiosPage() {
   };
 
   const handleAdd = async (data: Record<string, string>) => {
-    const result = await createMunicipio(data as { id_estado: string; nombre_municipio: string });
+    const result: any = await createMunicipio(data as { id_estado: string; nombre_municipio: string });
     if (result.success) { setIsModalOpen(false); await loadData(); }
     else toast.error(result.error || 'Error al añadir municipio');
   };
@@ -47,7 +47,7 @@ export default function MunicipiosPage() {
 
   const handleUpdate = async (data: Record<string, string>) => {
     if (!editingItem) return;
-    const result = await updateMunicipio(
+    const result: any = await updateMunicipio(
       editingItem.id_estado,
       editingItem.num_municipio,
       {
@@ -60,13 +60,13 @@ export default function MunicipiosPage() {
   };
 
   const handleToggle = async (item: any) => {
-    const result = await toggleMunicipioHabilitado(item.id_estado, item.num_municipio);
+    const result: any = await toggleMunicipioHabilitado(item.id_estado, item.num_municipio);
     if (result.success) await loadData();
     else toast.error(result.error || 'Error al cambiar estado');
   };
 
   const handleDelete = async (item: any, motivo?: string) => {
-    const result = await deleteMunicipio(item.id_estado, item.num_municipio, motivo);
+    const result: any = await deleteMunicipio(item.id_estado, item.num_municipio, motivo);
     if (result.success) await loadData();
     else toast.error(result.error === 'HAS_ASSOCIATIONS' ? (result.message || 'No se puede eliminar') : (result.error || 'Error al eliminar'));
   };

@@ -12,7 +12,7 @@
  * @param foto - La foto de perfil que puede ser Buffer, string (URL) o null
  * @returns URL de la foto o null si no existe
  */
-export function convertFotoPerfilToString(foto: Buffer | string | null | undefined): string | null {
+export function convertFotoPerfilToString(foto: Buffer | Uint8Array | string | null | undefined): string | null {
     if (!foto) {
         return null;
     }
@@ -22,10 +22,10 @@ export function convertFotoPerfilToString(foto: Buffer | string | null | undefin
         return foto;
     }
 
-    // Si es un Buffer (formato legacy), convertir a base64
-    // Esto permite compatibilidad con registros de auditoría antiguos
-    if (Buffer.isBuffer(foto)) {
-        return `data:image/jpeg;base64,${foto.toString('base64')}`;
+    // Si es un Buffer o Uint8Array (formato legacy BYTEA), convertir a base64
+    // Esto permite compatibilidad con registros antiguos en PostgreSQL
+    if (Buffer.isBuffer(foto) || foto instanceof Uint8Array) {
+        return `data:image/jpeg;base64,${Buffer.from(foto).toString('base64')}`;
     }
 
     return null;

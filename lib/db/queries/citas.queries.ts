@@ -95,7 +95,7 @@ export const citasQueries = {
       atenciones: typeof row.atenciones === 'string'
         ? JSON.parse(row.atenciones)
         : row.atenciones || []
-    }));
+    })) as any;
   },
 
   /**

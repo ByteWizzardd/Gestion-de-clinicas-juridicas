@@ -46,7 +46,7 @@ export default function ParroquiasPage() {
     };
 
     const handleAdd = async (data: Record<string, string>) => {
-        const result = await createParroquia(data as { id_estado: string; id_municipio: string; nombre_parroquia: string });
+        const result: any = await createParroquia(data as { id_estado: string; id_municipio: string; nombre_parroquia: string });
         if (result.success) {
             handleCloseModal();
             await loadData();
@@ -71,7 +71,7 @@ export default function ParroquiasPage() {
 
     const handleUpdate = async (data: Record<string, string>) => {
         if (!editingItem) return;
-        const result = await updateParroquia(
+        const result: any = await updateParroquia(
             editingItem.id_estado,
             editingItem.num_municipio,
             editingItem.num_parroquia,
@@ -90,13 +90,13 @@ export default function ParroquiasPage() {
     };
 
     const handleToggle = async (item: any) => {
-        const result = await toggleParroquiaHabilitado(item.id_estado, item.num_municipio, item.num_parroquia);
+        const result: any = await toggleParroquiaHabilitado(item.id_estado, item.num_municipio, item.num_parroquia);
         if (result.success) await loadData();
         else toast.error(result.error || 'Error al cambiar estado');
     };
 
     const handleDelete = async (item: any, motivo?: string) => {
-        const result = await deleteParroquia(item.id_estado, item.num_municipio, item.num_parroquia, motivo);
+        const result: any = await deleteParroquia(item.id_estado, item.num_municipio, item.num_parroquia, motivo);
         if (result.success) await loadData();
         else toast.error(result.error === 'HAS_ASSOCIATIONS' ? (result.message || 'No se puede eliminar') : (result.error || 'Error al eliminar parroquia'));
     };

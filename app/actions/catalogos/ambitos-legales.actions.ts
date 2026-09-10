@@ -7,7 +7,15 @@ import { revalidatePath } from 'next/cache';
 import { getAllAmbitosLegales } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 
-export async function getAmbitosLegales() {
+export type ActionResult<T = any> = {
+    success: boolean;
+    data?: T;
+    error?: string;
+    message?: string;
+};
+
+
+export async function getAmbitosLegales(): Promise<ActionResult> {
     try {
         const ambitos = await getAllAmbitosLegales();
         return { success: true, data: ambitos };
@@ -17,7 +25,7 @@ export async function getAmbitosLegales() {
     }
 }
 
-export async function createAmbitoLegal(data: { id_materia: string; num_categoria: string; num_subcategoria: string; nombre_ambito_legal: string }) {
+export async function createAmbitoLegal(data: { id_materia: string; num_categoria: string; num_subcategoria: string; nombre_ambito_legal: string }): Promise<ActionResult> {
     const authResult = await requireAuthInServerActionWithCode();
     if (!authResult.success || !authResult.user) {
         return { success: false, error: 'No autorizado' };
@@ -62,7 +70,7 @@ export async function updateAmbitoLegal(
         new_num_categoria?: string | number,
         new_num_subcategoria?: string | number
     }
-) {
+): Promise<ActionResult> {
     const authResult = await requireAuthInServerActionWithCode();
     if (!authResult.success || !authResult.user) {
         return { success: false, error: 'No autorizado' };
@@ -148,7 +156,7 @@ export async function updateAmbitoLegal(
     });
 }
 
-export async function toggleAmbitoLegalHabilitado(id_materia: number, num_categoria: number, num_subcategoria: number, num_ambito_legal: number) {
+export async function toggleAmbitoLegalHabilitado(id_materia: number, num_categoria: number, num_subcategoria: number, num_ambito_legal: number): Promise<ActionResult> {
     const authResult = await requireAuthInServerActionWithCode();
     if (!authResult.success || !authResult.user) {
         return { success: false, error: 'No autorizado' };
@@ -176,7 +184,7 @@ export async function toggleAmbitoLegalHabilitado(id_materia: number, num_catego
     });
 }
 
-export async function deleteAmbitoLegal(id_materia: number, num_categoria: number, num_subcategoria: number, num_ambito_legal: number, motivo?: string) {
+export async function deleteAmbitoLegal(id_materia: number, num_categoria: number, num_subcategoria: number, num_ambito_legal: number, motivo?: string): Promise<ActionResult> {
     const authResult = await requireAuthInServerActionWithCode();
     if (!authResult.success || !authResult.user) {
         return { success: false, error: 'No autorizado' };

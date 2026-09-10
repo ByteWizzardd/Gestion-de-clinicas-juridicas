@@ -35,7 +35,7 @@ export default function MateriasPage() {
 
     const handleAdd = async (data: Record<string, string>) => {
         const { createMateria } = await import('@/app/actions/catalogos/materias.actions');
-        const result = await createMateria(data as { nombre_materia: string });
+        const result: any = await createMateria(data as { nombre_materia: string });
 
         if (result.success) {
             setIsModalOpen(false);
@@ -60,7 +60,7 @@ export default function MateriasPage() {
     const handleUpdate = async (data: Record<string, string>) => {
         if (!editingItem) return;
 
-        const result = await updateMateria(editingItem.id_materia, data as { nombre_materia: string });
+        const result: any = await updateMateria(editingItem.id_materia, data as { nombre_materia: string });
 
         if (result.success) {
             setIsModalOpen(false);
@@ -73,7 +73,7 @@ export default function MateriasPage() {
     };
 
     const handleToggleHabilitado = async (item: any) => {
-        const result = await toggleMateriaHabilitado(item.id_materia);
+        const result: any = await toggleMateriaHabilitado(item.id_materia);
 
         if (result.success) {
             await loadMaterias();
@@ -83,7 +83,7 @@ export default function MateriasPage() {
     };
 
     const handleDelete = async (item: any, motivo?: string) => {
-        const result = await deleteMateria(item.id_materia, motivo);
+        const result: any = await deleteMateria(item.id_materia, motivo);
 
         if (result.success) {
             await loadMaterias();
