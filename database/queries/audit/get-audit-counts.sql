@@ -1,27 +1,21 @@
+-- Sesiones, reportes y descargas de soportes ya viven en auditoria_eventos
+-- (entidad='sesion'|'reporte'|'soporte') — se agregan igual que el resto de
+-- entidades, sin CTEs aparte contra sus tablas viejas.
 WITH eventos_agrupados AS (
-    SELECT 
-        entidad, 
-        operacion, 
-        COUNT(*) as total 
-    FROM auditoria_eventos 
+    SELECT
+        entidad,
+        operacion,
+        COUNT(*) as total
+    FROM auditoria_eventos
     GROUP BY entidad, operacion
-),
-soportes_descargados AS (
-    SELECT COUNT(*) as total FROM auditoria_descarga_soportes
-),
-sesiones AS (
-    SELECT COUNT(*) as total FROM auditoria_sesiones
-),
-reportes AS (
-    SELECT COUNT(*) as total FROM auditoria_reportes
 )
-SELECT 
+SELECT
     (SELECT COALESCE(SUM(total), 0) FROM eventos_agrupados WHERE entidad ILIKE 'soporte' AND operacion = 'eliminacion') as "soportes",
     (SELECT COALESCE(SUM(total), 0) FROM eventos_agrupados WHERE entidad ILIKE 'soporte' AND operacion = 'insercion') as "soportesCreados",
-    (SELECT total FROM soportes_descargados) as "soportesDescargados",
-    
-    (SELECT total FROM reportes) as "reportesGenerados",
-    
+    (SELECT COALESCE(SUM(total), 0) FROM eventos_agrupados WHERE entidad ILIKE 'soporte' AND operacion = 'descarga_soporte') as "soportesDescargados",
+
+    (SELECT COALESCE(SUM(total), 0) FROM eventos_agrupados WHERE entidad ILIKE 'reporte') as "reportesGenerados",
+
     (SELECT COALESCE(SUM(total), 0) FROM eventos_agrupados WHERE entidad ILIKE 'cita' AND operacion = 'eliminacion') as "citasEliminadas",
     (SELECT COALESCE(SUM(total), 0) FROM eventos_agrupados WHERE entidad ILIKE 'cita' AND operacion = 'actualizacion') as "citasActualizadas",
     (SELECT COALESCE(SUM(total), 0) FROM eventos_agrupados WHERE entidad ILIKE 'cita' AND operacion = 'insercion') as "citasCreadas",
@@ -107,4 +101,4 @@ SELECT
     
     (SELECT COALESCE(SUM(total), 0) FROM eventos_agrupados WHERE entidad ILIKE 'equipo%' AND operacion = 'actualizacion') as "equiposActualizados",
     
-    (SELECT total FROM sesiones) as "sesiones";
+    (SELECT COALESCE(SUM(total), 0) FROM eventos_agrupados WHERE entidad ILIKE 'sesion') as "sesiones";

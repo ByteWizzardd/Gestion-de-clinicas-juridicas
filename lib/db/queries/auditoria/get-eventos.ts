@@ -18,29 +18,12 @@ export const auditoriaQueries = {
      * @deprecated Usa auditoriaEventosQueries.getResumenPorEntidad()
      */
     getAuditCounts: async (): Promise<any> => {
-        // Build counts from the unified UNION ALL view
+        // Sesiones, reportes y descargas de soportes ya viven en auditoria_eventos
+        // (entidad='sesion'|'reporte'|'soporte') — ya no hace falta el UNION ALL
+        // contra sus tablas viejas.
         const query = `
-            SELECT entidad, operacion, COUNT(*)::int as total, MAX(fecha) as ultima_actividad
-            FROM (
-                SELECT t.entidad, t.operacion, t.fecha_evento as fecha FROM auditoria_eventos t
-                UNION ALL
-                SELECT 'sesion' as entidad,
-                       CASE WHEN t.fecha_cierre IS NOT NULL THEN 'cierre_sesion'
-                            WHEN t.exitoso = FALSE THEN 'intento_fallido'
-                            ELSE 'inicio_sesion' END as operacion,
-                       COALESCE(t.fecha_inicio, t.fecha_cierre) as fecha
-                FROM auditoria_sesiones t
-                UNION ALL
-                SELECT 'reporte' as entidad,
-                       CASE WHEN t.parametros->>'operacion' = 'vista_previa' THEN 'vista_previa_reporte'
-                            ELSE 'generacion_reporte' END as operacion,
-                       t.fecha_generacion as fecha
-                FROM auditoria_reportes t
-                UNION ALL
-                SELECT 'soporte' as entidad, 'descarga_soporte' as operacion,
-                       t.fecha_descarga as fecha
-                FROM auditoria_descarga_soportes t
-            ) AS unified
+            SELECT entidad, operacion, COUNT(*)::int as total, MAX(fecha_evento) as ultima_actividad
+            FROM auditoria_eventos
             GROUP BY entidad, operacion
         `;
         const { pool } = await import('../../pool');
