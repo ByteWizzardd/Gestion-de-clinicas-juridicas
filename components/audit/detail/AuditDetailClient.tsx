@@ -9,7 +9,9 @@ import AuditList from '../AuditList';
 import AuditRecordCard from '../AuditRecordCard';
 import AuditRecordCardSkeleton from '@/components/ui/skeletons/AuditRecordCardSkeleton';
 import { logger } from "@/lib/utils/logger";
+import { mapUnifiedLogToAuditRecord } from '@/lib/utils/audit-record-mapper';
 import type { AuditFilters, AuditRecordType } from '@/types/audit';
+import type { AuditoriaEvento } from '@/types/audit-events';
 
 type AuditType = 'soportes' | 'soportes-creados' | 'soportes-descargados' | 'citas-eliminadas' | 'citas-actualizadas' | 'citas-creadas' | 'usuarios-eliminados' | 'usuarios-habilitados' | 'usuarios-actualizados-campos' | 'usuarios-creados'
   | 'solicitantes-eliminados' | 'solicitantes-actualizados' | 'solicitantes-creados'
@@ -462,7 +464,15 @@ export default function AuditDetailClient({
             throw new Error('Tipo de auditoría no válido');
         }
 
-        setRecords(data);
+        // `data` son eventos crudos de auditoria_eventos (entidad/operacion/
+        // datos_nuevos/datos_anteriores/metadata) — pasarlos por el mismo
+        // mapeo que usa la vista general antes de dárselos a AuditRecordCard,
+        // que sigue esperando los nombres de campo planos de las tablas
+        // por-entidad viejas.
+        const mapped = (data as AuditoriaEvento[])
+          .map((event) => mapUnifiedLogToAuditRecord(event)?.record)
+          .filter((r): r is NonNullable<typeof r> => r != null);
+        setRecords(mapped);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error al cargar datos');
         logger.error('Error loading audit data:', err);
