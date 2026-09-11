@@ -787,7 +787,6 @@ DECLARE
     v_nombres_usuario VARCHAR(100);
     v_apellidos_usuario VARCHAR(100);
 BEGIN
-    -- Validar motivo
     IF p_motivo IS NULL OR TRIM(p_motivo) = '' THEN
         RAISE EXCEPTION 'El motivo es obligatorio para eliminaciones físicas de usuarios';
     END IF;
@@ -941,19 +940,31 @@ AS $$
         v_tipo_profesor_anterior VARCHAR;
         v_tipo_estudiante_nuevo VARCHAR;
         v_tipo_profesor_nuevo VARCHAR;
-        v_hubo_cambios BOOLEAN := FALSE;
+        v_term_actual VARCHAR;
     BEGIN
-        -- Obtener valores anteriores
+        -- Todas las operaciones sobre estudiantes/profesores/coordinadores
+        -- quedan escopadas al semestre actual, para no pisar/leer filas de
+        -- otros semestres con la misma cédula.
+        SELECT term INTO v_term_actual
+        FROM semestres
+        WHERE CURRENT_DATE BETWEEN fecha_inicio AND fecha_fin
+        ORDER BY term DESC
+        LIMIT 1;
+
         SELECT nombres, apellidos, correo_electronico, nombre_usuario, telefono_celular, habilitado_sistema, tipo_usuario
         INTO v_nombres_anterior, v_apellidos_anterior, v_correo_electronico_anterior, v_nombre_usuario_anterior, v_telefono_celular_anterior, v_habilitado_sistema_anterior, v_tipo_usuario_anterior
         FROM usuarios WHERE cedula = p_cedula;
 
         IF v_tipo_usuario_anterior = 'Estudiante' THEN
-            SELECT tipo_estudiante INTO v_tipo_estudiante_anterior FROM estudiantes WHERE cedula_estudiante = p_cedula AND habilitado = TRUE;
+            SELECT tipo_estudiante INTO v_tipo_estudiante_anterior
+            FROM estudiantes
+            WHERE cedula_estudiante = p_cedula AND term = v_term_actual;
         END IF;
-        
+
         IF v_tipo_usuario_anterior = 'Profesor' THEN
-            SELECT tipo_profesor INTO v_tipo_profesor_anterior FROM profesores WHERE cedula_profesor = p_cedula AND habilitado = TRUE;
+            SELECT tipo_profesor INTO v_tipo_profesor_anterior
+            FROM profesores
+            WHERE cedula_profesor = p_cedula AND term = v_term_actual;
         END IF;
 
         -- Auditoría de la actualización: la captura el trigger genérico sobre `usuarios`.
@@ -961,72 +972,88 @@ AS $$
             PERFORM set_config('app.current_user_id', p_cedula_actor, true);
         END IF;
 
-        -- Actualizar tabla usuarios
         UPDATE usuarios
         SET
             nombres = COALESCE(p_nombres, nombres),
-            apellidos = COALESCE(p_apellidos, apellidos), 
-            correo_electronico = COALESCE(p_correo_electronico, correo_electronico), 
+            apellidos = COALESCE(p_apellidos, apellidos),
+            correo_electronico = COALESCE(p_correo_electronico, correo_electronico),
             nombre_usuario = COALESCE(p_nombre_usuario, nombre_usuario),
             telefono_celular = COALESCE(p_telefono_celular, telefono_celular),
             tipo_usuario = COALESCE(p_tipo_usuario, tipo_usuario)
         WHERE cedula = p_cedula;
 
-        -- Manejo de cambio de tipo_usuario
         IF p_tipo_usuario IS NOT NULL AND v_tipo_usuario_anterior IS DISTINCT FROM p_tipo_usuario THEN
             IF v_tipo_usuario_anterior = 'Estudiante' THEN
-                UPDATE estudiantes SET habilitado = FALSE WHERE cedula_estudiante = p_cedula;
+                UPDATE estudiantes
+                SET habilitado = FALSE
+                WHERE cedula_estudiante = p_cedula AND term = v_term_actual;
             ELSIF v_tipo_usuario_anterior = 'Profesor' THEN
-                UPDATE profesores SET habilitado = FALSE WHERE cedula_profesor = p_cedula;
+                UPDATE profesores
+                SET habilitado = FALSE
+                WHERE cedula_profesor = p_cedula AND term = v_term_actual;
             ELSIF v_tipo_usuario_anterior = 'Coordinador' THEN
-                UPDATE coordinadores SET habilitado = FALSE WHERE id_coordinador = p_cedula;
+                UPDATE coordinadores
+                SET habilitado = FALSE
+                WHERE id_coordinador = p_cedula AND term = v_term_actual;
             END IF;
 
             IF p_tipo_usuario = 'Estudiante' THEN
-                IF EXISTS (SELECT 1 FROM estudiantes WHERE cedula_estudiante = p_cedula) THEN
-                    UPDATE estudiantes SET nrc = COALESCE(p_estudiante_nrc, nrc), term = COALESCE(p_estudiante_term, term), tipo_estudiante = COALESCE(p_estudiante_tipo, tipo_estudiante), habilitado = TRUE WHERE cedula_estudiante = p_cedula;
+                IF EXISTS (SELECT 1 FROM estudiantes WHERE cedula_estudiante = p_cedula AND term = v_term_actual) THEN
+                    UPDATE estudiantes
+                    SET nrc = COALESCE(p_estudiante_nrc, nrc),
+                        tipo_estudiante = COALESCE(p_estudiante_tipo, tipo_estudiante),
+                        habilitado = TRUE
+                    WHERE cedula_estudiante = p_cedula AND term = v_term_actual;
                 ELSE
-                    INSERT INTO estudiantes (cedula_estudiante, nrc, term, tipo_estudiante, habilitado) VALUES (p_cedula, p_estudiante_nrc, p_estudiante_term, p_estudiante_tipo, TRUE);
+                    INSERT INTO estudiantes (cedula_estudiante, nrc, term, tipo_estudiante, habilitado)
+                    VALUES (p_cedula, p_estudiante_nrc, v_term_actual, p_estudiante_tipo, TRUE);
                 END IF;
                 v_tipo_estudiante_nuevo := p_estudiante_tipo;
             ELSIF p_tipo_usuario = 'Profesor' THEN
-                IF EXISTS (SELECT 1 FROM profesores WHERE cedula_profesor = p_cedula) THEN
-                    UPDATE profesores SET term = COALESCE(p_profesor_term, term), tipo_profesor = COALESCE(p_profesor_tipo, tipo_profesor), habilitado = TRUE WHERE cedula_profesor = p_cedula;
+                IF EXISTS (SELECT 1 FROM profesores WHERE cedula_profesor = p_cedula AND term = v_term_actual) THEN
+                    UPDATE profesores
+                    SET tipo_profesor = COALESCE(p_profesor_tipo, tipo_profesor),
+                        habilitado = TRUE
+                    WHERE cedula_profesor = p_cedula AND term = v_term_actual;
                 ELSE
-                    INSERT INTO profesores (cedula_profesor, term, tipo_profesor, habilitado) VALUES (p_cedula, p_profesor_term, p_profesor_tipo, TRUE);
+                    INSERT INTO profesores (cedula_profesor, term, tipo_profesor, habilitado)
+                    VALUES (p_cedula, v_term_actual, p_profesor_tipo, TRUE);
                 END IF;
                 v_tipo_profesor_nuevo := p_profesor_tipo;
             ELSIF p_tipo_usuario = 'Coordinador' THEN
-                IF EXISTS (SELECT 1 FROM coordinadores WHERE id_coordinador = p_cedula) THEN
-                    UPDATE coordinadores SET term = COALESCE(p_coordinador_term, term), habilitado = TRUE WHERE id_coordinador = p_cedula;
+                IF EXISTS (SELECT 1 FROM coordinadores WHERE id_coordinador = p_cedula AND term = v_term_actual) THEN
+                    UPDATE coordinadores
+                    SET habilitado = TRUE
+                    WHERE id_coordinador = p_cedula AND term = v_term_actual;
                 ELSE
-                    INSERT INTO coordinadores (id_coordinador, term, habilitado) VALUES (p_cedula, p_coordinador_term, TRUE);
+                    INSERT INTO coordinadores (id_coordinador, term, habilitado)
+                    VALUES (p_cedula, v_term_actual, TRUE);
                 END IF;
             END IF;
+
         ELSE
             IF COALESCE(p_tipo_usuario, v_tipo_usuario_anterior) = 'Estudiante' THEN
-                UPDATE estudiantes SET nrc = COALESCE(p_estudiante_nrc, nrc), term = COALESCE(p_estudiante_term, term), tipo_estudiante = COALESCE(p_estudiante_tipo, tipo_estudiante) WHERE cedula_estudiante = p_cedula;
-                SELECT tipo_estudiante INTO v_tipo_estudiante_nuevo FROM estudiantes WHERE cedula_estudiante = p_cedula AND habilitado = TRUE;
+                UPDATE estudiantes
+                SET
+                    nrc = COALESCE(p_estudiante_nrc, nrc),
+                    tipo_estudiante = COALESCE(p_estudiante_tipo, tipo_estudiante)
+                WHERE cedula_estudiante = p_cedula AND term = v_term_actual;
+                SELECT tipo_estudiante INTO v_tipo_estudiante_nuevo
+                FROM estudiantes
+                WHERE cedula_estudiante = p_cedula AND term = v_term_actual;
             ELSIF COALESCE(p_tipo_usuario, v_tipo_usuario_anterior) = 'Profesor' THEN
-                UPDATE profesores SET term = COALESCE(p_profesor_term, term), tipo_profesor = COALESCE(p_profesor_tipo, tipo_profesor) WHERE cedula_profesor = p_cedula;
-                SELECT tipo_profesor INTO v_tipo_profesor_nuevo FROM profesores WHERE cedula_profesor = p_cedula AND habilitado = TRUE;
+                UPDATE profesores
+                SET
+                    tipo_profesor = COALESCE(p_profesor_tipo, tipo_profesor)
+                WHERE cedula_profesor = p_cedula AND term = v_term_actual;
+                SELECT tipo_profesor INTO v_tipo_profesor_nuevo
+                FROM profesores
+                WHERE cedula_profesor = p_cedula AND term = v_term_actual;
             ELSIF COALESCE(p_tipo_usuario, v_tipo_usuario_anterior) = 'Coordinador' THEN
-                UPDATE coordinadores SET term = COALESCE(p_coordinador_term, term) WHERE id_coordinador = p_cedula;
+                NULL;
             END IF;
         END IF;
-        
-        -- Detectar si hubo cambios
-        IF (v_nombres_anterior IS DISTINCT FROM COALESCE(p_nombres, v_nombres_anterior)) OR
-           (v_apellidos_anterior IS DISTINCT FROM COALESCE(p_apellidos, v_apellidos_anterior)) OR
-           (v_correo_electronico_anterior IS DISTINCT FROM COALESCE(p_correo_electronico, v_correo_electronico_anterior)) OR
-           (v_nombre_usuario_anterior IS DISTINCT FROM COALESCE(p_nombre_usuario, v_nombre_usuario_anterior)) OR
-           (v_telefono_celular_anterior IS DISTINCT FROM COALESCE(p_telefono_celular, v_telefono_celular_anterior)) OR
-           (v_tipo_usuario_anterior IS DISTINCT FROM COALESCE(p_tipo_usuario, v_tipo_usuario_anterior)) OR
-           (v_tipo_estudiante_anterior IS DISTINCT FROM v_tipo_estudiante_nuevo) OR
-           (v_tipo_profesor_anterior IS DISTINCT FROM v_tipo_profesor_nuevo) THEN
-            v_hubo_cambios := TRUE;
-        END IF;
-        
+
         -- La auditoría de los cambios en `usuarios` ya quedó registrada por el trigger
         -- genérico al hacer el UPDATE de arriba (con el actor seteado más arriba).
     END;
@@ -1224,7 +1251,7 @@ CREATE OR REPLACE FUNCTION public.trigger_sync_ocurren_en_soporte()
  LANGUAGE plpgsql
 AS $function$
 BEGIN
-    PERFORM public.ensure_case_semester_func(NEW.id_caso, NEW.fecha_consignacion);
+    PERFORM public.ensure_case_semester_func(NEW.id_caso, NEW.fecha_consignacion::DATE);
     RETURN NEW;
 END;
 $function$
