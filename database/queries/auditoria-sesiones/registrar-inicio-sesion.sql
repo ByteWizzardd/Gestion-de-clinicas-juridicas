@@ -6,9 +6,9 @@ INSERT INTO auditoria_eventos (
     entidad, operacion, id_usuario, datos_nuevos, metadata, fecha_evento
 ) VALUES (
     'sesion',
-    CASE WHEN $4 = TRUE THEN 'inicio_sesion' ELSE 'intento_fallido' END,
-    $1,
-    jsonb_build_object('exitoso', $4),
-    jsonb_strip_nulls(jsonb_build_object('ip', $2, 'dispositivo', $3, 'detalle', $5)),
+    CASE WHEN $4::boolean = TRUE THEN 'inicio_sesion' ELSE 'intento_fallido' END,
+    $1::varchar,
+    jsonb_build_object('exitoso', $4::boolean),
+    jsonb_strip_nulls(jsonb_build_object('ip', $2::text, 'dispositivo', $3::text, 'detalle', $5::text)),
     (NOW() AT TIME ZONE 'America/Caracas')
 ) RETURNING id::int AS id_sesion;

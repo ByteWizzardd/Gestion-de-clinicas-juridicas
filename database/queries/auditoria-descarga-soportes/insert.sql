@@ -10,8 +10,8 @@ INSERT INTO auditoria_eventos (
     'soporte',
     'descarga_soporte',
     $1::text || '-' || $2::text,
-    $4,
-    jsonb_build_object('nombre_archivo', $3, 'num_soporte', $1, 'id_caso', $2),
-    jsonb_strip_nulls(jsonb_build_object('ip', $5)),
+    $4::varchar,
+    jsonb_build_object('nombre_archivo', $3::text, 'num_soporte', $1::int, 'id_caso', $2::int),
+    jsonb_strip_nulls(jsonb_build_object('ip', $5::text)),
     (NOW() AT TIME ZONE 'America/Caracas')
-) RETURNING id, fecha_evento AS fecha_descarga;
+) RETURNING id::int AS id, fecha_evento AS fecha_descarga;
