@@ -1087,37 +1087,39 @@ DECLARE
     num_cambio_actual INTEGER;
     cedula_usuario VARCHAR(20);
 BEGIN
-    -- Obtener la cédula del usuario desde la variable de sesión
-    -- Esta variable se establece antes de insertar el caso
+    -- Obtener la cédula del usuario desde la variable de sesión unificada
+    -- (la establece casos.queries.ts antes de insertar el caso)
     BEGIN
         cedula_usuario := current_setting('app.current_user_id', true);
     EXCEPTION
         WHEN OTHERS THEN
             RAISE EXCEPTION 'No se puede crear cambio de estatus: no se proporcionó la cédula del usuario que registra el caso. Error: %', SQLERRM;
     END;
-    
+
     IF cedula_usuario IS NULL OR cedula_usuario = '' THEN
         RAISE EXCEPTION 'No se puede crear cambio de estatus: no se proporcionó la cédula del usuario que registra el caso (variable vacía)';
     END IF;
-    
+
     -- Calcular el num_cambio (será 1 para el primer cambio)
     SELECT COALESCE(MAX(num_cambio), 0) + 1 INTO num_cambio_actual
     FROM cambio_estatus
     WHERE id_caso = NEW.id_caso;
-    
+
     -- Insertar el cambio de estatus inicial con estatus 'Asesoría'
     INSERT INTO cambio_estatus (
         num_cambio,
         id_caso,
         nuevo_estatus,
         id_usuario_cambia,
-        motivo
+        motivo,
+        fecha
     ) VALUES (
         num_cambio_actual,
         NEW.id_caso,
         'Asesoría',
         cedula_usuario,
-        'Registro del caso'
+        'Registro del caso',
+        COALESCE(NEW.fecha_solicitud, CURRENT_DATE)
     );
     
     RETURN NEW;
