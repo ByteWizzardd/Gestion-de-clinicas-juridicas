@@ -1394,42 +1394,8 @@ GRANT INSERT, UPDATE ON auditoria_eventos TO rol_coordinador, rol_profesor, rol_
 GRANT SELECT ON auditoria_eventos TO rol_coordinador;
 GRANT USAGE, SELECT ON SEQUENCE auditoria_eventos_id_seq TO rol_coordinador, rol_profesor, rol_estudiante;
 
--- Restaurando tablas especiales excluidas de la auditoría unificada
-CREATE TABLE auditoria_reportes (
-    id SERIAL PRIMARY KEY,
-    tipo_reporte VARCHAR(100) NOT NULL,
-    filtros_aplicados TEXT,
-    id_usuario_genero VARCHAR(20),
-    formato VARCHAR(20),
-    cedula_solicitante VARCHAR(20),
-    operacion VARCHAR(20) DEFAULT 'generacion' CHECK (operacion IN ('generacion', 'vista_previa')),
-    fecha_generacion TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
-);
-
-CREATE TABLE auditoria_sesiones (
-    id_sesion SERIAL PRIMARY KEY,
-    cedula_usuario VARCHAR(20),
-    ip_direccion VARCHAR(50),
-    dispositivo TEXT,
-    detalle TEXT,
-    exitoso BOOLEAN DEFAULT TRUE,
-    fecha_inicio TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas'),
-    fecha_cierre TIMESTAMP
-);
-
-CREATE TABLE auditoria_descarga_soportes (
-    id SERIAL PRIMARY KEY,
-    num_soporte INTEGER NOT NULL,
-    id_caso INTEGER NOT NULL,
-    nombre_archivo VARCHAR(150) NOT NULL,
-    cedula_descargo VARCHAR(20) NOT NULL REFERENCES usuarios(cedula),
-    ip_direccion VARCHAR(45),
-    fecha_descarga TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Caracas')
-);
-
-CREATE INDEX idx_auditoria_descarga_soportes_caso ON auditoria_descarga_soportes(id_caso);
-CREATE INDEX idx_auditoria_descarga_soportes_usuario ON auditoria_descarga_soportes(cedula_descargo);
-CREATE INDEX idx_auditoria_descarga_soportes_fecha ON auditoria_descarga_soportes(fecha_descarga DESC);
-
-GRANT SELECT, INSERT ON auditoria_reportes TO rol_coordinador, rol_profesor, rol_estudiante;
-GRANT SELECT, INSERT, UPDATE ON auditoria_sesiones TO rol_coordinador, rol_profesor, rol_estudiante;
+-- Sesiones, reportes y descargas de soportes viven en auditoria_eventos
+-- (entidad='sesion'|'reporte'|'soporte') desde la migración
+-- 20260910_120000_unificar_sesiones_reportes_soportes_en_auditoria_eventos.sql —
+-- ya no tienen tablas propias (auditoria_sesiones, auditoria_reportes,
+-- auditoria_descarga_soportes fueron eliminadas).
