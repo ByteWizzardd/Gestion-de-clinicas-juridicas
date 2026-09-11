@@ -44,6 +44,24 @@ export default function AuditGeneralView() {
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
+    // Etiqueta bonita para mostrar junto a cada tarjeta (moduleName), a partir
+    // del valor crudo que guarda auditoria_eventos.entidad. Cubre todos los
+    // valores reales vistos en la BD (incluye 'accion' y 'accion_ejecutores'
+    // como entidades separadas, y 'solicitante_artefactos').
+    const entityLabels: Record<string, string> = {
+        sesion: 'Sesión', reporte: 'Reporte', caso: 'Caso', usuario: 'Usuario',
+        solicitante: 'Solicitante', solicitante_artefactos: 'Solicitante',
+        beneficiario: 'Beneficiario', cita: 'Cita', accion: 'Acción',
+        accion_ejecutores: 'Acción', estudiante: 'Estudiante', profesor: 'Profesor',
+        equipo: 'Equipo', soporte: 'Soporte', estado: 'Estado', municipio: 'Municipio',
+        parroquia: 'Parroquia', nucleo: 'Núcleo', materia: 'Materia', semestre: 'Semestre',
+        categoria: 'Categoría', subcategoria: 'Subcategoría', ambito_legal: 'Ámbito Legal',
+        nivel_educativo: 'Nivel Educativo', condicion_trabajo: 'Condición Trabajo',
+        condicion_actividad: 'Condición Actividad', tipo_caracteristica: 'Tipo Característica',
+        caracteristica: 'Característica',
+    };
+    const getEntityLabel = (entidad: string) => entityLabels[entidad] || entidad;
+
     const entityMapToTechnical: Record<string, AuditEntidad> = {
         'Sesión': 'sesion', 'Reporte': 'reporte', 'Caso': 'caso', 'Usuario': 'usuario',
         'Solicitante': 'solicitante', 'Beneficiario': 'beneficiario', 'Cita': 'cita',
@@ -212,6 +230,18 @@ export default function AuditGeneralView() {
             else if (a === 'actualizacion') type = 'accion-actualizada';
             else if (a === 'eliminacion') type = 'accion-eliminada';
         }
+        else if (e === 'accion') {
+            // Registro de la propia acción de seguimiento (tabla `acciones`,
+            // vía trigger genérico) — distinto de accion_ejecutores. No tiene
+            // tarjeta dedicada todavía; usa el fallback genérico de
+            // AuditRecordCard en vez de perderse silenciosamente.
+            type = 'accion-registro' as AuditRecordType;
+        }
+        else if (e === 'solicitante_artefactos') {
+            // Cambios de artefactos domésticos del solicitante. Sin tarjeta
+            // dedicada todavía; usa el fallback genérico.
+            type = 'solicitante-artefactos' as AuditRecordType;
+        }
         else if (e === 'soporte') {
             if (a === 'insercion') type = 'soporte-creado';
             else if (a === 'eliminacion') type = 'soporte';
@@ -263,8 +293,22 @@ export default function AuditGeneralView() {
         }
 
         if (record) {
+            // auditoria_eventos solo tiene una fecha real (fecha_evento); las
+            // tarjetas viejas fueron escritas contra columnas por-entidad de
+            // las tablas originales (fecha_creacion, fecha_generacion,
+            // fecha_registro, fecha_eliminacion, fecha_inicio...) — se
+            // rellenan como fallback (solo si no vinieron ya del merge de
+            // datos_nuevos/datos_anteriores) para que cada tarjeta encuentre
+            // el nombre de campo que espera sin pisar datos reales — ej.
+            // semestres.fecha_inicio es una columna de negocio real, no la
+            // fecha del evento de auditoría.
             record.fecha = log.fecha_evento;
             record.fecha_actualizacion = log.fecha_evento;
+            record.fecha_creacion ??= log.fecha_evento;
+            record.fecha_eliminacion ??= log.fecha_evento;
+            record.fecha_registro ??= log.fecha_evento;
+            record.fecha_generacion ??= log.fecha_evento;
+            record.fecha_inicio ??= log.fecha_evento;
 
             // Inyectar nombres de actor según la operación
             let actorSuffix = '';
@@ -295,11 +339,21 @@ export default function AuditGeneralView() {
                 if (!record[nameField]) record[nameField] = log.nombre_completo_usuario;
             }
 
-            // Para sesiones, inyectar nombre completo directo en un campo extra
+            // Para sesiones, inyectar nombre completo, cédula e IP directo
+            // (la tarjeta de sesión espera cedula_usuario/ip_direccion, no
+            // id_usuario/metadata.ip).
             if (e === 'sesion') {
                 if (!record.nombre_completo_usuario_accion) {
                     record.nombre_completo_usuario_accion = log.nombre_completo_usuario;
                 }
+                record.cedula_usuario = log.id_usuario;
+                record.ip_direccion = log.metadata?.ip ?? null;
+            }
+
+            // Para reportes, la tarjeta compara record.operacion === 'vista_previa'
+            // (valor legado); el enum real es 'vista_previa_reporte'.
+            if (e === 'reporte') {
+                record.operacion = a === 'vista_previa_reporte' ? 'vista_previa' : 'generacion';
             }
         }
 
@@ -377,7 +431,7 @@ export default function AuditGeneralView() {
                         if (!mapped) return null;
                         return (
                             <div key={`${log.fecha_evento}-${index}`}>
-                                <AuditRecordCard record={mapped.record} type={mapped.type} moduleName={log.entidad} />
+                                <AuditRecordCard record={mapped.record} type={mapped.type} moduleName={getEntityLabel(log.entidad)} />
                             </div>
                         );
                     })}
