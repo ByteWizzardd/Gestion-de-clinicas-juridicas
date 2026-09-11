@@ -27,6 +27,7 @@ function mapRow(row: Record<string, any>): AuditoriaEvento {
         id_entidad: row.id_entidad,
         id_usuario: row.usuario_id,
         nombre_completo_usuario: row.usuario_nombre,
+        nombre_completo_solicitante: row.solicitante_nombre ?? undefined,
         datos_anteriores: row.datos_anteriores ?? null,
         datos_nuevos: row.datos_nuevos ?? null,
         metadata: row.metadata ?? null,

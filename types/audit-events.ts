@@ -45,6 +45,7 @@ export interface AuditoriaEvento {
   id_entidad: string | null;
   id_usuario: string | null;
   nombre_completo_usuario?: string | null; // resuelto con JOIN a usuarios, para mostrar en UI
+  nombre_completo_solicitante?: string | null; // resuelto con JOIN a solicitantes (solo entidad='caso'), para mostrar en UI
   datos_anteriores: Record<string, unknown> | null;
   datos_nuevos: Record<string, unknown> | null;
   metadata: AuditMetadata | null;

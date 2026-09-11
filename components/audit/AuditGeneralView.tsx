@@ -355,6 +355,17 @@ export default function AuditGeneralView() {
             if (e === 'reporte') {
                 record.operacion = a === 'vista_previa_reporte' ? 'vista_previa' : 'generacion';
             }
+
+            // Para casos, la tarjeta espera cedula_solicitante/
+            // nombre_completo_solicitante (no la columna cruda `cedula`), y
+            // en eliminación el id va en `caso_eliminado`, no `id_caso`.
+            if (e === 'caso') {
+                record.cedula_solicitante = record.cedula;
+                record.nombre_completo_solicitante = log.nombre_completo_solicitante || null;
+                if (a === 'eliminacion') {
+                    record.caso_eliminado = record.id_caso;
+                }
+            }
         }
 
         if (!type) {

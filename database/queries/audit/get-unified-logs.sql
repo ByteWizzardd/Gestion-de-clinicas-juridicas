@@ -16,6 +16,13 @@ SELECT
     t.fecha_evento as fecha,
     t.id_usuario as usuario_id,
     COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario), t.id_usuario) as usuario_nombre,
+    -- Para eventos de 'caso', resolver el nombre del solicitante (columna
+    -- `cedula` cruda en datos_nuevos/datos_anteriores) — el frontend no
+    -- puede hacer este JOIN por su cuenta.
+    (CASE WHEN t.entidad = 'caso' THEN
+        (SELECT nombres || ' ' || apellidos FROM solicitantes
+         WHERE cedula = COALESCE(t.datos_nuevos->>'cedula', t.datos_anteriores->>'cedula'))
+    END) as solicitante_nombre,
     t.datos_anteriores as datos_anteriores,
     t.datos_nuevos as datos_nuevos,
     t.metadata as metadata
