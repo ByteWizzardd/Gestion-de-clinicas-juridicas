@@ -1,3 +1,10 @@
+> **OBSOLETO (2026-09-11):** versión temprana del plan de frontend genérico,
+> superada por [plan-frontend-nucleo.md](plan-frontend-nucleo.md) y
+> [plan-frontend-feed.md](plan-frontend-feed.md) — ninguno de los dos se
+> implementó. Eduardo Armas construyó y pulió el frontend "viejo" en su
+> lugar (ver commits `99c9ebb`/`03fabba`), y el usuario decidió mantenerlo.
+> Se deja como referencia histórica.
+
 # Plan — Persona B: Frontend de auditoría
 
 > Contrato compartido con Persona A (backend): [types/audit-events.ts](types/audit-events.ts)

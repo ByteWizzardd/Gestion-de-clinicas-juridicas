@@ -1,3 +1,13 @@
+> **OBSOLETO (2026-09-11):** este plan nunca se implementó. En su lugar,
+> Eduardo Armas construyó y pulió el frontend de auditoría "viejo"
+> ([AuditRecordCard.tsx](components/audit/AuditRecordCard.tsx),
+> `AuditGeneralView.tsx`, `AuditModulesView.tsx`, etc. — ver commits
+> `99c9ebb`/`03fabba`) conectado al backend unificado (`auditoria_eventos`)
+> mediante una capa de compatibilidad en `app/actions/audit.ts`. Decisión
+> tomada con el usuario: mantener esa UI (ya tiene dark mode, responsive,
+> buscador) en vez de reemplazarla por el feed genérico descrito acá. Se
+> deja este archivo como referencia histórica, no como trabajo pendiente.
+
 # Plan — Persona B: Feed, rutas y limpieza
 
 > Contrato compartido con Persona A: la firma de `<AuditEventCard evento={...} />`
