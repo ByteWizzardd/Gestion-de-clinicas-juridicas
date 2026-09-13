@@ -61,6 +61,17 @@ export interface AuditoriaEvento {
   nombre_ambito_legal_nuevo?: string | null;
   nombre_solicitante_anterior?: string | null;
   nombre_solicitante_nuevo?: string | null;
+  // Nombre del catálogo "padre" (un solo valor, no cambia entre
+  // operaciones): categoria->materia, subcategoria->categoria,
+  // ambito_legal->subcategoria, caracteristica->tipo_caracteristica,
+  // municipio->estado, parroquia->municipio y estado.
+  nombre_materia?: string | null;
+  nombre_categoria?: string | null;
+  nombre_subcategoria?: string | null;
+  nombre_tipo_caracteristica?: string | null;
+  nombre_estado?: string | null;
+  nombre_municipio?: string | null;
+  nombre_estado_parroquia?: string | null;
   datos_anteriores: Record<string, unknown> | null;
   datos_nuevos: Record<string, unknown> | null;
   metadata: AuditMetadata | null;

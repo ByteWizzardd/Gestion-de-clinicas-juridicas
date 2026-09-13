@@ -107,6 +107,64 @@ SELECT
            AND al.num_subcategoria = COALESCE((t.datos_nuevos->>'num_subcategoria')::int, c.num_subcategoria)
            AND al.num_ambito_legal = COALESCE((t.datos_nuevos->>'num_ambito_legal')::int, c.num_ambito_legal))
     END) as nombre_ambito_legal_nuevo,
+    -- Nombre del catálogo "padre" para las tarjetas de categoría/
+    -- subcategoría/ámbito legal/característica/municipio/parroquia — un
+    -- solo valor (no _anterior/_nuevo) porque la parte de la clave que
+    -- identifica al padre es parte de la PK y no cambia entre operaciones;
+    -- se resuelve haciendo JOIN hacia arriba desde la fila actual del propio
+    -- catálogo (localizada por id_entidad, en el mismo orden de columnas que
+    -- declara su CREATE TRIGGER trg_audit_* en schema.sql). Para
+    -- eliminaciones la fila ya no existe y esto resuelve NULL — igual que
+    -- antes, sin regresión.
+    (CASE WHEN t.entidad = 'categoria' THEN
+        (SELECT m.nombre_materia
+         FROM categorias cat JOIN materias m ON m.id_materia = cat.id_materia
+         WHERE cat.num_categoria = split_part(t.id_entidad, '-', 1)::int
+           AND cat.id_materia = split_part(t.id_entidad, '-', 2)::int)
+    END) as nombre_materia,
+    (CASE WHEN t.entidad = 'subcategoria' THEN
+        (SELECT cat.nombre_categoria
+         FROM subcategorias sub
+         JOIN categorias cat ON cat.id_materia = sub.id_materia AND cat.num_categoria = sub.num_categoria
+         WHERE sub.num_subcategoria = split_part(t.id_entidad, '-', 1)::int
+           AND sub.num_categoria = split_part(t.id_entidad, '-', 2)::int
+           AND sub.id_materia = split_part(t.id_entidad, '-', 3)::int)
+    END) as nombre_categoria,
+    (CASE WHEN t.entidad = 'ambito_legal' THEN
+        (SELECT sub.nombre_subcategoria
+         FROM ambitos_legales al
+         JOIN subcategorias sub ON sub.id_materia = al.id_materia AND sub.num_categoria = al.num_categoria AND sub.num_subcategoria = al.num_subcategoria
+         WHERE al.id_materia = split_part(t.id_entidad, '-', 1)::int
+           AND al.num_categoria = split_part(t.id_entidad, '-', 2)::int
+           AND al.num_subcategoria = split_part(t.id_entidad, '-', 3)::int
+           AND al.num_ambito_legal = split_part(t.id_entidad, '-', 4)::int)
+    END) as nombre_subcategoria,
+    (CASE WHEN t.entidad = 'caracteristica' THEN
+        (SELECT tc.nombre_tipo_caracteristica
+         FROM caracteristicas c2 JOIN tipo_caracteristicas tc ON tc.id_tipo = c2.id_tipo_caracteristica
+         WHERE c2.id_tipo_caracteristica = split_part(t.id_entidad, '-', 1)::int
+           AND c2.num_caracteristica = split_part(t.id_entidad, '-', 2)::int)
+    END) as nombre_tipo_caracteristica,
+    (CASE WHEN t.entidad = 'municipio' THEN
+        (SELECT e.nombre_estado
+         FROM municipios mu JOIN estados e ON e.id_estado = mu.id_estado
+         WHERE mu.id_estado = split_part(t.id_entidad, '-', 1)::int
+           AND mu.num_municipio = split_part(t.id_entidad, '-', 2)::int)
+    END) as nombre_estado,
+    (CASE WHEN t.entidad = 'parroquia' THEN
+        (SELECT mu.nombre_municipio
+         FROM parroquias p JOIN municipios mu ON mu.id_estado = p.id_estado AND mu.num_municipio = p.num_municipio
+         WHERE p.id_estado = split_part(t.id_entidad, '-', 1)::int
+           AND p.num_municipio = split_part(t.id_entidad, '-', 2)::int
+           AND p.num_parroquia = split_part(t.id_entidad, '-', 3)::int)
+    END) as nombre_municipio,
+    (CASE WHEN t.entidad = 'parroquia' THEN
+        (SELECT e.nombre_estado
+         FROM parroquias p JOIN estados e ON e.id_estado = p.id_estado
+         WHERE p.id_estado = split_part(t.id_entidad, '-', 1)::int
+           AND p.num_municipio = split_part(t.id_entidad, '-', 2)::int
+           AND p.num_parroquia = split_part(t.id_entidad, '-', 3)::int)
+    END) as nombre_estado_parroquia,
     t.datos_anteriores as datos_anteriores,
     t.datos_nuevos as datos_nuevos,
     t.metadata as metadata

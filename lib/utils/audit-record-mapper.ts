@@ -252,6 +252,25 @@ export function mapUnifiedLogToAuditRecord(log: AuditoriaEvento): { record: any,
                 }
             }
         }
+
+        // Nombre del catálogo "padre" (un solo valor, no _anterior/_nuevo)
+        // para las tarjetas de categoría/subcategoría/ámbito legal/
+        // característica/municipio/parroquia — sin esto la tarjeta omite el
+        // paréntesis con el contexto (ej. "(Materia Civil)") en silencio.
+        if (e === 'categoria' && log.nombre_materia != null) {
+            record.nombre_materia = log.nombre_materia;
+        } else if (e === 'subcategoria' && log.nombre_categoria != null) {
+            record.nombre_categoria = log.nombre_categoria;
+        } else if (e === 'ambito_legal' && log.nombre_subcategoria != null) {
+            record.nombre_subcategoria = log.nombre_subcategoria;
+        } else if (e === 'caracteristica' && log.nombre_tipo_caracteristica != null) {
+            record.nombre_tipo_caracteristica = log.nombre_tipo_caracteristica;
+        } else if (e === 'municipio' && log.nombre_estado != null) {
+            record.nombre_estado = log.nombre_estado;
+        } else if (e === 'parroquia') {
+            if (log.nombre_municipio != null) record.nombre_municipio = log.nombre_municipio;
+            if (log.nombre_estado_parroquia != null) record.nombre_estado = log.nombre_estado_parroquia;
+        }
     }
 
     if (!type) {
