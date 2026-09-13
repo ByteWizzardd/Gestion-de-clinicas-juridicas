@@ -195,6 +195,43 @@ export function mapUnifiedLogToAuditRecord(log: AuditoriaEvento): { record: any,
             if (!record[nameField]) record[nameField] = log.nombre_completo_usuario;
         }
 
+        // Alias genéricos del nombre del actor: varias tarjetas de este
+        // archivo se escribieron cada una con su propia convención
+        // (usuario_nombre_completo, nombre_completo_usuario_accion, en vez
+        // de nombre_completo_usuario_<sufijo>) — sin esto, esas tarjetas
+        // mostraban la cédula del actor en vez de su nombre.
+        record.usuario_nombre_completo ??= log.nombre_completo_usuario;
+        record.nombre_completo_usuario_accion ??= log.nombre_completo_usuario;
+
+        // accion_ejecutores/eliminacion usa su propia convención para el
+        // actor (eliminado_por / nombre_completo_eliminado_por) en vez de
+        // id_usuario_elimino / nombre_completo_usuario_elimino.
+        if (e === 'accion_ejecutores' && a === 'eliminacion') {
+            record.eliminado_por ??= log.id_usuario;
+            record.nombre_completo_eliminado_por ??= log.nombre_completo_usuario;
+        }
+
+        // id_caso/num_X son parte de la PK de cita/beneficiario/equipo: en
+        // una actualización que no las toca, el trigger genérico no las
+        // incluye en el diff. Se completan con id_entidad (mismo orden de
+        // columnas que declara el CREATE TRIGGER trg_audit_* en schema.sql).
+        // accion_ejecutores es la excepción: su id_entidad solo guarda
+        // num_accion (ver casos.service.ts), nunca id_caso — no hay forma
+        // de recuperarlo aquí sin cambiar cómo se inserta ese evento.
+        if (log.id_entidad != null) {
+            if (e === 'cita') {
+                const [numCita, idCaso] = String(log.id_entidad).split('-');
+                record.num_cita ??= numCita !== undefined ? Number(numCita) : undefined;
+                record.id_caso ??= idCaso !== undefined ? Number(idCaso) : undefined;
+            } else if (e === 'beneficiario') {
+                const [numBeneficiario, idCaso] = String(log.id_entidad).split('-');
+                record.num_beneficiario ??= numBeneficiario !== undefined ? Number(numBeneficiario) : undefined;
+                record.id_caso ??= idCaso !== undefined ? Number(idCaso) : undefined;
+            } else if (e === 'equipo') {
+                record.id_caso ??= Number(log.id_entidad);
+            }
+        }
+
         // Para sesiones, inyectar nombre completo, cédula e IP directo
         // (la tarjeta de sesión espera cedula_usuario/ip_direccion, no
         // id_usuario/metadata.ip).
@@ -250,6 +287,33 @@ export function mapUnifiedLogToAuditRecord(log: AuditoriaEvento): { record: any,
                     record.nombre_solicitante_anterior = log.nombre_solicitante_anterior || null;
                     record.nombre_solicitante_nuevo = log.nombre_solicitante_nuevo || null;
                 }
+            }
+        }
+
+        // Solicitante: la tarjeta de eliminación usa su propia convención
+        // (nombres_solicitante_eliminado/apellidos_solicitante_eliminado/
+        // solicitante_eliminado) en vez de los campos planos nombres/
+        // apellidos/cedula que trae el diff. La de actualización espera
+        // nombres resueltos para las 6 FKs propias (nivel educativo,
+        // condición de trabajo/actividad, estado/municipio/parroquia).
+        if (e === 'solicitante') {
+            if (a === 'eliminacion') {
+                record.nombres_solicitante_eliminado ??= record.nombres;
+                record.apellidos_solicitante_eliminado ??= record.apellidos;
+                record.solicitante_eliminado ??= record.cedula;
+            } else if (a === 'actualizacion') {
+                if (log.nivel_educativo_anterior != null) record.nivel_educativo_anterior = log.nivel_educativo_anterior;
+                if (log.nivel_educativo_nuevo != null) record.nivel_educativo_nuevo = log.nivel_educativo_nuevo;
+                if (log.condicion_trabajo_anterior != null) record.condicion_trabajo_anterior = log.condicion_trabajo_anterior;
+                if (log.condicion_trabajo_nuevo != null) record.condicion_trabajo_nuevo = log.condicion_trabajo_nuevo;
+                if (log.condicion_actividad_anterior != null) record.condicion_actividad_anterior = log.condicion_actividad_anterior;
+                if (log.condicion_actividad_nuevo != null) record.condicion_actividad_nuevo = log.condicion_actividad_nuevo;
+                if (log.solicitante_estado_anterior != null) record.estado_anterior = log.solicitante_estado_anterior;
+                if (log.solicitante_estado_nuevo != null) record.estado_nuevo = log.solicitante_estado_nuevo;
+                if (log.solicitante_municipio_anterior != null) record.municipio_anterior = log.solicitante_municipio_anterior;
+                if (log.solicitante_municipio_nuevo != null) record.municipio_nuevo = log.solicitante_municipio_nuevo;
+                if (log.solicitante_parroquia_anterior != null) record.parroquia_anterior = log.solicitante_parroquia_anterior;
+                if (log.solicitante_parroquia_nuevo != null) record.parroquia_nuevo = log.solicitante_parroquia_nuevo;
             }
         }
 

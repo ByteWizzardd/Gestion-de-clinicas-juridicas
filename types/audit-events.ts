@@ -72,6 +72,21 @@ export interface AuditoriaEvento {
   nombre_estado?: string | null;
   nombre_municipio?: string | null;
   nombre_estado_parroquia?: string | null;
+  // FKs propias de 'solicitante' (nivel educativo, condición de trabajo/
+  // actividad, estado/municipio/parroquia de residencia) para el diff de
+  // 'solicitante-actualizado'.
+  nivel_educativo_anterior?: string | null;
+  nivel_educativo_nuevo?: string | null;
+  condicion_trabajo_anterior?: string | null;
+  condicion_trabajo_nuevo?: string | null;
+  condicion_actividad_anterior?: string | null;
+  condicion_actividad_nuevo?: string | null;
+  solicitante_estado_anterior?: string | null;
+  solicitante_estado_nuevo?: string | null;
+  solicitante_municipio_anterior?: string | null;
+  solicitante_municipio_nuevo?: string | null;
+  solicitante_parroquia_anterior?: string | null;
+  solicitante_parroquia_nuevo?: string | null;
   datos_anteriores: Record<string, unknown> | null;
   datos_nuevos: Record<string, unknown> | null;
   metadata: AuditMetadata | null;

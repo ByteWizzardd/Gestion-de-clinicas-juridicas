@@ -165,6 +165,66 @@ SELECT
            AND p.num_municipio = split_part(t.id_entidad, '-', 2)::int
            AND p.num_parroquia = split_part(t.id_entidad, '-', 3)::int)
     END) as nombre_estado_parroquia,
+    -- Solicitante: 6 FKs propias (nivel educativo, condición de trabajo/
+    -- actividad, estado/municipio/parroquia de residencia) que el diff de
+    -- 'solicitante-actualizado' muestra en líneas separadas, cada una con
+    -- su propio _anterior/_nuevo. Las compuestas (municipio, parroquia) se
+    -- completan con la fila vigente en `solicitantes` (id_entidad = cedula)
+    -- para las partes que no cambiaron.
+    (CASE WHEN t.entidad = 'solicitante' AND t.datos_anteriores ? 'id_nivel_educativo' THEN
+        (SELECT descripcion FROM niveles_educativos WHERE id_nivel_educativo = (t.datos_anteriores->>'id_nivel_educativo')::int)
+    END) as nivel_educativo_anterior,
+    (CASE WHEN t.entidad = 'solicitante' AND t.datos_nuevos ? 'id_nivel_educativo' THEN
+        (SELECT descripcion FROM niveles_educativos WHERE id_nivel_educativo = (t.datos_nuevos->>'id_nivel_educativo')::int)
+    END) as nivel_educativo_nuevo,
+    (CASE WHEN t.entidad = 'solicitante' AND t.datos_anteriores ? 'id_trabajo' THEN
+        (SELECT nombre_trabajo FROM condicion_trabajo WHERE id_trabajo = (t.datos_anteriores->>'id_trabajo')::int)
+    END) as condicion_trabajo_anterior,
+    (CASE WHEN t.entidad = 'solicitante' AND t.datos_nuevos ? 'id_trabajo' THEN
+        (SELECT nombre_trabajo FROM condicion_trabajo WHERE id_trabajo = (t.datos_nuevos->>'id_trabajo')::int)
+    END) as condicion_trabajo_nuevo,
+    (CASE WHEN t.entidad = 'solicitante' AND t.datos_anteriores ? 'id_actividad' THEN
+        (SELECT nombre_actividad FROM condicion_actividad WHERE id_actividad = (t.datos_anteriores->>'id_actividad')::int)
+    END) as condicion_actividad_anterior,
+    (CASE WHEN t.entidad = 'solicitante' AND t.datos_nuevos ? 'id_actividad' THEN
+        (SELECT nombre_actividad FROM condicion_actividad WHERE id_actividad = (t.datos_nuevos->>'id_actividad')::int)
+    END) as condicion_actividad_nuevo,
+    (CASE WHEN t.entidad = 'solicitante' AND t.datos_anteriores ? 'id_estado' THEN
+        (SELECT nombre_estado FROM estados WHERE id_estado = (t.datos_anteriores->>'id_estado')::int)
+    END) as solicitante_estado_anterior,
+    (CASE WHEN t.entidad = 'solicitante' AND t.datos_nuevos ? 'id_estado' THEN
+        (SELECT nombre_estado FROM estados WHERE id_estado = (t.datos_nuevos->>'id_estado')::int)
+    END) as solicitante_estado_nuevo,
+    (CASE WHEN t.entidad = 'solicitante' AND (t.datos_anteriores ? 'num_municipio' OR t.datos_anteriores ? 'id_estado') THEN
+        (SELECT mu.nombre_municipio
+         FROM municipios mu LEFT JOIN solicitantes s ON s.cedula = t.id_entidad
+         WHERE mu.id_estado = COALESCE((t.datos_anteriores->>'id_estado')::int, s.id_estado)
+           AND mu.num_municipio = COALESCE((t.datos_anteriores->>'num_municipio')::int, s.num_municipio))
+    END) as solicitante_municipio_anterior,
+    (CASE WHEN t.entidad = 'solicitante' AND (t.datos_nuevos ? 'num_municipio' OR t.datos_nuevos ? 'id_estado') THEN
+        (SELECT mu.nombre_municipio
+         FROM municipios mu LEFT JOIN solicitantes s ON s.cedula = t.id_entidad
+         WHERE mu.id_estado = COALESCE((t.datos_nuevos->>'id_estado')::int, s.id_estado)
+           AND mu.num_municipio = COALESCE((t.datos_nuevos->>'num_municipio')::int, s.num_municipio))
+    END) as solicitante_municipio_nuevo,
+    (CASE WHEN t.entidad = 'solicitante' AND (
+        t.datos_anteriores ? 'num_parroquia' OR t.datos_anteriores ? 'num_municipio' OR t.datos_anteriores ? 'id_estado'
+    ) THEN
+        (SELECT p.nombre_parroquia
+         FROM parroquias p LEFT JOIN solicitantes s ON s.cedula = t.id_entidad
+         WHERE p.id_estado = COALESCE((t.datos_anteriores->>'id_estado')::int, s.id_estado)
+           AND p.num_municipio = COALESCE((t.datos_anteriores->>'num_municipio')::int, s.num_municipio)
+           AND p.num_parroquia = COALESCE((t.datos_anteriores->>'num_parroquia')::int, s.num_parroquia))
+    END) as solicitante_parroquia_anterior,
+    (CASE WHEN t.entidad = 'solicitante' AND (
+        t.datos_nuevos ? 'num_parroquia' OR t.datos_nuevos ? 'num_municipio' OR t.datos_nuevos ? 'id_estado'
+    ) THEN
+        (SELECT p.nombre_parroquia
+         FROM parroquias p LEFT JOIN solicitantes s ON s.cedula = t.id_entidad
+         WHERE p.id_estado = COALESCE((t.datos_nuevos->>'id_estado')::int, s.id_estado)
+           AND p.num_municipio = COALESCE((t.datos_nuevos->>'num_municipio')::int, s.num_municipio)
+           AND p.num_parroquia = COALESCE((t.datos_nuevos->>'num_parroquia')::int, s.num_parroquia))
+    END) as solicitante_parroquia_nuevo,
     t.datos_anteriores as datos_anteriores,
     t.datos_nuevos as datos_nuevos,
     t.metadata as metadata
