@@ -165,6 +165,13 @@ export async function updateCasoAction(
     const rolUsuario = authResult.user.rol;
 
     return await withSecureTransaction(rolUsuario, async (client) => {
+      // casosService.updateCaso recibe un client externo -> se salta su propio
+      // withAuditTransaction (ver el comentario "asumimos que el llamador ya
+      // inyectó el contexto" en casos.service.ts), así que el actor hay que
+      // setearlo acá antes de tocar `casos` para que el trigger genérico lo
+      // capture (si no, el evento queda con id_usuario=null: "Actualizado por:
+      // Usuario desconocido").
+      await client.query("SELECT set_config('app.current_user_id', $1, true)", [cedulaUsuario]);
       const casoActualizado = await casosService.updateCaso(idCaso, data, cedulaUsuario, client);
 
       // Revalidar cache de la página de casos

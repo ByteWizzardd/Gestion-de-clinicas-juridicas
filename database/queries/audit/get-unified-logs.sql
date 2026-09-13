@@ -23,6 +23,41 @@ SELECT
         (SELECT nombres || ' ' || apellidos FROM solicitantes
          WHERE cedula = COALESCE(t.datos_nuevos->>'cedula', t.datos_anteriores->>'cedula'))
     END) as solicitante_nombre,
+    -- Para actualizaciones de 'caso' que cambian núcleo/ámbito legal, el
+    -- diff solo trae el id crudo (id_nucleo, num_ambito_legal...) — resolver
+    -- nombres. El ámbito legal es una clave compuesta de 4 partes; las que
+    -- no cambiaron no están en el diff, así que se completan con el valor
+    -- vigente en `casos` (join por id_entidad).
+    (CASE WHEN t.entidad = 'caso' AND (t.datos_anteriores ? 'id_nucleo') THEN
+        (SELECT nombre_nucleo FROM nucleos WHERE id_nucleo = (t.datos_anteriores->>'id_nucleo')::int)
+    END) as nombre_nucleo_anterior,
+    (CASE WHEN t.entidad = 'caso' AND (t.datos_nuevos ? 'id_nucleo') THEN
+        (SELECT nombre_nucleo FROM nucleos WHERE id_nucleo = (t.datos_nuevos->>'id_nucleo')::int)
+    END) as nombre_nucleo_nuevo,
+    (CASE WHEN t.entidad = 'caso' AND (
+        t.datos_anteriores ? 'num_ambito_legal' OR t.datos_anteriores ? 'id_materia' OR
+        t.datos_anteriores ? 'num_categoria' OR t.datos_anteriores ? 'num_subcategoria'
+    ) THEN
+        (SELECT al.nombre_ambito_legal
+         FROM ambitos_legales al
+         LEFT JOIN casos c ON c.id_caso = t.id_entidad::int
+         WHERE al.id_materia = COALESCE((t.datos_anteriores->>'id_materia')::int, c.id_materia)
+           AND al.num_categoria = COALESCE((t.datos_anteriores->>'num_categoria')::int, c.num_categoria)
+           AND al.num_subcategoria = COALESCE((t.datos_anteriores->>'num_subcategoria')::int, c.num_subcategoria)
+           AND al.num_ambito_legal = COALESCE((t.datos_anteriores->>'num_ambito_legal')::int, c.num_ambito_legal))
+    END) as nombre_ambito_legal_anterior,
+    (CASE WHEN t.entidad = 'caso' AND (
+        t.datos_nuevos ? 'num_ambito_legal' OR t.datos_nuevos ? 'id_materia' OR
+        t.datos_nuevos ? 'num_categoria' OR t.datos_nuevos ? 'num_subcategoria'
+    ) THEN
+        (SELECT al.nombre_ambito_legal
+         FROM ambitos_legales al
+         LEFT JOIN casos c ON c.id_caso = t.id_entidad::int
+         WHERE al.id_materia = COALESCE((t.datos_nuevos->>'id_materia')::int, c.id_materia)
+           AND al.num_categoria = COALESCE((t.datos_nuevos->>'num_categoria')::int, c.num_categoria)
+           AND al.num_subcategoria = COALESCE((t.datos_nuevos->>'num_subcategoria')::int, c.num_subcategoria)
+           AND al.num_ambito_legal = COALESCE((t.datos_nuevos->>'num_ambito_legal')::int, c.num_ambito_legal))
+    END) as nombre_ambito_legal_nuevo,
     t.datos_anteriores as datos_anteriores,
     t.datos_nuevos as datos_nuevos,
     t.metadata as metadata

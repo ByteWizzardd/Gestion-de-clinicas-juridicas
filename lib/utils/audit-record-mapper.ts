@@ -216,10 +216,22 @@ export function mapUnifiedLogToAuditRecord(log: AuditoriaEvento): { record: any,
         // nombre_completo_solicitante (no la columna cruda `cedula`), y
         // en eliminación el id va en `caso_eliminado`, no `id_caso`.
         if (e === 'caso') {
+            // id_caso es la PK: en una actualización que no la toca, el
+            // trigger genérico no la incluye en el diff (solo guarda columnas
+            // que cambiaron) — cae siempre en id_entidad.
+            record.id_caso ??= log.id_entidad != null ? Number(log.id_entidad) : undefined;
             record.cedula_solicitante = record.cedula;
             record.nombre_completo_solicitante = log.nombre_completo_solicitante || null;
             if (a === 'eliminacion') {
                 record.caso_eliminado = record.id_caso;
+            }
+            // Nombres resueltos de núcleo/ámbito legal para el diff de
+            // 'caso-actualizado' (si no, la tarjeta cae a mostrar el id crudo).
+            if (a === 'actualizacion') {
+                if (log.nombre_nucleo_anterior != null) record.nombre_nucleo_anterior = log.nombre_nucleo_anterior;
+                if (log.nombre_nucleo_nuevo != null) record.nombre_nucleo_nuevo = log.nombre_nucleo_nuevo;
+                if (log.nombre_ambito_legal_anterior != null) record.nombre_ambito_legal_anterior = log.nombre_ambito_legal_anterior;
+                if (log.nombre_ambito_legal_nuevo != null) record.nombre_ambito_legal_nuevo = log.nombre_ambito_legal_nuevo;
             }
         }
     }
