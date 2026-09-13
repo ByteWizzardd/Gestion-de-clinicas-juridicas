@@ -225,13 +225,31 @@ export function mapUnifiedLogToAuditRecord(log: AuditoriaEvento): { record: any,
             if (a === 'eliminacion') {
                 record.caso_eliminado = record.id_caso;
             }
-            // Nombres resueltos de núcleo/ámbito legal para el diff de
-            // 'caso-actualizado' (si no, la tarjeta cae a mostrar el id crudo).
+            // Nombres resueltos de núcleo/materia/categoría/subcategoría/
+            // ámbito legal/solicitante para el diff de 'caso-actualizado'
+            // (si no, la tarjeta cae a mostrar el id crudo o "N/A").
             if (a === 'actualizacion') {
                 if (log.nombre_nucleo_anterior != null) record.nombre_nucleo_anterior = log.nombre_nucleo_anterior;
                 if (log.nombre_nucleo_nuevo != null) record.nombre_nucleo_nuevo = log.nombre_nucleo_nuevo;
+                if (log.nombre_materia_anterior != null) record.nombre_materia_anterior = log.nombre_materia_anterior;
+                if (log.nombre_materia_nuevo != null) record.nombre_materia_nuevo = log.nombre_materia_nuevo;
+                if (log.nombre_categoria_anterior != null) record.nombre_categoria_anterior = log.nombre_categoria_anterior;
+                if (log.nombre_categoria_nuevo != null) record.nombre_categoria_nuevo = log.nombre_categoria_nuevo;
+                if (log.nombre_subcategoria_anterior != null) record.nombre_subcategoria_anterior = log.nombre_subcategoria_anterior;
+                if (log.nombre_subcategoria_nuevo != null) record.nombre_subcategoria_nuevo = log.nombre_subcategoria_nuevo;
                 if (log.nombre_ambito_legal_anterior != null) record.nombre_ambito_legal_anterior = log.nombre_ambito_legal_anterior;
                 if (log.nombre_ambito_legal_nuevo != null) record.nombre_ambito_legal_nuevo = log.nombre_ambito_legal_nuevo;
+
+                // El diff de "Solicitante" (r.cedula_solicitante_anterior/
+                // _nuevo + nombre_solicitante_anterior/_nuevo) es distinto del
+                // cedula_solicitante singular de arriba: solo aplica cuando
+                // cambió la cédula del caso en sí.
+                if (record.cedula_anterior !== undefined || record.cedula_nuevo !== undefined) {
+                    record.cedula_solicitante_anterior = record.cedula_anterior;
+                    record.cedula_solicitante_nuevo = record.cedula_nuevo;
+                    record.nombre_solicitante_anterior = log.nombre_solicitante_anterior || null;
+                    record.nombre_solicitante_nuevo = log.nombre_solicitante_nuevo || null;
+                }
             }
         }
     }
