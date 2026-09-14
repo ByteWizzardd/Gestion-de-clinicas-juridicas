@@ -18,6 +18,7 @@ import { ESTATUS_CASO } from '@/lib/constants/status';
 import { logger } from '@/lib/utils/logger';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 const getCasoByIdQuery = readFileSync(
     join(process.cwd(), 'database/queries/casos/get-by-id.sql'),
@@ -28,6 +29,38 @@ const getCaseIdsQuery = readFileSync(
     join(process.cwd(), 'database/queries/casos/get-by-id-case.sql'),
     'utf8'
 );
+
+/**
+ * Fecha 'YYYY-MM-DD' de un valor DATE: string de la API o Date que devuelve pg
+ * (medianoche local), para comparar fechas sin desfases de zona horaria.
+ */
+const fechaISO = (valor: unknown): string | null => {
+    if (valor == null || valor === '') return null;
+    if (valor instanceof Date) {
+        const pad = (n: number) => String(n).padStart(2, '0');
+        return `${valor.getFullYear()}-${pad(valor.getMonth() + 1)}-${pad(valor.getDate())}`;
+    }
+    return String(valor).slice(0, 10);
+};
+
+/**
+ * Reglas de orden entre fechas de un caso (las mismas CHECK de la BD:
+ * chk_casos_inicio_post_solicitud y chk_casos_fin_post_inicio), validadas
+ * antes para responder con el campo concreto en vez de un error genérico.
+ */
+const validarOrdenFechasCaso = (fechas: { solicitud: unknown; inicio: unknown; fin: unknown }) => {
+    const solicitud = fechaISO(fechas.solicitud);
+    const inicio = fechaISO(fechas.inicio);
+    const fin = fechaISO(fechas.fin);
+    if (solicitud && inicio && inicio < solicitud) {
+        const mensaje = 'La fecha de solicitud no puede ser posterior a la fecha de inicio del caso';
+        throw new ValidationError(mensaje, { fecha_solicitud: [mensaje] });
+    }
+    if (inicio && fin && fin < inicio) {
+        const mensaje = 'La fecha de fin del caso no puede ser anterior a la fecha de inicio';
+        throw new ValidationError(mensaje, { fecha_fin_caso: [mensaje] });
+    }
+};
 
 /**
  * Servicio para la entidad Casos
@@ -50,9 +83,9 @@ export const casosService = {
             }));
         } catch (error) {
             throw new AppError(
-                'Error al obtener los casos',
+                toUserMessage(error, 'Error al obtener los casos'),
                 500,
-                error instanceof Error ? error.message : 'Error desconocido'
+                'CASO_ERROR'
             );
         }
     },
@@ -68,9 +101,9 @@ export const casosService = {
             return nextId;
         } catch (error) {
             throw new AppError(
-                'Error al obtener el siguiente número de caso',
+                toUserMessage(error, 'Error al obtener el siguiente número de caso'),
                 500,
-                error instanceof Error ? error.message : 'Error desconocido'
+                'CASO_ERROR'
             );
         }
     },
@@ -126,6 +159,12 @@ export const casosService = {
                     throw new ValidationError('La fecha de inicio no puede ser futura', { fecha_inicio_caso: ['La fecha no puede ser futura'] });
                 }
             }
+            // Sin fecha_solicitud la BD usa CURRENT_DATE: el inicio no puede ser anterior a hoy.
+            validarOrdenFechasCaso({
+                solicitud: validatedData.fecha_solicitud ?? fechaISO(today),
+                inicio: validatedData.fecha_inicio_caso,
+                fin: null,
+            });
 
             // Crear el caso
             // Si fecha_solicitud no se proporciona, se usa CURRENT_DATE en la BD
@@ -173,9 +212,9 @@ export const casosService = {
             }
 
             throw new AppError(
-                'Error al crear el caso',
+                toUserMessage(error, 'Error al crear el caso'),
                 500,
-                error instanceof Error ? error.message : 'Error desconocido'
+                'CASO_ERROR'
             );
         }
     },
@@ -236,6 +275,37 @@ export const casosService = {
                 }
             }
 
+            const fechasActuales = existingCaso as { fecha_solicitud?: unknown; fecha_inicio_caso?: unknown; fecha_fin_caso?: unknown };
+
+            // Fecha de inicio. Los formularios de edición tienen UN solo campo
+            // ("Fecha del caso", inicializado con la solicitud) y mandan ese
+            // valor en fecha_solicitud y fecha_inicio_caso. Solo se mueve el
+            // inicio si el usuario cambió esa fecha; si la solicitud llega igual
+            // que antes, re-enviar el campo sin tocarlo no debe igualar un
+            // inicio que era distinto.
+            const inicioActual = fechaISO(fechasActuales.fecha_inicio_caso);
+            const solicitudCambio = validatedData.fecha_solicitud === undefined
+                || validatedData.fecha_solicitud !== fechaISO(fechasActuales.fecha_solicitud);
+            const nuevoInicio = validatedData.fecha_inicio_caso
+                && validatedData.fecha_inicio_caso !== inicioActual
+                && solicitudCambio
+                ? validatedData.fecha_inicio_caso
+                : undefined;
+            if (nuevoInicio) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                if (new Date(nuevoInicio) > today) {
+                    throw new ValidationError('La fecha de inicio no puede ser futura', { fecha_inicio_caso: ['La fecha no puede ser futura'] });
+                }
+            }
+
+            // Orden de fechas con los valores que quedarán tras la actualización.
+            validarOrdenFechasCaso({
+                solicitud: validatedData.fecha_solicitud ?? fechasActuales.fecha_solicitud,
+                inicio: nuevoInicio ?? fechasActuales.fecha_inicio_caso,
+                fin: validatedData.fecha_fin_caso || fechasActuales.fecha_fin_caso,
+            });
+
             // Validar si la cédula cambia y existe
             if (validatedData.cedula && validatedData.cedula !== (existingCaso as any).cedula) {
                 const solicitanteExists = await solicitantesQueries.getSolicitanteById(validatedData.cedula);
@@ -255,6 +325,7 @@ export const casosService = {
                 num_subcategoria: validatedData.num_subcategoria,
                 num_ambito_legal: validatedData.num_ambito_legal,
                 fecha_solicitud: validatedData.fecha_solicitud,
+                fecha_inicio_caso: nuevoInicio,
                 cedula: validatedData.cedula,
             };
 
@@ -279,6 +350,7 @@ export const casosService = {
                     num_ambito_legal: updateData.num_ambito_legal || (existingCaso as any).num_ambito_legal,
                     fecha_solicitud: updateData.fecha_solicitud ? (typeof updateData.fecha_solicitud === 'string' ? updateData.fecha_solicitud : updateData.fecha_solicitud) : (existingCaso as any).fecha_solicitud,
                     cedula: updateData.cedula || (existingCaso as any).cedula,
+                    fecha_inicio_caso: updateData.fecha_inicio_caso,
                 }, client);
                 return result;
             };
@@ -307,9 +379,9 @@ export const casosService = {
             }
 
             throw new AppError(
-                'Error al actualizar el caso',
+                toUserMessage(error, 'Error al actualizar el caso'),
                 500,
-                error instanceof Error ? error.message : 'Error desconocido'
+                'CASO_ERROR'
             );
         }
     },
@@ -369,9 +441,8 @@ export const casosService = {
             if (error instanceof AppError) {
                 throw error;
             }
-            const originalMessage = error instanceof Error ? error.message : 'Error desconocido';
             throw new AppError(
-                `Error al obtener el caso completo: ${originalMessage}`,
+                toUserMessage(error, 'Error al obtener el caso completo'),
                 500,
                 'CASO_ERROR'
             );
@@ -550,9 +621,9 @@ export const casosService = {
         } catch (error) {
             logger.error('Error al eliminar la acción (detalle DB):', error);
             throw new AppError(
-                "Error al eliminar la acción",
+                toUserMessage(error, "Error al eliminar la acción"),
                 500,
-                error instanceof Error ? error.message : "Error desconocido"
+                'CASO_ERROR'
             );
         }
     },
