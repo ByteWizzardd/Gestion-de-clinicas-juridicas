@@ -1,25 +1,29 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
     FileText, Calendar, User, Users, UserX, FolderOpen, AlertCircle, Hash, Search,
     Filter, CheckCircle2, Clock, MapPin, Building, Building2, BookOpen, GraduationCap, Briefcase, Activity, Tag, FolderTree, Scale, Layers
 } from 'lucide-react';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
-import { UnifiedAuditLog, getUnifiedAuditLogsAction } from '@/app/actions/audit-general';
+import { getAuditEventsAction } from '@/app/actions/audit-events.actions';
+import type { AuditoriaEvento, AuditOperacion, AuditEntidad } from '@/types/audit-events';
 import { logger } from '@/lib/utils/logger';
 import AuditRecordCardSkeleton from '@/components/ui/skeletons/AuditRecordCardSkeleton';
 import AuditRecordCard from './AuditRecordCard';
-import type { AuditRecordType } from '@/types/audit';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import { getUsuariosAction } from '@/app/actions/usuarios';
 import { filterLogsByVisibleContent } from '@/lib/utils/audit-search';
+import { mapUnifiedLogToAuditRecord } from '@/lib/utils/audit-record-mapper';
 
 import { TablePagination } from '@/components/Table/TablePagination';
 
+// Máximo de coincidencias que se traen para filtrar y paginar en el cliente al buscar
+const LIMITE_BUSQUEDA = 2000;
+
 export default function AuditGeneralView() {
-    const [logs, setLogs] = useState<UnifiedAuditLog[]>([]);
+    const [logs, setLogs] = useState<AuditoriaEvento[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -43,27 +47,86 @@ export default function AuditGeneralView() {
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
+    // Etiqueta bonita para mostrar junto a cada tarjeta (moduleName), a partir
+    // del valor crudo que guarda auditoria_eventos.entidad. Cubre todos los
+    // valores reales vistos en la BD (incluye 'accion' y 'accion_ejecutores'
+    // como entidades separadas, y 'solicitante_artefactos').
+    const entityLabels: Record<string, string> = {
+        sesion: 'Sesión', reporte: 'Reporte', caso: 'Caso', usuario: 'Usuario',
+        solicitante: 'Solicitante', solicitante_artefactos: 'Solicitante',
+        solicitante_perfil: 'Solicitante', vivienda: 'Solicitante', familia_y_hogar: 'Solicitante',
+        beneficiario: 'Beneficiario', cita: 'Cita', accion: 'Acción',
+        accion_ejecutores: 'Acción', estudiante: 'Estudiante', profesor: 'Profesor',
+        equipo: 'Equipo', caso_semestre: 'Caso', cambio_estatus: 'Caso', atencion_cita: 'Cita', soporte: 'Soporte', estado: 'Estado', municipio: 'Municipio',
+        parroquia: 'Parroquia', nucleo: 'Núcleo', materia: 'Materia', semestre: 'Semestre',
+        categoria: 'Categoría', subcategoria: 'Subcategoría', ambito_legal: 'Ámbito Legal',
+        nivel_educativo: 'Nivel Educativo', condicion_trabajo: 'Condición Trabajo',
+        condicion_actividad: 'Condición Actividad', tipo_caracteristica: 'Tipo Característica',
+        caracteristica: 'Característica',
+    };
+    const getEntityLabel = (entidad: string) => entityLabels[entidad] || entidad;
+
+    const entityMapToTechnical: Record<string, AuditEntidad> = {
+        'Sesión': 'sesion', 'Reporte': 'reporte', 'Caso': 'caso', 'Usuario': 'usuario',
+        'Solicitante': 'solicitante', 'Beneficiario': 'beneficiario', 'Cita': 'cita',
+        'Acción': 'accion', 'Estudiante': 'estudiante', 'Profesor': 'profesor',
+        'Equipo': 'equipo', 'Soporte': 'soporte', 'Estado': 'estado', 'Municipio': 'municipio',
+        'Parroquia': 'parroquia', 'Núcleo': 'nucleo', 'Materia': 'materia', 'Semestre': 'semestre',
+        'Categoría': 'categoria', 'Subcategoría': 'subcategoria', 'Ámbito Legal': 'ambito_legal',
+        'Nivel Educativo': 'nivel_educativo', 'Condición Trabajo': 'condicion_trabajo',
+        'Condición Actividad': 'condicion_actividad', 'Tipo Característica': 'tipo_caracteristica',
+        'Característica': 'caracteristica'
+    };
+
+    // Una opción por operación que realmente se registra. ('Habilitación',
+    // 'Inscripción' y 'Asignación' eran alias de Actualización/Creación y
+    // mostraban lo mismo; 'Cierre de Sesión' no existe como evento: el cierre
+    // se guarda dentro del inicio de sesión.)
+    const operationMapToTechnical: Record<string, AuditOperacion> = {
+        'Creación': 'insercion', 'Actualización': 'actualizacion', 'Eliminación': 'eliminacion',
+        'Inicio de Sesión': 'inicio_sesion', 'Intento Fallido': 'intento_fallido',
+        'Generación de reporte': 'generacion_reporte', 'Vista previa de reporte': 'vista_previa_reporte',
+        'Descarga de soporte': 'descarga_soporte'
+    };
+
+    // Cambiar un filtro dispara dos cargas (la de la página actual y la de la
+    // página 1): solo se aplica la respuesta de la última petición.
+    const ultimaPeticion = useRef(0);
+
+    // Con búsqueda, el cliente descarta coincidencias que no se ven en la
+    // tarjeta (filterLogsByVisibleContent). Si se paginara en el servidor y
+    // luego se filtrara, quedarían páginas vacías y un total que no cuadra: se
+    // traen todas las coincidencias y se pagina en el cliente.
+    const buscando = Boolean(debouncedSearchTerm);
+    const paginaServidor = buscando ? 1 : page;
+    const filasServidor = buscando ? LIMITE_BUSQUEDA : rowsPerPage;
+
     const fetchLogs = useCallback(async () => {
+        const peticion = ++ultimaPeticion.current;
         try {
             setLoading(true);
-            const { logs: newLogs, totalCount: count } = await getUnifiedAuditLogsAction(page, rowsPerPage, {
-                entidad: selectedEntity || undefined,
-                usuarioId: selectedUser || undefined,
-                operacion: selectedOperation || undefined,
+            const { eventos: newLogs, total: count } = await getAuditEventsAction({
+                entidad: selectedEntity ? entityMapToTechnical[selectedEntity] : undefined,
+                idUsuario: selectedUser || undefined,
+                operacion: selectedOperation ? operationMapToTechnical[selectedOperation] : undefined,
                 fechaInicio: startDate || undefined,
                 fechaFin: endDate || undefined,
-                orden: sortOrder,
-                busqueda: debouncedSearchTerm || undefined
+                orden: sortOrder as 'asc' | 'desc',
+                busqueda: debouncedSearchTerm || undefined,
+                limit: filasServidor,
+                offset: (paginaServidor - 1) * filasServidor
             });
+            if (peticion !== ultimaPeticion.current) return;
             setLogs(newLogs);
             setTotalCount(count);
         } catch (error) {
+            if (peticion !== ultimaPeticion.current) return;
             logger.error(error);
             toast.error('Error al cargar los registros de auditoría');
         } finally {
-            setLoading(false);
+            if (peticion === ultimaPeticion.current) setLoading(false);
         }
-    }, [page, rowsPerPage, selectedEntity, selectedUser, selectedOperation, startDate, endDate, sortOrder, debouncedSearchTerm, toast]);
+    }, [paginaServidor, filasServidor, selectedEntity, selectedUser, selectedOperation, startDate, endDate, sortOrder, debouncedSearchTerm, toast]);
 
     useEffect(() => {
         fetchLogs();
@@ -95,10 +158,12 @@ export default function AuditGeneralView() {
     // Filtrado híbrido: el servidor retorna un superset (metadata::text match),
     // luego el cliente filtra dejando solo registros donde el término aparece
     // en datos realmente visibles (campos que cambiaron para actualizaciones).
-    const displayLogs = useMemo(() => {
+    const logsVisibles = useMemo(() => {
         if (!debouncedSearchTerm) return logs;
         return filterLogsByVisibleContent(logs, debouncedSearchTerm);
     }, [logs, debouncedSearchTerm]);
+    const displayLogs = buscando ? logsVisibles.slice((page - 1) * rowsPerPage, page * rowsPerPage) : logs;
+    const totalMostrado = buscando ? logsVisibles.length : totalCount;
 
     // Lista de entidades disponibles para filtrar
     const availableEntitiesOptions = [
@@ -112,9 +177,8 @@ export default function AuditGeneralView() {
     // Lista de tipos de operación
     const operationOptions = [
         'Creación', 'Actualización', 'Eliminación',
-        'Habilitación', 'Inscripción', 'Asignación',
-        'Inicio de Sesión', 'Cierre de Sesión', 'Intento Fallido',
-        'Generación', 'Descarga'
+        'Inicio de Sesión', 'Intento Fallido',
+        'Generación de reporte', 'Vista previa de reporte', 'Descarga de soporte'
     ].map(o => ({ value: o, label: o }));
 
     // Opciones de ordenamiento
@@ -122,175 +186,6 @@ export default function AuditGeneralView() {
         { value: 'desc', label: 'Más reciente' },
         { value: 'asc', label: 'Más antiguo' }
     ];
-
-    const mapUnifiedLogToAuditRecord = (log: UnifiedAuditLog): { record: any, type: AuditRecordType } | null => {
-        // Parsear metadata si es string
-        let metadata: any = {};
-        try {
-            metadata = typeof log.metadata === 'string' ? JSON.parse(log.metadata) : log.metadata;
-        } catch (e) {
-            logger.error("Error parsing metadata", e);
-            return null;
-        }
-
-        const e = log.entidad;
-        const a = log.accion.toLowerCase();
-        let type: AuditRecordType | null = null;
-        let record: any = { ...metadata };
-
-        // Mapeo de tipos
-        if (e === 'Sesión') {
-            type = 'sesion';
-        }
-        else if (e === 'Caso') {
-            if (a.includes('creación')) type = 'caso-creado';
-            else if (a.includes('actualización')) type = 'caso-actualizado';
-            else if (a.includes('eliminación')) type = 'caso-eliminado';
-        }
-        else if (e === 'Usuario') {
-            if (a.includes('creación')) type = 'usuario-creado';
-            else if (a.includes('actualización')) type = 'usuario-actualizado-campos';
-            else if (a.includes('eliminación')) type = 'usuario-eliminado';
-            else if (a.includes('habilitación')) type = 'usuario-actualizado-campos';
-        }
-        else if (e === 'Estudiante') {
-            type = 'estudiante-inscrito';
-        }
-        else if (e === 'Profesor') {
-            type = 'profesor-asignado';
-        }
-        else if (e === 'Solicitante') {
-            if (a.includes('creación')) type = 'solicitante-creado';
-            else if (a.includes('actualización')) type = 'solicitante-actualizado';
-            else if (a.includes('eliminación')) type = 'solicitante-eliminado';
-        }
-        else if (e === 'Beneficiario') {
-            if (a.includes('creación')) {
-                type = 'beneficiario-creado';
-                // AuditRecordCard espera 'beneficiario-creado' mapeado a 'BeneficiarioInscritoAuditRecord' ?
-                // Revisando AuditRecordCard switch line 4953: case 'beneficiario-creado'
-            }
-            else if (a.includes('actualización')) type = 'beneficiario-actualizado';
-            else if (a.includes('eliminación')) type = 'beneficiario-eliminado';
-        }
-        else if (e === 'Cita') {
-            if (a.includes('programación') || a.includes('creación')) type = 'cita-creada';
-            else if (a.includes('actualización')) type = 'cita-actualizada';
-            else if (a.includes('eliminación')) type = 'cita-eliminada';
-        }
-        else if (e === 'Acción') {
-            if (a.includes('registro') || a.includes('creación')) type = 'accion-creada';
-            else if (a.includes('actualización')) type = 'accion-actualizada';
-            else if (a.includes('eliminación')) type = 'accion-eliminada';
-        }
-        else if (e === 'Soporte') {
-            if (a.includes('subida')) type = 'soporte-creado';
-            else if (a.includes('eliminación')) type = 'soporte';
-            else if (a.includes('descarga')) type = 'soporte-descargado';
-        }
-        else if (e === 'Reporte') {
-            type = 'reporte-generado';
-        }
-        else if (e === 'Equipo') {
-            type = 'equipo-actualizado';
-        }
-        // Catálogos
-        else {
-            const entityMap: Record<string, string> = {
-                'Estado': 'estado',
-                'Municipio': 'municipio',
-                'Parroquia': 'parroquia',
-                'Núcleo': 'nucleo',
-                'Materia': 'materia',
-                'Semestre': 'semestre',
-                'Categoría': 'categoria',
-                'Subcategoría': 'subcategoria',
-                'Ámbito Legal': 'ambito-legal',
-                'Nivel Educativo': 'nivel-educativo',
-                'Condición Trabajo': 'condicion-trabajo',
-                'Condición Actividad': 'condicion-actividad',
-                'Tipo Característica': 'tipo-caracteristica',
-                'Característica': 'caracteristica'
-            };
-
-            const feminineEntities = [
-                'Materia', 'Parroquia', 'Categoría', 'Subcategoría',
-                'Condición Trabajo', 'Condición Actividad', 'Característica'
-            ];
-
-            const prefix = entityMap[e];
-            if (prefix) {
-                const isFeminine = feminineEntities.includes(e);
-                const suffix = {
-                    insert: isFeminine ? 'insertada' : 'insertado',
-                    update: isFeminine ? 'actualizada' : 'actualizado',
-                    delete: isFeminine ? 'eliminada' : 'eliminado'
-                };
-
-                if (a.includes('creación')) type = `${prefix}-${suffix.insert}` as AuditRecordType;
-                else if (a.includes('actualización')) type = `${prefix}-${suffix.update}` as AuditRecordType;
-                else if (a.includes('eliminación')) type = `${prefix}-${suffix.delete}` as AuditRecordType;
-            }
-        }
-
-        if (record) {
-            record.fecha = log.fecha;
-            record.fecha_actualizacion = log.fecha;
-
-            // Para sesiones, inyectar nombre completo directamente
-            if (e === 'Sesión') {
-                if (!record.nombre_completo_usuario_accion) {
-                    record.nombre_completo_usuario_accion = log.usuario_nombre;
-                }
-            }
-
-            // Inyectar información del actor si falta en metadata
-            // Mapear sufijos de acción a campos de usuario
-            let actorSuffix = '';
-            if (a.includes('creación') || a.includes('registro') || a.includes('programación') || a.includes('subida') || a.includes('inscripción') || a.includes('asignación')) {
-                actorSuffix = 'creo';
-                if (a.includes('subida')) actorSuffix = 'subio';
-            } else if (a.includes('actualización') || a.includes('modificación')) {
-                actorSuffix = 'actualizo';
-                if (e === 'Equipo') actorSuffix = 'modifico';
-            } else if (a.includes('eliminación')) {
-                actorSuffix = 'elimino';
-            } else if (a.includes('descarga')) {
-                actorSuffix = 'descargo';
-            } else if (e === 'Reporte') {
-                actorSuffix = 'genero';
-            }
-
-            if (actorSuffix) {
-                const idField = `id_usuario_${actorSuffix}`;
-                const nameField = `nombre_completo_usuario_${actorSuffix}`;
-
-                // Si cedula_descargo es usado en lugar de id_usuario_descargo
-                if (actorSuffix === 'descargo') {
-                    if (!record.cedula_descargo) record.cedula_descargo = log.usuario_id;
-                } else {
-                    if (!record[idField]) record[idField] = log.usuario_id;
-                }
-
-                if (!record[nameField]) record[nameField] = log.usuario_nombre;
-
-                // Asegurar nombres/apellidos individuales si faltan
-                if (!record[`nombres_usuario_${actorSuffix}`] && log.usuario_nombre) {
-                    // Intento básico de split si es necesario, o dejar que renderUserLink use el nombre completo
-                    // renderUserLink prioriza nombre_completo, asi que con eso basta.
-                }
-            }
-        }
-
-        if (!type) {
-            // Fallback para tipos desconocidos (Sesiones, etc no están en AuditRecordCard explícitamente como cards visuales complejas, o sí?)
-            // Sesiones no parece estar en AuditRecordCard.
-            logger.warn(`Tipo de auditoría desconocido: ${e} - ${a}`);
-            return null;
-        }
-
-        return { record, type };
-    };
 
     return (
         <div className="w-full">
@@ -355,8 +250,8 @@ export default function AuditGeneralView() {
                         const mapped = mapUnifiedLogToAuditRecord(log);
                         if (!mapped) return null;
                         return (
-                            <div key={`${log.fecha}-${index}`}>
-                                <AuditRecordCard record={mapped.record} type={mapped.type} moduleName={log.entidad} />
+                            <div key={`${log.fecha_evento}-${index}`}>
+                                <AuditRecordCard record={mapped.record} type={mapped.type} moduleName={getEntityLabel(log.entidad)} />
                             </div>
                         );
                     })}
@@ -364,11 +259,11 @@ export default function AuditGeneralView() {
             )}
 
             {/* Footer con Paginación */}
-            {!loading && totalCount > 0 && (
+            {!loading && totalMostrado > 0 && (
                 <div className="p-4 flex justify-end w-full">
                     <TablePagination
                         currentPage={page}
-                        totalPages={Math.ceil(totalCount / rowsPerPage)}
+                        totalPages={Math.ceil(totalMostrado / rowsPerPage)}
                         rowsPerPage={rowsPerPage}
                         onPageChange={(newPage) => {
                             setPage(newPage);

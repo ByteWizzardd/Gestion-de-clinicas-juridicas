@@ -1,1137 +1,485 @@
--- Obtener logs unificados de auditoría
-SELECT * FROM (
-    -- Sesiones (auditoria_sesiones)
-    SELECT
-        'Sesión' as entidad,
-        CASE 
-            WHEN t.fecha_cierre IS NOT NULL THEN 'Cierre de Sesión'
-            WHEN t.exitoso = FALSE THEN 'Intento Fallido'
-            ELSE 'Inicio de Sesión' 
-        END as accion,
-        COALESCE(t.fecha_inicio, t.fecha_cierre) as fecha,
-        t.cedula_usuario as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.cedula_usuario), t.cedula_usuario) as usuario_nombre,
-        COALESCE(t.detalle, 'IP: ' || COALESCE(t.ip_direccion::text, 'N/A')) as detalles,
-        row_to_json(t.*)::text as metadata
-    FROM auditoria_sesiones t
-
-    UNION ALL
-
-    -- Reportes (auditoria_reportes)
-    SELECT
-        'Reporte' as entidad,
-        CASE WHEN t.operacion = 'vista_previa' THEN 'Vista Previa' ELSE 'Generación' END as accion,
-        t.fecha_generacion as fecha,
-        t.id_usuario_genero as usuario_id,
-        COALESCE(
-            (SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_genero),
-            t.id_usuario_genero
-        ) as usuario_nombre,
-        'Tipo: ' || t.tipo_reporte as detalles,
-        (
-            row_to_json(t.*)::jsonb 
-            || COALESCE(
-                (
-                    SELECT jsonb_build_object(
-                        'nombres_usuario_genero', u.nombres, 
-                        'apellidos_usuario_genero', u.apellidos, 
-                        'nombre_completo_usuario_genero', u.nombres || ' ' || u.apellidos
-                    )
-                    FROM usuarios u
-                    WHERE u.cedula = t.id_usuario_genero
-                ),
-                '{}'::jsonb
-            )
-            || COALESCE(
-                (
-                    SELECT jsonb_build_object(
-                        'nombres_solicitante', s.nombres,
-                        'apellidos_solicitante', s.apellidos,
-                        'nombre_completo_solicitante', s.nombres || ' ' || s.apellidos
-                    )
-                    FROM solicitantes s
-                    WHERE s.cedula = t.cedula_solicitante
-                ),
-                '{}'::jsonb
-            )
-        )::text as metadata
-    FROM auditoria_reportes t
-
-    UNION ALL
-
-    -- Casos (Inserción)
-    SELECT
-        'Caso' as entidad,
-        'Creación' as accion,
-        t.fecha_creacion as fecha,
-        t.id_usuario_creo as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre,
-        'Caso creado' as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_creo', u.nombres, 
-                    'apellidos_usuario_creo', u.apellidos, 
-                    'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.id_usuario_creo),
-                '{}'::jsonb
-            ) ||
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_solicitante', s.nombres, 
-                    'apellidos_solicitante', s.apellidos, 
-                    'nombre_completo_solicitante', s.nombres || ' ' || s.apellidos
-                ) FROM solicitantes s WHERE s.cedula = t.cedula_solicitante),
-                '{}'::jsonb
-            )
-        )::text as metadata
-    FROM auditoria_insercion_casos t
-
-    UNION ALL
-
-    -- Casos (Actualización)
-    SELECT
-        'Caso' as entidad,
-        'Actualización' as accion,
-        t.fecha_actualizacion as fecha,
-        t.id_usuario_actualizo as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_actualizo), t.id_usuario_actualizo) as usuario_nombre,
-        'Actualización de caso ' || t.id_caso as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_actualizo', u.nombres, 
-                    'apellidos_usuario_actualizo', u.apellidos, 
-                    'nombre_completo_usuario_actualizo', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo),
-                '{}'::jsonb
-            ) ||
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombre_solicitante_anterior', s_ant.nombres || ' ' || s_ant.apellidos
-                ) FROM solicitantes s_ant WHERE s_ant.cedula = t.cedula_solicitante_anterior),
-                '{}'::jsonb
-            ) ||
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombre_solicitante_nuevo', s_nue.nombres || ' ' || s_nue.apellidos,
-                    'nombres_solicitante', s_nue.nombres, 
-                    'apellidos_solicitante', s_nue.apellidos, 
-                    'nombre_completo_solicitante', s_nue.nombres || ' ' || s_nue.apellidos
-                ) FROM solicitantes s_nue WHERE s_nue.cedula = COALESCE(t.cedula_solicitante_nuevo, t.cedula_solicitante_anterior)),
-                '{}'::jsonb
-            ) ||
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombre_ambito_legal_anterior', al_ant.nombre_ambito_legal,
-                    'nombre_ambito_legal_nuevo', al_nue.nombre_ambito_legal,
-                    'nombre_materia_anterior', m_ant.nombre_materia,
-                    'nombre_materia_nuevo', m_nue.nombre_materia,
-                    'nombre_categoria_anterior', c_ant.nombre_categoria,
-                    'nombre_categoria_nuevo', c_nue.nombre_categoria,
-                    'nombre_subcategoria_anterior', sc_ant.nombre_subcategoria,
-                    'nombre_subcategoria_nuevo', sc_nue.nombre_subcategoria,
-                    'nombre_nucleo_anterior', n_ant.nombre_nucleo,
-                    'nombre_nucleo_nuevo', n_nue.nombre_nucleo
-                ) 
-                FROM auditoria_actualizacion_casos ac
-                LEFT JOIN public.nucleos n_ant ON ac.id_nucleo_anterior = n_ant.id_nucleo
-                LEFT JOIN public.nucleos n_nue ON ac.id_nucleo_nuevo = n_nue.id_nucleo
-                LEFT JOIN public.materias m_ant ON ac.id_materia_anterior = m_ant.id_materia
-                LEFT JOIN public.materias m_nue ON ac.id_materia_nuevo = m_nue.id_materia
-                LEFT JOIN public.categorias c_ant ON ac.id_materia_anterior = c_ant.id_materia AND ac.num_categoria_anterior = c_ant.num_categoria
-                LEFT JOIN public.categorias c_nue ON ac.id_materia_nuevo = c_nue.id_materia AND ac.num_categoria_nuevo = c_nue.num_categoria
-                LEFT JOIN public.subcategorias sc_ant ON ac.id_materia_anterior = sc_ant.id_materia AND ac.num_categoria_anterior = sc_ant.num_categoria AND ac.num_subcategoria_anterior = sc_ant.num_subcategoria
-                LEFT JOIN public.subcategorias sc_nue ON ac.id_materia_nuevo = sc_nue.id_materia AND ac.num_categoria_nuevo = sc_nue.num_categoria AND ac.num_subcategoria_nuevo = sc_nue.num_subcategoria
-                LEFT JOIN public.ambitos_legales al_ant ON ac.id_materia_anterior = al_ant.id_materia AND ac.num_categoria_anterior = al_ant.num_categoria AND ac.num_subcategoria_anterior = al_ant.num_subcategoria AND ac.num_ambito_legal_anterior = al_ant.num_ambito_legal
-                LEFT JOIN public.ambitos_legales al_nue ON ac.id_materia_nuevo = al_nue.id_materia AND ac.num_categoria_nuevo = al_nue.num_categoria AND ac.num_subcategoria_nuevo = al_nue.num_subcategoria AND ac.num_ambito_legal_nuevo = al_nue.num_ambito_legal
-                WHERE ac.id = t.id),
-                '{}'::jsonb
-            )
-        )::text as metadata
-    FROM auditoria_actualizacion_casos t
-
-    UNION ALL
-
-    -- Casos (Cambio de estatus)
-    SELECT
-        'Caso' as entidad,
-        'Actualización' as accion,
-        t.fecha as fecha,
-        t.id_usuario_cambia as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_cambia), t.id_usuario_cambia) as usuario_nombre,
-        'Cambio de estatus del caso ' || t.id_caso as detalles,
-        (row_to_json(t.*)::jsonb || 
-            jsonb_build_object(
-                'tipo_cambio', 'cambio_estatus',
-                'estatus_nuevo', t.nuevo_estatus,
-                'fecha_actualizacion', t.fecha,
-                'estatus_anterior', (
-                    SELECT prev.nuevo_estatus 
-                    FROM public.cambio_estatus prev 
-                    WHERE prev.id_caso = t.id_caso 
-                      AND prev.num_cambio < t.num_cambio
-                    ORDER BY prev.num_cambio DESC
-                    LIMIT 1
-                )
-            )
-        )::text as metadata
-    FROM public.cambio_estatus t
-    WHERE t.num_cambio > 1
-
-    UNION ALL
-
-    -- Casos (Eliminación)
-    SELECT
-        'Caso' as entidad,
-        'Eliminación' as accion,
-        t.fecha as fecha,
-        t.eliminado_por as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.eliminado_por), t.eliminado_por) as usuario_nombre,
-        'Causa: ' || COALESCE(t.motivo, 'No especificada') as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_elimino', u.nombres, 
-                    'apellidos_usuario_elimino', u.apellidos, 
-                    'nombre_completo_usuario_elimino', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.eliminado_por),
-                '{}'::jsonb
-            ) ||
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_solicitante', s.nombres, 
-                    'apellidos_solicitante', s.apellidos, 
-                    'nombre_completo_solicitante', s.nombres || ' ' || s.apellidos
-                ) FROM solicitantes s WHERE s.cedula = t.cedula_solicitante),
-                '{}'::jsonb
-            )
-        )::text as metadata
-    FROM auditoria_eliminacion_casos t
-
-    UNION ALL
-
-    -- Usuarios (Inserción)
-    SELECT
-        'Usuario' as entidad,
-        'Creación' as accion,
-        t.fecha_creacion as fecha,
-        t.id_usuario_creo as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre,
-        'Usuario creado: ' || t.cedula as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_creo', u.nombres, 
-                    'apellidos_usuario_creo', u.apellidos, 
-                    'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.id_usuario_creo),
-                '{}'::jsonb
-            ) ||
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'foto_perfil_usuario', u.foto_perfil
-                ) FROM usuarios u WHERE u.cedula = t.cedula),
-                '{}'::jsonb
-            )
-        )::text as metadata
-    FROM auditoria_insercion_usuarios t
-
-    UNION ALL
-
-    -- Estudiantes (Inscripción)
-    SELECT 
-        'Estudiante' as entidad, 
-        'Inscripción' as accion, 
-        t.fecha_creacion as fecha, 
-        t.id_usuario_creo as usuario_id, 
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre, 
-        'Inscripción estudiante: ' || t.cedula_estudiante as detalles, 
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_creo', u.nombres, 
-                    'apellidos_usuario_creo', u.apellidos, 
-                    'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.id_usuario_creo),
-                '{}'::jsonb
-            ) ||
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'cedula', u.cedula,
-                    'nombres', u.nombres, 
-                    'apellidos', u.apellidos, 
-                    'nombre_completo', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.cedula_estudiante),
-                '{}'::jsonb
-            )
-        )::text as metadata 
-    FROM auditoria_insercion_estudiantes t
-
-    UNION ALL
-
-    -- Profesores (Asignación)
-    SELECT 
-        'Profesor' as entidad, 
-        'Asignación' as accion, 
-        t.fecha_creacion as fecha, 
-        t.id_usuario_creo as usuario_id, 
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre, 
-        'Asignación profesor: ' || t.cedula_profesor as detalles, 
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_creo', u.nombres, 
-                    'apellidos_usuario_creo', u.apellidos, 
-                    'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.id_usuario_creo),
-                '{}'::jsonb
-            ) ||
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'cedula', u.cedula,
-                    'nombres', u.nombres, 
-                    'apellidos', u.apellidos, 
-                    'nombre_completo', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.cedula_profesor),
-                '{}'::jsonb
-            )
-        )::text as metadata 
-    FROM auditoria_insercion_profesores t
-
-    UNION ALL
-
-    -- Usuarios (Actualización)
-    SELECT
-        'Usuario' as entidad,
-        CASE 
-            WHEN (t.habilitado_sistema_anterior IS DISTINCT FROM t.habilitado_sistema_nuevo) THEN 'Habilitación'
-            ELSE 'Actualización'
-        END as accion,
-        t.fecha_actualizacion as fecha,
-        t.id_usuario_actualizo as usuario_id,
-        COALESCE(
-            (SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_actualizo), 
-            t.id_usuario_actualizo,
-            -- En caso de que el usuario que actualizó no se encuentre (ej. fue eliminado), 
-            -- intentar buscar en las auditorías de eliminación o inserción si es necesario,
-            -- pero para simplicidad mostramos el ID si no hay match.
-            -- Ojo: t.id_usuario_actualizo es la CÉDULA aquí según esquema (verificado: auditoria_actualizacion_usuarios.id_usuario_actualizo)
-            t.id_usuario_actualizo 
-        ) as usuario_nombre,
-        'Actualización de usuario ' || t.ci_usuario as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario', u.nombres, 
-                    'apellidos_usuario', u.apellidos, 
-                    'nombre_completo_usuario', u.nombres || ' ' || u.apellidos,
-                    'foto_perfil_usuario', u.foto_perfil
-                ) FROM usuarios u WHERE u.cedula = t.ci_usuario),
-                jsonb_build_object(
-                    'nombres_usuario', COALESCE(t.nombres_nuevo, t.nombres_anterior),
-                    'apellidos_usuario', COALESCE(t.apellidos_nuevo, t.apellidos_anterior),
-                    'nombre_completo_usuario', COALESCE(t.nombres_nuevo, t.nombres_anterior) || ' ' || COALESCE(t.apellidos_nuevo, t.apellidos_anterior),
-                    'foto_perfil_usuario', t.foto_perfil_nuevo
-                )
-            ) ||
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_actualizo', u2.nombres, 
-                    'apellidos_usuario_actualizo', u2.apellidos, 
-                    'nombre_completo_usuario_actualizo', u2.nombres || ' ' || u2.apellidos
-                ) FROM usuarios u2 WHERE u2.cedula = t.id_usuario_actualizo),
-                '{}'::jsonb
-            )
-        )::text as metadata
-    FROM auditoria_actualizacion_usuarios t
-
-    UNION ALL
-
-    -- Usuarios (Eliminación)
-    SELECT
-        'Usuario' as entidad,
-        'Eliminación' as accion,
-        t.fecha as fecha,
-        t.eliminado_por as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.eliminado_por), t.eliminado_por) as usuario_nombre,
-        'Usuario eliminado: ' || t.usuario_eliminado as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_eliminado_por', u.nombres, 
-                    'apellidos_eliminado_por', u.apellidos, 
-                    'nombre_completo_eliminado_por', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.eliminado_por),
-                '{}'::jsonb
-            )
-        )::text as metadata
-    FROM auditoria_eliminacion_usuario t
-
-    UNION ALL
-
-    -- Solicitantes (Inserción)
-    SELECT
-        'Solicitante' as entidad,
-        'Creación' as accion,
-        t.fecha_creacion as fecha,
-        t.id_usuario_creo as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre,
-        'Solicitante creado: ' || t.cedula as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_creo', u.nombres, 
-                    'apellidos_usuario_creo', u.apellidos, 
-                    'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.id_usuario_creo),
-                '{}'::jsonb
-            ) ||
-            jsonb_build_object(
-                'nivel_educativo', (SELECT ne.descripcion FROM niveles_educativos ne WHERE ne.id_nivel_educativo = t.id_nivel_educativo),
-                'condicion_trabajo', (SELECT ct.nombre_trabajo FROM condicion_trabajo ct WHERE ct.id_trabajo = t.id_trabajo),
-                'condicion_actividad', (SELECT ca.nombre_actividad FROM condicion_actividad ca WHERE ca.id_actividad = t.id_actividad),
-                'nombre_estado', (SELECT e.nombre_estado FROM estados e WHERE e.id_estado = t.id_estado),
-                'nombre_municipio', (SELECT m.nombre_municipio FROM municipios m WHERE m.id_estado = t.id_estado AND m.num_municipio = t.num_municipio),
-                'nombre_parroquia', (SELECT p.nombre_parroquia FROM parroquias p WHERE p.id_estado = t.id_estado AND p.num_municipio = t.num_municipio AND p.num_parroquia = t.num_parroquia)
-            )
-        )::text as metadata
-    FROM auditoria_insercion_solicitantes t
-
-    UNION ALL
-
-    -- Solicitantes (Actualización)
-    SELECT
-        'Solicitante' as entidad,
-        'Actualización' as accion,
-        t.fecha_actualizacion as fecha,
-        t.id_usuario_actualizo as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_actualizo), t.id_usuario_actualizo) as usuario_nombre,
-        'Actualización de solicitante ' || t.cedula_solicitante as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_actualizo', u.nombres, 
-                    'apellidos_usuario_actualizo', u.apellidos, 
-                    'nombre_completo_usuario_actualizo', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo),
-                '{}'::jsonb
-            ) ||
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_solicitante', s.nombres, 
-                    'apellidos_solicitante', s.apellidos, 
-                    'nombre_completo_solicitante', s.nombres || ' ' || s.apellidos
-                ) FROM solicitantes s WHERE s.cedula = t.cedula_solicitante),
-                jsonb_build_object(
-                    'nombres_solicitante', COALESCE(t.nombres_nuevo, t.nombres_anterior),
-                    'apellidos_solicitante', COALESCE(t.apellidos_nuevo, t.apellidos_anterior),
-                    'nombre_completo_solicitante', COALESCE(t.nombres_nuevo, t.nombres_anterior) || ' ' || COALESCE(t.apellidos_nuevo, t.apellidos_anterior)
-                )
-            ) ||
-            jsonb_build_object(
-                'condicion_trabajo_anterior', (SELECT ct.nombre_trabajo FROM condicion_trabajo ct WHERE ct.id_trabajo = t.id_trabajo_anterior),
-                'condicion_trabajo_nuevo', (SELECT ct.nombre_trabajo FROM condicion_trabajo ct WHERE ct.id_trabajo = t.id_trabajo_nuevo),
-                'condicion_actividad_anterior', (SELECT ca.nombre_actividad FROM condicion_actividad ca WHERE ca.id_actividad = t.id_actividad_anterior),
-                'condicion_actividad_nuevo', (SELECT ca.nombre_actividad FROM condicion_actividad ca WHERE ca.id_actividad = t.id_actividad_nuevo),
-                'nivel_educativo_anterior', (SELECT ne.descripcion FROM niveles_educativos ne WHERE ne.id_nivel_educativo = t.id_nivel_educativo_anterior),
-                'nivel_educativo_nuevo', (SELECT ne.descripcion FROM niveles_educativos ne WHERE ne.id_nivel_educativo = t.id_nivel_educativo_nuevo),
-                'estado_anterior', (SELECT e.nombre_estado FROM estados e WHERE e.id_estado = t.id_estado_anterior),
-                'estado_nuevo', (SELECT e.nombre_estado FROM estados e WHERE e.id_estado = t.id_estado_nuevo),
-                'municipio_anterior', (SELECT m.nombre_municipio FROM municipios m WHERE m.id_estado = t.id_estado_anterior AND m.num_municipio = t.num_municipio_anterior),
-                'municipio_nuevo', (SELECT m.nombre_municipio FROM municipios m WHERE m.id_estado = t.id_estado_nuevo AND m.num_municipio = t.num_municipio_nuevo),
-                'parroquia_anterior', (SELECT p.nombre_parroquia FROM parroquias p WHERE p.id_estado = t.id_estado_anterior AND p.num_municipio = t.num_municipio_anterior AND p.num_parroquia = t.num_parroquia_anterior),
-                'parroquia_nuevo', (SELECT p.nombre_parroquia FROM parroquias p WHERE p.id_estado = t.id_estado_nuevo AND p.num_municipio = t.num_municipio_nuevo AND p.num_parroquia = t.num_parroquia_nuevo)
-            )
-        )::text as metadata
-    FROM auditoria_actualizacion_solicitantes t
-
-    UNION ALL
-
-    -- Solicitantes (Eliminación)
-    SELECT
-        'Solicitante' as entidad,
-        'Eliminación' as accion,
-        t.fecha as fecha,
-        t.eliminado_por as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.eliminado_por), t.eliminado_por) as usuario_nombre,
-        'Solicitante eliminado: ' || t.solicitante_eliminado as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_elimino', u.nombres, 
-                    'apellidos_usuario_elimino', u.apellidos, 
-                    'nombre_completo_usuario_elimino', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.eliminado_por),
-                '{}'::jsonb
-            )
-        )::text as metadata
-    FROM auditoria_eliminacion_solicitantes t
-
-    UNION ALL
-
-    -- Citas (Inserción)
-    SELECT
-        'Cita' as entidad,
-        'Programación' as accion,
-        t.fecha_creacion as fecha,
-        t.id_usuario_creo as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre,
-        'Cita programada para ' || t.fecha_encuentro::text as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_creo', u.nombres, 
-                    'apellidos_usuario_creo', u.apellidos, 
-                    'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.id_usuario_creo),
-                '{}'::jsonb
-            )
-        )::text as metadata
-    FROM auditoria_insercion_citas t
-
-    UNION ALL
-
-    -- Citas (Actualización)
-    SELECT
-        'Cita' as entidad,
-        'Actualización' as accion,
-        t.fecha_actualizacion as fecha,
-        t.id_usuario_actualizo as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_actualizo), t.id_usuario_actualizo) as usuario_nombre,
-        'Actualización de cita ' || t.num_cita || ' (Caso ' || t.id_caso || ')' as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_actualizo', u.nombres, 
-                    'apellidos_usuario_actualizo', u.apellidos, 
-                    'nombre_completo_usuario_actualizo', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo),
-                '{}'::jsonb
-            ) ||
-            jsonb_build_object(
-                -- Fechas como texto para evitar que JS las parsee como UTC y reste 1 día
-                'fecha_encuentro_anterior', to_char(t.fecha_encuentro_anterior, 'YYYY-MM-DD'),
-                'fecha_encuentro_nuevo', to_char(t.fecha_encuentro_nuevo, 'YYYY-MM-DD'),
-                'fecha_proxima_cita_anterior', to_char(t.fecha_proxima_cita_anterior, 'YYYY-MM-DD'),
-                'fecha_proxima_cita_nuevo', to_char(t.fecha_proxima_cita_nuevo, 'YYYY-MM-DD'),
-                'usuarios_atenciones_anterior', COALESCE(
-                    (SELECT json_agg(json_build_object(
-                        'cedula', u.cedula,
-                        'nombre', CONCAT(u.nombres, ' ', u.apellidos)
-                    ))
-                    FROM usuarios u
-                    WHERE u.cedula = ANY(string_to_array(t.atenciones_anterior, ','))),
-                    '[]'::json  -- Devuelve JSON nulo o arreglo vacío si no hay
-                ),
-                'usuarios_atenciones_nuevo', COALESCE(
-                    (SELECT json_agg(json_build_object(
-                        'cedula', u.cedula,
-                        'nombre', CONCAT(u.nombres, ' ', u.apellidos)
-                    ))
-                    FROM usuarios u
-                    WHERE u.cedula = ANY(string_to_array(t.atenciones_nuevo, ','))),
-                    '[]'::json
-                )
-            )
-        )::text as metadata
-    FROM auditoria_actualizacion_citas t
-
-    UNION ALL
-
-    -- Citas (Eliminación)
-    SELECT
-        'Cita' as entidad,
-        'Eliminación' as accion,
-        t.fecha_eliminacion as fecha,
-        t.id_usuario_elimino as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_elimino), t.id_usuario_elimino) as usuario_nombre,
-        'Eliminación de cita ' || t.num_cita || ' (Caso ' || t.id_caso || ')' as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_elimino', u.nombres, 
-                    'apellidos_usuario_elimino', u.apellidos, 
-                    'nombre_completo_usuario_elimino', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.id_usuario_elimino),
-                '{}'::jsonb
-            ) ||
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_registro', u.nombres, 
-                    'apellidos_usuario_registro', u.apellidos, 
-                    'nombre_completo_usuario_registro', u.nombres || ' ' || u.apellidos
-                ) FROM public.usuarios u WHERE u.cedula = t.id_usuario_registro),
-                '{}'::jsonb
-            )
-        )::text as metadata
-    FROM auditoria_eliminacion_citas t
-
-    UNION ALL
-
-    -- Acciones (Inserción)
-    SELECT
-        'Acción' as entidad,
-        'Registro' as accion,
-        t.fecha_creacion as fecha,
-        t.id_usuario_creo as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre,
-        'Acción registrada en caso ' || t.id_caso as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_creo', u.nombres, 
-                    'apellidos_usuario_creo', u.apellidos, 
-                    'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.id_usuario_creo),
-                '{}'::jsonb
-            ) ||
-            jsonb_build_object(
-                'ejecutores', COALESCE(
-                    (SELECT json_agg(json_build_object(
-                        'cedula', aiae.id_usuario_ejecutor,
-                        'nombre', CONCAT(aiae.nombres_ejecutor, ' ', aiae.apellidos_ejecutor),
-                        'fecha_ejecucion', TO_CHAR(aiae.fecha_ejecucion, 'YYYY-MM-DD')
-                    ))
-                    FROM auditoria_insercion_acciones_ejecutores aiae
-                    WHERE aiae.id_auditoria_insercion = t.id),
-                    (SELECT json_agg(json_build_object(
-                        'cedula', u.cedula,
-                        'nombre', CONCAT(u.nombres, ' ', u.apellidos),
-                        'fecha_ejecucion', TO_CHAR(e.fecha_ejecucion, 'YYYY-MM-DD')
-                    ))
-                    FROM ejecutan e
-                    JOIN usuarios u ON e.id_usuario_ejecuta = u.cedula
-                    WHERE e.num_accion = t.num_accion AND e.id_caso = t.id_caso)
-                )
-            )
-        )::text as metadata
-    FROM auditoria_insercion_acciones t
-
-    UNION ALL
-
-    -- Acciones (Actualización)
-    SELECT
-        'Acción' as entidad,
-        'Actualización' as accion,
-        t.fecha_actualizacion as fecha,
-        t.id_usuario_actualizo as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_actualizo), t.id_usuario_actualizo) as usuario_nombre,
-        'Actualización de acción en caso ' || t.id_caso as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_actualizo', u.nombres, 
-                    'apellidos_usuario_actualizo', u.apellidos, 
-                    'nombre_completo_usuario_actualizo', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo),
-                '{}'::jsonb
-            ) ||
-            jsonb_build_object(
-                'ejecutores_anterior', (
-                    SELECT json_agg(json_build_object(
-                        'cedula', aaae.id_usuario_ejecutor,
-                        'nombre', CONCAT(aaae.nombres_ejecutor, ' ', aaae.apellidos_ejecutor),
-                        'fecha_ejecucion', TO_CHAR(aaae.fecha_ejecucion, 'YYYY-MM-DD')
-                    ))
-                    FROM auditoria_actualizacion_acciones_ejecutores aaae
-                    WHERE aaae.id_auditoria_actualizacion = t.id AND aaae.tipo = 'anterior'
-                ),
-                'ejecutores_nuevo', (
-                    SELECT json_agg(json_build_object(
-                        'cedula', aaae.id_usuario_ejecutor,
-                        'nombre', CONCAT(aaae.nombres_ejecutor, ' ', aaae.apellidos_ejecutor),
-                        'fecha_ejecucion', TO_CHAR(aaae.fecha_ejecucion, 'YYYY-MM-DD')
-                    ))
-                    FROM auditoria_actualizacion_acciones_ejecutores aaae
-                    WHERE aaae.id_auditoria_actualizacion = t.id AND aaae.tipo = 'nuevo'
-                )
-            )
-        )::text as metadata
-    FROM auditoria_actualizacion_acciones t
-
-    UNION ALL
-
-    -- Acciones (Eliminación)
-    SELECT
-        'Acción' as entidad,
-        'Eliminación' as accion,
-        t.fecha as fecha,
-        t.eliminado_por as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.eliminado_por), t.eliminado_por) as usuario_nombre,
-        'Acción eliminada del caso ' || t.id_caso as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_eliminado_por', u.nombres, 
-                    'apellidos_eliminado_por', u.apellidos, 
-                    'nombre_completo_eliminado_por', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.eliminado_por),
-                '{}'::jsonb
-            ) ||
-            jsonb_build_object(
-                'ejecutores', (
-                    SELECT json_agg(json_build_object(
-                        'cedula', aeae.id_usuario_ejecutor,
-                        'nombre', CONCAT(aeae.nombres_ejecutor, ' ', aeae.apellidos_ejecutor),
-                        'fecha_ejecucion', TO_CHAR(aeae.fecha_ejecucion, 'YYYY-MM-DD')
-                    ))
-                    FROM auditoria_eliminacion_acciones_ejecutores aeae
-                    WHERE aeae.id_auditoria_eliminacion = t.id
-                )
-            )
-        )::text as metadata
-    FROM auditoria_eliminacion_acciones t
-
-    UNION ALL
-
-    -- Beneficiarios (Inserción)
-    SELECT
-        'Beneficiario' as entidad,
-        'Creación' as accion,
-        t.fecha_registro as fecha,
-        t.id_usuario_registro as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_registro), t.id_usuario_registro) as usuario_nombre,
-        'Beneficiario agregado al caso ' || t.id_caso as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'usuario_nombre_completo', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.id_usuario_registro),
-                '{}'::jsonb
-            )
-        )::text as metadata
-    FROM auditoria_insercion_beneficiarios t
-
-    UNION ALL
-
-    -- Beneficiarios (Actualización)
-    SELECT
-        'Beneficiario' as entidad,
-        'Actualización' as accion,
-        t.fecha_actualizacion as fecha,
-        t.id_usuario_actualizo as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_actualizo), t.id_usuario_actualizo) as usuario_nombre,
-        'Actualización de beneficiario en caso ' || t.id_caso as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'usuario_nombre_completo', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo),
-                '{}'::jsonb
-            )
-        )::text as metadata
-    FROM auditoria_actualizacion_beneficiarios t
-
-    UNION ALL
-
-    -- Beneficiarios (Eliminación)
-    SELECT
-        'Beneficiario' as entidad,
-        'Eliminación' as accion,
-        t.fecha_eliminacion as fecha,
-        t.id_usuario_elimino as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_elimino), t.id_usuario_elimino) as usuario_nombre,
-        'Beneficiario eliminado del caso ' || t.id_caso as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'usuario_nombre_completo', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.id_usuario_elimino),
-                '{}'::jsonb
-            )
-        )::text as metadata
-    FROM auditoria_eliminacion_beneficiarios t
-
-    UNION ALL
-
-    -- Equipo (Actualización)
-    SELECT
-        'Equipo' as entidad,
-        'Actualización' as accion,
-        t.fecha_actualizacion as fecha,
-        t.id_usuario_modifico as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_modifico), t.id_usuario_modifico) as usuario_nombre,
-        'Actualización de equipo del caso ' || t.id_caso as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_modifico', u.nombres, 
-                    'apellidos_usuario_modifico', u.apellidos, 
-                    'nombre_completo_usuario_modifico', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.id_usuario_modifico),
-                '{}'::jsonb
-            ) ||
-            jsonb_build_object(
-                'miembros_anteriores', COALESCE((
-                    SELECT jsonb_agg(
-                        jsonb_build_object(
-                            'cedula', a.cedula,
-                            'tipo', a.tipo,
-                            'nombres', a.nombres,
-                            'apellidos', a.apellidos,
-                            'term', a.term,
-                            'nombre_completo', a.nombres || ' ' || a.apellidos
-                        )
-                    )
-                    FROM auditoria_actualizacion_equipo_anterior a
-                    WHERE a.id_auditoria_actualizacion = t.id
-                ), '[]'::jsonb),
-                'miembros_nuevos', COALESCE((
-                    SELECT jsonb_agg(
-                        jsonb_build_object(
-                            'cedula', n.cedula,
-                            'tipo', n.tipo,
-                            'nombres', n.nombres,
-                            'apellidos', n.apellidos,
-                            'term', n.term,
-                            'nombre_completo', n.nombres || ' ' || n.apellidos
-                        )
-                    )
-                    FROM auditoria_actualizacion_equipo_nuevo n
-                    WHERE n.id_auditoria_actualizacion = t.id
-                ), '[]'::jsonb)
-             )
-        )::text as metadata
-    FROM auditoria_actualizacion_equipo t
-
-    UNION ALL
-
-    -- Soportes (Inserción)
-    SELECT
-        'Soporte' as entidad,
-        'Subida' as accion,
-        t.fecha_creacion as fecha,
-        t.id_usuario_subio as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_subio), t.id_usuario_subio) as usuario_nombre,
-        t.nombre_archivo as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_subio', u.nombres, 
-                    'apellidos_usuario_subio', u.apellidos, 
-                    'nombre_completo_usuario_subio', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.id_usuario_subio),
-                '{}'::jsonb
-            )
-        )::text as metadata
-    FROM auditoria_insercion_soportes t
-
-    UNION ALL
-
-    -- Soportes (Eliminación)
-    SELECT
-        'Soporte' as entidad,
-        'Eliminación' as accion,
-        t.fecha_eliminacion as fecha,
-        t.id_usuario_elimino as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_elimino), t.id_usuario_elimino) as usuario_nombre,
-        t.nombre_archivo as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_elimino', u.nombres, 
-                    'apellidos_usuario_elimino', u.apellidos, 
-                    'nombre_completo_usuario_elimino', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.id_usuario_elimino),
-                '{}'::jsonb
-            )
-        )::text as metadata
-    FROM auditoria_eliminacion_soportes t
-
-    UNION ALL
-
-    -- ========================================================
-    -- CATÁLOGOS
-    -- ========================================================
-
-    -- Estados (Inserción)
-    SELECT 'Estado' as entidad, 'Creación' as accion, t.fecha_creacion as fecha, t.id_usuario_creo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre, 'Nuevo estado: ' || t.nombre_estado as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_creo', u.nombres, 'apellidos_usuario_creo', u.apellidos, 'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_creo), '{}'::jsonb))::text as metadata FROM auditoria_insercion_estados t
-
-    UNION ALL
-
-    -- Estados (Actualización)
-    SELECT 'Estado' as entidad, 'Actualización' as accion, t.fecha_actualizacion as fecha, t.id_usuario_actualizo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_actualizo), t.id_usuario_actualizo) as usuario_nombre, 'Actualización estado: ' || t.nombre_estado_anterior as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_actualizo', u.nombres, 'apellidos_usuario_actualizo', u.apellidos, 'nombre_completo_usuario_actualizo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo), '{}'::jsonb))::text as metadata FROM auditoria_actualizacion_estados t
-
-    UNION ALL
-
-    -- Estados (Eliminación)
-    SELECT 'Estado' as entidad, 'Eliminación' as accion, t.fecha_eliminacion as fecha, t.id_usuario_elimino as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_elimino), t.id_usuario_elimino) as usuario_nombre, 'Eliminación estado: ' || t.nombre_estado as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_elimino', u.nombres, 'apellidos_usuario_elimino', u.apellidos, 'nombre_completo_usuario_elimino', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_elimino), '{}'::jsonb))::text as metadata FROM auditoria_eliminacion_estados t
-
-    UNION ALL
-
-    -- Municipios (Inserción)
-    SELECT 'Municipio' as entidad, 'Creación' as accion, t.fecha_creacion as fecha, t.id_usuario_creo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre, 'Nuevo municipio: ' || t.nombre_municipio as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_creo', u.nombres, 'apellidos_usuario_creo', u.apellidos, 'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_creo), '{}'::jsonb))::text as metadata FROM auditoria_insercion_municipios t
-
-    UNION ALL
-
-    -- Municipios (Actualización)
-    SELECT 'Municipio' as entidad, 'Actualización' as accion, t.fecha_actualizacion as fecha, t.id_usuario_actualizo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_actualizo), t.id_usuario_actualizo) as usuario_nombre, 'Actualización municipio: ' || t.nombre_municipio_anterior as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_actualizo', u.nombres, 'apellidos_usuario_actualizo', u.apellidos, 'nombre_completo_usuario_actualizo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo), '{}'::jsonb))::text as metadata FROM auditoria_actualizacion_municipios t
-
-    UNION ALL
-
-    -- Municipios (Eliminación)
-    SELECT 'Municipio' as entidad, 'Eliminación' as accion, t.fecha_eliminacion as fecha, t.id_usuario_elimino as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_elimino), t.id_usuario_elimino) as usuario_nombre, 'Eliminación municipio: ' || t.nombre_municipio as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_elimino', u.nombres, 'apellidos_usuario_elimino', u.apellidos, 'nombre_completo_usuario_elimino', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_elimino), '{}'::jsonb))::text as metadata FROM auditoria_eliminacion_municipios t
-
-    UNION ALL
-
-    -- Parroquias (Inserción)
-    SELECT 'Parroquia' as entidad, 'Creación' as accion, t.fecha_creacion as fecha, t.id_usuario_creo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre, 'Nueva parroquia: ' || t.nombre_parroquia as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_creo', u.nombres, 'apellidos_usuario_creo', u.apellidos, 'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_creo), '{}'::jsonb))::text as metadata FROM auditoria_insercion_parroquias t
-
-    UNION ALL
-    
-    -- Parroquias (Actualización)
-    SELECT 'Parroquia' as entidad, 'Actualización' as accion, t.fecha_actualizacion as fecha, t.id_usuario_actualizo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_actualizo), t.id_usuario_actualizo) as usuario_nombre, 'Actualización parroquia: ' || t.nombre_parroquia_anterior as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_actualizo', u.nombres, 'apellidos_usuario_actualizo', u.apellidos, 'nombre_completo_usuario_actualizo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo), '{}'::jsonb))::text as metadata FROM auditoria_actualizacion_parroquias t
-
-    UNION ALL
-
-    -- Parroquias (Eliminación)
-    SELECT 'Parroquia' as entidad, 'Eliminación' as accion, t.fecha_eliminacion as fecha, t.id_usuario_elimino as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_elimino), t.id_usuario_elimino) as usuario_nombre, 'Eliminación parroquia: ' || t.nombre_parroquia as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_elimino', u.nombres, 'apellidos_usuario_elimino', u.apellidos, 'nombre_completo_usuario_elimino', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_elimino), '{}'::jsonb))::text as metadata FROM auditoria_eliminacion_parroquias t
-
-    UNION ALL
-
-    -- Núcleos (Inserción)
-    SELECT 'Núcleo' as entidad, 'Creación' as accion, t.fecha_creacion as fecha, t.id_usuario_creo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre, 'Nuevo núcleo: ' || t.nombre_nucleo as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_creo', u.nombres, 'apellidos_usuario_creo', u.apellidos, 'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_creo), '{}'::jsonb))::text as metadata FROM auditoria_insercion_nucleos t
-
-    UNION ALL
-
-    -- Núcleos (Actualización)
-    SELECT 'Núcleo' as entidad, 'Actualización' as accion, t.fecha_actualizacion as fecha, t.id_usuario_actualizo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_actualizo), t.id_usuario_actualizo) as usuario_nombre, 'Actualización núcleo: ' || t.nombre_nucleo_anterior as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_actualizo', u.nombres, 'apellidos_usuario_actualizo', u.apellidos, 'nombre_completo_usuario_actualizo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo), '{}'::jsonb))::text as metadata FROM auditoria_actualizacion_nucleos t
-
-    UNION ALL
-
-    -- Núcleos (Eliminación)
-    SELECT 'Núcleo' as entidad, 'Eliminación' as accion, t.fecha_eliminacion as fecha, t.id_usuario_elimino as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_elimino), t.id_usuario_elimino) as usuario_nombre, 'Eliminación núcleo: ' || t.nombre_nucleo as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_elimino', u.nombres, 'apellidos_usuario_elimino', u.apellidos, 'nombre_completo_usuario_elimino', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_elimino), '{}'::jsonb))::text as metadata FROM auditoria_eliminacion_nucleos t
-
-    UNION ALL
-
-    -- Materias (Inserción)
-    SELECT 'Materia' as entidad, 'Creación' as accion, t.fecha_creacion as fecha, t.id_usuario_creo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre, 'Nueva materia: ' || t.nombre_materia as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_creo', u.nombres, 'apellidos_usuario_creo', u.apellidos, 'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_creo), '{}'::jsonb))::text as metadata FROM auditoria_insercion_materias t
-
-    UNION ALL
-
-    -- Materias (Actualización)
-    SELECT 'Materia' as entidad, 'Actualización' as accion, t.fecha_actualizacion as fecha, t.id_usuario_actualizo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_actualizo), t.id_usuario_actualizo) as usuario_nombre, 'Actualización materia: ' || t.nombre_materia_anterior as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_actualizo', u.nombres, 'apellidos_usuario_actualizo', u.apellidos, 'nombre_completo_usuario_actualizo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo), '{}'::jsonb))::text as metadata FROM auditoria_actualizacion_materias t
-
-    UNION ALL
-
-    -- Materias (Eliminación)
-    SELECT 'Materia' as entidad, 'Eliminación' as accion, t.fecha_eliminacion as fecha, t.id_usuario_elimino as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_elimino), t.id_usuario_elimino) as usuario_nombre, 'Eliminación materia: ' || t.nombre_materia as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_elimino', u.nombres, 'apellidos_usuario_elimino', u.apellidos, 'nombre_completo_usuario_elimino', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_elimino), '{}'::jsonb))::text as metadata FROM auditoria_eliminacion_materias t
-
-    UNION ALL
-
-    -- Semestres (Inserción)
-    SELECT 'Semestre' as entidad, 'Creación' as accion, t.fecha_creacion as fecha, t.id_usuario_creo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre, 'Nuevo semestre: ' || t.term as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_creo', u.nombres, 'apellidos_usuario_creo', u.apellidos, 'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_creo), '{}'::jsonb))::text as metadata FROM auditoria_insercion_semestres t
-
-    UNION ALL
-
-    -- Semestres (Actualización)
-    SELECT 'Semestre' as entidad, 'Actualización' as accion, t.fecha_actualizacion as fecha, t.id_usuario_actualizo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_actualizo), t.id_usuario_actualizo) as usuario_nombre, 'Actualización semestre: ' || t.term as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_actualizo', u.nombres, 'apellidos_usuario_actualizo', u.apellidos, 'nombre_completo_usuario_actualizo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo), '{}'::jsonb))::text as metadata FROM auditoria_actualizacion_semestres t
-
-    UNION ALL
-
-    -- Semestres (Eliminación)
-    SELECT 'Semestre' as entidad, 'Eliminación' as accion, t.fecha_eliminacion as fecha, t.id_usuario_elimino as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_elimino), t.id_usuario_elimino) as usuario_nombre, 'Eliminación semestre: ' || t.term as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_elimino', u.nombres, 'apellidos_usuario_elimino', u.apellidos, 'nombre_completo_usuario_elimino', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_elimino), '{}'::jsonb))::text as metadata FROM auditoria_eliminacion_semestres t
-
-    UNION ALL
-
-    -- Categorías (Inserción)
-    SELECT 'Categoría' as entidad, 'Creación' as accion, t.fecha_creacion as fecha, t.id_usuario_creo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre, 'Nueva categoría: ' || t.nombre_categoria as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_creo', u.nombres, 'apellidos_usuario_creo', u.apellidos, 'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_creo), '{}'::jsonb))::text as metadata FROM auditoria_insercion_categorias t
-
-    UNION ALL
-
-    -- Categorías (Actualización)
-    SELECT 'Categoría' as entidad, 'Actualización' as accion, t.fecha_actualizacion as fecha, t.id_usuario_actualizo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_actualizo), t.id_usuario_actualizo) as usuario_nombre, 'Actualización categoría: ' || t.nombre_categoria_anterior as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_actualizo', u.nombres, 'apellidos_usuario_actualizo', u.apellidos, 'nombre_completo_usuario_actualizo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo), '{}'::jsonb))::text as metadata FROM auditoria_actualizacion_categorias t
-
-    UNION ALL
-
-    -- Categorías (Eliminación)
-    SELECT 'Categoría' as entidad, 'Eliminación' as accion, t.fecha_eliminacion as fecha, t.id_usuario_elimino as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_elimino), t.id_usuario_elimino) as usuario_nombre, 'Eliminación categoría: ' || t.nombre_categoria as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_elimino', u.nombres, 'apellidos_usuario_elimino', u.apellidos, 'nombre_completo_usuario_elimino', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_elimino), '{}'::jsonb))::text as metadata FROM auditoria_eliminacion_categorias t
-
-    UNION ALL
-
-    -- Subcategorías (Inserción)
-    SELECT 'Subcategoría' as entidad, 'Creación' as accion, t.fecha_creacion as fecha, t.id_usuario_creo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre, 'Nueva subcategoría: ' || t.nombre_subcategoria as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_creo', u.nombres, 'apellidos_usuario_creo', u.apellidos, 'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_creo), '{}'::jsonb) || COALESCE((SELECT jsonb_build_object('nombre_categoria', c.nombre_categoria, 'nombre_materia', m.nombre_materia) FROM categorias c JOIN materias m ON c.id_materia = m.id_materia WHERE c.id_materia = t.id_materia AND c.num_categoria = t.num_categoria), '{}'::jsonb))::text as metadata FROM auditoria_insercion_subcategorias t
-
-    UNION ALL
-
-    -- Subcategorías (Actualización)
-    SELECT 'Subcategoría' as entidad, 'Actualización' as accion, t.fecha_actualizacion as fecha, t.id_usuario_actualizo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_actualizo), t.id_usuario_actualizo) as usuario_nombre, 'Actualización subcategoría: ' || t.nombre_subcategoria_anterior as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_actualizo', u.nombres, 'apellidos_usuario_actualizo', u.apellidos, 'nombre_completo_usuario_actualizo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo), '{}'::jsonb) || COALESCE((SELECT jsonb_build_object('nombre_categoria', c.nombre_categoria, 'nombre_materia', m.nombre_materia) FROM categorias c JOIN materias m ON c.id_materia = m.id_materia WHERE c.id_materia = t.id_materia AND c.num_categoria = t.num_categoria), '{}'::jsonb))::text as metadata FROM auditoria_actualizacion_subcategorias t
-
-    UNION ALL
-
-    -- Subcategorías (Eliminación)
-    SELECT 'Subcategoría' as entidad, 'Eliminación' as accion, t.fecha_eliminacion as fecha, t.id_usuario_elimino as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_elimino), t.id_usuario_elimino) as usuario_nombre, 'Eliminación subcategoría: ' || t.nombre_subcategoria as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_elimino', u.nombres, 'apellidos_usuario_elimino', u.apellidos, 'nombre_completo_usuario_elimino', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_elimino), '{}'::jsonb) || COALESCE((SELECT jsonb_build_object('nombre_categoria', c.nombre_categoria, 'nombre_materia', m.nombre_materia) FROM categorias c JOIN materias m ON c.id_materia = m.id_materia WHERE c.id_materia = t.id_materia AND c.num_categoria = t.num_categoria), '{}'::jsonb))::text as metadata FROM auditoria_eliminacion_subcategorias t
-
-    UNION ALL
-
-    -- Ámbitos Legales (Inserción)
-    SELECT 'Ámbito Legal' as entidad, 'Creación' as accion, t.fecha_creacion as fecha, t.id_usuario_creo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre, 'Nuevo ámbito legal: ' || t.nombre_ambito_legal as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_creo', u.nombres, 'apellidos_usuario_creo', u.apellidos, 'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_creo), '{}'::jsonb))::text as metadata FROM auditoria_insercion_ambitos_legales t
-
-    UNION ALL
-
-    -- Ámbitos Legales (Actualización)
-    SELECT 'Ámbito Legal' as entidad, 'Actualización' as accion, t.fecha_actualizacion as fecha, t.id_usuario_actualizo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_actualizo), t.id_usuario_actualizo) as usuario_nombre, 'Actualización ámbito legal: ' || t.nombre_ambito_legal_anterior as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_actualizo', u.nombres, 'apellidos_usuario_actualizo', u.apellidos, 'nombre_completo_usuario_actualizo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo), '{}'::jsonb))::text as metadata FROM auditoria_actualizacion_ambitos_legales t
-
-    UNION ALL
-
-    -- Ámbitos Legales (Eliminación)
-    SELECT 'Ámbito Legal' as entidad, 'Eliminación' as accion, t.fecha_eliminacion as fecha, t.id_usuario_elimino as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_elimino), t.id_usuario_elimino) as usuario_nombre, 'Eliminación ámbito legal: ' || t.nombre_ambito_legal as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_elimino', u.nombres, 'apellidos_usuario_elimino', u.apellidos, 'nombre_completo_usuario_elimino', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_elimino), '{}'::jsonb))::text as metadata FROM auditoria_eliminacion_ambitos_legales t
-
-    UNION ALL
-
-    -- Niveles Educativos (Inserción)
-    SELECT 'Nivel Educativo' as entidad, 'Creación' as accion, t.fecha_creacion as fecha, t.id_usuario_creo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre, 'Nuevo nivel educativo: ' || t.descripcion as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_creo', u.nombres, 'apellidos_usuario_creo', u.apellidos, 'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_creo), '{}'::jsonb))::text as metadata FROM auditoria_insercion_niveles_educativos t
-
-    UNION ALL
-
-    -- Niveles Educativos (Actualización)
-    SELECT 'Nivel Educativo' as entidad, 'Actualización' as accion, t.fecha_actualizacion as fecha, t.id_usuario_actualizo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_actualizo), t.id_usuario_actualizo) as usuario_nombre, 'Actualización nivel educativo: ' || t.descripcion_anterior as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_actualizo', u.nombres, 'apellidos_usuario_actualizo', u.apellidos, 'nombre_completo_usuario_actualizo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo), '{}'::jsonb))::text as metadata FROM auditoria_actualizacion_niveles_educativos t
-
-    UNION ALL
-
-    -- Niveles Educativos (Eliminación)
-    SELECT 'Nivel Educativo' as entidad, 'Eliminación' as accion, t.fecha_eliminacion as fecha, t.id_usuario_elimino as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_elimino), t.id_usuario_elimino) as usuario_nombre, 'Eliminación nivel educativo: ' || t.descripcion as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_elimino', u.nombres, 'apellidos_usuario_elimino', u.apellidos, 'nombre_completo_usuario_elimino', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_elimino), '{}'::jsonb))::text as metadata FROM auditoria_eliminacion_niveles_educativos t
-
-    UNION ALL
-
-    -- Condiciones Trabajo (Inserción)
-    SELECT 'Condición Trabajo' as entidad, 'Creación' as accion, t.fecha_creacion as fecha, t.id_usuario_creo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre, 'Nueva condición trabajo: ' || t.nombre_trabajo as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_creo', u.nombres, 'apellidos_usuario_creo', u.apellidos, 'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_creo), '{}'::jsonb))::text as metadata FROM auditoria_insercion_condiciones_trabajo t
-
-    UNION ALL
-
-    -- Condiciones Trabajo (Actualización)
-    SELECT 'Condición Trabajo' as entidad, 'Actualización' as accion, t.fecha_actualizacion as fecha, t.id_usuario_actualizo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_actualizo), t.id_usuario_actualizo) as usuario_nombre, 'Actualización condición trabajo: ' || t.nombre_trabajo_anterior as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_actualizo', u.nombres, 'apellidos_usuario_actualizo', u.apellidos, 'nombre_completo_usuario_actualizo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo), '{}'::jsonb))::text as metadata FROM auditoria_actualizacion_condiciones_trabajo t
-
-    UNION ALL
-
-    -- Condiciones Trabajo (Eliminación)
-    SELECT 'Condición Trabajo' as entidad, 'Eliminación' as accion, t.fecha_eliminacion as fecha, t.id_usuario_elimino as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_elimino), t.id_usuario_elimino) as usuario_nombre, 'Eliminación condición trabajo: ' || t.nombre_trabajo as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_elimino', u.nombres, 'apellidos_usuario_elimino', u.apellidos, 'nombre_completo_usuario_elimino', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_elimino), '{}'::jsonb))::text as metadata FROM auditoria_eliminacion_condiciones_trabajo t
-
-    UNION ALL
-
-    -- Condiciones Actividad (Inserción)
-    SELECT 'Condición Actividad' as entidad, 'Creación' as accion, t.fecha_creacion as fecha, t.id_usuario_creo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre, 'Nueva condición actividad: ' || t.nombre_actividad as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_creo', u.nombres, 'apellidos_usuario_creo', u.apellidos, 'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_creo), '{}'::jsonb))::text as metadata FROM auditoria_insercion_condiciones_actividad t
-
-    UNION ALL
-
-    -- Condiciones Actividad (Actualización)
-    SELECT 'Condición Actividad' as entidad, 'Actualización' as accion, t.fecha_actualizacion as fecha, t.id_usuario_actualizo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_actualizo), t.id_usuario_actualizo) as usuario_nombre, 'Actualización condición actividad: ' || t.nombre_actividad_anterior as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_actualizo', u.nombres, 'apellidos_usuario_actualizo', u.apellidos, 'nombre_completo_usuario_actualizo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo), '{}'::jsonb))::text as metadata FROM auditoria_actualizacion_condiciones_actividad t
-
-    UNION ALL
-
-    -- Condiciones Actividad (Eliminación)
-    SELECT 'Condición Actividad' as entidad, 'Eliminación' as accion, t.fecha_eliminacion as fecha, t.id_usuario_elimino as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_elimino), t.id_usuario_elimino) as usuario_nombre, 'Eliminación condición actividad: ' || t.nombre_actividad as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_elimino', u.nombres, 'apellidos_usuario_elimino', u.apellidos, 'nombre_completo_usuario_elimino', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_elimino), '{}'::jsonb))::text as metadata FROM auditoria_eliminacion_condiciones_actividad t
-
-    UNION ALL
-
-    -- Tipos Características (Inserción)
-    SELECT 'Tipo Característica' as entidad, 'Creación' as accion, t.fecha_creacion as fecha, t.id_usuario_creo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre, 'Nuevo tipo característica: ' || t.nombre_tipo_caracteristica as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_creo', u.nombres, 'apellidos_usuario_creo', u.apellidos, 'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_creo), '{}'::jsonb))::text as metadata FROM auditoria_insercion_tipos_caracteristicas t
-
-    UNION ALL
-
-    -- Tipos Características (Actualización)
-    SELECT 'Tipo Característica' as entidad, 'Actualización' as accion, t.fecha_actualizacion as fecha, t.id_usuario_actualizo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_actualizo), t.id_usuario_actualizo) as usuario_nombre, 'Actualización tipo característica: ' || t.nombre_tipo_caracteristica_anterior as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_actualizo', u.nombres, 'apellidos_usuario_actualizo', u.apellidos, 'nombre_completo_usuario_actualizo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo), '{}'::jsonb))::text as metadata FROM auditoria_actualizacion_tipos_caracteristicas t
-
-    UNION ALL
-
-    -- Tipos Características (Eliminación)
-    SELECT 'Tipo Característica' as entidad, 'Eliminación' as accion, t.fecha_eliminacion as fecha, t.id_usuario_elimino as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_elimino), t.id_usuario_elimino) as usuario_nombre, 'Eliminación tipo característica: ' || t.nombre_tipo_caracteristica as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_elimino', u.nombres, 'apellidos_usuario_elimino', u.apellidos, 'nombre_completo_usuario_elimino', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_elimino), '{}'::jsonb))::text as metadata FROM auditoria_eliminacion_tipos_caracteristicas t
-
-    UNION ALL
-
-    -- Características (Inserción)
-    SELECT 'Característica' as entidad, 'Creación' as accion, t.fecha_creacion as fecha, t.id_usuario_creo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_creo), t.id_usuario_creo) as usuario_nombre, 'Nueva característica: ' || t.descripcion as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_creo', u.nombres, 'apellidos_usuario_creo', u.apellidos, 'nombre_completo_usuario_creo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_creo), '{}'::jsonb))::text as metadata FROM auditoria_insercion_caracteristicas t
-
-    UNION ALL
-
-    -- Características (Actualización)
-    SELECT 'Característica' as entidad, 'Actualización' as accion, t.fecha_actualizacion as fecha, t.id_usuario_actualizo as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_actualizo), t.id_usuario_actualizo) as usuario_nombre, 'Actualización característica: ' || t.descripcion_anterior as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_actualizo', u.nombres, 'apellidos_usuario_actualizo', u.apellidos, 'nombre_completo_usuario_actualizo', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_actualizo), '{}'::jsonb))::text as metadata FROM auditoria_actualizacion_caracteristicas t
-
-    UNION ALL
-
-    -- Características (Eliminación)
-    SELECT 'Característica' as entidad, 'Eliminación' as accion, t.fecha_eliminacion as fecha, t.id_usuario_elimino as usuario_id, COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_elimino), t.id_usuario_elimino) as usuario_nombre, 'Eliminación característica: ' || t.descripcion as detalles, (row_to_json(t.*)::jsonb || COALESCE((SELECT jsonb_build_object('nombres_usuario_elimino', u.nombres, 'apellidos_usuario_elimino', u.apellidos, 'nombre_completo_usuario_elimino', u.nombres || ' ' || u.apellidos) FROM usuarios u WHERE u.cedula = t.id_usuario_elimino), '{}'::jsonb))::text as metadata FROM auditoria_eliminacion_caracteristicas t
-
-    UNION ALL
-
-    -- Soportes (Inserción / Subida)
-    SELECT
-        'Soporte' as entidad,
-        'Subida' as accion,
-        t.fecha_creacion as fecha,
-        t.id_usuario_subio as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_subio), t.id_usuario_subio) as usuario_nombre,
-        'Archivo: ' || t.nombre_archivo as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_subio', u.nombres, 
-                    'apellidos_usuario_subio', u.apellidos, 
-                    'nombre_completo_usuario_subio', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.id_usuario_subio),
-                '{}'::jsonb
-            )
-        )::text as metadata
-    FROM auditoria_insercion_soportes t
-
-    UNION ALL
-
-    -- Soportes (Eliminación)
-    SELECT
-        'Soporte' as entidad,
-        'Eliminación' as accion,
-        t.fecha_eliminacion as fecha,
-        t.id_usuario_elimino as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario_elimino), t.id_usuario_elimino) as usuario_nombre,
-        'Archivo: ' || t.nombre_archivo as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_elimino', u.nombres, 
-                    'apellidos_usuario_elimino', u.apellidos, 
-                    'nombre_completo_usuario_elimino', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.id_usuario_elimino),
-                '{}'::jsonb
-            )
-        )::text as metadata
-    FROM auditoria_eliminacion_soportes t
-
-    UNION ALL
-
-    -- Soportes (Descarga)
-    SELECT
-        'Soporte' as entidad,
-        'Descarga' as accion,
-        t.fecha_descarga as fecha,
-        t.cedula_descargo as usuario_id,
-        COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.cedula_descargo), t.cedula_descargo) as usuario_nombre,
-        'Archivo: ' || t.nombre_archivo as detalles,
-        (row_to_json(t.*)::jsonb || 
-            COALESCE(
-                (SELECT jsonb_build_object(
-                    'nombres_usuario_descargo', u.nombres, 
-                    'apellidos_usuario_descargo', u.apellidos, 
-                    'nombre_completo_usuario_descargo', u.nombres || ' ' || u.apellidos
-                ) FROM usuarios u WHERE u.cedula = t.cedula_descargo),
-                '{}'::jsonb
-            )
-        )::text as metadata
-    FROM auditoria_descarga_soportes t
-) AS unified_logs
-WHERE
-    ($3::text IS NULL OR entidad = $3) AND
-    ($4::text IS NULL OR usuario_id = $4) AND
-    ($5::text IS NULL OR accion ILIKE '%' || $5 || '%') AND
-    ($6::timestamp IS NULL OR fecha >= $6) AND
-    ($7::timestamp IS NULL OR fecha <= $7) AND
-    ($9::text IS NULL OR (
-        TRANSLATE(detalles, 'áéíóúÁÉÍÓÚäëïöüÄËÏÖÜ', 'aeiouAEIOUaeiouAEIOU') ILIKE '%' || TRANSLATE($9, 'áéíóúÁÉÍÓÚäëïöüÄËÏÖÜ', 'aeiouAEIOUaeiouAEIOU') || '%' OR 
-        TRANSLATE(usuario_nombre, 'áéíóúÁÉÍÓÚäëïöüÄËÏÖÜ', 'aeiouAEIOUaeiouAEIOU') ILIKE '%' || TRANSLATE($9, 'áéíóúÁÉÍÓÚäëïöüÄËÏÖÜ', 'aeiouAEIOUaeiouAEIOU') || '%' OR 
-        TRANSLATE(accion, 'áéíóúÁÉÍÓÚäëïöüÄËÏÖÜ', 'aeiouAEIOUaeiouAEIOU') ILIKE '%' || TRANSLATE($9, 'áéíóúÁÉÍÓÚäëïöüÄËÏÖÜ', 'aeiouAEIOUaeiouAEIOU') || '%' OR 
-        TRANSLATE(metadata::text, 'áéíóúÁÉÍÓÚäëïöüÄËÏÖÜ', 'aeiouAEIOUaeiouAEIOU') ILIKE '%' || TRANSLATE($9, 'áéíóúÁÉÍÓÚäëïöüÄËÏÖÜ', 'aeiouAEIOUaeiouAEIOU') || '%'
-    ))
-ORDER BY 
-    CASE WHEN ($8::text = 'asc') THEN fecha END ASC,
-    CASE WHEN ($8::text = 'desc' OR $8::text IS NULL) THEN fecha END DESC
+-- Obtener logs unificados de auditoría con paginación
+-- Devuelve campos crudos (entidad/operacion/id_entidad) para que el frontend
+-- genérico pueda buscar la config de la entidad y armar el diff, en vez de
+-- strings ya formateados en español.
+--
+-- Sesiones, reportes y descargas de soportes viven en auditoria_eventos
+-- (entidad='sesion'|'reporte'|'soporte') desde la migración
+-- 20260910_120000_unificar_sesiones_reportes_soportes_en_auditoria_eventos.sql —
+-- ya no hace falta el UNION ALL contra sus tablas viejas.
+SELECT
+    t.id::text as id,
+    t.id_transaccion::text as id_transaccion,
+    t.entidad as entidad,
+    t.operacion as operacion,
+    t.id_entidad as id_entidad,
+    t.fecha_evento as fecha,
+    t.id_usuario as usuario_id,
+    COALESCE((SELECT nombres || ' ' || apellidos FROM usuarios WHERE cedula = t.id_usuario), t.id_usuario) as usuario_nombre,
+    -- Para eventos de 'caso', resolver el nombre del solicitante (columna
+    -- `cedula` cruda en datos_nuevos/datos_anteriores) — el frontend no
+    -- puede hacer este JOIN por su cuenta. Usado para la tarjeta de
+    -- creación/eliminación (un solo nombre) y, por separado más abajo, para
+    -- el diff de actualización cuando la cédula misma cambia.
+    -- También para 'solicitante' y sus eventos derivados: en una
+    -- actualización la cédula (PK) no viene en el diff, solo en id_entidad
+    -- (o metadata.cedula_solicitante en eventos migrados).
+    (CASE
+        WHEN t.entidad = 'caso' THEN
+            (SELECT nombres || ' ' || apellidos FROM solicitantes
+             WHERE cedula = COALESCE(t.datos_nuevos->>'cedula', t.datos_anteriores->>'cedula',
+                                     t.datos_nuevos->>'cedula_solicitante', t.datos_anteriores->>'cedula_solicitante'))
+        WHEN t.entidad IN ('solicitante', 'solicitante_perfil', 'solicitante_artefactos', 'vivienda', 'familia_y_hogar') THEN
+            (SELECT nombres || ' ' || apellidos FROM solicitantes
+             WHERE cedula = COALESCE(t.id_entidad, t.metadata->>'cedula_solicitante'))
+    END) as solicitante_nombre,
+    (CASE WHEN t.entidad = 'caso' AND (t.datos_anteriores ? 'cedula') THEN
+        (SELECT nombres || ' ' || apellidos FROM solicitantes WHERE cedula = t.datos_anteriores->>'cedula')
+    END) as nombre_solicitante_anterior,
+    (CASE WHEN t.entidad = 'caso' AND (t.datos_nuevos ? 'cedula') THEN
+        (SELECT nombres || ' ' || apellidos FROM solicitantes WHERE cedula = t.datos_nuevos->>'cedula')
+    END) as nombre_solicitante_nuevo,
+    -- Para actualizaciones de 'caso' que cambian núcleo/materia/categoría/
+    -- subcategoría/ámbito legal, el diff solo trae el id crudo (id_nucleo,
+    -- id_materia, num_categoria...) — resolver nombres. Categoría,
+    -- subcategoría y ámbito legal usan claves compuestas; las partes que no
+    -- cambiaron no están en el diff, así que se completan con el valor
+    -- vigente en `casos` (join por id_entidad).
+    (CASE WHEN t.entidad = 'caso' AND (t.datos_anteriores ? 'id_nucleo') THEN
+        (SELECT nombre_nucleo FROM nucleos WHERE id_nucleo = (t.datos_anteriores->>'id_nucleo')::int)
+    END) as nombre_nucleo_anterior,
+    (CASE WHEN t.entidad = 'caso' AND (t.datos_nuevos ? 'id_nucleo') THEN
+        (SELECT nombre_nucleo FROM nucleos WHERE id_nucleo = (t.datos_nuevos->>'id_nucleo')::int)
+    END) as nombre_nucleo_nuevo,
+    (CASE WHEN t.entidad = 'caso' AND (t.datos_anteriores ? 'id_materia') THEN
+        (SELECT nombre_materia FROM materias WHERE id_materia = (t.datos_anteriores->>'id_materia')::int)
+    END) as nombre_materia_anterior,
+    (CASE WHEN t.entidad = 'caso' AND (t.datos_nuevos ? 'id_materia') THEN
+        (SELECT nombre_materia FROM materias WHERE id_materia = (t.datos_nuevos->>'id_materia')::int)
+    END) as nombre_materia_nuevo,
+    (CASE WHEN t.entidad = 'caso' AND (t.datos_anteriores ? 'num_categoria' OR t.datos_anteriores ? 'id_materia') THEN
+        (SELECT cat.nombre_categoria
+         FROM categorias cat
+         LEFT JOIN casos c ON c.id_caso = t.id_entidad::int
+         WHERE cat.id_materia = COALESCE((t.datos_anteriores->>'id_materia')::int, c.id_materia)
+           AND cat.num_categoria = COALESCE((t.datos_anteriores->>'num_categoria')::int, c.num_categoria))
+    END) as nombre_categoria_anterior,
+    (CASE WHEN t.entidad = 'caso' AND (t.datos_nuevos ? 'num_categoria' OR t.datos_nuevos ? 'id_materia') THEN
+        (SELECT cat.nombre_categoria
+         FROM categorias cat
+         LEFT JOIN casos c ON c.id_caso = t.id_entidad::int
+         WHERE cat.id_materia = COALESCE((t.datos_nuevos->>'id_materia')::int, c.id_materia)
+           AND cat.num_categoria = COALESCE((t.datos_nuevos->>'num_categoria')::int, c.num_categoria))
+    END) as nombre_categoria_nuevo,
+    (CASE WHEN t.entidad = 'caso' AND (
+        t.datos_anteriores ? 'num_subcategoria' OR t.datos_anteriores ? 'num_categoria' OR t.datos_anteriores ? 'id_materia'
+    ) THEN
+        (SELECT sub.nombre_subcategoria
+         FROM subcategorias sub
+         LEFT JOIN casos c ON c.id_caso = t.id_entidad::int
+         WHERE sub.id_materia = COALESCE((t.datos_anteriores->>'id_materia')::int, c.id_materia)
+           AND sub.num_categoria = COALESCE((t.datos_anteriores->>'num_categoria')::int, c.num_categoria)
+           AND sub.num_subcategoria = COALESCE((t.datos_anteriores->>'num_subcategoria')::int, c.num_subcategoria))
+    END) as nombre_subcategoria_anterior,
+    (CASE WHEN t.entidad = 'caso' AND (
+        t.datos_nuevos ? 'num_subcategoria' OR t.datos_nuevos ? 'num_categoria' OR t.datos_nuevos ? 'id_materia'
+    ) THEN
+        (SELECT sub.nombre_subcategoria
+         FROM subcategorias sub
+         LEFT JOIN casos c ON c.id_caso = t.id_entidad::int
+         WHERE sub.id_materia = COALESCE((t.datos_nuevos->>'id_materia')::int, c.id_materia)
+           AND sub.num_categoria = COALESCE((t.datos_nuevos->>'num_categoria')::int, c.num_categoria)
+           AND sub.num_subcategoria = COALESCE((t.datos_nuevos->>'num_subcategoria')::int, c.num_subcategoria))
+    END) as nombre_subcategoria_nuevo,
+    (CASE WHEN t.entidad = 'caso' AND (
+        t.datos_anteriores ? 'num_ambito_legal' OR t.datos_anteriores ? 'id_materia' OR
+        t.datos_anteriores ? 'num_categoria' OR t.datos_anteriores ? 'num_subcategoria'
+    ) THEN
+        (SELECT al.nombre_ambito_legal
+         FROM ambitos_legales al
+         LEFT JOIN casos c ON c.id_caso = t.id_entidad::int
+         WHERE al.id_materia = COALESCE((t.datos_anteriores->>'id_materia')::int, c.id_materia)
+           AND al.num_categoria = COALESCE((t.datos_anteriores->>'num_categoria')::int, c.num_categoria)
+           AND al.num_subcategoria = COALESCE((t.datos_anteriores->>'num_subcategoria')::int, c.num_subcategoria)
+           AND al.num_ambito_legal = COALESCE((t.datos_anteriores->>'num_ambito_legal')::int, c.num_ambito_legal))
+    END) as nombre_ambito_legal_anterior,
+    (CASE WHEN t.entidad = 'caso' AND (
+        t.datos_nuevos ? 'num_ambito_legal' OR t.datos_nuevos ? 'id_materia' OR
+        t.datos_nuevos ? 'num_categoria' OR t.datos_nuevos ? 'num_subcategoria'
+    ) THEN
+        (SELECT al.nombre_ambito_legal
+         FROM ambitos_legales al
+         LEFT JOIN casos c ON c.id_caso = t.id_entidad::int
+         WHERE al.id_materia = COALESCE((t.datos_nuevos->>'id_materia')::int, c.id_materia)
+           AND al.num_categoria = COALESCE((t.datos_nuevos->>'num_categoria')::int, c.num_categoria)
+           AND al.num_subcategoria = COALESCE((t.datos_nuevos->>'num_subcategoria')::int, c.num_subcategoria)
+           AND al.num_ambito_legal = COALESCE((t.datos_nuevos->>'num_ambito_legal')::int, c.num_ambito_legal))
+    END) as nombre_ambito_legal_nuevo,
+    -- Nombre del catálogo "padre" para las tarjetas de categoría/
+    -- subcategoría/ámbito legal/característica/municipio/parroquia — un
+    -- solo valor (no _anterior/_nuevo) porque la parte de la clave que
+    -- identifica al padre es parte de la PK y no cambia entre operaciones;
+    -- se resuelve haciendo JOIN hacia arriba desde la fila actual del propio
+    -- catálogo (localizada por id_entidad, en el mismo orden de columnas que
+    -- declara su CREATE TRIGGER trg_audit_* en schema.sql). Para
+    -- eliminaciones la fila ya no existe y esto resuelve NULL — igual que
+    -- antes, sin regresión.
+    (CASE WHEN t.entidad = 'categoria' THEN
+        (SELECT m.nombre_materia
+         FROM categorias cat JOIN materias m ON m.id_materia = cat.id_materia
+         WHERE cat.num_categoria = split_part(t.id_entidad, '-', 1)::int
+           AND cat.id_materia = split_part(t.id_entidad, '-', 2)::int)
+    END) as nombre_materia,
+    (CASE WHEN t.entidad = 'subcategoria' THEN
+        (SELECT cat.nombre_categoria
+         FROM subcategorias sub
+         JOIN categorias cat ON cat.id_materia = sub.id_materia AND cat.num_categoria = sub.num_categoria
+         WHERE sub.num_subcategoria = split_part(t.id_entidad, '-', 1)::int
+           AND sub.num_categoria = split_part(t.id_entidad, '-', 2)::int
+           AND sub.id_materia = split_part(t.id_entidad, '-', 3)::int)
+    END) as nombre_categoria,
+    (CASE WHEN t.entidad = 'ambito_legal' THEN
+        (SELECT sub.nombre_subcategoria
+         FROM ambitos_legales al
+         JOIN subcategorias sub ON sub.id_materia = al.id_materia AND sub.num_categoria = al.num_categoria AND sub.num_subcategoria = al.num_subcategoria
+         WHERE al.id_materia = split_part(t.id_entidad, '-', 1)::int
+           AND al.num_categoria = split_part(t.id_entidad, '-', 2)::int
+           AND al.num_subcategoria = split_part(t.id_entidad, '-', 3)::int
+           AND al.num_ambito_legal = split_part(t.id_entidad, '-', 4)::int)
+    END) as nombre_subcategoria,
+    (CASE WHEN t.entidad = 'caracteristica' THEN
+        (SELECT tc.nombre_tipo_caracteristica
+         FROM caracteristicas c2 JOIN tipo_caracteristicas tc ON tc.id_tipo = c2.id_tipo_caracteristica
+         WHERE c2.id_tipo_caracteristica = split_part(t.id_entidad, '-', 1)::int
+           AND c2.num_caracteristica = split_part(t.id_entidad, '-', 2)::int)
+    END) as nombre_tipo_caracteristica,
+    (CASE WHEN t.entidad = 'municipio' THEN
+        (SELECT e.nombre_estado
+         FROM municipios mu JOIN estados e ON e.id_estado = mu.id_estado
+         WHERE mu.id_estado = split_part(t.id_entidad, '-', 1)::int
+           AND mu.num_municipio = split_part(t.id_entidad, '-', 2)::int)
+    END) as nombre_estado,
+    (CASE WHEN t.entidad = 'parroquia' THEN
+        (SELECT mu.nombre_municipio
+         FROM parroquias p JOIN municipios mu ON mu.id_estado = p.id_estado AND mu.num_municipio = p.num_municipio
+         WHERE p.id_estado = split_part(t.id_entidad, '-', 1)::int
+           AND p.num_municipio = split_part(t.id_entidad, '-', 2)::int
+           AND p.num_parroquia = split_part(t.id_entidad, '-', 3)::int)
+    END) as nombre_municipio,
+    (CASE WHEN t.entidad = 'parroquia' THEN
+        (SELECT e.nombre_estado
+         FROM parroquias p JOIN estados e ON e.id_estado = p.id_estado
+         WHERE p.id_estado = split_part(t.id_entidad, '-', 1)::int
+           AND p.num_municipio = split_part(t.id_entidad, '-', 2)::int
+           AND p.num_parroquia = split_part(t.id_entidad, '-', 3)::int)
+    END) as nombre_estado_parroquia,
+    -- Solicitante: 6 FKs propias (nivel educativo, condición de trabajo/
+    -- actividad, estado/municipio/parroquia de residencia) que el diff de
+    -- 'solicitante-actualizado' muestra en líneas separadas, cada una con
+    -- su propio _anterior/_nuevo. Las compuestas (municipio, parroquia) se
+    -- completan con la fila vigente en `solicitantes` (id_entidad = cedula)
+    -- para las partes que no cambiaron.
+    (CASE WHEN t.entidad IN ('solicitante', 'solicitante_perfil') AND t.datos_anteriores ? 'id_nivel_educativo' THEN
+        (SELECT descripcion FROM niveles_educativos WHERE id_nivel_educativo = (t.datos_anteriores->>'id_nivel_educativo')::int)
+    END) as nivel_educativo_anterior,
+    (CASE WHEN t.entidad IN ('solicitante', 'solicitante_perfil') AND t.datos_nuevos ? 'id_nivel_educativo' THEN
+        (SELECT descripcion FROM niveles_educativos WHERE id_nivel_educativo = (t.datos_nuevos->>'id_nivel_educativo')::int)
+    END) as nivel_educativo_nuevo,
+    (CASE WHEN t.entidad IN ('solicitante', 'solicitante_perfil') AND t.datos_anteriores ? 'id_trabajo' THEN
+        (SELECT nombre_trabajo FROM condicion_trabajo WHERE id_trabajo = (t.datos_anteriores->>'id_trabajo')::int)
+    END) as condicion_trabajo_anterior,
+    (CASE WHEN t.entidad IN ('solicitante', 'solicitante_perfil') AND t.datos_nuevos ? 'id_trabajo' THEN
+        (SELECT nombre_trabajo FROM condicion_trabajo WHERE id_trabajo = (t.datos_nuevos->>'id_trabajo')::int)
+    END) as condicion_trabajo_nuevo,
+    (CASE WHEN t.entidad IN ('solicitante', 'solicitante_perfil') AND t.datos_anteriores ? 'id_actividad' THEN
+        (SELECT nombre_actividad FROM condicion_actividad WHERE id_actividad = (t.datos_anteriores->>'id_actividad')::int)
+    END) as condicion_actividad_anterior,
+    (CASE WHEN t.entidad IN ('solicitante', 'solicitante_perfil') AND t.datos_nuevos ? 'id_actividad' THEN
+        (SELECT nombre_actividad FROM condicion_actividad WHERE id_actividad = (t.datos_nuevos->>'id_actividad')::int)
+    END) as condicion_actividad_nuevo,
+    (CASE WHEN t.entidad IN ('solicitante', 'solicitante_perfil') AND t.datos_anteriores ? 'id_estado' THEN
+        (SELECT nombre_estado FROM estados WHERE id_estado = (t.datos_anteriores->>'id_estado')::int)
+    END) as solicitante_estado_anterior,
+    (CASE WHEN t.entidad IN ('solicitante', 'solicitante_perfil') AND t.datos_nuevos ? 'id_estado' THEN
+        (SELECT nombre_estado FROM estados WHERE id_estado = (t.datos_nuevos->>'id_estado')::int)
+    END) as solicitante_estado_nuevo,
+    (CASE WHEN t.entidad IN ('solicitante', 'solicitante_perfil') AND (t.datos_anteriores ? 'num_municipio' OR t.datos_anteriores ? 'id_estado') THEN
+        (SELECT mu.nombre_municipio
+         FROM municipios mu LEFT JOIN solicitantes s ON s.cedula = t.id_entidad
+         WHERE mu.id_estado = COALESCE((t.datos_anteriores->>'id_estado')::int, s.id_estado)
+           AND mu.num_municipio = COALESCE((t.datos_anteriores->>'num_municipio')::int, s.num_municipio))
+    END) as solicitante_municipio_anterior,
+    (CASE WHEN t.entidad IN ('solicitante', 'solicitante_perfil') AND (t.datos_nuevos ? 'num_municipio' OR t.datos_nuevos ? 'id_estado') THEN
+        (SELECT mu.nombre_municipio
+         FROM municipios mu LEFT JOIN solicitantes s ON s.cedula = t.id_entidad
+         WHERE mu.id_estado = COALESCE((t.datos_nuevos->>'id_estado')::int, s.id_estado)
+           AND mu.num_municipio = COALESCE((t.datos_nuevos->>'num_municipio')::int, s.num_municipio))
+    END) as solicitante_municipio_nuevo,
+    (CASE WHEN t.entidad IN ('solicitante', 'solicitante_perfil') AND (
+        t.datos_anteriores ? 'num_parroquia' OR t.datos_anteriores ? 'num_municipio' OR t.datos_anteriores ? 'id_estado'
+    ) THEN
+        (SELECT p.nombre_parroquia
+         FROM parroquias p LEFT JOIN solicitantes s ON s.cedula = t.id_entidad
+         WHERE p.id_estado = COALESCE((t.datos_anteriores->>'id_estado')::int, s.id_estado)
+           AND p.num_municipio = COALESCE((t.datos_anteriores->>'num_municipio')::int, s.num_municipio)
+           AND p.num_parroquia = COALESCE((t.datos_anteriores->>'num_parroquia')::int, s.num_parroquia))
+    END) as solicitante_parroquia_anterior,
+    (CASE WHEN t.entidad IN ('solicitante', 'solicitante_perfil') AND (
+        t.datos_nuevos ? 'num_parroquia' OR t.datos_nuevos ? 'num_municipio' OR t.datos_nuevos ? 'id_estado'
+    ) THEN
+        (SELECT p.nombre_parroquia
+         FROM parroquias p LEFT JOIN solicitantes s ON s.cedula = t.id_entidad
+         WHERE p.id_estado = COALESCE((t.datos_nuevos->>'id_estado')::int, s.id_estado)
+           AND p.num_municipio = COALESCE((t.datos_nuevos->>'num_municipio')::int, s.num_municipio)
+           AND p.num_parroquia = COALESCE((t.datos_nuevos->>'num_parroquia')::int, s.num_parroquia))
+    END) as solicitante_parroquia_nuevo,
+    -- Datos de las personas referenciadas por cédula dentro del evento (el
+    -- usuario afectado, estudiante/profesor inscrito, quien subió un soporte,
+    -- quien registró un beneficiario...), indexados por cédula. Solo campos
+    -- de presentación: nunca la contraseña.
+    (SELECT jsonb_object_agg(u.cedula, jsonb_build_object(
+            'nombres', u.nombres, 'apellidos', u.apellidos,
+            'correo_electronico', u.correo_electronico, 'nombre_usuario', u.nombre_usuario,
+            'tipo_usuario', u.tipo_usuario, 'telefono_celular', u.telefono_celular))
+     FROM usuarios u
+     WHERE u.cedula IN (
+        CASE WHEN t.entidad = 'usuario' THEN t.id_entidad END,
+        t.metadata->>'ci_usuario',
+        COALESCE(t.datos_nuevos, t.datos_anteriores)->>'usuario_eliminado',
+        COALESCE(t.datos_nuevos, t.datos_anteriores)->>'cedula_estudiante',
+        COALESCE(t.datos_nuevos, t.datos_anteriores)->>'cedula_profesor',
+        COALESCE(t.datos_nuevos, t.datos_anteriores)->>'id_usuario_subio',
+        COALESCE(t.datos_nuevos, t.datos_anteriores)->>'id_usuario_registro',
+        COALESCE(t.datos_nuevos, t.datos_anteriores)->>'id_usuario_registra',
+        CASE WHEN t.entidad IN ('estudiante', 'profesor') THEN substring(t.id_entidad from '^[^-]+-[^-]+-(.+)$') END
+     )) as usuarios_ref,
+    -- Nombres resueltos adicionales, por entidad, que el diff solo trae como
+    -- ids. Las partes de una clave que no cambiaron no vienen en el diff: se
+    -- completan con id_entidad / la fila vigente / metadata (migrados).
+    COALESCE(jsonb_strip_nulls(CASE
+        -- Usuario eliminado sin nombre en el evento (algunos migrados) y que ya
+        -- no existe en `usuarios`: último nombre conocido en sus eventos previos.
+        WHEN t.entidad = 'usuario' AND t.operacion = 'eliminacion'
+             AND COALESCE(t.datos_anteriores->>'nombres', t.datos_anteriores->>'nombres_usuario_eliminado') IS NULL THEN (
+            SELECT jsonb_build_object(
+                'nombres_historico', COALESCE(a.datos_nuevos, a.datos_anteriores)->>'nombres',
+                'apellidos_historico', COALESCE(a.datos_nuevos, a.datos_anteriores)->>'apellidos')
+            FROM auditoria_eventos a
+            WHERE a.entidad = 'usuario' AND a.id < t.id
+              AND COALESCE(a.datos_nuevos, a.datos_anteriores) ? 'nombres'
+              AND t.datos_anteriores->>'usuario_eliminado' IN (a.id_entidad, a.metadata->>'ci_usuario', COALESCE(a.datos_nuevos, a.datos_anteriores)->>'cedula')
+            ORDER BY a.id DESC
+            LIMIT 1)
+        -- Cambio de estatus: el estatus previo del caso es el del cambio
+        -- anterior (num_cambio menor). Si el caso ya no existe, se busca en
+        -- los eventos de auditoría anteriores del mismo caso.
+        WHEN t.entidad = 'cambio_estatus' THEN jsonb_build_object(
+            'estatus_anterior', COALESCE(
+                (SELECT ce.nuevo_estatus FROM cambio_estatus ce
+                 WHERE ce.id_caso = NULLIF(split_part(t.id_entidad, '-', 2), '')::int
+                   AND ce.num_cambio < NULLIF(split_part(t.id_entidad, '-', 1), '')::int
+                 ORDER BY ce.num_cambio DESC LIMIT 1),
+                (SELECT a.datos_nuevos->>'nuevo_estatus' FROM auditoria_eventos a
+                 WHERE a.entidad = 'cambio_estatus' AND a.id < t.id
+                   AND split_part(a.id_entidad, '-', 2) = split_part(t.id_entidad, '-', 2)
+                 ORDER BY a.id DESC LIMIT 1)))
+        -- Núcleo: ubicación (estado/municipio/parroquia) antes y después.
+        WHEN t.entidad = 'nucleo' AND t.operacion = 'actualizacion' THEN (
+            SELECT jsonb_build_object(
+                'nombre_estado_anterior', (SELECT nombre_estado FROM estados WHERE id_estado = v.ea),
+                'nombre_estado_nuevo', (SELECT nombre_estado FROM estados WHERE id_estado = v.en),
+                'nombre_municipio_anterior', (SELECT nombre_municipio FROM municipios WHERE id_estado = v.ea AND num_municipio = v.ma),
+                'nombre_municipio_nuevo', (SELECT nombre_municipio FROM municipios WHERE id_estado = v.en AND num_municipio = v.mn),
+                'nombre_parroquia_anterior', (SELECT nombre_parroquia FROM parroquias WHERE id_estado = v.ea AND num_municipio = v.ma AND num_parroquia = v.pa),
+                'nombre_parroquia_nuevo', (SELECT nombre_parroquia FROM parroquias WHERE id_estado = v.en AND num_municipio = v.mn AND num_parroquia = v.pn))
+            FROM (
+                -- Partes que no cambiaron en este evento: su valor en ese
+                -- momento, aunque el núcleo se haya editado o eliminado después.
+                SELECT COALESCE((t.datos_anteriores->>'id_estado')::int, v0.en) AS ea, v0.en,
+                       COALESCE((t.datos_anteriores->>'num_municipio')::int, v0.mn) AS ma, v0.mn,
+                       COALESCE((t.datos_anteriores->>'num_parroquia')::int, v0.pn) AS pa, v0.pn
+                FROM (
+                    SELECT
+                        COALESCE((t.datos_nuevos->>'id_estado')::int, (SELECT (a.datos_anteriores->>'id_estado')::int FROM auditoria_eventos a WHERE a.entidad = 'nucleo' AND a.id_entidad = t.id_entidad AND a.id > t.id AND a.datos_anteriores ? 'id_estado' ORDER BY a.id LIMIT 1), n.id_estado) AS en,
+                        COALESCE((t.datos_nuevos->>'num_municipio')::int, (SELECT (a.datos_anteriores->>'num_municipio')::int FROM auditoria_eventos a WHERE a.entidad = 'nucleo' AND a.id_entidad = t.id_entidad AND a.id > t.id AND a.datos_anteriores ? 'num_municipio' ORDER BY a.id LIMIT 1), n.num_municipio) AS mn,
+                        COALESCE((t.datos_nuevos->>'num_parroquia')::int, (SELECT (a.datos_anteriores->>'num_parroquia')::int FROM auditoria_eventos a WHERE a.entidad = 'nucleo' AND a.id_entidad = t.id_entidad AND a.id > t.id AND a.datos_anteriores ? 'num_parroquia' ORDER BY a.id LIMIT 1), n.num_parroquia) AS pn
+                    FROM (SELECT 1) x
+                    LEFT JOIN nucleos n ON n.id_nucleo = COALESCE(t.id_entidad, t.metadata->>'id_nucleo')::int
+                ) v0
+            ) v)
+        -- Parroquia: estado/municipio antes y después (son parte de su PK).
+        WHEN t.entidad = 'parroquia' AND t.operacion = 'actualizacion' THEN (
+            SELECT jsonb_build_object(
+                'nombre_estado_anterior', (SELECT nombre_estado FROM estados WHERE id_estado = v.ea),
+                'nombre_estado_nuevo', (SELECT nombre_estado FROM estados WHERE id_estado = v.en),
+                'nombre_municipio_anterior', (SELECT nombre_municipio FROM municipios WHERE id_estado = v.ea AND num_municipio = v.ma),
+                'nombre_municipio_nuevo', (SELECT nombre_municipio FROM municipios WHERE id_estado = v.en AND num_municipio = v.mn))
+            FROM (
+                SELECT COALESCE((t.datos_anteriores->>'id_estado')::int, v0.en) AS ea, v0.en,
+                       COALESCE((t.datos_anteriores->>'num_municipio')::int, v0.mn) AS ma, v0.mn
+                FROM (SELECT
+                    COALESCE((t.datos_nuevos->>'id_estado')::int, (t.metadata->>'id_estado')::int, NULLIF(split_part(t.id_entidad, '-', 1), '')::int) AS en,
+                    COALESCE((t.datos_nuevos->>'num_municipio')::int, (t.metadata->>'num_municipio')::int, NULLIF(split_part(t.id_entidad, '-', 2), '')::int) AS mn
+                ) v0
+            ) v)
+        -- Subcategoría: materia/categoría antes y después (parte de su PK).
+        WHEN t.entidad = 'subcategoria' AND t.operacion = 'actualizacion' THEN (
+            SELECT jsonb_build_object(
+                'nombre_materia_anterior', (SELECT nombre_materia FROM materias WHERE id_materia = v.ma),
+                'nombre_materia_nuevo', (SELECT nombre_materia FROM materias WHERE id_materia = v.mn),
+                'nombre_categoria_anterior', COALESCE((SELECT nombre_categoria FROM categorias WHERE id_materia = v.ma AND num_categoria = v.ca), (SELECT COALESCE(h.datos_anteriores, h.datos_nuevos)->>'nombre_categoria' FROM auditoria_eventos h WHERE h.entidad = 'categoria' AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'id_materia' = v.ma::text AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'num_categoria' = v.ca::text ORDER BY h.id DESC LIMIT 1)),
+                'nombre_categoria_nuevo', COALESCE((SELECT nombre_categoria FROM categorias WHERE id_materia = v.mn AND num_categoria = v.cn), (SELECT COALESCE(h.datos_anteriores, h.datos_nuevos)->>'nombre_categoria' FROM auditoria_eventos h WHERE h.entidad = 'categoria' AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'id_materia' = v.mn::text AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'num_categoria' = v.cn::text ORDER BY h.id DESC LIMIT 1)))
+            FROM (
+                SELECT COALESCE((t.datos_anteriores->>'id_materia')::int, v0.mn) AS ma, v0.mn,
+                       COALESCE((t.datos_anteriores->>'num_categoria')::int, v0.cn) AS ca, v0.cn
+                FROM (SELECT
+                    COALESCE((t.datos_nuevos->>'id_materia')::int, (t.metadata->>'id_materia')::int, NULLIF(split_part(t.id_entidad, '-', 3), '')::int) AS mn,
+                    COALESCE((t.datos_nuevos->>'num_categoria')::int, (t.metadata->>'num_categoria')::int, NULLIF(split_part(t.id_entidad, '-', 2), '')::int) AS cn
+                ) v0
+            ) v)
+        -- Ámbito legal movido a otra subcategoría (ver movimientos en
+        -- filtro-eventos.sql): materia/categoría/subcategoría antes y después.
+        -- Si el padre ya no existe (al mover una categoría se borra la vieja
+        -- con sus subcategorías), su nombre sale del último evento que lo registró.
+        -- id_entidad ya es la clave nueva: id_materia-num_categoria-num_subcategoria-num_ambito_legal.
+        WHEN t.entidad = 'ambito_legal' AND t.operacion = 'actualizacion' THEN (
+            SELECT jsonb_build_object(
+                'nombre_materia_anterior', (SELECT nombre_materia FROM materias WHERE id_materia = v.ma),
+                'nombre_materia_nuevo', (SELECT nombre_materia FROM materias WHERE id_materia = v.mn),
+                'nombre_categoria_anterior', COALESCE((SELECT nombre_categoria FROM categorias WHERE id_materia = v.ma AND num_categoria = v.ca), (SELECT COALESCE(h.datos_anteriores, h.datos_nuevos)->>'nombre_categoria' FROM auditoria_eventos h WHERE h.entidad = 'categoria' AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'id_materia' = v.ma::text AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'num_categoria' = v.ca::text ORDER BY h.id DESC LIMIT 1)),
+                'nombre_categoria_nuevo', COALESCE((SELECT nombre_categoria FROM categorias WHERE id_materia = v.mn AND num_categoria = v.cn), (SELECT COALESCE(h.datos_anteriores, h.datos_nuevos)->>'nombre_categoria' FROM auditoria_eventos h WHERE h.entidad = 'categoria' AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'id_materia' = v.mn::text AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'num_categoria' = v.cn::text ORDER BY h.id DESC LIMIT 1)),
+                'nombre_subcategoria_anterior', COALESCE((SELECT nombre_subcategoria FROM subcategorias WHERE id_materia = v.ma AND num_categoria = v.ca AND num_subcategoria = v.sa), (SELECT COALESCE(h.datos_anteriores, h.datos_nuevos)->>'nombre_subcategoria' FROM auditoria_eventos h WHERE h.entidad = 'subcategoria' AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'id_materia' = v.ma::text AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'num_categoria' = v.ca::text AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'num_subcategoria' = v.sa::text ORDER BY h.id DESC LIMIT 1)),
+                'nombre_subcategoria_nuevo', COALESCE((SELECT nombre_subcategoria FROM subcategorias WHERE id_materia = v.mn AND num_categoria = v.cn AND num_subcategoria = v.sn), (SELECT COALESCE(h.datos_anteriores, h.datos_nuevos)->>'nombre_subcategoria' FROM auditoria_eventos h WHERE h.entidad = 'subcategoria' AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'id_materia' = v.mn::text AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'num_categoria' = v.cn::text AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'num_subcategoria' = v.sn::text ORDER BY h.id DESC LIMIT 1)))
+            FROM (
+                SELECT COALESCE((t.datos_anteriores->>'id_materia')::int, v0.mn) AS ma, v0.mn,
+                       COALESCE((t.datos_anteriores->>'num_categoria')::int, v0.cn) AS ca, v0.cn,
+                       COALESCE((t.datos_anteriores->>'num_subcategoria')::int, v0.sn) AS sa, v0.sn
+                FROM (SELECT
+                    COALESCE((t.datos_nuevos->>'id_materia')::int, NULLIF(split_part(t.id_entidad, '-', 1), '')::int) AS mn,
+                    COALESCE((t.datos_nuevos->>'num_categoria')::int, NULLIF(split_part(t.id_entidad, '-', 2), '')::int) AS cn,
+                    COALESCE((t.datos_nuevos->>'num_subcategoria')::int, NULLIF(split_part(t.id_entidad, '-', 3), '')::int) AS sn
+                ) v0
+            ) v)
+        -- Categoría movida a otra materia. id_entidad: num_categoria-id_materia.
+        WHEN t.entidad = 'categoria' AND t.operacion = 'actualizacion' THEN (
+            SELECT jsonb_build_object(
+                'nombre_materia_anterior', (SELECT nombre_materia FROM materias WHERE id_materia = COALESCE((t.datos_anteriores->>'id_materia')::int, v.mn)),
+                'nombre_materia_nuevo', (SELECT nombre_materia FROM materias WHERE id_materia = v.mn))
+            FROM (SELECT COALESCE((t.datos_nuevos->>'id_materia')::int, NULLIF(split_part(t.id_entidad, '-', 2), '')::int) AS mn) v)
+        -- Municipio movido a otro estado. id_entidad: id_estado-num_municipio.
+        WHEN t.entidad = 'municipio' AND t.operacion = 'actualizacion' THEN (
+            SELECT jsonb_build_object(
+                'nombre_estado_anterior', (SELECT nombre_estado FROM estados WHERE id_estado = COALESCE((t.datos_anteriores->>'id_estado')::int, v.en)),
+                'nombre_estado_nuevo', (SELECT nombre_estado FROM estados WHERE id_estado = v.en))
+            FROM (SELECT COALESCE((t.datos_nuevos->>'id_estado')::int, NULLIF(split_part(t.id_entidad, '-', 1), '')::int) AS en) v)
+        -- Característica movida a otro tipo. id_entidad: id_tipo_caracteristica-num_caracteristica.
+        WHEN t.entidad = 'caracteristica' AND t.operacion = 'actualizacion' THEN (
+            SELECT jsonb_build_object(
+                'nombre_tipo_caracteristica_anterior', (SELECT nombre_tipo_caracteristica FROM tipo_caracteristicas WHERE id_tipo = COALESCE((t.datos_anteriores->>'id_tipo_caracteristica')::int, v.tn)),
+                'nombre_tipo_caracteristica_nuevo', (SELECT nombre_tipo_caracteristica FROM tipo_caracteristicas WHERE id_tipo = v.tn))
+            FROM (SELECT COALESCE((t.datos_nuevos->>'id_tipo_caracteristica')::int, NULLIF(split_part(t.id_entidad, '-', 1), '')::int) AS tn) v)
+        -- Solicitante eliminado: nivel educativo del jefe del hogar, que vive
+        -- en el evento gemelo de familias_y_hogares.
+        WHEN t.entidad = 'solicitante' AND t.operacion = 'eliminacion' THEN jsonb_build_object(
+            'nivel_educativo_jefe', (
+                SELECT ne.descripcion
+                FROM auditoria_eventos s
+                JOIN niveles_educativos ne ON ne.id_nivel_educativo = (s.datos_anteriores->>'id_nivel_educativo_jefe')::int
+                WHERE s.entidad = 'familia_y_hogar' AND s.operacion = 'eliminacion'
+                  AND s.fecha_evento = t.fecha_evento AND s.id_entidad = t.id_entidad
+                LIMIT 1))
+        -- Perfil del solicitante (y familia/hogar suelto): nivel educativo del jefe.
+        WHEN t.entidad IN ('solicitante', 'solicitante_perfil', 'familia_y_hogar') THEN jsonb_build_object(
+            'nivel_educativo_jefe_anterior', (SELECT descripcion FROM niveles_educativos WHERE id_nivel_educativo = (t.datos_anteriores->>'id_nivel_educativo_jefe')::int),
+            'nivel_educativo_jefe_nuevo', (SELECT descripcion FROM niveles_educativos WHERE id_nivel_educativo = (t.datos_nuevos->>'id_nivel_educativo_jefe')::int))
+    END), '{}'::jsonb)
+    -- Nombre del elemento de catálogo en el momento de una actualización cuyo
+    -- diff no lo trae (habilitar/deshabilitar, mover de padre...).
+    || COALESCE(jsonb_strip_nulls(jsonb_build_object('nombre_catalogo', CASE WHEN t.operacion = 'actualizacion' THEN
+        CASE t.entidad
+            WHEN 'estado' THEN COALESCE((t.datos_nuevos->>'nombre_estado'), (SELECT (a.datos_anteriores->>'nombre_estado') FROM auditoria_eventos a WHERE a.entidad = 'estado' AND a.id_entidad = t.id_entidad AND a.id > t.id AND a.datos_anteriores ? 'nombre_estado' ORDER BY a.id LIMIT 1), (SELECT nombre_estado FROM estados WHERE id_estado::text = t.id_entidad))
+            WHEN 'municipio' THEN COALESCE((t.datos_nuevos->>'nombre_municipio'), (SELECT (a.datos_anteriores->>'nombre_municipio') FROM auditoria_eventos a WHERE a.entidad = 'municipio' AND a.id_entidad = t.id_entidad AND a.id > t.id AND a.datos_anteriores ? 'nombre_municipio' ORDER BY a.id LIMIT 1), (SELECT nombre_municipio FROM municipios WHERE id_estado || '-' || num_municipio = t.id_entidad))
+            WHEN 'parroquia' THEN COALESCE((t.datos_nuevos->>'nombre_parroquia'), (SELECT (a.datos_anteriores->>'nombre_parroquia') FROM auditoria_eventos a WHERE a.entidad = 'parroquia' AND a.id_entidad = t.id_entidad AND a.id > t.id AND a.datos_anteriores ? 'nombre_parroquia' ORDER BY a.id LIMIT 1), (SELECT nombre_parroquia FROM parroquias WHERE id_estado || '-' || num_municipio || '-' || num_parroquia = t.id_entidad))
+            WHEN 'nucleo' THEN COALESCE((t.datos_nuevos->>'nombre_nucleo'), (SELECT (a.datos_anteriores->>'nombre_nucleo') FROM auditoria_eventos a WHERE a.entidad = 'nucleo' AND a.id_entidad = t.id_entidad AND a.id > t.id AND a.datos_anteriores ? 'nombre_nucleo' ORDER BY a.id LIMIT 1), (SELECT nombre_nucleo FROM nucleos WHERE id_nucleo::text = t.id_entidad))
+            WHEN 'materia' THEN COALESCE((t.datos_nuevos->>'nombre_materia'), (SELECT (a.datos_anteriores->>'nombre_materia') FROM auditoria_eventos a WHERE a.entidad = 'materia' AND a.id_entidad = t.id_entidad AND a.id > t.id AND a.datos_anteriores ? 'nombre_materia' ORDER BY a.id LIMIT 1), (SELECT nombre_materia FROM materias WHERE id_materia::text = t.id_entidad))
+            WHEN 'categoria' THEN COALESCE((t.datos_nuevos->>'nombre_categoria'), (SELECT (a.datos_anteriores->>'nombre_categoria') FROM auditoria_eventos a WHERE a.entidad = 'categoria' AND a.id_entidad = t.id_entidad AND a.id > t.id AND a.datos_anteriores ? 'nombre_categoria' ORDER BY a.id LIMIT 1), (SELECT nombre_categoria FROM categorias WHERE num_categoria || '-' || id_materia = t.id_entidad))
+            WHEN 'subcategoria' THEN COALESCE((t.datos_nuevos->>'nombre_subcategoria'), (SELECT (a.datos_anteriores->>'nombre_subcategoria') FROM auditoria_eventos a WHERE a.entidad = 'subcategoria' AND a.id_entidad = t.id_entidad AND a.id > t.id AND a.datos_anteriores ? 'nombre_subcategoria' ORDER BY a.id LIMIT 1), (SELECT nombre_subcategoria FROM subcategorias WHERE num_subcategoria || '-' || num_categoria || '-' || id_materia = t.id_entidad))
+            WHEN 'ambito_legal' THEN COALESCE((t.datos_nuevos->>'nombre_ambito_legal'), (SELECT (a.datos_anteriores->>'nombre_ambito_legal') FROM auditoria_eventos a WHERE a.entidad = 'ambito_legal' AND a.id_entidad = t.id_entidad AND a.id > t.id AND a.datos_anteriores ? 'nombre_ambito_legal' ORDER BY a.id LIMIT 1), (SELECT nombre_ambito_legal FROM ambitos_legales WHERE id_materia || '-' || num_categoria || '-' || num_subcategoria || '-' || num_ambito_legal = t.id_entidad))
+            WHEN 'nivel_educativo' THEN COALESCE((t.datos_nuevos->>'descripcion'), (SELECT (a.datos_anteriores->>'descripcion') FROM auditoria_eventos a WHERE a.entidad = 'nivel_educativo' AND a.id_entidad = t.id_entidad AND a.id > t.id AND a.datos_anteriores ? 'descripcion' ORDER BY a.id LIMIT 1), (SELECT descripcion FROM niveles_educativos WHERE id_nivel_educativo::text = t.id_entidad))
+            WHEN 'condicion_trabajo' THEN COALESCE((t.datos_nuevos->>'nombre_trabajo'), (SELECT (a.datos_anteriores->>'nombre_trabajo') FROM auditoria_eventos a WHERE a.entidad = 'condicion_trabajo' AND a.id_entidad = t.id_entidad AND a.id > t.id AND a.datos_anteriores ? 'nombre_trabajo' ORDER BY a.id LIMIT 1), (SELECT nombre_trabajo FROM condicion_trabajo WHERE id_trabajo::text = t.id_entidad))
+            WHEN 'condicion_actividad' THEN COALESCE((t.datos_nuevos->>'nombre_actividad'), (SELECT (a.datos_anteriores->>'nombre_actividad') FROM auditoria_eventos a WHERE a.entidad = 'condicion_actividad' AND a.id_entidad = t.id_entidad AND a.id > t.id AND a.datos_anteriores ? 'nombre_actividad' ORDER BY a.id LIMIT 1), (SELECT nombre_actividad FROM condicion_actividad WHERE id_actividad::text = t.id_entidad))
+            WHEN 'tipo_caracteristica' THEN COALESCE((t.datos_nuevos->>'nombre_tipo_caracteristica'), (SELECT (a.datos_anteriores->>'nombre_tipo_caracteristica') FROM auditoria_eventos a WHERE a.entidad = 'tipo_caracteristica' AND a.id_entidad = t.id_entidad AND a.id > t.id AND a.datos_anteriores ? 'nombre_tipo_caracteristica' ORDER BY a.id LIMIT 1), (SELECT nombre_tipo_caracteristica FROM tipo_caracteristicas WHERE id_tipo::text = t.id_entidad))
+            WHEN 'caracteristica' THEN COALESCE((t.datos_nuevos->>'descripcion'), (SELECT (a.datos_anteriores->>'descripcion') FROM auditoria_eventos a WHERE a.entidad = 'caracteristica' AND a.id_entidad = t.id_entidad AND a.id > t.id AND a.datos_anteriores ? 'descripcion' ORDER BY a.id LIMIT 1), (SELECT descripcion FROM caracteristicas WHERE id_tipo_caracteristica || '-' || num_caracteristica = t.id_entidad))
+        END
+    END)), '{}'::jsonb) as nombres_resueltos,
+    -- Solicitante eliminado: las filas de viviendas/familias_y_hogares se
+    -- borran en la misma transacción; se adjuntan sus datos para que la
+    -- tarjeta muestre vivienda y familia (los eventos gemelos se ocultan).
+    (CASE WHEN t.entidad = 'solicitante' AND t.operacion = 'eliminacion' THEN
+        (SELECT jsonb_object_agg(kv.key, kv.value)
+         FROM auditoria_eventos s, jsonb_each(s.datos_anteriores) kv
+         WHERE s.entidad IN ('vivienda', 'familia_y_hogar') AND s.operacion = 'eliminacion'
+           AND s.fecha_evento = t.fecha_evento AND s.id_entidad = t.id_entidad)
+    END) as solicitante_extra,
+    -- Personas que atienden una cita (tabla atienden, entidad 'atencion_cita'):
+    -- se escriben en la misma transacción que la cita. 'anteriores' son las
+    -- filas borradas y 'nuevos' las insertadas (al editar, la app reemplaza la
+    -- lista completa), con el nombre resuelto.
+    (CASE WHEN t.entidad IN ('cita', 'atencion_cita') THEN (
+        SELECT jsonb_build_object(
+            'anteriores', COALESCE(jsonb_agg(jsonb_build_object('cedula', s.ced, 'nombre', COALESCE(u.nombres || ' ' || u.apellidos, s.ced)) ORDER BY s.ced) FILTER (WHERE s.operacion = 'eliminacion'), '[]'::jsonb),
+            'nuevos', COALESCE(jsonb_agg(jsonb_build_object('cedula', s.ced, 'nombre', COALESCE(u.nombres || ' ' || u.apellidos, s.ced)) ORDER BY s.ced) FILTER (WHERE s.operacion = 'insercion'), '[]'::jsonb))
+        FROM (
+            SELECT a.operacion, COALESCE(a.datos_nuevos, a.datos_anteriores)->>'id_usuario' AS ced
+            FROM auditoria_eventos a
+            WHERE a.entidad = 'atencion_cita'
+              AND a.fecha_evento = t.fecha_evento
+              AND split_part(a.id_entidad, '-', 1) = split_part(t.id_entidad, '-', 1)
+              AND split_part(a.id_entidad, '-', 2) = split_part(t.id_entidad, '-', 2)
+        ) s
+        LEFT JOIN usuarios u ON u.cedula = s.ced
+        HAVING COUNT(*) > 0)
+    END) as atenciones_evento,
+    -- Inscripción (estudiantes/profesores) creada o editada junto con el
+    -- usuario en la misma transacción.
+    (CASE WHEN t.entidad = 'usuario' AND t.operacion IN ('insercion', 'actualizacion') THEN (
+        SELECT jsonb_build_object('entidad', s.entidad, 'anteriores', s.datos_anteriores, 'nuevos', s.datos_nuevos)
+        FROM auditoria_eventos s
+        WHERE s.entidad IN ('estudiante', 'profesor')
+          AND s.operacion = t.operacion
+          AND s.fecha_evento = t.fecha_evento
+          AND COALESCE(s.datos_nuevos->>'cedula_estudiante', s.datos_nuevos->>'cedula_profesor',
+                       s.datos_anteriores->>'cedula_estudiante', s.datos_anteriores->>'cedula_profesor',
+                       substring(s.id_entidad from '^[^-]+-[^-]+-(.+)$')) = t.id_entidad
+        ORDER BY s.id DESC
+        LIMIT 1)
+    END) as inscripcion_extra,
+    -- Acciones: crear/editar/eliminar una acción genera DOS eventos en la
+    -- misma transacción (misma fecha_evento): 'accion' (trigger genérico, con
+    -- detalle/comentario/num_accion/id_caso) y 'accion_ejecutores' (manual,
+    -- con la lista de ejecutores). Se adjuntan los ejecutores al evento
+    -- 'accion' para mostrar una sola tarjeta completa; el evento gemelo de
+    -- ejecutores se oculta en el WHERE.
+    (CASE WHEN t.entidad = 'accion' THEN
+        (SELECT jsonb_build_object(
+            'anteriores', e.datos_anteriores->'ejecutores',
+            'nuevos', e.datos_nuevos->'ejecutores',
+            'metadata', e.metadata)
+         FROM auditoria_eventos e
+         WHERE e.entidad = 'accion_ejecutores'
+           AND e.operacion = t.operacion
+           AND e.fecha_evento = t.fecha_evento
+           AND split_part(e.id_entidad, '-', 1) = COALESCE(
+                NULLIF(split_part(t.id_entidad, '-', 1), ''),
+                t.metadata->>'num_accion', t.datos_nuevos->>'num_accion', t.datos_anteriores->>'num_accion')
+         ORDER BY e.id DESC
+         LIMIT 1)
+    END) as ejecutores_evento,
+    t.datos_anteriores as datos_anteriores,
+    t.datos_nuevos as datos_nuevos,
+    t.metadata as metadata
+{{FILTRO_EVENTOS}}
+-- {{ORDEN}}: DESC por defecto o ASC (filtro "Más antiguo"); id desempata
+-- los eventos de una misma transacción, que comparten fecha_evento.
+ORDER BY t.fecha_evento {{ORDEN}}, t.id {{ORDEN}}
 LIMIT $1 OFFSET $2;

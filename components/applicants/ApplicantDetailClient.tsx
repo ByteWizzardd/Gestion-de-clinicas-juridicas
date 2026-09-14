@@ -23,6 +23,7 @@ import type { SolicitanteFichaData } from '@/lib/types/report-types';
 import ApplicantFormModal from '@/components/forms/ApplicantFormModal';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 import { logger } from '@/lib/utils/logger';
+import { sanitizeUserMessage } from '@/lib/utils/error-messages';
 
 type GetSolicitanteByIdAction = typeof import('@/app/actions/solicitantes').getSolicitanteByIdAction;
 type GetSolicitanteByIdResult = Awaited<ReturnType<GetSolicitanteByIdAction>>;
@@ -106,7 +107,7 @@ export default function ApplicantDetailClient() {
         throw new Error('No se pudo obtener la información');
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+      const errorMessage = sanitizeUserMessage(err, 'No se pudo cargar la información del solicitante.');
       setError(errorMessage);
       logger.error('Error fetching solicitante:', err);
     } finally {
@@ -152,7 +153,8 @@ export default function ApplicantDetailClient() {
         toast.success('Solicitante eliminado exitosamente');
         router.push('/dashboard/applicants');
       } else {
-        toast.error('Error al eliminar el solicitante');
+        const message = (result.error as { message?: string } | undefined)?.message;
+        toast.error(message || 'No se pudo eliminar el solicitante.', 'Error al eliminar');
       }
     } catch (err) {
       toast.error('Error al eliminar el solicitante');

@@ -10,8 +10,7 @@ WHERE cedula = $1
   AND ($4::TEXT IS NULL OR EXISTS (
       SELECT 1 FROM ocurren_en oe WHERE oe.id_caso = view_casos_detalle.id_caso AND oe.term = $4
   ))
-  AND ($2::date IS NULL OR fecha_inicio_caso >= $2)
-  AND ($3::date IS NULL OR fecha_inicio_caso <= $3)
+  AND caso_con_actividad_en_rango(view_casos_detalle.id_caso, $2::date, $3::date)
 ORDER BY fecha_inicio_caso DESC;
 
 

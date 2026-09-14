@@ -26,6 +26,7 @@ import type {
   SocioeconomicoData
 } from '@/types/reports';
 import { TIPOS_REPORTE } from '@/lib/constants/reports';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 
 
@@ -489,7 +490,7 @@ export async function getInformeResumenData(
     logger.error('Error al obtener datos del informe resumen:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Error desconocido',
+      error: toUserMessage(error, 'No se pudieron obtener los datos del informe.'),
     };
   }
 }
@@ -832,7 +833,7 @@ export async function getHistorialCasosBySolicitante(
     logger.error('Error al obtener historial de casos del solicitante:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Error desconocido'
+      error: toUserMessage(error, 'No se pudo obtener el historial de casos del solicitante.')
     };
   }
 }
@@ -872,7 +873,7 @@ export async function registrarAuditoriaReporteAction(params: {
     logger.error('Error al registrar auditoría de reporte:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Error al registrar auditoría'
+      error: toUserMessage(error, 'Error al registrar auditoría')
     };
   }
 }

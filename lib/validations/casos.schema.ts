@@ -40,6 +40,7 @@ export type CreateCasoInput = z.infer<typeof CreateCasoSchema>;
 export const UpdateCasoSchema = z.object({
   id_caso: z.number().int().positive(),
   fecha_solicitud: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha inválida. Formato: YYYY-MM-DD').optional(),
+  fecha_inicio_caso: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha inválida. Formato: YYYY-MM-DD').optional(),
   fecha_fin_caso: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha inválida. Formato: YYYY-MM-DD').optional().nullable(),
   tramite: z.enum([
     TRAMITES.ASESORIA,

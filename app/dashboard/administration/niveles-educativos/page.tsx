@@ -34,7 +34,7 @@ export default function NivelesEducativosPage() {
 
     const handleAdd = async (data: Record<string, string>) => {
         const { createNivelEducativo } = await import('@/app/actions/catalogos/niveles-educativos.actions');
-        const result = await createNivelEducativo(data as { descripcion: string });
+        const result: any = await createNivelEducativo(data as { descripcion: string });
 
         if (result.success) {
             setIsModalOpen(false);
@@ -57,7 +57,7 @@ export default function NivelesEducativosPage() {
 
     const handleUpdate = async (data: Record<string, string>) => {
         if (!editingItem) return;
-        const result = await updateNivelEducativo(editingItem.id_nivel_educativo, data as { descripcion: string });
+        const result: any = await updateNivelEducativo(editingItem.id_nivel_educativo, data as { descripcion: string });
         if (result.success) {
             setIsModalOpen(false);
             setIsEditMode(false);
@@ -69,7 +69,7 @@ export default function NivelesEducativosPage() {
     };
 
     const handleToggleHabilitado = async (item: any) => {
-        const result = await toggleNivelEducativoHabilitado(item.id_nivel_educativo);
+        const result: any = await toggleNivelEducativoHabilitado(item.id_nivel_educativo);
         if (result.success) {
             await loadNivelesEducativos();
         } else {
@@ -78,7 +78,7 @@ export default function NivelesEducativosPage() {
     };
 
     const handleDelete = async (item: any, motivo?: string) => {
-        const result = await deleteNivelEducativo(item.id_nivel_educativo, motivo);
+        const result: any = await deleteNivelEducativo(item.id_nivel_educativo, motivo);
         if (result.success) {
             await loadNivelesEducativos();
         } else {

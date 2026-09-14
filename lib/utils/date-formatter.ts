@@ -83,6 +83,28 @@ export function formatDateTime(date: Date | string | null | undefined, _options?
 }
 
 /**
+ * Fecha 'YYYY-MM-DD' en la zona horaria del navegador/servidor.
+ * No usar toISOString().slice(0, 10): da la fecha UTC, que en Venezuela
+ * (UTC-4) ya es el día siguiente a partir de las 8 p. m.
+ */
+export function toLocalISODate(date: Date = new Date()): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+/**
+ * Date a medianoche LOCAL de una fecha 'YYYY-MM-DD' (inversa de toLocalISODate).
+ * new Date('YYYY-MM-DD') la interpreta en UTC: en Venezuela queda en el día
+ * anterior a las 8 p. m. y getDate()/setHours() devuelven el día equivocado.
+ */
+export function parseLocalISODate(value: string): Date {
+    const [year, month, day] = value.slice(0, 10).split('-').map(Number);
+    return new Date(year, month - 1, day);
+}
+
+/**
  * Formatea la fecha y hora actual para usar en nombres de archivos.
  * Formato: DD-MM-YYYY_HH-mm
  */

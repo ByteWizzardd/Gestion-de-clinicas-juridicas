@@ -30,7 +30,7 @@ export default function TiposCaracteristicasPage() {
   };
 
   const handleAdd = async (data: Record<string, string>) => {
-    const result = await createTipoCaracteristica(data as { nombre_tipo_caracteristica: string });
+    const result: any = await createTipoCaracteristica(data as { nombre_tipo_caracteristica: string });
     if (result.success) { setIsModalOpen(false); await loadTipos(); }
     else toast.error(result.error || 'Error al añadir tipo');
   };
@@ -44,19 +44,19 @@ export default function TiposCaracteristicasPage() {
 
   const handleUpdate = async (data: Record<string, string>) => {
     if (!editingItem) return;
-    const result = await updateTipoCaracteristica(editingItem.id_tipo, data as { nombre_tipo_caracteristica: string });
+    const result: any = await updateTipoCaracteristica(editingItem.id_tipo, data as { nombre_tipo_caracteristica: string });
     if (result.success) { setIsModalOpen(false); setIsEditMode(false); setEditingItem(null); await loadTipos(); }
     else toast.error(result.error || 'Error al actualizar');
   };
 
   const handleToggle = async (item: any) => {
-    const result = await toggleTipoCaracteristicaHabilitado(item.id_tipo);
+    const result: any = await toggleTipoCaracteristicaHabilitado(item.id_tipo);
     if (result.success) await loadTipos();
     else toast.error(result.error || 'Error al cambiar estado');
   };
 
   const handleDelete = async (item: any, motivo?: string) => {
-    const result = await deleteTipoCaracteristica(item.id_tipo, motivo);
+    const result: any = await deleteTipoCaracteristica(item.id_tipo, motivo);
     if (result.success) await loadTipos();
     else toast.error(result.error === 'HAS_ASSOCIATIONS' ? (result.message || 'No se puede eliminar') : (result.error || 'Error al eliminar'));
   };

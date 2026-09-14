@@ -2,6 +2,7 @@
 
 import { casosService } from '@/lib/services/casos.service';
 import { logger } from '@/lib/utils/logger';
+import { toLocalISODate } from '@/lib/utils/date-formatter';
 import { revalidatePath } from 'next/cache';
 import { soportesQueries } from '@/lib/db/queries/soportes.queries';
 import { accionesQueries } from '@/lib/db/queries/acciones.queries';
@@ -21,6 +22,7 @@ import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 import { withSecureTransaction } from '@/lib/db/secure-transactions';
 import { notificarVariosUsuariosAction } from './notificaciones';
 import { uploadSoporte, deleteFile } from '@/lib/services/storage.service';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 export interface CreateCasoResult {
   success: boolean;
@@ -165,6 +167,13 @@ export async function updateCasoAction(
     const rolUsuario = authResult.user.rol;
 
     return await withSecureTransaction(rolUsuario, async (client) => {
+      // casosService.updateCaso recibe un client externo -> se salta su propio
+      // withAuditTransaction (ver el comentario "asumimos que el llamador ya
+      // inyectó el contexto" en casos.service.ts), así que el actor hay que
+      // setearlo acá antes de tocar `casos` para que el trigger genérico lo
+      // capture (si no, el evento queda con id_usuario=null: "Actualizado por:
+      // Usuario desconocido").
+      await client.query("SELECT set_config('app.current_user_id', $1, true)", [cedulaUsuario]);
       const casoActualizado = await casosService.updateCaso(idCaso, data, cedulaUsuario, client);
 
       // Revalidar cache de la página de casos
@@ -253,7 +262,7 @@ export async function uploadSoportesAction(
         return {
           success: false,
           error: {
-            message: `Error al subir el archivo "${file.name}": ${uploadResult.error || 'Error desconocido'}`,
+            message: `No se pudo subir el archivo "${file.name}". ${uploadResult.error || 'Intenta de nuevo.'}`,
             code: 'UPLOAD_ERROR',
           },
         };
@@ -545,7 +554,7 @@ export async function getCasosByFechaSolicitudAction(
       };
     }
 
-    const todayISO = new Date().toISOString().slice(0, 10);
+    const todayISO = toLocalISODate();
     const isValidISODate = (value: string): boolean => {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
       const d = new Date(value);
@@ -728,8 +737,7 @@ export async function createAccionAction(
     })();
 
     // Establecer variable de sesión para auditoría
-    const cedulaEscapada = cedulaUsuario.replace(/'/g, "''");
-    await client.query(`SET LOCAL app.usuario_registra = '${cedulaEscapada}'`);
+    await client.query(`SELECT set_config('app.current_user_id', $1, true)`, [cedulaUsuario]);
 
     // Crear la acción usando el cliente de la transacción
     const createAccionQuery = loadSQL('acciones/create.sql');
@@ -758,39 +766,31 @@ export async function createAccionAction(
         ]);
       }
 
-      // Guardar los ejecutores en la tabla normalizada de auditoría (para que no se pierdan si la acción es eliminada)
-      // Obtener el ID del registro de auditoría más reciente
-      const auditoriaResult = await client.query(`
-        SELECT id FROM auditoria_insercion_acciones 
-        WHERE num_accion = $1 AND id_caso = $2 
-        ORDER BY fecha_creacion DESC LIMIT 1
-      `, [accion.num_accion, idCaso]);
+      // Registrar los ejecutores como su propio evento de auditoría (para que no se pierdan
+      // si la acción es eliminada más adelante). Un solo INSERT con RETURNING, sin re-consultar
+      // "la fila más reciente" de otra tabla.
+      const ejecutoresIds = ejecutores.map(e => e.idUsuario);
+      const nombresResult = await client.query(
+        `SELECT cedula, nombres, apellidos FROM usuarios WHERE cedula = ANY($1)`,
+        [ejecutoresIds]
+      );
+      const usersMap = new Map(nombresResult.rows.map((u: any) => [u.cedula, { nombres: u.nombres, apellidos: u.apellidos }]));
 
-      if (auditoriaResult.rows.length > 0) {
-        const idAuditoria = auditoriaResult.rows[0].id;
+      const ejecutoresNuevos = ejecutores.map(ejecutor => {
+        const userData = usersMap.get(ejecutor.idUsuario);
+        return {
+          cedula: ejecutor.idUsuario,
+          nombres: userData?.nombres ?? null,
+          apellidos: userData?.apellidos ?? null,
+          fecha_ejecucion: ejecutor.fechaEjecucion,
+        };
+      });
 
-        // Obtener los nombres de los ejecutores
-        const ejecutoresIds = ejecutores.map(e => e.idUsuario);
-        const nombresQuery = `SELECT cedula, nombres, apellidos FROM usuarios WHERE cedula = ANY($1)`;
-        const nombresResult = await client.query(nombresQuery, [ejecutoresIds]);
-        const usersMap = new Map(nombresResult.rows.map((u: any) => [u.cedula, { nombres: u.nombres, apellidos: u.apellidos }]));
-
-        // Insertar en tabla normalizada de ejecutores de auditoría
-        for (const ejecutor of ejecutores) {
-          const userData = usersMap.get(ejecutor.idUsuario);
-          await client.query(`
-            INSERT INTO auditoria_insercion_acciones_ejecutores 
-            (id_auditoria_insercion, id_usuario_ejecutor, nombres_ejecutor, apellidos_ejecutor, fecha_ejecucion)
-            VALUES ($1, $2, $3, $4, $5)
-          `, [
-            idAuditoria,
-            ejecutor.idUsuario,
-            userData?.nombres || null,
-            userData?.apellidos || null,
-            ejecutor.fechaEjecucion
-          ]);
-        }
-      }
+      await client.query(
+        `INSERT INTO auditoria_eventos (entidad, operacion, id_entidad, id_usuario, datos_nuevos)
+         VALUES ('accion_ejecutores', 'insercion', $1, $2, $3)`,
+        [`${accion.num_accion}-${idCaso}`, cedulaUsuario, JSON.stringify({ ejecutores: ejecutoresNuevos })]
+      );
     }
 
     await client.query('COMMIT');
@@ -806,7 +806,7 @@ export async function createAccionAction(
       return {
         success: false,
         error: {
-          message: error.message,
+          message: toUserMessage(error),
           code: error.code || 'ACCION_ERROR',
         },
       };
@@ -815,7 +815,7 @@ export async function createAccionAction(
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : 'Error al crear la acción',
+        message: toUserMessage(error, 'Error al crear la acción'),
         code: 'UNKNOWN_ERROR',
       },
     };
@@ -981,7 +981,7 @@ export async function getEquipoDisponibleAction(): Promise<GetEquipoDisponibleRe
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : 'Error al obtener equipo disponible',
+        message: toUserMessage(error, 'Error al obtener equipo disponible'),
         code: 'UNKNOWN_ERROR',
       },
     };
@@ -1251,80 +1251,56 @@ export async function asignarEquipoAction(
       const huboCambiosEstudiantes = !coincidenEstudiantes;
 
       if (huboCambiosProfesores || huboCambiosEstudiantes) {
-        // 1. Crear registro principal de auditoría
-        const auditoriaQuery = `
-          INSERT INTO auditoria_actualizacion_equipo (id_caso, id_usuario_modifico)
-          VALUES ($1, $2)
-          RETURNING id
-        `;
-        const auditoriaResult = await client.query(auditoriaQuery, [idCaso, cedulaEmisor]);
-        const auditoriaId = auditoriaResult.rows[0].id;
-
-        // 2. Registrar miembros anteriores (Equipo ANTES del cambio)
-        const insertAnteriorQuery = `
-          INSERT INTO auditoria_actualizacion_equipo_anterior (id_auditoria_actualizacion, tipo, cedula, nombres, apellidos, term)
-          VALUES ($1, $2, $3, $4, $5, $6)
-        `;
-
-        for (const miembro of equipoActual) {
-          // Solo registrar si el miembro estaba habilitado (activo en el equipo)
-          if (miembro.habilitado) {
-            // Separar nombres y apellidos si es necesario, o usarlos tal cual si vienen
-            // Asumimos que getEquipoByCaso retorna nombre_completo, pero necesitamos nombres y apellidos separados idealmente
-            // Para simplificar, usaremos nombre_completo en nombres y '' en apellidos si no están separados,
-            // O consultaremos los detalles si es crítico. 
-            // Revisando asignacionesQueries.getEquipoByCaso, probablemente hace join con usuarios.
-
-            // NOTA: Para no complejizar la query, usaremos los datos disponibles.
-            // Si miembro.nombre_completo es lo único disponible, lo dividiremos burdamente o buscaremos info.
-            // Mejor aún: Buscamos la info detallada de usuarios.
-
-            const tipo = miembro.tipo; // 'profesor' o 'estudiante'
-            // Consultamos info detallada si no está en miembro
-            // Asumimos que getEquipoByCaso devuelve lo necesario. Si no, hacemos query rápida.
-            const usuarioInfoQuery = 'SELECT nombres, apellidos FROM usuarios WHERE cedula = $1';
-            const usuarioInfo = await client.query(usuarioInfoQuery, [miembro.cedula]);
-            const { nombres, apellidos } = usuarioInfo.rows[0];
-
-            await client.query(insertAnteriorQuery, [
-              auditoriaId,
-              tipo,
-              miembro.cedula,
-              nombres,
-              apellidos,
-              miembro.term
-            ]);
+        // Equipo ANTES del cambio: solo miembros habilitados. Resolvemos nombres/apellidos
+        // en un solo batch (WHERE cedula = ANY($1)) en vez de una query por miembro.
+        const miembrosAnterioresActivos = equipoActual.filter(m => m.habilitado);
+        const cedulasAnteriores = miembrosAnterioresActivos.map(m => m.cedula);
+        const infoAnterioresMap = new Map<string, { nombres: string; apellidos: string }>();
+        if (cedulasAnteriores.length > 0) {
+          const { rows } = await client.query(
+            'SELECT cedula, nombres, apellidos FROM usuarios WHERE cedula = ANY($1)',
+            [cedulasAnteriores]
+          );
+          for (const row of rows) {
+            infoAnterioresMap.set(row.cedula, { nombres: row.nombres, apellidos: row.apellidos });
           }
         }
+        const miembrosAnteriores = miembrosAnterioresActivos.map(miembro => {
+          const info = infoAnterioresMap.get(miembro.cedula);
+          return {
+            tipo: miembro.tipo,
+            cedula: miembro.cedula,
+            nombres: info?.nombres ?? null,
+            apellidos: info?.apellidos ?? null,
+            term: miembro.term,
+          };
+        });
 
-        // 3. Registrar miembros nuevos (Equipo DESPUÉS del cambio)
-        // Reconstruimos el estado final del equipo
-        const insertNuevoQuery = `
-          INSERT INTO auditoria_actualizacion_equipo_nuevo (id_auditoria_actualizacion, tipo, cedula, nombres, apellidos, term)
-          VALUES ($1, $2, $3, $4, $5, $6)
-        `;
+        // Equipo DESPUÉS del cambio: reconstruido a partir de los maps ya cargados en memoria.
+        const miembrosNuevos = [
+          ...profesoresUnicos.flatMap(cedula => {
+            const info = profesoresAllActiveMap.get(cedula);
+            if (!info) return [];
+            return [{ tipo: 'profesor', cedula, nombres: info.nombres, apellidos: info.apellidos, term: info.term }];
+          }),
+          ...estudiantesUnicos.flatMap(cedula => {
+            const info = estudiantesAllActiveMap.get(cedula);
+            if (!info) return [];
+            return [{ tipo: 'estudiante', cedula, nombres: info.nombres, apellidos: info.apellidos, term: info.term }];
+          }),
+        ];
 
-        // Profesores finales
-        for (const cedula of profesoresUnicos) {
-          const profesorInfo = profesoresAllActiveMap.get(cedula);
-          if (profesorInfo) {
-            const termToUse = profesorInfo.term === currentTerm ? currentTerm : profesorInfo.term;
-            await client.query(insertNuevoQuery, [
-              auditoriaId, 'profesor', cedula, profesorInfo.nombres, profesorInfo.apellidos, termToUse
-            ]);
-          }
-        }
-
-        // Estudiantes finales
-        for (const cedula of estudiantesUnicos) {
-          const estudianteInfo = estudiantesAllActiveMap.get(cedula);
-          if (estudianteInfo) {
-            const termToUse = estudianteInfo.term === currentTerm ? currentTerm : estudianteInfo.term;
-            await client.query(insertNuevoQuery, [
-              auditoriaId, 'estudiante', cedula, estudianteInfo.nombres, estudianteInfo.apellidos, termToUse
-            ]);
-          }
-        }
+        // Un solo evento de auditoría para todo el cambio de equipo.
+        await client.query(
+          `INSERT INTO auditoria_eventos (entidad, operacion, id_entidad, id_usuario, datos_anteriores, datos_nuevos)
+           VALUES ('equipo', 'actualizacion', $1, $2, $3, $4)`,
+          [
+            String(idCaso),
+            cedulaEmisor,
+            JSON.stringify({ miembros: miembrosAnteriores }),
+            JSON.stringify({ miembros: miembrosNuevos }),
+          ]
+        );
       }
 
       revalidatePath(`/dashboard/cases/${idCaso}`);
@@ -1346,7 +1322,7 @@ export async function asignarEquipoAction(
       return {
         success: false,
         error: {
-          message: error.message,
+          message: toUserMessage(error),
           code: error.code || 'ASIGNACION_ERROR',
         },
       };
@@ -1355,7 +1331,7 @@ export async function asignarEquipoAction(
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : 'Error al asignar equipo',
+        message: toUserMessage(error, 'Error al asignar equipo'),
         code: 'UNKNOWN_ERROR',
       },
     };
@@ -1436,7 +1412,7 @@ export async function deleteAccionAction(params: DeleteAccionParams): Promise<De
       return {
         success: false,
         error: {
-          message: error.message,
+          message: toUserMessage(error),
           code: error.code || 'ACCION_ERROR',
         },
       };
@@ -1445,7 +1421,7 @@ export async function deleteAccionAction(params: DeleteAccionParams): Promise<De
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : 'Error al eliminar la acción',
+        message: toUserMessage(error, 'Error al eliminar la acción'),
         code: 'UNKNOWN_ERROR',
       },
     };
@@ -1499,7 +1475,7 @@ export async function updateAccionAction(params: UpdateAccionParams): Promise<Up
       return {
         success: false,
         error: {
-          message: error.message,
+          message: toUserMessage(error),
           code: error.code || 'ACCION_ERROR',
         },
       };
@@ -1508,7 +1484,7 @@ export async function updateAccionAction(params: UpdateAccionParams): Promise<Up
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : 'Error al actualizar la acción',
+        message: toUserMessage(error, 'Error al actualizar la acción'),
         code: 'UNKNOWN_ERROR',
       },
     };
@@ -1568,6 +1544,12 @@ export async function deleteCasoAction(
     // Validar autenticación básica (cualquier rol puede eliminar si está autenticado)
     // if (authResult.user.rol !== 'Coordinador') { ... } // Restricción eliminada
 
+    // URLs de los documentos en Vercel Blob: la BD solo guarda la URL, así que
+    // hay que tomarlas antes de que eliminar_caso_fisico borre los soportes.
+    const urlsDocumentos = (await soportesQueries.getByCaso(idCaso))
+      .map((s) => s.url_documento)
+      .filter((url): url is string => !!url);
+
     // Eliminar el caso (la función maneja todas las referencias y la auditoría)
     // Usamos una transacción segura asumiendo el rol de BD del usuario para que funcionen los permisos granulares
     await withSecureTransaction(authResult.user.rol!, async (client) => {
@@ -1577,6 +1559,13 @@ export async function deleteCasoAction(
         motivo.trim(),
         client
       );
+    });
+
+    // Eliminar los archivos de Vercel Blob, como al borrar un soporte suelto. Si
+    // alguno falla se registra pero no se revierte: el caso ya no existe en la BD.
+    const resultadosBlob = await Promise.all(urlsDocumentos.map((url) => deleteFile(url)));
+    resultadosBlob.forEach((r, i) => {
+      if (!r.success) logger.error(`No se pudo eliminar de Vercel Blob el documento del caso #${idCaso}: ${urlsDocumentos[i]}`, r.error);
     });
 
     // Revalidar cache de las páginas relacionadas
@@ -1775,7 +1764,7 @@ export async function addCaseToSemesterAction(idCaso: number, term: string): Pro
     }
 
     await withSecureTransaction(authResult.user.rol, async (client) => {
-      await casosService.addOcurrencia(idCaso, term);
+      await casosService.addOcurrencia(idCaso, term, authResult.user!.cedula);
     });
 
     revalidatePath(`/dashboard/cases/${idCaso}`);
@@ -1793,7 +1782,7 @@ export async function removeCaseFromSemesterAction(idCaso: number, term: string)
     }
 
     await withSecureTransaction(authResult.user.rol, async () => {
-      await casosService.removeOcurrencia(idCaso, term);
+      await casosService.removeOcurrencia(idCaso, term, authResult.user!.cedula);
     });
 
     revalidatePath(`/dashboard/cases/${idCaso}`);

@@ -308,7 +308,7 @@ export default function CasesTab({ casos, cedulaSolicitante }: CasesTabProps) {
         setDeleteMotivo('');
         router.refresh(); // O recargar datos si es necesario
       } else {
-        toast.error(result.error?.message || 'Error desconocido', 'Error al eliminar');
+        toast.error(result.error?.message || 'No se pudo eliminar el caso.', 'Error al eliminar');
       }
     } catch (e) {
       logger.error(e);
@@ -328,7 +328,7 @@ export default function CasesTab({ casos, cedulaSolicitante }: CasesTabProps) {
         await generateCasoHistorialZip(result.data as CasoHistorialData);
         toast.success('Historial del caso descargado correctamente');
       } else {
-        toast.error(`Error al descargar el historial: ${result.error || 'Error desconocido'}`);
+        toast.error(result.error || 'No se pudo descargar el historial del caso.', 'Error al descargar el historial');
       }
     } catch (error) {
       logger.error('Error al descargar historial:', error);

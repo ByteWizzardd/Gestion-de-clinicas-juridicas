@@ -11,12 +11,14 @@ import { soportesQueries } from '@/lib/db/queries/soportes.queries';
 import { asignacionesQueries } from '@/lib/db/queries/asignaciones.queries';
 import { AppError, ValidationError, NotFoundError } from '@/lib/utils/errors';
 import { withTransaction } from '@/lib/db/transactions';
+import { withAuditTransaction } from '@/lib/utils/audit-context';
 import { loadSQL } from '@/lib/db/sql-loader';
 import { CreateCasoSchema, CreateCasoInput } from '@/lib/validations/casos.schema';
 import { ESTATUS_CASO } from '@/lib/constants/status';
 import { logger } from '@/lib/utils/logger';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 const getCasoByIdQuery = readFileSync(
     join(process.cwd(), 'database/queries/casos/get-by-id.sql'),
@@ -27,6 +29,38 @@ const getCaseIdsQuery = readFileSync(
     join(process.cwd(), 'database/queries/casos/get-by-id-case.sql'),
     'utf8'
 );
+
+/**
+ * Fecha 'YYYY-MM-DD' de un valor DATE: string de la API o Date que devuelve pg
+ * (medianoche local), para comparar fechas sin desfases de zona horaria.
+ */
+const fechaISO = (valor: unknown): string | null => {
+    if (valor == null || valor === '') return null;
+    if (valor instanceof Date) {
+        const pad = (n: number) => String(n).padStart(2, '0');
+        return `${valor.getFullYear()}-${pad(valor.getMonth() + 1)}-${pad(valor.getDate())}`;
+    }
+    return String(valor).slice(0, 10);
+};
+
+/**
+ * Reglas de orden entre fechas de un caso (las mismas CHECK de la BD:
+ * chk_casos_inicio_post_solicitud y chk_casos_fin_post_inicio), validadas
+ * antes para responder con el campo concreto en vez de un error genérico.
+ */
+const validarOrdenFechasCaso = (fechas: { solicitud: unknown; inicio: unknown; fin: unknown }) => {
+    const solicitud = fechaISO(fechas.solicitud);
+    const inicio = fechaISO(fechas.inicio);
+    const fin = fechaISO(fechas.fin);
+    if (solicitud && inicio && inicio < solicitud) {
+        const mensaje = 'La fecha de solicitud no puede ser posterior a la fecha de inicio del caso';
+        throw new ValidationError(mensaje, { fecha_solicitud: [mensaje] });
+    }
+    if (inicio && fin && fin < inicio) {
+        const mensaje = 'La fecha de fin del caso no puede ser anterior a la fecha de inicio';
+        throw new ValidationError(mensaje, { fecha_fin_caso: [mensaje] });
+    }
+};
 
 /**
  * Servicio para la entidad Casos
@@ -49,9 +83,9 @@ export const casosService = {
             }));
         } catch (error) {
             throw new AppError(
-                'Error al obtener los casos',
+                toUserMessage(error, 'Error al obtener los casos'),
                 500,
-                error instanceof Error ? error.message : 'Error desconocido'
+                'CASO_ERROR'
             );
         }
     },
@@ -67,9 +101,9 @@ export const casosService = {
             return nextId;
         } catch (error) {
             throw new AppError(
-                'Error al obtener el siguiente número de caso',
+                toUserMessage(error, 'Error al obtener el siguiente número de caso'),
                 500,
-                error instanceof Error ? error.message : 'Error desconocido'
+                'CASO_ERROR'
             );
         }
     },
@@ -125,6 +159,12 @@ export const casosService = {
                     throw new ValidationError('La fecha de inicio no puede ser futura', { fecha_inicio_caso: ['La fecha no puede ser futura'] });
                 }
             }
+            // Sin fecha_solicitud la BD usa CURRENT_DATE: el inicio no puede ser anterior a hoy.
+            validarOrdenFechasCaso({
+                solicitud: validatedData.fecha_solicitud ?? fechaISO(today),
+                inicio: validatedData.fecha_inicio_caso,
+                fin: null,
+            });
 
             // Crear el caso
             // Si fecha_solicitud no se proporciona, se usa CURRENT_DATE en la BD
@@ -172,9 +212,9 @@ export const casosService = {
             }
 
             throw new AppError(
-                'Error al crear el caso',
+                toUserMessage(error, 'Error al crear el caso'),
                 500,
-                error instanceof Error ? error.message : 'Error desconocido'
+                'CASO_ERROR'
             );
         }
     },
@@ -235,6 +275,37 @@ export const casosService = {
                 }
             }
 
+            const fechasActuales = existingCaso as { fecha_solicitud?: unknown; fecha_inicio_caso?: unknown; fecha_fin_caso?: unknown };
+
+            // Fecha de inicio. Los formularios de edición tienen UN solo campo
+            // ("Fecha del caso", inicializado con la solicitud) y mandan ese
+            // valor en fecha_solicitud y fecha_inicio_caso. Solo se mueve el
+            // inicio si el usuario cambió esa fecha; si la solicitud llega igual
+            // que antes, re-enviar el campo sin tocarlo no debe igualar un
+            // inicio que era distinto.
+            const inicioActual = fechaISO(fechasActuales.fecha_inicio_caso);
+            const solicitudCambio = validatedData.fecha_solicitud === undefined
+                || validatedData.fecha_solicitud !== fechaISO(fechasActuales.fecha_solicitud);
+            const nuevoInicio = validatedData.fecha_inicio_caso
+                && validatedData.fecha_inicio_caso !== inicioActual
+                && solicitudCambio
+                ? validatedData.fecha_inicio_caso
+                : undefined;
+            if (nuevoInicio) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                if (new Date(nuevoInicio) > today) {
+                    throw new ValidationError('La fecha de inicio no puede ser futura', { fecha_inicio_caso: ['La fecha no puede ser futura'] });
+                }
+            }
+
+            // Orden de fechas con los valores que quedarán tras la actualización.
+            validarOrdenFechasCaso({
+                solicitud: validatedData.fecha_solicitud ?? fechasActuales.fecha_solicitud,
+                inicio: nuevoInicio ?? fechasActuales.fecha_inicio_caso,
+                fin: validatedData.fecha_fin_caso || fechasActuales.fecha_fin_caso,
+            });
+
             // Validar si la cédula cambia y existe
             if (validatedData.cedula && validatedData.cedula !== (existingCaso as any).cedula) {
                 const solicitanteExists = await solicitantesQueries.getSolicitanteById(validatedData.cedula);
@@ -254,27 +325,19 @@ export const casosService = {
                 num_subcategoria: validatedData.num_subcategoria,
                 num_ambito_legal: validatedData.num_ambito_legal,
                 fecha_solicitud: validatedData.fecha_solicitud,
+                fecha_inicio_caso: nuevoInicio,
                 cedula: validatedData.cedula,
             };
 
             // Lógica de actualización (abstraída para reutilizar)
             const performUpdate = async (client: import('pg').PoolClient) => {
-                // Establecer variable de sesión para auditoría
                 // Validar cédula
                 if (!/^[A-Za-z0-9.\-]+$/.test(cedulaUsuario)) {
                     throw new Error('Formato de cédula inválido');
                 }
-                const cedulaEscapada = cedulaUsuario.replace(/'/g, "''");
 
-                // Ejecutar SET LOCAL y UPDATE en la misma transacción y cliente
-                await client.query(`SET LOCAL app.usuario_actualiza_caso = '${cedulaEscapada}'`);
-
-                // Usar casosQueries.update que ahora acepta client
-                // Nota: antes se usaba client.query directo aquí con loadSQL, ahora delegamos en casosQueries.update
-                // pero casosQueries.update espera los datos ya procesados.
-                // Como casosQueries.update ya está adaptado y hace loadSQL, lo llamamos directamente.
-                // Sin embargo, el código original hacía la query inline aquí.
-                // Para mantener la lógica exacta (y aprovechar que ya edité casosQueries.update), lo invoco.
+                // NOTA: Si se usa externalClient, asumimos que el llamador ya inyectó el contexto (withAuditTransaction).
+                // Si no, la llamada a withAuditTransaction más abajo lo hará.
 
                 const result = await casosQueries.update(idCaso, {
                     tramite: updateData.tramite || (existingCaso as any).tramite,
@@ -287,6 +350,7 @@ export const casosService = {
                     num_ambito_legal: updateData.num_ambito_legal || (existingCaso as any).num_ambito_legal,
                     fecha_solicitud: updateData.fecha_solicitud ? (typeof updateData.fecha_solicitud === 'string' ? updateData.fecha_solicitud : updateData.fecha_solicitud) : (existingCaso as any).fecha_solicitud,
                     cedula: updateData.cedula || (existingCaso as any).cedula,
+                    fecha_inicio_caso: updateData.fecha_inicio_caso,
                 }, client);
                 return result;
             };
@@ -296,10 +360,14 @@ export const casosService = {
                 return await performUpdate(externalClient);
             }
 
-            // Si no, usar transacción local (legacy safe)
-            return await withTransaction(async (client) => {
-                return await performUpdate(client);
-            });
+            // Si no, usar transacción local auditada
+            return await withAuditTransaction(
+                cedulaUsuario,
+                { accion_negocio: 'Actualización de datos del caso' },
+                async (client) => {
+                    return await performUpdate(client);
+                }
+            );
 
         } catch (error) {
             if (error instanceof ValidationError || error instanceof NotFoundError) {
@@ -311,9 +379,9 @@ export const casosService = {
             }
 
             throw new AppError(
-                'Error al actualizar el caso',
+                toUserMessage(error, 'Error al actualizar el caso'),
                 500,
-                error instanceof Error ? error.message : 'Error desconocido'
+                'CASO_ERROR'
             );
         }
     },
@@ -373,9 +441,8 @@ export const casosService = {
             if (error instanceof AppError) {
                 throw error;
             }
-            const originalMessage = error instanceof Error ? error.message : 'Error desconocido';
             throw new AppError(
-                `Error al obtener el caso completo: ${originalMessage}`,
+                toUserMessage(error, 'Error al obtener el caso completo'),
                 500,
                 'CASO_ERROR'
             );
@@ -411,12 +478,10 @@ export const casosService = {
             const numAccion = Number(params.numAccion);
             const idCaso = Number(params.idCaso);
 
-            return await withTransaction(async (client) => {
-                // Establecer variables de sesión para auditoría
-                const cedulaEscapada = params.idUsuarioElimino.replace(/'/g, "''");
-                const motivoEscapado = params.motivo.replace(/'/g, "''");
-                await client.query(`SET LOCAL app.usuario_elimina_accion = '${cedulaEscapada}'`);
-                await client.query(`SET LOCAL app.motivo_eliminacion_accion = '${motivoEscapado}'`);
+            return await withAuditTransaction(
+                params.idUsuarioElimino,
+                { accion_negocio: 'Eliminación de acción de caso', motivo: params.motivo },
+                async (client) => {
 
                 // 1. Obtener información completa de la acción antes de eliminarla
                 const getAccionQuery = `
@@ -454,7 +519,7 @@ export const casosService = {
                     `;
 
                     const ejecutoresAccionResult = await client.query(ejecutoresAccionQuery, [numAccion, idCaso]);
-                    const ejecutoresAccion = ejecutoresAccionResult.rows.map(r => r.id_usuario).sort();
+                    const ejecutoresAccion = ejecutoresAccionResult.rows.map((r: Record<string, any>) => r.id_usuario).sort();
 
                     // Para cada cita, verificar si corresponde a esta acción por ejecutores
                     let citaRelacionada = null;
@@ -468,7 +533,7 @@ export const casosService = {
                         `;
 
                         const ejecutoresCitaResult = await client.query(ejecutoresCitaQuery, [cita.num_cita, idCaso]);
-                        const ejecutoresCita = ejecutoresCitaResult.rows.map(r => r.id_usuario).sort();
+                        const ejecutoresCita = ejecutoresCitaResult.rows.map((r: Record<string, any>) => r.id_usuario).sort();
 
                         // Comparar listas de ejecutores
                         const ejecutoresCoinciden = JSON.stringify(ejecutoresCita) === JSON.stringify(ejecutoresAccion);
@@ -527,32 +592,28 @@ export const casosService = {
                     throw new AppError('No se pudo eliminar la acción', 500);
                 }
 
-                // 6. Insertar los ejecutores en la tabla normalizada de auditoría
+                // 6. Registrar los ejecutores como su propio evento de auditoría (independiente
+                // de si el trigger genérico creó o no un evento para la acción en sí).
                 if (ejecutoresData.length > 0) {
-                    // Obtener el ID del registro de auditoría recién creado
-                    const auditoriaResult = await client.query(`
-                        SELECT id FROM auditoria_eliminacion_acciones 
-                        WHERE num_accion = $1 AND id_caso = $2 
-                        ORDER BY fecha DESC LIMIT 1
-                    `, [numAccion, idCaso]);
+                    const ejecutoresAnteriores = ejecutoresData.map((ejecutor: any) => ({
+                        cedula: ejecutor.cedula,
+                        nombres: ejecutor.nombres,
+                        apellidos: ejecutor.apellidos,
+                        fecha_ejecucion: ejecutor.fecha_ejecucion instanceof Date
+                            ? ejecutor.fecha_ejecucion.toISOString().split('T')[0]
+                            : ejecutor.fecha_ejecucion,
+                    }));
 
-                    if (auditoriaResult.rows.length > 0) {
-                        const idAuditoria = auditoriaResult.rows[0].id;
-
-                        for (const ejecutor of ejecutoresData) {
-                            await client.query(`
-                                INSERT INTO auditoria_eliminacion_acciones_ejecutores 
-                                (id_auditoria_eliminacion, id_usuario_ejecutor, nombres_ejecutor, apellidos_ejecutor, fecha_ejecucion)
-                                VALUES ($1, $2, $3, $4, $5)
-                            `, [
-                                idAuditoria,
-                                ejecutor.cedula,
-                                ejecutor.nombres,
-                                ejecutor.apellidos,
-                                ejecutor.fecha_ejecucion
-                            ]);
-                        }
-                    }
+                    await client.query(
+                        `INSERT INTO auditoria_eventos (entidad, operacion, id_entidad, id_usuario, datos_anteriores, metadata)
+                         VALUES ('accion_ejecutores', 'eliminacion', $1, $2, $3, $4)`,
+                        [
+                            `${numAccion}-${idCaso}`,
+                            params.idUsuarioElimino,
+                            JSON.stringify({ ejecutores: ejecutoresAnteriores }),
+                            JSON.stringify({ motivo: params.motivo }),
+                        ]
+                    );
                 }
 
                 return result.rows[0];
@@ -560,9 +621,9 @@ export const casosService = {
         } catch (error) {
             logger.error('Error al eliminar la acción (detalle DB):', error);
             throw new AppError(
-                "Error al eliminar la acción",
+                toUserMessage(error, "Error al eliminar la acción"),
                 500,
-                error instanceof Error ? error.message : "Error desconocido"
+                'CASO_ERROR'
             );
         }
     },
@@ -575,10 +636,10 @@ export const casosService = {
         idUsuarioActualizo: string;
         ejecutores?: Array<{ idUsuario: string; fechaEjecucion: string }>;
     }) => {
-        return await withTransaction(async (client) => {
-            // Establecer variable de sesión para auditoría
-            const cedulaEscapada = params.idUsuarioActualizo.replace(/'/g, "''");
-            await client.query(`SET LOCAL app.usuario_actualiza_accion = '${cedulaEscapada}'`);
+        return await withAuditTransaction(
+            params.idUsuarioActualizo,
+            { accion_negocio: 'Actualización de acción de caso' },
+            async (client) => {
 
             // Verificar que la acción existe antes de actualizar
             const checkQuery = 'SELECT num_accion, detalle_accion, comentario FROM acciones WHERE num_accion = $1 AND id_caso = $2';
@@ -620,7 +681,7 @@ export const casosService = {
                     const idsUsuarios = params.ejecutores.map(e => e.idUsuario);
                     const namesQuery = `SELECT cedula, nombres, apellidos FROM usuarios WHERE cedula = ANY($1)`;
                     const namesResult = await client.query(namesQuery, [idsUsuarios]);
-                    const usersMap = new Map(namesResult.rows.map((u: any) => [u.cedula, { nombres: u.nombres, apellidos: u.apellidos }]));
+                    const usersMap = new Map<string, { nombres: string, apellidos: string }>(namesResult.rows.map((u: Record<string, any>) => [u.cedula, { nombres: u.nombres, apellidos: u.apellidos }]));
 
                     const createEjecutanQuery = loadSQL('ejecutan/create.sql');
                     for (const ejecutor of params.ejecutores) {
@@ -642,7 +703,7 @@ export const casosService = {
                 }
             } else {
                 // Si no se modifican los ejecutores, los nuevos son igual a los anteriores
-                ejecutoresNuevos = ejecutoresAnteriores.map((e: any) => ({
+                ejecutoresNuevos = ejecutoresAnteriores.map((e: Record<string, any>) => ({
                     cedula: e.cedula,
                     nombres: e.nombres,
                     apellidos: e.apellidos,
@@ -652,38 +713,33 @@ export const casosService = {
                 }));
             }
 
-            // Insertar ejecutores en tabla normalizada de auditoría
-            // Solo si hubo cambios en la acción (el trigger inserta el registro base)
-            const auditoriaResult = await client.query(`
-                SELECT id FROM auditoria_actualizacion_acciones 
-                WHERE num_accion = $1 AND id_caso = $2 
-                ORDER BY fecha_actualizacion DESC LIMIT 1
-            `, [params.numAccion, params.idCaso]);
+            // Registrar el diff de ejecutores como su propio evento de auditoría, solo si
+            // realmente cambiaron — sin depender de si el trigger genérico creó o no un
+            // evento para la acción en sí (evita adjuntar el cambio a una fila vieja).
+            const ejecutoresCambiaron = params.ejecutores !== undefined &&
+                JSON.stringify([...ejecutoresAnteriores].map((e: any) => e.cedula).sort()) !==
+                JSON.stringify([...ejecutoresNuevos].map((e) => e.cedula).sort());
 
-            if (auditoriaResult.rows.length > 0) {
-                const idAuditoria = auditoriaResult.rows[0].id;
-
-                // Insertar ejecutores anteriores (tipo = 'anterior')
-                for (const ejecutor of ejecutoresAnteriores) {
-                    const fechaStr = ejecutor.fecha_ejecucion instanceof Date
+            if (ejecutoresCambiaron) {
+                const normalizarFecha = (ejecutor: any) => ({
+                    cedula: ejecutor.cedula,
+                    nombres: ejecutor.nombres,
+                    apellidos: ejecutor.apellidos,
+                    fecha_ejecucion: ejecutor.fecha_ejecucion instanceof Date
                         ? ejecutor.fecha_ejecucion.toISOString().split('T')[0]
-                        : ejecutor.fecha_ejecucion;
+                        : ejecutor.fecha_ejecucion,
+                });
 
-                    await client.query(`
-                        INSERT INTO auditoria_actualizacion_acciones_ejecutores 
-                        (id_auditoria_actualizacion, tipo, id_usuario_ejecutor, nombres_ejecutor, apellidos_ejecutor, fecha_ejecucion)
-                        VALUES ($1, 'anterior', $2, $3, $4, $5)
-                    `, [idAuditoria, ejecutor.cedula, ejecutor.nombres, ejecutor.apellidos, fechaStr]);
-                }
-
-                // Insertar ejecutores nuevos (tipo = 'nuevo')
-                for (const ejecutor of ejecutoresNuevos) {
-                    await client.query(`
-                        INSERT INTO auditoria_actualizacion_acciones_ejecutores 
-                        (id_auditoria_actualizacion, tipo, id_usuario_ejecutor, nombres_ejecutor, apellidos_ejecutor, fecha_ejecucion)
-                        VALUES ($1, 'nuevo', $2, $3, $4, $5)
-                    `, [idAuditoria, ejecutor.cedula, ejecutor.nombres, ejecutor.apellidos, ejecutor.fecha_ejecucion]);
-                }
+                await client.query(
+                    `INSERT INTO auditoria_eventos (entidad, operacion, id_entidad, id_usuario, datos_anteriores, datos_nuevos)
+                     VALUES ('accion_ejecutores', 'actualizacion', $1, $2, $3, $4)`,
+                    [
+                        `${params.numAccion}-${params.idCaso}`,
+                        params.idUsuarioActualizo,
+                        JSON.stringify({ ejecutores: ejecutoresAnteriores.map(normalizarFecha) }),
+                        JSON.stringify({ ejecutores: ejecutoresNuevos.map(normalizarFecha) }),
+                    ]
+                );
             }
 
             // Verificar que la acción se actualizó correctamente
@@ -701,20 +757,37 @@ export const casosService = {
     /**
      * Agrega un semestre a un caso
      */
-    addOcurrencia: async (idCaso: number, term: string): Promise<void> => {
+    addOcurrencia: async (idCaso: number, term: string, idUsuario: string): Promise<void> => {
         const query = loadSQL('casos/add-ocurrencia.sql');
         return await withTransaction(async (client) => {
-            await client.query(query, [idCaso, term]);
+            const result = await client.query(query, [idCaso, term]);
+            // ocurren_en no tiene trigger de auditoría (los triggers de sincronización
+            // la llenan automáticamente y ensuciarían el feed), así que solo se
+            // audita la asociación manual — y solo si realmente se insertó la fila.
+            if (result.rows.length > 0) {
+                await client.query(
+                    `INSERT INTO auditoria_eventos (entidad, operacion, id_entidad, id_usuario, datos_nuevos)
+                     VALUES ('caso_semestre', 'insercion', $1, $2, $3)`,
+                    [`${idCaso}-${term}`, idUsuario, JSON.stringify({ id_caso: idCaso, term })]
+                );
+            }
         });
     },
 
     /**
      * Elimina un semestre de un caso
      */
-    removeOcurrencia: async (idCaso: number, term: string): Promise<void> => {
+    removeOcurrencia: async (idCaso: number, term: string, idUsuario: string): Promise<void> => {
         const query = loadSQL('casos/remove-ocurrencia.sql');
         return await withTransaction(async (client) => {
-            await client.query(query, [idCaso, term]);
+            const result = await client.query(query, [idCaso, term]);
+            if (result.rows.length > 0) {
+                await client.query(
+                    `INSERT INTO auditoria_eventos (entidad, operacion, id_entidad, id_usuario, datos_anteriores)
+                     VALUES ('caso_semestre', 'eliminacion', $1, $2, $3)`,
+                    [`${idCaso}-${term}`, idUsuario, JSON.stringify({ id_caso: idCaso, term })]
+                );
+            }
         });
     },
 
@@ -727,7 +800,7 @@ export const casosService = {
         // withTransaction provee un cliente, es seguro
         return await withTransaction(async (client) => {
             const result = await client.query(query, [idCaso]);
-            return result.rows.map(row => ({
+            return result.rows.map((row: Record<string, any>) => ({
                 term: row.term,
                 fecha_inicio: row.fecha_inicio.toISOString().split('T')[0],
                 fecha_fin: row.fecha_fin.toISOString().split('T')[0]

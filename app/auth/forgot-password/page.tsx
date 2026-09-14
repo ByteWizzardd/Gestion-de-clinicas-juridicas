@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
+import { sanitizeUserMessage } from '@/lib/utils/error-messages';
 
 export default function ForgotPasswordPage() {
     const router = useRouter();
@@ -89,7 +90,7 @@ export default function ForgotPasswordPage() {
                 setIsLoading(false);
             }
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error al procesar la solicitud");
+            setError(sanitizeUserMessage(err, "Error al procesar la solicitud"));
             setIsLoading(false);
         }
     };

@@ -4,6 +4,8 @@ import { QueryResult, type PoolClient } from 'pg';
 import { logger } from '@/lib/utils/logger';
 import { solicitantesQueries, type Solicitante, type SolicitanteCompleto } from '@/lib/db/queries/solicitantes.queries';
 import { AppError } from '@/lib/utils/errors';
+import { withAuditTransaction } from '@/lib/utils/audit-context';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 interface ApplicantFormData {
   // Identificación
@@ -175,9 +177,9 @@ export class SolicitantesService {
         logger.error(`Error details: ${error.message}`);
       }
       throw new AppError(
-        "No se pudieron obtener los solicitantes. Por favor, intente más tarde.",
+        toUserMessage(error, "No se pudieron obtener los solicitantes. Por favor, intente más tarde."),
         500,
-        error instanceof Error ? error.message : String(error)
+        'SOLICITANTE_ERROR'
       );
     }
   }
@@ -197,9 +199,9 @@ export class SolicitantesService {
         logger.error(`Error details: ${error.message}`);
       }
       throw new AppError(
-        "No se pudo obtener el solicitante. Por favor, intente más tarde.",
+        toUserMessage(error, "No se pudo obtener el solicitante. Por favor, intente más tarde."),
         500,
-        error instanceof Error ? error.message : String(error)
+        'SOLICITANTE_ERROR'
       );
     }
   }
@@ -220,9 +222,9 @@ export class SolicitantesService {
         logger.error(`Error details: ${error.message}`);
       }
       throw new AppError(
-        'No se pudo obtener la información completa del solicitante. Por favor, intente más tarde.',
+        toUserMessage(error, 'No se pudo obtener la información completa del solicitante. Por favor, intente más tarde.'),
         500,
-        error instanceof Error ? error.message : String(error)
+        'SOLICITANTE_ERROR'
       );
     }
   }
@@ -245,15 +247,11 @@ export const solicitantesService = {
       }
     }
 
-    const client = await pool.connect();
-
     try {
-      await client.query('BEGIN');
-      // Establecer variable de sesión para auditoría
-      if (usuarioActualizo) {
-        await client.query("SELECT set_config('app.usuario_actualiza_solicitante', $1, true)", [usuarioActualizo]);
-        await client.query("SELECT set_config('app.usuario_crea_solicitante', $1, true)", [usuarioActualizo]);
-      }
+      return await withAuditTransaction(
+        usuarioActualizo,
+        { accion_negocio: 'Registro de solicitante' },
+        async (client) => {
 
       // 1. Crear o verificar solicitante básico
       // Construir cédula con formato V-XXXX (con guión)
@@ -330,7 +328,6 @@ export const solicitantesService = {
         const emailExistente = await client.query(checkEmailQuery, [data.correoElectronico, null]);
 
         if (emailExistente.rows.length > 0) {
-          await client.query('ROLLBACK');
           throw new AppError(
             `El correo electrónico ${data.correoElectronico} ya está asociado a otro solicitante`,
             400,
@@ -358,7 +355,6 @@ export const solicitantesService = {
           const pgError = error as { code?: string; constraint?: string };
           // Si es un error de unique constraint en correo_electronico
           if (pgError.code === '23505' && pgError.constraint === 'solicitantes_correo_electronico_unique') {
-            await client.query('ROLLBACK');
             throw new AppError(
               `El correo electrónico ${data.correoElectronico} ya está asociado a otro solicitante`,
               400,
@@ -380,7 +376,6 @@ export const solicitantesService = {
           if (nuevoEmailExistente.rows.length > 0) {
             const otroSolicitante = nuevoEmailExistente.rows[0];
             if (otroSolicitante.cedula !== cedula) {
-              await client.query('ROLLBACK');
               throw new AppError(
                 `El correo electrónico ${data.correoElectronico} ya está asociado a otro solicitante`,
                 400,
@@ -505,8 +500,6 @@ export const solicitantesService = {
       ]);
       const solicitanteActualizado = solicitanteResult.rows[0];
 
-      await client.query('COMMIT');
-
       return {
         solicitante: solicitanteActualizado,
         vivienda,
@@ -515,8 +508,8 @@ export const solicitantesService = {
         idActividad,
         hogar,
       };
+      });
     } catch (error: unknown) {
-      await client.query('ROLLBACK');
       logger.error('Error al registrar solicitante', error);
 
       // Mejorar el mensaje de error para debugging
@@ -534,8 +527,6 @@ export const solicitantesService = {
       });
 
       throw enhancedError;
-    } finally {
-      client.release();
     }
   },
 
@@ -573,14 +564,11 @@ export const solicitantesService = {
       }
     }
 
-    const client = await pool.connect();
-
     try {
-      await client.query('BEGIN');
-      // Establecer variable de sesión para auditoría (por compatibilidad con otros triggers)
-      if (usuarioActualizo) {
-        await client.query("SELECT set_config('app.usuario_actualiza_solicitante', $1, true)", [usuarioActualizo]);
-      }
+      return await withAuditTransaction(
+        usuarioActualizo,
+        { accion_negocio: 'Actualización de solicitante' },
+        async (client) => {
 
       // ========== OBTENER DATOS ANTERIORES PARA AUDITORÍA ==========
       const datosAnterioresResult = await client.query(`
@@ -609,7 +597,7 @@ export const solicitantesService = {
 
       // Mapear características a un objeto para fácil acceso
       const caracteristicasMap: Record<number, string> = {};
-      caracteristicasResult.rows.forEach(row => {
+      caracteristicasResult.rows.forEach((row: Record<string, any>) => {
         caracteristicasMap[row.id_tipo_caracteristica] = row.descripcion;
       });
 
@@ -630,7 +618,7 @@ export const solicitantesService = {
         WHERE a.cedula_solicitante = $1 AND c.id_tipo_caracteristica = 8
         ORDER BY c.descripcion
       `, [cedulaOriginal]);
-      const artefactosAnteriores = artefactosAnterioresResult.rows.map(r => r.descripcion);
+      const artefactosAnteriores = artefactosAnterioresResult.rows.map((r: Record<string, any>) => r.descripcion);
       datosAnteriores.artefactos_domesticos = artefactosAnteriores.join(', ') || null;
 
       // 1. Preparar datos básicos
@@ -794,128 +782,72 @@ export const solicitantesService = {
 
       const datosNuevos = datosNuevosResult.rows[0] || {};
 
-      // Insertar UN SOLO registro de auditoría con TODO
-      // Insertar UN SOLO registro de auditoría con TODO
-      await client.query(`
-        INSERT INTO auditoria_actualizacion_solicitantes (
-          cedula_solicitante,
-          -- Solicitante anterior
-          nombres_anterior, apellidos_anterior, fecha_nacimiento_anterior,
-          telefono_local_anterior, telefono_celular_anterior, correo_electronico_anterior,
-          sexo_anterior, nacionalidad_anterior, estado_civil_anterior, concubinato_anterior,
-          tipo_tiempo_estudio_anterior, tiempo_estudio_anterior, id_nivel_educativo_anterior,
-          id_trabajo_anterior, id_actividad_anterior,
-          id_estado_anterior, num_municipio_anterior, num_parroquia_anterior,
-          -- Solicitante nuevo
-          nombres_nuevo, apellidos_nuevo, fecha_nacimiento_nuevo,
-          telefono_local_nuevo, telefono_celular_nuevo, correo_electronico_nuevo,
-          sexo_nuevo, nacionalidad_nuevo, estado_civil_nuevo, concubinato_nuevo,
-          tipo_tiempo_estudio_nuevo, tiempo_estudio_nuevo, id_nivel_educativo_nuevo,
-          id_trabajo_nuevo, id_actividad_nuevo,
-          id_estado_nuevo, num_municipio_nuevo, num_parroquia_nuevo,
-          -- Familia anterior
-          cant_personas_anterior, cant_trabajadores_anterior, cant_no_trabajadores_anterior,
-          cant_ninos_anterior, cant_ninos_estudiando_anterior, jefe_hogar_anterior,
-          ingresos_mensuales_anterior, id_nivel_educativo_jefe_anterior,
-          tipo_tiempo_estudio_jefe_anterior, tiempo_estudio_jefe_anterior,
-          -- Familia nuevo
-          cant_personas_nuevo, cant_trabajadores_nuevo, cant_no_trabajadores_nuevo,
-          cant_ninos_nuevo, cant_ninos_estudiando_nuevo, jefe_hogar_nuevo,
-          ingresos_mensuales_nuevo, id_nivel_educativo_jefe_nuevo,
-          tipo_tiempo_estudio_jefe_nuevo, tiempo_estudio_jefe_nuevo,
-          -- Vivienda anterior
-          cant_habitaciones_anterior, cant_banos_anterior,
-          -- Vivienda nuevo
-          cant_habitaciones_nuevo, cant_banos_nuevo,
-          -- Dirección
-          direccion_habitacion_anterior, direccion_habitacion_nuevo,
-          -- Características vivienda (tipo 1-7)
-          tipo_vivienda_anterior, tipo_vivienda_nuevo,
-          material_piso_anterior, material_piso_nuevo,
-          material_paredes_anterior, material_paredes_nuevo,
-          material_techo_anterior, material_techo_nuevo,
-          agua_potable_anterior, agua_potable_nuevo,
-          eliminacion_aguas_negras_anterior, eliminacion_aguas_negras_nuevo,
-          aseo_anterior, aseo_nuevo,
-          -- Artefactos domésticos
-          artefactos_domesticos_anteriores, artefactos_domesticos_nuevos,
-          -- Meta
-          id_usuario_actualizo
-        ) VALUES (
-          $1,
-          -- Solicitante anterior
-          $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
-          -- Solicitante nuevo
-          $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37,
-          -- Familia anterior
-          $38, $39, $40, $41, $42, $43, $44, $45, $46, $47,
-          -- Familia nuevo
-          $48, $49, $50, $51, $52, $53, $54, $55, $56, $57,
-          -- Vivienda anterior
-          $58, $59,
-          -- Vivienda nuevo
-          $60, $61,
-          -- Dirección
-          $62, $63,
-          -- Características vivienda
-          $64, $65,
-          $66, $67,
-          $68, $69,
-          $70, $71,
-          $72, $73,
-          $74, $75,
-          $76, $77,
-          -- Artefactos domésticos
-          $78, $79,
-          -- Meta
-          $80
-        )
-      `, [
-        cedula,
-        // Solicitante anterior
-        datosAnteriores.nombres, datosAnteriores.apellidos, datosAnteriores.fecha_nacimiento,
-        datosAnteriores.telefono_local, datosAnteriores.telefono_celular, datosAnteriores.correo_electronico,
-        datosAnteriores.sexo, datosAnteriores.nacionalidad, datosAnteriores.estado_civil, datosAnteriores.concubinato,
-        datosAnteriores.tipo_tiempo_estudio, datosAnteriores.tiempo_estudio, datosAnteriores.id_nivel_educativo,
-        datosAnteriores.id_trabajo, datosAnteriores.id_actividad,
-        datosAnteriores.id_estado, datosAnteriores.num_municipio, datosAnteriores.num_parroquia,
-        // Solicitante nuevo (usar los valores que acabamos de actualizar)
-        data.nombres, data.apellidos, data.fechaNacimiento,
-        data.telefonoLocal || null, telefonoCelularCompleto, data.correoElectronico,
-        sexo, datosAnteriores.nacionalidad, estadoCivil, concubinato,
-        tipoTiempoEstudioSolicitante, tiempoEstudioSolicitante, nivelEducativoSolicitante.id_nivel_educativo,
-        idTrabajo, idActividad,
-        data.idEstado ? parseInt(data.idEstado) : 1, data.numMunicipio ? parseInt(data.numMunicipio) : 1, data.numParroquia ? parseInt(data.numParroquia) : 1,
-        // Familia anterior
-        datosAnteriores.cant_personas, datosAnteriores.cant_trabajadores, datosAnteriores.cant_no_trabajadores,
-        datosAnteriores.cant_ninos, datosAnteriores.cant_ninos_estudiando, datosAnteriores.jefe_hogar,
-        datosAnteriores.ingresos_mensuales, datosAnteriores.id_nivel_educativo_jefe,
-        datosAnteriores.tipo_tiempo_estudio_jefe, datosAnteriores.tiempo_estudio_jefe,
-        // Familia nuevo
-        datosNuevos.cant_personas, datosNuevos.cant_trabajadores, datosNuevos.cant_no_trabajadores,
-        datosNuevos.cant_ninos, datosNuevos.cant_ninos_estudiando, datosNuevos.jefe_hogar,
-        datosNuevos.ingresos_mensuales, datosNuevos.id_nivel_educativo_jefe,
-        datosNuevos.tipo_tiempo_estudio_jefe, datosNuevos.tiempo_estudio_jefe,
-        // Vivienda anterior
-        datosAnteriores.cant_habitaciones, datosAnteriores.cant_banos,
-        // Vivienda nuevo
-        datosNuevos.cant_habitaciones, datosNuevos.cant_banos,
-        // Dirección
-        datosAnteriores.direccion_habitacion, data.direccionHabitacion || null,
-        // Características 
-        datosAnteriores.tipo_vivienda, data.tipoVivienda,
-        datosAnteriores.material_piso, data.materialPiso,
-        datosAnteriores.material_paredes, data.materialParedes,
-        datosAnteriores.material_techo, data.materialTecho,
-        datosAnteriores.agua_potable, data.aguaPotable,
-        datosAnteriores.eliminacion_aguas_negras, data.eliminacionAguasN,
-        datosAnteriores.aseo, data.aseo,
-        // Artefactos domésticos
-        datosAnteriores.artefactos_domesticos,
-        data.artefactosDomesticos ? data.artefactosDomesticos.sort().join(', ') : null,
-        // Meta
-        usuarioActualizo
-      ]);
+      // Insertar UN SOLO evento de auditoría con todo el perfil extendido del solicitante
+      // (familia/hogar, vivienda, características, artefactos domésticos) — estas tablas
+      // no tienen trigger genérico propio porque el "dueño" conceptual del cambio es el
+      // solicitante, no cada tabla satélite. El cambio a las columnas propias de
+      // `solicitantes` ya queda auditado aparte por el trigger genérico (entidad='solicitante').
+      const perfilAnterior = {
+        nombres: datosAnteriores.nombres, apellidos: datosAnteriores.apellidos,
+        fecha_nacimiento: datosAnteriores.fecha_nacimiento,
+        telefono_local: datosAnteriores.telefono_local, telefono_celular: datosAnteriores.telefono_celular,
+        correo_electronico: datosAnteriores.correo_electronico,
+        sexo: datosAnteriores.sexo, nacionalidad: datosAnteriores.nacionalidad,
+        estado_civil: datosAnteriores.estado_civil, concubinato: datosAnteriores.concubinato,
+        tipo_tiempo_estudio: datosAnteriores.tipo_tiempo_estudio, tiempo_estudio: datosAnteriores.tiempo_estudio,
+        id_nivel_educativo: datosAnteriores.id_nivel_educativo,
+        id_trabajo: datosAnteriores.id_trabajo, id_actividad: datosAnteriores.id_actividad,
+        id_estado: datosAnteriores.id_estado, num_municipio: datosAnteriores.num_municipio,
+        num_parroquia: datosAnteriores.num_parroquia,
+        cant_personas: datosAnteriores.cant_personas, cant_trabajadores: datosAnteriores.cant_trabajadores,
+        cant_no_trabajadores: datosAnteriores.cant_no_trabajadores,
+        cant_ninos: datosAnteriores.cant_ninos, cant_ninos_estudiando: datosAnteriores.cant_ninos_estudiando,
+        jefe_hogar: datosAnteriores.jefe_hogar,
+        ingresos_mensuales: datosAnteriores.ingresos_mensuales,
+        id_nivel_educativo_jefe: datosAnteriores.id_nivel_educativo_jefe,
+        tipo_tiempo_estudio_jefe: datosAnteriores.tipo_tiempo_estudio_jefe,
+        tiempo_estudio_jefe: datosAnteriores.tiempo_estudio_jefe,
+        cant_habitaciones: datosAnteriores.cant_habitaciones, cant_banos: datosAnteriores.cant_banos,
+        direccion_habitacion: datosAnteriores.direccion_habitacion,
+        tipo_vivienda: datosAnteriores.tipo_vivienda, material_piso: datosAnteriores.material_piso,
+        material_paredes: datosAnteriores.material_paredes, material_techo: datosAnteriores.material_techo,
+        agua_potable: datosAnteriores.agua_potable, eliminacion_aguas_negras: datosAnteriores.eliminacion_aguas_negras,
+        aseo: datosAnteriores.aseo,
+        artefactos_domesticos: datosAnteriores.artefactos_domesticos,
+      };
+      const perfilNuevo = {
+        nombres: data.nombres, apellidos: data.apellidos, fecha_nacimiento: data.fechaNacimiento,
+        telefono_local: data.telefonoLocal || null, telefono_celular: telefonoCelularCompleto,
+        correo_electronico: data.correoElectronico,
+        sexo, nacionalidad: datosAnteriores.nacionalidad, estado_civil: estadoCivil, concubinato,
+        tipo_tiempo_estudio: tipoTiempoEstudioSolicitante, tiempo_estudio: tiempoEstudioSolicitante,
+        id_nivel_educativo: nivelEducativoSolicitante.id_nivel_educativo,
+        id_trabajo: idTrabajo, id_actividad: idActividad,
+        id_estado: data.idEstado ? parseInt(data.idEstado) : 1,
+        num_municipio: data.numMunicipio ? parseInt(data.numMunicipio) : 1,
+        num_parroquia: data.numParroquia ? parseInt(data.numParroquia) : 1,
+        cant_personas: datosNuevos.cant_personas, cant_trabajadores: datosNuevos.cant_trabajadores,
+        cant_no_trabajadores: datosNuevos.cant_no_trabajadores,
+        cant_ninos: datosNuevos.cant_ninos, cant_ninos_estudiando: datosNuevos.cant_ninos_estudiando,
+        jefe_hogar: datosNuevos.jefe_hogar,
+        ingresos_mensuales: datosNuevos.ingresos_mensuales,
+        id_nivel_educativo_jefe: datosNuevos.id_nivel_educativo_jefe,
+        tipo_tiempo_estudio_jefe: datosNuevos.tipo_tiempo_estudio_jefe,
+        tiempo_estudio_jefe: datosNuevos.tiempo_estudio_jefe,
+        cant_habitaciones: datosNuevos.cant_habitaciones, cant_banos: datosNuevos.cant_banos,
+        direccion_habitacion: data.direccionHabitacion || null,
+        tipo_vivienda: data.tipoVivienda, material_piso: data.materialPiso,
+        material_paredes: data.materialParedes, material_techo: data.materialTecho,
+        agua_potable: data.aguaPotable, eliminacion_aguas_negras: data.eliminacionAguasN,
+        aseo: data.aseo,
+        artefactos_domesticos: data.artefactosDomesticos ? data.artefactosDomesticos.slice().sort().join(', ') : null,
+      };
+
+      await client.query(
+        `INSERT INTO auditoria_eventos (entidad, operacion, id_entidad, id_usuario, datos_anteriores, datos_nuevos)
+         VALUES ('solicitante_perfil', 'actualizacion', $1, $2, $3, $4)`,
+        [cedula, usuarioActualizo, JSON.stringify(perfilAnterior), JSON.stringify(perfilNuevo)]
+      );
 
       // ========== ARTEFACTOS DOMÉSTICOS (después de auditoría) ==========
       // Se procesan DESPUÉS del INSERT de auditoría para que el trigger
@@ -929,8 +861,8 @@ export const solicitantesService = {
            WHERE a.cedula_solicitante = $1 AND a.id_tipo_caracteristica = 8`,
           [cedula]
         );
-        const artefactosActuales = new Set(artefactosActualesResult.rows.map(r => r.descripcion));
-        const artefactosNuevos = new Set(data.artefactosDomesticos);
+        const artefactosActuales = new Set<string>(artefactosActualesResult.rows.map((r: Record<string, any>) => r.descripcion));
+        const artefactosNuevos = new Set<string>(data.artefactosDomesticos || []);
 
         // Encontrar los que se eliminaron (están en actuales pero no en nuevos)
         const artefactosAEliminar = [...artefactosActuales].filter(a => !artefactosNuevos.has(a));
@@ -958,16 +890,13 @@ export const solicitantesService = {
         }
       }
 
-      await client.query('COMMIT');
-
       return {
         solicitante: solicitanteActualizado,
         vivienda,
         hogar,
       };
-
+      });
     } catch (error: unknown) {
-      await client.query('ROLLBACK');
       logger.error('Error al actualizar solicitante', error);
       const err = error as { message?: string; code?: string };
       throw new AppError(
@@ -975,32 +904,31 @@ export const solicitantesService = {
         500,
         err?.code || 'UNKNOWN'
       );
-    } finally {
-      client.release();
     }
   },
 
   delete: async (cedula: string, usuarioElimino: string, motivo: string): Promise<void> => {
-    const client = await pool.connect();
     try {
-      await client.query('BEGIN');
-
-      // Establecer variables de auditoría
-      await client.query("SELECT set_config('app.usuario_elimina_solicitante', $1, true)", [usuarioElimino]);
-      await client.query("SELECT set_config('app.motivo_eliminacion_solicitante', $1, true)", [motivo]);
-      // También establecer usuario_actualiza para los triggers de artefactos que se disparan al eliminar
-      await client.query("SELECT set_config('app.usuario_actualiza_solicitante', $1, true)", [usuarioElimino]);
-
-      const deleteQuery = loadSQL('solicitantes/delete-by-id.sql');
-      await client.query(deleteQuery, [cedula]);
-
-      await client.query('COMMIT');
+      await withAuditTransaction(
+        usuarioElimino,
+        { accion_negocio: 'Eliminación de solicitante', motivo },
+        async (client) => {
+          // viviendas y familias_y_hogares referencian a solicitantes sin
+          // ON DELETE CASCADE (y asignadas_a guarda sus características): se
+          // borran primero, en la misma transacción, para que el DELETE del
+          // solicitante no viole la FK. Sus triggers de auditoría registran
+          // los datos borrados y la lectura los adjunta al evento del
+          // solicitante.
+          await client.query('DELETE FROM asignadas_a WHERE cedula_solicitante = $1', [cedula]);
+          await client.query('DELETE FROM familias_y_hogares WHERE cedula_solicitante = $1', [cedula]);
+          await client.query('DELETE FROM viviendas WHERE cedula_solicitante = $1', [cedula]);
+          const deleteQuery = loadSQL('solicitantes/delete-by-id.sql');
+          await client.query(deleteQuery, [cedula]);
+        }
+      );
     } catch (error) {
-      await client.query('ROLLBACK');
       logger.error('Error al eliminar solicitante', error);
       throw error;
-    } finally {
-      client.release();
     }
   },
 };

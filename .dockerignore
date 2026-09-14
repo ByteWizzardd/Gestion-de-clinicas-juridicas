@@ -1,0 +1,35 @@
+# Dependencias y builds
+node_modules
+.next
+out
+build
+dist
+
+# Control de versiones
+.git
+.gitignore
+.gitattributes
+
+# Variables de entorno locales
+.env
+.env*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Archivos de configuración del IDE y SO
+.DS_Store
+*.pem
+.vscode
+.idea
+
+# Archivos de documentación y Docker locales
+README.md
+

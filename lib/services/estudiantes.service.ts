@@ -2,8 +2,9 @@ import ExcelJS from 'exceljs';
 import { pool } from '@/lib/db/pool';
 import { hashPassword } from '@/lib/utils/security';
 import { ValidationError } from '@/lib/utils/errors';
-
 import { validateEmailDomain as validateEmailDomainUtil } from '@/lib/utils/email-validation';
+import { withAuditTransaction } from '@/lib/utils/audit-context';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 export interface EstudianteRow {
   cedula: string;
@@ -202,7 +203,7 @@ async function parseExcel(file: File): Promise<EstudianteRow[]> {
   // Leer encabezados (primera fila)
   const headerRow = worksheet.getRow(1);
   const headers: string[] = [];
-  headerRow.eachCell({ includeEmpty: true }, (cell) => {
+  headerRow.eachCell({ includeEmpty: true }, (cell: any) => {
     headers.push(cell.value?.toString() || '');
   });
 
@@ -227,7 +228,7 @@ async function parseExcel(file: File): Promise<EstudianteRow[]> {
     const row = worksheet.getRow(i);
     const values: string[] = [];
 
-    row.eachCell({ includeEmpty: true }, (cell) => {
+    row.eachCell({ includeEmpty: true }, (cell: any) => {
       values.push(cell.value?.toString() || '');
     });
 
@@ -440,53 +441,30 @@ export async function bulkCreateEstudiantes(
   const defaultPasswordHash = await hashPassword('password123');
 
   // Procesar en transacción
-  const client = await pool.connect();
-
   try {
-    await client.query('BEGIN');
-    // Establecer usuario para auditoría
-    if (cedulaActor) {
-      await client.query("SELECT set_config('app.usuario_crea_catalogo', $1, true)", [cedulaActor]);
-    }
-    // Cargar queries SQL
-    const { loadSQL } = await import('@/lib/db/sql-loader');
-    const usuarioQuery = loadSQL('usuarios/create-or-update.sql');
-    const estudianteQuery = loadSQL('estudiantes/create-or-update.sql');
+    return await withAuditTransaction(
+      cedulaActor,
+      { accion_negocio: 'Carga masiva de estudiantes' },
+      async (client) => {
+        // Cargar queries SQL
+        const { loadSQL } = await import('@/lib/db/sql-loader');
+        const usuarioQuery = loadSQL('usuarios/create-or-update.sql');
+        const estudianteQuery = loadSQL('estudiantes/create-or-update.sql');
 
-    let successCount = 0;
+        let successCount = 0;
 
     for (const processedRow of validRows) {
       if (!processedRow.data) continue;
 
       try {
         const { cedula, nombres, apellidos, correo_electronico, nombre_usuario, nrc } = processedRow.data;
-        // Si el usuario ya existe, verificar si está deshabilitado para registrar la reactivación
-        if (processedRow.isDuplicate && cedulaActor) {
-          const userStatus = await client.query(
-            'SELECT habilitado_sistema, nombres, apellidos FROM usuarios WHERE cedula = $1',
-            [cedula]
-          );
-
-          if (userStatus.rows.length > 0 && userStatus.rows[0].habilitado_sistema === false) {
-            // Registrar en auditoría de habilitación
-            await client.query(`
-              INSERT INTO auditoria_habilitacion_usuario (
-                usuario_habilitado,
-                nombres_usuario_habilitado,
-                apellidos_usuario_habilitado,
-                habilitado_por,
-                motivo,
-                fecha
-              ) VALUES ($1, $2, $3, $4, $5, (NOW() AT TIME ZONE 'America/Caracas'))
-            `, [
-              cedula,
-              userStatus.rows[0].nombres,
-              userStatus.rows[0].apellidos,
-              cedulaActor,
-              'Reactivación automática por registro de lote'
-            ]);
-          }
-        }
+        // Savepoint por fila: un error de PostgreSQL aborta la transacción
+        // completa, así que sin esto una sola fila inválida hacía fallar a
+        // todas las siguientes ("current transaction is aborted").
+        // La reactivación de un usuario deshabilitado (habilitado_sistema
+        // false -> true en create-or-update.sql) la registra el trigger de
+        // auditoría de `usuarios`.
+        await client.query('SAVEPOINT fila_estudiante');
 
         // Crear o actualizar usuario usando el cliente de la transacción
         await client.query(usuarioQuery, [
@@ -507,28 +485,27 @@ export async function bulkCreateEstudiantes(
           nrc,
         ]);
 
+        await client.query('RELEASE SAVEPOINT fila_estudiante');
         successCount++;
       } catch (error) {
+        await client.query('ROLLBACK TO SAVEPOINT fila_estudiante');
         processedRow.errors.push(
-          error instanceof Error ? error.message : 'Error desconocido al insertar'
+          toUserMessage(error, 'Error desconocido al insertar')
         );
         processedRow.data = null;
       }
     }
 
-    await client.query('COMMIT');
-
-    return {
-      total: processed.length,
-      success: successCount,
-      errors: processed.filter(p => p.errors.length > 0 || p.data === null).length,
-      duplicates: processed.filter(p => p.isDuplicate).length,
-      details: processed,
-    };
+        return {
+          total: processed.length,
+          success: successCount,
+          errors: processed.filter(p => p.errors.length > 0 || p.data === null).length,
+          duplicates: processed.filter(p => p.isDuplicate).length,
+          details: processed,
+        };
+      }
+    );
   } catch (error) {
-    await client.query('ROLLBACK');
     throw error;
-  } finally {
-    client.release();
   }
 }

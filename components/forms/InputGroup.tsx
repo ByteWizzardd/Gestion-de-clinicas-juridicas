@@ -84,6 +84,7 @@ function SelectSmall({ value, onChange, options, className = '', error = false, 
               <button
                 key={option.value}
                 type="button"
+                role="menuitem"
                 onClick={() => handleSelect(option.value)}
                 className={`
                   w-full px-3 py-2 text-left text-base text-[var(--card-text)] hover:bg-[var(--sidebar-hover)] transition-colors

@@ -33,6 +33,7 @@ import { getCurrentUserAction } from '@/app/actions/auth';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
 import DetailPageSkeleton from '@/components/ui/skeletons/DetailPageSkeleton';
 import { logger } from '@/lib/utils/logger';
+import { sanitizeUserMessage } from '@/lib/utils/error-messages';
 
 interface CaseDetailClientProps {
   id?: string;
@@ -95,7 +96,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
         throw new Error('No se pudo obtener la información');
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+      const errorMessage = sanitizeUserMessage(err, 'No se pudo cargar la información del caso.');
       setError(errorMessage);
       logger.error('Error fetching caso:', err);
     } finally {
@@ -222,7 +223,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
         await generateCasoHistorialZip(result.data as CasoHistorialData);
         toast.success('Historial del caso descargado correctamente');
       } else {
-        toast.error(`Error al descargar el historial: ${result.error || 'Error desconocido'}`);
+        toast.error(result.error || 'No se pudo descargar el historial del caso.', 'Error al descargar el historial');
       }
     } catch (error) {
       logger.error('Error al descargar historial:', error);
@@ -281,7 +282,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
       // Recargar el caso para actualizar el estatus
       await fetchCaso();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al cambiar el estatus');
+      alert(sanitizeUserMessage(err, 'Error al cambiar el estatus'));
     } finally {
       setChangingStatus(false);
     }

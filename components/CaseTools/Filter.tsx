@@ -28,6 +28,7 @@ import { createPortal } from 'react-dom';
 import { getNucleosAction } from '@/app/actions/nucleos';
 import DatePicker from '@/components/forms/DatePicker';
 import { logger } from '@/lib/utils/logger';
+import { toLocalISODate } from '@/lib/utils/date-formatter';
 
 interface FilterProps {
   nucleoFilter?: string;
@@ -206,7 +207,7 @@ function Filter({
   const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
   const isMobileViewport = () => window.innerWidth < 640; // Tailwind sm
 
-  const formatISODate = (date: Date): string => date.toISOString().slice(0, 10);
+  const formatISODate = toLocalISODate;
   const addDays = (base: Date, days: number): Date => {
     const d = new Date(base);
     d.setDate(d.getDate() + days);
@@ -377,7 +378,8 @@ function Filter({
     ((fechaInicio || fechaFin) ? 1 : 0) +
     (recentActivityFilter ? 1 : 0) +
     (operacionFilter ? 1 : 0) +
-    (sortFilter ? 1 : 0);
+    // 'desc' (más reciente) es el orden por defecto: no cuenta como filtro activo
+    (sortFilter && sortFilter !== 'desc' ? 1 : 0);
 
   const hasActiveFilter = activeFilterCount > 0;
 

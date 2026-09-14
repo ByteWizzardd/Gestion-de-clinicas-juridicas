@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import MultiSelect from '@/components/forms/MultiSelect';
 import { getEquipoDisponibleAction, asignarEquipoAction } from '@/app/actions/casos';
 import { useToast } from "@/components/ui/feedback/ToastProvider";
+import { sanitizeUserMessage } from '@/lib/utils/error-messages';
 
 interface AssignTeamModalProps {
   isOpen: boolean;
@@ -116,7 +117,7 @@ export default function AssignTeamModal({
         setEstudiantesSeleccionados(estudiantesActuales);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al cargar equipo disponible');
+      setError(sanitizeUserMessage(err, 'Error al cargar equipo disponible'));
     } finally {
       setLoadingData(false);
     }
@@ -165,7 +166,7 @@ export default function AssignTeamModal({
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al asignar equipo');
+      setError(sanitizeUserMessage(err, 'Error al asignar equipo'));
     } finally {
       setLoading(false);
     }

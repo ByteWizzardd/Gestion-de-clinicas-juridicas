@@ -1,5 +1,6 @@
 import { loadSQL } from '../sql-loader';
 import { pool } from '../pool';
+import { withAuditTransaction } from '@/lib/utils/audit-context';
 import { QueryResult } from 'pg';
 
 export interface CitaCreada {
@@ -53,7 +54,7 @@ export const citasQueries = {
     const query = loadSQL('citas/get-all.sql');
     const result: QueryResult = await pool.query(query);
     // Parsear el JSON de atenciones (similar a getByCaso)
-    return result.rows.map(row => ({
+    return result.rows.map((row: Record<string, any>) => ({
       ...row,
       atenciones: typeof row.atenciones === 'string'
         ? JSON.parse(row.atenciones)
@@ -68,7 +69,7 @@ export const citasQueries = {
     const query = loadSQL('citas/get-by-usuario.sql');
     const result: QueryResult = await pool.query(query, [cedulaUsuario]);
     // Parsear el JSON de atenciones
-    return result.rows.map(row => ({
+    return result.rows.map((row: Record<string, any>) => ({
       ...row,
       atenciones: typeof row.atenciones === 'string'
         ? JSON.parse(row.atenciones)
@@ -90,12 +91,12 @@ export const citasQueries = {
     const query = loadSQL('citas/get-by-caso.sql');
     const result: QueryResult = await pool.query(query, [idCaso]);
     // Parsear el JSON de atenciones
-    return result.rows.map(row => ({
+    return result.rows.map((row: Record<string, any>) => ({
       ...row,
       atenciones: typeof row.atenciones === 'string'
         ? JSON.parse(row.atenciones)
         : row.atenciones || []
-    }));
+    })) as any;
   },
 
   /**
@@ -127,32 +128,11 @@ export const citasQueries = {
     num_cita: number;
     id_caso: number;
   } | null> => {
-    // Usar transacción para establecer las variables de sesión y ejecutar el DELETE
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-
-      // Establecer las variables de sesión para el trigger usando set_config
-      // El tercer parámetro 'true' hace que sea local a la transacción
-      await client.query("SELECT set_config('app.usuario_elimina_cita', $1, true)", [idUsuarioElimino]);
-      await client.query("SELECT set_config('app.motivo_eliminacion_cita', $1, true)", [motivo || '']);
-
-      // Ejecutar el DELETE (el trigger capturará la auditoría usando OLD)
-      const query = loadSQL('citas/delete.sql');
-      const result: QueryResult = await client.query(query, [numCita, idCaso]);
-
-      await client.query('COMMIT');
-
-      if (result.rows.length === 0) {
-        return null;
-      }
-      return result.rows[0];
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
+    // El trigger de auditoría captura el DELETE con el usuario, el motivo y el tx_id de la transacción.
+    return withAuditTransaction(idUsuarioElimino, { accion_negocio: 'Eliminación de cita', motivo: motivo || '' }, async (client) => {
+      const result: QueryResult = await client.query(loadSQL('citas/delete.sql'), [numCita, idCaso]);
+      return result.rows[0] ?? null;
+    });
   },
 };
 

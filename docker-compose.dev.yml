@@ -1,0 +1,50 @@
+services:
+  app:
+    image: node:20-alpine
+    container_name: clinica_juridica_app
+    working_dir: /app
+    # Instalar dependencias e iniciar Next.js en modo dev
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/gestion_clinicas
+      - JWT_SECRET=0a6d1b4d001c59e09b51712ac87ff1f10d7f0e7f401c0a802a0e88bd6e928db965329182ea3e86bec450cba120424042e26dbcdabc7b8dd4942050c9fcb2b8d9
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - clinica_network
+
+  db:
+    image: postgres:16-alpine
+    container_name: clinica_juridica_db
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gestion_clinicas
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+      - ./database:/database:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d gestion_clinicas"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - clinica_network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  clinica_network:
+    driver: bridge

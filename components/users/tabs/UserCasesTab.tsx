@@ -188,7 +188,7 @@ export default function UserCasesTab({ casos: initialCasos }: UserCasesTabProps)
                 await generateCasoHistorialZip(result.data as CasoHistorialData);
                 toast.success('Historial del caso descargado correctamente');
             } else {
-                toast.error(`Error al descargar el historial: ${result.error || 'Error desconocido'}`);
+                toast.error(result.error || 'No se pudo descargar el historial del caso.', 'Error al descargar el historial');
             }
         } catch (error) {
             logger.error('Error al descargar historial:', error);

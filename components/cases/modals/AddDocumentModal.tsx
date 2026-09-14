@@ -5,6 +5,7 @@ import Modal from '@/components/ui/feedback/Modal';
 import Button from '@/components/ui/Button';
 import { Upload, File, X } from 'lucide-react';
 import { uploadSoportesAction } from '@/app/actions/casos';
+import { sanitizeUserMessage } from '@/lib/utils/error-messages';
 
 interface AddDocumentModalProps {
   isOpen: boolean;
@@ -79,7 +80,7 @@ export default function AddDocumentModal({ isOpen, onClose, idCaso, onSuccess }:
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al subir los documentos');
+      setError(sanitizeUserMessage(err, 'Error al subir los documentos'));
     } finally {
       setLoading(false);
     }

@@ -657,7 +657,7 @@ export const solicitantesQueries = {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
-            await client.query(`SELECT set_config('app.usuario_actualiza_solicitante', $1, true)`, [cedulaActor]);
+            await client.query(`SELECT set_config('app.current_user_id', $1, true)`, [cedulaActor]);
             const fecha = typeof fechaNacimiento === 'string' ? fechaNacimiento : fechaNacimiento.toISOString().split('T')[0];
             await client.query(
                 `UPDATE solicitantes SET nombres = $2, apellidos = $3, fecha_nacimiento = $4, sexo = $5 WHERE cedula = $1`,
@@ -679,7 +679,7 @@ export const solicitantesQueries = {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
-            await client.query(`SELECT set_config('app.usuario_actualiza_solicitante', $1, true)`, [cedulaActor]);
+            await client.query(`SELECT set_config('app.current_user_id', $1, true)`, [cedulaActor]);
             await client.query(
                 `UPDATE solicitantes SET nombres = $2, apellidos = $3, correo_electronico = $4, telefono_celular = $5 WHERE cedula = $1`,
                 [cedula, nombres, apellidos, correo, telefono]

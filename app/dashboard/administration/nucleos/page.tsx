@@ -75,7 +75,7 @@ export default function NucleosPage() {
     };
 
     const handleAdd = async (data: Record<string, string>) => {
-        const result = await createNucleo(data as { id_estado: string; id_municipio: string; id_parroquia: string; nombre_nucleo: string });
+        const result: any = await createNucleo(data as { id_estado: string; id_municipio: string; id_parroquia: string; nombre_nucleo: string });
         if (result.success) {
             handleCloseModal();
             await loadData();
@@ -102,7 +102,7 @@ export default function NucleosPage() {
 
     const handleUpdate = async (data: Record<string, string>) => {
         if (!editingItem) return;
-        const result = await updateNucleo(
+        const result: any = await updateNucleo(
             editingItem.id_nucleo,
             {
                 nombre_nucleo: data.nombre_nucleo,
@@ -120,13 +120,13 @@ export default function NucleosPage() {
     };
 
     const handleToggle = async (item: any) => {
-        const result = await toggleNucleoHabilitado(item.id_nucleo);
+        const result: any = await toggleNucleoHabilitado(item.id_nucleo);
         if (result.success) await loadData();
         else toast.error(result.error || 'Error al cambiar estado');
     };
 
     const handleDelete = async (item: any, motivo?: string) => {
-        const result = await deleteNucleo(item.id_nucleo, motivo);
+        const result: any = await deleteNucleo(item.id_nucleo, motivo);
         if (result.success) await loadData();
         else toast.error(result.error === 'HAS_ASSOCIATIONS' ? (result.message || 'No se puede eliminar') : (result.error || 'Error al eliminar'));
     };
