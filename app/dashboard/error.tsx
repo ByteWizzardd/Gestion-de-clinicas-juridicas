@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import Button from '@/components/ui/Button';
 import { logger } from '@/lib/utils/logger';
+import { sanitizeUserMessage } from '@/lib/utils/error-messages';
 
 export default function Error({
   error,
@@ -22,7 +23,7 @@ export default function Error({
           Algo salió mal
         </h2>
         <p className="text-gray-600 mb-6">
-          {error.message || 'Ocurrió un error inesperado'}
+          {sanitizeUserMessage(error)}
         </p>
         <Button onClick={reset} variant="primary">
           Intentar de nuevo

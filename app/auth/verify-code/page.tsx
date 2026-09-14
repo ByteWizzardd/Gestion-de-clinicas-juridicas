@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
+import { sanitizeUserMessage } from '@/lib/utils/error-messages';
 
 function VerifyCodeContent() {
     const router = useRouter();
@@ -97,7 +98,7 @@ function VerifyCodeContent() {
                 }, prefersReducedMotion ? 0 : 150);
             }, 1000);
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error al verificar el código");
+            setError(sanitizeUserMessage(err, "Error al verificar el código"));
             setIsLoading(false);
         }
     };

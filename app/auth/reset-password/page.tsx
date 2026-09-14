@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
+import { sanitizeUserMessage } from '@/lib/utils/error-messages';
 
 function ResetPasswordForm() {
     const router = useRouter();
@@ -106,7 +107,7 @@ function ResetPasswordForm() {
                 }, prefersReducedMotion ? 0 : 150);
             }, 2000);
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error al restablecer la contraseña");
+            setError(sanitizeUserMessage(err, "Error al restablecer la contraseña"));
             setIsLoading(false);
         }
     };
