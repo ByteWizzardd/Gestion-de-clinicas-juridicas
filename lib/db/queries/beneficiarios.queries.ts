@@ -1,5 +1,6 @@
 import { loadSQL } from '../sql-loader';
 import { pool } from '../pool';
+import { withAuditTransaction } from '@/lib/utils/audit-context';
 import { QueryResult } from 'pg';
 
 /**
@@ -244,24 +245,10 @@ export const beneficiariosQueries = {
    * Elimina un beneficiario
    */
   delete: async (idCaso: number, numBeneficiario: number, userId: string, motivo: string): Promise<any> => {
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      // Set session config for audit trigger
-      await client.query(`SELECT set_config('app.current_user_id', $1, true)`, [userId]);
-      await client.query(`SELECT set_config('app.audit_metadata', $1, true)`, [JSON.stringify({ motivo })]);
-
-      const query = loadSQL('beneficiarios/delete.sql');
-      const result = await client.query(query, [idCaso, numBeneficiario]);
-
-      await client.query('COMMIT');
+    return withAuditTransaction(userId, { accion_negocio: 'Eliminación de beneficiario', motivo }, async (client) => {
+      const result = await client.query(loadSQL('beneficiarios/delete.sql'), [idCaso, numBeneficiario]);
       return result.rows[0];
-    } catch (e) {
-      await client.query('ROLLBACK');
-      throw e;
-    } finally {
-      client.release();
-    }
+    });
   },
 
   /**

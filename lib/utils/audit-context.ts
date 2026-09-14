@@ -22,6 +22,21 @@ import { randomUUID } from 'crypto';
  *   }
  * );
  */
+/**
+ * Agrega o sobrescribe campos del metadata de auditoría a mitad de una
+ * transacción (p. ej. el motivo antes de un DELETE). Se FUSIONA con el
+ * metadata vigente: reemplazarlo con set_config perdía el tx_id y la
+ * accion_negocio que puso withAuditTransaction.
+ */
+export async function setAuditMetadata(client: PoolClient, extra: Partial<AuditMetadata>): Promise<void> {
+  await client.query(
+    `SELECT set_config('app.audit_metadata',
+        (COALESCE(NULLIF(current_setting('app.audit_metadata', true), ''), '{}')::jsonb || $1::jsonb)::text,
+        true)`,
+    [JSON.stringify(extra)]
+  );
+}
+
 export async function withAuditTransaction<T>(
   idUsuario: string,
   metadata: Omit<AuditMetadata, 'tx_id'>, // accion_negocio es REQUERIDA aquí
