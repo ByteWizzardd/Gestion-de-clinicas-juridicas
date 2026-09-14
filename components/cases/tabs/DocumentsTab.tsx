@@ -50,7 +50,17 @@ export default function DocumentsTab({ soportes, onSoporteDeleted }: DocumentsTa
       // Usar window.open() para compatibilidad con navegadores móviles (iOS Safari, Chrome Android)
       // El approach de crear un <a> dinámico y hacer .click() es bloqueado por navegadores móviles
       // cuando el click no proviene directamente de un gesto del usuario.
-      window.open(result.data.url_documento, '_blank', 'noopener,noreferrer');
+      const url = result.data.url_documento;
+      if (url?.startsWith('data:')) {
+        // Soporte anterior a Vercel Blob (guardado en la BD): los navegadores
+        // bloquean abrir data: URLs en una pestaña, así que se abre como Blob.
+        const blob = await (await fetch(url)).blob();
+        const blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, '_blank', 'noopener,noreferrer');
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+      } else {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
     } catch (error) {
       logger.error('Error al descargar:', error);
       alert('Error al descargar el archivo');

@@ -19,6 +19,7 @@ services:
       - SMTP_FROM=${SMTP_FROM:-}
       - CITA_REMINDER_DAYS_AHEAD=${CITA_REMINDER_DAYS_AHEAD:-1}
       - NOTIFICATIONS_TTL_DAYS=${NOTIFICATIONS_TTL_DAYS:-30}
+      - BLOB_READ_WRITE_TOKEN=${BLOB_READ_WRITE_TOKEN:-}
     depends_on:
       db:
         condition: service_healthy
