@@ -17,8 +17,9 @@ fechas_actividad AS (
         FROM auditoria_eventos ae WHERE ae.entidad = 'caso' AND ae.operacion = 'actualizacion'
     UNION ALL SELECT id_caso, fecha_registro FROM atienden
     UNION ALL SELECT id_caso, fecha_ejecucion FROM ejecutan
-    UNION ALL SELECT b.id_caso, ae.fecha_evento::date
-        FROM auditoria_eventos ae JOIN beneficiarios b ON b.id_beneficiario = (ae.id_entidad)::integer
+    -- id_entidad de un beneficiario es 'num_beneficiario-id_caso' (eventos migrados: sin id_entidad)
+    UNION ALL SELECT COALESCE(NULLIF(split_part(ae.id_entidad, '-', 2), ''), ae.datos_nuevos->>'id_caso', ae.metadata->>'id_caso')::integer, ae.fecha_evento::date
+        FROM auditoria_eventos ae
         WHERE ae.entidad = 'beneficiario' AND ae.operacion IN ('insercion', 'actualizacion')
 ),
 -- 3. Obtener la fecha más reciente por cada caso

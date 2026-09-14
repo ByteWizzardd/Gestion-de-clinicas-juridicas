@@ -12,13 +12,7 @@ WHERE
     ))
     AND (
         ($1::DATE IS NULL AND $2::DATE IS NULL)
-        OR EXISTS (
-            SELECT 1 FROM ocurren_en oe
-            JOIN semestres sem ON oe.term = sem.term
-            WHERE oe.id_caso = c.id_caso
-            AND ($2::DATE IS NULL OR sem.fecha_inicio <= $2)
-            AND ($1::DATE IS NULL OR sem.fecha_fin >= $1)
-        )
+        OR caso_con_actividad_en_rango(c.id_caso, $1::DATE, $2::DATE)
     )
 GROUP BY m.id_materia, m.nombre_materia
 ORDER BY cantidad DESC

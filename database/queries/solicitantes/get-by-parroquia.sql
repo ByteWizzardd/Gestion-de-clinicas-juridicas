@@ -20,13 +20,7 @@ WHERE
         ))
         AND (
             ($1::DATE IS NULL AND $2::DATE IS NULL)
-            OR EXISTS (
-                SELECT 1 FROM ocurren_en oe2
-                JOIN semestres sem ON oe2.term = sem.term
-                WHERE oe2.id_caso = c.id_caso
-                AND ($2::DATE IS NULL OR sem.fecha_inicio <= $2)
-                AND ($1::DATE IS NULL OR sem.fecha_fin >= $1)
-            )
+            OR caso_con_actividad_en_rango(c.id_caso, $1::DATE, $2::DATE)
         )
     )
 GROUP BY COALESCE(p.id_estado, 0), COALESCE(p.num_municipio, 0), COALESCE(p.num_parroquia, 0), COALESCE(p.nombre_parroquia, 'Sin parroquia')

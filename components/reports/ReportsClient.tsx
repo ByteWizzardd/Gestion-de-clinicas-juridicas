@@ -32,6 +32,7 @@ import {
     registrarAuditoriaReporteAction
 } from '@/app/actions/reports';
 import { TIPOS_REPORTE, DESCRIPCIONES_REPORTE } from '@/lib/constants/reports';
+import { toLocalISODate } from '@/lib/utils/date-formatter';
 
 interface ResumenSectionsData {
     casosPorMateria: boolean;
@@ -261,7 +262,7 @@ export default function ReportsPage() {
 
                 if (filters.dateRange !== 'all') {
                     fechaInicio = getDateFromRange(filters.dateRange);
-                    fechaFin = new Date().toISOString().split('T')[0];
+                    fechaFin = toLocalISODate();
                 }
 
                 if (filters.nucleo !== 'all') {
@@ -613,7 +614,7 @@ export default function ReportsPage() {
                         if (result.success && (!result.data || result.data.length === 0)) {
                             toast.warning('No se encontraron casos para el solicitante en el rango de fechas seleccionado.');
                         } else {
-                            toast.error('Error al obtener el historial: ' + (result.error || 'Error desconocido'));
+                            toast.error(result.error || 'No se pudo obtener el historial.', 'Error al obtener el historial');
                         }
                     }
 
@@ -663,8 +664,8 @@ export default function ReportsPage() {
                         });
 
                     } else {
-                        const errorMsg = fichaResult.error || historialResult.error || 'Error desconocido al obtener datos';
-                        toast.error('Error al generar el expediente: ' + errorMsg);
+                        const errorMsg = fichaResult.error || historialResult.error || 'No se pudieron obtener los datos del solicitante.';
+                        toast.error(errorMsg, 'Error al generar el expediente');
                     }
 
                 } else if (tipoReporteActual === 'Resumen de Casos') {
@@ -726,7 +727,7 @@ export default function ReportsPage() {
                             formato: formatoReporte === 'word' ? 'DOCX' : 'PDF'
                         });
                     } else {
-                        toast.error('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
+                        toast.error(result.error || 'No se pudo generar el reporte.', 'Error al generar el reporte');
                     }
                 } else if (tipoReporteActual === 'Estatus de Casos') {
                     // Generar reporte de estatus de casos
@@ -783,7 +784,7 @@ export default function ReportsPage() {
                             formato: formatoReporte === 'word' ? 'DOCX' : 'PDF'
                         });
                     } else {
-                        toast.error('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
+                        toast.error(result.error || 'No se pudo generar el reporte.', 'Error al generar el reporte');
                     }
                 } else if (tipoReporteActual === 'Reporte Socioeconómico') {
                     // Generar reporte socioeconómico (paso a paso)
@@ -843,7 +844,7 @@ export default function ReportsPage() {
                             formato: formatoReporte === 'word' ? 'DOCX' : 'PDF'
                         });
                     } else {
-                        toast.error('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
+                        toast.error(result.error || 'No se pudo generar el reporte.', 'Error al generar el reporte');
                     }
                 } else {
                     // Generar reporte de tipos de caso (comportamiento original)
@@ -899,7 +900,7 @@ export default function ReportsPage() {
                             formato: formatoReporte === 'word' ? 'DOCX' : 'PDF'
                         });
                     } else {
-                        toast.error('Error al generar el reporte: ' + (result.error || 'Error desconocido'));
+                        toast.error(result.error || 'No se pudo generar el reporte.', 'Error al generar el reporte');
                     }
                 }
             } catch (error) {
@@ -929,10 +930,10 @@ export default function ReportsPage() {
                 date.setFullYear(today.getFullYear() - 1);
                 break;
             default:
-                return today.toISOString().split('T')[0];
+                return toLocalISODate(today);
         }
 
-        return date.toISOString().split('T')[0];
+        return toLocalISODate(date);
     };
 
     return (

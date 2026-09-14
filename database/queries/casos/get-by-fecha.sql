@@ -24,7 +24,6 @@ SELECT
 		TRIM(REGEXP_REPLACE(vc.nombre_materia, '^\s*Materia\s+', '', 'i')) AS nombre_materia,
 		vc.nombre_categoria,
 		vc.nombre_subcategoria,
-		vc.nombre_subcategoria,
 		-- Obtenemos el nombre del profesor supervisor más reciente mediante subconsulta
 		(
 				SELECT 
@@ -37,7 +36,13 @@ SELECT
 					AND s.habilitado = true
 				ORDER BY sem.fecha_inicio DESC, s.term DESC
 				LIMIT 1
-		) AS nombre_responsable
+		) AS nombre_responsable,
+		-- Semestres donde ocurre el caso (filtro de semestre de la lista de casos)
+		(
+				SELECT array_agg(oe.term ORDER BY oe.term DESC)
+				FROM ocurren_en oe
+				WHERE oe.id_caso = vc.id_caso
+		) AS semestres
 FROM view_casos_detalle vc
 WHERE ($1::date IS NULL OR vc.fecha_solicitud >= $1::date)
 	AND ($2::date IS NULL OR vc.fecha_solicitud <= $2::date)
