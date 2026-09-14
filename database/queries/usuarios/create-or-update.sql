@@ -26,7 +26,8 @@ SET nombres = EXCLUDED.nombres,
     correo_electronico = EXCLUDED.correo_electronico,
     nombre_usuario = EXCLUDED.nombre_usuario,
     -- contrasena NO se actualiza para preservar contraseñas existentes
-    telefono_celular = EXCLUDED.telefono_celular,
+    -- La carga masiva no trae teléfono: no borrar el que ya tenía el usuario.
+    telefono_celular = COALESCE(EXCLUDED.telefono_celular, usuarios.telefono_celular),
     habilitado_sistema = TRUE
 RETURNING *;
 
