@@ -2,6 +2,9 @@
 -- Parámetros:
 --   $1 = daysAhead (int). Ej: 1 => mañana
 --
+-- "Hoy" es la fecha de Caracas: la BD corre en UTC y CURRENT_DATE ya es el día
+-- siguiente a partir de las 8 p. m. en Venezuela.
+--
 -- "cita-{num_cita}-{id_caso}-{fecha_encuentro_ms}"
 
 SELECT
@@ -16,6 +19,7 @@ SELECT
     c.num_cita,
     c.id_caso,
     c.fecha_encuentro::DATE AS fecha,
+    TO_CHAR(c.fecha_encuentro, 'DD/MM/YYYY') AS fecha_texto,
     COALESCE(
         ARRAY_AGG(a.id_usuario) FILTER (WHERE a.id_usuario IS NOT NULL),
         ARRAY[]::TEXT[]
@@ -25,5 +29,5 @@ FROM citas c
 LEFT JOIN atienden a
     ON a.num_cita = c.num_cita
  AND a.id_caso = c.id_caso
-WHERE c.fecha_encuentro::DATE = (CURRENT_DATE + $1::INT)
+WHERE c.fecha_encuentro::DATE = ((NOW() AT TIME ZONE 'America/Caracas')::DATE + $1::INT)
 GROUP BY c.num_cita, c.id_caso, c.fecha_encuentro;

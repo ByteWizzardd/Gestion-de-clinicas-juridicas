@@ -24,13 +24,6 @@ const logDebug = (m, d = "") => logger.debug(`${SCRIPT_TAG} ${m}`, d);
 
 logInfo(`boot: node=${process.version} debug=${DEBUG_SEND_CITA_REMINDERS}`);
 
-function getDateYYYYMMDD(d) {
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-}
-
 function getDaysAheadFromEnv() {
   const raw = process.env.CITA_REMINDER_DAYS_AHEAD;
   if (!raw) return 1;
@@ -141,8 +134,7 @@ async function main() {
     readFileSync(path.join(process.cwd(), relativePath), "utf-8");
 
   const reminderSql = readSql("database/queries/citas/reminder.sql");
-  const lockSql = readSql("database/queries/citas/lock-reminder.sql");
-  const createNotifSql = readSql("database/queries/notificaciones/create.sql");
+  const createNotifSql = readSql("database/queries/notificaciones/create-if-not-exists.sql");
 
   let recordatoriosEnviados = 0;
 
@@ -161,16 +153,6 @@ async function main() {
     logInfo(`params: daysAhead=${daysAhead}`);
     logDebug('params: cedulaEmisor=', cedulaEmisor);
 
-    // Validación previa: asegurar tabla idempotente de locks
-    const { rows: regRows } = await pool.query(
-      "SELECT to_regclass('public.cita_recordatorios') AS reg"
-    );
-    if (!regRows?.[0]?.reg) {
-      throw new Error(
-        "Falta la tabla cita_recordatorios. Crea esa tabla (idempotencia de recordatorios) y vuelve a correr el script."
-      );
-    }
-
     logDebug('consultando citas (reminder.sql)');
     const { rows: citas } = await pool.query(reminderSql, [daysAhead]);
     logInfo(`citas: encontradas=${citas.length}`);
@@ -178,28 +160,21 @@ async function main() {
     for (const c of citas) {
       const appointmentId = c.appointment_id;
       const idCaso = c.id_caso;
-      const fecha = c.fecha instanceof Date ? c.fecha : new Date(String(c.fecha));
-      const fechaStr = getDateYYYYMMDD(fecha);
+      const fechaTexto = c.fecha_texto;
 
       const usuariosAtienden = parsePgTextArray(c.usuarios_atienden);
       if (!appointmentId || !idCaso || usuariosAtienden.length === 0) continue;
 
-      // lock idempotente para evitar duplicados
-      const { rows: lockedRows } = await pool.query(lockSql, [
-        appointmentId,
-        `D-${daysAhead}`,
-        fechaStr,
-      ]);
-      if (lockedRows.length === 0) continue;
-
+      // La notificación solo se crea si el receptor no tiene ya la misma: correr
+      // el script dos veces el mismo día no duplica recordatorios.
       for (const cedulaReceptor of usuariosAtienden) {
-        await pool.query(createNotifSql, [
+        const { rows: creadas } = await pool.query(createNotifSql, [
           cedulaReceptor,
           cedulaEmisor,
           "Recordatorio de cita",
-          `Tienes una cita del caso #${idCaso} programada para el día ${fechaStr}.`,
+          `Tienes la cita #${c.num_cita} del caso #${idCaso} programada para el ${fechaTexto}.`,
         ]);
-        recordatoriosEnviados += 1;
+        recordatoriosEnviados += creadas.length;
       }
     }
 

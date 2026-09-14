@@ -9,6 +9,8 @@ services:
       - "${PORT:-3000}:3000"
     environment:
       - NODE_ENV=production
+      # Misma zona que la BD: pg convierte DATE/TIMESTAMP con la zona del proceso
+      - TZ=America/Caracas
       - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@db:5432/gestion_clinicas}
       - JWT_SECRET=${JWT_SECRET:-clave-secreta-de-produccion-cambiar}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-30d}
