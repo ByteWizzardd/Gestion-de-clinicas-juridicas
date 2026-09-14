@@ -5,6 +5,25 @@ import { logger } from '@/lib/utils/logger';
 import { DatabaseError } from '@/lib/utils/errors';
 import type { AuditoriaEvento, AuditoriaEventoFilters, AuditoriaEventosPage, AuditoriaEventoResumen } from '@/types/audit-events';
 
+/** Orden de los parámetros de filtro (ver buildFilterParams). */
+const FILTROS = ['entidad', 'usuario', 'operacion', 'fecha_inicio', 'fecha_fin', 'busqueda', 'tx_id', 'id_transaccion'] as const;
+
+/**
+ * Inserta el fragmento compartido audit/filtro-eventos.sql (FROM + WHERE) en
+ * lugar de {{FILTRO_EVENTOS}} y numera sus parámetros a partir de
+ * `primerParametro`. Con `primerParametro = null` todos los filtros quedan en
+ * NULL (sin filtrar), para los contadores por módulo.
+ */
+function conFiltroEventos(sql: string, primerParametro: number | null): string {
+    let filtro = loadSQL('audit/filtro-eventos.sql');
+    FILTROS.forEach((nombre, i) => {
+        filtro = filtro.split(`{{${nombre}}}`).join(primerParametro == null ? 'NULL' : `$${primerParametro + i}`);
+    });
+    // Reemplazo con función: con un string, replace() interpretaría los `$` del
+    // fragmento ($3, $') como patrones de reemplazo y corrompería el SQL.
+    return sql.replace('{{FILTRO_EVENTOS}}', () => filtro);
+}
+
 function buildFilterParams(filters?: AuditoriaEventoFilters) {
     return [
         filters?.entidad || null,
@@ -16,6 +35,22 @@ function buildFilterParams(filters?: AuditoriaEventoFilters) {
         filters?.txId || null,
         filters?.idTransaccion || null,
     ];
+}
+
+/**
+ * auditoria_eventos.fecha_evento es TIMESTAMP (sin zona) y guarda la hora de
+ * pared de Caracas (DEFAULT now() AT TIME ZONE 'America/Caracas'). `pg` lo
+ * convierte a un Date interpretándolo en la zona local del proceso; usar
+ * .toISOString() le agregaba una 'Z' (UTC) y el formateador del frontend,
+ * que lee la hora literal del string, la mostraba desplazada (+4h en
+ * Caracas). Se rearma el string con los componentes locales del Date, que
+ * son exactamente los que venían de la BD, sin importar la TZ del servidor.
+ */
+export function timestampSinZona(value: unknown): string | null {
+    if (value == null) return null;
+    if (!(value instanceof Date)) return String(value);
+    const pad = (n: number, len = 2) => String(n).padStart(len, '0');
+    return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}T${pad(value.getHours())}:${pad(value.getMinutes())}:${pad(value.getSeconds())}.${pad(value.getMilliseconds(), 3)}`;
 }
 
 function mapRow(row: Record<string, any>): AuditoriaEvento {
@@ -62,7 +97,13 @@ function mapRow(row: Record<string, any>): AuditoriaEvento {
         datos_anteriores: row.datos_anteriores ?? null,
         datos_nuevos: row.datos_nuevos ?? null,
         metadata: row.metadata ?? null,
-        fecha_evento: row.fecha instanceof Date ? row.fecha.toISOString() : row.fecha,
+        fecha_evento: timestampSinZona(row.fecha) as string,
+        ejecutores_evento: row.ejecutores_evento ?? undefined,
+        usuarios_ref: row.usuarios_ref ?? undefined,
+        nombres_resueltos: row.nombres_resueltos ?? undefined,
+        solicitante_extra: row.solicitante_extra ?? undefined,
+        atenciones_evento: row.atenciones_evento ?? undefined,
+        inscripcion_extra: row.inscripcion_extra ?? undefined,
     };
 }
 
@@ -74,8 +115,10 @@ export const auditoriaEventosQueries = {
         const limit = filters?.limit ?? 20;
         const offset = filters?.offset ?? 0;
         try {
-            const query = loadSQL('audit/get-unified-logs.sql');
-            const countQuery = loadSQL('audit/count-unified-logs.sql');
+            // $1/$2 son limit/offset en el feed; el conteo no los lleva.
+            const query = conFiltroEventos(loadSQL('audit/get-unified-logs.sql'), 3)
+                .split('{{ORDEN}}').join(filters?.orden === 'asc' ? 'ASC' : 'DESC');
+            const countQuery = conFiltroEventos(loadSQL('audit/count-unified-logs.sql'), 1);
             
             const params = buildFilterParams(filters);
             
@@ -131,13 +174,13 @@ export const auditoriaEventosQueries = {
      */
     getResumenPorEntidad: async (): Promise<AuditoriaEventoResumen[]> => {
         try {
-            const query = loadSQL('audit/get-resumen-entidad.sql');
+            const query = conFiltroEventos(loadSQL('audit/get-resumen-entidad.sql'), null);
             const result = await pool.query(query);
             return result.rows.map((row: Record<string, any>) => ({
                 entidad: row.entidad,
                 operacion: row.operacion,
                 total: row.total,
-                ultima_actividad: row.ultima_actividad instanceof Date ? row.ultima_actividad.toISOString() : row.ultima_actividad,
+                ultima_actividad: timestampSinZona(row.ultima_actividad),
             }));
         } catch (error) {
             logger.error('Error en auditoriaEventosQueries.getResumenPorEntidad', error);

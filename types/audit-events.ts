@@ -10,7 +10,8 @@
 /** Tipo discriminado para el campo 'entidad'. */
 export type AuditEntidad =
   | 'caso' | 'usuario' | 'sesion' | 'solicitante' | 'beneficiario'
-  | 'cita' | 'equipo' | 'accion_ejecutores' | 'reporte' | 'soporte'
+  | 'cita' | 'equipo' | 'caso_semestre' | 'accion_ejecutores' | 'reporte' | 'soporte'
+  | 'cambio_estatus' | 'atencion_cita' | 'vivienda' | 'familia_y_hogar'
   | 'categoria' | 'subcategoria' | 'ambito_legal' | 'nucleo' | 'materia'
   | 'semestre' | 'nivel_educativo' | 'estado' | 'municipio' | 'parroquia'
   | 'condicion_trabajo' | 'condicion_actividad' | 'tipo_caracteristica'
@@ -87,6 +88,43 @@ export interface AuditoriaEvento {
   solicitante_municipio_nuevo?: string | null;
   solicitante_parroquia_anterior?: string | null;
   solicitante_parroquia_nuevo?: string | null;
+  // Solo entidad='accion': ejecutores del evento gemelo 'accion_ejecutores'
+  // de la misma operación (ver get-unified-logs.sql).
+  ejecutores_evento?: {
+    anteriores?: Array<Record<string, unknown>> | null;
+    nuevos?: Array<Record<string, unknown>> | null;
+    metadata?: AuditMetadata | null;
+  } | null;
+  // Personas referenciadas por cédula dentro del evento (usuario afectado,
+  // estudiante/profesor, quien subió un soporte...), indexadas por cédula.
+  usuarios_ref?: Record<string, {
+    nombres: string | null;
+    apellidos: string | null;
+    correo_electronico: string | null;
+    nombre_usuario: string | null;
+    tipo_usuario: string | null;
+    telefono_celular: string | null;
+  }> | null;
+  // Nombres adicionales resueltos por entidad (ubicación de un núcleo,
+  // materia/categoría de una subcategoría, nivel educativo del jefe...), con
+  // las mismas claves que espera la tarjeta.
+  nombres_resueltos?: Record<string, string> | null;
+  // Solo solicitante eliminado: datos de vivienda y familia/hogar borrados
+  // en la misma transacción.
+  solicitante_extra?: Record<string, unknown> | null;
+  // Solo cita / atencion_cita: personas que atienden la cita borradas
+  // ('anteriores') e insertadas ('nuevos') en la misma transacción.
+  atenciones_evento?: {
+    anteriores: Array<{ cedula: string; nombre: string }>;
+    nuevos: Array<{ cedula: string; nombre: string }>;
+  } | null;
+  // Solo usuario: fila de estudiantes/profesores creada o editada en la misma
+  // transacción.
+  inscripcion_extra?: {
+    entidad: 'estudiante' | 'profesor';
+    anteriores: Record<string, unknown> | null;
+    nuevos: Record<string, unknown> | null;
+  } | null;
   datos_anteriores: Record<string, unknown> | null;
   datos_nuevos: Record<string, unknown> | null;
   metadata: AuditMetadata | null;

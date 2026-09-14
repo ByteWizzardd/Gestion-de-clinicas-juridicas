@@ -18,27 +18,22 @@ export const auditoriaQueries = {
      * @deprecated Usa auditoriaEventosQueries.getResumenPorEntidad()
      */
     getAuditCounts: async (): Promise<any> => {
-        // Sesiones, reportes y descargas de soportes ya viven en auditoria_eventos
-        // (entidad='sesion'|'reporte'|'soporte') — ya no hace falta el UNION ALL
-        // contra sus tablas viejas.
-        const query = `
-            SELECT entidad, operacion, COUNT(*)::int as total, MAX(fecha_evento) as ultima_actividad
-            FROM auditoria_eventos
-            GROUP BY entidad, operacion
-        `;
-        const { pool } = await import('../../pool');
-        const result = await pool.query(query);
+        // Mismos eventos visibles que el feed (fragmento filtro-eventos.sql),
+        // agrupados por la entidad/operación bajo la que se muestran: sin esto
+        // los contadores incluían eventos fusionados u ocultos (ejecutores,
+        // vivienda/familia, estatus inicial...) y no cuadraban con los listados.
+        const resumen = await auditoriaEventosQueries.getResumenPorEntidad();
 
         // Map DB rows → legacy AuditCounts shape
         const entidadOpMap: Record<string, number> = {};
         const lastActivities: Record<string, string | null> = {};
 
-        for (const row of result.rows) {
+        for (const row of resumen) {
             const key = `${row.entidad}:${row.operacion}`;
             entidadOpMap[key] = row.total;
             // Track last activity per module
             const moduleKey = row.entidad;
-            const ts = row.ultima_actividad instanceof Date ? row.ultima_actividad.toISOString() : row.ultima_actividad;
+            const ts = row.ultima_actividad;
             if (!lastActivities[moduleKey] || (ts && ts > (lastActivities[moduleKey] || ''))) {
                 lastActivities[moduleKey] = ts;
             }
@@ -55,7 +50,7 @@ export const auditoriaQueries = {
             casos: lastActivities['caso'] || null,
             solicitantes: lastActivities['solicitante'] || null,
             beneficiarios: lastActivities['beneficiario'] || null,
-            acciones: lastActivities['accion_ejecutores'] || null,
+            acciones: lastActivities['accion'] || null,
             equipo: lastActivities['equipo'] || null,
             sesiones: lastActivities['sesion'] || null,
             estados: lastActivities['estado'] || null,
@@ -97,9 +92,9 @@ export const auditoriaQueries = {
             beneficiariosCreados: g('beneficiario', 'insercion'),
             beneficiariosActualizados: g('beneficiario', 'actualizacion'),
             beneficiariosEliminados: g('beneficiario', 'eliminacion'),
-            accionesCreadas: g('accion_ejecutores', 'insercion'),
-            accionesActualizadas: g('accion_ejecutores', 'actualizacion'),
-            accionesEliminadas: g('accion_ejecutores', 'eliminacion'),
+            accionesCreadas: g('accion', 'insercion'),
+            accionesActualizadas: g('accion', 'actualizacion'),
+            accionesEliminadas: g('accion', 'eliminacion'),
             equiposActualizados: g('equipo', 'actualizacion'),
             sesiones: g('sesion', 'inicio_sesion') + g('sesion', 'cierre_sesion') + g('sesion', 'intento_fallido'),
             // Catálogos
