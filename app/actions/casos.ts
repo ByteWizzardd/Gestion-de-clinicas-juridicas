@@ -787,7 +787,7 @@ export async function createAccionAction(
       await client.query(
         `INSERT INTO auditoria_eventos (entidad, operacion, id_entidad, id_usuario, datos_nuevos)
          VALUES ('accion_ejecutores', 'insercion', $1, $2, $3)`,
-        [String(accion.num_accion), cedulaUsuario, JSON.stringify({ ejecutores: ejecutoresNuevos })]
+        [`${accion.num_accion}-${idCaso}`, cedulaUsuario, JSON.stringify({ ejecutores: ejecutoresNuevos })]
       );
     }
 
@@ -1749,7 +1749,7 @@ export async function addCaseToSemesterAction(idCaso: number, term: string): Pro
     }
 
     await withSecureTransaction(authResult.user.rol, async (client) => {
-      await casosService.addOcurrencia(idCaso, term);
+      await casosService.addOcurrencia(idCaso, term, authResult.user!.cedula);
     });
 
     revalidatePath(`/dashboard/cases/${idCaso}`);
@@ -1767,7 +1767,7 @@ export async function removeCaseFromSemesterAction(idCaso: number, term: string)
     }
 
     await withSecureTransaction(authResult.user.rol, async () => {
-      await casosService.removeOcurrencia(idCaso, term);
+      await casosService.removeOcurrencia(idCaso, term, authResult.user!.cedula);
     });
 
     revalidatePath(`/dashboard/cases/${idCaso}`);

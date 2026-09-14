@@ -537,7 +537,7 @@ export const casosService = {
                         `INSERT INTO auditoria_eventos (entidad, operacion, id_entidad, id_usuario, datos_anteriores, metadata)
                          VALUES ('accion_ejecutores', 'eliminacion', $1, $2, $3, $4)`,
                         [
-                            String(numAccion),
+                            `${numAccion}-${idCaso}`,
                             params.idUsuarioElimino,
                             JSON.stringify({ ejecutores: ejecutoresAnteriores }),
                             JSON.stringify({ motivo: params.motivo }),
@@ -663,7 +663,7 @@ export const casosService = {
                     `INSERT INTO auditoria_eventos (entidad, operacion, id_entidad, id_usuario, datos_anteriores, datos_nuevos)
                      VALUES ('accion_ejecutores', 'actualizacion', $1, $2, $3, $4)`,
                     [
-                        String(params.numAccion),
+                        `${params.numAccion}-${params.idCaso}`,
                         params.idUsuarioActualizo,
                         JSON.stringify({ ejecutores: ejecutoresAnteriores.map(normalizarFecha) }),
                         JSON.stringify({ ejecutores: ejecutoresNuevos.map(normalizarFecha) }),
@@ -686,20 +686,37 @@ export const casosService = {
     /**
      * Agrega un semestre a un caso
      */
-    addOcurrencia: async (idCaso: number, term: string): Promise<void> => {
+    addOcurrencia: async (idCaso: number, term: string, idUsuario: string): Promise<void> => {
         const query = loadSQL('casos/add-ocurrencia.sql');
         return await withTransaction(async (client) => {
-            await client.query(query, [idCaso, term]);
+            const result = await client.query(query, [idCaso, term]);
+            // ocurren_en no tiene trigger de auditoría (los triggers de sincronización
+            // la llenan automáticamente y ensuciarían el feed), así que solo se
+            // audita la asociación manual — y solo si realmente se insertó la fila.
+            if (result.rows.length > 0) {
+                await client.query(
+                    `INSERT INTO auditoria_eventos (entidad, operacion, id_entidad, id_usuario, datos_nuevos)
+                     VALUES ('caso_semestre', 'insercion', $1, $2, $3)`,
+                    [`${idCaso}-${term}`, idUsuario, JSON.stringify({ id_caso: idCaso, term })]
+                );
+            }
         });
     },
 
     /**
      * Elimina un semestre de un caso
      */
-    removeOcurrencia: async (idCaso: number, term: string): Promise<void> => {
+    removeOcurrencia: async (idCaso: number, term: string, idUsuario: string): Promise<void> => {
         const query = loadSQL('casos/remove-ocurrencia.sql');
         return await withTransaction(async (client) => {
-            await client.query(query, [idCaso, term]);
+            const result = await client.query(query, [idCaso, term]);
+            if (result.rows.length > 0) {
+                await client.query(
+                    `INSERT INTO auditoria_eventos (entidad, operacion, id_entidad, id_usuario, datos_anteriores)
+                     VALUES ('caso_semestre', 'eliminacion', $1, $2, $3)`,
+                    [`${idCaso}-${term}`, idUsuario, JSON.stringify({ id_caso: idCaso, term })]
+                );
+            }
         });
     },
 

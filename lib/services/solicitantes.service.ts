@@ -912,6 +912,15 @@ export const solicitantesService = {
         usuarioElimino,
         { accion_negocio: 'Eliminación de solicitante', motivo },
         async (client) => {
+          // viviendas y familias_y_hogares referencian a solicitantes sin
+          // ON DELETE CASCADE (y asignadas_a guarda sus características): se
+          // borran primero, en la misma transacción, para que el DELETE del
+          // solicitante no viole la FK. Sus triggers de auditoría registran
+          // los datos borrados y la lectura los adjunta al evento del
+          // solicitante.
+          await client.query('DELETE FROM asignadas_a WHERE cedula_solicitante = $1', [cedula]);
+          await client.query('DELETE FROM familias_y_hogares WHERE cedula_solicitante = $1', [cedula]);
+          await client.query('DELETE FROM viviendas WHERE cedula_solicitante = $1', [cedula]);
           const deleteQuery = loadSQL('solicitantes/delete-by-id.sql');
           await client.query(deleteQuery, [cedula]);
         }
