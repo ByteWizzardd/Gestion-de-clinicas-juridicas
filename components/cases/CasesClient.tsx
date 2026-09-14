@@ -22,6 +22,8 @@ import type { CasoHistorialData } from '@/lib/types/report-types';
 import { getSemestres } from '@/app/actions/catalogos/semestres.actions';
 import { logger } from '@/lib/utils/logger';
 import { getCurrentTermAction } from '@/app/actions/estudiantes';
+import { sanitizeUserMessage } from '@/lib/utils/error-messages';
+import { toLocalISODate } from '@/lib/utils/date-formatter';
 interface Caso {
   id_caso: number;
   fecha_inicio_caso: string;
@@ -165,7 +167,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
     { value: TRAMITES.ASISTENCIA_JUDICIAL, label: TRAMITES.ASISTENCIA_JUDICIAL },
   ];
 
-  const todayISO = new Date().toISOString().slice(0, 10);
+  const todayISO = toLocalISODate();
   const isValidISODate = (value: string): boolean => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
     const d = new Date(value);
@@ -262,12 +264,20 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   const applyDateRangeLocal = (rows: Caso[], fechaInicio: string, fechaFin: string): Caso[] => {
     if (!fechaInicio && !fechaFin) return rows;
     return rows.filter((c) => {
-      const f = c.fecha_solicitud;
+      // pg entrega DATE como Date: comparar un Date con 'YYYY-MM-DD' siempre da
+      // false y el filtro no excluía nada. Se compara la fecha local como texto.
+      const valor = c.fecha_solicitud as unknown;
+      const f = valor instanceof Date ? toLocalISODate(valor) : String(valor ?? '').slice(0, 10);
       if (fechaInicio && f < fechaInicio) return false;
       if (fechaFin && f > fechaFin) return false;
       return true;
     });
   };
+
+  // "Mis casos" y las fechas disparan esta carga más de una vez seguida (handler +
+  // efecto): solo se aplica el resultado de la última llamada.
+  const ultimaCargaCasos = useRef(0);
+  const setCasosDirecto = setCasos;
 
   const applyFechaSolicitudFilter = async (opts: {
     fechaInicio: string;
@@ -275,6 +285,10 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
     casosAsignados: boolean;
   }) => {
     const { fechaInicio, fechaFin, casosAsignados } = opts;
+    const carga = ++ultimaCargaCasos.current;
+    const setCasos = (rows: Caso[]) => {
+      if (carga === ultimaCargaCasos.current) setCasosDirecto(rows);
+    };
 
     if (fechaInicio && !isValidISODate(fechaInicio)) {
       throw new Error('Fecha inicio inválida');
@@ -351,7 +365,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
         setAllCasos([]);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      setError(sanitizeUserMessage(err, 'No se pudieron cargar los casos.'));
     } finally {
       setLoading(false);
     }
@@ -592,7 +606,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
           try {
             const uploadResult = await uploadSoportesAction(Number(caseData.id_caso), formData);
             if (!uploadResult.success) {
-              toast.error(`Caso actualizado, pero error al subir archivos: ${uploadResult.error?.message}`);
+              toast.error(uploadResult.error?.message || 'No se pudieron subir los archivos.', 'Caso actualizado, pero hubo un problema con los archivos');
             }
           } catch {
             toast.error('Caso actualizado, pero error al subir archivos');
@@ -630,9 +644,8 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
         // Lanzar error con información del campo para que el modal lo capture
         if (errorFields) {
-          const fieldErrors = Object.entries(errorFields)
-            .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
-            .join('\n');
+          // Solo los mensajes: los nombres de campo de la BD no le dicen nada al usuario.
+          const fieldErrors = [...new Set(Object.values(errorFields).flat())].join('\n');
           throw new Error(`VALIDATION_ERROR:${fieldErrors}`);
         } else if (errorCode === 'NOT_FOUND' || errorMessage.toLowerCase().includes('solicitante')) {
           // Error específico de solicitante no encontrado
@@ -663,7 +676,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
           const uploadResult = await uploadSoportesAction(Number(idCaso), formData);
 
           if (!uploadResult.success) {
-            toast.error(`Caso creado, pero error al subir archivos: ${uploadResult.error?.message || 'Error desconocido'}`);
+            toast.error(uploadResult.error?.message || 'No se pudieron subir los archivos.', 'Caso creado, pero hubo un problema con los archivos');
           }
         } catch {
           toast.error('Caso creado, pero error al subir archivos');
@@ -689,11 +702,11 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
         await generateCasoHistorialZip(result.data as CasoHistorialData);
         toast.success('Historial del caso descargado correctamente');
       } else {
-        toast.error(`Error al descargar el historial: ${result.error || 'Error desconocido'}`);
+        toast.error(result.error || 'No se pudo descargar el historial del caso.', 'Error al descargar el historial');
       }
     } catch (error) {
       logger.error('Error al descargar historial:', error);
-      toast.error(`Ocurrió un error al descargar el historial del caso: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      toast.error('Ocurrió un error al descargar el historial del caso. Intenta de nuevo.');
     }
   };
 

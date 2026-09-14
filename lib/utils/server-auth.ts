@@ -5,6 +5,7 @@
 
 import { cookies } from 'next/headers';
 import { verifyToken } from './security';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 export interface AuthResult {
   success: boolean;
@@ -58,7 +59,7 @@ export async function requireAuthInServerAction(): Promise<AuthResult> {
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Error desconocido',
+      error: toUserMessage(error, 'Error desconocido'),
     };
   }
 
@@ -109,7 +110,7 @@ export async function requireAuthInServerActionWithCode(
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : 'Error desconocido',
+        message: toUserMessage(error, 'Error desconocido'),
         code: 'AUTH_ERROR',
       },
     };

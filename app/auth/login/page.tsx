@@ -6,6 +6,7 @@ import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
+import { sanitizeUserMessage } from '@/lib/utils/error-messages';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -78,7 +79,7 @@ export default function LoginPage() {
                 router.push("/dashboard");
             }, prefersReducedMotion ? 0 : 150);
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error al iniciar sesión");
+            setError(sanitizeUserMessage(err, "Error al iniciar sesión"));
             setIsLoading(false);
         }
     };

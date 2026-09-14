@@ -5,6 +5,7 @@ import {
   GetNotificacionesResult,
   markNotificacionLeidaAction,
 } from '@/app/actions/notificaciones';
+import { sanitizeUserMessage } from '@/lib/utils/error-messages';
 
 // Debe coincidir con la interfaz Notificacion del backend
 type Notificacion = {
@@ -57,7 +58,7 @@ export function useNotifications() {
         );
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al obtener notificaciones');
+      setError(sanitizeUserMessage(err, 'Error al obtener notificaciones'));
     } finally {
       setLoading(false);
     }

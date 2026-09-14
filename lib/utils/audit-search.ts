@@ -136,37 +136,29 @@ const EXCLUDE_PATTERNS = [
     /^num_cambio$/,
 ];
 
+import type { AuditoriaEvento } from '@/types/audit-events';
+import { mapUnifiedLogToAuditRecord } from '@/lib/utils/audit-record-mapper';
+
 /**
  * Extrae el texto buscable visible de un registro de auditoría.
  */
-export function extractVisibleSearchText(log: {
-    entidad: string;
-    accion: string;
-    fecha: string;
-    usuario_id: string;
-    usuario_nombre: string;
-    detalles: string;
-    metadata: string;
-}): string {
+export function extractVisibleSearchText(log: AuditoriaEvento): string {
     // Campos básicos siempre visibles (summary de la card)
     const parts: string[] = [
         log.entidad,
-        log.accion,
-        log.usuario_nombre,
-        log.usuario_id,
-        log.detalles,
+        log.operacion,
+        log.nombre_completo_usuario || '',
+        log.id_usuario || '',
+        log.metadata?.accion_negocio || '',
     ];
 
-    // Parsear metadata
-    let metadata: AnyRecord = {};
-    try {
-        metadata = typeof log.metadata === 'string' ? JSON.parse(log.metadata) : (log.metadata || {});
-    } catch {
-        return parts.filter(Boolean).join(' ').toLowerCase();
-    }
+    // Registro plano tal como lo recibe la tarjeta (datos_* + metadata +
+    // nombres resueltos). Antes se leía solo log.metadata, que en eventos
+    // actuales casi siempre está vacío: la búsqueda descartaba en el cliente
+    // resultados cuyo texto visible venía de datos_anteriores/datos_nuevos.
+    const metadata: AnyRecord = mapUnifiedLogToAuditRecord(log)?.record ?? log.metadata ?? {};
 
-    const isUpdate = log.accion.toLowerCase().includes('actualización') ||
-        log.accion.toLowerCase().includes('modificación');
+    const isUpdate = log.operacion === 'actualizacion';
 
     // 1. Siempre incluir campos de identidad/contexto
     for (const field of IDENTITY_FIELDS) {
@@ -238,6 +230,7 @@ export function extractVisibleSearchText(log: {
             const anteriorArr = parseMiembros(metadata.miembros_anteriores);
             const nuevoArr = parseMiembros(metadata.miembros_nuevos);
             for (const m of [...anteriorArr, ...nuevoArr]) {
+                if (m?.nombre_completo) parts.push(m.nombre_completo);
                 if (m?.nombre) parts.push(m.nombre);
                 if (m?.cedula) parts.push(m.cedula);
                 if (m?.rol) parts.push(m.rol);
@@ -289,15 +282,7 @@ function normalizeText(text: string): string {
  * Solo retorna logs donde el término de búsqueda aparece en datos realmente visibles.
  */
 export function filterLogsByVisibleContent(
-    logs: Array<{
-        entidad: string;
-        accion: string;
-        fecha: string;
-        usuario_id: string;
-        usuario_nombre: string;
-        detalles: string;
-        metadata: string;
-    }>,
+    logs: AuditoriaEvento[],
     searchTerm: string
 ): typeof logs {
     if (!searchTerm || searchTerm.trim() === '') return logs;

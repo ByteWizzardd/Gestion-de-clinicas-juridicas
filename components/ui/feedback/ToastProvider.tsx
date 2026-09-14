@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { X, CheckCircle2, AlertCircle, Info, AlertTriangle } from 'lucide-react';
+import { sanitizeUserMessage } from '@/lib/utils/error-messages';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -53,9 +54,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
     const toastMethods = {
         success: (msg: string, title?: string, duration?: number) => addToast('success', msg, title, duration),
-        error: (msg: string, title?: string, duration?: number) => addToast('error', msg, title, duration),
+        // Red de seguridad: ningún error técnico (SQL, red, JS) debe llegar al usuario tal cual.
+        error: (msg: string, title?: string, duration?: number) => addToast('error', sanitizeUserMessage(msg), title, duration),
         info: (msg: string, title?: string, duration?: number) => addToast('info', msg, title, duration),
-        warning: (msg: string, title?: string, duration?: number) => addToast('warning', msg, title, duration),
+        warning: (msg: string, title?: string, duration?: number) => addToast('warning', sanitizeUserMessage(msg), title, duration),
     };
 
     return (

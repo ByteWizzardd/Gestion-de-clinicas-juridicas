@@ -39,3 +39,10 @@ next-env.d.ts
 # uploads (si se implementa)
 /uploads
 github
+/x
+
+# claude / agent metadata
+.claude/
+skills-lock.json
+# Archivos exportados de columnas BYTEA antes de pasar a Vercel Blob (datos personales)
+/database/respaldo-archivos-legacy/

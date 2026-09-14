@@ -5,6 +5,7 @@
 
 import { put, del, list } from '@vercel/blob';
 import { logger } from '@/lib/utils/logger';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 // Tipos de archivos soportados
 export type StorageFolder = 'profile-photos' | 'soportes';
@@ -65,7 +66,7 @@ export async function uploadFile(
         logger.error('Error uploading file to Vercel Blob:', error);
         return {
             success: false,
-            error: error instanceof Error ? error.message : 'Error al subir archivo',
+            error: toUserMessage(error, 'Error al subir archivo'),
         };
     }
 }
@@ -110,7 +111,7 @@ export async function deleteFile(url: string): Promise<DeleteResult> {
         logger.error('Error deleting file from Vercel Blob:', error);
         return {
             success: false,
-            error: error instanceof Error ? error.message : 'Error al eliminar archivo',
+            error: toUserMessage(error, 'Error al eliminar archivo'),
         };
     }
 }

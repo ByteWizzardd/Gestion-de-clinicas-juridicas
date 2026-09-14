@@ -54,6 +54,11 @@ AS $$
             SELECT tipo_profesor INTO v_tipo_profesor_anterior FROM profesores WHERE cedula_profesor = p_cedula AND habilitado = TRUE;
         END IF;
 
+        -- Auditoría de la actualización: la captura el trigger genérico sobre `usuarios`.
+        IF p_cedula_actor IS NOT NULL AND p_cedula_actor != '' THEN
+            PERFORM set_config('app.current_user_id', p_cedula_actor, true);
+        END IF;
+
         -- Actualizar tabla usuarios solo si existe el usuario
         UPDATE usuarios
         SET 
@@ -159,53 +164,7 @@ AS $$
             v_hubo_cambios := TRUE;
         END IF;
         
-        -- Insertar auditoría manual si hubo cambios y hay actor
-        IF v_hubo_cambios AND p_cedula_actor IS NOT NULL AND p_cedula_actor != '' THEN
-            INSERT INTO auditoria_actualizacion_usuarios (
-                ci_usuario,
-                nombres_anterior,
-                apellidos_anterior,
-                correo_electronico_anterior,
-                nombre_usuario_anterior,
-                telefono_celular_anterior,
-                habilitado_sistema_anterior,
-                tipo_usuario_anterior,
-                tipo_estudiante_anterior,
-                tipo_profesor_anterior,
-                nombres_nuevo,
-                apellidos_nuevo,
-                correo_electronico_nuevo,
-                nombre_usuario_nuevo,
-                telefono_celular_nuevo,
-                habilitado_sistema_nuevo,
-                tipo_usuario_nuevo,
-                tipo_estudiante_nuevo,
-                tipo_profesor_nuevo,
-                id_usuario_actualizo,
-                fecha_actualizacion
-            ) VALUES (
-                p_cedula,
-                v_nombres_anterior,
-                v_apellidos_anterior,
-                v_correo_electronico_anterior,
-                v_nombre_usuario_anterior,
-                v_telefono_celular_anterior,
-                v_habilitado_sistema_anterior,
-                v_tipo_usuario_anterior,
-                v_tipo_estudiante_anterior,
-                v_tipo_profesor_anterior,
-                COALESCE(p_nombres, v_nombres_anterior),
-                COALESCE(p_apellidos, v_apellidos_anterior),
-                COALESCE(p_correo_electronico, v_correo_electronico_anterior),
-                COALESCE(p_nombre_usuario, v_nombre_usuario_anterior),
-                COALESCE(p_telefono_celular, v_telefono_celular_anterior),
-                v_habilitado_sistema_anterior, -- No cambia en este procedimiento
-                COALESCE(p_tipo_usuario, v_tipo_usuario_anterior),
-                v_tipo_estudiante_nuevo,
-                v_tipo_profesor_nuevo,
-                p_cedula_actor,
-                (NOW() AT TIME ZONE 'America/Caracas')
-            );
-        END IF;
+        -- La auditoría de los cambios en `usuarios` ya quedó registrada por el trigger
+        -- genérico al hacer el UPDATE de arriba (con el actor seteado más arriba).
     END;
 $$;

@@ -13,6 +13,7 @@ import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 
 import type { Solicitante as SolicitanteListItem } from '@/lib/db/queries/solicitantes.queries';
 import type { SolicitanteCompleto } from '@/lib/db/queries/solicitantes.queries';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 type ApplicantFormData = Parameters<(typeof solicitantesService)['create']>[0];
 
@@ -112,7 +113,7 @@ export async function getSolicitantesAction(): Promise<GetSolicitantesResult> {
       return {
         success: false,
         error: {
-          message: error.message,
+          message: toUserMessage(error),
           code: error.code || 'SOLICITANTE_ERROR',
         },
       };
@@ -122,7 +123,7 @@ export async function getSolicitantesAction(): Promise<GetSolicitantesResult> {
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : 'Error al obtener solicitantes',
+        message: toUserMessage(error, 'Error al obtener solicitantes'),
         code: 'UNKNOWN_ERROR',
       },
     };
@@ -350,7 +351,7 @@ export async function updateSolicitanteAction(cedulaOriginal: string, data: Appl
 
                 // Variable para saltar el trigger de auditoría de usuarios (por si acaso)
                 await client.query("SELECT set_config('app.sync_solicitante_mode', 'true', true)");
-                await client.query("SELECT set_config('app.usuario_actualiza_usuario', $1, true)", [authResult.user.cedula]);
+                await client.query("SELECT set_config('app.current_user_id', $1, true)", [authResult.user.cedula]);
 
                 // Ejecutar update
                 const updateQuery = loadSQL('usuarios/update-contact-info.sql');

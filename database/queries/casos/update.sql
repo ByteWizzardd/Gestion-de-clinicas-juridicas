@@ -12,6 +12,7 @@
 --   $9 = num_ambito_legal (opcional)
 --   $10 = fecha_solicitud (opcional)
 --   $11 = cedula (opcional)
+--   $12 = fecha_inicio_caso (opcional; al cambiar, trigger_sync_semestre_caso asocia el semestre)
 UPDATE casos
 SET 
     tramite = COALESCE($2, tramite),
@@ -23,7 +24,8 @@ SET
     num_subcategoria = COALESCE($8, num_subcategoria),
     num_ambito_legal = COALESCE($9, num_ambito_legal),
     fecha_solicitud = COALESCE($10, fecha_solicitud),
-    cedula = COALESCE($11, cedula)
+    cedula = COALESCE($11, cedula),
+    fecha_inicio_caso = COALESCE($12, fecha_inicio_caso)
 WHERE id_caso = $1
 RETURNING *;
 

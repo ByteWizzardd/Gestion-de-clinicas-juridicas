@@ -61,25 +61,12 @@ BEGIN
         UPDATE soportes SET id_usuario_subio = NULL WHERE id_usuario_subio = p_cedula_usuario;
 
 
-        -- Auditoría de eliminación (guardar antes de eliminar)
-        INSERT INTO auditoria_eliminacion_usuario (
-            usuario_eliminado, 
-            nombres_usuario_eliminado,
-            apellidos_usuario_eliminado,
-            eliminado_por, 
-            motivo, 
-            fecha
-        ) VALUES (
-            p_cedula_usuario,
-            v_nombres_usuario,
-            v_apellidos_usuario,
-            p_cedula_actor,
-            p_motivo,
-            (NOW() AT TIME ZONE 'America/Caracas')
-        );
+        -- Auditoría de eliminación: la captura el trigger genérico sobre `usuarios`,
+        -- que lee el actor de app.current_user_id y el motivo de app.audit_metadata.
+        PERFORM set_config('app.current_user_id', p_cedula_actor, true);
+        PERFORM set_config('app.audit_metadata', jsonb_build_object('motivo', p_motivo)::text, true);
 
-        -- Eliminar de usuarios (después de guardar la auditoría)
-        -- Las foreign keys de auditoría deben permitir la eliminación (ON DELETE SET NULL)
+        -- Eliminar de usuarios (después de dejar seteadas las variables de auditoría)
         DELETE FROM usuarios WHERE cedula = p_cedula_usuario;
 
     EXCEPTION

@@ -31,6 +31,7 @@ import type {
   AccionActualizadaAuditRecord,
   AccionEliminadaAuditRecord,
   EquipoActualizadoAuditRecord,
+  CasoSemestreAuditRecord,
   MiembroEquipoAudit,
   ReporteGeneradoAuditRecord,
   SesionAuditRecord
@@ -708,13 +709,15 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         return renderRow(
           <UserAvatar fotoPerfil={r.foto_perfil_usuario} nombre={nombreCompleto} size={25} />,
           <>
-            <Link
-              href={`/dashboard/users/${r.cedula}`}
-              className="text-primary hover:underline transition-colors"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {nombreCompleto}
-            </Link>
+            {r.cedula ? (
+              <Link
+                href={`/dashboard/users/${r.cedula}`}
+                className="text-primary hover:underline transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {nombreCompleto}
+              </Link>
+            ) : nombreCompleto}
           </>,
           <>
             Cédula: {r.cedula} • Inscrito por:{' '}
@@ -736,13 +739,15 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         return renderRow(
           <UserAvatar fotoPerfil={r.foto_perfil_usuario} nombre={nombreCompleto} size={25} />,
           <>
-            <Link
-              href={`/dashboard/users/${r.cedula}`}
-              className="text-primary hover:underline transition-colors"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {nombreCompleto}
-            </Link>
+            {r.cedula ? (
+              <Link
+                href={`/dashboard/users/${r.cedula}`}
+                className="text-primary hover:underline transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {nombreCompleto}
+              </Link>
+            ) : nombreCompleto}
           </>,
           <>
             Cédula: {r.cedula} • Asignado por:{' '}
@@ -809,13 +814,15 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         return renderRow(
           <User className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>
-            <Link
-              href={`/dashboard/applicants/${r.cedula}`}
-              className="text-primary hover:underline transition-colors"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {nombreCompleto}
-            </Link>
+            {r.cedula ? (
+              <Link
+                href={`/dashboard/applicants/${r.cedula}`}
+                className="text-primary hover:underline transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {nombreCompleto}
+              </Link>
+            ) : nombreCompleto}
             {r.cedula && (
               <span className="text-[var(--card-text-muted)] font-normal"> (Cédula: {r.cedula})</span>
             )}
@@ -839,13 +846,15 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         return renderRow(
           <Check className="w-5 h-5 text-[var(--card-text-muted)]" />,
           <>
-            <Link
-              href={`/dashboard/applicants/${r.cedula_solicitante}`}
-              className="text-primary hover:underline transition-colors"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {nombreCompleto}
-            </Link>
+            {r.cedula_solicitante ? (
+              <Link
+                href={`/dashboard/applicants/${r.cedula_solicitante}`}
+                className="text-primary hover:underline transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {nombreCompleto}
+              </Link>
+            ) : nombreCompleto}
             {r.cedula_solicitante && (
               <span className="text-[var(--card-text-muted)] font-normal"> (Cédula: {r.cedula_solicitante})</span>
             )}
@@ -961,17 +970,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           nameField = r.descripcion || 'N/A';
         }
 
-        // Para características, mostrar solo num_caracteristica (sin guión)
-        const caracteristicaId = r.num_caracteristica != null ? r.num_caracteristica : null;
-
-        const idField = r.id_estado || r.id_materia || r.id_nivel_educativo || r.id_nucleo ||
-          r.id_trabajo || r.id_actividad || r.id_tipo || r.term ||
-          (r.id_estado != null && r.num_municipio != null ? `${r.id_estado}-${r.num_municipio}` : null) ||
-          (r.id_estado != null && r.num_municipio != null && r.num_parroquia != null ? `${r.id_estado}-${r.num_municipio}-${r.num_parroquia}` : null) ||
-          (r.id_materia != null && r.num_categoria != null ? `${r.id_materia}-${r.num_categoria}` : null) ||
-          (r.id_materia != null && r.num_categoria != null && r.num_subcategoria != null ? `${r.id_materia}-${r.num_categoria}-${r.num_subcategoria}` : null) ||
-          (r.id_materia != null && r.num_categoria != null && r.num_subcategoria != null && r.num_ambito_legal != null ? `${r.id_materia}-${r.num_categoria}-${r.num_subcategoria}-${r.num_ambito_legal}` : null) ||
-          caracteristicaId || 'N/A';
+        // ID propio del catálogo (num_municipio en un municipio, no id_estado);
+        // lo calcula audit-record-mapper.ts a partir de la PK.
+        const idField = r.id_catalogo ?? 'N/A';
 
         const isInserted = type.includes('-insertado') || type.includes('-insertada');
         const actionText = isInserted ? 'Creado por' : 'Eliminado por';
@@ -1123,17 +1124,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           nameField = r.descripcion_nuevo || 'N/A';
         }
 
-        // Para características, mostrar solo num_caracteristica (sin guión)
-        const caracteristicaId = r.num_caracteristica != null ? r.num_caracteristica : null;
-
-        const idField = r.id_estado || r.id_materia || r.id_nivel_educativo || r.id_nucleo ||
-          r.id_trabajo || r.id_actividad || r.id_tipo || r.term ||
-          (r.id_estado != null && r.num_municipio != null ? `${r.id_estado}-${r.num_municipio}` : null) ||
-          (r.id_estado != null && r.num_municipio != null && r.num_parroquia != null ? `${r.id_estado}-${r.num_municipio}-${r.num_parroquia}` : null) ||
-          (r.id_materia != null && r.num_categoria != null ? `${r.id_materia}-${r.num_categoria}` : null) ||
-          (r.id_materia != null && r.num_categoria != null && r.num_subcategoria != null ? `${r.id_materia}-${r.num_categoria}-${r.num_subcategoria}` : null) ||
-          (r.id_materia != null && r.num_categoria != null && r.num_subcategoria != null && r.num_ambito_legal != null ? `${r.id_materia}-${r.num_categoria}-${r.num_subcategoria}-${r.num_ambito_legal}` : null) ||
-          caracteristicaId || 'N/A';
+        // ID propio del catálogo (num_municipio en un municipio, no id_estado);
+        // lo calcula audit-record-mapper.ts a partir de la PK.
+        const idField = r.id_catalogo ?? 'N/A';
 
         // Para características, mostrar también el tipo de característica
         const tipoCaracteristica = type === 'caracteristica-actualizada'
@@ -1256,7 +1249,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
 
       case 'beneficiario-eliminado': {
         const r = record as BeneficiarioEliminadoAuditRecord;
-        const nombreCompleto = r.nombres || 'Beneficiario desconocido';
+        const nombreCompleto = `${r.nombres || ''} ${r.apellidos || ''}`.trim() || 'Beneficiario desconocido';
 
         return renderRow(
           <Users className="w-5 h-5 text-[var(--card-text-muted)]" />,
@@ -1285,7 +1278,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               Caso #{r.id_caso}
             </Link>
             {' - '}
-            {r.miembros_anteriores.length === 0 ? 'Equipo asignado' : 'Equipo actualizado'}
+            {(r.miembros_anteriores ?? []).length === 0 ? 'Equipo asignado' : 'Equipo actualizado'}
           </>,
           <>
             Modificado por: {' '}
@@ -1294,6 +1287,30 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               r.nombres_usuario_modifico,
               r.apellidos_usuario_modifico,
               r.id_usuario_modifico
+            )}
+          </>
+        );
+      }
+      case 'caso-semestre-agregado':
+      case 'caso-semestre-eliminado': {
+        const r = record as CasoSemestreAuditRecord;
+        const agregado = type === 'caso-semestre-agregado';
+        return renderRow(
+          <Calendar className="w-5 h-5 text-[var(--card-text-muted)]" />,
+          <>
+            <Link href={`/dashboard/cases/${r.id_caso}`} className="hover:underline text-primary">
+              Caso #{r.id_caso}
+            </Link>
+            {' - '}
+            {agregado ? 'Semestre de actividad agregado' : 'Semestre de actividad eliminado'}: {r.term}
+          </>,
+          <>
+            {agregado ? 'Agregado por' : 'Eliminado por'}: {' '}
+            {renderUserLink(
+              agregado ? r.nombre_completo_usuario_creo : r.nombre_completo_usuario_elimino,
+              null,
+              null,
+              agregado ? r.id_usuario_creo : r.id_usuario_elimino
             )}
           </>
         );
@@ -1458,13 +1475,15 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <div className="flex flex-col text-sm text-[var(--card-text-muted)] space-y-0.5">
                 <p>
                   <span className="font-medium">Nombre:</span>{' '}
-                  <Link
-                    href={`/dashboard/users/${r.cedula}`}
-                    className="text-primary hover:underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {nombreCompleto}
-                  </Link>
+                  {r.cedula ? (
+                    <Link
+                      href={`/dashboard/users/${r.cedula}`}
+                      className="text-primary hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {nombreCompleto}
+                    </Link>
+                  ) : nombreCompleto}
                 </p>
                 <p><span className="font-medium">Cédula:</span> {r.cedula}</p>
                 <p><span className="font-medium">Correo:</span> {r.correo_electronico || '-'}</p>
@@ -2822,6 +2841,36 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 </div>
               )}
 
+              {r.es_inscripcion && r.nrc_anterior !== r.nrc_nuevo && (
+                <div className="mb-2">
+                  <p className="text-sm text-[var(--card-text-muted)]">
+                    NRC{r.term ? ` (${r.term})` : ''}:{' '}
+                    <span className="line-through text-[var(--bulk-error-text)]">{r.nrc_anterior || 'N/A'}</span>
+                    {' → '}
+                    <span className="text-[var(--bulk-success-text)]">{r.nrc_nuevo || 'N/A'}</span>
+                  </p>
+                </div>
+              )}
+
+              {r.es_inscripcion && r.habilitado_anterior !== r.habilitado_nuevo && r.habilitado_nuevo !== undefined && (
+                <div className="mb-2">
+                  <p className="text-sm text-[var(--card-text-muted)]">
+                    Inscripción{r.term ? ` en ${r.term}` : ''}:{' '}
+                    <span className="line-through text-[var(--bulk-error-text)]">{r.habilitado_anterior ? 'Habilitada' : 'Deshabilitada'}</span>
+                    {' → '}
+                    <span className="text-[var(--bulk-success-text)]">{r.habilitado_nuevo ? 'Habilitada' : 'Deshabilitada'}</span>
+                  </p>
+                </div>
+              )}
+
+              {r.contrasena_cambiada_nuevo && (
+                <div className="mb-2">
+                  <p className="text-sm text-[var(--card-text-muted)]">
+                    Contraseña: <span className="text-[var(--bulk-success-text)]">actualizada</span>
+                  </p>
+                </div>
+              )}
+
               {(r.foto_perfil_anterior !== r.foto_perfil_nuevo) && (
                 <div className="mb-2">
                   <p className="text-sm text-[var(--card-text-muted)] mb-2">
@@ -2931,17 +2980,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           nameField = r.descripcion || 'N/A';
         }
 
-        // Para características, mostrar solo num_caracteristica (sin guión)
-        const caracteristicaId = r.num_caracteristica != null ? r.num_caracteristica : null;
-
-        const idField = r.id_estado || r.id_materia || r.id_nivel_educativo || r.id_nucleo ||
-          r.id_trabajo || r.id_actividad || r.id_tipo || r.term ||
-          (r.id_estado != null && r.num_municipio != null ? `${r.id_estado}-${r.num_municipio}` : null) ||
-          (r.id_estado != null && r.num_municipio != null && r.num_parroquia != null ? `${r.id_estado}-${r.num_municipio}-${r.num_parroquia}` : null) ||
-          (r.id_materia != null && r.num_categoria != null ? `${r.id_materia}-${r.num_categoria}` : null) ||
-          (r.id_materia != null && r.num_categoria != null && r.num_subcategoria != null ? `${r.id_materia}-${r.num_categoria}-${r.num_subcategoria}` : null) ||
-          (r.id_materia != null && r.num_categoria != null && r.num_subcategoria != null && r.num_ambito_legal != null ? `${r.id_materia}-${r.num_categoria}-${r.num_subcategoria}-${r.num_ambito_legal}` : null) ||
-          caracteristicaId || 'N/A';
+        // ID propio del catálogo (num_municipio en un municipio, no id_estado);
+        // lo calcula audit-record-mapper.ts a partir de la PK.
+        const idField = r.id_catalogo ?? 'N/A';
 
         // Obtener información de la entidad fuerte
         const entidadFuerte =
@@ -3066,17 +3107,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           nameField = r.descripcion || 'N/A';
         }
 
-        // Para características, mostrar solo num_caracteristica (sin guión)
-        const caracteristicaId = r.num_caracteristica != null ? r.num_caracteristica : null;
-
-        const idField = r.id_estado || r.id_materia || r.id_nivel_educativo || r.id_nucleo ||
-          r.id_trabajo || r.id_actividad || r.id_tipo || r.term ||
-          (r.id_estado != null && r.num_municipio != null ? `${r.id_estado}-${r.num_municipio}` : null) ||
-          (r.id_estado != null && r.num_municipio != null && r.num_parroquia != null ? `${r.id_estado}-${r.num_municipio}-${r.num_parroquia}` : null) ||
-          (r.id_materia != null && r.num_categoria != null ? `${r.id_materia}-${r.num_categoria}` : null) ||
-          (r.id_materia != null && r.num_categoria != null && r.num_subcategoria != null ? `${r.id_materia}-${r.num_categoria}-${r.num_subcategoria}` : null) ||
-          (r.id_materia != null && r.num_categoria != null && r.num_subcategoria != null && r.num_ambito_legal != null ? `${r.id_materia}-${r.num_categoria}-${r.num_subcategoria}-${r.num_ambito_legal}` : null) ||
-          caracteristicaId || 'N/A';
+        // ID propio del catálogo (num_municipio en un municipio, no id_estado);
+        // lo calcula audit-record-mapper.ts a partir de la PK.
+        const idField = r.id_catalogo ?? 'N/A';
 
         // Obtener información de la entidad fuerte
         const entidadFuerte =
@@ -3181,7 +3214,7 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                 {r.sexo && <p className="text-[var(--card-text-muted)]">Sexo: {r.sexo === 'M' ? 'Masculino' : 'Femenino'}</p>}
                 {r.nacionalidad && <p className="text-[var(--card-text-muted)]">Nacionalidad: {r.nacionalidad === 'V' ? 'Venezolano' : 'Extranjero'}</p>}
                 {r.estado_civil && <p className="text-[var(--card-text-muted)]">Estado Civil: {r.estado_civil}</p>}
-                {r.concubinato !== null && <p className="text-[var(--card-text-muted)]">Concubinato: {r.concubinato ? 'Sí' : 'No'}</p>}
+                {r.concubinato != null && <p className="text-[var(--card-text-muted)]">Concubinato: {r.concubinato ? 'Sí' : 'No'}</p>}
               </div>
 
               {/* Columna 2: Contacto + Académico/Laboral */}
@@ -3208,8 +3241,8 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Columna 3: Vivienda */}
               <div className="space-y-1">
                 <p className="font-semibold text-[var(--card-text)]">Vivienda</p>
-                {r.cant_habitaciones !== null && <p className="text-[var(--card-text-muted)]">Habitaciones: {r.cant_habitaciones}</p>}
-                {r.cant_banos !== null && <p className="text-[var(--card-text-muted)]">Baños: {r.cant_banos}</p>}
+                {r.cant_habitaciones != null && <p className="text-[var(--card-text-muted)]">Habitaciones: {r.cant_habitaciones}</p>}
+                {r.cant_banos != null && <p className="text-[var(--card-text-muted)]">Baños: {r.cant_banos}</p>}
                 {Object.entries(caracteristicasAgrupadas).map(([tipo, caracteristicas]) => (
                   <p key={tipo} className="text-[var(--card-text-muted)]">
                     <span className="font-medium">{tipo}:</span> {caracteristicas.join(', ')}
@@ -3220,13 +3253,13 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {/* Columna 4: Familia y Hogar */}
               <div className="space-y-1">
                 <p className="font-semibold text-[var(--card-text)]">Familia y Hogar</p>
-                {r.cant_personas !== null && <p className="text-[var(--card-text-muted)]">Personas: {r.cant_personas}</p>}
-                {r.cant_trabajadores !== null && <p className="text-[var(--card-text-muted)]">Trabajadores: {r.cant_trabajadores}</p>}
-                {r.cant_no_trabajadores !== null && <p className="text-[var(--card-text-muted)]">No trabajadores: {r.cant_no_trabajadores}</p>}
-                {r.cant_ninos !== null && <p className="text-[var(--card-text-muted)]">Niños: {r.cant_ninos}</p>}
-                {r.cant_ninos_estudiando !== null && <p className="text-[var(--card-text-muted)]">Niños estudiando: {r.cant_ninos_estudiando}</p>}
-                {r.jefe_hogar !== null && <p className="text-[var(--card-text-muted)]">Jefe del hogar: {r.jefe_hogar ? 'Sí' : 'No'}</p>}
-                {r.ingresos_mensuales !== null && (
+                {r.cant_personas != null && <p className="text-[var(--card-text-muted)]">Personas: {r.cant_personas}</p>}
+                {r.cant_trabajadores != null && <p className="text-[var(--card-text-muted)]">Trabajadores: {r.cant_trabajadores}</p>}
+                {r.cant_no_trabajadores != null && <p className="text-[var(--card-text-muted)]">No trabajadores: {r.cant_no_trabajadores}</p>}
+                {r.cant_ninos != null && <p className="text-[var(--card-text-muted)]">Niños: {r.cant_ninos}</p>}
+                {r.cant_ninos_estudiando != null && <p className="text-[var(--card-text-muted)]">Niños estudiando: {r.cant_ninos_estudiando}</p>}
+                {r.jefe_hogar != null && <p className="text-[var(--card-text-muted)]">Jefe del hogar: {r.jefe_hogar ? 'Sí' : 'No'}</p>}
+                {r.ingresos_mensuales != null && (
                   <p className="text-[var(--card-text-muted)]">Ingresos: Bs. {Number(r.ingresos_mensuales).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</p>
                 )}
                 {r.nivel_educativo_jefe && <p className="text-[var(--card-text-muted)]">Nivel edu. jefe: {r.nivel_educativo_jefe}</p>}
@@ -3870,7 +3903,42 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {r.tramite && (
                 <p className="text-sm text-[var(--card-text-muted)]">Trámite: {r.tramite}</p>
               )}
+              {r.estatus_final && (
+                <p className="text-sm text-[var(--card-text-muted)]">Estatus al eliminarse: {r.estatus_final}</p>
+              )}
             </div>
+            {/* Equipo y elementos eliminados junto con el caso (metadata de eliminar_caso_fisico) */}
+            {r.equipo && (r.equipo.profesores.length > 0 || r.equipo.estudiantes.length > 0) && (
+              <div>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Equipo asignado</p>
+                {r.equipo.profesores.length > 0 && (
+                  <p className="text-sm text-[var(--card-text-muted)]">
+                    Profesores: {r.equipo.profesores.map((p) => `${p.nombre} (${p.term})`).join(', ')}
+                  </p>
+                )}
+                {r.equipo.estudiantes.length > 0 && (
+                  <p className="text-sm text-[var(--card-text-muted)]">
+                    Estudiantes: {r.equipo.estudiantes.map((e) => `${e.nombre} (${e.term})`).join(', ')}
+                  </p>
+                )}
+              </div>
+            )}
+            {r.eliminados && (() => {
+              const e = r.eliminados;
+              const partes = ([
+                [e.citas, 'cita', 'citas'],
+                [e.acciones, 'acción', 'acciones'],
+                [e.beneficiarios, 'beneficiario', 'beneficiarios'],
+                [e.soportes, 'soporte', 'soportes'],
+                [e.cambios_estatus, 'cambio de estatus', 'cambios de estatus'],
+              ] as const).filter(([n]) => Number(n) > 0).map(([n, uno, varios]) => `${n} ${Number(n) === 1 ? uno : varios}`);
+              return partes.length > 0 ? (
+                <div>
+                  <p className="text-sm font-semibold text-[var(--card-text)] mb-1">También se eliminó</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">{partes.join(', ')}</p>
+                </div>
+              ) : null;
+            })()}
             <div>
               <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
               <p className="text-sm text-[var(--card-text-muted)]">
@@ -4337,18 +4405,6 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           nameFieldNuevo = r.descripcion_nuevo || 'N/A';
         }
 
-        // Para características, mostrar solo num_caracteristica (sin guión)
-        const caracteristicaId = r.num_caracteristica != null ? r.num_caracteristica : null;
-
-        const idField = r.id_estado || r.id_materia || r.id_nivel_educativo || r.id_nucleo ||
-          r.id_trabajo || r.id_actividad || r.id_tipo || r.term ||
-          (r.id_estado != null && r.num_municipio != null ? `${r.id_estado}-${r.num_municipio}` : null) ||
-          (r.id_estado != null && r.num_municipio != null && r.num_parroquia != null ? `${r.id_estado}-${r.num_municipio}-${r.num_parroquia}` : null) ||
-          (r.id_materia != null && r.num_categoria != null ? `${r.id_materia}-${r.num_categoria}` : null) ||
-          (r.id_materia != null && r.num_categoria != null && r.num_subcategoria != null ? `${r.id_materia}-${r.num_categoria}-${r.num_subcategoria}` : null) ||
-          (r.id_materia != null && r.num_categoria != null && r.num_subcategoria != null && r.num_ambito_legal != null ? `${r.id_materia}-${r.num_categoria}-${r.num_subcategoria}-${r.num_ambito_legal}` : null) ||
-          caracteristicaId || 'N/A';
-
         // Obtener información de la entidad fuerte
         const entidadFuerte =
           type === 'categoria-actualizada' ? r.nombre_materia :
@@ -4362,14 +4418,24 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         // Para parroquias, también mostrar el estado
         const estadoParroquiaActualizadaDetalle = type === 'parroquia-actualizada' ? r.nombre_estado : null;
 
+        // Línea "Etiqueta: anterior → nuevo", solo si el padre cambió.
+        const renderCambioPadre = (etiqueta: string, anterior?: string | null, nuevo?: string | null) =>
+          (anterior || nuevo) && anterior !== nuevo ? (
+            <div className="mb-2">
+              <p className="text-sm text-[var(--card-text-muted)]">
+                {etiqueta}:{' '}
+                <span className="line-through text-[var(--bulk-error-text)]">{anterior || 'N/A'}</span>
+                {' → '}
+                <span className="text-[var(--bulk-success-text)]">{nuevo || 'N/A'}</span>
+              </p>
+            </div>
+          ) : null;
+
         return (
           <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div>
-              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Cambios Realizados</p>
-              {/* Para semestres, el term es el ID, así que no mostramos ID por separado */}
-              {type !== 'semestre-actualizado' && (
-                <p className="text-sm text-[var(--card-text-muted)] mb-3">ID: {idField}</p>
-              )}
+              {/* El ID ya está en la cabecera de la tarjeta; aquí solo lo que cambió. */}
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-2">Cambios Realizados</p>
 
               {(nameFieldAnterior !== nameFieldNuevo) && (
                 <div className="mb-2">
@@ -4572,6 +4638,20 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   )}
                 </>
               )}
+
+              {/* Movido a otro padre (categoría, ámbito legal, municipio, característica):
+                  la app lo registra como INSERT + DELETE y filtro-eventos.sql lo
+                  presenta como esta actualización. */}
+              {type === 'categoria-actualizada' && renderCambioPadre('Materia', r.nombre_materia_anterior, r.nombre_materia_nuevo)}
+              {type === 'ambito-legal-actualizado' && (
+                <>
+                  {renderCambioPadre('Materia', r.nombre_materia_anterior, r.nombre_materia_nuevo)}
+                  {renderCambioPadre('Categoría', r.nombre_categoria_anterior, r.nombre_categoria_nuevo)}
+                  {renderCambioPadre('Subcategoría', r.nombre_subcategoria_anterior, r.nombre_subcategoria_nuevo)}
+                </>
+              )}
+              {type === 'municipio-actualizado' && renderCambioPadre('Estado', r.nombre_estado_anterior, r.nombre_estado_nuevo)}
+              {type === 'caracteristica-actualizada' && renderCambioPadre('Tipo', r.nombre_tipo_caracteristica_anterior, r.nombre_tipo_caracteristica_nuevo)}
             </div>
             {/* Para semestres actualizados, mostrar sección de Información con todos los atributos */}
             {type === 'semestre-actualizado' && (
@@ -4738,6 +4818,38 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <p className="text-sm text-[var(--card-text-muted)]">
                 Fecha modificación: {formatDate(r.fecha)}
               </p>
+            </div>
+          </div>
+        );
+      }
+      case 'caso-semestre-agregado':
+      case 'caso-semestre-eliminado': {
+        const r = record as CasoSemestreAuditRecord;
+        const agregado = type === 'caso-semestre-agregado';
+        return (
+          <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
+            <div>
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Información</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
+                Caso:{' '}
+                <Link href={`/dashboard/cases/${r.id_caso}`} className="hover:underline text-primary">
+                  #{r.id_caso}
+                </Link>
+              </p>
+              <p className="text-sm text-[var(--card-text-muted)]">Semestre: {r.term}</p>
+            </div>
+            <div className="pt-4 border-t border-[var(--card-border)]">
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
+              <p className="text-sm text-[var(--card-text-muted)]">
+                {agregado ? 'Agregado por' : 'Eliminado por'}:{' '}
+                {renderUserLink(
+                  agregado ? r.nombre_completo_usuario_creo : r.nombre_completo_usuario_elimino,
+                  null,
+                  null,
+                  agregado ? r.id_usuario_creo : r.id_usuario_elimino
+                )}
+              </p>
+              <p className="text-sm text-[var(--card-text-muted)]">Fecha: {formatDate(r.fecha)}</p>
             </div>
           </div>
         );
@@ -4948,9 +5060,11 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               <div>
                 <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Tiempos</p>
                 <p className="text-sm text-[var(--card-text-muted)]">Inicio: {formatDate(r.fecha_inicio)}</p>
-                <p className="text-sm text-[var(--card-text-muted)]">
-                  Cierre: {r.fecha_cierre ? formatDate(r.fecha_cierre) : 'Sin cerrar (Activa)'}
-                </p>
+                {exitoso && (
+                  <p className="text-sm text-[var(--card-text-muted)]">
+                    Cierre: {r.fecha_cierre ? formatDate(r.fecha_cierre) : 'Sin cerrar (Activa)'}
+                  </p>
+                )}
                 {r.fecha_cierre && (
                   <p className="text-sm text-[var(--card-text-muted)]">Duración: {formatDuration(r.fecha_inicio, r.fecha_cierre)}</p>
                 )}
@@ -5076,6 +5190,9 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
       // Equipo actualizado
       case 'equipo-actualizado':
         return (record as EquipoActualizadoAuditRecord).fecha;
+      case 'caso-semestre-agregado':
+      case 'caso-semestre-eliminado':
+        return (record as CasoSemestreAuditRecord).fecha;
       // Reportes
       case 'reporte-generado':
         return (record as ReporteGeneradoAuditRecord).fecha_generacion;

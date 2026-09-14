@@ -1,5 +1,6 @@
 import { logger } from './logger';
 import { AppError } from './errors';
+import { toUserMessage } from './error-messages';
 
 export interface ServerActionError {
   message: string;
@@ -20,10 +21,12 @@ export function handleServerActionError(
   defaultCode: string = 'UNKNOWN_ERROR'
 ): { success: false; error: ServerActionError } {
   if (error instanceof AppError) {
+    if (error.statusCode >= 500) logger.error(`Error en ${context}:`, error);
     return {
       success: false,
       error: {
-        message: error.message,
+        // Los servicios a veces envuelven el error de la BD dentro del mensaje del AppError.
+        message: toUserMessage(error),
         code: error.code || defaultCode,
         fields: (error as any).fields,
       },
@@ -34,7 +37,7 @@ export function handleServerActionError(
   return {
     success: false,
     error: {
-      message: error instanceof Error ? error.message : 'Error desconocido',
+      message: toUserMessage(error),
       code: defaultCode,
     },
   };

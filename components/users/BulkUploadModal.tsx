@@ -9,6 +9,7 @@ import { bulkCreateEstudiantesAction } from '@/app/actions/estudiantes';
 import { getSemestres } from '@/app/actions/catalogos/semestres.actions';
 import { BulkUploadResult } from '@/lib/services/estudiantes.service';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
+import { sanitizeUserMessage } from '@/lib/utils/error-messages';
 
 interface BulkUploadModalProps {
   isOpen: boolean;
@@ -111,7 +112,7 @@ export default function BulkUploadModal({
         setError(result.error?.message || 'Error al procesar el archivo');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al procesar el archivo');
+      setError(sanitizeUserMessage(err, 'Error al procesar el archivo'));
     } finally {
       setLoading(false);
     }
@@ -148,8 +149,9 @@ export default function BulkUploadModal({
         setError(result.error?.message || 'Error al cargar estudiantes');
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error al cargar estudiantes');
-      setError(err instanceof Error ? err.message : 'Error al cargar estudiantes');
+      const message = sanitizeUserMessage(err, 'Error al cargar estudiantes');
+      toast.error(message);
+      setError(message);
     } finally {
       setLoading(false);
     }

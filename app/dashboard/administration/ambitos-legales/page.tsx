@@ -70,7 +70,7 @@ export default function AmbitosLegalesPage() {
             handleCloseModal();
             await loadData();
         } else {
-            toast.error(result.error || 'Error al añadir ámbito legal');
+            toast.error((result as any).error || 'Error al añadir ámbito legal');
         }
     };
 
@@ -121,21 +121,22 @@ export default function AmbitosLegalesPage() {
             handleCloseModal();
             await loadData();
         } else {
-            toast.error(result.error || 'Error al actualizar ámbito legal');
+            toast.error((result as any).error || 'Error al actualizar ámbito legal');
         }
     };
 
     const handleToggle = async (item: any) => {
         const result = await toggleAmbitoLegalHabilitado(item.id_materia, item.num_categoria, item.num_subcategoria, item.num_ambito_legal);
         if (result.success) await loadData();
-        else toast.error(result.error || 'Error al cambiar estado');
+        else toast.error((result as any).error || 'Error al cambiar estado');
     };
 
     const handleDelete = async (item: any, motivo?: string) => {
-        const result = await deleteAmbitoLegal(item.id_materia, item.num_categoria, item.num_subcategoria, item.num_ambito_legal, motivo);
+        const result: any = await deleteAmbitoLegal(item.id_materia, item.num_categoria, item.num_subcategoria, item.num_ambito_legal, motivo);
         if (result.success) await loadData();
         else toast.error(result.error === 'HAS_ASSOCIATIONS' ? (result.message || 'No se puede eliminar') : (result.error || 'Error al eliminar'));
     };
+
 
     const handleCloseModal = () => {
         setIsModalOpen(false);

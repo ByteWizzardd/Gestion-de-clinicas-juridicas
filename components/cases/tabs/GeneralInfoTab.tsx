@@ -181,7 +181,7 @@ export default function GeneralInfoTab({ caso, onRefresh }: GeneralInfoTabProps)
         router.refresh(); // Mantiene estado de server components actualizado
         if (onRefresh) onRefresh(); // Actualiza el estado local del cliente
       } else {
-        toast.error(result.error?.message || 'Error desconocido', 'Error al eliminar');
+        toast.error(result.error?.message || 'No se pudo completar la eliminación.', 'Error al eliminar');
       }
     } catch (error) {
       logger.error('Error al eliminar beneficiario:', error);

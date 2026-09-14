@@ -3,6 +3,7 @@
  * Centraliza lógica común de manejo de fechas y términos
  */
 import { logger } from '@/lib/utils/logger';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 /**
  * Obtiene las fechas de inicio y fin basadas en un término (semestre)
@@ -16,9 +17,12 @@ export async function resolveDateRange(
   fechaFin?: string,
   term?: string
 ): Promise<{ start?: string; end?: string }> {
-  // Las fechas del usuario se pasan tal cual.
-  // El filtro por semestre se maneja en el SQL via el parámetro term ($3/$4).
-  // Ambos pueden combinarse: term filtra por ocurren_en, fechas por fecha_inicio_caso.
+  // Las fechas del usuario se pasan tal cual. En el SQL:
+  //   - fechas: el caso tiene actividad fechada dentro del rango (función
+  //     caso_con_actividad_en_rango: inicio, citas, acciones, ejecuciones,
+  //     cambios de estatus, soportes);
+  //   - term: el caso ocurre en ese semestre (ocurren_en).
+  // Ambos pueden combinarse.
   return {
     start: fechaInicio || undefined,
     end: fechaFin || undefined,
@@ -38,6 +42,6 @@ export function handleReportError(
   logger.error(`Error en ${context}:`, error);
   return {
     success: false,
-    error: error instanceof Error ? error.message : 'Error desconocido',
+    error: toUserMessage(error, 'No se pudieron obtener los datos del reporte.'),
   };
 }

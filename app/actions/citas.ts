@@ -8,6 +8,7 @@ import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 import { revalidatePath } from 'next/cache';
 import { logger } from '@/lib/utils/logger';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 
 export interface GetCitasResult {
@@ -175,7 +176,7 @@ export async function getAppointmentFilterOptionsAction(): Promise<GetAppointmen
       return {
         success: false,
         error: {
-          message: error.message,
+          message: toUserMessage(error),
           code: error.code || 'FILTER_OPTIONS_ERROR',
         },
       };
@@ -185,7 +186,7 @@ export async function getAppointmentFilterOptionsAction(): Promise<GetAppointmen
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : 'Error al obtener opciones de filtros',
+        message: toUserMessage(error, 'Error al obtener opciones de filtros'),
         code: 'UNKNOWN_ERROR',
       },
     };
@@ -366,7 +367,7 @@ export async function updateCitaAction(params: UpdateCitaParams): Promise<GetCit
       return {
         success: false,
         error: {
-          message: error.message,
+          message: toUserMessage(error),
           code: error.code || 'CITA_ERROR',
         },
       };
@@ -376,7 +377,7 @@ export async function updateCitaAction(params: UpdateCitaParams): Promise<GetCit
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : 'Error al actualizar la cita',
+        message: toUserMessage(error, 'Error al actualizar la cita'),
         code: 'UNKNOWN_ERROR',
       },
     };
@@ -467,7 +468,7 @@ export async function deleteCitaAction(params: DeleteCitaParams): Promise<GetCit
       return {
         success: false,
         error: {
-          message: error.message,
+          message: toUserMessage(error),
           code: error.code || 'CITA_ERROR',
         },
       };
@@ -476,7 +477,7 @@ export async function deleteCitaAction(params: DeleteCitaParams): Promise<GetCit
     const errorResult = {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : 'Error al eliminar la cita',
+        message: toUserMessage(error, 'Error al eliminar la cita'),
         code: 'UNKNOWN_ERROR',
       },
     };

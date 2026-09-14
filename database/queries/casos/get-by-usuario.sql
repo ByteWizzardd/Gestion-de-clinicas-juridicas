@@ -14,6 +14,13 @@ WITH user_roles AS (
     SELECT id_caso, term, 'Supervisor' AS rol_usuario
     FROM supervisa
     WHERE cedula_profesor = $1 AND habilitado = true
+),
+-- Una fila por caso (la del semestre más reciente): un usuario asignado al mismo
+-- caso en varios semestres, o como estudiante y supervisor, lo duplicaba.
+un_rol_por_caso AS (
+    SELECT DISTINCT ON (id_caso) id_caso, term, rol_usuario
+    FROM user_roles
+    ORDER BY id_caso, term DESC, rol_usuario
 )
 SELECT 
     vc.id_caso,
@@ -28,6 +35,7 @@ SELECT
     vc.num_subcategoria,
     vc.num_ambito_legal,
     vc.cant_beneficiarios,
+    vc.cedula,
     vc.cedula AS cedula_solicitante,
     vc.nombres_solicitante,
     vc.apellidos_solicitante,
@@ -48,7 +56,13 @@ SELECT
         WHERE s.id_caso = vc.id_caso AND s.habilitado = true
         ORDER BY sem.fecha_inicio DESC, s.term DESC
         LIMIT 1
-    ) AS nombre_responsable
-FROM user_roles ur
+    ) AS nombre_responsable,
+    -- Semestres donde ocurre el caso (filtro de semestre de la lista de casos)
+    (
+        SELECT array_agg(oe.term ORDER BY oe.term DESC)
+        FROM ocurren_en oe
+        WHERE oe.id_caso = vc.id_caso
+    ) AS semestres
+FROM un_rol_por_caso ur
 INNER JOIN view_casos_detalle vc ON ur.id_caso = vc.id_caso
 ORDER BY vc.fecha_inicio_caso DESC, vc.id_caso DESC;

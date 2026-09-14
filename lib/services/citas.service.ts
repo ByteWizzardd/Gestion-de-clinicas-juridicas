@@ -1,9 +1,62 @@
 import { citasQueries, type CitaCompleta } from '@/lib/db/queries/citas.queries';
 import { AppError } from '@/lib/utils/errors';
-import { withTransaction } from '@/lib/db/transactions';
+import { withAuditTransaction } from '@/lib/utils/audit-context';
 import { loadSQL } from '@/lib/db/sql-loader';
 import { atiendenQueries } from '@/lib/db/queries/atienden.queries';
 import { logger } from '@/lib/utils/logger';
+import { toLocalISODate } from '@/lib/utils/date-formatter';
+import type { PoolClient } from 'pg';
+import { toUserMessage } from '@/lib/utils/error-messages';
+
+/**
+ * Registra el cambio de ejecutores de una acción como evento 'accion_ejecutores'
+ * (misma forma que casos.service.ts): la tabla `ejecutan` no tiene trigger, y
+ * la lectura de auditoría fusiona este evento con el de la acción de la misma
+ * transacción.
+ */
+async function auditarEjecutores(
+  client: PoolClient,
+  operacion: 'actualizacion' | 'eliminacion',
+  numAccion: number,
+  idCaso: number,
+  idUsuario: string,
+  anteriores: Array<{ cedula: string; fecha_ejecucion: string | null }>,
+  nuevos: Array<{ cedula: string; fecha_ejecucion: string | null }>,
+  metadata?: Record<string, unknown>
+) {
+  const cedulas = [...new Set([...anteriores, ...nuevos].map(e => e.cedula))];
+  const { rows } = await client.query(
+    'SELECT cedula, nombres, apellidos FROM usuarios WHERE cedula = ANY($1)',
+    [cedulas]
+  );
+  const nombres = new Map((rows as Array<{ cedula: string; nombres: string; apellidos: string }>).map(u => [u.cedula, u]));
+  const conNombre = (lista: typeof anteriores) => lista.map(e => ({
+    cedula: e.cedula,
+    nombres: nombres.get(e.cedula)?.nombres ?? null,
+    apellidos: nombres.get(e.cedula)?.apellidos ?? null,
+    fecha_ejecucion: e.fecha_ejecucion,
+  }));
+
+  await client.query(
+    `INSERT INTO auditoria_eventos (entidad, operacion, id_entidad, id_usuario, datos_anteriores, datos_nuevos, metadata)
+     VALUES ('accion_ejecutores', $1, $2, $3, $4, $5, $6)`,
+    [
+      operacion,
+      `${numAccion}-${idCaso}`,
+      idUsuario,
+      JSON.stringify({ ejecutores: conNombre(anteriores) }),
+      operacion === 'eliminacion' ? null : JSON.stringify({ ejecutores: conNombre(nuevos) }),
+      metadata ? JSON.stringify(metadata) : null,
+    ]
+  );
+}
+
+type FilaEjecutor = { id_usuario: string; fecha_ejecucion: Date | string | null };
+
+const fechaISO = (d: Date | string | null | undefined): string | null => {
+  if (!d) return null;
+  return typeof d === 'string' ? d.slice(0, 10) : d.toISOString().slice(0, 10);
+};
 
 /**
  * Servicio para la entidad Citas
@@ -104,9 +157,9 @@ export const citasService = {
       });
     } catch (error) {
       throw new AppError(
-        "Error al obtener las citas",
+        toUserMessage(error, "Error al obtener las citas"),
         500,
-        error instanceof Error ? error.message : "Error desconocido"
+        'CITA_ERROR'
       );
     }
   },
@@ -194,9 +247,9 @@ export const citasService = {
       });
     } catch (error) {
       throw new AppError(
-        "Error al obtener las citas del usuario",
+        toUserMessage(error, "Error al obtener las citas del usuario"),
         500,
-        error instanceof Error ? error.message : "Error desconocido"
+        'CITA_ERROR'
       );
     }
   },
@@ -222,9 +275,10 @@ export const citasService = {
       }
 
       // Usar transacción para crear cita y registros en atienden de forma atómica
-      return await withTransaction(async (client) => {
-        // Establecer la variable de sesión para el trigger de auditoría
-        await client.query("SELECT set_config('app.usuario_crea_cita', $1, true)", [params.idUsuarioRegistro]);
+      return await withAuditTransaction(
+        params.idUsuarioRegistro,
+        { accion_negocio: 'Registro de cita' },
+        async (client) => {
 
         // 1. Crear la cita
         const createQuery = loadSQL('citas/create.sql');
@@ -264,9 +318,9 @@ export const citasService = {
       // Log detallado para depuración
       logger.error('Error al crear la cita (detalle DB):', error);
       throw new AppError(
-        "Error al crear la cita",
+        toUserMessage(error, "Error al crear la cita"),
         500,
-        error instanceof Error ? error.message : "Error desconocido"
+        'CITA_ERROR'
       );
     }
   },
@@ -298,7 +352,10 @@ export const citasService = {
       }
 
       // Usar transacción para actualizar cita y registros en atienden de forma atómica
-      return await withTransaction(async (client) => {
+      return await withAuditTransaction(
+        params.idUsuarioActualizo,
+        { accion_negocio: 'Actualización de cita' },
+        async (client) => {
         // 0. Recolectar estado inicial para comparar
         const getCitaInfoQuery = loadSQL('citas/get-by-id.sql');
         const citaInfoResult = await client.query(getCitaInfoQuery, [num_cita, id_caso]);
@@ -309,15 +366,11 @@ export const citasService = {
 
         const getAtiendenQuery = loadSQL('atienden/get-usuarios-by-cita.sql');
         const atiendenAnteriorResult = await client.query(getAtiendenQuery, [num_cita, id_caso]);
-        const cedulasAnteriores = atiendenAnteriorResult.rows.map(r => r.cedula).sort();
-        const atencioneAnteriorStr = cedulasAnteriores.join(',') || '';
+        const cedulasAnteriores = atiendenAnteriorResult.rows.map((r: Record<string, any>) => r.cedula).sort();
 
-        // 1. Actualizar la cita si hay cambios en campos básicos
-        let updateCitaSuccess = false;
+        // 1. Actualizar la cita si hay cambios en campos básicos. El trigger
+        //    genérico de `citas` registra el diff real (solo si algo cambió).
         if (params.date || params.endDate !== undefined || params.orientacion) {
-          // Desactivar trigger de auditoría para evitar duplicados, lo haremos manual
-          await client.query("SELECT set_config('app.skip_audit_trigger', 'true', true)");
-
           const updateQuery = loadSQL('citas/update.sql');
 
           let endDateParam: string | null;
@@ -329,30 +382,30 @@ export const citasService = {
             endDateParam = null;
           }
 
-          const citaResult = await client.query(updateQuery, [
+          await client.query(updateQuery, [
             num_cita,
             id_caso,
             params.date || null,
             endDateParam,
             params.orientacion || null
           ]);
-
-          updateCitaSuccess = (citaResult.rowCount ?? 0) > 0;
         }
 
-        // 2. Actualizar registros en atienden si se proporcionaron usuarios
-        let huboCambiosAtenciones = false;
-        let cedulasNuevas = cedulasAnteriores;
+        // 2. Reemplazar las personas que atienden solo si la lista cambió: el
+        //    trigger de `atienden` audita cada fila borrada/insertada y la
+        //    lectura las agrupa en una sola tarjeta con la cita.
+        const cedulasNuevas = params.usuariosAtienden !== undefined
+          ? [...new Set(params.usuariosAtienden)].sort()
+          : cedulasAnteriores;
+        const huboCambiosAtenciones = JSON.stringify(cedulasAnteriores) !== JSON.stringify(cedulasNuevas);
 
-        if (params.usuariosAtienden !== undefined) {
-          // Eliminar todos los registros existentes
+        if (huboCambiosAtenciones) {
           const deleteQuery = loadSQL('atienden/delete-by-cita.sql');
           await client.query(deleteQuery, [num_cita, id_caso]);
 
-          // Luego crear los nuevos registros si hay usuarios seleccionados
-          if (params.usuariosAtienden.length > 0) {
+          if (cedulasNuevas.length > 0) {
             const createQuery = loadSQL('atienden/create.sql');
-            for (const usuarioCedula of params.usuariosAtienden) {
+            for (const usuarioCedula of cedulasNuevas) {
               await client.query(createQuery, [
                 usuarioCedula,
                 num_cita,
@@ -361,51 +414,6 @@ export const citasService = {
               ]);
             }
           }
-
-          cedulasNuevas = params.usuariosAtienden.slice().sort();
-          huboCambiosAtenciones = JSON.stringify(cedulasAnteriores) !== JSON.stringify(cedulasNuevas);
-        }
-
-        // 3. Auditoría Manual Centralizada
-        // Verificar si hubo cambios en los campos de la cita O en las atenciones
-        // Normalizar las fechas a string YYYY-MM-DD para evitar que new Date() las parsee como UTC medianoche y reste 1 día en zonas negativas
-        const normalizeDate = (d: Date | string | null | undefined): string | null => {
-          if (!d) return null;
-          if (typeof d === 'string') return d.slice(0, 10); // ya es YYYY-MM-DD
-          return d.toISOString().slice(0, 10);
-        };
-
-        const nuevaFecha = params.date ? params.date : normalizeDate(citaInfo.fecha_encuentro);
-        const nuevaProxima = params.endDate !== undefined
-          ? (params.endDate === null || params.endDate === 'NULL' ? null : params.endDate)
-          : normalizeDate(citaInfo.fecha_proxima_cita);
-        const nuevaOrientacion = params.orientacion !== undefined ? params.orientacion : citaInfo.orientacion;
-
-        const fechaAnteriorNorm = normalizeDate(citaInfo.fecha_encuentro);
-        const proximaAnteriorNorm = normalizeDate(citaInfo.fecha_proxima_cita);
-
-        const huboCambiosCita =
-          (params.date && fechaAnteriorNorm !== params.date) ||
-          (params.endDate !== undefined && (
-            (proximaAnteriorNorm === null && params.endDate !== null && params.endDate !== 'NULL') ||
-            (proximaAnteriorNorm !== null && (params.endDate === null || params.endDate === 'NULL')) ||
-            (proximaAnteriorNorm !== null && params.endDate !== null && params.endDate !== 'NULL' && proximaAnteriorNorm !== params.endDate)
-          )) ||
-          (params.orientacion !== undefined && citaInfo.orientacion !== params.orientacion);
-
-        if (huboCambiosCita || huboCambiosAtenciones) {
-          const atencioneNuevoStr = cedulasNuevas.join(',') || '';
-
-          const insertAuditQuery = loadSQL('auditoria-actualizacion-citas/create.sql');
-          await client.query(insertAuditQuery, [
-            num_cita, id_caso,
-            fechaAnteriorNorm, proximaAnteriorNorm, citaInfo.orientacion,
-            nuevaFecha,
-            nuevaProxima,
-            nuevaOrientacion,
-            atencioneAnteriorStr, atencioneNuevoStr,
-            params.idUsuarioActualizo
-          ]);
         }
 
         // 3. Sincronización bidireccional: Si la cita está registrada como acción, actualizarla también
@@ -432,28 +440,19 @@ export const citasService = {
               // Para cada acción de cita, verificar si corresponde a esta cita por ejecutores
               for (const accion of accionesResult.rows) {
                 // Comparar ejecutores para identificar cuál acción corresponde a esta cita
-                const ejecutoresCitaQuery = `
-                  SELECT id_usuario
-                  FROM atienden
-                  WHERE num_cita = $1 AND id_caso = $2
-                  ORDER BY id_usuario
-                `;
-
                 const ejecutoresAccionQuery = `
-                  SELECT id_usuario_ejecuta as id_usuario
+                  SELECT id_usuario_ejecuta as id_usuario, fecha_ejecucion
                   FROM ejecutan
                   WHERE num_accion = $1 AND id_caso = $2
                   ORDER BY id_usuario_ejecuta
                 `;
 
-                const [ejecutoresCitaResult, ejecutoresAccionResult] = await Promise.all([
-                  client.query(ejecutoresCitaQuery, [num_cita, id_caso]),
-                  client.query(ejecutoresAccionQuery, [accion.num_accion, id_caso])
-                ]);
+                const ejecutoresAccionResult = await client.query(ejecutoresAccionQuery, [accion.num_accion, id_caso]);
 
-                // Comparar listas de ejecutores ordenadas
-                const ejecutoresCita = ejecutoresCitaResult.rows.map(r => r.id_usuario).sort();
-                const ejecutoresAccion = ejecutoresAccionResult.rows.map(r => r.id_usuario).sort();
+                // Comparar con quienes atendían ANTES de este cambio: la lista de
+                // atienden ya se reemplazó en el paso 2.
+                const ejecutoresCita = cedulasAnteriores;
+                const ejecutoresAccion = ejecutoresAccionResult.rows.map((r: Record<string, any>) => r.id_usuario).sort();
 
                 const ejecutoresCoinciden = JSON.stringify(ejecutoresCita) === JSON.stringify(ejecutoresAccion);
 
@@ -475,25 +474,22 @@ export const citasService = {
                     nuevoComentario = params.orientacion;
                   }
 
-                  // Establecer la variable de sesión para que el trigger sepa quién actualizó la acción
-                  await client.query("SELECT set_config('app.usuario_actualiza_accion', $1, true)", [params.idUsuarioActualizo]);
-
                   // Actualizar la acción usando client de la transacción
                   const updateAccionQuery = loadSQL('acciones/update.sql');
                   await client.query(updateAccionQuery, [accion.num_accion, id_caso, nuevoDetalle, nuevoComentario]);
 
-                  // Si cambiaron los ejecutores, actualizar los ejecutores de la acción
-                  if (params.usuariosAtienden !== undefined) {
+                  // Si cambiaron quienes atienden, actualizar los ejecutores de la acción
+                  if (huboCambiosAtenciones) {
+                    const fechaEjecucion = params.date || fechaISO(cita.fecha_encuentro);
 
                     // Eliminar ejecutores existentes de la acción usando client
                     const deleteEjecutanQuery = loadSQL('ejecutan/delete-by-accion.sql');
                     await client.query(deleteEjecutanQuery, [accion.num_accion, id_caso]);
 
                     // Crear nuevos ejecutores si hay usuarios
-                    if (params.usuariosAtienden.length > 0) {
+                    if (cedulasNuevas.length > 0) {
                       const createEjecutanQuery = loadSQL('ejecutan/create.sql');
-                      for (const usuarioCedula of params.usuariosAtienden) {
-                        const fechaEjecucion = params.date || cita.fecha_encuentro;
+                      for (const usuarioCedula of cedulasNuevas) {
                         await client.query(createEjecutanQuery, [
                           usuarioCedula,
                           accion.num_accion,
@@ -502,6 +498,12 @@ export const citasService = {
                         ]);
                       }
                     }
+
+                    await auditarEjecutores(
+                      client, 'actualizacion', accion.num_accion, id_caso, params.idUsuarioActualizo,
+                      (ejecutoresAccionResult.rows as FilaEjecutor[]).map(r => ({ cedula: r.id_usuario, fecha_ejecucion: fechaISO(r.fecha_ejecucion) })),
+                      cedulasNuevas.map(cedula => ({ cedula, fecha_ejecucion: fechaEjecucion }))
+                    );
                   }
 
                   // Solo actualizar la primera acción que coincida (debería haber solo una)
@@ -521,18 +523,18 @@ export const citasService = {
           const getDateQuery = 'SELECT fecha_encuentro FROM citas WHERE num_cita = $1 AND id_caso = $2';
           const dateResult = await client.query(getDateQuery, [num_cita, id_caso]);
           if (dateResult.rows.length > 0) {
-            finalDate = dateResult.rows[0].fecha_encuentro.toISOString().split('T')[0];
+            finalDate = toLocalISODate(dateResult.rows[0].fecha_encuentro);
           }
         }
 
-        return { num_cita, id_caso, fecha: finalDate || new Date().toISOString().split('T')[0] };
+        return { num_cita, id_caso, fecha: finalDate || toLocalISODate() };
       });
     } catch (error) {
       logger.error('Error al actualizar la cita (detalle DB):', error);
       throw new AppError(
-        "Error al actualizar la cita",
+        toUserMessage(error, "Error al actualizar la cita"),
         500,
-        error instanceof Error ? error.message : "Error desconocido"
+        'CITA_ERROR'
       );
     }
   },
@@ -580,7 +582,10 @@ export const citasService = {
       }
 
       // Usar transacción para eliminar registros relacionados y la cita de forma atómica
-      return await withTransaction(async (client) => {
+      return await withAuditTransaction(
+        params.idUsuarioElimino,
+        { accion_negocio: 'Eliminación de cita', motivo: params.motivo },
+        async (client) => {
         // 1. Obtener información de la cita antes de eliminarla
         const getCitaQuery = loadSQL('citas/get-by-id.sql');
         const citaInfo = await client.query(getCitaQuery, [num_cita, id_caso]);
@@ -627,7 +632,7 @@ export const citasService = {
               `;
 
               const ejecutoresAccionQuery = `
-                SELECT id_usuario_ejecuta as id_usuario
+                SELECT id_usuario_ejecuta as id_usuario, fecha_ejecucion
                 FROM ejecutan
                 WHERE num_accion = $1::INTEGER AND id_caso = $2::INTEGER
                 ORDER BY id_usuario_ejecuta
@@ -639,15 +644,15 @@ export const citasService = {
               ]);
 
               // Comparar listas de ejecutores
-              const ejecutoresCita = ejecutoresCitaResult.rows.map(r => r.id_usuario).sort();
-              const ejecutoresAccion = ejecutoresAccionResult.rows.map(r => r.id_usuario).sort();
+              const ejecutoresCita = ejecutoresCitaResult.rows.map((r: Record<string, any>) => r.id_usuario).sort();
+              const ejecutoresAccion = ejecutoresAccionResult.rows.map((r: Record<string, any>) => r.id_usuario).sort();
 
               const ejecutoresCoinciden = JSON.stringify(ejecutoresCita) === JSON.stringify(ejecutoresAccion);
 
 
               if (ejecutoresCoinciden) {
                 // ¡Esta acción corresponde a la cita!
-                accionRelacionada = accion;
+                accionRelacionada = { ...accion, ejecutores: ejecutoresAccionResult.rows };
                 break; // Salir del loop, ya encontramos la acción correcta
               }
             }
@@ -658,6 +663,15 @@ export const citasService = {
               // Eliminar ejecutores primero usando client de la transacción
               const deleteEjecutanQuery = loadSQL('ejecutan/delete-by-accion.sql');
               await client.query(deleteEjecutanQuery, [accionRelacionada.num_accion, id_caso]);
+
+              if (accionRelacionada.ejecutores.length > 0) {
+                await auditarEjecutores(
+                  client, 'eliminacion', accionRelacionada.num_accion, id_caso, params.idUsuarioElimino,
+                  (accionRelacionada.ejecutores as FilaEjecutor[]).map(r => ({ cedula: r.id_usuario, fecha_ejecucion: fechaISO(r.fecha_ejecucion) })),
+                  [],
+                  { motivo: params.motivo }
+                );
+              }
 
               // Eliminar la acción usando client de la transacción
               const deleteAccionQuery = loadSQL('acciones/delete.sql');
@@ -674,10 +688,6 @@ export const citasService = {
         await client.query(deleteAtiendenQuery, [num_cita, id_caso]);
 
         // 5. Eliminar la cita (el trigger capturará la auditoría usando OLD)
-        // Establecer las variables de sesión para el trigger
-        await client.query("SELECT set_config('app.usuario_elimina_cita', $1, true)", [params.idUsuarioElimino]);
-        await client.query("SELECT set_config('app.motivo_eliminacion_cita', $1, true)", [params.motivo || '']);
-
         const deleteCitaQuery = loadSQL('citas/delete.sql');
         const citaResult = await client.query(deleteCitaQuery, [num_cita, id_caso]);
 
@@ -690,9 +700,9 @@ export const citasService = {
     } catch (error) {
       logger.error('Error al eliminar la cita (detalle DB):', error);
       throw new AppError(
-        "Error al eliminar la cita",
+        toUserMessage(error, "Error al eliminar la cita"),
         500,
-        error instanceof Error ? error.message : "Error desconocido"
+        'CITA_ERROR'
       );
     }
   },

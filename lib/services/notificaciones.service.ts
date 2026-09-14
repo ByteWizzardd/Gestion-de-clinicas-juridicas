@@ -1,5 +1,6 @@
 import { notificacionesQueries } from '../db/queries/notificaciones.queries';
 import { usuariosQueries } from '../db/queries/usuarios.queries';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 export interface NotificarVariosUsuariosInput {
   cedulaEmisor: string;
@@ -59,7 +60,7 @@ export async function notificarVariosUsuariosService(input: NotificarVariosUsuar
     }
     return { success: true, data: notificados.map(cedulaReceptor => ({ cedulaReceptor })) };
   } catch (error) {
-    return { success: false, error: { message: error instanceof Error ? error.message : 'Error al notificar', code: 'NOTIFICACION_ERROR' } };
+    return { success: false, error: { message: toUserMessage(error, 'Error al notificar'), code: 'NOTIFICACION_ERROR' } };
   }
 }
 
@@ -121,7 +122,7 @@ export async function notificarDeshabilitacionUsuarioEnCasosService(
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : 'Error al notificar deshabilitación',
+        message: toUserMessage(error, 'Error al notificar deshabilitación'),
         code: 'NOTIFICACION_DESHABILITACION_ERROR',
       },
     };

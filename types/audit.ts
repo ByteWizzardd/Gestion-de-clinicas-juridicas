@@ -35,6 +35,7 @@ export type AuditRecordType =
   | 'beneficiario-eliminado' | 'beneficiario-actualizado' | 'beneficiario-creado'
   | 'accion-eliminada' | 'accion-actualizada' | 'accion-creada'
   | 'equipo-actualizado'
+  | 'caso-semestre-agregado' | 'caso-semestre-eliminado'
   | 'sesion'
   | 'reporte-generado';
 
@@ -201,8 +202,29 @@ export interface UsuarioHabilitadoAuditRecord {
 }
 
 // Auditoría de actualizaciones de campos de usuario (incluyendo cambios de tipo, tipo_estudiante, tipo_profesor)
+// Semestre de actividad agregado a / quitado de un caso (entidad caso_semestre).
+export interface CasoSemestreAuditRecord {
+  id: number;
+  id_caso: number;
+  term: string;
+  fecha: string;
+  id_usuario_creo?: string | null;
+  nombre_completo_usuario_creo?: string | null;
+  id_usuario_elimino?: string | null;
+  nombre_completo_usuario_elimino?: string | null;
+}
+
 export interface UsuarioActualizadoCamposAuditRecord {
   id: number;
+  // Inscripción del semestre editada junto con el usuario (o sola) y cambio
+  // de contraseña (sin el hash): ver audit-record-mapper.ts.
+  es_inscripcion?: boolean;
+  term?: string | null;
+  nrc_anterior?: string | null;
+  nrc_nuevo?: string | null;
+  habilitado_anterior?: boolean | null;
+  habilitado_nuevo?: boolean | null;
+  contrasena_cambiada_nuevo?: boolean;
   ci_usuario: string;
   nombres_usuario: string | null;
   apellidos_usuario: string | null;
@@ -345,6 +367,19 @@ export interface CasoEliminadoAuditRecord {
   fecha: string;
   usuario_accion: string; // Alias para eliminado_por
   nombre_completo_usuario_accion?: string; // Alias para nombre_completo_usuario_elimino
+  // Estado del caso al eliminarse (metadata que guarda eliminar_caso_fisico)
+  estatus_final?: string | null;
+  equipo?: {
+    profesores: Array<{ cedula: string; nombre: string; term: string }>;
+    estudiantes: Array<{ cedula: string; nombre: string; term: string }>;
+  } | null;
+  eliminados?: {
+    citas: number;
+    acciones: number;
+    beneficiarios: number;
+    soportes: number;
+    cambios_estatus: number;
+  } | null;
 }
 
 // Auditoría de casos actualizados
@@ -759,8 +794,19 @@ export interface AuditCounts {
   equiposActualizados?: number;
   // Sesiones
   sesiones?: number;
-  lastActivities?: Record<string, string | null>;
+  lastActivities?: Partial<Record<ModuloAuditoria, string | null>>;
 }
+
+/**
+ * Módulos de la vista de auditoría con fecha de última actividad. Tipo cerrado a
+ * propósito: con Record<string, ...> un nombre mal escrito (ambitosLegales vs
+ * ambitos_legales) compilaba y la tarjeta quedaba sin fecha, ordenada al final.
+ */
+export type ModuloAuditoria =
+  | 'soportes' | 'reportes' | 'citas' | 'usuarios' | 'casos' | 'solicitantes' | 'beneficiarios'
+  | 'acciones' | 'equipo' | 'sesiones' | 'estados' | 'materias' | 'niveles_educativos' | 'nucleos'
+  | 'condiciones_trabajo' | 'condiciones_actividad' | 'tipos_caracteristicas' | 'semestres'
+  | 'municipios' | 'parroquias' | 'categorias' | 'subcategorias' | 'ambitos_legales' | 'caracteristicas';
 
 // Auditoría de Sesiones
 export interface SesionAuditRecord {

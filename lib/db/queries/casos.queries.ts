@@ -1,6 +1,7 @@
 import { loadSQL } from '../sql-loader';
 import { pool } from '../pool';
 import { QueryResult } from 'pg';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 /**
  * Queries para la entidad Casos
@@ -124,8 +125,7 @@ export const casosQueries = {
         if (!/^[A-Za-z0-9.\-]+$/.test(data.cedulaUsuarioRegistra)) {
           throw new Error('Formato de cédula inválido');
         }
-        const cedulaEscapada = data.cedulaUsuarioRegistra.replace(/'/g, "''");
-        await db.query(`SET LOCAL app.usuario_registra = '${cedulaEscapada}'`);
+        await db.query(`SELECT set_config('app.current_user_id', $1, true)`, [data.cedulaUsuarioRegistra]);
       }
 
       const query = loadSQL('casos/create.sql');
@@ -190,6 +190,7 @@ export const casosQueries = {
       num_subcategoria?: number;
       num_ambito_legal?: number;
       fecha_solicitud?: string | Date;
+      fecha_inicio_caso?: string;
       cedula?: string;
     },
     client?: import('pg').PoolClient
@@ -208,6 +209,7 @@ export const casosQueries = {
       data.num_ambito_legal || null,
       data.fecha_solicitud ? (typeof data.fecha_solicitud === 'string' ? data.fecha_solicitud : data.fecha_solicitud.toISOString().split('T')[0]) : null,
       data.cedula || null,
+      data.fecha_inicio_caso || null,
     ]);
     return result.rows[0];
   },
@@ -603,7 +605,7 @@ export const casosQueries = {
       } catch (error) {
         errors.push({
           id_caso: idCaso,
-          error: error instanceof Error ? error.message : 'Error desconocido',
+          error: toUserMessage(error, 'No se pudo archivar el caso.'),
         });
       }
     }
