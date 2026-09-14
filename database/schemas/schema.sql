@@ -502,6 +502,8 @@ DECLARE
     v_usuario   VARCHAR(20);
     v_entidad   TEXT := TG_ARGV[0];
     v_pk_cols   TEXT[] := string_to_array(TG_ARGV[1], ',');
+    -- Columnas cuyo valor nunca debe quedar en la auditoría.
+    v_ocultas   TEXT[] := ARRAY['contrasena', 'documento_data'];
     v_old       JSONB; v_new JSONB;
     v_before    JSONB := '{}'::jsonb; v_after JSONB := '{}'::jsonb;
     v_key       TEXT; v_id_entidad TEXT;
@@ -513,36 +515,45 @@ BEGIN
     v_usuario := NULLIF(current_setting('app.current_user_id', true), '');
 
     IF TG_OP = 'INSERT' THEN
-        v_after := to_jsonb(NEW);
+        v_usuario := COALESCE(v_usuario, NULLIF(COALESCE(
+            to_jsonb(NEW)->>'id_usuario_cambia',
+            to_jsonb(NEW)->>'id_usuario_registro',
+            to_jsonb(NEW)->>'id_usuario_subio'), ''));
+        v_after := to_jsonb(NEW) - v_ocultas;
         v_id_entidad := (SELECT string_agg(to_jsonb(NEW)->>c, '-') FROM unnest(v_pk_cols) c);
-        
+
         INSERT INTO auditoria_eventos(entidad, operacion, id_entidad, id_usuario, datos_nuevos, metadata)
         VALUES (v_entidad, 'insercion', v_id_entidad, v_usuario, v_after, NULLIF(current_setting('app.audit_metadata', true), '')::jsonb);
-                
+
     ELSIF TG_OP = 'DELETE' THEN
-        v_before := to_jsonb(OLD);
+        v_before := to_jsonb(OLD) - v_ocultas;
         v_id_entidad := (SELECT string_agg(to_jsonb(OLD)->>c, '-') FROM unnest(v_pk_cols) c);
-        
+
         INSERT INTO auditoria_eventos(entidad, operacion, id_entidad, id_usuario, datos_anteriores, metadata)
         VALUES (v_entidad, 'eliminacion', v_id_entidad, v_usuario, v_before, NULLIF(current_setting('app.audit_metadata', true), '')::jsonb);
-                
+
     ELSE -- UPDATE
         v_old := to_jsonb(OLD); v_new := to_jsonb(NEW);
-        
+
         FOR v_key IN SELECT key FROM jsonb_object_keys(v_new) key LOOP
             IF v_old->v_key IS DISTINCT FROM v_new->v_key THEN
-                v_before := v_before || jsonb_build_object(v_key, v_old->v_key);
-                v_after  := v_after  || jsonb_build_object(v_key, v_new->v_key);
+                IF v_key = ANY(v_ocultas) THEN
+                    v_before := v_before || jsonb_build_object(v_key, '[oculto]');
+                    v_after  := v_after  || jsonb_build_object(v_key, '[oculto]');
+                ELSE
+                    v_before := v_before || jsonb_build_object(v_key, v_old->v_key);
+                    v_after  := v_after  || jsonb_build_object(v_key, v_new->v_key);
+                END IF;
             END IF;
         END LOOP;
-        
+
         IF v_before <> '{}'::jsonb THEN
             v_id_entidad := (SELECT string_agg(v_new->>c, '-') FROM unnest(v_pk_cols) c);
             INSERT INTO auditoria_eventos(entidad, operacion, id_entidad, id_usuario, datos_anteriores, datos_nuevos, metadata)
             VALUES (v_entidad, 'actualizacion', v_id_entidad, v_usuario, v_before, v_after, NULLIF(current_setting('app.audit_metadata', true), '')::jsonb);
         END IF;
     END IF;
-    
+
     RETURN COALESCE(NEW, OLD);
 END; $function$;
 
@@ -1349,6 +1360,12 @@ CREATE TRIGGER trg_audit_citas AFTER INSERT OR UPDATE OR DELETE ON citas FOR EAC
 CREATE TRIGGER trg_audit_acciones AFTER INSERT OR UPDATE OR DELETE ON acciones FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('accion', 'num_accion,id_caso');
 CREATE TRIGGER trg_audit_soportes AFTER INSERT OR UPDATE OR DELETE ON soportes FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('soporte', 'num_soporte,id_caso');
 CREATE TRIGGER trg_audit_beneficiarios AFTER INSERT OR UPDATE OR DELETE ON beneficiarios FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('beneficiario', 'num_beneficiario,id_caso');
+-- Historial de estatus, inscripciones por semestre y personas que atienden una
+-- cita (ver migración 20260913_191000_auditar_estatus_inscripciones_atenciones.sql).
+CREATE TRIGGER trg_audit_cambio_estatus AFTER INSERT ON cambio_estatus FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('cambio_estatus', 'num_cambio,id_caso');
+CREATE TRIGGER trg_audit_estudiantes AFTER INSERT OR UPDATE ON estudiantes FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('estudiante', 'term,cedula_estudiante');
+CREATE TRIGGER trg_audit_profesores AFTER INSERT OR UPDATE ON profesores FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('profesor', 'term,cedula_profesor');
+CREATE TRIGGER trg_audit_atienden AFTER INSERT OR DELETE ON atienden FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('atencion_cita', 'num_cita,id_caso,id_usuario');
 
 -- NOTA: Las tablas asociativas (ejecutan, equipo, sesiones) NO llevan trigger aquí 
 -- porque se auditarán manualmente desde el código de la aplicación.
