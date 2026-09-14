@@ -1,7 +1,6 @@
 import { loadSQL } from '../sql-loader';
 import { pool } from '../pool';
-import { QueryResult } from 'pg';
-
+import { QueryResult, PoolClient } from 'pg';
 /**
  * Queries para asignaciones (equipo asignado a casos)
  * Todas las queries SQL están en database/queries/asignaciones/
@@ -87,6 +86,46 @@ export const asignacionesQueries = {
   ): Promise<void> => {
     const query = loadSQL('asignaciones/remove-se-le-asigna.sql');
     await pool.query(query, [term, cedulaEstudiante, idCaso]);
+  },
+
+  // Lista completa (para el modal)
+  getCasosConEquipoAnterior: async (currentTerm: string): Promise<Array<{
+    id_caso: number;
+    nombre_solicitante: string;
+    tipo_miembro: 'profesor' | 'estudiante';
+    nombre_miembro: string;
+    cedula_miembro: string;
+    term_asignacion: string;
+  }>> => {
+    const query = loadSQL('asignaciones/get-casos-con-equipo-anterior.sql');
+    const result = await pool.query(query, [currentTerm]);
+    return result.rows;
+  },
+
+  // Solo IDs únicos (para el filtro client-side — query ligera)
+  getCasosIdsPendientesReasignacion: async (currentTerm: string): Promise<number[]> => {
+    const result = await pool.query(
+      `SELECT DISTINCT id_caso FROM supervisa WHERE habilitado = true AND term != $1
+       UNION
+       SELECT DISTINCT id_caso FROM se_le_asigna WHERE habilitado = true AND term != $1`,
+      [currentTerm]
+    );
+    return result.rows.map((r: { id_caso: number }) => r.id_caso);
+  },
+
+  // Deshabilita el equipo activo de semestres anteriores de un caso.
+  // Debe llamarse dentro de withAuditTransaction (recibe el PoolClient).
+  desasignarEquipoAnterior: async (client: PoolClient, idCaso: number, currentTerm: string): Promise<void> => {
+    await client.query(
+      `UPDATE supervisa SET habilitado = false
+       WHERE id_caso = $1 AND term != $2 AND habilitado = true`,
+      [idCaso, currentTerm]
+    );
+    await client.query(
+      `UPDATE se_le_asigna SET habilitado = false
+       WHERE id_caso = $1 AND term != $2 AND habilitado = true`,
+      [idCaso, currentTerm]
+    );
   },
 };
 
