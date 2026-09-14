@@ -21,6 +21,9 @@ type CaseToolsProps = {
     tramiteOptions?: { value: string; label: string }[];
     estatusOptions?: { value: string; label: string }[];
     showCasosAsignados?: boolean;
+    mostrarPendientesReasignacion?: boolean;
+    pendientesReasignacionFilter?: boolean;
+    onPendientesReasignacionChange?: (value: boolean) => void;
     materiaFilter?: string;
     onMateriaChange?: (value: string) => void;
     materias?: { id_materia: number; nombre_materia: string; habilitado?: boolean }[];
@@ -108,6 +111,9 @@ function CaseTools({
     tramiteOptions = [],
     estatusOptions = [],
     showCasosAsignados = false,
+    mostrarPendientesReasignacion,
+    pendientesReasignacionFilter = false,
+    onPendientesReasignacionChange,
     materiaFilter = '',
     onMateriaChange,
     materias = [],
@@ -172,6 +178,7 @@ function CaseTools({
         onTramiteChange !== undefined ||
         onEstatusChange !== undefined ||
         onCasosAsignadosChange !== undefined ||
+        onPendientesReasignacionChange !== undefined ||
         onMateriaChange !== undefined ||
         onCategoriaChange !== undefined ||
         onSubcategoriaChange !== undefined ||
@@ -215,8 +222,7 @@ function CaseTools({
         await call(onMunicipioChange, '');
         await call(onParroquiaChange, '');
         await call(onCasosAsignadosChange, false);
-        await call(onFechaInicioChange, '');
-        await call(onCasosAsignadosChange, false);
+        await call(onPendientesReasignacionChange, false);
         await call(onFechaInicioChange, '');
         await call(onFechaFinChange, '');
         await call(onTermChange, '');
@@ -245,6 +251,9 @@ function CaseTools({
                         tramiteFilter={tramiteFilter}
                         estatusFilter={estatusFilter}
                         casosAsignadosFilter={casosAsignadosFilter}
+                        mostrarPendientesReasignacion={mostrarPendientesReasignacion}
+                        pendientesReasignacionFilter={pendientesReasignacionFilter}
+                        onPendientesReasignacionChange={onPendientesReasignacionChange}
                         onClearFilters={handleClearFilters}
                         onNucleoChange={onNucleoChange}
                         onTramiteChange={onTramiteChange}

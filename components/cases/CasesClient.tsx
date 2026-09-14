@@ -13,7 +13,7 @@ import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 import ArchiveInactiveCasesModal from '@/components/cases/modals/ArchiveInactiveCasesModal';
 import ReasignarEquipoSemestreModal from '@/components/cases/modals/ReasignarEquipoSemestreModal';
 import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
-import { getCasosAction, getCasosByUsuarioAction, getCasosByFechaSolicitudAction, deleteCasoAction } from '@/app/actions/casos';
+import { getCasosAction, getCasosByUsuarioAction, getCasosByFechaSolicitudAction, deleteCasoAction, getCasosIdsPendientesReasignacionAction } from '@/app/actions/casos';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
 import { createCasoAction, updateCasoAction, uploadSoportesAction } from '@/app/actions/casos';
 import { getMateriasAction } from '@/app/actions/materias';
@@ -84,6 +84,8 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   const [materiaFilter, setMateriaFilter] = useState('');
   const [fechaInicioFilter, setFechaInicioFilter] = useState('');
   const [fechaFinFilter, setFechaFinFilter] = useState('');
+  const [pendientesReasignacionFilter, setPendientesReasignacionFilter] = useState(false);
+  const [casosIdsPendientes, setCasosIdsPendientes] = useState<number[]>([]);
 
   // Evita condiciones de carrera cuando se setean ambas fechas en el mismo tick (ej: opciones rápidas semana/mes).
   const fechaInicioRef = useRef(fechaInicioFilter);
@@ -155,6 +157,21 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  // Fetch de los IDs de casos pendientes de reasignación
+  useEffect(() => {
+    const fetchPendientes = async () => {
+      try {
+        const result = await getCasosIdsPendientesReasignacionAction();
+        if (result.success && result.data) {
+          setCasosIdsPendientes(result.data);
+        }
+      } catch (err) {
+        logger.error('Error al cargar casos pendientes de reasignación:', err);
+      }
+    };
+    fetchPendientes();
   }, []);
 
   const estatusOptions = [
@@ -445,7 +462,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   };
 
   const filteredCasos = useMemo(() => {
-    if (!searchValue && !nucleoFilter && !tramiteFilter && !estatusFilter && !casosAsignadosFilter && !materiaFilter && !fechaInicioFilter && !fechaFinFilter && !termFilter) {
+    if (!searchValue && !nucleoFilter && !tramiteFilter && !estatusFilter && !casosAsignadosFilter && !materiaFilter && !fechaInicioFilter && !fechaFinFilter && !termFilter && !pendientesReasignacionFilter) {
       return casos;
     }
 
@@ -481,10 +498,12 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       const matchesMateria = !materiaFilter || (caso.id_materia && String(caso.id_materia) === materiaFilter);
       // Check if the case is active in the selected term (matches any in the semestres array)
       const matchesTerm = !termFilter || (caso.semestres && caso.semestres.includes(termFilter));
+      
+      const matchesPendientes = !pendientesReasignacionFilter || casosIdsPendientes.includes(caso.id_caso);
 
-      return matchesSearch && matchesNucleo && matchesTramite && matchesEstatus && matchesMateria && matchesTerm;
+      return matchesSearch && matchesNucleo && matchesTramite && matchesEstatus && matchesMateria && matchesTerm && matchesPendientes;
     });
-  }, [casos, searchValue, nucleoFilter, tramiteFilter, estatusFilter, casosAsignadosFilter, materiaFilter, fechaInicioFilter, fechaFinFilter, termFilter]);
+  }, [casos, searchValue, nucleoFilter, tramiteFilter, estatusFilter, casosAsignadosFilter, materiaFilter, fechaInicioFilter, fechaFinFilter, termFilter, pendientesReasignacionFilter, casosIdsPendientes]);
 
   const handleView = (data: Record<string, unknown>) => {
     const caso = data as TableRow;
@@ -765,6 +784,9 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
           casosAsignadosFilter={casosAsignadosFilter}
           onCasosAsignadosChange={handleCasosAsignadosChange}
           showCasosAsignados={true}
+          mostrarPendientesReasignacion={true}
+          pendientesReasignacionFilter={pendientesReasignacionFilter}
+          onPendientesReasignacionChange={setPendientesReasignacionFilter}
 
           showDateRange={true}
           fechaInicio={fechaInicioFilter}
