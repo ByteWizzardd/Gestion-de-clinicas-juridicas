@@ -235,9 +235,9 @@ export async function getBeneficiariosEliminadosAuditAction(filters?: any) { ret
 export async function getBeneficiariosActualizadosAuditAction(filters?: any) { return getEventosHelper('beneficiario', 'actualizacion', filters); }
 export async function getBeneficiariosInscritosAuditAction(filters?: any) { return getEventosHelper('beneficiario', 'insercion', filters); }
 
-export async function getAccionesCreadasAuditAction(filters?: any) { return getEventosHelper('accion_ejecutores', 'insercion', filters); }
-export async function getAccionesActualizadasAuditAction(filters?: any) { return getEventosHelper('accion_ejecutores', 'actualizacion', filters); }
-export async function getAccionesEliminadasAuditAction(filters?: any) { return getEventosHelper('accion_ejecutores', 'eliminacion', filters); }
+export async function getAccionesCreadasAuditAction(filters?: any) { return getEventosHelper('accion', 'insercion', filters); }
+export async function getAccionesActualizadasAuditAction(filters?: any) { return getEventosHelper('accion', 'actualizacion', filters); }
+export async function getAccionesEliminadasAuditAction(filters?: any) { return getEventosHelper('accion', 'eliminacion', filters); }
 
 export async function getEquiposActualizadosAuditAction(filters?: any) { return getEventosHelper('equipo', 'actualizacion', filters); }
 export async function getEquiposCreadosAuditAction(filters?: any) { return getEventosHelper('equipo', 'insercion', filters); }

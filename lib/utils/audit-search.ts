@@ -137,6 +137,7 @@ const EXCLUDE_PATTERNS = [
 ];
 
 import type { AuditoriaEvento } from '@/types/audit-events';
+import { mapUnifiedLogToAuditRecord } from '@/lib/utils/audit-record-mapper';
 
 /**
  * Extrae el texto buscable visible de un registro de auditoría.
@@ -151,8 +152,11 @@ export function extractVisibleSearchText(log: AuditoriaEvento): string {
         log.metadata?.accion_negocio || '',
     ];
 
-    // Parsear metadata
-    let metadata: AnyRecord = log.metadata || {};
+    // Registro plano tal como lo recibe la tarjeta (datos_* + metadata +
+    // nombres resueltos). Antes se leía solo log.metadata, que en eventos
+    // actuales casi siempre está vacío: la búsqueda descartaba en el cliente
+    // resultados cuyo texto visible venía de datos_anteriores/datos_nuevos.
+    const metadata: AnyRecord = mapUnifiedLogToAuditRecord(log)?.record ?? log.metadata ?? {};
 
     const isUpdate = log.operacion === 'actualizacion';
 
@@ -226,6 +230,7 @@ export function extractVisibleSearchText(log: AuditoriaEvento): string {
             const anteriorArr = parseMiembros(metadata.miembros_anteriores);
             const nuevoArr = parseMiembros(metadata.miembros_nuevos);
             for (const m of [...anteriorArr, ...nuevoArr]) {
+                if (m?.nombre_completo) parts.push(m.nombre_completo);
                 if (m?.nombre) parts.push(m.nombre);
                 if (m?.cedula) parts.push(m.cedula);
                 if (m?.rol) parts.push(m.rol);

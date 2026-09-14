@@ -51,9 +51,10 @@ export default function AuditGeneralView() {
     const entityLabels: Record<string, string> = {
         sesion: 'Sesión', reporte: 'Reporte', caso: 'Caso', usuario: 'Usuario',
         solicitante: 'Solicitante', solicitante_artefactos: 'Solicitante',
+        solicitante_perfil: 'Solicitante', vivienda: 'Solicitante', familia_y_hogar: 'Solicitante',
         beneficiario: 'Beneficiario', cita: 'Cita', accion: 'Acción',
         accion_ejecutores: 'Acción', estudiante: 'Estudiante', profesor: 'Profesor',
-        equipo: 'Equipo', soporte: 'Soporte', estado: 'Estado', municipio: 'Municipio',
+        equipo: 'Equipo', caso_semestre: 'Caso', cambio_estatus: 'Caso', atencion_cita: 'Cita', soporte: 'Soporte', estado: 'Estado', municipio: 'Municipio',
         parroquia: 'Parroquia', nucleo: 'Núcleo', materia: 'Materia', semestre: 'Semestre',
         categoria: 'Categoría', subcategoria: 'Subcategoría', ambito_legal: 'Ámbito Legal',
         nivel_educativo: 'Nivel Educativo', condicion_trabajo: 'Condición Trabajo',
@@ -65,7 +66,7 @@ export default function AuditGeneralView() {
     const entityMapToTechnical: Record<string, AuditEntidad> = {
         'Sesión': 'sesion', 'Reporte': 'reporte', 'Caso': 'caso', 'Usuario': 'usuario',
         'Solicitante': 'solicitante', 'Beneficiario': 'beneficiario', 'Cita': 'cita',
-        'Acción': 'accion_ejecutores', 'Estudiante': 'estudiante', 'Profesor': 'profesor',
+        'Acción': 'accion', 'Estudiante': 'estudiante', 'Profesor': 'profesor',
         'Equipo': 'equipo', 'Soporte': 'soporte', 'Estado': 'estado', 'Municipio': 'municipio',
         'Parroquia': 'parroquia', 'Núcleo': 'nucleo', 'Materia': 'materia', 'Semestre': 'semestre',
         'Categoría': 'categoria', 'Subcategoría': 'subcategoria', 'Ámbito Legal': 'ambito_legal',

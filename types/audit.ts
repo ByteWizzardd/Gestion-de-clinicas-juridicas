@@ -35,6 +35,7 @@ export type AuditRecordType =
   | 'beneficiario-eliminado' | 'beneficiario-actualizado' | 'beneficiario-creado'
   | 'accion-eliminada' | 'accion-actualizada' | 'accion-creada'
   | 'equipo-actualizado'
+  | 'caso-semestre-agregado' | 'caso-semestre-eliminado'
   | 'sesion'
   | 'reporte-generado';
 
@@ -201,8 +202,29 @@ export interface UsuarioHabilitadoAuditRecord {
 }
 
 // Auditoría de actualizaciones de campos de usuario (incluyendo cambios de tipo, tipo_estudiante, tipo_profesor)
+// Semestre de actividad agregado a / quitado de un caso (entidad caso_semestre).
+export interface CasoSemestreAuditRecord {
+  id: number;
+  id_caso: number;
+  term: string;
+  fecha: string;
+  id_usuario_creo?: string | null;
+  nombre_completo_usuario_creo?: string | null;
+  id_usuario_elimino?: string | null;
+  nombre_completo_usuario_elimino?: string | null;
+}
+
 export interface UsuarioActualizadoCamposAuditRecord {
   id: number;
+  // Inscripción del semestre editada junto con el usuario (o sola) y cambio
+  // de contraseña (sin el hash): ver audit-record-mapper.ts.
+  es_inscripcion?: boolean;
+  term?: string | null;
+  nrc_anterior?: string | null;
+  nrc_nuevo?: string | null;
+  habilitado_anterior?: boolean | null;
+  habilitado_nuevo?: boolean | null;
+  contrasena_cambiada_nuevo?: boolean;
   ci_usuario: string;
   nombres_usuario: string | null;
   apellidos_usuario: string | null;

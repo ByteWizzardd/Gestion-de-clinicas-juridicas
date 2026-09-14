@@ -470,7 +470,10 @@ export default function AuditDetailClient({
         // que sigue esperando los nombres de campo planos de las tablas
         // por-entidad viejas.
         const mapped = (data as AuditoriaEvento[])
-          .map((event) => mapUnifiedLogToAuditRecord(event)?.record)
+          .map((event) => {
+            const m = mapUnifiedLogToAuditRecord(event);
+            return m ? { ...m.record, tipo_registro: m.type } : null;
+          })
           .filter((r): r is NonNullable<typeof r> => r != null);
         setRecords(mapped);
       } catch (err) {
