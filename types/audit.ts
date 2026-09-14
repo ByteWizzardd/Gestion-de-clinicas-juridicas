@@ -367,6 +367,19 @@ export interface CasoEliminadoAuditRecord {
   fecha: string;
   usuario_accion: string; // Alias para eliminado_por
   nombre_completo_usuario_accion?: string; // Alias para nombre_completo_usuario_elimino
+  // Estado del caso al eliminarse (metadata que guarda eliminar_caso_fisico)
+  estatus_final?: string | null;
+  equipo?: {
+    profesores: Array<{ cedula: string; nombre: string; term: string }>;
+    estudiantes: Array<{ cedula: string; nombre: string; term: string }>;
+  } | null;
+  eliminados?: {
+    citas: number;
+    acciones: number;
+    beneficiarios: number;
+    soportes: number;
+    cambios_estatus: number;
+  } | null;
 }
 
 // Auditoría de casos actualizados
@@ -781,8 +794,19 @@ export interface AuditCounts {
   equiposActualizados?: number;
   // Sesiones
   sesiones?: number;
-  lastActivities?: Record<string, string | null>;
+  lastActivities?: Partial<Record<ModuloAuditoria, string | null>>;
 }
+
+/**
+ * Módulos de la vista de auditoría con fecha de última actividad. Tipo cerrado a
+ * propósito: con Record<string, ...> un nombre mal escrito (ambitosLegales vs
+ * ambitos_legales) compilaba y la tarjeta quedaba sin fecha, ordenada al final.
+ */
+export type ModuloAuditoria =
+  | 'soportes' | 'reportes' | 'citas' | 'usuarios' | 'casos' | 'solicitantes' | 'beneficiarios'
+  | 'acciones' | 'equipo' | 'sesiones' | 'estados' | 'materias' | 'niveles_educativos' | 'nucleos'
+  | 'condiciones_trabajo' | 'condiciones_actividad' | 'tipos_caracteristicas' | 'semestres'
+  | 'municipios' | 'parroquias' | 'categorias' | 'subcategorias' | 'ambitos_legales' | 'caracteristicas';
 
 // Auditoría de Sesiones
 export interface SesionAuditRecord {

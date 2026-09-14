@@ -327,8 +327,8 @@ SELECT
             SELECT jsonb_build_object(
                 'nombre_materia_anterior', (SELECT nombre_materia FROM materias WHERE id_materia = v.ma),
                 'nombre_materia_nuevo', (SELECT nombre_materia FROM materias WHERE id_materia = v.mn),
-                'nombre_categoria_anterior', (SELECT nombre_categoria FROM categorias WHERE id_materia = v.ma AND num_categoria = v.ca),
-                'nombre_categoria_nuevo', (SELECT nombre_categoria FROM categorias WHERE id_materia = v.mn AND num_categoria = v.cn))
+                'nombre_categoria_anterior', COALESCE((SELECT nombre_categoria FROM categorias WHERE id_materia = v.ma AND num_categoria = v.ca), (SELECT COALESCE(h.datos_anteriores, h.datos_nuevos)->>'nombre_categoria' FROM auditoria_eventos h WHERE h.entidad = 'categoria' AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'id_materia' = v.ma::text AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'num_categoria' = v.ca::text ORDER BY h.id DESC LIMIT 1)),
+                'nombre_categoria_nuevo', COALESCE((SELECT nombre_categoria FROM categorias WHERE id_materia = v.mn AND num_categoria = v.cn), (SELECT COALESCE(h.datos_anteriores, h.datos_nuevos)->>'nombre_categoria' FROM auditoria_eventos h WHERE h.entidad = 'categoria' AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'id_materia' = v.mn::text AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'num_categoria' = v.cn::text ORDER BY h.id DESC LIMIT 1)))
             FROM (
                 SELECT COALESCE((t.datos_anteriores->>'id_materia')::int, v0.mn) AS ma, v0.mn,
                        COALESCE((t.datos_anteriores->>'num_categoria')::int, v0.cn) AS ca, v0.cn
@@ -337,6 +337,47 @@ SELECT
                     COALESCE((t.datos_nuevos->>'num_categoria')::int, (t.metadata->>'num_categoria')::int, NULLIF(split_part(t.id_entidad, '-', 2), '')::int) AS cn
                 ) v0
             ) v)
+        -- Ámbito legal movido a otra subcategoría (ver movimientos en
+        -- filtro-eventos.sql): materia/categoría/subcategoría antes y después.
+        -- Si el padre ya no existe (al mover una categoría se borra la vieja
+        -- con sus subcategorías), su nombre sale del último evento que lo registró.
+        -- id_entidad ya es la clave nueva: id_materia-num_categoria-num_subcategoria-num_ambito_legal.
+        WHEN t.entidad = 'ambito_legal' AND t.operacion = 'actualizacion' THEN (
+            SELECT jsonb_build_object(
+                'nombre_materia_anterior', (SELECT nombre_materia FROM materias WHERE id_materia = v.ma),
+                'nombre_materia_nuevo', (SELECT nombre_materia FROM materias WHERE id_materia = v.mn),
+                'nombre_categoria_anterior', COALESCE((SELECT nombre_categoria FROM categorias WHERE id_materia = v.ma AND num_categoria = v.ca), (SELECT COALESCE(h.datos_anteriores, h.datos_nuevos)->>'nombre_categoria' FROM auditoria_eventos h WHERE h.entidad = 'categoria' AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'id_materia' = v.ma::text AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'num_categoria' = v.ca::text ORDER BY h.id DESC LIMIT 1)),
+                'nombre_categoria_nuevo', COALESCE((SELECT nombre_categoria FROM categorias WHERE id_materia = v.mn AND num_categoria = v.cn), (SELECT COALESCE(h.datos_anteriores, h.datos_nuevos)->>'nombre_categoria' FROM auditoria_eventos h WHERE h.entidad = 'categoria' AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'id_materia' = v.mn::text AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'num_categoria' = v.cn::text ORDER BY h.id DESC LIMIT 1)),
+                'nombre_subcategoria_anterior', COALESCE((SELECT nombre_subcategoria FROM subcategorias WHERE id_materia = v.ma AND num_categoria = v.ca AND num_subcategoria = v.sa), (SELECT COALESCE(h.datos_anteriores, h.datos_nuevos)->>'nombre_subcategoria' FROM auditoria_eventos h WHERE h.entidad = 'subcategoria' AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'id_materia' = v.ma::text AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'num_categoria' = v.ca::text AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'num_subcategoria' = v.sa::text ORDER BY h.id DESC LIMIT 1)),
+                'nombre_subcategoria_nuevo', COALESCE((SELECT nombre_subcategoria FROM subcategorias WHERE id_materia = v.mn AND num_categoria = v.cn AND num_subcategoria = v.sn), (SELECT COALESCE(h.datos_anteriores, h.datos_nuevos)->>'nombre_subcategoria' FROM auditoria_eventos h WHERE h.entidad = 'subcategoria' AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'id_materia' = v.mn::text AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'num_categoria' = v.cn::text AND COALESCE(h.datos_anteriores, h.datos_nuevos)->>'num_subcategoria' = v.sn::text ORDER BY h.id DESC LIMIT 1)))
+            FROM (
+                SELECT COALESCE((t.datos_anteriores->>'id_materia')::int, v0.mn) AS ma, v0.mn,
+                       COALESCE((t.datos_anteriores->>'num_categoria')::int, v0.cn) AS ca, v0.cn,
+                       COALESCE((t.datos_anteriores->>'num_subcategoria')::int, v0.sn) AS sa, v0.sn
+                FROM (SELECT
+                    COALESCE((t.datos_nuevos->>'id_materia')::int, NULLIF(split_part(t.id_entidad, '-', 1), '')::int) AS mn,
+                    COALESCE((t.datos_nuevos->>'num_categoria')::int, NULLIF(split_part(t.id_entidad, '-', 2), '')::int) AS cn,
+                    COALESCE((t.datos_nuevos->>'num_subcategoria')::int, NULLIF(split_part(t.id_entidad, '-', 3), '')::int) AS sn
+                ) v0
+            ) v)
+        -- Categoría movida a otra materia. id_entidad: num_categoria-id_materia.
+        WHEN t.entidad = 'categoria' AND t.operacion = 'actualizacion' THEN (
+            SELECT jsonb_build_object(
+                'nombre_materia_anterior', (SELECT nombre_materia FROM materias WHERE id_materia = COALESCE((t.datos_anteriores->>'id_materia')::int, v.mn)),
+                'nombre_materia_nuevo', (SELECT nombre_materia FROM materias WHERE id_materia = v.mn))
+            FROM (SELECT COALESCE((t.datos_nuevos->>'id_materia')::int, NULLIF(split_part(t.id_entidad, '-', 2), '')::int) AS mn) v)
+        -- Municipio movido a otro estado. id_entidad: id_estado-num_municipio.
+        WHEN t.entidad = 'municipio' AND t.operacion = 'actualizacion' THEN (
+            SELECT jsonb_build_object(
+                'nombre_estado_anterior', (SELECT nombre_estado FROM estados WHERE id_estado = COALESCE((t.datos_anteriores->>'id_estado')::int, v.en)),
+                'nombre_estado_nuevo', (SELECT nombre_estado FROM estados WHERE id_estado = v.en))
+            FROM (SELECT COALESCE((t.datos_nuevos->>'id_estado')::int, NULLIF(split_part(t.id_entidad, '-', 1), '')::int) AS en) v)
+        -- Característica movida a otro tipo. id_entidad: id_tipo_caracteristica-num_caracteristica.
+        WHEN t.entidad = 'caracteristica' AND t.operacion = 'actualizacion' THEN (
+            SELECT jsonb_build_object(
+                'nombre_tipo_caracteristica_anterior', (SELECT nombre_tipo_caracteristica FROM tipo_caracteristicas WHERE id_tipo = COALESCE((t.datos_anteriores->>'id_tipo_caracteristica')::int, v.tn)),
+                'nombre_tipo_caracteristica_nuevo', (SELECT nombre_tipo_caracteristica FROM tipo_caracteristicas WHERE id_tipo = v.tn))
+            FROM (SELECT COALESCE((t.datos_nuevos->>'id_tipo_caracteristica')::int, NULLIF(split_part(t.id_entidad, '-', 1), '')::int) AS tn) v)
         -- Solicitante eliminado: nivel educativo del jefe del hogar, que vive
         -- en el evento gemelo de familias_y_hogares.
         WHEN t.entidad = 'solicitante' AND t.operacion = 'eliminacion' THEN jsonb_build_object(

@@ -691,6 +691,21 @@ export function mapUnifiedLogToAuditRecord(log: AuditoriaEvento): { record: any,
             if (log.nombre_municipio != null) record.nombre_municipio = log.nombre_municipio;
             if (log.nombre_estado_parroquia != null) record.nombre_estado = log.nombre_estado_parroquia;
         }
+
+        // En una actualización, si el elemento ya no existe (se eliminó
+        // después) el padre vigente no se puede resolver: se usa el padre que
+        // quedó tras el cambio.
+        if (a === 'actualizacion') {
+            const padres: Record<string, string[]> = {
+                categoria: ['nombre_materia'],
+                subcategoria: ['nombre_categoria'],
+                ambito_legal: ['nombre_subcategoria'],
+                caracteristica: ['nombre_tipo_caracteristica'],
+                municipio: ['nombre_estado'],
+                parroquia: ['nombre_municipio', 'nombre_estado'],
+            };
+            for (const col of padres[e] ?? []) record[col] ??= record[`${col}_nuevo`];
+        }
     }
 
     if (!type) {

@@ -10,6 +10,7 @@ import { getAuditCountsAction } from '@/app/actions/audit';
 import { logger } from '@/lib/utils/logger';
 import type { AuditCounts } from '@/types/audit';
 import { LucideIcon, FileText, Calendar, Users, User, MapPin, BookOpen, FolderTree, Building2, Home, Building, Briefcase, Activity, GraduationCap, Tag, Tags, Scale, Calendar as CalendarIcon, Clock, ArrowDown, ArrowUp, FileBarChart } from 'lucide-react';
+import { sanitizeUserMessage } from '@/lib/utils/error-messages';
 
 interface AuditOperation {
   label: string;
@@ -42,7 +43,7 @@ export default function AuditClient() {
         const data = await getAuditCountsAction();
         setCounts(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error al cargar contadores');
+        setError(sanitizeUserMessage(err, 'Error al cargar contadores'));
         logger.error('Error loading audit counts:', err);
       } finally {
         setLoading(false);

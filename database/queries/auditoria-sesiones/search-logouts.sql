@@ -20,9 +20,9 @@ WHERE
      ae.metadata->>'ip' ILIKE '%' || $3 || '%' OR
      ae.metadata->>'dispositivo' ILIKE '%' || $3 || '%')
     AND ($5::text IS NULL OR ae.id_usuario = $5)
-    AND ($6::timestamp IS NULL OR ae.fecha_evento >= $6)
-    AND ($7::timestamp IS NULL OR ae.fecha_evento <= $7)
+    AND ($6::date IS NULL OR (ae.metadata->>'fecha_cierre')::timestamp >= $6::date)
+    AND ($7::date IS NULL OR (ae.metadata->>'fecha_cierre')::timestamp < $7::date + 1)
 ORDER BY
-    CASE WHEN $4 = 'asc' THEN ae.fecha_evento END ASC,
-    CASE WHEN $4 = 'desc' OR $4 IS NULL THEN ae.fecha_evento END DESC
+    CASE WHEN $4 = 'asc' THEN (ae.metadata->>'fecha_cierre')::timestamp END ASC,
+    CASE WHEN $4 = 'desc' OR $4 IS NULL THEN (ae.metadata->>'fecha_cierre')::timestamp END DESC
 LIMIT $1 OFFSET $2;

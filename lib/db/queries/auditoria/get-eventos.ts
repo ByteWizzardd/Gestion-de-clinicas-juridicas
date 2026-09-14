@@ -1,6 +1,7 @@
 import { auditoriaEventosQueries } from '../auditoria-eventos.queries';
 import type { AuditoriaEventoFilters, AuditoriaEventosPage } from '@/types/audit-events';
 import { logger } from '@/lib/utils/logger';
+import type { ModuloAuditoria } from '@/types/audit';
 
 /**
  * @deprecated Usa auditoriaEventosQueries desde '@/lib/db/queries/auditoria-eventos.queries' directamente.
@@ -41,32 +42,35 @@ export const auditoriaQueries = {
 
         const g = (entidad: string, operacion: string) => entidadOpMap[`${entidad}:${operacion}`] || 0;
 
-        // Map friendly module names for lastActivities
-        const la: Record<string, string | null> = {
-            soportes: lastActivities['soporte'] || null,
-            reportes: lastActivities['reporte'] || null,
-            citas: lastActivities['cita'] || null,
-            usuarios: lastActivities['usuario'] || lastActivities['estudiante'] || lastActivities['profesor'] || null,
-            casos: lastActivities['caso'] || null,
-            solicitantes: lastActivities['solicitante'] || null,
-            beneficiarios: lastActivities['beneficiario'] || null,
-            acciones: lastActivities['accion'] || null,
-            equipo: lastActivities['equipo'] || null,
-            sesiones: lastActivities['sesion'] || null,
-            estados: lastActivities['estado'] || null,
-            materias: lastActivities['materia'] || null,
-            nivelesEducativos: lastActivities['nivel_educativo'] || null,
-            nucleos: lastActivities['nucleo'] || null,
-            condicionesTrabajo: lastActivities['condicion_trabajo'] || null,
-            condicionesActividad: lastActivities['condicion_actividad'] || null,
-            tiposCaracteristicas: lastActivities['tipo_caracteristica'] || null,
-            semestres: lastActivities['semestre'] || null,
-            municipios: lastActivities['municipio'] || null,
-            parroquias: lastActivities['parroquia'] || null,
-            categorias: lastActivities['categoria'] || null,
-            subcategorias: lastActivities['subcategoria'] || null,
-            ambitosLegales: lastActivities['ambito_legal'] || null,
-            caracteristicas: lastActivities['caracteristica'] || null,
+        // Última actividad por módulo de la vista (AuditModulesView). El tipo
+        // cerrado hace que un nombre que no coincida con la vista no compile.
+        const masReciente = (...entidades: string[]) =>
+            entidades.map((e) => lastActivities[e]).filter((t): t is string => !!t).sort().pop() ?? null;
+        const la: Record<ModuloAuditoria, string | null> = {
+            soportes: masReciente('soporte'),
+            reportes: masReciente('reporte'),
+            citas: masReciente('cita'),
+            usuarios: masReciente('usuario', 'estudiante', 'profesor'),
+            casos: masReciente('caso'),
+            solicitantes: masReciente('solicitante'),
+            beneficiarios: masReciente('beneficiario'),
+            acciones: masReciente('accion'),
+            equipo: masReciente('equipo'),
+            sesiones: masReciente('sesion'),
+            estados: masReciente('estado'),
+            materias: masReciente('materia'),
+            niveles_educativos: masReciente('nivel_educativo'),
+            nucleos: masReciente('nucleo'),
+            condiciones_trabajo: masReciente('condicion_trabajo'),
+            condiciones_actividad: masReciente('condicion_actividad'),
+            tipos_caracteristicas: masReciente('tipo_caracteristica'),
+            semestres: masReciente('semestre'),
+            municipios: masReciente('municipio'),
+            parroquias: masReciente('parroquia'),
+            categorias: masReciente('categoria'),
+            subcategorias: masReciente('subcategoria'),
+            ambitos_legales: masReciente('ambito_legal'),
+            caracteristicas: masReciente('caracteristica'),
         };
 
         return {

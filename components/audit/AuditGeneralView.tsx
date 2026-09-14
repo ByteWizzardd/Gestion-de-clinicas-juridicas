@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
     FileText, Calendar, User, Users, UserX, FolderOpen, AlertCircle, Hash, Search,
@@ -18,6 +18,9 @@ import { filterLogsByVisibleContent } from '@/lib/utils/audit-search';
 import { mapUnifiedLogToAuditRecord } from '@/lib/utils/audit-record-mapper';
 
 import { TablePagination } from '@/components/Table/TablePagination';
+
+// Máximo de coincidencias que se traen para filtrar y paginar en el cliente al buscar
+const LIMITE_BUSQUEDA = 2000;
 
 export default function AuditGeneralView() {
     const [logs, setLogs] = useState<AuditoriaEvento[]>([]);
@@ -75,14 +78,31 @@ export default function AuditGeneralView() {
         'Característica': 'caracteristica'
     };
 
+    // Una opción por operación que realmente se registra. ('Habilitación',
+    // 'Inscripción' y 'Asignación' eran alias de Actualización/Creación y
+    // mostraban lo mismo; 'Cierre de Sesión' no existe como evento: el cierre
+    // se guarda dentro del inicio de sesión.)
     const operationMapToTechnical: Record<string, AuditOperacion> = {
         'Creación': 'insercion', 'Actualización': 'actualizacion', 'Eliminación': 'eliminacion',
-        'Habilitación': 'actualizacion', 'Inscripción': 'insercion', 'Asignación': 'insercion',
-        'Inicio de Sesión': 'inicio_sesion', 'Cierre de Sesión': 'cierre_sesion', 'Intento Fallido': 'intento_fallido',
-        'Generación': 'generacion_reporte', 'Descarga': 'descarga_soporte'
+        'Inicio de Sesión': 'inicio_sesion', 'Intento Fallido': 'intento_fallido',
+        'Generación de reporte': 'generacion_reporte', 'Vista previa de reporte': 'vista_previa_reporte',
+        'Descarga de soporte': 'descarga_soporte'
     };
 
+    // Cambiar un filtro dispara dos cargas (la de la página actual y la de la
+    // página 1): solo se aplica la respuesta de la última petición.
+    const ultimaPeticion = useRef(0);
+
+    // Con búsqueda, el cliente descarta coincidencias que no se ven en la
+    // tarjeta (filterLogsByVisibleContent). Si se paginara en el servidor y
+    // luego se filtrara, quedarían páginas vacías y un total que no cuadra: se
+    // traen todas las coincidencias y se pagina en el cliente.
+    const buscando = Boolean(debouncedSearchTerm);
+    const paginaServidor = buscando ? 1 : page;
+    const filasServidor = buscando ? LIMITE_BUSQUEDA : rowsPerPage;
+
     const fetchLogs = useCallback(async () => {
+        const peticion = ++ultimaPeticion.current;
         try {
             setLoading(true);
             const { eventos: newLogs, total: count } = await getAuditEventsAction({
@@ -93,18 +113,20 @@ export default function AuditGeneralView() {
                 fechaFin: endDate || undefined,
                 orden: sortOrder as 'asc' | 'desc',
                 busqueda: debouncedSearchTerm || undefined,
-                limit: rowsPerPage,
-                offset: (page - 1) * rowsPerPage
+                limit: filasServidor,
+                offset: (paginaServidor - 1) * filasServidor
             });
+            if (peticion !== ultimaPeticion.current) return;
             setLogs(newLogs);
             setTotalCount(count);
         } catch (error) {
+            if (peticion !== ultimaPeticion.current) return;
             logger.error(error);
             toast.error('Error al cargar los registros de auditoría');
         } finally {
-            setLoading(false);
+            if (peticion === ultimaPeticion.current) setLoading(false);
         }
-    }, [page, rowsPerPage, selectedEntity, selectedUser, selectedOperation, startDate, endDate, sortOrder, debouncedSearchTerm, toast]);
+    }, [paginaServidor, filasServidor, selectedEntity, selectedUser, selectedOperation, startDate, endDate, sortOrder, debouncedSearchTerm, toast]);
 
     useEffect(() => {
         fetchLogs();
@@ -136,10 +158,12 @@ export default function AuditGeneralView() {
     // Filtrado híbrido: el servidor retorna un superset (metadata::text match),
     // luego el cliente filtra dejando solo registros donde el término aparece
     // en datos realmente visibles (campos que cambiaron para actualizaciones).
-    const displayLogs = useMemo(() => {
+    const logsVisibles = useMemo(() => {
         if (!debouncedSearchTerm) return logs;
         return filterLogsByVisibleContent(logs, debouncedSearchTerm);
     }, [logs, debouncedSearchTerm]);
+    const displayLogs = buscando ? logsVisibles.slice((page - 1) * rowsPerPage, page * rowsPerPage) : logs;
+    const totalMostrado = buscando ? logsVisibles.length : totalCount;
 
     // Lista de entidades disponibles para filtrar
     const availableEntitiesOptions = [
@@ -153,9 +177,8 @@ export default function AuditGeneralView() {
     // Lista de tipos de operación
     const operationOptions = [
         'Creación', 'Actualización', 'Eliminación',
-        'Habilitación', 'Inscripción', 'Asignación',
-        'Inicio de Sesión', 'Cierre de Sesión', 'Intento Fallido',
-        'Generación', 'Descarga'
+        'Inicio de Sesión', 'Intento Fallido',
+        'Generación de reporte', 'Vista previa de reporte', 'Descarga de soporte'
     ].map(o => ({ value: o, label: o }));
 
     // Opciones de ordenamiento
@@ -236,11 +259,11 @@ export default function AuditGeneralView() {
             )}
 
             {/* Footer con Paginación */}
-            {!loading && totalCount > 0 && (
+            {!loading && totalMostrado > 0 && (
                 <div className="p-4 flex justify-end w-full">
                     <TablePagination
                         currentPage={page}
-                        totalPages={Math.ceil(totalCount / rowsPerPage)}
+                        totalPages={Math.ceil(totalMostrado / rowsPerPage)}
                         rowsPerPage={rowsPerPage}
                         onPageChange={(newPage) => {
                             setPage(newPage);

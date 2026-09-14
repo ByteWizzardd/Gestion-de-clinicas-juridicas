@@ -3903,7 +3903,42 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
               {r.tramite && (
                 <p className="text-sm text-[var(--card-text-muted)]">Trámite: {r.tramite}</p>
               )}
+              {r.estatus_final && (
+                <p className="text-sm text-[var(--card-text-muted)]">Estatus al eliminarse: {r.estatus_final}</p>
+              )}
             </div>
+            {/* Equipo y elementos eliminados junto con el caso (metadata de eliminar_caso_fisico) */}
+            {r.equipo && (r.equipo.profesores.length > 0 || r.equipo.estudiantes.length > 0) && (
+              <div>
+                <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Equipo asignado</p>
+                {r.equipo.profesores.length > 0 && (
+                  <p className="text-sm text-[var(--card-text-muted)]">
+                    Profesores: {r.equipo.profesores.map((p) => `${p.nombre} (${p.term})`).join(', ')}
+                  </p>
+                )}
+                {r.equipo.estudiantes.length > 0 && (
+                  <p className="text-sm text-[var(--card-text-muted)]">
+                    Estudiantes: {r.equipo.estudiantes.map((e) => `${e.nombre} (${e.term})`).join(', ')}
+                  </p>
+                )}
+              </div>
+            )}
+            {r.eliminados && (() => {
+              const e = r.eliminados;
+              const partes = ([
+                [e.citas, 'cita', 'citas'],
+                [e.acciones, 'acción', 'acciones'],
+                [e.beneficiarios, 'beneficiario', 'beneficiarios'],
+                [e.soportes, 'soporte', 'soportes'],
+                [e.cambios_estatus, 'cambio de estatus', 'cambios de estatus'],
+              ] as const).filter(([n]) => Number(n) > 0).map(([n, uno, varios]) => `${n} ${Number(n) === 1 ? uno : varios}`);
+              return partes.length > 0 ? (
+                <div>
+                  <p className="text-sm font-semibold text-[var(--card-text)] mb-1">También se eliminó</p>
+                  <p className="text-sm text-[var(--card-text-muted)]">{partes.join(', ')}</p>
+                </div>
+              ) : null;
+            })()}
             <div>
               <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Auditoría</p>
               <p className="text-sm text-[var(--card-text-muted)]">
@@ -4370,10 +4405,6 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
           nameFieldNuevo = r.descripcion_nuevo || 'N/A';
         }
 
-        // ID propio del catálogo (num_municipio en un municipio, no id_estado);
-        // lo calcula audit-record-mapper.ts a partir de la PK.
-        const idField = r.id_catalogo ?? 'N/A';
-
         // Obtener información de la entidad fuerte
         const entidadFuerte =
           type === 'categoria-actualizada' ? r.nombre_materia :
@@ -4387,14 +4418,24 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
         // Para parroquias, también mostrar el estado
         const estadoParroquiaActualizadaDetalle = type === 'parroquia-actualizada' ? r.nombre_estado : null;
 
+        // Línea "Etiqueta: anterior → nuevo", solo si el padre cambió.
+        const renderCambioPadre = (etiqueta: string, anterior?: string | null, nuevo?: string | null) =>
+          (anterior || nuevo) && anterior !== nuevo ? (
+            <div className="mb-2">
+              <p className="text-sm text-[var(--card-text-muted)]">
+                {etiqueta}:{' '}
+                <span className="line-through text-[var(--bulk-error-text)]">{anterior || 'N/A'}</span>
+                {' → '}
+                <span className="text-[var(--bulk-success-text)]">{nuevo || 'N/A'}</span>
+              </p>
+            </div>
+          ) : null;
+
         return (
           <div className="mt-4 space-y-3 pt-4 border-t border-[var(--card-border)]">
             <div>
-              <p className="text-sm font-semibold text-[var(--card-text)] mb-1">Cambios Realizados</p>
-              {/* Para semestres, el term es el ID, así que no mostramos ID por separado */}
-              {type !== 'semestre-actualizado' && (
-                <p className="text-sm text-[var(--card-text-muted)] mb-3">ID: {idField}</p>
-              )}
+              {/* El ID ya está en la cabecera de la tarjeta; aquí solo lo que cambió. */}
+              <p className="text-sm font-semibold text-[var(--card-text)] mb-2">Cambios Realizados</p>
 
               {(nameFieldAnterior !== nameFieldNuevo) && (
                 <div className="mb-2">
@@ -4597,6 +4638,20 @@ export default function AuditRecordCard({ record, type, moduleName }: AuditRecor
                   )}
                 </>
               )}
+
+              {/* Movido a otro padre (categoría, ámbito legal, municipio, característica):
+                  la app lo registra como INSERT + DELETE y filtro-eventos.sql lo
+                  presenta como esta actualización. */}
+              {type === 'categoria-actualizada' && renderCambioPadre('Materia', r.nombre_materia_anterior, r.nombre_materia_nuevo)}
+              {type === 'ambito-legal-actualizado' && (
+                <>
+                  {renderCambioPadre('Materia', r.nombre_materia_anterior, r.nombre_materia_nuevo)}
+                  {renderCambioPadre('Categoría', r.nombre_categoria_anterior, r.nombre_categoria_nuevo)}
+                  {renderCambioPadre('Subcategoría', r.nombre_subcategoria_anterior, r.nombre_subcategoria_nuevo)}
+                </>
+              )}
+              {type === 'municipio-actualizado' && renderCambioPadre('Estado', r.nombre_estado_anterior, r.nombre_estado_nuevo)}
+              {type === 'caracteristica-actualizada' && renderCambioPadre('Tipo', r.nombre_tipo_caracteristica_anterior, r.nombre_tipo_caracteristica_nuevo)}
             </div>
             {/* Para semestres actualizados, mostrar sección de Información con todos los atributos */}
             {type === 'semestre-actualizado' && (

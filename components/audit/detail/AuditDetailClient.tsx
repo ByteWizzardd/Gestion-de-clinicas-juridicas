@@ -12,6 +12,7 @@ import { logger } from "@/lib/utils/logger";
 import { mapUnifiedLogToAuditRecord } from '@/lib/utils/audit-record-mapper';
 import type { AuditFilters, AuditRecordType } from '@/types/audit';
 import type { AuditoriaEvento } from '@/types/audit-events';
+import { sanitizeUserMessage } from '@/lib/utils/error-messages';
 
 type AuditType = 'soportes' | 'soportes-creados' | 'soportes-descargados' | 'citas-eliminadas' | 'citas-actualizadas' | 'citas-creadas' | 'usuarios-eliminados' | 'usuarios-habilitados' | 'usuarios-actualizados-campos' | 'usuarios-creados'
   | 'solicitantes-eliminados' | 'solicitantes-actualizados' | 'solicitantes-creados'
@@ -159,6 +160,9 @@ export default function AuditDetailClient({
 
   // Cargar datos
   useEffect(() => {
+    // La búsqueda dispara una carga por tecla: si una respuesta vieja llega
+    // después de una nueva, no debe pisar el resultado (ni el orden) actual.
+    let cancelado = false;
     async function loadData() {
       try {
         setLoading(true);
@@ -475,15 +479,19 @@ export default function AuditDetailClient({
             return m ? { ...m.record, tipo_registro: m.type } : null;
           })
           .filter((r): r is NonNullable<typeof r> => r != null);
-        setRecords(mapped);
+        if (!cancelado) setRecords(mapped);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error al cargar datos');
+        if (cancelado) return;
+        setError(sanitizeUserMessage(err, 'Error al cargar datos'));
         logger.error('Error loading audit data:', err);
       } finally {
-        setLoading(false);
+        if (!cancelado) setLoading(false);
       }
     }
     loadData();
+    return () => {
+      cancelado = true;
+    };
   }, [auditType, filters]);
 
   const handleFilterChange = (key: keyof AuditFilters, value: string | 'asc' | 'desc' | undefined) => {

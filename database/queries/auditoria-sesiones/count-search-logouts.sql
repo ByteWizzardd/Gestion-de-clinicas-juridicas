@@ -10,5 +10,5 @@ WHERE
      ae.metadata->>'ip' ILIKE '%' || $1 || '%' OR
      ae.metadata->>'dispositivo' ILIKE '%' || $1 || '%')
     AND ($2::text IS NULL OR ae.id_usuario = $2)
-    AND ($3::timestamp IS NULL OR ae.fecha_evento >= $3)
-    AND ($4::timestamp IS NULL OR ae.fecha_evento <= $4);
+    AND ($3::date IS NULL OR (ae.metadata->>'fecha_cierre')::timestamp >= $3::date)
+    AND ($4::date IS NULL OR (ae.metadata->>'fecha_cierre')::timestamp < $4::date + 1);

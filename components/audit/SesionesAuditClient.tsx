@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LogIn, LogOut, ChevronDown, ChevronUp, XCircle, ArrowDown, ArrowUp } from 'lucide-react';
 import AuditRecordCardSkeleton from '@/components/ui/skeletons/AuditRecordCardSkeleton';
@@ -13,6 +13,7 @@ import { getSesionesAuditAction } from '@/app/actions/audit';
 import { getUsuariosAction } from '@/app/actions/usuarios';
 import type { SesionAuditRecord, AuditFilters } from '@/types/audit';
 import Link from 'next/link';
+import { sanitizeUserMessage } from '@/lib/utils/error-messages';
 
 interface SesionExtended extends SesionAuditRecord {
     nombre_completo_usuario_accion?: string;
@@ -89,7 +90,8 @@ function parseUserAgent(ua: string | null): { browser: string; os: string } {
     return { browser, os };
 }
 
-function SesionCard({ sesion }: { sesion: SesionExtended }) {
+// En la pestaña de cierres, la fecha visible (y la de orden/filtro) es la del cierre
+function SesionCard({ sesion, porCierre = false }: { sesion: SesionExtended; porCierre?: boolean }) {
     const [expanded, setExpanded] = useState(false);
     const { browser, os } = parseUserAgent(sesion.dispositivo);
     const isActive = !sesion.fecha_cierre;
@@ -157,7 +159,7 @@ function SesionCard({ sesion }: { sesion: SesionExtended }) {
                         </div>
                     </div>
                     <p className="text-xs text-[var(--card-text-muted)] mt-2 transition-colors">
-                        {formatDate(sesion.fecha_inicio)}
+                        {formatDate(porCierre && sesion.fecha_cierre ? sesion.fecha_cierre : sesion.fecha_inicio)}
                     </p>
                 </div>
                 <div className="shrink-0 p-2 hover:bg-[var(--sidebar-hover)] rounded-full transition-colors">
@@ -283,7 +285,12 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
         return () => clearTimeout(timer);
     }, [searchQuery]);
 
+    // Solo se aplica la respuesta de la última petición (cambiar orden, fechas o
+    // búsqueda rápido no debe dejar en pantalla un resultado viejo).
+    const ultimaPeticion = useRef(0);
+
     const loadSesiones = useCallback(async () => {
+        const peticion = ++ultimaPeticion.current;
         try {
             setLoading(true);
             const result = await getSesionesAuditAction({
@@ -296,13 +303,15 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
                 fechaInicio: filters.fechaInicio,
                 fechaFin: filters.fechaFin
             });
+            if (peticion !== ultimaPeticion.current) return;
             setSesiones(result.records as unknown as SesionExtended[]);
             setTotal(result.total);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Error al cargar sesiones');
+            if (peticion !== ultimaPeticion.current) return;
+            setError(sanitizeUserMessage(err, 'Error al cargar sesiones'));
             logger.error('Error loading sesiones:', err);
         } finally {
-            setLoading(false);
+            if (peticion === ultimaPeticion.current) setLoading(false);
         }
     }, [debouncedSearch, page, type, filters, rowsPerPage]);
 
@@ -395,7 +404,7 @@ function SesionesList({ type }: { type: 'logins' | 'logouts' | 'failed' }) {
                 ) : (
                     <div className="space-y-3">
                         {sesiones.map((sesion) => (
-                            <SesionCard key={sesion.id_sesion} sesion={sesion} />
+                            <SesionCard key={sesion.id_sesion} sesion={sesion} porCierre={type === 'logouts'} />
                         ))}
                     </div>
                 )}
