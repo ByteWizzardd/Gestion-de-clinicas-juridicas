@@ -6,6 +6,7 @@ import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllEstados } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 /**
  * Get all estados
@@ -43,7 +44,7 @@ export async function createEstado(data: { nombre_estado: string }) {
         }
     ).catch(error => {
         logger.error('❌ Error creating estado:', error);
-        return { success: false, error: 'Error al crear estado' };
+        return { success: false, error: toUserMessage(error, 'Error al crear estado') };
     });
 }
 
@@ -74,8 +75,7 @@ export async function updateEstado(id: number, data: { nombre_estado: string }) 
         }
     ).catch(error => {
         logger.error('Error updating estado:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-        return { success: false, error: `Error al actualizar estado: ${errorMessage}` };
+        return { success: false, error: toUserMessage(error, 'Error al actualizar estado') };
     });
 }
 
@@ -106,8 +106,7 @@ export async function toggleEstadoHabilitado(id: number) {
         }
     ).catch(error => {
         logger.error('Error toggling estado habilitado:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-        return { success: false, error: `Error al cambiar estado: ${errorMessage}` };
+        return { success: false, error: toUserMessage(error, 'Error al cambiar estado') };
     });
 }
 
@@ -161,7 +160,6 @@ export async function deleteEstado(id: number, motivo?: string) {
         }
     ).catch(error => {
         logger.error('Error deleting estado:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-        return { success: false, error: `Error al eliminar estado: ${errorMessage}` };
+        return { success: false, error: toUserMessage(error, 'Error al eliminar estado') };
     });
 }

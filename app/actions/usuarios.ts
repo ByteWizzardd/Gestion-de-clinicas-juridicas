@@ -12,6 +12,7 @@ import { revalidatePath } from 'next/cache';
 import { notificarDeshabilitacionUsuarioEnCasosService } from '@/lib/services/notificaciones.service';
 import { withSecureTransaction } from '@/lib/db/secure-transactions';
 import { uploadProfilePhoto, deleteFile } from '@/lib/services/storage.service';
+import { toUserMessage } from '@/lib/utils/error-messages';
 export interface GetUsuarioCompleteByCedulaResult {
   success: boolean;
   data?: {
@@ -229,7 +230,7 @@ export async function toggleHabilitadoUsuarioAction(
     return {
       success: false,
       error: {
-        message: (error as Error).message,
+        message: toUserMessage(error),
         code: (error as Error & { code?: string }).code,
       },
     };
@@ -266,6 +267,9 @@ export async function deleteUsuarioFisicoAction(
   }
 
   try {
+    // URL de la foto en Vercel Blob: se toma antes de borrar la fila.
+    const urlFoto = await usuariosQueries.getFotoPerfil(cedula_usuario);
+
     // 3. Ejecutar la eliminación física con transacción segura
     await withSecureTransaction(userResult.data!.rol!, async (client) => {
       await usuariosQueries.deleteFisico(
@@ -275,13 +279,20 @@ export async function deleteUsuarioFisicoAction(
         client
       );
     });
+
+    // 4. Eliminar la foto de Vercel Blob. Si falla se registra pero no se
+    //    revierte: el usuario ya no existe en la BD.
+    if (urlFoto) {
+      const borrado = await deleteFile(urlFoto);
+      if (!borrado.success) logger.error(`No se pudo eliminar de Vercel Blob la foto de ${cedula_usuario}: ${urlFoto}`, borrado.error);
+    }
     return { success: true };
   } catch (error) {
     return {
       success: false,
       error: {
         message:
-          error instanceof Error ? error.message : "Error al eliminar usuario",
+          toUserMessage(error, "Error al eliminar usuario"),
       },
     };
   }
@@ -374,7 +385,7 @@ export async function getUsuarioInfoByCedulaAction(
       return {
         success: false,
         error: {
-          message: error.message,
+          message: toUserMessage(error),
           code: error.code || "USUARIO_ERROR",
         },
       };
@@ -384,7 +395,7 @@ export async function getUsuarioInfoByCedulaAction(
       success: false,
       error: {
         message:
-          error instanceof Error ? error.message : "Error al obtener usuario",
+          toUserMessage(error, "Error al obtener usuario"),
 
         code: "UNKNOWN_ERROR",
       },
@@ -443,7 +454,7 @@ export async function checkEmailExistsUsuarioAction(
       success: false,
       exists: false,
       error: {
-        message: error instanceof Error ? error.message : "Error al verificar correo",
+        message: toUserMessage(error, "Error al verificar correo"),
         code: "UNKNOWN_ERROR",
       },
     };
@@ -500,7 +511,7 @@ export async function checkUsernameExistsUsuarioAction(
       success: false,
       exists: false,
       error: {
-        message: error instanceof Error ? error.message : "Error al verificar nombre de usuario",
+        message: toUserMessage(error, "Error al verificar nombre de usuario"),
         code: "UNKNOWN_ERROR",
       },
     };
@@ -684,7 +695,7 @@ export async function updateUsuarioByCedulaAction(
         success: false,
 
         error: {
-          message: error.message,
+          message: toUserMessage(error),
 
           code: error.code || "USUARIO_ERROR",
         },
@@ -695,9 +706,7 @@ export async function updateUsuarioByCedulaAction(
       success: false,
       error: {
         message:
-          error instanceof Error
-            ? error.message
-            : "Error al actualizar usuario",
+          toUserMessage(error, "Error al actualizar usuario"),
         code: "UNKNOWN_ERROR",
       },
     };
@@ -788,7 +797,7 @@ export async function createUsuarioAction(
       return {
         success: false,
         error: {
-          message: error.message,
+          message: toUserMessage(error),
           code: error.code || "USUARIO_ERROR",
         },
       };
@@ -798,9 +807,7 @@ export async function createUsuarioAction(
       success: false,
       error: {
         message:
-          error instanceof Error
-            ? error.message
-            : "Error al crear usuario",
+          toUserMessage(error, "Error al crear usuario"),
         code: "UNKNOWN_ERROR",
       },
     };
@@ -1171,7 +1178,7 @@ export async function disableUsuariosLoteAction(
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : "Error al deshabilitar usuarios",
+        message: toUserMessage(error, "Error al deshabilitar usuarios"),
       },
     };
   }
@@ -1206,7 +1213,7 @@ export async function enableUsuariosLoteAction(
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : "Error al habilitar usuarios",
+        message: toUserMessage(error, "Error al habilitar usuarios"),
       },
     };
   }
@@ -1310,7 +1317,7 @@ export async function lookupPersonByCedulaAction(
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : "Error al buscar persona",
+        message: toUserMessage(error, "Error al buscar persona"),
       },
     };
   }

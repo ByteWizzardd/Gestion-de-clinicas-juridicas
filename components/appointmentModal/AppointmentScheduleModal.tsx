@@ -12,6 +12,7 @@ import Button from "../ui/Button";
 import { X, Loader2 } from "lucide-react";
 import { logger } from "@/lib/utils/logger";
 import { useToast } from "@/components/ui/feedback/ToastProvider";
+import { parseLocalISODate, toLocalISODate } from '@/lib/utils/date-formatter';
 
 interface AppointmentScheduleModalProps {
   onClose: () => void;
@@ -208,7 +209,7 @@ export function AppointmentScheduleModal({
       // Crear cita programada con orientación por defecto
       const result = await createCitaAction({
         caseId: parseInt(selectedCaseID),
-        date: date!.toISOString().split('T')[0], // Formato YYYY-MM-DD
+        date: toLocalISODate(date!), // Formato YYYY-MM-DD
         orientacion: "Cita programada", // Orientación por defecto para citas agendadas
         usuariosAtienden: usuariosInvitados
       });
@@ -273,9 +274,9 @@ export function AppointmentScheduleModal({
               </label>
               <div className="relative">
                 <DatePicker
-                  value={date ? date.toISOString().slice(0, 10) : ""}
+                  value={date ? toLocalISODate(date) : ""}
                   onChange={(value: string) => {
-                    setDate(value ? new Date(value) : null);
+                    setDate(value ? parseLocalISODate(value) : null);
                     if (errors.date) {
                       setErrors((prev) => {
                         const newErrors = { ...prev };

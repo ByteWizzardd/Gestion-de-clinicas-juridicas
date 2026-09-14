@@ -3,6 +3,8 @@
 import { auditoriaQueries } from '@/lib/db/queries/auditoria/get-eventos';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { mapSystemRoleToSidebarRole } from '@/lib/utils/role-mapper';
+import { toUserMessage } from '@/lib/utils/error-messages';
+import { toLocalISODate } from '@/lib/utils/date-formatter';
 
 export interface GetAuditoriaResult {
   success: boolean;
@@ -38,7 +40,7 @@ export async function getAuditoriaEventosAction(limit = 1000): Promise<GetAudito
     console.error('Error en getAuditoriaEventosAction:', error);
     return {
       success: false,
-      error: { message: error?.message || 'Error interno al obtener eventos de auditoría', code: 'UNAUTHORIZED' }
+      error: { message: toUserMessage(error, 'Error al obtener los eventos de auditoría'), code: 'UNAUTHORIZED' }
     };
   }
 }
@@ -88,8 +90,12 @@ export async function getSesionesAuditAction(options: GetSesionesAuditOptions = 
     fechaFin
   } = options;
 
-  const startDate = fechaInicio ? new Date(fechaInicio) : undefined;
-  const endDate = fechaFin ? new Date(fechaFin) : undefined;
+  // Días completos 'YYYY-MM-DD' (el SQL compara >= inicio y < fin + 1 día). Un
+  // Date se serializaría con zona horaria y correría el día.
+  const aDia = (valor?: string | Date) =>
+    valor instanceof Date ? toLocalISODate(valor) : valor ? String(valor).slice(0, 10) : undefined;
+  const startDate = aDia(fechaInicio);
+  const endDate = aDia(fechaFin);
 
   let records: any[] = [];
   let total = 0;
@@ -139,6 +145,8 @@ async function getEventosHelper(entidad: string, operacion?: string, filters?: a
       idUsuario: filters?.idUsuario,
       fechaInicio: filters?.fechaInicio,
       fechaFin: filters?.fechaFin,
+      // Botón "Más reciente / Más antiguo" de las páginas de detalle por módulo
+      orden: filters?.orden === 'asc' ? 'asc' : 'desc',
       limit: filters?.limit ?? 1000,
       offset: filters?.offset ?? 0,
     });

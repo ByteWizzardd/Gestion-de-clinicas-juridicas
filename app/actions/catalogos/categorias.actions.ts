@@ -1,11 +1,12 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
-import { withAuditTransaction } from '@/lib/utils/audit-context';
+import { setAuditMetadata, withAuditTransaction } from '@/lib/utils/audit-context';
 import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllCategorias } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 export async function getCategorias() {
     try {
@@ -13,7 +14,7 @@ export async function getCategorias() {
         return { success: true, data: categorias };
     } catch (error) {
         logger.error('Error getting categorias:', error);
-        return { success: false, error: `Error al obtener categorías: ${error instanceof Error ? error.message : String(error)}` };
+        return { success: false, error: toUserMessage(error, 'Error al obtener categorías') };
     }
 }
 
@@ -43,7 +44,7 @@ export async function createCategoria(data: { id_materia: string; nombre_categor
         }
     ).catch(error => {
         logger.error('Error creating categoria:', error);
-        return { success: false, error: 'Error al crear categoría' };
+        return { success: false, error: toUserMessage(error, 'Error al crear categoría') };
     });
 }
 
@@ -91,7 +92,7 @@ export async function updateCategoria(
                 const nombreMateriaDestino = targetMateriaResult.rows[0]?.nombre_materia || `Materia ID: ${target_id_materia}`;
 
                 // Set session variables for deletions
-                await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: `Movido a: ${nombreMateriaDestino}`, accion_negocio: 'Actualización en catálogo Categorías' })]);
+                await setAuditMetadata(client, { motivo: `Movido a: ${nombreMateriaDestino}`, accion_negocio: 'Actualización en catálogo Categorías' });
 
                 // 3. Move Subcategories
                 const subcategorias = await client.query(
@@ -168,7 +169,7 @@ export async function updateCategoria(
     ).catch(error => {
         logger.error('Error updating categoria:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Categoría no encontrada' };
-        return { success: false, error: 'Error al actualizar categoría' };
+        return { success: false, error: toUserMessage(error, 'Error al actualizar categoría') };
     });
 }
 
@@ -196,7 +197,7 @@ export async function toggleCategoriaHabilitado(id_materia: number, num_categori
     ).catch(error => {
         logger.error('Error toggling categoria habilitado:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Categoría no encontrada' };
-        return { success: false, error: 'Error al cambiar estado' };
+        return { success: false, error: toUserMessage(error, 'Error al cambiar estado') };
     });
 }
 
@@ -259,6 +260,6 @@ export async function deleteCategoria(id_materia: number, num_categoria: number,
     ).catch(error => {
         logger.error('Error deleting categoria:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Categoría no encontrada' };
-        return { success: false, error: 'Error al eliminar categoría' };
+        return { success: false, error: toUserMessage(error, 'Error al eliminar categoría') };
     });
 }

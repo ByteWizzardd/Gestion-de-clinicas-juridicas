@@ -5,6 +5,7 @@ import { logger } from '@/lib/utils/logger';
 import { solicitantesQueries, type Solicitante, type SolicitanteCompleto } from '@/lib/db/queries/solicitantes.queries';
 import { AppError } from '@/lib/utils/errors';
 import { withAuditTransaction } from '@/lib/utils/audit-context';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 interface ApplicantFormData {
   // Identificación
@@ -176,9 +177,9 @@ export class SolicitantesService {
         logger.error(`Error details: ${error.message}`);
       }
       throw new AppError(
-        "No se pudieron obtener los solicitantes. Por favor, intente más tarde.",
+        toUserMessage(error, "No se pudieron obtener los solicitantes. Por favor, intente más tarde."),
         500,
-        error instanceof Error ? error.message : String(error)
+        'SOLICITANTE_ERROR'
       );
     }
   }
@@ -198,9 +199,9 @@ export class SolicitantesService {
         logger.error(`Error details: ${error.message}`);
       }
       throw new AppError(
-        "No se pudo obtener el solicitante. Por favor, intente más tarde.",
+        toUserMessage(error, "No se pudo obtener el solicitante. Por favor, intente más tarde."),
         500,
-        error instanceof Error ? error.message : String(error)
+        'SOLICITANTE_ERROR'
       );
     }
   }
@@ -221,9 +222,9 @@ export class SolicitantesService {
         logger.error(`Error details: ${error.message}`);
       }
       throw new AppError(
-        'No se pudo obtener la información completa del solicitante. Por favor, intente más tarde.',
+        toUserMessage(error, 'No se pudo obtener la información completa del solicitante. Por favor, intente más tarde.'),
         500,
-        error instanceof Error ? error.message : String(error)
+        'SOLICITANTE_ERROR'
       );
     }
   }

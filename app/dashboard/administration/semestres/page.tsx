@@ -8,6 +8,7 @@ import CatalogViewModal from "@/components/catalogs/CatalogViewModal";
 import { Hash, Calendar, CheckCircle2 } from "lucide-react";
 import { getSemestres, createSemestre, updateSemestre, toggleSemestreHabilitado, deleteSemestre, checkSemestreExists } from "@/app/actions/catalogos/semestres.actions";
 import { useToast } from "@/components/ui/feedback/ToastProvider";
+import { toLocalISODate } from '@/lib/utils/date-formatter';
 
 export default function SemestresPage() {
   const [semestres, setSemestres] = useState<any[]>([]);
@@ -149,7 +150,7 @@ export default function SemestresPage() {
               if (!value) return undefined;
               // Ensure value is treated as string for validation
               const strValue = value instanceof Date
-                ? value.toISOString().split('T')[0]
+                ? toLocalISODate(value)
                 : String(value);
 
               if (formData.term && /^\d{4}-(15|25)$/.test(formData.term)) {

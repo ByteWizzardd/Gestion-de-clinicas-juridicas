@@ -1,11 +1,12 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
-import { withAuditTransaction } from '@/lib/utils/audit-context';
+import { setAuditMetadata, withAuditTransaction } from '@/lib/utils/audit-context';
 import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllCaracteristicas } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 export async function getCaracteristicas() {
     try {
@@ -43,7 +44,7 @@ export async function createCaracteristica(data: { id_tipo_caracteristica: strin
         }
     ).catch(error => {
         logger.error('Error creating caracteristica:', error);
-        return { success: false, error: 'Error al crear característica' };
+        return { success: false, error: toUserMessage(error, 'Error al crear característica') };
     });
 }
 
@@ -106,7 +107,7 @@ export async function updateCaracteristica(id_tipo_caracteristica: number, num_c
             );
 
             // 3. Establecer variables de sesión para eliminación
-            await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: 'Movido a nuevo tipo', accion_negocio: 'Actualización en catálogo Características' })]);
+            await setAuditMetadata(client, { motivo: 'Movido a nuevo tipo', accion_negocio: 'Actualización en catálogo Características' });
 
             // 4. Borrar el viejo
             await client.query(
@@ -121,7 +122,7 @@ export async function updateCaracteristica(id_tipo_caracteristica: number, num_c
         logger.error('Error updating caracteristica:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Característica no encontrada' };
         if (error.message === 'HAS_ASSOCIATIONS') return { success: false, error: 'HAS_ASSOCIATIONS', message: 'No se puede cambiar el tipo porque esta característica ya está asociada a viviendas. Cree una nueva en su lugar.' };
-        return { success: false, error: error.message || 'Error al actualizar característica' };
+        return { success: false, error: toUserMessage(error, 'Error al actualizar característica') };
     });
 }
 
@@ -149,7 +150,7 @@ export async function toggleCaracteristicaHabilitado(id_tipo_caracteristica: num
     ).catch(error => {
         logger.error('Error toggling caracteristica habilitado:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Característica no encontrada' };
-        return { success: false, error: 'Error al cambiar estado' };
+        return { success: false, error: toUserMessage(error, 'Error al cambiar estado') };
     });
 }
 
@@ -196,6 +197,6 @@ export async function deleteCaracteristica(id_tipo_caracteristica: number, num_c
     ).catch(error => {
         logger.error('Error deleting caracteristica:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Característica no encontrada' };
-        return { success: false, error: 'Error al eliminar característica' };
+        return { success: false, error: toUserMessage(error, 'Error al eliminar característica') };
     });
 }

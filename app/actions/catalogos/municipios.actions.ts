@@ -1,11 +1,12 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
-import { withAuditTransaction } from '@/lib/utils/audit-context';
+import { setAuditMetadata, withAuditTransaction } from '@/lib/utils/audit-context';
 import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllMunicipios } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 export async function getMunicipios() {
     try {
@@ -42,7 +43,7 @@ export async function createMunicipio(data: { id_estado: string; nombre_municipi
         }
     ).catch(error => {
         logger.error('Error creating municipio:', error);
-        return { success: false, error: 'Error al crear municipio' };
+        return { success: false, error: toUserMessage(error, 'Error al crear municipio') };
     });
 }
 
@@ -92,7 +93,7 @@ export async function updateMunicipio(id_estado: number, num_municipio: number, 
                 const nombreEstadoDestino = destEstado.rows[0]?.nombre_estado || `Estado ID: ${data.id_estado}`;
 
                 // Set additional audit metadata just for the deletion side if needed, but withAuditTransaction handles the main.
-                await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: `Movido al estado: ${nombreEstadoDestino}`, accion_negocio: 'Actualización en catálogo Municipios' })]);
+                await setAuditMetadata(client, { motivo: `Movido al estado: ${nombreEstadoDestino}`, accion_negocio: 'Actualización en catálogo Municipios' });
 
                 await client.query(
                     'DELETE FROM municipios WHERE id_estado = $1 AND num_municipio = $2',
@@ -140,7 +141,7 @@ export async function updateMunicipio(id_estado: number, num_municipio: number, 
         if (error.code === '23503') { // ForeignKeyViolation
             return { success: false, error: 'No se puede mover el municipio porque tiene registros asociados.' };
         }
-        return { success: false, error: 'Error al actualizar municipio: ' + error.message };
+        return { success: false, error: toUserMessage(error, 'Error al actualizar municipio') };
     });
 }
 
@@ -168,7 +169,7 @@ export async function toggleMunicipioHabilitado(id_estado: number, num_municipio
     ).catch(error => {
         logger.error('Error toggling municipio habilitado:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Municipio no encontrado' };
-        return { success: false, error: 'Error al cambiar estado' };
+        return { success: false, error: toUserMessage(error, 'Error al cambiar estado') };
     });
 }
 
@@ -217,6 +218,6 @@ export async function deleteMunicipio(id_estado: number, num_municipio: number, 
     ).catch(error => {
         logger.error('Error deleting municipio:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Municipio no encontrado' };
-        return { success: false, error: 'Error al eliminar municipio' };
+        return { success: false, error: toUserMessage(error, 'Error al eliminar municipio') };
     });
 }

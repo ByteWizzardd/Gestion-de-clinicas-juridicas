@@ -1,11 +1,12 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
-import { withAuditTransaction } from '@/lib/utils/audit-context';
+import { setAuditMetadata, withAuditTransaction } from '@/lib/utils/audit-context';
 import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllParroquias } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 export async function getParroquias() {
     try {
@@ -46,7 +47,7 @@ export async function createParroquia(data: { id_estado: string; id_municipio: s
         }
     ).catch(error => {
         logger.error('Error creating parroquia:', error);
-        return { success: false, error: 'Error al crear parroquia' };
+        return { success: false, error: toUserMessage(error, 'Error al crear parroquia') };
     });
 }
 
@@ -128,7 +129,7 @@ export async function updateParroquia(id_estado: number, num_municipio: number, 
                 const nombreEstado = destLocation.rows[0]?.nombre_estado || `Estado ID: ${target_id_estado}`;
                 const nombreMunicipio = destLocation.rows[0]?.nombre_municipio || `Municipio #${target_num_municipio}`;
 
-                await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: `Movido a: ${nombreEstado} - ${nombreMunicipio}`, accion_negocio: 'Actualización en catálogo Parroquias' })]);
+                await setAuditMetadata(client, { motivo: `Movido a: ${nombreEstado} - ${nombreMunicipio}`, accion_negocio: 'Actualización en catálogo Parroquias' });
 
                 await client.query(
                     'DELETE FROM parroquias WHERE id_estado = $1 AND num_municipio = $2 AND num_parroquia = $3',
@@ -156,7 +157,7 @@ export async function updateParroquia(id_estado: number, num_municipio: number, 
         if (error.message === 'NO_FIELDS') return { success: false, error: 'No se proporcionaron campos para actualizar' };
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Parroquia no encontrada' };
         if (error.message === 'HAS_ASSOCIATIONS') return { success: false, error: 'HAS_ASSOCIATIONS', message: 'No se puede mover la parroquia porque tiene núcleos o solicitantes asociados.' };
-        return { success: false, error: 'Error al actualizar parroquia' };
+        return { success: false, error: toUserMessage(error, 'Error al actualizar parroquia') };
     });
 }
 
@@ -184,7 +185,7 @@ export async function toggleParroquiaHabilitado(id_estado: number, num_municipio
     ).catch(error => {
         logger.error('Error toggling parroquia habilitado:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Parroquia no encontrada' };
-        return { success: false, error: 'Error al cambiar estado' };
+        return { success: false, error: toUserMessage(error, 'Error al cambiar estado') };
     });
 }
 
@@ -233,6 +234,6 @@ export async function deleteParroquia(id_estado: number, num_municipio: number, 
     ).catch(error => {
         logger.error('Error deleting parroquia:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Parroquia no encontrada' };
-        return { success: false, error: 'Error al eliminar parroquia' };
+        return { success: false, error: toUserMessage(error, 'Error al eliminar parroquia') };
     });
 }

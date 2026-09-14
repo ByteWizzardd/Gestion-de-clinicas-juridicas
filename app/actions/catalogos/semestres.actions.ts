@@ -6,6 +6,7 @@ import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllSemestres } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 export async function getSemestres() {
     try {
@@ -58,8 +59,7 @@ export async function createSemestre(data: { term: string; fecha_inicio: string;
         if (error.code === '23505') {
             return { success: false, error: 'Este semestre ya existe' };
         }
-        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-        return { success: false, error: `Error al crear semestre: ${errorMessage}` };
+        return { success: false, error: toUserMessage(error, 'Error al crear semestre') };
     });
 }
 
@@ -105,7 +105,7 @@ export async function updateSemestre(term: string, data: { fecha_inicio: string;
             return { success: false, error: 'Semestre no encontrado' };
         }
 
-        return { success: false, error: 'Error al actualizar semestre' };
+        return { success: false, error: toUserMessage(error, 'Error al actualizar semestre') };
     });
 }
 
@@ -133,7 +133,7 @@ export async function toggleSemestreHabilitado(term: string) {
     ).catch(error => {
         logger.error('Error toggling semestre:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Semestre no encontrado' };
-        return { success: false, error: 'Error al cambiar estado' };
+        return { success: false, error: toUserMessage(error, 'Error al cambiar estado') };
     });
 }
 
@@ -185,7 +185,7 @@ export async function cerrarSemestre(term: string) {
         }
     ).catch(error => {
         logger.error('Error cerrando semestre:', error);
-        return { success: false, error: 'Error al cerrar semestre' };
+        return { success: false, error: toUserMessage(error, 'Error al cerrar semestre') };
     });
 }
 
@@ -233,6 +233,6 @@ export async function deleteSemestre(term: string, motivo?: string) {
     ).catch(error => {
         logger.error('Error deleting semestre:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Semestre no encontrado' };
-        return { success: false, error: 'Error al eliminar semestre' };
+        return { success: false, error: toUserMessage(error, 'Error al eliminar semestre') };
     });
 }

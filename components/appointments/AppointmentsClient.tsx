@@ -17,6 +17,7 @@ import { AppointmentScheduleModal } from '../appointmentModal/AppointmentSchedul
 import NewAppointmentButton from './NewAppointmentButton';
 import { logger } from '@/lib/utils/logger';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
+import { parseLocalISODate } from '@/lib/utils/date-formatter';
 
 interface AppointmentFilterOptions {
   nucleos: Array<{ id_nucleo: number; nombre_nucleo: string }>;
@@ -95,7 +96,7 @@ export default function AppointmentsClient({
     // Núcleo
     if (nucleoFilter) {
       const nucleoNeedle = normalizeText(nucleoFilter);
-      filtered = filtered.filter((apt) => normalizeText(apt.location || '').includes(nucleoNeedle));
+      filtered = filtered.filter((apt) => normalizeText(apt.location || '') === nucleoNeedle);
     }
 
     // Usuario que atendió (Filtro simple: la cita incluye al usuario seleccionado)
@@ -116,9 +117,9 @@ export default function AppointmentsClient({
     if (termFilter && termFilter !== 'all') {
       const selectedSemester = semestresData.find((s) => s.term === termFilter);
       if (selectedSemester) {
-        const semesterStart = new Date(selectedSemester.fecha_inicio);
+        const semesterStart = parseLocalISODate(selectedSemester.fecha_inicio);
         semesterStart.setHours(0, 0, 0, 0);
-        const semesterEnd = new Date(selectedSemester.fecha_fin);
+        const semesterEnd = parseLocalISODate(selectedSemester.fecha_fin);
         semesterEnd.setHours(23, 59, 59, 999);
 
         filtered = filtered.filter((apt) => {
@@ -153,9 +154,9 @@ export default function AppointmentsClient({
           }
           case 'custom': {
             if (customDateStart && customDateEnd) {
-              const start = new Date(customDateStart);
+              const start = parseLocalISODate(customDateStart);
               start.setHours(0, 0, 0, 0);
-              const end = new Date(customDateEnd);
+              const end = parseLocalISODate(customDateEnd);
               end.setHours(23, 59, 59, 999);
               return aptDateOriginal >= start && aptDateOriginal <= end;
             }
@@ -218,7 +219,7 @@ export default function AppointmentsClient({
       const nucleoNeedle = normalizeText(nucleoFilter);
       filtered = filtered.filter((apt) => {
         // El location contiene el nombre del núcleo
-        return normalizeText(apt.location || '').includes(nucleoNeedle);
+        return normalizeText(apt.location || '') === nucleoNeedle;
       });
     }
 
@@ -248,9 +249,9 @@ export default function AppointmentsClient({
     if (termFilter && termFilter !== 'all') {
       const selectedSemester = semestresData.find((s) => s.term === termFilter);
       if (selectedSemester) {
-        const semesterStart = new Date(selectedSemester.fecha_inicio);
+        const semesterStart = parseLocalISODate(selectedSemester.fecha_inicio);
         semesterStart.setHours(0, 0, 0, 0);
-        const semesterEnd = new Date(selectedSemester.fecha_fin);
+        const semesterEnd = parseLocalISODate(selectedSemester.fecha_fin);
         semesterEnd.setHours(23, 59, 59, 999);
 
         filtered = filtered.filter((apt) => {
@@ -310,7 +311,7 @@ export default function AppointmentsClient({
       const nucleoNeedle = normalizeText(nucleoFilter);
       filtered = filtered.filter((apt) => {
         // El location contiene el nombre del núcleo
-        return normalizeText(apt.location || '').includes(nucleoNeedle);
+        return normalizeText(apt.location || '') === nucleoNeedle;
       });
     }
 
@@ -338,9 +339,9 @@ export default function AppointmentsClient({
     if (termFilter && termFilter !== 'all') {
       const selectedSemester = semestresData.find((s) => s.term === termFilter);
       if (selectedSemester) {
-        const semesterStart = new Date(selectedSemester.fecha_inicio);
+        const semesterStart = parseLocalISODate(selectedSemester.fecha_inicio);
         semesterStart.setHours(0, 0, 0, 0);
-        const semesterEnd = new Date(selectedSemester.fecha_fin);
+        const semesterEnd = parseLocalISODate(selectedSemester.fecha_fin);
         semesterEnd.setHours(23, 59, 59, 999);
 
         filtered = filtered.filter((apt) => {
@@ -375,9 +376,9 @@ export default function AppointmentsClient({
           }
           case 'custom': {
             if (customDateStart && customDateEnd) {
-              const start = new Date(customDateStart);
+              const start = parseLocalISODate(customDateStart);
               start.setHours(0, 0, 0, 0); // Inicio del día de inicio (00:00:00)
-              const end = new Date(customDateEnd);
+              const end = parseLocalISODate(customDateEnd);
               end.setHours(23, 59, 59, 999); // Fin del día de fin (23:59:59.999)
 
               // Usar la fecha original de la cita (con hora) para comparar con el rango completo

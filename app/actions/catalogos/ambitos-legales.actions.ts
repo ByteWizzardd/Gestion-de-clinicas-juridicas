@@ -1,11 +1,12 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
-import { withAuditTransaction } from '@/lib/utils/audit-context';
+import { setAuditMetadata, withAuditTransaction } from '@/lib/utils/audit-context';
 import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllAmbitosLegales } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 export type ActionResult<T = any> = {
     success: boolean;
@@ -55,7 +56,7 @@ export async function createAmbitoLegal(data: { id_materia: string; num_categori
         }
     ).catch(error => {
         logger.error('Error creating ambito legal:', error);
-        return { success: false, error: 'Error al crear ámbito legal' };
+        return { success: false, error: toUserMessage(error, 'Error al crear ámbito legal') };
     });
 }
 
@@ -139,7 +140,7 @@ export async function updateAmbitoLegal(
                 const nombreSubcategoria = destHierarchy.rows[0]?.nombre_subcategoria || `Subcategoría #${target_num_subcategoria}`;
 
                 // 4. Delete old record (set session variables for audit trigger for deletion side)
-                await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: `Movido a: ${nombreMateria} > ${nombreCategoria} > ${nombreSubcategoria}`, accion_negocio: 'Actualización en catálogo Ámbitos Legales' })]);
+                await setAuditMetadata(client, { motivo: `Movido a: ${nombreMateria} > ${nombreCategoria} > ${nombreSubcategoria}`, accion_negocio: 'Actualización en catálogo Ámbitos Legales' });
                 await client.query(
                     'DELETE FROM ambitos_legales WHERE id_materia = $1 AND num_categoria = $2 AND num_subcategoria = $3 AND num_ambito_legal = $4',
                     [id_materia, num_categoria, num_subcategoria, num_ambito_legal]
@@ -152,7 +153,7 @@ export async function updateAmbitoLegal(
     ).catch(error => {
         logger.error('Error updating ambito legal:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Ámbito legal no encontrado' };
-        return { success: false, error: 'Error al actualizar ámbito legal' };
+        return { success: false, error: toUserMessage(error, 'Error al actualizar ámbito legal') };
     });
 }
 
@@ -180,7 +181,7 @@ export async function toggleAmbitoLegalHabilitado(id_materia: number, num_catego
     ).catch(error => {
         logger.error('Error toggling ambito legal habilitado:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Ámbito legal no encontrado' };
-        return { success: false, error: 'Error al cambiar estado' };
+        return { success: false, error: toUserMessage(error, 'Error al cambiar estado') };
     });
 }
 
@@ -227,6 +228,6 @@ export async function deleteAmbitoLegal(id_materia: number, num_categoria: numbe
     ).catch(error => {
         logger.error('Error deleting ambito legal:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Ámbito legal no encontrado' };
-        return { success: false, error: 'Error al eliminar ámbito legal' };
+        return { success: false, error: toUserMessage(error, 'Error al eliminar ámbito legal') };
     });
 }

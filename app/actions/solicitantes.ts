@@ -13,6 +13,7 @@ import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 
 import type { Solicitante as SolicitanteListItem } from '@/lib/db/queries/solicitantes.queries';
 import type { SolicitanteCompleto } from '@/lib/db/queries/solicitantes.queries';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 type ApplicantFormData = Parameters<(typeof solicitantesService)['create']>[0];
 
@@ -112,7 +113,7 @@ export async function getSolicitantesAction(): Promise<GetSolicitantesResult> {
       return {
         success: false,
         error: {
-          message: error.message,
+          message: toUserMessage(error),
           code: error.code || 'SOLICITANTE_ERROR',
         },
       };
@@ -122,7 +123,7 @@ export async function getSolicitantesAction(): Promise<GetSolicitantesResult> {
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : 'Error al obtener solicitantes',
+        message: toUserMessage(error, 'Error al obtener solicitantes'),
         code: 'UNKNOWN_ERROR',
       },
     };

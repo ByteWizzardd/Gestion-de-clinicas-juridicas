@@ -6,6 +6,7 @@ import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllCondicionesTrabajo } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 export async function getCondicionesTrabajo() {
     try {
@@ -37,7 +38,7 @@ export async function createCondicionTrabajo(data: { nombre_trabajo: string }) {
         }
     ).catch(error => {
         logger.error('Error creating condicion trabajo:', error);
-        return { success: false, error: 'Error al crear condición de trabajo' };
+        return { success: false, error: toUserMessage(error, 'Error al crear condición de trabajo') };
     });
 }
 
@@ -65,7 +66,7 @@ export async function updateCondicionTrabajo(id: number, data: { nombre_trabajo:
     ).catch(error => {
         logger.error('Error updating condicion trabajo:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Condición no encontrada' };
-        return { success: false, error: 'Error al actualizar condición' };
+        return { success: false, error: toUserMessage(error, 'Error al actualizar condición') };
     });
 }
 
@@ -93,7 +94,7 @@ export async function toggleCondicionTrabajoHabilitado(id: number) {
     ).catch(error => {
         logger.error('Error toggling condicion trabajo habilitado:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Condición no encontrada' };
-        return { success: false, error: 'Error al cambiar estado' };
+        return { success: false, error: toUserMessage(error, 'Error al cambiar estado') };
     });
 }
 
@@ -135,6 +136,6 @@ export async function deleteCondicionTrabajo(id: number, motivo?: string) {
     ).catch(error => {
         logger.error('Error deleting condicion trabajo:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Condición no encontrada' };
-        return { success: false, error: 'Error al eliminar condición' };
+        return { success: false, error: toUserMessage(error, 'Error al eliminar condición') };
     });
 }

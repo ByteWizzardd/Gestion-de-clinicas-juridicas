@@ -8,6 +8,7 @@ import { getAllNivelesEducativos } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 const QUERIES_DIR = join(process.cwd(), 'database', 'queries', 'catalogos');
 
@@ -49,7 +50,7 @@ export async function createNivelEducativo(data: { descripcion: string }) {
         }
     ).catch(error => {
         logger.error('❌ Error creating nivel educativo:', error);
-        return { success: false, error: 'Error al crear nivel educativo' };
+        return { success: false, error: toUserMessage(error, 'Error al crear nivel educativo') };
     });
 }
 
@@ -79,8 +80,7 @@ export async function updateNivelEducativo(id: number, data: { descripcion: stri
     ).catch(error => {
         logger.error('Error updating nivel educativo:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Nivel educativo no encontrado' };
-        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-        return { success: false, error: `Error al actualizar nivel educativo: ${errorMessage}` };
+        return { success: false, error: toUserMessage(error, 'Error al actualizar nivel educativo') };
     });
 }
 
@@ -110,8 +110,7 @@ export async function toggleNivelEducativoHabilitado(id: number) {
     ).catch(error => {
         logger.error('Error toggling nivel educativo habilitado:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Nivel educativo no encontrado' };
-        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-        return { success: false, error: `Error al cambiar estado: ${errorMessage}` };
+        return { success: false, error: toUserMessage(error, 'Error al cambiar estado') };
     });
 }
 
@@ -159,7 +158,6 @@ export async function deleteNivelEducativo(id: number, motivo?: string) {
     ).catch(error => {
         logger.error('Error deleting nivel educativo:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Nivel educativo no encontrado' };
-        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-        return { success: false, error: `Error al eliminar nivel educativo: ${errorMessage}` };
+        return { success: false, error: toUserMessage(error, 'Error al eliminar nivel educativo') };
     });
 }

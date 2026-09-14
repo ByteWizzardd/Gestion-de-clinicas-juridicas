@@ -105,22 +105,22 @@ export default function StudentsClient({ initialEstudiantes = [] }: StudentsClie
             .toLowerCase();
     };
 
-    const tiposDisponibles = useMemo(() => {
-        // Extraer los tipos de estudiante del formato "2024-51 - Inscrito (NRC: 123)"
-        const tipos = new Set<string>();
-        usuarios.forEach(u => {
-            if (u.info_estudiante && u.info_estudiante !== 'Sin información') {
-                // Buscar patrones como "Inscrito", "Voluntario", "Egresado", "Servicio Comunitario"
-                const tiposEncontrados = ['Inscrito', 'Voluntario', 'Egresado', 'Servicio Comunitario'];
-                tiposEncontrados.forEach(tipo => {
-                    if (u.info_estudiante!.includes(tipo)) {
-                        tipos.add(tipo);
-                    }
-                });
-            }
-        });
-        return Array.from(tipos).map(t => ({ value: t, label: t }));
-    }, [usuarios]);
+    // Tipos válidos de estudiante (CHECK de la tabla estudiantes). Lista fija: si
+    // quedara vacía, el filtro mostraría los núcleos en su lugar.
+    const tiposDisponibles = useMemo(
+        () => ['Inscrito', 'Voluntario', 'Egresado', 'Servicio Comunitario'].map(t => ({ value: t, label: t })),
+        []
+    );
+
+    // info_estudiante trae un semestre por entrada: "2025-15 - Inscrito (NRC: 123), 2024-25 - Voluntario (NRC: 456)"
+    const inscripciones = (info: string | null | undefined) =>
+        (info ?? '')
+            .split(', ')
+            .map((entrada) => {
+                const m = entrada.match(/^(\S+) - (.+?) \(NRC:/);
+                return m ? { term: m[1], tipo: m[2] } : null;
+            })
+            .filter((x): x is { term: string; tipo: string } => x !== null);
 
     // Opciones de semestres para el filtro
     const semestreOptions = useMemo(() => {
@@ -147,15 +147,14 @@ export default function StudentsClient({ initialEstudiantes = [] }: StudentsClie
                 (estadoFilter === 'Habilitado' && usuario.habilitado_sistema) ||
                 (estadoFilter === 'Deshabilitado' && !usuario.habilitado_sistema);
 
-            // Filtrar por tipo: buscar si el tipo está contenido en info_estudiante
-            const matchesTipo = !tipoFilter ||
-                (usuario.info_estudiante && usuario.info_estudiante.includes(tipoFilter));
+            // Tipo y semestre se evalúan sobre la MISMA inscripción: con semestre
+            // 2025-15 y tipo Voluntario, no debe salir quien fue voluntario en otro
+            // semestre e inscrito en 2025-15.
+            const matchesInscripcion = (!tipoFilter && !semestreFilter) ||
+                inscripciones(usuario.info_estudiante).some((i) =>
+                    (!semestreFilter || i.term === semestreFilter) && (!tipoFilter || i.tipo === tipoFilter));
 
-            // Filtrar por semestre: buscar en info_estudiante que contiene el term
-            const matchesSemestre = !semestreFilter ||
-                (usuario.info_estudiante && usuario.info_estudiante.includes(semestreFilter));
-
-            return matchesSearch && matchesEstado && matchesTipo && matchesSemestre;
+            return matchesSearch && matchesEstado && matchesInscripcion;
         });
     }, [usuarios, searchValue, estadoFilter, tipoFilter, semestreFilter]);
 

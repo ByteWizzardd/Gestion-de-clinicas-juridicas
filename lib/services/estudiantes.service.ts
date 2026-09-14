@@ -4,6 +4,7 @@ import { hashPassword } from '@/lib/utils/security';
 import { ValidationError } from '@/lib/utils/errors';
 import { validateEmailDomain as validateEmailDomainUtil } from '@/lib/utils/email-validation';
 import { withAuditTransaction } from '@/lib/utils/audit-context';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 export interface EstudianteRow {
   cedula: string;
@@ -489,7 +490,7 @@ export async function bulkCreateEstudiantes(
       } catch (error) {
         await client.query('ROLLBACK TO SAVEPOINT fila_estudiante');
         processedRow.errors.push(
-          error instanceof Error ? error.message : 'Error desconocido al insertar'
+          toUserMessage(error, 'Error desconocido al insertar')
         );
         processedRow.data = null;
       }

@@ -6,6 +6,7 @@ import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllTiposCaracteristicas } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 export async function getTiposCaracteristicas() {
     try {
@@ -41,7 +42,7 @@ export async function createTipoCaracteristica(data: { nombre_tipo_caracteristic
         }
     ).catch(error => {
         logger.error('Error creating tipo caracteristica:', error);
-        return { success: false, error: 'Error al crear tipo de característica' };
+        return { success: false, error: toUserMessage(error, 'Error al crear tipo de característica') };
     });
 }
 
@@ -69,7 +70,7 @@ export async function updateTipoCaracteristica(id: number, data: { nombre_tipo_c
     ).catch(error => {
         logger.error('Error updating tipo caracteristica:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Tipo no encontrado' };
-        return { success: false, error: 'Error al actualizar tipo' };
+        return { success: false, error: toUserMessage(error, 'Error al actualizar tipo') };
     });
 }
 
@@ -97,7 +98,7 @@ export async function toggleTipoCaracteristicaHabilitado(id: number) {
     ).catch(error => {
         logger.error('Error toggling tipo caracteristica habilitado:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Tipo no encontrado' };
-        return { success: false, error: 'Error al cambiar estado' };
+        return { success: false, error: toUserMessage(error, 'Error al cambiar estado') };
     });
 }
 
@@ -139,6 +140,6 @@ export async function deleteTipoCaracteristica(id: number, motivo?: string) {
     ).catch(error => {
         logger.error('Error deleting tipo caracteristica:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Tipo no encontrado' };
-        return { success: false, error: 'Error al eliminar tipo' };
+        return { success: false, error: toUserMessage(error, 'Error al eliminar tipo') };
     });
 }

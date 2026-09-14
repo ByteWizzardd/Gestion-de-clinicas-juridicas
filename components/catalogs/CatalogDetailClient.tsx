@@ -167,9 +167,13 @@ export default function CatalogDetailClient({
             });
         }
         if (searchQuery) {
-            const query = searchQuery.toLowerCase();
+            // Sin distinguir acentos ("barandiaran" encuentra "Barandiarán"). Los
+            // booleanos se omiten: "true"/"false" coincidirían con cualquier búsqueda.
+            const normalizar = (t: string) => t.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+            const query = normalizar(searchQuery.trim());
             result = result.filter((item: any) =>
-                Object.values(item).some(value => value?.toString().toLowerCase().includes(query))
+                Object.values(item).some(value =>
+                    value != null && typeof value !== 'boolean' && typeof value !== 'object' && normalizar(String(value)).includes(query))
             );
         }
         if (estadoFilterValue) {

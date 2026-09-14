@@ -6,6 +6,7 @@ import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllMaterias } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 /**
  * Get all materias
@@ -42,8 +43,7 @@ export async function createMateria(data: { nombre_materia: string }) {
         }
     ).catch(error => {
         logger.error('❌ Error creating materia:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-        return { success: false, error: `Error al crear materia: ${errorMessage}` };
+        return { success: false, error: toUserMessage(error, 'Error al crear materia') };
     });
 }
 
@@ -75,8 +75,7 @@ export async function updateMateria(id: number, data: { nombre_materia: string }
     ).catch(error => {
         logger.error('Error updating materia:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Materia no encontrada' };
-        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-        return { success: false, error: `Error al actualizar materia: ${errorMessage}` };
+        return { success: false, error: toUserMessage(error, 'Error al actualizar materia') };
     });
 }
 
@@ -108,8 +107,7 @@ export async function toggleMateriaHabilitado(id: number) {
     ).catch(error => {
         logger.error('Error toggling materia habilitado:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Materia no encontrada' };
-        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-        return { success: false, error: `Error al cambiar estado: ${errorMessage}` };
+        return { success: false, error: toUserMessage(error, 'Error al cambiar estado') };
     });
 }
 
@@ -165,7 +163,6 @@ export async function deleteMateria(id: number, motivo?: string) {
     ).catch(error => {
         logger.error('Error deleting materia:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Materia no encontrada' };
-        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-        return { success: false, error: `Error al eliminar materia: ${errorMessage}` };
+        return { success: false, error: toUserMessage(error, 'Error al eliminar materia') };
     });
 }

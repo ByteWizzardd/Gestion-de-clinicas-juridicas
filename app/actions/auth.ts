@@ -9,6 +9,7 @@ import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 import { usuariosQueries } from '@/lib/db/queries/usuarios.queries';
 import crypto from "crypto";
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '30d';
 
@@ -163,7 +164,7 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
       return {
         success: false,
         error: {
-          message: error.message,
+          message: toUserMessage(error),
           code: error.code || 'AUTH_ERROR',
         },
       };
@@ -385,7 +386,7 @@ export async function forgotPasswordAction(formData: FormData): Promise<ForgotPa
       return {
         success: false,
         error: {
-          message: error.message,
+          message: toUserMessage(error),
           code: error.code || 'AUTH_ERROR',
         },
       };
@@ -394,7 +395,7 @@ export async function forgotPasswordAction(formData: FormData): Promise<ForgotPa
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : 'Error al procesar la solicitud',
+        message: toUserMessage(error, 'Error al procesar la solicitud'),
         code: 'UNKNOWN_ERROR',
       },
     };
@@ -447,7 +448,7 @@ export async function verifyCodeAction(formData: FormData): Promise<VerifyCodeRe
       return {
         success: false,
         error: {
-          message: error.message,
+          message: toUserMessage(error),
           code: error.code || 'AUTH_ERROR',
         },
       };
@@ -456,7 +457,7 @@ export async function verifyCodeAction(formData: FormData): Promise<VerifyCodeRe
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : 'Error al verificar el código',
+        message: toUserMessage(error, 'Error al verificar el código'),
         code: 'UNKNOWN_ERROR',
       },
     };
@@ -534,7 +535,7 @@ export async function resetPasswordAction(formData: FormData): Promise<ResetPass
       return {
         success: false,
         error: {
-          message: error.message,
+          message: toUserMessage(error),
           code: error.code || 'AUTH_ERROR',
         },
       };
@@ -543,7 +544,7 @@ export async function resetPasswordAction(formData: FormData): Promise<ResetPass
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : 'Error al restablecer la contraseña',
+        message: toUserMessage(error, 'Error al restablecer la contraseña'),
         code: 'UNKNOWN_ERROR',
       },
     };

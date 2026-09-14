@@ -19,6 +19,7 @@ import { descargarFichaSolicitanteAction } from '@/app/actions/reports';
 import { logger } from '@/lib/utils/logger';
 import { generateSolicitanteFichaZip } from '@/lib/utils/applicant-file-pdf-generator';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
+import { toLocalISODate } from '@/lib/utils/date-formatter';
 
 interface Solicitante {
   cedula: string;
@@ -145,11 +146,15 @@ export default function ApplicantsClient({
     };
   };
 
+  // Cambiar filtros seguido lanza varias peticiones: solo se aplica la última.
+  const ultimaPeticion = useRef(0);
+
   const applyServerFilters = async (filters: {
     nucleo: string;
     estadoCivil: string;
     nacionalidad: string;
   }) => {
+    const peticion = ++ultimaPeticion.current;
     setIsFiltering(true);
     try {
       // 1) Elegir el filtro "principal" que se hace en backend.
@@ -170,6 +175,7 @@ export default function ApplicantsClient({
         result = await getSolicitantesAction();
       }
 
+      if (peticion !== ultimaPeticion.current) return;
       if (!result.success || !result.data) {
         toast.error(result.error?.message || 'No se pudieron cargar los solicitantes');
         return;
@@ -188,9 +194,9 @@ export default function ApplicantsClient({
       setSolicitantes(rows);
     } catch (e) {
       logger.error(e);
-      toast.error('Ocurrió un error al aplicar el filtro');
+      if (peticion === ultimaPeticion.current) toast.error('Ocurrió un error al aplicar el filtro');
     } finally {
-      setIsFiltering(false);
+      if (peticion === ultimaPeticion.current) setIsFiltering(false);
     }
   };
 
@@ -220,7 +226,7 @@ export default function ApplicantsClient({
     await applyServerFilters({ nucleo: '', estadoCivil: '', nacionalidad: '' });
   };
 
-  const todayISO = new Date().toISOString().slice(0, 10);
+  const todayISO = toLocalISODate();
   const isValidISODate = (value: string): boolean => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
     const d = new Date(value);
@@ -386,7 +392,7 @@ export default function ApplicantsClient({
         setDeleteMotivo('');
         await handleRefresh();
       } else {
-        toast.error(getErrorMessage(result.error) || 'Error desconocido', 'Error al eliminar');
+        toast.error(getErrorMessage(result.error) || 'No se pudo eliminar el solicitante.', 'Error al eliminar');
       }
     } catch (e) {
       logger.error(e);
@@ -417,7 +423,7 @@ export default function ApplicantsClient({
         }
         toast.success(`Ficha de ${solicitante.nombre_completo} descargada correctamente`);
       } else {
-        toast.error(result.error || 'Error desconocido', 'Error al descargar la ficha');
+        toast.error(result.error || 'No se pudo descargar la ficha del solicitante.', 'Error al descargar la ficha');
       }
     } catch (error) {
       logger.error('Error al descargar ficha:', error);

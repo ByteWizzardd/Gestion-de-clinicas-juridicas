@@ -2,6 +2,7 @@
 
 import { casosService } from '@/lib/services/casos.service';
 import { logger } from '@/lib/utils/logger';
+import { toLocalISODate } from '@/lib/utils/date-formatter';
 import { revalidatePath } from 'next/cache';
 import { soportesQueries } from '@/lib/db/queries/soportes.queries';
 import { accionesQueries } from '@/lib/db/queries/acciones.queries';
@@ -21,6 +22,7 @@ import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 import { withSecureTransaction } from '@/lib/db/secure-transactions';
 import { notificarVariosUsuariosAction } from './notificaciones';
 import { uploadSoporte, deleteFile } from '@/lib/services/storage.service';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 export interface CreateCasoResult {
   success: boolean;
@@ -260,7 +262,7 @@ export async function uploadSoportesAction(
         return {
           success: false,
           error: {
-            message: `Error al subir el archivo "${file.name}": ${uploadResult.error || 'Error desconocido'}`,
+            message: `No se pudo subir el archivo "${file.name}". ${uploadResult.error || 'Intenta de nuevo.'}`,
             code: 'UPLOAD_ERROR',
           },
         };
@@ -552,7 +554,7 @@ export async function getCasosByFechaSolicitudAction(
       };
     }
 
-    const todayISO = new Date().toISOString().slice(0, 10);
+    const todayISO = toLocalISODate();
     const isValidISODate = (value: string): boolean => {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
       const d = new Date(value);
@@ -804,7 +806,7 @@ export async function createAccionAction(
       return {
         success: false,
         error: {
-          message: error.message,
+          message: toUserMessage(error),
           code: error.code || 'ACCION_ERROR',
         },
       };
@@ -813,7 +815,7 @@ export async function createAccionAction(
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : 'Error al crear la acción',
+        message: toUserMessage(error, 'Error al crear la acción'),
         code: 'UNKNOWN_ERROR',
       },
     };
@@ -979,7 +981,7 @@ export async function getEquipoDisponibleAction(): Promise<GetEquipoDisponibleRe
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : 'Error al obtener equipo disponible',
+        message: toUserMessage(error, 'Error al obtener equipo disponible'),
         code: 'UNKNOWN_ERROR',
       },
     };
@@ -1320,7 +1322,7 @@ export async function asignarEquipoAction(
       return {
         success: false,
         error: {
-          message: error.message,
+          message: toUserMessage(error),
           code: error.code || 'ASIGNACION_ERROR',
         },
       };
@@ -1329,7 +1331,7 @@ export async function asignarEquipoAction(
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : 'Error al asignar equipo',
+        message: toUserMessage(error, 'Error al asignar equipo'),
         code: 'UNKNOWN_ERROR',
       },
     };
@@ -1410,7 +1412,7 @@ export async function deleteAccionAction(params: DeleteAccionParams): Promise<De
       return {
         success: false,
         error: {
-          message: error.message,
+          message: toUserMessage(error),
           code: error.code || 'ACCION_ERROR',
         },
       };
@@ -1419,7 +1421,7 @@ export async function deleteAccionAction(params: DeleteAccionParams): Promise<De
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : 'Error al eliminar la acción',
+        message: toUserMessage(error, 'Error al eliminar la acción'),
         code: 'UNKNOWN_ERROR',
       },
     };
@@ -1473,7 +1475,7 @@ export async function updateAccionAction(params: UpdateAccionParams): Promise<Up
       return {
         success: false,
         error: {
-          message: error.message,
+          message: toUserMessage(error),
           code: error.code || 'ACCION_ERROR',
         },
       };
@@ -1482,7 +1484,7 @@ export async function updateAccionAction(params: UpdateAccionParams): Promise<Up
     return {
       success: false,
       error: {
-        message: error instanceof Error ? error.message : 'Error al actualizar la acción',
+        message: toUserMessage(error, 'Error al actualizar la acción'),
         code: 'UNKNOWN_ERROR',
       },
     };
@@ -1542,6 +1544,12 @@ export async function deleteCasoAction(
     // Validar autenticación básica (cualquier rol puede eliminar si está autenticado)
     // if (authResult.user.rol !== 'Coordinador') { ... } // Restricción eliminada
 
+    // URLs de los documentos en Vercel Blob: la BD solo guarda la URL, así que
+    // hay que tomarlas antes de que eliminar_caso_fisico borre los soportes.
+    const urlsDocumentos = (await soportesQueries.getByCaso(idCaso))
+      .map((s) => s.url_documento)
+      .filter((url): url is string => !!url);
+
     // Eliminar el caso (la función maneja todas las referencias y la auditoría)
     // Usamos una transacción segura asumiendo el rol de BD del usuario para que funcionen los permisos granulares
     await withSecureTransaction(authResult.user.rol!, async (client) => {
@@ -1551,6 +1559,13 @@ export async function deleteCasoAction(
         motivo.trim(),
         client
       );
+    });
+
+    // Eliminar los archivos de Vercel Blob, como al borrar un soporte suelto. Si
+    // alguno falla se registra pero no se revierte: el caso ya no existe en la BD.
+    const resultadosBlob = await Promise.all(urlsDocumentos.map((url) => deleteFile(url)));
+    resultadosBlob.forEach((r, i) => {
+      if (!r.success) logger.error(`No se pudo eliminar de Vercel Blob el documento del caso #${idCaso}: ${urlsDocumentos[i]}`, r.error);
     });
 
     // Revalidar cache de las páginas relacionadas

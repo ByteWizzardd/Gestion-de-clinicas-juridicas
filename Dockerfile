@@ -40,6 +40,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+# Zona horaria de la clínica (ver instrumentation.ts)
+ENV TZ=America/Caracas
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 

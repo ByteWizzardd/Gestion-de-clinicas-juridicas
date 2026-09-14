@@ -21,6 +21,7 @@ import { useToast } from "@/components/ui/feedback/ToastProvider";
 import { logger } from "@/lib/utils/logger";
 import { toggleHabilitadoUsuarioAction, deleteUsuarioFisicoAction } from "@/app/actions/usuarios";
 import { UserX, UserCheck } from "lucide-react";
+import { sanitizeUserMessage } from '@/lib/utils/error-messages';
 
 interface Usuario {
   cedula: string;
@@ -91,7 +92,7 @@ export default function UserDetailPage() {
           }
 
         } catch (err) {
-          const errorMessage = err instanceof Error ? err.message : "Error desconocido";
+          const errorMessage = sanitizeUserMessage(err, "No se pudo cargar la información del usuario.");
           setError(errorMessage);
           logger.error("Error fetching usuario:", err);
         } finally {

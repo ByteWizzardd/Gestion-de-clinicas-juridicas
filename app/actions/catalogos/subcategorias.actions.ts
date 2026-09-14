@@ -1,11 +1,12 @@
 'use server';
 
 import { pool } from '@/lib/db/pool';
-import { withAuditTransaction } from '@/lib/utils/audit-context';
+import { setAuditMetadata, withAuditTransaction } from '@/lib/utils/audit-context';
 import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllSubcategorias } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 export async function getSubcategorias() {
     try {
@@ -46,7 +47,7 @@ export async function createSubcategoria(data: { id_materia: string; num_categor
         }
     ).catch(error => {
         logger.error('Error creating subcategoria:', error);
-        return { success: false, error: 'Error al crear subcategoría' };
+        return { success: false, error: toUserMessage(error, 'Error al crear subcategoría') };
     });
 }
 
@@ -105,7 +106,7 @@ export async function updateSubcategoria(
                 const nombreMateria = destHierarchy.rows[0]?.nombre_materia || `Materia ID: ${newIdMateria}`;
                 const nombreCategoria = destHierarchy.rows[0]?.nombre_categoria || `Categoría #${newNumCategoria}`;
 
-                await client.query("SELECT set_config('app.audit_metadata', $1, true)", [JSON.stringify({ motivo: `Movido a: ${nombreMateria} > ${nombreCategoria}`, accion_negocio: 'Actualización en catálogo Subcategorías' })]);
+                await setAuditMetadata(client, { motivo: `Movido a: ${nombreMateria} > ${nombreCategoria}`, accion_negocio: 'Actualización en catálogo Subcategorías' });
 
                 // Actualizar todos los campos incluyendo la clave primaria
                 const result = await client.query(
@@ -138,7 +139,7 @@ export async function updateSubcategoria(
     ).catch(error => {
         logger.error('Error updating subcategoria:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Subcategoría no encontrada' };
-        return { success: false, error: 'Error al actualizar subcategoría' };
+        return { success: false, error: toUserMessage(error, 'Error al actualizar subcategoría') };
     });
 }
 
@@ -166,7 +167,7 @@ export async function toggleSubcategoriaHabilitado(id_materia: number, num_categ
     ).catch(error => {
         logger.error('Error toggling subcategoria habilitado:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Subcategoría no encontrada' };
-        return { success: false, error: 'Error al cambiar estado' };
+        return { success: false, error: toUserMessage(error, 'Error al cambiar estado') };
     });
 }
 
@@ -213,6 +214,6 @@ export async function deleteSubcategoria(id_materia: number, num_categoria: numb
     ).catch(error => {
         logger.error('Error deleting subcategoria:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Subcategoría no encontrada' };
-        return { success: false, error: 'Error al eliminar subcategoría' };
+        return { success: false, error: toUserMessage(error, 'Error al eliminar subcategoría') };
     });
 }

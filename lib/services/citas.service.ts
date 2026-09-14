@@ -4,7 +4,9 @@ import { withAuditTransaction } from '@/lib/utils/audit-context';
 import { loadSQL } from '@/lib/db/sql-loader';
 import { atiendenQueries } from '@/lib/db/queries/atienden.queries';
 import { logger } from '@/lib/utils/logger';
+import { toLocalISODate } from '@/lib/utils/date-formatter';
 import type { PoolClient } from 'pg';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 /**
  * Registra el cambio de ejecutores de una acción como evento 'accion_ejecutores'
@@ -155,9 +157,9 @@ export const citasService = {
       });
     } catch (error) {
       throw new AppError(
-        "Error al obtener las citas",
+        toUserMessage(error, "Error al obtener las citas"),
         500,
-        error instanceof Error ? error.message : "Error desconocido"
+        'CITA_ERROR'
       );
     }
   },
@@ -245,9 +247,9 @@ export const citasService = {
       });
     } catch (error) {
       throw new AppError(
-        "Error al obtener las citas del usuario",
+        toUserMessage(error, "Error al obtener las citas del usuario"),
         500,
-        error instanceof Error ? error.message : "Error desconocido"
+        'CITA_ERROR'
       );
     }
   },
@@ -316,9 +318,9 @@ export const citasService = {
       // Log detallado para depuración
       logger.error('Error al crear la cita (detalle DB):', error);
       throw new AppError(
-        "Error al crear la cita",
+        toUserMessage(error, "Error al crear la cita"),
         500,
-        error instanceof Error ? error.message : "Error desconocido"
+        'CITA_ERROR'
       );
     }
   },
@@ -521,18 +523,18 @@ export const citasService = {
           const getDateQuery = 'SELECT fecha_encuentro FROM citas WHERE num_cita = $1 AND id_caso = $2';
           const dateResult = await client.query(getDateQuery, [num_cita, id_caso]);
           if (dateResult.rows.length > 0) {
-            finalDate = dateResult.rows[0].fecha_encuentro.toISOString().split('T')[0];
+            finalDate = toLocalISODate(dateResult.rows[0].fecha_encuentro);
           }
         }
 
-        return { num_cita, id_caso, fecha: finalDate || new Date().toISOString().split('T')[0] };
+        return { num_cita, id_caso, fecha: finalDate || toLocalISODate() };
       });
     } catch (error) {
       logger.error('Error al actualizar la cita (detalle DB):', error);
       throw new AppError(
-        "Error al actualizar la cita",
+        toUserMessage(error, "Error al actualizar la cita"),
         500,
-        error instanceof Error ? error.message : "Error desconocido"
+        'CITA_ERROR'
       );
     }
   },
@@ -698,9 +700,9 @@ export const citasService = {
     } catch (error) {
       logger.error('Error al eliminar la cita (detalle DB):', error);
       throw new AppError(
-        "Error al eliminar la cita",
+        toUserMessage(error, "Error al eliminar la cita"),
         500,
-        error instanceof Error ? error.message : "Error desconocido"
+        'CITA_ERROR'
       );
     }
   },

@@ -5,6 +5,7 @@ import { getCurrentTermAction } from '@/app/actions/estudiantes';
 import AppointmentsClient from '@/components/appointments/AppointmentsClient';
 import { authorizeRole } from '@/lib/utils/auth-utils';
 import type { Appointment } from '@/types/appointment';
+import { toLocalISODate } from '@/lib/utils/date-formatter';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,8 +50,8 @@ export default async function AppointmentsPage() {
   const semestresData = semestresResult.success && Array.isArray(semestresResult.data)
     ? semestresResult.data.map((s: any) => ({
       term: s.term,
-      fecha_inicio: s.fecha_inicio instanceof Date ? s.fecha_inicio.toISOString().split('T')[0] : s.fecha_inicio,
-      fecha_fin: s.fecha_fin instanceof Date ? s.fecha_fin.toISOString().split('T')[0] : s.fecha_fin,
+      fecha_inicio: s.fecha_inicio instanceof Date ? toLocalISODate(s.fecha_inicio) : s.fecha_inicio,
+      fecha_fin: s.fecha_fin instanceof Date ? toLocalISODate(s.fecha_fin) : s.fecha_fin,
     })).sort((a, b) => b.term.localeCompare(a.term))
     : [];
 

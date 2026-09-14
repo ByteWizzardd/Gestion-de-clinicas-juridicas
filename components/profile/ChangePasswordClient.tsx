@@ -7,6 +7,7 @@ import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import Input from '@/components/forms/Input';
 import Button from '@/components/ui/Button';
 import { changePasswordAction } from '@/app/actions/auth';
+import { sanitizeUserMessage } from '@/lib/utils/error-messages';
 
 export default function ChangePasswordClient() {
   const router = useRouter();
@@ -93,7 +94,7 @@ export default function ChangePasswordClient() {
         }
       }
     } catch (err) {
-      setErrors({ newPassword: err instanceof Error ? err.message : 'Error al cambiar la contraseña' });
+      setErrors({ newPassword: sanitizeUserMessage(err, 'Error al cambiar la contraseña') });
     } finally {
       setLoading(false);
     }

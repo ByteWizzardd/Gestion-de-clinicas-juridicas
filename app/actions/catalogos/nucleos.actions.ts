@@ -6,6 +6,7 @@ import { logger } from '@/lib/utils/logger';
 import { revalidatePath } from 'next/cache';
 import { getAllNucleos } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
+import { toUserMessage } from '@/lib/utils/error-messages';
 
 export async function getNucleos() {
     try {
@@ -41,7 +42,7 @@ export async function createNucleo(data: { id_estado: string; id_municipio: stri
         }
     ).catch(error => {
         logger.error('Error creating nucleo:', error);
-        return { success: false, error: 'Error al crear núcleo' };
+        return { success: false, error: toUserMessage(error, 'Error al crear núcleo') };
     });
 }
 
@@ -101,7 +102,7 @@ export async function updateNucleo(id_nucleo: number, data: {
         logger.error('Error updating nucleo:', error);
         if (error.message === 'NO_FIELDS') return { success: false, error: 'No se proporcionaron campos para actualizar' };
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Núcleo no encontrado' };
-        return { success: false, error: 'Error al actualizar núcleo' };
+        return { success: false, error: toUserMessage(error, 'Error al actualizar núcleo') };
     });
 }
 
@@ -129,7 +130,7 @@ export async function toggleNucleoHabilitado(id_nucleo: number) {
     ).catch(error => {
         logger.error('Error in toggleNucleoHabilitado:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Núcleo no encontrado' };
-        return { success: false, error: 'Error al cambiar estado' };
+        return { success: false, error: toUserMessage(error, 'Error al cambiar estado') };
     });
 }
 
@@ -176,6 +177,6 @@ export async function deleteNucleo(id_nucleo: number, motivo?: string) {
     ).catch(error => {
         logger.error('Error deleting nucleo:', error);
         if (error.message === 'NOT_FOUND') return { success: false, error: 'Núcleo no encontrado' };
-        return { success: false, error: 'Error al eliminar núcleo' };
+        return { success: false, error: toUserMessage(error, 'Error al eliminar núcleo') };
     });
 }

@@ -10,6 +10,7 @@ import { createAccionAction, updateAccionAction } from '@/app/actions/casos';
 import { getUsuariosAction } from '@/app/actions/usuarios';
 import { X, Users, Calendar } from 'lucide-react';
 import { useToast } from "@/components/ui/feedback/ToastProvider";
+import { sanitizeUserMessage } from '@/lib/utils/error-messages';
 
 interface AddActionModalProps {
   isOpen: boolean;
@@ -94,7 +95,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
         setUsuarios(usuariosList);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al cargar usuarios disponibles');
+      setError(sanitizeUserMessage(err, 'Error al cargar usuarios disponibles'));
     } finally {
       setLoadingData(false);
     }
@@ -214,7 +215,7 @@ export default function AddActionModal({ isOpen, onClose, idCaso, onSuccess, edi
       onActionAdded?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al crear la acción');
+      setError(sanitizeUserMessage(err, 'Error al crear la acción'));
     } finally {
       setLoading(false);
     }
