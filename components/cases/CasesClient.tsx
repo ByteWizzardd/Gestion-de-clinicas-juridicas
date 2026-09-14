@@ -4,13 +4,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useRef } from 'react';
 import { motion } from 'motion/react';
-import { Download } from 'lucide-react';
+import { Download, RefreshCw } from 'lucide-react';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import CaseFormModal from '@/components/forms/CaseFormModal';
 import TableSkeleton from '@/components/ui/skeletons/TableSkeleton';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 import ArchiveInactiveCasesModal from '@/components/cases/modals/ArchiveInactiveCasesModal';
+import ReasignarEquipoSemestreModal from '@/components/cases/modals/ReasignarEquipoSemestreModal';
 import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
 import { getCasosAction, getCasosByUsuarioAction, getCasosByFechaSolicitudAction, deleteCasoAction } from '@/app/actions/casos';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
@@ -105,6 +106,9 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
   // State for archiving inactive cases
   const [showArchiveModal, setShowArchiveModal] = useState(false);
+
+  // State for reassigning teams
+  const [showReasignarModal, setShowReasignarModal] = useState(false);
 
   // State for editing
   const [editingCase, setEditingCase] = useState<Caso | null>(null);
@@ -740,9 +744,10 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
   return (
     <>
-      <div className="px-1">
-        <CaseTools
-          addLabel="Añadir Caso"
+      <div className="px-1 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div className="flex-1">
+          <CaseTools
+            addLabel="Añadir Caso"
           onAddClick={handleAddCase}
           searchValue={searchValue}
           onSearchChange={setSearchValue}
@@ -771,6 +776,20 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
           onTermChange={setTermFilter}
           termOptions={semestresOptions}
         />
+        </div>
+        
+        <div className="flex shrink-0">
+          <button
+            id="btn-cierre-semestre"
+            onClick={() => setShowReasignarModal(true)}
+            className="h-10 px-4 cursor-pointer rounded-full border border-red-500 text-red-600
+                       dark:text-red-400 flex items-center gap-2 whitespace-nowrap
+                       hover:bg-red-50 dark:hover:bg-red-950/30 transition-all text-base"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Cierre de semestre
+          </button>
+        </div>
       </div>
       <div className="mt-10"></div>
 
@@ -896,6 +915,12 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
           }
         }}
         onArchiveComplete={fetchCasos}
+      />
+
+      <ReasignarEquipoSemestreModal
+        isOpen={showReasignarModal}
+        onClose={() => setShowReasignarModal(false)}
+        onSuccess={fetchCasos}
       />
     </>
   );
