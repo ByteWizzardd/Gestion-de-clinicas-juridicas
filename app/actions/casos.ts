@@ -20,6 +20,7 @@ import { AppError } from '@/lib/utils/errors';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 import { withSecureTransaction } from '@/lib/db/secure-transactions';
+import { withAuditTransaction } from '@/lib/utils/audit-context';
 import { notificarVariosUsuariosAction } from './notificaciones';
 import { uploadSoporte, deleteFile } from '@/lib/services/storage.service';
 import { toUserMessage } from '@/lib/utils/error-messages';
@@ -1803,5 +1804,133 @@ export async function getCaseSemestersAction(idCaso: number): Promise<GetCaseSem
     return { success: true, data: semestres };
   } catch (error) {
     return handleServerActionError(error, 'getCaseSemestersAction', 'SEMESTER_ERROR');
+  }
+}
+
+export async function getCasosConEquipoAnteriorAction(): Promise<{
+  success: boolean;
+  currentTerm?: string;
+  data?: Array<{
+    id_caso: number;
+    nombre_solicitante: string;
+    miembros: Array<{ tipo: string; nombre: string; cedula: string; term: string }>;
+  }>;
+  error?: { message: string; code?: string };
+}> {
+  try {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user)
+      return { success: false, error: authResult.error };
+
+    const semestres = await semestresQueries.getAll();
+    if (semestres.length === 0)
+      return { success: false, error: { message: 'No hay semestres disponibles' } };
+
+    const currentTerm = semestres[0].term;
+    const filas = await asignacionesQueries.getCasosConEquipoAnterior(currentTerm);
+
+    // Agrupar por id_caso
+    const casosMap = new Map<number, {
+      id_caso: number;
+      nombre_solicitante: string;
+      miembros: Array<{ tipo: string; nombre: string; cedula: string; term: string }>;
+    }>();
+
+    for (const fila of filas) {
+      if (!casosMap.has(fila.id_caso)) {
+        casosMap.set(fila.id_caso, {
+          id_caso: fila.id_caso,
+          nombre_solicitante: fila.nombre_solicitante,
+          miembros: [],
+        });
+      }
+      casosMap.get(fila.id_caso)!.miembros.push({
+        tipo: fila.tipo_miembro,
+        nombre: fila.nombre_miembro,
+        cedula: fila.cedula_miembro,
+        term: fila.term_asignacion,
+      });
+    }
+
+    return {
+      success: true,
+      currentTerm,
+      data: Array.from(casosMap.values()),
+    };
+  } catch (error) {
+    return handleServerActionError(error, 'getCasosConEquipoAnteriorAction', 'ASIGNACION_ERROR');
+  }
+}
+
+export async function desasignarEquipoSemestreAnteriorAction(
+  idCasos: number[]
+): Promise<{ success: boolean; data?: { casosDesasignados: number }; error?: { message: string; code?: string } }> {
+  try {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user)
+      return { success: false, error: authResult.error };
+
+    if (!idCasos.length)
+      return { success: false, error: { message: 'No se seleccionaron casos' } };
+
+    const semestres = await semestresQueries.getAll();
+    if (semestres.length === 0)
+      return { success: false, error: { message: 'No hay semestres disponibles' } };
+
+    const currentTerm = semestres[0].term;
+    const cedulaUsuario = authResult.user.cedula;
+
+    // Recopilar cédulas para notificación antes de la transacción
+    const filas = await asignacionesQueries.getCasosConEquipoAnterior(currentTerm);
+    const cedulasPorCaso = new Map<number, string[]>();
+    for (const fila of filas) {
+      if (idCasos.includes(fila.id_caso)) {
+        if (!cedulasPorCaso.has(fila.id_caso)) cedulasPorCaso.set(fila.id_caso, []);
+        cedulasPorCaso.get(fila.id_caso)!.push(fila.cedula_miembro);
+      }
+    }
+
+    return await withAuditTransaction(
+      cedulaUsuario,
+      { accion_negocio: 'Cierre de semestre - Desasignación masiva de equipo' },
+      async (client) => {
+        for (const idCaso of idCasos) {
+          await asignacionesQueries.desasignarEquipoAnterior(client, idCaso, currentTerm);
+        }
+
+        // Notificar
+        const todasLasCedulas = [...new Set([...cedulasPorCaso.values()].flat())];
+        if (todasLasCedulas.length > 0) {
+          await notificarVariosUsuariosAction({
+            cedulasReceptores: todasLasCedulas,
+            titulo: 'Cierre de semestre',
+            mensaje: 'Has sido desasignado de uno o más casos al cierre del semestre. Consulta el sistema para más detalles.',
+          });
+        }
+
+        revalidatePath('/dashboard/cases');
+        return { success: true, data: { casosDesasignados: idCasos.length } };
+      }
+    );
+  } catch (error) {
+    return handleServerActionError(error, 'desasignarEquipoSemestreAnteriorAction', 'ASIGNACION_ERROR');
+  }
+}
+
+export async function getCasosIdsPendientesReasignacionAction(): Promise<{
+  success: boolean;
+  data: number[];
+}> {
+  try {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) return { success: false, data: [] };
+
+    const semestres = await semestresQueries.getAll();
+    if (semestres.length === 0) return { success: true, data: [] };
+
+    const ids = await asignacionesQueries.getCasosIdsPendientesReasignacion(semestres[0].term);
+    return { success: true, data: ids };
+  } catch {
+    return { success: true, data: [] };
   }
 }
