@@ -6,8 +6,12 @@ Esta carpeta contiene todos los archivos relacionados con la base de datos del p
 
 ```
 database/
-├── schemas/          # Esquemas de base de datos (DDL)
-│   └── schema.sql    # Esquema principal con todas las tablas, vistas, funciones, triggers
+├── schemas/          # Esquemas de base de datos (DDL), ejecutar en este orden:
+│   ├── schema.sql    # 1. Tablas, claves foráneas e índices
+│   ├── vistas.sql    # 2. Vistas
+│   ├── funciones.sql # 3. Funciones y procedimientos almacenados
+│   ├── triggers.sql  # 4. Triggers (semestres, estatus inicial, auditoría)
+│   └── permisos.sql  # 5. Roles de la aplicación y permisos
 ├── migrations/       # Migraciones de base de datos
 │   └── (archivos de migración versionados)
 ├── seeds/           # Datos iniciales y semillas
@@ -23,7 +27,11 @@ database/
 ### `schemas/`
 Contiene los esquemas de base de datos (DDL - Data Definition Language). Aquí se definen todas las tablas, vistas, índices, constraints, etc.
 
-- **schema.sql**: Esquema completo de la base de datos con todas las tablas del sistema.
+- **schema.sql**: tablas, claves foráneas e índices.
+- **vistas.sql**: vistas (requiere las tablas).
+- **funciones.sql**: funciones y procedimientos almacenados.
+- **triggers.sql**: triggers; requiere las funciones.
+- **permisos.sql**: roles `rol_coordinador`, `rol_profesor`, `rol_estudiante` y sus permisos; va al final.
 
 ### `migrations/`
 Contiene las migraciones de base de datos versionadas. Cada migración representa un cambio incremental en el esquema.
