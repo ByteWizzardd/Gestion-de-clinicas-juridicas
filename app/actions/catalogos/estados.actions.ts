@@ -13,6 +13,11 @@ import { toUserMessage } from '@/lib/utils/error-messages';
  */
 export async function getEstados() {
     try {
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            return { success: false, error: 'No autorizado' };
+        }
+
         const estados = await getAllEstados();
         return { success: true, data: estados };
     } catch (error) {

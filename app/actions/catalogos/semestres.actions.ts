@@ -10,6 +10,11 @@ import { toUserMessage } from '@/lib/utils/error-messages';
 
 export async function getSemestres() {
     try {
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            return { success: false, error: 'No autorizado' };
+        }
+
         const semestres = await getAllSemestres();
         return { success: true, data: semestres };
     } catch (error) {
@@ -19,6 +24,11 @@ export async function getSemestres() {
 }
 
 export async function checkSemestreExists(term: string) {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+        return { exists: false };
+    }
+
     const client = await pool.connect();
     try {
         const result = await client.query('SELECT 1 FROM semestres WHERE term = $1', [term]);

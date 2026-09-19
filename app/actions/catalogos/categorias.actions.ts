@@ -10,6 +10,11 @@ import { toUserMessage } from '@/lib/utils/error-messages';
 
 export async function getCategorias() {
     try {
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            return { success: false, error: 'No autorizado' };
+        }
+
         const categorias = await getAllCategorias();
         return { success: true, data: categorias };
     } catch (error) {

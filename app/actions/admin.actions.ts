@@ -7,6 +7,15 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 export async function fixDatabaseSequences() {
+    // Mantenimiento de base de datos: solo coordinadores.
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+        return { success: false, error: 'No autorizado' };
+    }
+    if (authResult.user.rol !== 'Coordinador') {
+        return { success: false, error: 'No autorizado' };
+    }
+
     const client = await pool.connect();
     try {
         await client.query('BEGIN');

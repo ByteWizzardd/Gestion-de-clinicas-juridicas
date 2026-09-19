@@ -25,7 +25,7 @@ const faqs: FAQ[] = [
   {
     id: '3',
     question: '¿Cómo cambio mi contraseña?',
-    answer: 'Puedes cambiar tu contraseña desde tu perfil. Haz clic en tu foto de perfil en el sidebar, selecciona "Cambiar contraseña" y completa el formulario con tu contraseña actual y la nueva contraseña. La nueva contraseña debe tener al menos 6 caracteres.',
+    answer: 'Puedes cambiar tu contraseña desde tu perfil. Haz clic en tu foto de perfil en el sidebar, selecciona "Cambiar contraseña" y completa el formulario con tu contraseña actual y la nueva contraseña. La nueva contraseña debe tener al menos 8 caracteres.',
   },
   {
     id: '4',

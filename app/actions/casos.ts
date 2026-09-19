@@ -22,7 +22,7 @@ import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 import { withSecureTransaction } from '@/lib/db/secure-transactions';
 import { withAuditTransaction } from '@/lib/utils/audit-context';
 import { notificarVariosUsuariosAction } from './notificaciones';
-import { uploadSoporte, deleteFile } from '@/lib/services/storage.service';
+import { uploadSoporte, deleteFile, isValidSoporteMimeType } from '@/lib/services/storage.service';
 import { toUserMessage } from '@/lib/utils/error-messages';
 
 export interface CreateCasoResult {
@@ -248,6 +248,19 @@ export async function uploadSoportesAction(
           error: {
             message: `El archivo "${file.name}" excede el límite de 10MB. Tamaño: ${(file.size / 1024 / 1024).toFixed(2)}MB`,
             code: 'FILE_TOO_LARGE',
+          },
+        };
+      }
+
+      // Validar el tipo de archivo. isValidSoporteMimeType existia en
+      // storage.service.ts pero no la llamaba nadie, asi que hasta ahora se
+      // aceptaba cualquier tipo de archivo como soporte de un caso.
+      if (!isValidSoporteMimeType(file.type)) {
+        return {
+          success: false,
+          error: {
+            message: `El archivo "${file.name}" tiene un formato no permitido.`,
+            code: 'INVALID_FILE_TYPE',
           },
         };
       }
@@ -922,6 +935,11 @@ export interface GetEquipoDisponibleResult {
 
 export async function getEquipoDisponibleAction(): Promise<GetEquipoDisponibleResult> {
   try {
+    const authResult = await requireAuthInServerActionWithCode();
+    if (!authResult.success || !authResult.user) {
+      return { success: false, error: authResult.error! };
+    }
+
     // Obtener el semestre actual (el más reciente)
     const semestres = await semestresQueries.getAll();
     if (semestres.length === 0) {

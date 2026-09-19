@@ -18,6 +18,11 @@ export type ActionResult<T = any> = {
 
 export async function getAmbitosLegales(): Promise<ActionResult> {
     try {
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            return { success: false, error: 'No autorizado' };
+        }
+
         const ambitos = await getAllAmbitosLegales();
         return { success: true, data: ambitos };
     } catch (error) {

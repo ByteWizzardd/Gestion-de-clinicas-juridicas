@@ -10,6 +10,11 @@ import { toUserMessage } from '@/lib/utils/error-messages';
 
 export async function getTiposCaracteristicas() {
     try {
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            return { success: false, error: 'No autorizado' };
+        }
+
         const tipos = await getAllTiposCaracteristicas();
         return { success: true, data: tipos };
     } catch (error) {
