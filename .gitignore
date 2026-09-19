@@ -46,3 +46,4 @@ github
 skills-lock.json
 # Archivos exportados de columnas BYTEA antes de pasar a Vercel Blob (datos personales)
 /database/respaldo-archivos-legacy/
+.test-build/
