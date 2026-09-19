@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Permisos minimos. La pagina remota NO recibe acceso IPC: no se declara ningun dominio en 'remote', asi que el sitio de Vercel no puede invocar comandos nativos.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

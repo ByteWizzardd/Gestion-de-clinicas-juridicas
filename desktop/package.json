@@ -1,0 +1,15 @@
+{
+  "name": "clinica-juridica-desktop",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Shell de escritorio para Gestion de Clinicas Juridicas",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "icon": "tauri icon app-icon.png",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}
