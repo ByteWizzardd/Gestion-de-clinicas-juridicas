@@ -80,6 +80,8 @@ function VerifyCodeContent() {
             const { verifyCodeAction } = await import('@/app/actions/auth');
             const formDataToSend = new FormData();
             formDataToSend.append('codigo', formData.codigo);
+            // El codigo se valida dentro de esta cuenta, no por si solo.
+            formDataToSend.append('email', email);
 
             const result = await verifyCodeAction(formDataToSend);
 
@@ -93,7 +95,9 @@ function VerifyCodeContent() {
                 setIsExiting(true);
                 setTimeout(() => {
                     if (result.data) {
-                        router.push(`/auth/reset-password?cedula=${encodeURIComponent(result.data.cedula)}&email=${encodeURIComponent(result.data.email)}`);
+                        // Viaja el comprobante firmado, no la cedula: el paso
+                        // siguiente no debe poder elegir a quien le cambia la clave.
+                        router.push(`/auth/reset-password?ticket=${encodeURIComponent(result.data.ticket)}&email=${encodeURIComponent(result.data.email)}`);
                     }
                 }, prefersReducedMotion ? 0 : 150);
             }, 1000);

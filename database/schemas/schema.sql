@@ -101,9 +101,13 @@ CREATE TABLE password_reset_tokens (
     id_token SERIAL,
     cedula_usuario VARCHAR(20) NOT NULL,
     codigo_verificacion VARCHAR(10) NOT NULL,
-    fecha_expiracion DATE NOT NULL,
+    -- TIMESTAMP y no DATE: con DATE la caducidad se truncaba al final del dia,
+    -- asi que un codigo de 15 minutos era imposible de expresar.
+    fecha_expiracion TIMESTAMP NOT NULL,
     usado BOOLEAN NOT NULL DEFAULT false,
-    fecha_creacion DATE NOT NULL DEFAULT CURRENT_DATE,
+    -- Intentos fallidos de verificacion. Al llegar al limite el codigo se anula.
+    intentos SMALLINT NOT NULL DEFAULT 0,
+    fecha_creacion TIMESTAMP NOT NULL DEFAULT (now() AT TIME ZONE 'America/Caracas'::text),
     CONSTRAINT password_reset_tokens_pkey PRIMARY KEY (id_token)
 );
 
@@ -576,6 +580,7 @@ ALTER TABLE ocurren_en ADD CONSTRAINT ocurren_en_term_fkey FOREIGN KEY (term) RE
 CREATE INDEX idx_password_reset_cedula ON password_reset_tokens USING btree (cedula_usuario);
 CREATE INDEX idx_password_reset_code ON password_reset_tokens USING btree (codigo_verificacion);
 CREATE INDEX idx_password_reset_expired ON password_reset_tokens USING btree (fecha_expiracion, usado);
+CREATE INDEX idx_password_reset_cedula_activo ON password_reset_tokens USING btree (cedula_usuario, usado, fecha_expiracion);
 CREATE INDEX idx_citas_usuario_actualizo ON citas USING btree (id_usuario_actualizo);
 CREATE INDEX idx_citas_usuario_registro ON citas USING btree (id_usuario_registro);
 CREATE INDEX idx_soportes_usuario_subio ON soportes USING btree (id_usuario_subio);

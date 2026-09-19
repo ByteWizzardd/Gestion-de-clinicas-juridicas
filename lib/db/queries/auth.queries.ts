@@ -161,4 +161,44 @@ export const authQueries = {
       logger.error('Error al registrar cierre de sesión', error);
     }
   },
+
+  /**
+   * Cuenta los intentos de inicio de sesion fallidos recientes de un usuario.
+   *
+   * Se usa para frenar la fuerza bruta contra contrasenas. Ante un error de
+   * consulta devuelve 0: preferimos permitir el login a dejar a todos fuera si
+   * la auditoria falla.
+   *
+   * @param cedula Cedula del usuario
+   * @param minutos Ventana de tiempo a revisar
+   */
+  contarIntentosFallidosRecientes: async (
+    cedula: string,
+    minutos: number
+  ): Promise<number> => {
+    try {
+      const query = loadSQL('auditoria-sesiones/contar-intentos-fallidos.sql');
+      const result = await pool.query(query, [cedula, minutos]);
+      return result.rows[0]?.intentos ?? 0;
+    } catch (error) {
+      logger.error('Error al contar intentos fallidos', error);
+      return 0;
+    }
+  },
+
+  /**
+   * Estado vigente de una cuenta: si sigue habilitada y su rol actual.
+   *
+   * Lo usa el gate de autenticacion en cada peticion. A diferencia de
+   * getUserByCedula, no trae el hash de la contrasena.
+   *
+   * @returns null si la cedula no existe
+   */
+  getEstadoCuenta: async (
+    cedula: string
+  ): Promise<{ cedula: string; habilitado: boolean; rol: string } | null> => {
+    const query = loadSQL('usuarios/get-estado-cuenta.sql');
+    const result = await pool.query(query, [cedula]);
+    return result.rows[0] || null;
+  },
 };
