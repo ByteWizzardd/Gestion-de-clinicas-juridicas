@@ -9,7 +9,7 @@ import { SolicitanteFichaPDF as SolicitanteFichaDocument } from '../../component
 import { generateSolicitanteFichaExcel } from './applicant-file-excel-generator';
 import { imageToBase64 } from './pdf-generator-react';
 import { formatDateTimeForFilename } from './date-formatter';
-
+import { sanitizeFileNamePart } from './filename';
 
 /**
  * Genera y descarga un PDF con la ficha completa de un solicitante (versión simple)
@@ -41,7 +41,7 @@ export async function generateSolicitanteFichaPDF(data: SolicitanteFichaData): P
         const primerNombre = (data.solicitante?.nombres || '').trim().split(' ')[0];
         const primerApellido = (data.solicitante?.apellidos || '').trim().split(' ')[0];
         const nombreSimple = `${primerNombre} ${primerApellido}`.trim();
-        const safeName = nombreSimple ? nombreSimple.replace(/[^a-zA-Z0-9]/g, '_') : 'N_A';
+        const safeName = sanitizeFileNamePart(nombreSimple);
 
         link.download = `Ficha_Solicitante_${safeName}_${formatDateTimeForFilename()}.pdf`;
 
@@ -91,7 +91,7 @@ export async function generateSolicitanteFichaZip(data: SolicitanteFichaData): P
         const primerNombre = (data.solicitante?.nombres || '').trim().split(' ')[0];
         const primerApellido = (data.solicitante?.apellidos || '').trim().split(' ')[0];
         const nombreSimple = `${primerNombre} ${primerApellido}`.trim();
-        const safeName = nombreSimple ? nombreSimple.replace(/[^a-zA-Z0-9]/g, '_') : 'N_A';
+        const safeName = sanitizeFileNamePart(nombreSimple);
 
         // Agregar PDF al ZIP
         zip.file(`Ficha_Solicitante_${safeName}_${timestamp}.pdf`, pdfBlob);

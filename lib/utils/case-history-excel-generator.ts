@@ -396,7 +396,7 @@ export async function generateCasoHistorialExcelFormatoUCAB(data: CasoHistorialD
     // SINGLE MERGED BLOCK
     // Build multiline recaudos with entity attributes
     const recaudosLines = (data.soportes || []).map(s => {
-        return `${s.nombre_archivo} (${s.tipo_mime || 'Desconocido'})${s.descripcion ? ' - ' + s.descripcion : ''}`;
+        return `${s.nombre_archivo}${s.descripcion ? ' - ' + s.descripcion : ''}`;
     });
     const recaudosStr = recaudosLines.join('\n');
     sheet.mergeCells(r, 3, r + 3, 39); // 4 rows high

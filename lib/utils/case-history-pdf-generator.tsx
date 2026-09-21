@@ -12,7 +12,7 @@ import { SolicitanteFichaData } from '../types/report-types';
 import { SolicitanteFichaPDF as SolicitanteFichaDocument } from '../../components/applicants/SolicitanteFichaPDF';
 import { generateSolicitanteFichaExcel } from './applicant-file-excel-generator';
 import { formatDateTimeForFilename } from './date-formatter';
-
+import { sanitizeFileNamePart } from './filename';
 
 /**
  * Genera y descarga un PDF con el historial completo de un caso (versión simple)
@@ -52,7 +52,7 @@ export async function generateCasoHistorialPDF(data: CasoHistorialData, includeN
             const primerNombre = (data.caso?.nombres_solicitante || '').trim().split(' ')[0];
             const primerApellido = (data.caso?.apellidos_solicitante || '').trim().split(' ')[0];
             const nombreSimple = `${primerNombre} ${primerApellido}`.trim();
-            const safeName = nombreSimple ? nombreSimple.replace(/[^a-zA-Z0-9]/g, '_') : 'N_A';
+            const safeName = sanitizeFileNamePart(nombreSimple);
             filename = `Historial_Caso_${safeName}_${data.caso?.id_caso || 'N/A'}`;
         }
 
@@ -95,7 +95,7 @@ export async function generateCasoHistorialExcelUCAB(data: CasoHistorialData, in
             const primerNombre = (data.caso?.nombres_solicitante || '').trim().split(' ')[0];
             const primerApellido = (data.caso?.apellidos_solicitante || '').trim().split(' ')[0];
             const nombreSimple = `${primerNombre} ${primerApellido}`.trim();
-            const safeName = nombreSimple ? nombreSimple.replace(/[^a-zA-Z0-9]/g, '_') : 'N_A';
+            const safeName = sanitizeFileNamePart(nombreSimple);
             filename = `Historial_Caso_UCAB_${safeName}_${data.caso?.id_caso || 'N/A'}`;
         }
 
@@ -176,7 +176,7 @@ export async function generateCasoHistorialZip(data: CasoHistorialData, includeN
             const primerNombre = (data.caso?.nombres_solicitante || '').trim().split(' ')[0];
             const primerApellido = (data.caso?.apellidos_solicitante || '').trim().split(' ')[0];
             const nombreSimple = `${primerNombre} ${primerApellido}`.trim();
-            const safeName = nombreSimple ? nombreSimple.replace(/[^a-zA-Z0-9]/g, '_') : 'N_A';
+            const safeName = sanitizeFileNamePart(nombreSimple);
             filename = `Historial_Caso_${safeName}_${idCaso}`;
         }
 
@@ -268,7 +268,7 @@ export async function generateHistorialSolicitanteZIP(
         // Para ser más precisos, simplemente tomamos la primera palabra y la última si existe.
         const nombreParaArchivo = apellidosArray.length > 1 ? `${apellidosArray[0]} ${apellidosArray[apellidosArray.length - 1]}` : apellidosArray[0];
 
-        const safeName = nombreParaArchivo.replace(/[^a-zA-Z0-9]/g, '_');
+        const safeName = sanitizeFileNamePart(nombreParaArchivo);
         link.download = `Historial_de_Casos_del_Solicitante_${safeName}_${emissionStr}.zip`;
 
 
@@ -304,7 +304,7 @@ export async function generateExpedienteSolicitanteZIP(
         const timestamp = formatDateTimeForFilename();
         const nameParts = nombreSolicitante.trim().split(' ');
         const nombreParaArchivo = nameParts.length > 1 ? `${nameParts[0]} ${nameParts[nameParts.length - 1]}` : nameParts[0];
-        const safeName = nombreParaArchivo.replace(/[^a-zA-Z0-9]/g, '_');
+        const safeName = sanitizeFileNamePart(nombreParaArchivo);
 
         // --- 1. Agregar Ficha del Solicitante (Raíz) ---
 

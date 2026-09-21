@@ -13,7 +13,44 @@ import {
 import { generateBarChartImage } from '../bar-chart-generator';
 
 /**
- * Genera la imagen de la portada con la fecha sobrepuesta
+ * Carga Bodoni Moda para poder dibujarla en un canvas.
+ *
+ * El canvas solo puede usar fuentes que el documento ya tenga cargadas, y
+ * esta se sirve desde /public, no desde el CSS de la app.
+ */
+let bodoniCargada: Promise<boolean> | null = null;
+
+function cargarBodoni(): Promise<boolean> {
+    if (bodoniCargada) return bodoniCargada;
+
+    bodoniCargada = (async () => {
+        try {
+            const fuente = new FontFace(
+                'Bodoni Moda',
+                "url('/fonts/bodoni-moda/BodoniModa-Medium.ttf')",
+                { weight: '500' }
+            );
+            await fuente.load();
+            document.fonts.add(fuente);
+            return true;
+        } catch {
+            return false;
+        }
+    })();
+
+    return bodoniCargada;
+}
+
+/**
+ * Genera la portada del Word: una hoja A4 con la imagen centrada y el año
+ * sobrepuesto.
+ *
+ * El lienzo se arma con la proporción de un A4 (y no con la de la imagen)
+ * porque en el .docx se inserta a 794x1123 px, que es A4 a 96 ppp. Si se
+ * devolviera la imagen cuadrada tal cual, Word la estiraría hasta deformarla.
+ *
+ * Todo esto replica la portada del PDF (InformeResumenPDF): misma fuente,
+ * mismo cuerpo, mismo espaciado y la misma posición relativa del año.
  */
 export async function generateCoverImageWithDate(
     coverBase64: string,
@@ -23,36 +60,54 @@ export async function generateCoverImageWithDate(
     img.src = coverBase64;
     await new Promise(r => img.onload = r);
 
+    // Proporción A4 vertical, tomando el ancho de la imagen como ancho de hoja.
+    const ANCHO_A4_PT = 595.28;
+    const ALTO_A4_PT = 841.89;
+    const anchoHoja = img.width;
+    const altoHoja = Math.round(anchoHoja * (ALTO_A4_PT / ANCHO_A4_PT));
+
     const canvas = document.createElement('canvas');
-    canvas.width = img.width;
-    canvas.height = img.height;
+    canvas.width = anchoHoja;
+    canvas.height = altoHoja;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return coverBase64;
 
-    // Dibujar imagen original
-    ctx.drawImage(img, 0, 0);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, anchoHoja, altoHoja);
 
-    // Configurar texto (Times Roman 30px regular)
-    // El PDF usa 'fontSize: 30' para una hoja A4.
-    // La imagen de portada es grande, así que tenemos que escalar la fuente proporcionalmente
-    // Si la imagen es A4 @ 72dpi ~= 595x842. Si es alta resolución, escalar.
-    // Asumiremos una escala basada en el ancho de la imagen vs ancho A4 estándar (595pt)
+    // La imagen ocupa todo el ancho y queda centrada en vertical, igual que
+    // el objectFit 'contain' de la portada del PDF.
+    const altoImagen = Math.round(anchoHoja * (img.height / img.width));
+    const margenSuperior = Math.round((altoHoja - altoImagen) / 2);
+    ctx.drawImage(img, 0, margenSuperior, anchoHoja, altoImagen);
 
-    // Ancho A4 en puntos = 595.28
-    const scaleFactor = img.width / 595.28;
-    const fontSize = 30 * scaleFactor;
+    const hayBodoni = await cargarBodoni();
+
+    // Las medidas en puntos del PDF se escalan por el ancho de la hoja.
+    const escala = anchoHoja / ANCHO_A4_PT;
+    const fontSize = 24 * escala;
+    const tracking = 4.3 * escala;
 
     ctx.fillStyle = '#000000';
-    ctx.font = `400 ${fontSize}px "Times New Roman", Times, serif`;
-    ctx.textAlign = 'center';
+    ctx.font = `500 ${fontSize}px "${hayBodoni ? 'Bodoni Moda' : 'Times New Roman'}", serif`;
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
 
-    // Posición: top 26%
-    const x = img.width / 2;
-    const y = img.height * 0.26;
+    // El canvas no tiene un letterSpacing con soporte parejo entre
+    // navegadores, así que el texto se dibuja carácter por carácter.
+    const letras = Array.from(text);
+    const anchos = letras.map(c => ctx.measureText(c).width);
+    const anchoTotal = anchos.reduce((a, b) => a + b, 0) + tracking * (letras.length - 1);
 
-    ctx.fillText(text, x, y);
+    let x = (anchoHoja - anchoTotal) / 2;
+    // 19% del alto de la portada: es donde está el año en el Anexo 4.
+    const y = margenSuperior + altoImagen * 0.19;
+
+    letras.forEach((c, i) => {
+        ctx.fillText(c, x, y);
+        x += anchos[i] + tracking;
+    });
 
     return canvas.toDataURL('image/png', 1.0);
 }

@@ -41,6 +41,23 @@ try {
   logger.warn('No se pudo cargar League Spartan, usando Helvetica como fallback');
 }
 
+// Registrar Bodoni Moda: es la Didone del año en la portada del Anexo 4
+// (Memoria y Cuenta), que es el reporte en el que se basa esta portada.
+try {
+  Font.register({
+    family: 'Bodoni Moda',
+    fonts: [
+      {
+        src: '/fonts/bodoni-moda/BodoniModa-Medium.ttf',
+        fontWeight: 500,
+        fontStyle: 'normal',
+      },
+    ],
+  });
+} catch {
+  logger.warn('No se pudo cargar Bodoni Moda, usando Times-Roman como fallback');
+}
+
 // Registrar Inter desde archivos locales
 try {
   Font.register({
@@ -494,9 +511,12 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
               alignItems: 'center',
             }}>
               <Text style={{
-                fontSize: 30, // Reduced from 36
-                fontWeight: 400, // Regular weight (thinner)
-                fontFamily: 'Times-Roman',
+                // Medidas tomadas del año impreso en el Anexo 4: alto de dígito
+                // 18,2 pt y ancho total 152 pt cuando la portada ocupa 595 pt.
+                fontSize: 24,
+                letterSpacing: 4.3,
+                fontWeight: 500,
+                fontFamily: 'Bodoni Moda',
                 color: '#000000',
                 textAlign: 'center'
               }}>

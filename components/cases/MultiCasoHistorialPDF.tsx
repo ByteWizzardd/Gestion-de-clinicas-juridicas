@@ -208,7 +208,7 @@ export function MultiCasoHistorialPDF({ data, logoBase64 }: MultiCasoHistorialPD
                             {soportes.length > 0 ? (
                                 soportes.map((s: any, i: number) => (
                                     <Text key={i} style={[styles.valueText, { marginBottom: 2 }]}>
-                                        • {s.nombre_archivo} ({s.tipo_mime}){s.descripcion ? ` - ${s.descripcion}` : ''}
+                                        • {s.nombre_archivo}{s.descripcion ? ` - ${s.descripcion}` : ''}
                                     </Text>
                                 ))
                             ) : (
