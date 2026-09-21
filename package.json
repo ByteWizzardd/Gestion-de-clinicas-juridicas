@@ -9,7 +9,7 @@
     "lint": "eslint",
     "cleanup:notificaciones": "node scripts/cleanup-notificaciones.mjs",
     "reminders:citas": "node scripts/send-cita-reminders.mjs",
-    "test:seguridad": "tsc lib/utils/security.ts lib/utils/reset-ticket.ts --outDir .test-build --rootDir . --module commonjs --target es2022 --moduleResolution node --esModuleInterop --skipLibCheck --types node && node --test tests/seguridad.test.mjs"
+    "test:seguridad": "tsc lib/utils/security.ts lib/utils/reset-ticket.ts lib/utils/desktop-gate.ts --outDir .test-build --rootDir . --module commonjs --target es2022 --moduleResolution node --esModuleInterop --skipLibCheck --types node && node --test tests/seguridad.test.mjs"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

@@ -159,3 +159,91 @@ test('un comprobante vacio o malformado es rechazado', () => {
   assert.equal(verificarResetTicket(''), null);
   assert.equal(verificarResetTicket('no-es-un-jwt'), null);
 });
+
+// --- Puerta de la app de escritorio ---
+//
+// No es criptografia, pero decide quien recibe un 404 y quien la aplicacion,
+// asi que se prueba igual: un fallo aqui deja el despliegue abierto o, peor,
+// deja fuera a la clinica entera.
+
+const { comparaEnTiempoConstante, obtenerTokenEscritorio, userAgentAutorizado } = await import(
+  '../.test-build/lib/utils/desktop-gate.js'
+);
+
+const TOKEN_ESCRITORIO = 'a'.repeat(32);
+
+/** User-Agent tal como lo arma desktop/src-tauri/src/lib.rs. */
+function agenteDeEscritorio(token, version = '0.1.0') {
+  return (
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) ' +
+    `Chrome/131.0.0.0 Safari/537.36 ClinicaJuridicaDesktop/${version} (${token})`
+  );
+}
+
+function conTokenEscritorio(valor, fn) {
+  const previo = process.env.DESKTOP_APP_TOKEN;
+  if (valor === undefined) {
+    delete process.env.DESKTOP_APP_TOKEN;
+  } else {
+    process.env.DESKTOP_APP_TOKEN = valor;
+  }
+  try {
+    fn();
+  } finally {
+    if (previo === undefined) {
+      delete process.env.DESKTOP_APP_TOKEN;
+    } else {
+      process.env.DESKTOP_APP_TOKEN = previo;
+    }
+  }
+}
+
+test('sin token configurado la puerta queda abierta', () => {
+  conTokenEscritorio(undefined, () => {
+    assert.equal(obtenerTokenEscritorio(), null);
+  });
+});
+
+test('un token demasiado corto no cuenta como configurado', () => {
+  // Un valor de relleno olvidado en el panel no debe parecer una puerta puesta.
+  conTokenEscritorio('corto', () => {
+    assert.equal(obtenerTokenEscritorio(), null);
+  });
+});
+
+test('un token valido se lee sin espacios alrededor', () => {
+  conTokenEscritorio(`  ${TOKEN_ESCRITORIO}  `, () => {
+    assert.equal(obtenerTokenEscritorio(), TOKEN_ESCRITORIO);
+  });
+});
+
+test('el User-Agent de la app de escritorio pasa la puerta', () => {
+  assert.equal(userAgentAutorizado(agenteDeEscritorio(TOKEN_ESCRITORIO), TOKEN_ESCRITORIO), true);
+});
+
+test('la puerta sigue abierta cuando sube la version de la app', () => {
+  assert.equal(
+    userAgentAutorizado(agenteDeEscritorio(TOKEN_ESCRITORIO, '1.4.12'), TOKEN_ESCRITORIO),
+    true
+  );
+});
+
+test('un navegador normal no pasa la puerta', () => {
+  const chrome =
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+  assert.equal(userAgentAutorizado(chrome, TOKEN_ESCRITORIO), false);
+  assert.equal(userAgentAutorizado(null, TOKEN_ESCRITORIO), false);
+  assert.equal(userAgentAutorizado('', TOKEN_ESCRITORIO), false);
+});
+
+test('el marcador correcto con otro token no pasa la puerta', () => {
+  assert.equal(userAgentAutorizado(agenteDeEscritorio('b'.repeat(32)), TOKEN_ESCRITORIO), false);
+  assert.equal(userAgentAutorizado(agenteDeEscritorio(''), TOKEN_ESCRITORIO), false);
+});
+
+test('el token no se acepta por prefijo ni por parecido', () => {
+  assert.equal(comparaEnTiempoConstante(TOKEN_ESCRITORIO, TOKEN_ESCRITORIO), true);
+  assert.equal(comparaEnTiempoConstante('a'.repeat(31), TOKEN_ESCRITORIO), false);
+  assert.equal(comparaEnTiempoConstante('a'.repeat(33), TOKEN_ESCRITORIO), false);
+  assert.equal(comparaEnTiempoConstante('', TOKEN_ESCRITORIO), false);
+});

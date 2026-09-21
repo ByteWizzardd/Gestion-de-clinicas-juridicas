@@ -18,6 +18,35 @@ use tauri_plugin_opener::OpenerExt;
 const APP_URL: &str = "https://clinicajuridica.vercel.app";
 const APP_HOST: &str = "clinicajuridica.vercel.app";
 
+/// Token compartido con el servidor, inyectado al compilar. Viaja en el
+/// User-Agent y el middleware de Next.js lo exige para responder algo que no
+/// sea un 404 (ver lib/utils/desktop-gate.ts). No es un secreto fuerte:
+/// `strings` lo saca del .exe. Solo evita que el despliegue este abierto a
+/// cualquiera que tenga la URL.
+const DESKTOP_TOKEN: Option<&str> = option_env!("CLINICA_DESKTOP_TOKEN");
+
+/// Un instalador compilado sin token no entraria al servidor, y eso se veria
+/// recien al abrirlo en el equipo del usuario. Mejor que no compile.
+#[cfg(not(debug_assertions))]
+const _: () = {
+    if DESKTOP_TOKEN.is_none() {
+        panic!("falta CLINICA_DESKTOP_TOKEN al compilar: debe coincidir con DESKTOP_APP_TOKEN en el servidor");
+    }
+};
+
+/// User-Agent de la ventana. El prefijo imita al de un Chrome de escritorio
+/// para no romper nada que olfatee el navegador; el marcador va al final y
+/// debe coincidir con MARCADOR_ESCRITORIO en lib/utils/desktop-gate.ts.
+fn user_agent() -> Option<String> {
+    DESKTOP_TOKEN.map(|token| {
+        format!(
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) \
+             Chrome/131.0.0.0 Safari/537.36 ClinicaJuridicaDesktop/{} ({token})",
+            env!("CARGO_PKG_VERSION")
+        )
+    })
+}
+
 /// En un webview `window.open` no abre nada util: no hay barra de pestanas.
 /// Lo convertimos en una navegacion normal para que `on_navigation` decida si
 /// corresponde abrirla en el navegador del sistema (ver DocumentsTab.tsx, que
@@ -101,7 +130,7 @@ pub fn run() {
             let nav_handle = app.handle().clone();
             let download_handle = app.handle().clone();
 
-            WebviewWindowBuilder::new(app, "main", start_url)
+            let mut ventana = WebviewWindowBuilder::new(app, "main", start_url)
                 .title("Clinica Juridica - UCAB")
                 .inner_size(1440.0, 900.0)
                 .min_inner_size(1024.0, 700.0)
@@ -151,8 +180,18 @@ pub fn run() {
                         _ => {}
                     }
                     true
-                })
-                .build()?;
+                });
+
+            // El marcador viaja en el User-Agent porque WebView2 lo aplica a
+            // todas las peticiones de la ventana (navegaciones, Server Actions
+            // y descargas) y Tauri no expone forma de anadir cabeceras
+            // propias: wry tiene with_headers, pero solo afecta a la carga
+            // inicial, no a los POST que vienen despues.
+            if let Some(agente) = user_agent() {
+                ventana = ventana.user_agent(&agente);
+            }
+
+            ventana.build()?;
 
             Ok(())
         })
