@@ -20,13 +20,45 @@ import {
  * exista, para evitar redirecciones innecesarias.
  */
 
-/** Respuesta para quien no pasa la puerta: 404 seco, sin pistas de qué hay detrás. */
+/**
+ * Página de "no existe" para quien no pasa la puerta.
+ *
+ * Es una copia del 404 por defecto de Next.js, a propósito y palabra por
+ * palabra: un "404" pelado delata que alguien escribió ese texto a mano, y
+ * cualquier página propia — aunque diga poco — confirma que ahí vive algo. Así
+ * el dominio se ve igual que cualquiera de los miles de despliegues de Next
+ * con una ruta que no existe.
+ *
+ * Por lo mismo no lleva favicon ni nada en español.
+ */
+const PAGINA_NO_EXISTE = `<!DOCTYPE html>
+<html>
+<head>
+<title>404: This page could not be found.</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div style="font-family:system-ui,&quot;Segoe UI&quot;,Roboto,Helvetica,Arial,sans-serif,&quot;Apple Color Emoji&quot;,&quot;Segoe UI Emoji&quot;;height:100vh;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center">
+<div>
+<style>body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}</style>
+<h1 class="next-error-h1" style="display:inline-block;margin:0 20px 0 0;padding:0 23px 0 0;font-size:24px;font-weight:500;vertical-align:top;line-height:49px">404</h1>
+<div style="display:inline-block"><h2 style="font-size:14px;font-weight:400;line-height:49px;margin:0">This page could not be found.</h2></div>
+</div>
+</div>
+</body>
+</html>
+`;
+
+/** Respuesta para quien no pasa la puerta: el 404 de un sitio cualquiera. */
 function noEncontrado(): NextResponse {
-  return new NextResponse('404', {
+  return new NextResponse(PAGINA_NO_EXISTE, {
     status: 404,
     headers: {
-      'content-type': 'text/plain; charset=utf-8',
-      'x-robots-tag': 'noindex, nofollow',
+      'content-type': 'text/html; charset=utf-8',
+      // Sin X-Robots-Tag a proposito: un 404 no se indexa igual, y la
+      // cabecera delataria a un dominio que se esconde. El noindex se pone
+      // mas abajo, solo en lo que pasa la puerta.
       'cache-control': 'no-store',
     },
   });
@@ -87,12 +119,8 @@ function puertaEscritorio(request: NextRequest): NextResponse | null {
   return noEncontrado();
 }
 
-export async function middleware(request: NextRequest) {
-  const cortada = puertaEscritorio(request);
-  if (cortada) {
-    return cortada;
-  }
-
+/** Lógica de sesión: la de siempre, ya del otro lado de la puerta. */
+function enrutar(request: NextRequest): NextResponse {
   const { pathname, searchParams } = request.nextUrl;
   const token = request.cookies.get('auth_token')?.value;
 
@@ -134,16 +162,33 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
+export async function middleware(request: NextRequest) {
+  const cortada = puertaEscritorio(request);
+  if (cortada) {
+    return cortada;
+  }
+
+  const respuesta = enrutar(request);
+  // El sistema no tiene nada que buscar desde fuera. Va aquí y no en
+  // next.config.ts para que la cabecera acompañe solo a las respuestas reales
+  // y el 404 de la puerta siga pareciendo el de un sitio cualquiera.
+  respuesta.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  return respuesta;
+}
+
 /**
  * La puerta de escritorio tiene que ver todo el sitio, no solo /auth y
  * /dashboard, así que el matcher pasó a ser "todo salvo los estáticos".
  *
- * Quedan fuera los recursos que sirve Next.js para pintar una página y
- * robots.txt, que debe seguir siendo legible por los buscadores justamente
- * para pedirles que no indexen.
+ * Quedan fuera solo los recursos que sirve Next.js para pintar una página
+ * (nombres con hash, no enumerables) y robots.txt, que debe seguir siendo
+ * legible por los buscadores justamente para pedirles que no indexen.
+ *
+ * favicon.ico SÍ pasa por la puerta: es el icono de la clínica, 25 KB que
+ * confirman de qué es el dominio a cualquiera que lo pida.
  */
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|robots.txt).*)',
+    '/((?!_next/static|_next/image|robots.txt).*)',
   ],
 };
