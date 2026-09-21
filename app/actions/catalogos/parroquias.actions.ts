@@ -10,6 +10,11 @@ import { toUserMessage } from '@/lib/utils/error-messages';
 
 export async function getParroquias() {
     try {
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            return { success: false, error: 'No autorizado' };
+        }
+
         const parroquias = await getAllParroquias();
         return { success: true, data: parroquias };
     } catch (error) {

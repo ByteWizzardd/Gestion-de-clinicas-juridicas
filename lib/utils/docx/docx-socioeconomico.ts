@@ -23,7 +23,7 @@ import { logger } from '@/lib/utils/logger';
 import {
     imageToBase64
 } from '../pdf-generator-react';
-import { formatDate, base64ToUint8Array, createEmptyPortraitPage } from './docx-utils';
+import { createExportStampParagraph, formatDate, base64ToUint8Array, createEmptyPortraitPage } from './docx-utils';
 import { formatDateTimeForFilename } from '../date-formatter';
 
 import {
@@ -71,13 +71,14 @@ function createLandscapePageSection(pageTable: Table) {
  */
 function createPageTable(
     topContent: any[],
-    vAlign: any = VerticalAlign.TOP
+    vAlign: any = VerticalAlign.TOP,
+    exportedAt?: Date
 ): Table {
     const rows = [
         new TableRow({
             children: [
                 new TableCell({
-                    children: [],
+                    children: [createExportStampParagraph(exportedAt)],
                     verticalAlign: VerticalAlign.TOP,
                     borders: {
                         top: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
@@ -127,6 +128,7 @@ export async function generateSocioeconomicoDOCX(
         const logoUint8 = base64ToUint8Array(logoBase64.split(',')[1]);
 
         const sections: any[] = [];
+        const exportedAt = new Date();
         const emissionStr = formatDateTimeForFilename();
         const reportTitle = `Datos Socioeconómicos${term ? ` Semestre ${term}` : (fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : '')}`;
 
@@ -302,7 +304,7 @@ export async function generateSocioeconomicoDOCX(
                 children: [new ImageRun({ data: chartUint8, transformation: { width: 850, height: 366 } } as any)],
             }));
 
-            const pageTable = createPageTable(topContent, VerticalAlign.TOP);
+            const pageTable = createPageTable(topContent, VerticalAlign.TOP, exportedAt);
             sections.push(createLandscapePageSection(pageTable));
             isFirstPage = false;
         }

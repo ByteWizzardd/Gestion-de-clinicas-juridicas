@@ -3,6 +3,7 @@
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import { formatDate } from '@/lib/utils/date-formatter';
 import { CasoHistorialData } from '@/lib/types/report-types';
+import { ExportStamp } from '@/components/pdf/ExportStamp';
 
 interface MultiCasoHistorialPDFProps {
     data: CasoHistorialData[]; // Array de casos
@@ -125,6 +126,8 @@ export function MultiCasoHistorialPDF({ data, logoBase64 }: MultiCasoHistorialPD
 
                 return (
                     <Page key={index} size="A4" style={styles.page}>
+                        {/* Marca de exportación (esquina superior derecha, en todas las páginas) */}
+                        <ExportStamp offset={30} />
                         {/* HEADER */}
                         <View style={styles.header}>
                             {logoBase64 ? (

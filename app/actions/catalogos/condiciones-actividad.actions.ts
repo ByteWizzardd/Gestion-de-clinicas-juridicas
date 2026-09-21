@@ -10,6 +10,11 @@ import { toUserMessage } from '@/lib/utils/error-messages';
 
 export async function getCondicionesActividad() {
     try {
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            return { success: false, error: 'No autorizado' };
+        }
+
         const condiciones = await getAllCondicionesActividad();
         return { success: true, data: condiciones };
     } catch (error) {

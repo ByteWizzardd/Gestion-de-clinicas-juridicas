@@ -24,7 +24,7 @@ import {
     imageToBase64,
     formatGroupTitle
 } from '../pdf-generator-react';
-import { formatDate, base64ToUint8Array, createEmptyPortraitPage } from './docx-utils';
+import { createExportStampParagraph, formatDate, base64ToUint8Array, createEmptyPortraitPage } from './docx-utils';
 import { formatDateTimeForFilename } from '../date-formatter';
 
 import {
@@ -79,13 +79,14 @@ function createPageTable(
     legendUint8?: Uint8Array,
     legendInsertWidth?: number,
     legendInsertHeight?: number,
-    vAlign: any = VerticalAlign.CENTER
+    vAlign: any = VerticalAlign.CENTER,
+    exportedAt?: Date
 ): Table {
     const rows = [
         new TableRow({
             children: [
                 new TableCell({
-                    children: [],
+                    children: [createExportStampParagraph(exportedAt)],
                     verticalAlign: VerticalAlign.TOP,
                     borders: {
                         top: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
@@ -181,6 +182,7 @@ export async function generateResumenCasosDOCX(
         if (!isSectionSelected('beneficiariosPorParentesco')) filteredData.beneficiariosPorParentesco = [];
 
         const sections: any[] = [];
+        const exportedAt = new Date();
         const emissionStr = formatDateTimeForFilename();
         const reportTitle = `Informe Resumen de Casos${term ? ` Semestre ${term}` : (fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : ' Histórico')}`;
 
@@ -296,7 +298,7 @@ export async function generateResumenCasosDOCX(
                 children: [new ImageRun({ data: chartUint8, transformation: { width: isFirstPage ? 650 : 830, height: isFirstPage ? 432 : 550 } } as any)],
             }));
 
-            const pageTable = createPageTable(topContent, legendUint8, legendWidth, legendHeight, VerticalAlign.CENTER);
+            const pageTable = createPageTable(topContent, legendUint8, legendWidth, legendHeight, VerticalAlign.CENTER, exportedAt);
             sections.push(createLandscapePageSection(pageTable));
             isFirstPage = false;
         }
@@ -454,7 +456,7 @@ export async function generateResumenCasosDOCX(
                 children: [new ImageRun({ data: chartUint8, transformation: { width: 850, height: 366 } } as any)],
             }));
 
-            const pageTable = createPageTable(topContent, undefined, undefined, undefined, VerticalAlign.TOP);
+            const pageTable = createPageTable(topContent, undefined, undefined, undefined, VerticalAlign.TOP, exportedAt);
             sections.push(createLandscapePageSection(pageTable));
         }
 

@@ -12,8 +12,10 @@ services:
       # Misma zona que la BD: pg convierte DATE/TIMESTAMP con la zona del proceso
       - TZ=America/Caracas
       - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@db:5432/gestion_clinicas}
-      - JWT_SECRET=${JWT_SECRET:-clave-secreta-de-produccion-cambiar}
-      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-30d}
+      # Sin valor por defecto a proposito: un secreto de respaldo escrito en
+      # el repositorio equivale a no tener secreto. ':?' aborta el arranque.
+      - JWT_SECRET=${JWT_SECRET:?definelo en .env, minimo 32 caracteres}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-12h}
       - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
       - SMTP_PORT=${SMTP_PORT:-587}
       - SMTP_USER=${SMTP_USER:-}

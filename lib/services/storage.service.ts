@@ -3,6 +3,7 @@
  * Maneja el almacenamiento de archivos (fotos de perfil y soportes)
  */
 
+import crypto from 'crypto';
 import { put, del, list } from '@vercel/blob';
 import { logger } from '@/lib/utils/logger';
 import { toUserMessage } from '@/lib/utils/error-messages';
@@ -22,18 +23,31 @@ export interface DeleteResult {
 }
 
 /**
- * Genera un nombre de archivo único
+ * Genera un nombre de archivo único.
+ *
+ * Tanto el nombre base como la extensión se limpian de todo lo que no sea
+ * alfanumérico. Sin limpiar la extensión, un archivo llamado
+ * "informe.a/../../profile-photos/foto" producía una clave que se salía de la
+ * carpeta destino, porque `split('.').pop()` devolvía "/profile-photos/foto".
  */
 function generateUniqueFilename(originalName: string, prefix?: string): string {
     const timestamp = Date.now();
-    const randomStr = Math.random().toString(36).substring(2, 8);
-    const extension = originalName.split('.').pop() || '';
-    const baseName = originalName.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9]/g, '_');
+    const randomStr = crypto.randomBytes(4).toString('hex');
+
+    const extensionCruda = originalName.split('.').pop() || '';
+    const extension = extensionCruda.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10).toLowerCase();
+
+    const baseName = originalName
+        .replace(/\.[^/.]+$/, '')
+        .replace(/[^a-zA-Z0-9]/g, '_')
+        .slice(0, 80);
+
+    const sufijo = extension ? `.${extension}` : '';
 
     if (prefix) {
-        return `${prefix}_${baseName}_${timestamp}_${randomStr}.${extension}`;
+        return `${prefix}_${baseName}_${timestamp}_${randomStr}${sufijo}`;
     }
-    return `${baseName}_${timestamp}_${randomStr}.${extension}`;
+    return `${baseName}_${timestamp}_${randomStr}${sufijo}`;
 }
 
 /**

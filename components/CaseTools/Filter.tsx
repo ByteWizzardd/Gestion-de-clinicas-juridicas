@@ -65,6 +65,9 @@ interface FilterProps {
   estatusOptions?: { value: string; label: string }[];
   estatusLabel?: string;
   showCasosAsignados?: boolean;
+  mostrarPendientesReasignacion?: boolean;
+  pendientesReasignacionFilter?: boolean;
+  onPendientesReasignacionChange?: (value: boolean) => void;
   materiaFilter?: string;
   onMateriaChange?: (value: string) => void;
   materias?: { id_materia: number; nombre_materia: string; habilitado?: boolean }[];
@@ -112,6 +115,9 @@ function Filter({
   estadoCivilFilter,
   nacionalidadFilter,
   casosAsignadosFilter,
+  mostrarPendientesReasignacion,
+  pendientesReasignacionFilter,
+  onPendientesReasignacionChange,
   onClearFilters,
   onNucleoChange,
   onTramiteChange,
@@ -371,6 +377,7 @@ function Filter({
     (municipioFilter ? 1 : 0) +
     (parroquiaFilter ? 1 : 0) +
     (casosAsignadosFilter ? 1 : 0) +
+    (pendientesReasignacionFilter ? 1 : 0) +
     (materiaFilter ? 1 : 0) +
     (categoriaFilter ? 1 : 0) +
     (subcategoriaFilter ? 1 : 0) +
@@ -401,6 +408,7 @@ function Filter({
         if (onSubcategoriaChange) onSubcategoriaChange('');
         if (onTermChange) onTermChange('');
         if (onCasosAsignadosChange) onCasosAsignadosChange(false);
+        if (onPendientesReasignacionChange) onPendientesReasignacionChange(false);
         if (onFechaInicioChange) onFechaInicioChange('');
         if (onFechaFinChange) onFechaFinChange('');
         if (onOperacionChange) onOperacionChange('');
@@ -1202,6 +1210,26 @@ function Filter({
                   </>
                 )}
 
+                {/* Opción: Casos Pendientes de Reasignación */}
+                {mostrarPendientesReasignacion && onPendientesReasignacionChange && (
+                  <>
+                    <motion.button
+                      type="button"
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ x: 4, backgroundColor: 'var(--sidebar-hover)' }}
+                      onClick={() => onPendientesReasignacionChange(!pendientesReasignacionFilter)}
+                      className={`w-full px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer flex items-center justify-end gap-2 group ${pendientesReasignacionFilter
+                        ? 'text-amber-600 dark:text-amber-500'
+                        : 'text-[var(--card-text)]'
+                        }`}
+                    >
+                      <div className="flex-1" />
+                      <span>Pendientes de reasignación</span>
+                      <Activity className={`w-4 h-4 ${pendientesReasignacionFilter ? 'text-amber-600 dark:text-amber-500' : 'text-[var(--card-text-muted)] group-hover:text-[var(--foreground)]'}`} />
+                    </motion.button>
+                    <div className="border-t border-[var(--card-border)] my-2 transition-colors"></div>
+                  </>
+                )}
 
                 {/* Opción: Actividad Reciente */}
                 {showRecentActivity && onRecentActivityChange && (

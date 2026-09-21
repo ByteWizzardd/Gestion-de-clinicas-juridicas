@@ -2,6 +2,7 @@
 
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import { formatDate } from '@/lib/utils/date-formatter';
+import { ExportStamp } from '@/components/pdf/ExportStamp';
 
 /**
  * PDF Generator Excel "Historial de Caso"
@@ -156,6 +157,8 @@ export function CasoHistorialPDF({ data, logoBase64 }: CasoHistorialPDFProps) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        {/* Marca de exportación (esquina superior derecha, en todas las páginas) */}
+        <ExportStamp offset={30} />
 
         {/* HEADER */}
         <View style={styles.header}>

@@ -2,7 +2,8 @@
  * Utilidades generales para la generación de documentos Word (.docx)
  */
 
-import { PageOrientation } from 'docx';
+import { AlignmentType, PageOrientation, Paragraph, TextRun } from 'docx';
+import { getExportStamp } from '../export-timestamp';
 
 /**
  * Crea una sección de página vacía vertical con márgenes estándar de Word
@@ -60,3 +61,25 @@ export function base64ToUint8Array(base64: string): Uint8Array {
     return bytes;
 }
 
+
+/**
+ * Párrafo con la marca de exportación, alineado a la derecha.
+ *
+ * Se coloca en la fila superior (que ya estaba vacía) de la tabla de cada
+ * página, de modo que queda en la esquina superior derecha sin desplazar el
+ * logo, el banner ni las gráficas.
+ */
+export function createExportStampParagraph(exportedAt?: Date): Paragraph {
+    return new Paragraph({
+        alignment: AlignmentType.RIGHT,
+        spacing: { before: 0, after: 0 },
+        children: [
+            new TextRun({
+                text: getExportStamp(exportedAt),
+                font: 'Arial',
+                size: 14, // 7 pt (docx usa medios puntos)
+                color: '8A8A8A',
+            }),
+        ],
+    });
+}

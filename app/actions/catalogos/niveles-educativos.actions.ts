@@ -21,6 +21,11 @@ function loadQuery(filename: string): string {
  */
 export async function getNivelesEducativos() {
     try {
+        const authResult = await requireAuthInServerActionWithCode();
+        if (!authResult.success || !authResult.user) {
+            return { success: false, error: 'No autorizado' };
+        }
+
         const nivelesEducativos = await getAllNivelesEducativos();
         return { success: true, data: nivelesEducativos };
     } catch (error) {

@@ -4,15 +4,16 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useRef } from 'react';
 import { motion } from 'motion/react';
-import { Download } from 'lucide-react';
+import { Download, RefreshCw } from 'lucide-react';
 import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import CaseFormModal from '@/components/forms/CaseFormModal';
 import TableSkeleton from '@/components/ui/skeletons/TableSkeleton';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 import ArchiveInactiveCasesModal from '@/components/cases/modals/ArchiveInactiveCasesModal';
+import ReasignarEquipoSemestreModal from '@/components/cases/modals/ReasignarEquipoSemestreModal';
 import { ESTATUS_CASO, TRAMITES } from '@/lib/constants/status';
-import { getCasosAction, getCasosByUsuarioAction, getCasosByFechaSolicitudAction, deleteCasoAction } from '@/app/actions/casos';
+import { getCasosAction, getCasosByUsuarioAction, getCasosByFechaSolicitudAction, deleteCasoAction, getCasosIdsPendientesReasignacionAction } from '@/app/actions/casos';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
 import { createCasoAction, updateCasoAction, uploadSoportesAction } from '@/app/actions/casos';
 import { getMateriasAction } from '@/app/actions/materias';
@@ -83,6 +84,8 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   const [materiaFilter, setMateriaFilter] = useState('');
   const [fechaInicioFilter, setFechaInicioFilter] = useState('');
   const [fechaFinFilter, setFechaFinFilter] = useState('');
+  const [pendientesReasignacionFilter, setPendientesReasignacionFilter] = useState(false);
+  const [casosIdsPendientes, setCasosIdsPendientes] = useState<number[]>([]);
 
   // Evita condiciones de carrera cuando se setean ambas fechas en el mismo tick (ej: opciones rápidas semana/mes).
   const fechaInicioRef = useRef(fechaInicioFilter);
@@ -105,6 +108,9 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
   // State for archiving inactive cases
   const [showArchiveModal, setShowArchiveModal] = useState(false);
+
+  // State for reassigning teams
+  const [showReasignarModal, setShowReasignarModal] = useState(false);
 
   // State for editing
   const [editingCase, setEditingCase] = useState<Caso | null>(null);
@@ -151,6 +157,21 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  // Fetch de los IDs de casos pendientes de reasignación
+  useEffect(() => {
+    const fetchPendientes = async () => {
+      try {
+        const result = await getCasosIdsPendientesReasignacionAction();
+        if (result.success && result.data) {
+          setCasosIdsPendientes(result.data);
+        }
+      } catch (err) {
+        logger.error('Error al cargar casos pendientes de reasignación:', err);
+      }
+    };
+    fetchPendientes();
   }, []);
 
   const estatusOptions = [
@@ -441,7 +462,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
   };
 
   const filteredCasos = useMemo(() => {
-    if (!searchValue && !nucleoFilter && !tramiteFilter && !estatusFilter && !casosAsignadosFilter && !materiaFilter && !fechaInicioFilter && !fechaFinFilter && !termFilter) {
+    if (!searchValue && !nucleoFilter && !tramiteFilter && !estatusFilter && !casosAsignadosFilter && !materiaFilter && !fechaInicioFilter && !fechaFinFilter && !termFilter && !pendientesReasignacionFilter) {
       return casos;
     }
 
@@ -477,10 +498,12 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
       const matchesMateria = !materiaFilter || (caso.id_materia && String(caso.id_materia) === materiaFilter);
       // Check if the case is active in the selected term (matches any in the semestres array)
       const matchesTerm = !termFilter || (caso.semestres && caso.semestres.includes(termFilter));
+      
+      const matchesPendientes = !pendientesReasignacionFilter || casosIdsPendientes.includes(caso.id_caso);
 
-      return matchesSearch && matchesNucleo && matchesTramite && matchesEstatus && matchesMateria && matchesTerm;
+      return matchesSearch && matchesNucleo && matchesTramite && matchesEstatus && matchesMateria && matchesTerm && matchesPendientes;
     });
-  }, [casos, searchValue, nucleoFilter, tramiteFilter, estatusFilter, casosAsignadosFilter, materiaFilter, fechaInicioFilter, fechaFinFilter, termFilter]);
+  }, [casos, searchValue, nucleoFilter, tramiteFilter, estatusFilter, casosAsignadosFilter, materiaFilter, fechaInicioFilter, fechaFinFilter, termFilter, pendientesReasignacionFilter, casosIdsPendientes]);
 
   const handleView = (data: Record<string, unknown>) => {
     const caso = data as TableRow;
@@ -740,9 +763,10 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
 
   return (
     <>
-      <div className="px-1">
-        <CaseTools
-          addLabel="Añadir Caso"
+      <div className="px-1 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div className="flex-1">
+          <CaseTools
+            addLabel="Añadir Caso"
           onAddClick={handleAddCase}
           searchValue={searchValue}
           onSearchChange={setSearchValue}
@@ -760,6 +784,9 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
           casosAsignadosFilter={casosAsignadosFilter}
           onCasosAsignadosChange={handleCasosAsignadosChange}
           showCasosAsignados={true}
+          mostrarPendientesReasignacion={true}
+          pendientesReasignacionFilter={pendientesReasignacionFilter}
+          onPendientesReasignacionChange={setPendientesReasignacionFilter}
 
           showDateRange={true}
           fechaInicio={fechaInicioFilter}
@@ -771,6 +798,20 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
           onTermChange={setTermFilter}
           termOptions={semestresOptions}
         />
+        </div>
+        
+        <div className="flex shrink-0">
+          <button
+            id="btn-cierre-semestre"
+            onClick={() => setShowReasignarModal(true)}
+            className="h-10 px-4 cursor-pointer rounded-full border border-red-500 text-red-600
+                       dark:text-red-400 flex items-center gap-2 whitespace-nowrap
+                       hover:bg-red-50 dark:hover:bg-red-950/30 transition-all text-base"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Cierre de semestre
+          </button>
+        </div>
       </div>
       <div className="mt-10"></div>
 
@@ -896,6 +937,12 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
           }
         }}
         onArchiveComplete={fetchCasos}
+      />
+
+      <ReasignarEquipoSemestreModal
+        isOpen={showReasignarModal}
+        onClose={() => setShowReasignarModal(false)}
+        onSuccess={fetchCasos}
       />
     </>
   );

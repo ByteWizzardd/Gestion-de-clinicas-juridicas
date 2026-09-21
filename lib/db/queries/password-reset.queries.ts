@@ -6,51 +6,80 @@ import { QueryResult } from 'pg';
  * Queries para tokens de recuperación de contraseña
  * Todas las queries SQL están en database/queries/password-reset/
  */
+
+export interface TokenRecuperacion {
+  id_token: number;
+  cedula_usuario: string;
+  codigo_verificacion: string;
+  fecha_expiracion: Date;
+  usado: boolean;
+  intentos: number;
+  fecha_creacion: Date;
+  correo_electronico: string;
+  nombres: string;
+  apellidos: string;
+}
+
 export const passwordResetQueries = {
   /**
-   * Crea un nuevo token de recuperación de contraseña
+   * Crea un nuevo token de recuperación de contraseña.
+   *
+   * La expiración se pasa como timestamp completo: la columna dejó de ser DATE
+   * en la migración 20260919_120000, porque truncar a día hacía imposible una
+   * caducidad corta.
    */
   createToken: async (data: {
     cedula_usuario: string;
     codigo_verificacion: string;
     fecha_expiracion: Date;
-  }): Promise<any> => {
+  }): Promise<TokenRecuperacion> => {
     const query = loadSQL('password-reset/create-token.sql');
-    const fechaExpiracionStr = data.fecha_expiracion.toISOString().split('T')[0];
     const result: QueryResult = await pool.query(query, [
       data.cedula_usuario,
       data.codigo_verificacion,
-      fechaExpiracionStr,
+      data.fecha_expiracion,
     ]);
     return result.rows[0];
   },
 
   /**
-   * Obtiene un token por código de verificación con información del usuario
+   * Obtiene el token vigente de un usuario.
+   *
+   * Deliberadamente NO existe una búsqueda por código suelto: la anterior
+   * permitía que un código acertado al azar sirviera para cualquier cuenta.
    */
-  getByCode: async (codigo: string): Promise<{
-    id_token: number;
-    cedula_usuario: string;
-    codigo_verificacion: string;
-    fecha_expiracion: Date;
-    usado: boolean;
-    fecha_creacion: Date;
-    correo_electronico: string;
-    nombres: string;
-    apellidos: string;
-  } | null> => {
-    const query = loadSQL('password-reset/get-by-code.sql');
-    const result: QueryResult = await pool.query(query, [codigo]);
+  getActiveByCedula: async (cedula: string): Promise<TokenRecuperacion | null> => {
+    const query = loadSQL('password-reset/get-active-by-cedula.sql');
+    const result: QueryResult = await pool.query(query, [cedula]);
     return result.rows[0] || null;
   },
 
   /**
-   * Marca un token como usado
+   * Suma un intento fallido y devuelve el total acumulado del token.
    */
-  markAsUsed: async (idToken: number): Promise<any> => {
-    const query = loadSQL('password-reset/mark-as-used.sql');
+  incrementAttempts: async (idToken: number): Promise<number> => {
+    const query = loadSQL('password-reset/increment-attempts.sql');
     const result: QueryResult = await pool.query(query, [idToken]);
-    return result.rows[0];
+    return result.rows[0]?.intentos ?? 0;
+  },
+
+  /**
+   * Marca el token como usado, pero solo si seguía vigente y sin usar.
+   *
+   * @returns true si este llamado fue el que lo consumió
+   */
+  consumeToken: async (idToken: number, cedula: string): Promise<boolean> => {
+    const query = loadSQL('password-reset/consume-token.sql');
+    const result: QueryResult = await pool.query(query, [idToken, cedula]);
+    return (result.rowCount ?? 0) > 0;
+  },
+
+  /**
+   * Invalida los códigos anteriores del usuario antes de emitirle uno nuevo.
+   */
+  invalidateUserTokens: async (cedula: string): Promise<void> => {
+    const query = loadSQL('password-reset/invalidate-user-tokens.sql');
+    await pool.query(query, [cedula]);
   },
 
   /**
@@ -61,4 +90,3 @@ export const passwordResetQueries = {
     await pool.query(query);
   },
 };
-

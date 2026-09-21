@@ -1,0 +1,40 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Clinica Juridica",
+  "version": "0.1.0",
+  "identifier": "ve.edu.ucab.clinicajuridica",
+  "build": {
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "publisher": "UCAB - Escuela de Derecho",
+    "copyright": "Universidad Catolica Andres Bello",
+    "category": "Business",
+    "shortDescription": "Gestion de Clinicas Juridicas",
+    "longDescription": "Cliente de escritorio para el sistema de Gestion de Clinicas Juridicas.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      },
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": ["Spanish", "English"]
+      }
+    }
+  }
+}

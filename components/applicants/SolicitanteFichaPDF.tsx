@@ -4,6 +4,7 @@ import React from 'react';
 // @ts-ignore - React PDF types issue with React 19
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import { formatDate, calculateAge } from '@/lib/utils/date-formatter';
+import { ExportStamp } from '@/components/pdf/ExportStamp';
 
 interface SolicitanteFichaPDFProps {
   data: {
@@ -197,6 +198,8 @@ export function SolicitanteFichaPDF({ data, logoBase64 }: SolicitanteFichaPDFPro
     <Document>
       {/* @ts-ignore */}
       <Page size="A4" style={styles.page}>
+        {/* Marca de exportación (esquina superior derecha, en todas las páginas) */}
+        <ExportStamp offset={30} />
 
         {/* HEADER */}
         {/* @ts-ignore */}
@@ -610,6 +613,8 @@ export function SolicitanteFichaPDF({ data, logoBase64 }: SolicitanteFichaPDFPro
       {/* PAGE 2 */}
       {/* @ts-ignore */}
       <Page size="A4" style={styles.page}>
+        {/* Marca de exportación (esquina superior derecha, en todas las páginas) */}
+        <ExportStamp offset={30} />
         {/* HEADER REPEATED */}
         {/* @ts-ignore */}
         <View style={styles.headerContainer}>

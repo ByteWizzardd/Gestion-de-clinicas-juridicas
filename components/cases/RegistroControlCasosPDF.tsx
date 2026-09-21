@@ -2,6 +2,7 @@
 
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import { formatDate } from '@/lib/utils/date-formatter';
+import { ExportStamp } from '@/components/pdf/ExportStamp';
 
 interface RegistroControlCasosPDFProps {
     data: {
@@ -254,6 +255,8 @@ export function RegistroControlCasosPDF({ data, logoBase64 }: RegistroControlCas
     return (
         <Document>
             <Page size="A4" style={styles.page}>
+                {/* Marca de exportación (esquina superior derecha, en todas las páginas) */}
+                <ExportStamp offset={30} />
 
                 {/* Header */}
                 <View style={styles.header}>

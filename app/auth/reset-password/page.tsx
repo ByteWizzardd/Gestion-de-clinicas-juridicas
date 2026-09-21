@@ -17,7 +17,7 @@ function ResetPasswordForm() {
     const [success, setSuccess] = useState(false);
     const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
     const [formData, setFormData] = useState({
-        cedula: "",
+        ticket: "",
         email: "",
         newPassword: "",
         confirmPassword: "",
@@ -36,10 +36,10 @@ function ResetPasswordForm() {
     }, []);
 
     useEffect(() => {
-        const cedula = searchParams.get('cedula');
+        const ticket = searchParams.get('ticket');
         const email = searchParams.get('email');
-        if (cedula) {
-            setFormData(prev => ({ ...prev, cedula: decodeURIComponent(cedula) }));
+        if (ticket) {
+            setFormData(prev => ({ ...prev, ticket: decodeURIComponent(ticket) }));
         }
         if (email) {
             setFormData(prev => ({ ...prev, email: decodeURIComponent(email) }));
@@ -68,7 +68,7 @@ function ResetPasswordForm() {
         setError(null);
         setSuccess(false);
 
-        if (!formData.cedula || !formData.newPassword || !formData.confirmPassword) {
+        if (!formData.ticket || !formData.newPassword || !formData.confirmPassword) {
             setError("Por favor complete todos los campos");
             return;
         }
@@ -78,8 +78,8 @@ function ResetPasswordForm() {
             return;
         }
 
-        if (formData.newPassword.length < 6) {
-            setError("La contraseña debe tener al menos 6 caracteres");
+        if (formData.newPassword.length < 8) {
+            setError("La contraseña debe tener al menos 8 caracteres");
             return;
         }
 
@@ -88,7 +88,7 @@ function ResetPasswordForm() {
         try {
             const { resetPasswordAction } = await import('@/app/actions/auth');
             const formDataToSend = new FormData();
-            formDataToSend.append('cedula', formData.cedula);
+            formDataToSend.append('ticket', formData.ticket);
             formDataToSend.append('newPassword', formData.newPassword);
             formDataToSend.append('confirmPassword', formData.confirmPassword);
 
@@ -163,8 +163,8 @@ function ResetPasswordForm() {
                                             <strong>Correo:</strong> {formData.email}
                                         </div>
                                     )}
-                                    {/* Campo oculto para cedula */}
-                                    <input type="hidden" name="cedula" value={formData.cedula} />
+                                    {/* Comprobante firmado del paso de verificacion */}
+                                    <input type="hidden" name="ticket" value={formData.ticket} />
                                     <Input
                                         label="Nueva contraseña"
                                         placeholder="Ingrese su nueva contraseña"

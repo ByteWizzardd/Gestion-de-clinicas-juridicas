@@ -3,6 +3,7 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
 import { logger } from '@/lib/utils/logger';
 import { SocioeconomicoData } from '@/types/reports';
+import { ExportStamp } from '@/components/pdf/ExportStamp';
 
 // Registrar League Spartan desde archivos locales
 try {
@@ -294,6 +295,8 @@ const InformeSocioeconomicoPDF: React.FC<InformeSocioeconomicoPDFProps> = ({
                 return (
                     // @ts-ignore
                     <Page key={section.key} size="A4" orientation="landscape" style={styles.page}>
+                        {/* Marca de exportación (esquina superior derecha, en todas las páginas) */}
+                        <ExportStamp />
                         {/* Header con logo (siempre arriba) */}
                         {/* @ts-ignore */}
                         <View style={styles.header}>

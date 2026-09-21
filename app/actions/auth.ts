@@ -3,15 +3,35 @@
 import { cookies, headers } from 'next/headers';
 import { authService } from '@/lib/services/auth.service';
 import { authQueries } from '@/lib/db/queries/auth.queries';
-import { jwtExpiresInToSeconds, verifyToken } from '@/lib/utils/security';
+import { jwtExpiresInToSeconds, verifyToken, JWT_EXPIRES_IN } from '@/lib/utils/security';
 import { AppError, UnauthorizedError } from '@/lib/utils/errors';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { handleServerActionError } from '@/lib/utils/server-action-helpers';
 import { usuariosQueries } from '@/lib/db/queries/usuarios.queries';
 import crypto from "crypto";
 import { toUserMessage } from '@/lib/utils/error-messages';
+import { passwordResetQueries } from '@/lib/db/queries/password-reset.queries';
+import { emitirResetTicket, verificarResetTicket } from '@/lib/utils/reset-ticket';
 
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '30d';
+// --- Limites contra fuerza bruta --------------------------------------------
+/** Intentos de login fallidos tolerados por usuario dentro de la ventana. */
+const MAX_INTENTOS_LOGIN = 5;
+/** Ventana, en minutos, sobre la que se cuentan esos intentos. */
+const VENTANA_LOGIN_MINUTOS = 15;
+/** Intentos de codigo de recuperacion tolerados antes de anular el codigo. */
+const MAX_INTENTOS_CODIGO = 5;
+/** Vigencia del codigo de recuperacion, en minutos. */
+const CODIGO_TTL_MINUTOS = 15;
+/** Longitud minima de una contrasena nueva. */
+const LONGITUD_MINIMA_PASSWORD = 8;
+
+/**
+ * Mensaje unico para todo fallo del paso de verificacion.
+ *
+ * Distinguir "codigo incorrecto" de "no hay codigo" o "demasiados intentos" le
+ * diria al atacante en cual de los tres casos esta.
+ */
+const ERROR_CODIGO_GENERICO = 'Codigo de verificacion invalido o expirado';
 
 export interface LoginResult {
   success: boolean;
@@ -112,6 +132,26 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
     const headersList = await headers();
     const ipDireccion = headersList.get('x-forwarded-for') || 'unknown';
     const dispositivo = headersList.get('user-agent') || 'unknown';
+
+    // Frenar la fuerza bruta antes de comparar la contrasena.
+    //
+    // No se registra un intento fallido adicional aqui: si lo hiciera, un
+    // atacante podria mantener bloqueada la cuenta de un usuario legitimo
+    // indefinidamente. El bloqueo se levanta solo al vencer la ventana.
+    const intentosRecientes = await authQueries.contarIntentosFallidosRecientes(
+      user.cedula,
+      VENTANA_LOGIN_MINUTOS
+    );
+
+    if (intentosRecientes >= MAX_INTENTOS_LOGIN) {
+      return {
+        success: false,
+        error: {
+          message: `Demasiados intentos fallidos. Espera ${VENTANA_LOGIN_MINUTOS} minutos e intenta de nuevo.`,
+          code: 'TOO_MANY_ATTEMPTS',
+        },
+      };
+    }
 
     // Auto-cerrar sesiones expiradas. Esto limpiará cualquier sesión "zombie"
     // cada vez que un usuario intente iniciar sesión, manteniendo limpia la BD.
@@ -293,7 +333,13 @@ export interface ResetPasswordResult {
 export interface VerifyCodeResult {
   success: boolean;
   data?: {
-    cedula: string;
+    /**
+     * Comprobante firmado de que el codigo fue verificado.
+     *
+     * Sustituye a la cedula que antes viajaba por la URL: el cliente ya no
+     * decide de quien es la contrasena que se va a cambiar.
+     */
+    ticket: string;
     email: string;
   };
   error?: {
@@ -310,6 +356,23 @@ function generateVerificationCode(): string {
   const randomBytes = crypto.randomBytes(3); // 3 bytes = 24 bits, suficiente para 6 dígitos
   const randomNum = parseInt(randomBytes.toString('hex'), 16) % 900000 + 100000; // Entre 100000 y 999999
   return randomNum.toString();
+}
+
+/**
+ * Compara dos codigos sin filtrar en cuanto difieren.
+ *
+ * Una comparacion normal con === se detiene en el primer caracter distinto, y
+ * esa diferencia de tiempo es medible.
+ */
+function comparacionSegura(a: string, b: string): boolean {
+  const bufA = Buffer.from(a, 'utf8');
+  const bufB = Buffer.from(b, 'utf8');
+
+  if (bufA.length !== bufB.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(bufA, bufB);
 }
 
 /**
@@ -336,18 +399,19 @@ export async function forgotPasswordAction(formData: FormData): Promise<ForgotPa
     const { usuariosQueries } = await import('@/lib/db/queries/usuarios.queries');
     const usuarios = await usuariosQueries.searchByEmail(normalizedEmail);
 
+    // El mismo mensaje exista o no el correo. Responder distinto permitia
+    // averiguar que cuentas estan registradas probando correos.
+    const successMessage = 'Si el correo existe en nuestro sistema, recibirás un código de verificación por correo electrónico.';
+
     if (usuarios.length === 0) {
       return {
         success: true,
         data: {
-          message: 'El correo electrónico ingresado no está registrado en nuestro sistema. Por favor, verifique el correo e intente nuevamente.',
-          emailFound: false, // No redirigir si el correo no existe
+          message: successMessage,
+          emailFound: true,
         },
       };
     }
-
-    // Por seguridad, siempre retornamos el mismo mensaje cuando el correo existe
-    const successMessage = 'Si el correo existe en nuestro sistema, recibirás un código de verificación por correo electrónico.';
 
     const usuario = usuarios[0];
     const cedula = usuario.cedula;
@@ -356,12 +420,14 @@ export async function forgotPasswordAction(formData: FormData): Promise<ForgotPa
     // Generar código de verificación
     const codigo = generateVerificationCode();
 
-    // Calcular fecha de expiración (24 horas desde ahora)
-    const fechaExpiracion = new Date();
-    fechaExpiracion.setDate(fechaExpiracion.getDate() + 1);
+    // Vigencia corta y real. La columna era DATE, lo que truncaba cualquier
+    // caducidad al final del dia; la migracion 20260919_120000 la paso a
+    // TIMESTAMP para que estos minutos signifiquen algo.
+    const fechaExpiracion = new Date(Date.now() + CODIGO_TTL_MINUTOS * 60 * 1000);
 
-    // Guardar token en la base de datos
-    const { passwordResetQueries } = await import('@/lib/db/queries/password-reset.queries');
+    // Un unico codigo vigente por usuario: emitir uno nuevo anula los previos.
+    await passwordResetQueries.invalidateUserTokens(cedula);
+
     await passwordResetQueries.createToken({
       cedula_usuario: cedula,
       codigo_verificacion: codigo,
@@ -407,39 +473,70 @@ export async function forgotPasswordAction(formData: FormData): Promise<ForgotPa
  */
 export async function verifyCodeAction(formData: FormData): Promise<VerifyCodeResult> {
   try {
-    const codigo = formData.get('codigo') as string;
+    const codigo = ((formData.get('codigo') as string | null) ?? '').trim();
+    const emailCrudo = (formData.get('email') as string | null) ?? '';
+    const email = emailCrudo.trim().toLowerCase().replace(/\s+/g, '');
 
-    if (!codigo || codigo.trim() === '') {
+    if (!codigo || !email) {
       return {
         success: false,
-        error: {
-          message: 'El código de verificación es requerido',
-          code: 'VALIDATION_ERROR',
-        },
+        error: { message: ERROR_CODIGO_GENERICO, code: 'INVALID_CODE' },
       };
     }
 
-    // Buscar token por código
-    const { passwordResetQueries } = await import('@/lib/db/queries/password-reset.queries');
-    const token = await passwordResetQueries.getByCode(codigo.trim());
+    // El codigo se busca DENTRO de la cuenta indicada. La version anterior lo
+    // buscaba suelto (WHERE codigo_verificacion = $1), asi que un acierto al
+    // azar servia para cualquier usuario sin saber siquiera de quien era.
+    const usuarios = await usuariosQueries.searchByEmail(email);
+
+    if (usuarios.length === 0) {
+      return {
+        success: false,
+        error: { message: ERROR_CODIGO_GENERICO, code: 'INVALID_CODE' },
+      };
+    }
+
+    const cedula = usuarios[0].cedula as string;
+    const token = await passwordResetQueries.getActiveByCedula(cedula);
 
     if (!token) {
       return {
         success: false,
-        error: {
-          message: 'Código de verificación inválido o expirado',
-          code: 'INVALID_CODE',
-        },
+        error: { message: ERROR_CODIGO_GENERICO, code: 'INVALID_CODE' },
       };
     }
 
-    // Marcar token como usado
-    await passwordResetQueries.markAsUsed(token.id_token);
+    if (token.intentos >= MAX_INTENTOS_CODIGO) {
+      await passwordResetQueries.invalidateUserTokens(cedula);
+      return {
+        success: false,
+        error: { message: ERROR_CODIGO_GENERICO, code: 'INVALID_CODE' },
+      };
+    }
+
+    if (!comparacionSegura(codigo, token.codigo_verificacion)) {
+      const intentos = await passwordResetQueries.incrementAttempts(token.id_token);
+
+      // Agotados los intentos el codigo muere: hay que pedir uno nuevo.
+      if (intentos >= MAX_INTENTOS_CODIGO) {
+        await passwordResetQueries.invalidateUserTokens(cedula);
+      }
+
+      return {
+        success: false,
+        error: { message: ERROR_CODIGO_GENERICO, code: 'INVALID_CODE' },
+      };
+    }
+
+    // Acierto. El token NO se marca usado todavia: se consume al guardar la
+    // contrasena nueva, para que un abandono a mitad de camino no obligue a
+    // pedir otro codigo.
+    const ticket = emitirResetTicket({ cedula, idToken: token.id_token });
 
     return {
       success: true,
       data: {
-        cedula: token.cedula_usuario,
+        ticket,
         email: token.correo_electronico,
       },
     };
@@ -457,7 +554,7 @@ export async function verifyCodeAction(formData: FormData): Promise<VerifyCodeRe
     return {
       success: false,
       error: {
-        message: toUserMessage(error, 'Error al verificar el código'),
+        message: toUserMessage(error, 'Error al verificar el codigo'),
         code: 'UNKNOWN_ERROR',
       },
     };
@@ -469,11 +566,11 @@ export async function verifyCodeAction(formData: FormData): Promise<VerifyCodeRe
  */
 export async function resetPasswordAction(formData: FormData): Promise<ResetPasswordResult> {
   try {
-    const cedula = formData.get('cedula') as string;
+    const ticket = ((formData.get('ticket') as string | null) ?? '').trim();
     const newPassword = formData.get('newPassword') as string;
     const confirmPassword = formData.get('confirmPassword') as string;
 
-    if (!cedula || !newPassword || !confirmPassword) {
+    if (!ticket || !newPassword || !confirmPassword) {
       return {
         success: false,
         error: {
@@ -483,29 +580,62 @@ export async function resetPasswordAction(formData: FormData): Promise<ResetPass
       };
     }
 
+    // De quien es la contrasena lo dice el comprobante firmado en el paso
+    // anterior, no el formulario. Antes se aceptaba una cedula suelta, de modo
+    // que cualquiera podia invocar esta accion y cambiar la clave de otro.
+    const datosTicket = verificarResetTicket(ticket);
+
+    if (!datosTicket) {
+      return {
+        success: false,
+        error: {
+          message: 'La verificacion expiro o no es valida. Solicita un codigo nuevo.',
+          code: 'INVALID_TICKET',
+        },
+      };
+    }
+
     if (newPassword !== confirmPassword) {
       return {
         success: false,
         error: {
-          message: 'Las contraseñas no coinciden',
+          message: 'Las contrasenas no coinciden',
           code: 'VALIDATION_ERROR',
         },
       };
     }
 
-    if (newPassword.length < 6) {
+    if (newPassword.length < LONGITUD_MINIMA_PASSWORD) {
       return {
         success: false,
         error: {
-          message: 'La contraseña debe tener al menos 6 caracteres',
+          message: `La contrasena debe tener al menos ${LONGITUD_MINIMA_PASSWORD} caracteres`,
           code: 'VALIDATION_ERROR',
         },
       };
     }
 
-    // Obtener correo del usuario por cédula
-    const { usuariosQueries } = await import('@/lib/db/queries/usuarios.queries');
-    const usuario = await usuariosQueries.getCompleteByCedula(cedula.trim());
+    // Las validaciones van antes de consumir: un error de tipeo no debe
+    // quemar el codigo y obligar a empezar de cero.
+    //
+    // consumeToken compara y escribe en una sola sentencia, asi que dos
+    // peticiones con el mismo comprobante no pueden pasar ambas.
+    const consumido = await passwordResetQueries.consumeToken(
+      datosTicket.idToken,
+      datosTicket.cedula
+    );
+
+    if (!consumido) {
+      return {
+        success: false,
+        error: {
+          message: 'Esta verificacion ya fue utilizada. Solicita un codigo nuevo.',
+          code: 'INVALID_TICKET',
+        },
+      };
+    }
+
+    const usuario = await usuariosQueries.getCompleteByCedula(datosTicket.cedula);
 
     if (!usuario) {
       return {
@@ -517,17 +647,15 @@ export async function resetPasswordAction(formData: FormData): Promise<ResetPass
       };
     }
 
-    // Hash de la nueva contraseña
     const { hashPassword } = await import('@/lib/utils/security');
     const passwordHash = await hashPassword(newPassword);
 
-    // Actualizar contraseña usando el correo
     await usuariosQueries.updatePasswordByEmail(usuario.correo_electronico, passwordHash);
 
     return {
       success: true,
       data: {
-        message: 'Contraseña actualizada exitosamente',
+        message: 'Contrasena actualizada exitosamente',
       },
     };
   } catch (error) {
@@ -544,7 +672,7 @@ export async function resetPasswordAction(formData: FormData): Promise<ResetPass
     return {
       success: false,
       error: {
-        message: toUserMessage(error, 'Error al restablecer la contraseña'),
+        message: toUserMessage(error, 'Error al restablecer la contrasena'),
         code: 'UNKNOWN_ERROR',
       },
     };
@@ -604,11 +732,11 @@ export async function changePasswordAction(formData: FormData): Promise<ChangePa
       };
     }
 
-    if (newPassword.length < 6) {
+    if (newPassword.length < LONGITUD_MINIMA_PASSWORD) {
       return {
         success: false,
         error: {
-          message: 'La contraseña debe tener al menos 6 caracteres',
+          message: `La contraseña debe tener al menos ${LONGITUD_MINIMA_PASSWORD} caracteres`,
           code: 'VALIDATION_ERROR',
         },
       };

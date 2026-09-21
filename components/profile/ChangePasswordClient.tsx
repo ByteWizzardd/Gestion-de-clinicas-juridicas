@@ -42,8 +42,8 @@ export default function ChangePasswordClient() {
 
     if (!formData.newPassword.trim()) {
       newErrors.newPassword = 'Este campo es requerido';
-    } else if (formData.newPassword.length < 6) {
-      newErrors.newPassword = 'La contraseña debe tener al menos 6 caracteres';
+    } else if (formData.newPassword.length < 8) {
+      newErrors.newPassword = 'La contraseña debe tener al menos 8 caracteres';
     }
 
     if (!formData.confirmPassword.trim()) {
@@ -144,7 +144,7 @@ export default function ChangePasswordClient() {
                 onChange={handleInputChange}
                 error={errors.newPassword}
                 required
-                minLength={6}
+                minLength={8}
               />
             </div>
 
@@ -157,7 +157,7 @@ export default function ChangePasswordClient() {
                 onChange={handleInputChange}
                 error={errors.confirmPassword}
                 required
-                minLength={6}
+                minLength={8}
               />
             </div>
 

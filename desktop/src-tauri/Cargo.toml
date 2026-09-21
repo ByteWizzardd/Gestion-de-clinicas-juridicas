@@ -1,0 +1,31 @@
+[package]
+name = "clinica-juridica-desktop"
+version = "0.1.0"
+description = "Cliente de escritorio de Gestion de Clinicas Juridicas"
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+name = "clinica_juridica_desktop_lib"
+# Solo rlib: staticlib y cdylib existen en la plantilla de Tauri para
+# compilar a iOS y Android. Esto es solo escritorio, y generarlos hacia
+# que el linker emitiera una advertencia en cada build.
+crate-type = ["rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+
+[target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
+tauri-plugin-single-instance = "2"
+
+# Binario lo mas pequeno posible: sin simbolos, una sola unidad de codegen y LTO.
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true
