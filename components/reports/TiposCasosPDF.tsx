@@ -3,6 +3,7 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
 import { logger } from '@/lib/utils/logger';
 import { CasosGroupedData } from '@/types/reports';
+import { ExportStamp } from '@/components/pdf/ExportStamp';
 
 // Registrar League Spartan desde archivos locales
 // Los archivos están en: public/fonts/league-spartan/static/
@@ -299,6 +300,8 @@ export const TiposCasosPDF: React.FC<TiposCasosPDFProps> = ({
         return (
           // @ts-ignore - React PDF types issue
           <Page key={key} size="A4" orientation="landscape" style={styles.page}>
+            {/* Marca de exportación (esquina superior derecha, en todas las páginas) */}
+            <ExportStamp />
             {/* Header con logo - EN TODAS LAS PÁGINAS */}
             {/* @ts-ignore */}
             <View style={styles.header}>

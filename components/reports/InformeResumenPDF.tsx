@@ -3,6 +3,7 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
 import { logger } from '@/lib/utils/logger';
 import { CasosGroupedData } from '@/types/reports';
+import { ExportStamp } from '@/components/pdf/ExportStamp';
 
 // Registrar League Spartan desde archivos locales
 try {
@@ -549,6 +550,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
         return (
           // @ts-ignore
           <Page key={key} size="A4" orientation="landscape" style={styles.page}>
+            {/* Marca de exportación (esquina superior derecha, en todas las páginas) */}
+            <ExportStamp />
             {isFirstPage ? (
               <>
                 {/* Header con logo */}
@@ -656,6 +659,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
       {chartImages.casosPorMateria && data.casosPorMateria && (
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
+          {/* Marca de exportación (esquina superior derecha, en todas las páginas) */}
+          <ExportStamp />
           <ReportHeader />
           {/* Banner si es la primera sección */}
           {firstVisibleSection === 'casosPorMateria' && <TitleBanner />}
@@ -683,6 +688,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
       {chartImages.solicitantesPorGenero && data.solicitantesPorGenero && (
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
+          {/* Marca de exportación (esquina superior derecha, en todas las páginas) */}
+          <ExportStamp />
           <ReportHeader />
           {/* Banner si es la primera sección */}
           {firstVisibleSection === 'solicitantesPorGenero' && <TitleBanner />}
@@ -710,6 +717,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
       {chartImages.solicitantesPorEstado && data.solicitantesPorEstado && (
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
+          {/* Marca de exportación (esquina superior derecha, en todas las páginas) */}
+          <ExportStamp />
           <ReportHeader />
           {/* Banner si es la primera sección */}
           {firstVisibleSection === 'solicitantesPorEstado' && <TitleBanner />}
@@ -737,6 +746,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
       {chartImages.solicitantesPorParroquia && data.solicitantesPorParroquia && (
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
+          {/* Marca de exportación (esquina superior derecha, en todas las páginas) */}
+          <ExportStamp />
           <ReportHeader />
           {/* Banner si es la primera sección */}
           {firstVisibleSection === 'solicitantesPorParroquia' && <TitleBanner />}
@@ -764,6 +775,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
       {chartImages.beneficiariosDirectos && data.beneficiariosPorTipo && (
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
+          {/* Marca de exportación (esquina superior derecha, en todas las páginas) */}
+          <ExportStamp />
           <ReportHeader />
           {/* Banner si es la primera sección */}
           {firstVisibleSection === 'beneficiariosDirectos' && <TitleBanner />}
@@ -793,6 +806,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
       {chartImages.beneficiariosIndirectos && data.beneficiariosPorTipo && (
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
+          {/* Marca de exportación (esquina superior derecha, en todas las páginas) */}
+          <ExportStamp />
           <ReportHeader />
           {/* Banner si es la primera sección */}
           {firstVisibleSection === 'beneficiariosIndirectos' && <TitleBanner />}
@@ -822,6 +837,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
       {chartImages.beneficiariosPorParentesco && data.beneficiariosPorParentesco && (
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
+          {/* Marca de exportación (esquina superior derecha, en todas las páginas) */}
+          <ExportStamp />
           <ReportHeader />
           {/* Banner si es la primera sección */}
           {firstVisibleSection === 'beneficiariosPorParentesco' && <TitleBanner />}
@@ -849,6 +866,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
       {data.estudiantesPorMateria && chartImages.estudiantesPorMateria?.total && (
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
+          {/* Marca de exportación (esquina superior derecha, en todas las páginas) */}
+          <ExportStamp />
           <ReportHeader />
           {/* Banner si es la primera sección */}
           {firstVisibleSection === 'estudiantesPorMateria' && <TitleBanner />}
@@ -876,6 +895,8 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
       {data.profesoresPorMateria && chartImages.profesoresPorMateria?.total && (
         // @ts-ignore
         <Page size="A4" orientation="landscape" style={styles.page}>
+          {/* Marca de exportación (esquina superior derecha, en todas las páginas) */}
+          <ExportStamp />
           <ReportHeader />
           {/* Banner si es la primera sección */}
           {firstVisibleSection === 'profesoresPorMateria' && <TitleBanner />}
