@@ -41,6 +41,43 @@ npm run build    # instalador en src-tauri/target/release/bundle/nsis/
 npm run icon     # regenera los iconos desde app-icon.png
 ```
 
+`npm run build` **exige** `CLINICA_DESKTOP_TOKEN` (ver abajo). En PowerShell:
+
+```powershell
+$env:CLINICA_DESKTOP_TOKEN = "<el mismo valor que DESKTOP_APP_TOKEN en Vercel>"
+npm run build
+```
+
+## Puerta de acceso al despliegue
+
+El despliegue es público: cualquiera con la URL ve la pantalla de login. Para
+filtrar ese ruido, la ventana se identifica con un marcador en su `User-Agent`
+y el servidor responde **404** a quien no lo traiga.
+
+| Dónde | Variable | Cuándo |
+|---|---|---|
+| Servidor | `DESKTOP_APP_TOKEN` | en el entorno de producción |
+| Instalador | `CLINICA_DESKTOP_TOKEN` | al compilar, mismo valor |
+
+Detalles que importan:
+
+- El token se inyecta al compilar (`option_env!`). Un build de **release** sin
+  él no compila: un instalador mudo no se detectaría hasta abrirlo en el equipo
+  del usuario. `npm run dev` sí funciona sin token.
+- Va en el `User-Agent` porque WebView2 lo aplica a **todas** las peticiones de
+  la ventana — navegaciones, Server Actions, descargas. Tauri no expone una
+  forma de añadir cabeceras propias (wry tiene `with_headers`, pero solo afecta
+  a la carga inicial).
+- Efecto colateral: cuando el webview sigue la redirección de
+  `/api/blob/image` hacia el CDN de Vercel Blob, el `User-Agent` viaja con él.
+  El token queda en los registros de otro host del mismo proveedor, siempre
+  sobre TLS.
+- Cambiar el token implica **redesplegar y redistribuir el instalador**. Los dos
+  valores tienen que coincidir o nadie entra.
+- **No es un límite de seguridad**: `strings "Clinica Juridica.exe"` saca el
+  token y replicarlo es un `curl -A`. El límite real siguen siendo el login y
+  los roles. Ver `lib/utils/desktop-gate.ts`.
+
 ## Qué resuelve el shell
 
 Un webview no es un navegador; estas cosas hubo que cablearlas a mano en
@@ -53,6 +90,7 @@ Un webview no es un navegador; estas cosas hubo que cablearlas a mano en
 | Enlaces externos secuestraban la ventana de la app | `on_navigation` solo permite el host de la app |
 | Sin internet se veía el error crudo de WebView2 | Chequeo de conectividad al arrancar → `dist/index.html` |
 | Abrir el .exe dos veces creaba dos ventanas | `tauri-plugin-single-instance` reenfoca la existente |
+| El despliegue estaba abierto a cualquiera con la URL | Marcador en el `User-Agent` que el middleware exige |
 
 ## Cambiar de entorno
 
@@ -60,3 +98,6 @@ El dominio está en dos sitios que deben coincidir:
 
 - `src-tauri/src/lib.rs` → `APP_URL` y `APP_HOST`
 - `dist/index.html` → `APP_URL`
+
+El token no: vive fuera del repositorio, en el entorno de compilación y en el
+del servidor.

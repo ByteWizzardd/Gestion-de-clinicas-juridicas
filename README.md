@@ -141,6 +141,9 @@ CITA_REMINDER_DAYS_AHEAD=1
 
 # Retención de notificaciones (días)
 NOTIFICATIONS_TTL_DAYS=30
+
+# Puerta de la app de escritorio (solo produccion; ver abajo)
+DESKTOP_APP_TOKEN=
 ```
 
 ### 4. Configurar la base de datos
@@ -201,6 +204,40 @@ Abre en tu navegador: [http://localhost:3000](http://localhost:3000)
 | Reiniciar los contenedores | `docker compose restart` |
 | Detener y eliminar volúmenes (reiniciar BD limpia) | `docker compose down -v` |
 | Conectarse a PostgreSQL dentro del contenedor | `docker compose exec db psql -U postgres -d gestion_clinicas` |
+
+---
+
+## 🖥️ App de escritorio y acceso al despliegue
+
+La clínica usa el sistema desde una ventana nativa (`desktop/`, Tauri v2) que
+carga el mismo despliegue. Ver [desktop/README.md](desktop/README.md).
+
+Como el despliegue es público, un token compartido filtra el tráfico que no
+viene de esa ventana: la app lo manda en su `User-Agent` y el middleware
+responde **404** a todo lo demás.
+
+| Dónde | Variable | Cuándo |
+|---|---|---|
+| Servidor (Vercel / Docker) | `DESKTOP_APP_TOKEN` | en el entorno de producción |
+| Instalador | `CLINICA_DESKTOP_TOKEN` | al compilar, mismo valor |
+
+```bash
+node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"
+```
+
+- **Sin `DESKTOP_APP_TOKEN` la puerta queda abierta**, a propósito: si el código
+  llega a producción antes que la variable, fallar cerrado dejaría fuera a todo
+  el mundo. En desarrollo (`NODE_ENV !== 'production'`) tampoco se aplica.
+- Para entrar desde un navegador normal (demos, soporte): abrir cualquier ruta
+  con `?acceso=<DESKTOP_APP_TOKEN>`. Deja una cookie por 30 días. El token queda
+  en los registros de acceso del servidor, así que conviene rotarlo después.
+- **Esto no es un límite de seguridad.** El token viaja dentro de un binario que
+  se distribuye y `strings` lo saca del `.exe`; replicarlo es un `curl -A`. El
+  límite real siguen siendo el login, los roles y la verificación de sesión de
+  cada Server Action. Nada de eso se puede relajar por tener esta puerta.
+- Si el plan de Vercel lo permite, la misma condición como regla del Firewall
+  corta el tráfico en el edge y ahorra invocaciones. El chequeo del middleware
+  se queda igual: viaja con el proyecto si se cambia de proveedor.
 
 ---
 
