@@ -7,7 +7,10 @@ rust-version = "1.77.2"
 
 [lib]
 name = "clinica_juridica_desktop_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
+# Solo rlib: staticlib y cdylib existen en la plantilla de Tauri para
+# compilar a iOS y Android. Esto es solo escritorio, y generarlos hacia
+# que el linker emitiera una advertencia en cada build.
+crate-type = ["rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
