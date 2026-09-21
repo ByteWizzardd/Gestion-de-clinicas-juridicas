@@ -7,6 +7,7 @@ import crypto from 'crypto';
 import { put, del, list } from '@vercel/blob';
 import { logger } from '@/lib/utils/logger';
 import { toUserMessage } from '@/lib/utils/error-messages';
+import { sanitizeFileExtension, sanitizeFileNamePart } from '@/lib/utils/filename';
 
 // Tipos de archivos soportados
 export type StorageFolder = 'profile-photos' | 'soportes';
@@ -25,8 +26,9 @@ export interface DeleteResult {
 /**
  * Genera un nombre de archivo único.
  *
- * Tanto el nombre base como la extensión se limpian de todo lo que no sea
- * alfanumérico. Sin limpiar la extensión, un archivo llamado
+ * Tanto el nombre base como la extensión quedan reducidos a [A-Za-z0-9_],
+ * transliterando antes los acentos para no perder legibilidad ("Informe
+ * Jurídico.pdf" -> "Informe_Juridico"). Sin limpiar la extensión, un archivo llamado
  * "informe.a/../../profile-photos/foto" producía una clave que se salía de la
  * carpeta destino, porque `split('.').pop()` devolvía "/profile-photos/foto".
  */
@@ -35,12 +37,9 @@ function generateUniqueFilename(originalName: string, prefix?: string): string {
     const randomStr = crypto.randomBytes(4).toString('hex');
 
     const extensionCruda = originalName.split('.').pop() || '';
-    const extension = extensionCruda.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10).toLowerCase();
+    const extension = sanitizeFileExtension(extensionCruda);
 
-    const baseName = originalName
-        .replace(/\.[^/.]+$/, '')
-        .replace(/[^a-zA-Z0-9]/g, '_')
-        .slice(0, 80);
+    const baseName = sanitizeFileNamePart(originalName.replace(/\.[^/.]+$/, ''), 'archivo');
 
     const sufijo = extension ? `.${extension}` : '';
 
@@ -96,7 +95,7 @@ export async function uploadProfilePhoto(
     cedula: string,
     filename: string
 ): Promise<UploadResult> {
-    return uploadFile(file, filename, 'profile-photos', cedula.replace(/[^a-zA-Z0-9]/g, '_'));
+    return uploadFile(file, filename, 'profile-photos', sanitizeFileNamePart(cedula, 'sin_cedula', 20));
 }
 
 /**
