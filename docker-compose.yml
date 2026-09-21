@@ -24,6 +24,9 @@ services:
       - CITA_REMINDER_DAYS_AHEAD=${CITA_REMINDER_DAYS_AHEAD:-1}
       - NOTIFICATIONS_TTL_DAYS=${NOTIFICATIONS_TTL_DAYS:-30}
       - BLOB_READ_WRITE_TOKEN=${BLOB_READ_WRITE_TOKEN:-}
+      # Vacio = puerta abierta. Solo tiene sentido si esta instalacion se usa
+      # desde la app de escritorio (ver desktop/README.md).
+      - DESKTOP_APP_TOKEN=${DESKTOP_APP_TOKEN:-}
     depends_on:
       db:
         condition: service_healthy
