@@ -240,7 +240,7 @@ export function CasoHistorialPDF({ data, logoBase64 }: CasoHistorialPDFProps) {
           {soportes.length > 0 ? (
             soportes.map((s, i) => (
               <Text key={i} style={[styles.valueText, { marginBottom: 2 }]}>
-                • {s.nombre_archivo} ({s.tipo_mime}){s.descripcion ? ` - ${s.descripcion}` : ''}
+                • {s.nombre_archivo}{s.descripcion ? ` - ${s.descripcion}` : ''}
               </Text>
             ))
           ) : (
