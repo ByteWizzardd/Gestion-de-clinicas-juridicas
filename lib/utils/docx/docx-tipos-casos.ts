@@ -25,7 +25,7 @@ import {
     generatePieChartImage,
     formatGroupTitle
 } from '../pdf-generator-react';
-import { formatDate, base64ToUint8Array } from './docx-utils';
+import { createExportStampParagraph, formatDate, base64ToUint8Array } from './docx-utils';
 import { formatDateTimeForFilename } from '../date-formatter';
 
 import {
@@ -143,7 +143,8 @@ function createPageTable(
     topContent: any[],
     legendUint8: Uint8Array,
     legendInsertWidth: number,
-    legendInsertHeight: number
+    legendInsertHeight: number,
+    exportedAt?: Date
 ): Table {
     return new Table({
         rows: [
@@ -151,7 +152,7 @@ function createPageTable(
             new TableRow({
                 children: [
                     new TableCell({
-                        children: [],
+                        children: [createExportStampParagraph(exportedAt)],
                         verticalAlign: VerticalAlign.TOP,
                         borders: {
                             top: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
@@ -254,6 +255,8 @@ export async function generateTiposCasosDOCX(
         const groupedData = groupDataByMateriaSubcategoria(data);
         const sections: any[] = [];
 
+        const exportedAt = new Date();
+
         const emissionStr = formatDateTimeForFilename();
         const reportTitle = `Tipos de Caso${term ? ` Semestre ${term}` : (fechaInicio && fechaFin ? ` ${formatDate(fechaInicio)} - ${formatDate(fechaFin)}` : '')}`;
 
@@ -291,7 +294,8 @@ export async function generateTiposCasosDOCX(
                 topContent,
                 legendUint8,
                 legendInsertWidth,
-                legendInsertHeight
+                legendInsertHeight,
+                exportedAt
             );
 
             // Agregar sección de página
