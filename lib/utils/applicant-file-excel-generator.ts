@@ -1,6 +1,7 @@
 import ExcelJS from 'exceljs';
 import { SolicitanteFichaData } from '../types/report-types';
 import { calculateAge } from './date-formatter';
+import { applyExcelExportStamp } from './excel-export-stamp';
 
 /**
  * Genera un archivo Excel con el diseño exacto de "REGISTRO Y CONTROL DE BENEFICIARIOS"
@@ -32,6 +33,9 @@ export async function generateSolicitanteFichaExcel(data: SolicitanteFichaData):
     const borderBox = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } } as const;
     const alignCenter = { horizontal: 'center', vertical: 'middle' } as const;
     const fillSection = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } } as const;
+
+    // Marca de exportación: fila 1, pegada al margen derecho del formato
+    applyExcelExportStamp(sheet, { cell: { row: 1, fromCol: 40, toCol: 55 } });
 
     const s = data.solicitante || {};
     const beneficiarios = data.beneficiarios || [];

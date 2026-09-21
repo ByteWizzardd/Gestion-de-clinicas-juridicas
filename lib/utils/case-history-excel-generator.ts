@@ -1,14 +1,16 @@
 import ExcelJS from 'exceljs';
 import { CasoHistorialData } from '../types/report-types';
 import { formatDate } from './date-formatter';
+import { applyExcelExportStamp } from './excel-export-stamp';
 
 /**
  * Genera un archivo Excel con el historial del caso
  */
 export async function generateCasoHistorialExcel(data: CasoHistorialData): Promise<ArrayBuffer> {
     const workbook = new ExcelJS.Workbook();
+    const exportedAt = new Date();
     workbook.creator = 'Sistema de Gestión de Clínicas Jurídicas';
-    workbook.created = new Date();
+    workbook.created = exportedAt;
 
     // 1. Información General
     const sheetGeneral = workbook.addWorksheet('Información General');
@@ -167,6 +169,10 @@ export async function generateCasoHistorialExcel(data: CasoHistorialData): Promi
     sheetSoportes.getRow(1).font = { bold: true };
 
 
+    // Marca de exportación en el encabezado de impresión de cada hoja
+    [sheetGeneral, sheetEquipo, sheetBeneficiarios, sheetSeguimiento, sheetCitas, sheetCambios, sheetSoportes]
+        .forEach(sheet => applyExcelExportStamp(sheet, { exportedAt }));
+
     // Ajustar columnas
     autoAdjustColumnWidth(sheetGeneral);
     autoAdjustColumnWidth(sheetEquipo);
@@ -209,6 +215,9 @@ export async function generateCasoHistorialExcelFormatoUCAB(data: CasoHistorialD
     const fontTitleMain = { name: 'Arial', size: 14, bold: true };
     const borderBottom = { bottom: { style: 'thin' } } as const;
     const borderBox = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } } as const;
+
+    // Marca de exportación: fila 1, pegada al margen derecho del formato
+    applyExcelExportStamp(sheet, { cell: { row: 1, fromCol: 26, toCol: 40 } });
 
     let r = 2; // Current Row
 
