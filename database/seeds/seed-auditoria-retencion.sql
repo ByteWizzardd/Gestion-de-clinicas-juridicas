@@ -10,18 +10,15 @@ INSERT INTO auditoria_retencion (clase, etiqueta, descripcion, meses_retencion, 
     ('operativo', 'Actividad operativa',
      'Inicios y cierres de sesión, intentos fallidos, reportes generados y descargas de soportes. Mucho volumen y sin valor probatorio pasado el período.',
      12, 3, 1),
-    ('migrado', 'Registros migrados',
-     'Eventos que vienen del esquema de auditoría anterior. Guardan la fila completa en vez de solo lo que cambió, así que pesan varias veces más que un evento actual.',
-     6, 1, 2),
     ('catalogo', 'Cambios de catálogo',
      'Altas, ediciones y bajas de estados, municipios, parroquias, núcleos, materias, categorías, subcategorías, ámbitos legales, características, niveles educativos, condiciones y semestres.',
-     24, 6, 3),
+     24, 6, 2),
     ('negocio', 'Actividad de casos y personas',
      'Casos, citas, acciones, soportes, beneficiarios, solicitantes, equipos y usuarios. Se conserva por su valor probatorio.',
-     60, 24, 4),
+     60, 24, 3),
     ('eliminacion', 'Eliminaciones',
      'Cualquier borrado de un registro del sistema. Es la única constancia de que ese dato existió.',
-     120, 60, 5)
+     120, 60, 4)
 ON CONFLICT (clase) DO NOTHING;
 
 -- Los mínimos no son arbitrarios:

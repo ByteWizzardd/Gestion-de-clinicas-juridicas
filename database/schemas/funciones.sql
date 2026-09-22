@@ -782,16 +782,13 @@ $function$
 -- CLASIFICACIÓN DE UN EVENTO DE AUDITORÍA
 -- =========================================================
 -- Devuelve NULL para lo que nunca se purga.
--- El ORDEN de los CASE importa, y cada salto tiene su motivo:
---   * los catálogos van ANTES que las eliminaciones para que un "movimiento"
---     de catálogo (DELETE de la clave vieja + INSERT de la nueva, que
---     filtro-eventos.sql muestra como UNA actualización) caiga entero en la
---     misma clase y se purgue junto o no se purgue;
---   * 'caso' y 'beneficiario' se resuelven antes que 'migrado' por la ventana
---     de casos inactivos (ver arriba);
---   * 'eliminacion' gana sobre 'migrado' porque entre los registros migrados
---     hay eliminaciones de casos y de usuarios, que son lo último que se debe
---     perder.
+-- El ORDEN de los CASE importa: los catálogos van ANTES que las eliminaciones
+-- para que un "movimiento" de catálogo (DELETE de la clave vieja + INSERT de
+-- la nueva, que filtro-eventos.sql muestra como UNA actualización) caiga
+-- entero en la misma clase y se purgue junto o no se purgue.
+-- Los eventos que vienen del esquema de auditoría anterior no tienen clase
+-- propia: se clasifican por lo que son (ver la migración
+-- 20260922_010000_quitar_clase_migrado_auditoria.sql).
 CREATE OR REPLACE FUNCTION public.auditoria_clase(
     p_entidad   TEXT,
     p_operacion TEXT,
@@ -806,18 +803,17 @@ LANGUAGE sql IMMUTABLE AS $function$
         WHEN p_entidad IN ('sesion', 'reporte')
           OR (p_entidad = 'soporte' AND p_operacion = 'descarga_soporte') THEN 'operativo'
 
+        -- Los catálogos van ANTES que las eliminaciones para que un
+        -- "movimiento" de catálogo (DELETE de la clave vieja + INSERT de la
+        -- nueva, que filtro-eventos.sql muestra como UNA actualización) caiga
+        -- entero en la misma clase y se purgue junto o no se purgue.
         WHEN p_entidad IN (
             'estado', 'municipio', 'parroquia', 'nucleo', 'materia', 'categoria',
             'subcategoria', 'ambito_legal', 'caracteristica', 'tipo_caracteristica',
             'nivel_educativo', 'condicion_trabajo', 'condicion_actividad', 'semestre'
         ) THEN 'catalogo'
 
-        WHEN p_entidad IN ('caso', 'beneficiario') THEN
-            CASE WHEN p_operacion = 'eliminacion' THEN 'eliminacion' ELSE 'negocio' END
-
         WHEN p_operacion = 'eliminacion' THEN 'eliminacion'
-
-        WHEN p_metadata ? 'migrado_de' THEN 'migrado'
 
         ELSE 'negocio'
     END;
