@@ -1,18 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, CheckCircle2, Trash2 } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle2, RefreshCw, Trash2 } from 'lucide-react';
 
 import Table from '@/components/Table/Table';
 import TableSkeleton from '@/components/ui/skeletons/TableSkeleton';
-import Button from '@/components/ui/Button';
 import CatalogFormModal from '@/components/catalogs/CatalogFormModal';
 import PurgeAuditLogsModal from './PurgeAuditLogsModal';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
 import {
-    getRetencionAuditoriaAction,
+    getMantenimientoAuditoriaAction,
     updateRetencionAuditoriaAction,
-    getUltimaPurgaAuditoriaAction,
 } from '@/app/actions/audit-retencion.actions';
 import type { ClaseRetencion, UltimaPurga } from '@/lib/db/queries/auditoria-retencion.queries';
 import { sanitizeUserMessage } from '@/lib/utils/error-messages';
@@ -61,17 +59,12 @@ export default function AuditMaintenanceView({ abrirPurga = false, onPurgaCerrad
         setLoading(true);
         setError(null);
         try {
-            const [resumen, purga] = await Promise.all([
-                getRetencionAuditoriaAction(),
-                getUltimaPurgaAuditoriaAction(),
-            ]);
-            if (resumen.success && resumen.data) {
-                setClases(resumen.data);
+            const resultado = await getMantenimientoAuditoriaAction();
+            if (resultado.success && resultado.data) {
+                setClases(resultado.data.clases);
+                setUltimaPurga(resultado.data.ultimaPurga);
             } else {
-                setError(resumen.error?.message || 'Error al cargar la política de retención');
-            }
-            if (purga.success) {
-                setUltimaPurga(purga.data ?? null);
+                setError(resultado.error?.message || 'Error al cargar la política de retención');
             }
         } catch (err) {
             setError(sanitizeUserMessage(err, 'Error al cargar la política de retención'));
@@ -131,22 +124,44 @@ export default function AuditMaintenanceView({ abrirPurga = false, onPurgaCerrad
 
     if (error) {
         return (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
-                <p>Error: {error}</p>
+            <div className="px-3">
+                <div className="bg-[var(--card-bg)] border border-red-200 dark:border-red-500/20 rounded-xl p-4 flex items-start gap-3 transition-colors">
+                    <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0 transition-colors">
+                        <AlertCircle className="w-5 h-5 text-red-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-[var(--card-text)] transition-colors">
+                            No se pudo cargar el mantenimiento
+                        </h4>
+                        <p className="text-sm text-[var(--card-text-muted)] mt-1 transition-colors">{error}</p>
+                        <button
+                            type="button"
+                            onClick={cargar}
+                            className="mt-3 h-10 px-4 inline-flex items-center justify-center gap-2 bg-[var(--card-bg)] text-[var(--card-text)] border border-[var(--ui-border)] rounded-full hover:bg-[var(--sidebar-hover)] transition-colors font-medium whitespace-nowrap cursor-pointer"
+                        >
+                            <RefreshCw className="w-4 h-4 text-[var(--card-text-muted)]" />
+                            <span className="text-sm sm:text-base">Reintentar</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         );
     }
 
     return (
         <div className="w-full px-3">
-            {/* Explicación: mismo bloque ámbar que el archivado de casos inactivos */}
-            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-lg p-4 flex items-start gap-3 transition-colors mb-6">
-                <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            {/* Aviso con el lenguaje de la app: tarjeta normal con acento ámbar
+                (mismo criterio que el toast de advertencia y los avisos de
+                reportes), no un bloque relleno de amarillo. */}
+            <div className="bg-[var(--card-bg)] border border-amber-200 dark:border-amber-500/20 rounded-xl p-4 flex items-start gap-3 transition-colors mb-6">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 transition-colors">
+                    <AlertTriangle className="w-5 h-5 text-amber-500" />
+                </div>
                 <div>
-                    <h4 className="font-medium text-amber-800 dark:text-amber-300">
+                    <h4 className="font-medium text-[var(--card-text)] transition-colors">
                         Depuración de registros de auditoría
                     </h4>
-                    <p className="text-sm text-amber-700 dark:text-amber-400/90 mt-1">
+                    <p className="text-sm text-[var(--card-text-muted)] mt-1 transition-colors">
                         La auditoría guarda cada cambio del sistema y crece sin parar. Aquí se define
                         cuánto tiempo se conserva cada tipo de registro y se depuran los que ya cumplieron
                         su plazo. Nada se borra solo: la depuración siempre la confirmas tú, y queda
@@ -181,15 +196,19 @@ export default function AuditMaintenanceView({ abrirPurga = false, onPurgaCerrad
                     )}
                 </div>
 
-                <Button
-                    variant="danger"
+                {/* Mismo botón de acción destructiva que usa Usuarios
+                    (Deshabilitar / Cerrar Semestre): píldora, no rectángulo. */}
+                <button
+                    type="button"
                     onClick={() => setShowPurgeModal(true)}
                     disabled={loading || totalPurgable === 0}
-                    className="gap-2 whitespace-nowrap"
+                    className="h-10 px-4 flex items-center justify-center gap-2 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 rounded-full hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors font-medium whitespace-nowrap cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-50 dark:disabled:hover:bg-red-500/10"
                 >
-                    <Trash2 className="w-4 h-4" />
-                    Depurar registros vencidos
-                </Button>
+                    <Trash2 className="w-5 h-5" />
+                    <span className="text-sm sm:text-base">
+                        Depurar registros vencidos{totalPurgable > 0 ? ` (${totalPurgable})` : ''}
+                    </span>
+                </button>
             </div>
 
             {loading ? (
@@ -232,7 +251,7 @@ export default function AuditMaintenanceView({ abrirPurga = false, onPurgaCerrad
                             const meses = Number(value);
                             if (!Number.isInteger(meses)) return 'Escribe un número entero de meses';
                             if (editando && meses < editando.meses_minimo) {
-                                return `No puede ser menos de ${editando.meses_minimo} meses`;
+                                return `No puede ser menos de ${formatearPlazo(editando.meses_minimo)}`;
                             }
                             if (meses > 600) return 'El máximo son 600 meses';
                             return undefined;

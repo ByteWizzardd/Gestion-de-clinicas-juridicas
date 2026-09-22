@@ -40,13 +40,26 @@ async function requireCoordinador() {
     return authResult.user;
 }
 
-/** Política de retención + cuántos eventos de cada clase ya vencieron. */
-export async function getRetencionAuditoriaAction(): Promise<RetencionResult<ClaseRetencion[]>> {
+/** Lo que necesita la pestaña de Mantenimiento, en una sola llamada. */
+export interface MantenimientoAuditoria {
+    clases: ClaseRetencion[];
+    ultimaPurga: UltimaPurga | null;
+}
+
+/**
+ * Política de retención + cuántos eventos vencieron + la última depuración.
+ *
+ * Va todo junto a propósito: son datos de la misma pantalla y pedirlos en dos
+ * server actions simultáneas solo multiplica los viajes y los modos de fallo.
+ */
+export async function getMantenimientoAuditoriaAction(): Promise<RetencionResult<MantenimientoAuditoria>> {
     try {
         await requireCoordinador();
-        return { success: true, data: await auditoriaRetencionQueries.getResumen() };
+        const clases = await auditoriaRetencionQueries.getResumen();
+        const ultimaPurga = await auditoriaRetencionQueries.getUltimaPurga();
+        return { success: true, data: { clases, ultimaPurga } };
     } catch (error) {
-        logger.error('Error en getRetencionAuditoriaAction', error);
+        logger.error('Error en getMantenimientoAuditoriaAction', error);
         return {
             success: false,
             error: { message: toUserMessage(error, 'Error al obtener la política de retención') },
@@ -77,11 +90,10 @@ export async function updateRetencionAuditoriaAction(
             return { success: false, error: { message: 'Esa clase de registros no existe' } };
         }
         if (meses < fila.meses_minimo) {
+            const piso = fila.meses_minimo === 1 ? '1 mes' : `${fila.meses_minimo} meses`;
             return {
                 success: false,
-                error: {
-                    message: `"${fila.etiqueta}" no puede guardarse por menos de ${fila.meses_minimo} meses.`,
-                },
+                error: { message: `"${fila.etiqueta}" no puede guardarse por menos de ${piso}.` },
             };
         }
 
@@ -140,16 +152,5 @@ export async function purgarAuditoriaAction(
             success: false,
             error: { message: toUserMessage(error, 'Error al depurar los registros de auditoría') },
         };
-    }
-}
-
-/** Última purga hecha, para mostrarla en la pestaña. */
-export async function getUltimaPurgaAuditoriaAction(): Promise<RetencionResult<UltimaPurga | null>> {
-    try {
-        await requireCoordinador();
-        return { success: true, data: await auditoriaRetencionQueries.getUltimaPurga() };
-    } catch (error) {
-        logger.error('Error en getUltimaPurgaAuditoriaAction', error);
-        return { success: false, error: { message: toUserMessage(error, 'Error al obtener la última depuración') } };
     }
 }
