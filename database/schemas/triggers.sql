@@ -89,3 +89,9 @@ CREATE TRIGGER trg_audit_atienden AFTER INSERT OR DELETE ON atienden FOR EACH RO
 
 -- NOTA: Las tablas asociativas (ejecutan, equipo, sesiones) NO llevan trigger aquí 
 -- porque se auditarán manualmente desde el código de la aplicación.
+
+-- Cambios de la política de retención de la auditoría
+DROP TRIGGER IF EXISTS trg_audit_auditoria_retencion ON auditoria_retencion;
+CREATE TRIGGER trg_audit_auditoria_retencion
+AFTER INSERT OR UPDATE OR DELETE ON auditoria_retencion
+FOR EACH ROW EXECUTE FUNCTION fn_auditoria_generica('retencion_auditoria', 'clase');
