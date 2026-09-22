@@ -10,6 +10,7 @@ import { CasosGroupedData, SocioeconomicoData } from '../../types/reports';
 import InformeSocioeconomicoPDF from '../../components/reports/InformeSocioeconomicoPDF';
 import { generateBarChartImage } from './bar-chart-generator';
 import { formatDateTimeForFilename } from './date-formatter';
+import { toTitleCase } from './title-case';
 
 
 export const CHART_COLORS = [
@@ -1111,7 +1112,7 @@ export async function generateInformeSocioeconomicoPDF(
         const key = `caract_${type.replace(/\s+/g, '_').toLowerCase()}`;
         chartImages[key] = await generateSocioeconomicoChartImage(
           items,
-          type,
+          toTitleCase(type),
           'caracteristica',
           'cantidad_solicitantes'
         );
