@@ -58,6 +58,33 @@ function aEntero(valor: unknown): number {
     return Number.isFinite(n) ? n : 0;
 }
 
+/**
+ * Traduce el fallo a algo accionable en vez de un "error al obtener…" mudo.
+ *
+ * El caso que más se repite es tener el código nuevo contra una base donde
+ * todavía no se corrió la migración: Postgres responde 42P01 (tabla que no
+ * existe) o 42883 (función que no existe), y sin este aviso la pantalla solo
+ * dice que algo falló.
+ */
+function errorDeBaseDeDatos(error: unknown, accion: string): DatabaseError {
+    const codigo = (error as { code?: string } | null)?.code;
+
+    if (codigo === '42P01' || codigo === '42883') {
+        return new DatabaseError(
+            'Falta aplicar la migración de depuración de auditoría ' +
+                '(database/migrations/20260921_120000_purga_manual_auditoria.sql) en esta base de datos.',
+            error
+        );
+    }
+    if (codigo === '42501') {
+        return new DatabaseError(
+            'El usuario de base de datos no tiene permiso para consultar la política de retención.',
+            error
+        );
+    }
+    return new DatabaseError(accion, error);
+}
+
 export const auditoriaRetencionQueries = {
     getResumen: async (): Promise<ClaseRetencion[]> => {
         try {
@@ -72,7 +99,7 @@ export const auditoriaRetencionQueries = {
             }));
         } catch (error) {
             logger.error('Error en auditoriaRetencionQueries.getResumen', error);
-            throw new DatabaseError('Error al obtener la política de retención', error);
+            throw errorDeBaseDeDatos(error, 'Error al obtener la política de retención');
         }
     },
 
@@ -83,7 +110,7 @@ export const auditoriaRetencionQueries = {
             return result.rows[0] ?? null;
         } catch (error) {
             logger.error('Error en auditoriaRetencionQueries.updateMeses', error);
-            throw new DatabaseError('Error al actualizar el plazo de retención', error);
+            throw errorDeBaseDeDatos(error, 'Error al actualizar el plazo de retención');
         }
     },
 
@@ -102,7 +129,7 @@ export const auditoriaRetencionQueries = {
             }));
         } catch (error) {
             logger.error('Error en auditoriaRetencionQueries.purgar', error);
-            throw new DatabaseError('Error al depurar los registros de auditoría', error);
+            throw errorDeBaseDeDatos(error, 'Error al depurar los registros de auditoría');
         }
     },
 
