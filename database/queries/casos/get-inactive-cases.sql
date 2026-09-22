@@ -37,7 +37,7 @@ SELECT
 FROM view_casos_detalle vc
 JOIN ultima_actividad ua ON vc.id_caso = ua.id_caso
 CROSS JOIN fecha_corte fc
-WHERE vc.estatus != 'Archivado' 
+WHERE vc.estatus NOT IN ('Archivado', 'Entregado')
   AND vc.fecha_fin_caso IS NULL
   AND ua.fecha_maxima < fc.limite
 ORDER BY ua.fecha_maxima ASC;
