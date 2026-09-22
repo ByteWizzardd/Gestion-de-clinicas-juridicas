@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertCircle, AlertTriangle, CheckCircle2, RefreshCw, Trash2 } from 'lucide-react';
+import { AlertCircle, RefreshCw, Trash2 } from 'lucide-react';
 
 import Table from '@/components/Table/Table';
 import TableSkeleton from '@/components/ui/skeletons/TableSkeleton';
@@ -101,10 +101,6 @@ export default function AuditMaintenanceView({ abrirPurga = false, onPurgaCerrad
         () => clases.reduce((suma, c) => suma + c.eventos_purgables, 0),
         [clases]
     );
-    const totalRegistros = useMemo(
-        () => clases.reduce((suma, c) => suma + c.eventos_totales, 0),
-        [clases]
-    );
 
     const handleGuardarPlazo = async (data: Record<string, string>) => {
         if (!editando) return;
@@ -150,48 +146,14 @@ export default function AuditMaintenanceView({ abrirPurga = false, onPurgaCerrad
 
     return (
         <div className="w-full px-3">
-            {/* Aviso con el lenguaje de la app: tarjeta normal con acento ámbar
-                (mismo criterio que el toast de advertencia y los avisos de
-                reportes), no un bloque relleno de amarillo. */}
-            <div className="bg-[var(--card-bg)] border border-amber-200 dark:border-amber-500/20 rounded-xl p-4 flex items-start gap-3 transition-colors mb-6">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 transition-colors">
-                    <AlertTriangle className="w-5 h-5 text-amber-500" />
-                </div>
-                <div>
-                    <h4 className="font-medium text-[var(--card-text)] transition-colors">
-                        Depuración de registros de auditoría
-                    </h4>
-                    <p className="text-sm text-[var(--card-text-muted)] mt-1 transition-colors">
-                        La auditoría guarda cada cambio del sistema y crece sin parar. Aquí se define
-                        cuánto tiempo se conserva cada tipo de registro y se depuran los que ya cumplieron
-                        su plazo. Nada se borra solo: la depuración siempre la confirmas tú, y queda
-                        registrada como un evento más.
-                    </p>
-                </div>
-            </div>
-
-            {/* Resumen */}
+            {/* Los totales por clase ya están en la tabla y el pendiente en el
+                botón, así que aquí solo va lo que no se ve en ningún otro lado. */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                 <div className="text-base text-[var(--card-text-muted)]">
-                    {loading ? (
-                        'Calculando…'
-                    ) : (
+                    {!loading && ultimaPurga && (
                         <>
-                            <span className="font-medium text-[var(--foreground)]">{totalRegistros}</span>{' '}
-                            registros en total
-                            {totalPurgable > 0 && (
-                                <>
-                                    {' · '}
-                                    <span className="font-medium text-[var(--foreground)]">{totalPurgable}</span>{' '}
-                                    ya cumplieron su plazo
-                                </>
-                            )}
-                            {ultimaPurga && (
-                                <>
-                                    {' · '}última depuración: {formatearFecha(ultimaPurga.fecha.slice(0, 10))} por{' '}
-                                    {ultimaPurga.usuario_nombre} ({ultimaPurga.eventos_borrados})
-                                </>
-                            )}
+                            Última depuración: {formatearFecha(ultimaPurga.fecha.slice(0, 10))} por{' '}
+                            {ultimaPurga.usuario_nombre} ({ultimaPurga.eventos_borrados})
                         </>
                     )}
                 </div>
@@ -222,15 +184,6 @@ export default function AuditMaintenanceView({ abrirPurga = false, onPurgaCerrad
                     rowsPerPage={10}
                     onEdit={(fila) => setEditando(fila as unknown as ClaseRetencion)}
                 />
-            )}
-
-            {!loading && totalPurgable === 0 && (
-                <div className="flex flex-col items-center justify-center py-10 text-center">
-                    <CheckCircle2 className="w-12 h-12 text-green-500 mb-3" />
-                    <p className="text-[var(--card-text-muted)]">
-                        No hay registros de auditoría que hayan cumplido su plazo.
-                    </p>
-                </div>
             )}
 
             {/* Editar el plazo: el mismo modal de formulario de los catálogos */}

@@ -114,6 +114,18 @@ async function conReversion(cuerpo) {
 
 const num = (x) => Number(x);
 
+/**
+ * Las clases que se prueban a fondo y el SQL que las deja al plazo mínimo.
+ * Sin esto las pruebas de purga serían vacías: con los plazos por defecto
+ * (12 y 24 meses) no hay nada vencido en ninguna de las dos ramas, así que
+ * "no borró nada" pasaría sin haber ejercitado el borrado. Bajar el plazo
+ * ocurre DENTRO de la subtransacción que luego se revierte.
+ */
+const CLASES_CORTAS = "ARRAY['operativo','catalogo']";
+const ACORTAR_PLAZOS =
+    "UPDATE auditoria_retencion SET meses_retencion = meses_minimo " +
+    "WHERE clase IN ('operativo', 'catalogo');";
+
 let totalInicial = 0;
 let coordinador = COORDINADOR;
 
@@ -176,7 +188,7 @@ test('cada evento cae en una clase, salvo el rastro de la propia depuración', a
         FROM auditoria_eventos GROUP BY 1`);
 
     const clases = Object.fromEntries(filas.map((f) => [f.clase, num(f.n)]));
-    const conocidas = ['operativo', 'migrado', 'catalogo', 'negocio', 'eliminacion', '(ninguna)'];
+    const conocidas = ['operativo', 'catalogo', 'negocio', 'eliminacion', '(ninguna)'];
     for (const clase of Object.keys(clases)) {
         assert.ok(conocidas.includes(clase), `clase inesperada: ${clase}`);
     }
@@ -204,7 +216,7 @@ test('el resumen no borra nada y respeta los plazos configurados', async () => {
         SELECT clase, meses_retencion, fecha_corte, eventos_purgables, eventos_totales
         FROM auditoria_retencion_resumen()`);
 
-    assert.equal(filas.length, 5, 'deberían ser cinco clases de retención');
+    assert.equal(filas.length, 4, 'deberían ser cuatro clases de retención');
     for (const f of filas) {
         assert.ok(num(f.eventos_purgables) <= num(f.eventos_totales));
     }
@@ -235,14 +247,15 @@ test('el resumen no borra nada y respeta los plazos configurados', async () => {
 
 test('la simulación cuenta pero no borra; la purga real borra eso mismo', async () => {
     const v = await conReversion(`
+        ${ACORTAR_PLAZOS}
         v := v || jsonb_build_object('antes', (SELECT count(*) FROM auditoria_eventos));
 
         v := v || jsonb_build_object('simulacion',
-            (SELECT jsonb_agg(to_jsonb(p)) FROM auditoria_purgar(ARRAY['migrado'], '${coordinador}', TRUE) p));
+            (SELECT jsonb_agg(to_jsonb(p)) FROM auditoria_purgar(${CLASES_CORTAS}, '${coordinador}', TRUE) p));
         v := v || jsonb_build_object('tras_simular', (SELECT count(*) FROM auditoria_eventos));
 
         v := v || jsonb_build_object('purga',
-            (SELECT jsonb_agg(to_jsonb(p)) FROM auditoria_purgar(ARRAY['migrado'], '${coordinador}', FALSE) p));
+            (SELECT jsonb_agg(to_jsonb(p)) FROM auditoria_purgar(${CLASES_CORTAS}, '${coordinador}', FALSE) p));
         v := v || jsonb_build_object('tras_purgar', (SELECT count(*) FROM auditoria_eventos));
 
         v := v || jsonb_build_object('eventos_de_purga',
@@ -266,7 +279,8 @@ test('la purga no parte en dos los eventos que el panel muestra fusionados', asy
         CREATE TEMP TABLE censo_fechas ON COMMIT DROP AS
             SELECT fecha_evento, count(*) AS n FROM auditoria_eventos GROUP BY 1;
 
-        PERFORM auditoria_purgar(ARRAY['migrado','operativo','catalogo'], '${coordinador}', FALSE);
+        ${ACORTAR_PLAZOS}
+        PERFORM auditoria_purgar(${CLASES_CORTAS}, '${coordinador}', FALSE);
 
         v := v || jsonb_build_object('fechas_partidas', (
             SELECT COALESCE(jsonb_agg(c.fecha_evento), '[]'::jsonb)
@@ -280,12 +294,13 @@ test('la purga no parte en dos los eventos que el panel muestra fusionados', asy
 
 test('nada vencido de las clases purgadas sobrevive salvo lo retenido por agrupación', async () => {
     const v = await conReversion(`
+        ${ACORTAR_PLAZOS}
         v := v || jsonb_build_object('resultado',
-            (SELECT jsonb_agg(to_jsonb(p)) FROM auditoria_purgar(ARRAY['migrado'], '${coordinador}', FALSE) p));
+            (SELECT jsonb_agg(to_jsonb(p)) FROM auditoria_purgar(${CLASES_CORTAS}, '${coordinador}', FALSE) p));
         v := v || jsonb_build_object('vencidos_vivos', (
             SELECT count(*) FROM auditoria_eventos e
             JOIN auditoria_retencion r ON r.clase = auditoria_clase(e.entidad, e.operacion, e.metadata)
-            WHERE r.clase = 'migrado'
+            WHERE r.clase IN ('operativo', 'catalogo')
               AND e.fecha_evento < ((now() AT TIME ZONE 'America/Caracas')::date
                                     - make_interval(months => r.meses_retencion))));
     `);
@@ -306,10 +321,10 @@ test('la purga rechaza clases inventadas, listas vacías y actores no autorizado
         v := v || jsonb_build_object(
           'clase_inventada', pg_temp.intentar($q$SELECT * FROM auditoria_purgar(ARRAY['xyz'], '${coordinador}', TRUE)$q$),
           'lista_vacia',     pg_temp.intentar($q$SELECT * FROM auditoria_purgar(ARRAY[]::text[], '${coordinador}', TRUE)$q$),
-          'actor_nulo',      pg_temp.intentar($q$SELECT * FROM auditoria_purgar(ARRAY['migrado'], NULL, TRUE)$q$),
-          'actor_inventado', pg_temp.intentar($q$SELECT * FROM auditoria_purgar(ARRAY['migrado'], 'V-00000001', TRUE)$q$),
+          'actor_nulo',      pg_temp.intentar($q$SELECT * FROM auditoria_purgar(ARRAY['operativo'], NULL, TRUE)$q$),
+          'actor_inventado', pg_temp.intentar($q$SELECT * FROM auditoria_purgar(ARRAY['operativo'], 'V-00000001', TRUE)$q$),
           'no_coordinador',  pg_temp.intentar((
-              SELECT format($q$SELECT * FROM auditoria_purgar(ARRAY['migrado'], %L, TRUE)$q$, u.cedula)
+              SELECT format($q$SELECT * FROM auditoria_purgar(ARRAY['operativo'], %L, TRUE)$q$, u.cedula)
               FROM usuarios u WHERE u.tipo_usuario <> 'Coordinador' LIMIT 1)));
     `);
 
@@ -355,10 +370,9 @@ test('el plazo de cada clase no puede bajar de su mínimo, y cambiarlo queda aud
 
 test('el rastro de la depuración nunca se purga a sí mismo', async () => {
     const v = await conReversion(`
-        PERFORM auditoria_purgar(ARRAY['migrado'], '${coordinador}', FALSE);
         UPDATE auditoria_retencion SET meses_retencion = meses_minimo;
         PERFORM auditoria_purgar(
-            ARRAY['operativo','migrado','catalogo','negocio','eliminacion'], '${coordinador}', FALSE);
+            ARRAY['operativo','catalogo','negocio','eliminacion'], '${coordinador}', FALSE);
         v := v || jsonb_build_object('rastro_vivo', (
             SELECT count(*) FROM auditoria_eventos
             WHERE entidad IN ('auditoria', 'retencion_auditoria')));
