@@ -151,13 +151,15 @@ export default function PurgeAuditLogsModal({
         >
             <div className="p-6 space-y-6 overflow-y-auto max-h-[70vh]">
                 {/* Advertencia */}
-                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-lg p-4 flex items-start gap-3 transition-colors">
-                    <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div className="bg-[var(--card-bg)] border border-amber-200 dark:border-amber-500/20 rounded-xl p-4 flex items-start gap-3 transition-colors">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 transition-colors">
+                        <AlertTriangle className="w-5 h-5 text-amber-500" />
+                    </div>
                     <div>
-                        <h4 className="font-medium text-amber-800 dark:text-amber-300">
+                        <h4 className="font-medium text-[var(--card-text)] transition-colors">
                             Esta acción no se puede deshacer
                         </h4>
-                        <p className="text-sm text-amber-700 dark:text-amber-400/90 mt-1">
+                        <p className="text-sm text-[var(--card-text-muted)] mt-1 transition-colors">
                             Solo se borran los registros que ya superaron el plazo de conservación de su
                             tipo. Nada más reciente se toca, y la depuración queda registrada en la propia
                             auditoría con quién la hizo y cuánto borró.
