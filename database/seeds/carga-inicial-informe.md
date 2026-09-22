@@ -13,6 +13,7 @@ el motivo, para que la clínica lo complete y se vuelva a correr el ETL.
 | familias_y_hogares | 7 | 32 |
 | asignadas_a (características) | 326 | — |
 | casos | 32 | 40 |
+| acciones (revisiones del libro) | 81 | — |
 
 ## Casos que no se cargaron (40)
 
