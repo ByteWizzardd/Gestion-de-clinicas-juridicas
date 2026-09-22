@@ -142,6 +142,10 @@ const NIVEL_NO_SUMINISTRADO = 'No suministrado';
  * (trigger_crear_cambio_estatus_inicial la exige para poder abrir el caso).
  */
 const COORDINADOR = 'V-77777777';
+/** Misma contraseña que el Coordinador; son cuentas de demostración. */
+const CLAVE_DEMO = '$2b$10$sV6rtquZ.uUT2RKkp.Gw/uNIj7qoYjPUwfYdek1tuvbNcBQ3ByYn2';
+/** Semestres que abarca el libro (septiembre 2024 - julio 2025 y su cola). */
+const TERMS = ['2024-25', '2025-15', '2025-25'];
 const esSinRespuesta = (t) => /^(no suministra|sin informacion|no informa|no aplica|sin respuesta|si informacion)/.test(t);
 
 const CONDICION_TRABAJO = { patrono: 1, empleado: 2, obrero: 3, 'cuenta propia': 4, 'no aplica': 0 };
@@ -225,6 +229,105 @@ function ambitoDeCaso(tipo, reseña) {
             return [1, 1, 2, 18];
     }
     return ambito;
+}
+
+/**
+ * Saca la fecha de una revisión ("En fecha 11/07/25 se presentó solicitud…").
+ *
+ * El libro escribe dd/mm/aa, a veces sin año ("En fecha 11/12 se citó…") y a
+ * veces sin fecha ("Se le brindó la asesoría…", que es lo que pasó el día de
+ * la consulta). Cuando falta el año se toma el de la anotación anterior; si no
+ * hay fecha alguna, devuelve null y quien llama usa la anterior, dejándolo
+ * dicho en el comentario de la acción.
+ *
+ * @param referencia fecha de la anotación anterior (o la del caso)
+ * @param inicio     fecha de inicio del caso: nada puede ser anterior
+ */
+function fechaEnTexto(texto, referencia, inicio) {
+    const m = String(texto).match(/(\d{1,2})[/\-.](\d{1,2})(?:[/\-.](\d{2,4}))?/);
+    if (!m) return null;
+
+    const [, d, mes, a] = m;
+    const dia = Number(d), numMes = Number(mes);
+    if (dia < 1 || dia > 31 || numMes < 1 || numMes > 12) return null;
+
+    const anio = a
+        ? (a.length === 2 ? 2000 + Number(a) : Number(a))
+        : Number(referencia.slice(0, 4));
+    const iso = `${anio}-${String(numMes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+
+    // Una revisión no puede ser anterior a la apertura del caso ni futura: si
+    // sale eso, el texto traía otra cosa (un número de expediente, un monto).
+    const hoy = new Date().toISOString().slice(0, 10);
+    if (iso < inicio || iso > hoy) return null;
+    return iso;
+}
+
+/**
+ * Quiénes son las personas que aparecen en "Alumno responsable".
+ *
+ * El libro las escribe a mano y con erratas ("Vincenzo", "Vincezo Altobelli",
+ * "Vicenzo"; "Edgar Dunn", "Edgar Dumn", "Egdar Dunn"), a veces dos en la misma
+ * celda ("Nazaret y Dunn", "Niuska Calderon y Bautista Rosas") y a veces con
+ * una nota delante ("Redacción: Edgar", "Profesor Colaborador: Roberto
+ * Delgado"). Este mapa fija quién es quién; la clave es el texto normalizado
+ * tal como aparece.
+ *
+ * Las cédulas y los correos son INVENTADOS: de estas personas el libro solo da
+ * el nombre. Se usa un bloque de cédulas V-9000000x y el sufijo ".demo" en el
+ * correo justamente para que se note que no son datos reales y para no chocar
+ * con una dirección verdadera de la UCAB.
+ */
+const EQUIPO = [
+    { rol: 'Profesor', nombres: 'Minelvis', apellidos: 'Martínez', alias: ['minelvis martinez', 'minelvis'] },
+    { rol: 'Profesor', nombres: 'Roberto', apellidos: 'Delgado', alias: ['roberto delgado'] },
+    { rol: 'Estudiante', nombres: 'Edgar', apellidos: 'Dunn', alias: ['edgar dunn', 'edgar dumn', 'egdar dunn', 'edgar', 'dunn'] },
+    { rol: 'Estudiante', nombres: 'José Matías', apellidos: 'Araguayan', alias: ['jose matias araguayan', 'mathias', 'matias'] },
+    { rol: 'Estudiante', nombres: 'Vincenzo', apellidos: 'Altobelli', alias: ['vincenzo altobelli', 'vincezo altobelli', 'vincenzo', 'vicenzo'] },
+    { rol: 'Estudiante', nombres: 'Yuliana', apellidos: 'Pereira', alias: ['yuliana pereira'] },
+    { rol: 'Estudiante', nombres: 'Victoria', apellidos: 'Pereira', alias: ['victoria pereira'] },
+    { rol: 'Estudiante', nombres: 'Niuska', apellidos: 'Calderón', alias: ['niuska calderon'] },
+    { rol: 'Estudiante', nombres: 'Edidson', apellidos: 'Lozano', alias: ['edidson lozano'] },
+    { rol: 'Estudiante', nombres: 'Bautista', apellidos: 'García', alias: ['bautista garcia'] },
+    { rol: 'Estudiante', nombres: 'Bautista', apellidos: 'Rosas', alias: ['bautista rosas'] },
+    { rol: 'Estudiante', nombres: 'Ana', apellidos: 'Moreno', alias: ['ana moreno'] },
+    { rol: 'Estudiante', nombres: 'Nazaret', apellidos: 'Moorley', alias: ['nazaret moorley', 'nazareth moorley', 'nazaret'] },
+    { rol: 'Estudiante', nombres: 'Ana', apellidos: 'León', alias: ['ana leon'] },
+].map((p, i) => {
+    const local = norm(`${p.nombres} ${p.apellidos}`).replace(/\s+/g, '.');
+    return {
+        ...p,
+        cedula: `V-${90000000 + i + 1}`,
+        correo: `${local}.demo@${p.rol === 'Profesor' ? 'ucab.edu.ve' : 'est.ucab.edu.ve'}`,
+        usuario: `${local}.demo`,
+    };
+});
+
+const PERSONA_POR_ALIAS = new Map();
+for (const p of EQUIPO) for (const a of p.alias) PERSONA_POR_ALIAS.set(a, p);
+
+/** Lee la celda "Alumno responsable" y devuelve las personas que nombra. */
+function equipoDeCaso(texto) {
+    const encontradas = new Set();
+    const sinReconocer = [];
+    const trozos = String(texto ?? '')
+        .split(/[\/;,]|\s+y\s+/i)
+        .map((t) => norm(t.replace(/profesor(a)?\s*(colaborador(a)?)?\s*:?/ig, '')
+                          .replace(/\bprof\.?/ig, '')
+                          .replace(/redacci[oó]n\s*:|redacta\s*:/ig, ''))
+                    // "prof. Minelvis" deja un punto suelto al quitar el prefijo
+                    .replace(/^[^a-záéíóúñ]+|[^a-záéíóúñ]+$/g, ''))
+        .filter(Boolean);
+    for (const t of trozos) {
+        const p = PERSONA_POR_ALIAS.get(t);
+        if (p) encontradas.add(p);
+        else sinReconocer.push(t);
+    }
+    return {
+        profesores: [...encontradas].filter((p) => p.rol === 'Profesor'),
+        estudiantes: [...encontradas].filter((p) => p.rol === 'Estudiante'),
+        sinReconocer,
+    };
 }
 
 /** Estatus del libro -> los cuatro que admite cambio_estatus. */
@@ -412,7 +515,7 @@ if (!rutaBenef || !rutaCasos) {
     process.exit(1);
 }
 
-const omitidos = { solicitantes: [], viviendas: [], familias: [], casos: [] };
+const omitidos = { solicitantes: [], viviendas: [], familias: [], casos: [], equipos: [] };
 const anota = (lista, ref, motivo) => omitidos[lista].push({ ref, motivo });
 
 const parroquias = await consultar(
@@ -633,20 +736,49 @@ for (const cfg of [
         const contexto = `${resena} ${revisiones.join(' ')}`;
         const [m, cat, sub, amb] = ambitoDeCaso(f[cTipo], contexto);
 
+        // Las revisiones no son observaciones: son lo que se hizo en el caso,
+        // cada una con su fecha. Van a `acciones`.
+        const acciones = [];
+        let ultimaFecha = fecha;
+        for (const texto of revisiones) {
+            const extraida = fechaEnTexto(texto, ultimaFecha, fecha);
+            acciones.push({
+                num: acciones.length + 1,
+                detalle: texto,
+                fecha: extraida ?? ultimaFecha,
+                comentario: extraida
+                    ? null
+                    : 'La revisión no trae fecha en el control de casos; se usó la de la anotación anterior.',
+            });
+            ultimaFecha = extraida ?? ultimaFecha;
+        }
+
+        // En observaciones solo va lo que no cabe en ningún otro campo. El
+        // número de expediente del libro lo reemplaza el id del caso, y el
+        // tipo ya está en materia/categoría/subcategoría/ámbito legal.
+        // La reseña va tal cual: es la observación del caso, no hace falta
+        // anunciarla. El responsable sí lleva etiqueta, porque un nombre suelto
+        // al final no se entendería.
         const notas = [];
-        if (nro) notas.push(`Expediente del control de casos: ${nro}`);
-        if (String(f[cTipo] ?? '').trim()) notas.push(`Tipo según el libro: ${String(f[cTipo]).trim()}`);
-        if (resena) notas.push(`Reseña: ${resena}`);
+        if (resena) notas.push(resena);
         if (alumno) notas.push(`Responsable según el control de casos: ${alumno}`);
-        revisiones.forEach((r, i) => notas.push(`Revisión ${i + 1}: ${r}`));
+
+        const equipo = equipoDeCaso(alumno);
+        if (equipo.sinReconocer.length) {
+            anota('equipos', ref, `no se reconoció a: ${equipo.sinReconocer.join(', ')}`);
+        }
 
         casos.push({
-            ref, cedula: solicitante.cedula, id_nucleo: idNucleo,
+            ref, cedula: solicitante.cedula, id_nucleo: idNucleo, equipo,
             fecha_solicitud: fecha, fecha_inicio_caso: fecha,
             tramite: tramiteDeCaso(f[cTipo], contexto),
             observaciones: notas.join('\n') || null,
             id_materia: m, num_categoria: cat, num_subcategoria: sub, num_ambito_legal: amb,
             estatus: estatusDeCaso(f[cEstatus]),
+            acciones,
+            // El caso se cerró cuando ocurrió lo último que quedó anotado, no
+            // el día que se abrió.
+            fecha_cierre: acciones.length ? acciones[acciones.length - 1].fecha : fecha,
         });
     }
 }
@@ -680,6 +812,36 @@ L.push('');
 L.push('-- trigger_crear_cambio_estatus_inicial exige saber quién abre el caso.');
 L.push(`SET LOCAL app.current_user_id = ${sql(COORDINADOR)};`);
 L.push('');
+// Profesores y alumnos del libro. Sin ellos los casos quedan "sin asignar";
+// con ellos el sistema muestra el equipo real de cada caso. Los identificadores
+// son inventados, ver el comentario de EQUIPO.
+L.push('-- ---------------------------------------------------------------------');
+L.push('-- Profesores y alumnos que aparecen en el control de casos.');
+L.push('-- ATENCIÓN: cédula, correo y contraseña son INVENTADOS; el libro solo da');
+L.push('-- el nombre. La contraseña es la misma del Coordinador. Ver el informe.');
+L.push('-- ---------------------------------------------------------------------');
+L.push('INSERT INTO usuarios (cedula, nombres, apellidos, correo_electronico, nombre_usuario,');
+L.push('    contrasena, habilitado_sistema, tipo_usuario, id_usuario_registro) VALUES');
+L.push(EQUIPO.map((p) => `    (${[
+    sql(p.cedula), sql(p.nombres), sql(p.apellidos), sql(p.correo), sql(p.usuario),
+    sql(CLAVE_DEMO), 'TRUE', sql(p.rol), sql(COORDINADOR),
+].join(', ')})`).join(',\n') + ';');
+L.push('');
+
+// Se inscriben en todos los semestres que tocan los casos, porque
+// se_le_asigna/supervisa apuntan por clave foránea a (term, cédula).
+L.push('-- Inscripción en los semestres que abarca el libro.');
+L.push('INSERT INTO estudiantes (term, cedula_estudiante, tipo_estudiante, nrc, id_usuario_registro)');
+L.push(`SELECT s.term, u.cedula, 'Inscrito', 'CJ-2024-2025', ${sql(COORDINADOR)}`);
+L.push(`FROM usuarios u CROSS JOIN (SELECT unnest(ARRAY[${TERMS.map(sql).join(', ')}]) AS term) s`);
+L.push(`WHERE u.cedula = ANY(ARRAY[${EQUIPO.filter((p) => p.rol === 'Estudiante').map((p) => sql(p.cedula)).join(', ')}]);`);
+L.push('');
+L.push('INSERT INTO profesores (term, cedula_profesor, tipo_profesor, id_usuario_registro)');
+L.push(`SELECT s.term, u.cedula, 'Asesor', ${sql(COORDINADOR)}`);
+L.push(`FROM usuarios u CROSS JOIN (SELECT unnest(ARRAY[${TERMS.map(sql).join(', ')}]) AS term) s`);
+L.push(`WHERE u.cedula = ANY(ARRAY[${EQUIPO.filter((p) => p.rol === 'Profesor').map((p) => sql(p.cedula)).join(', ')}]);`);
+L.push('');
+
 L.push('-- Opción de catálogo para quien no contestó el nivel educativo. El campo es');
 L.push('-- NOT NULL y "Sin Nivel" significaría que no estudió, que no es lo mismo.');
 L.push(`INSERT INTO niveles_educativos (descripcion)`);
@@ -727,23 +889,52 @@ L.push('-- el trigger trigger_crear_cambio_estatus_inicial ya crea el primer');
 L.push('-- cambio de estatus, así que aquí solo se corrige cuando el libro dice');
 L.push('-- que el caso se cerró o quedó en pausa.');
 L.push('DO $carga$');
-L.push('DECLARE v_id INTEGER;');
+L.push('DECLARE v_id INTEGER; v_term VARCHAR(20);');
 L.push('BEGIN');
 for (const c of casos) {
     L.push(`    -- ${c.ref.replace(/\n/g, ' ')}`);
     L.push(`    INSERT INTO casos (fecha_solicitud, fecha_inicio_caso, tramite, observaciones, id_nucleo,`);
-    L.push(`        cedula, id_materia, num_categoria, num_subcategoria, num_ambito_legal, id_usuario_registro)`);
+    L.push(`        cedula, id_materia, num_categoria, num_subcategoria, num_ambito_legal, id_usuario_registro,`);
+    L.push(`        fecha_fin_caso)`);
     L.push(`    VALUES (${[
         sql(c.fecha_solicitud), sql(c.fecha_inicio_caso), sql(c.tramite), sql(c.observaciones),
         sqlNum(c.id_nucleo), sql(c.cedula), c.id_materia, c.num_categoria, c.num_subcategoria,
         c.num_ambito_legal, sql(COORDINADOR),
+        // El libro dice CERRADO: la fecha de cierre es la de lo último anotado.
+        c.estatus?.estatus === 'Entregado' ? sql(c.fecha_cierre) : 'NULL',
     ].join(', ')})`);
     L.push('    RETURNING id_caso INTO v_id;');
+
+    // Equipo del caso. El semestre sale de ocurren_en, que lo puso el trigger
+    // al insertar el caso, para que coincida con la inscripción.
+    if (c.equipo.profesores.length || c.equipo.estudiantes.length) {
+        L.push('    SELECT term INTO v_term FROM ocurren_en WHERE id_caso = v_id;');
+        for (const p of c.equipo.profesores) {
+            L.push(`    INSERT INTO supervisa (term, cedula_profesor, id_caso, id_usuario_registro)`);
+            L.push(`    VALUES (v_term, ${sql(p.cedula)}, v_id, ${sql(COORDINADOR)});`);
+        }
+        for (const p of c.equipo.estudiantes) {
+            L.push(`    INSERT INTO se_le_asigna (term, cedula_estudiante, id_caso, id_usuario_registro)`);
+            L.push(`    VALUES (v_term, ${sql(p.cedula)}, v_id, ${sql(COORDINADOR)});`);
+        }
+    }
+
+    // Cada revisión del libro es una acción con su fecha.
+    for (const a of c.acciones) {
+        L.push(`    INSERT INTO acciones (num_accion, id_caso, detalle_accion, comentario,`);
+        L.push(`        fecha_registro, id_usuario_registra, id_usuario_registro)`);
+        L.push(`    VALUES (${a.num}, v_id, ${sql(a.detalle)}, ${sql(a.comentario)},`);
+        L.push(`            ${sql(a.fecha)}, ${sql(COORDINADOR)}, ${sql(COORDINADOR)});`);
+    }
+
     if (c.estatus) {
+        // La fecha del cambio de estatus es la de lo último anotado en el
+        // caso, no la de apertura: un caso cerrado no se cerró el día que
+        // se abrió.
         L.push(`    INSERT INTO cambio_estatus (num_cambio, id_caso, motivo, nuevo_estatus, fecha,`);
         L.push(`        id_usuario_cambia, id_usuario_registro)`);
         L.push(`    VALUES (COALESCE((SELECT max(num_cambio) FROM cambio_estatus WHERE id_caso = v_id), 0) + 1,`);
-        L.push(`            v_id, ${sql(c.estatus.motivo)}, ${sql(c.estatus.estatus)}, ${sql(c.fecha_inicio_caso)},`);
+        L.push(`            v_id, ${sql(c.estatus.motivo)}, ${sql(c.estatus.estatus)}, ${sql(c.fecha_cierre)},`);
         L.push(`            ${sql(COORDINADOR)}, ${sql(COORDINADOR)});`);
     }
     L.push('');
@@ -755,7 +946,8 @@ L.push("RESET app.skip_audit_trigger;");
 L.push('INSERT INTO auditoria_eventos (entidad, operacion, id_usuario, datos_nuevos, metadata)');
 L.push(`VALUES ('carga_inicial', 'insercion', ${sql(COORDINADOR)},`);
 L.push(`    jsonb_build_object('solicitantes', ${solicitantes.length}, 'viviendas', ${viviendas.length},`);
-L.push(`        'familias_y_hogares', ${familias.length}, 'caracteristicas', ${asignadas.length}, 'casos', ${casos.length}),`);
+L.push(`        'familias_y_hogares', ${familias.length}, 'caracteristicas', ${asignadas.length},
+        'casos', ${casos.length}, 'acciones', ${casos.reduce((n, c) => n + c.acciones.length, 0)}),`);
 L.push(`    jsonb_build_object('origen', 'Libros de la clínica 2024-2025', 'generado_por', 'scripts/etl-carga-inicial.mjs'));`);
 L.push('');
 L.push('COMMIT;');
@@ -779,12 +971,14 @@ I.push(`| viviendas | ${viviendas.length} | ${omitidos.viviendas.length} |`);
 I.push(`| familias_y_hogares | ${familias.length} | ${omitidos.familias.length} |`);
 I.push(`| asignadas_a (características) | ${asignadas.length} | — |`);
 I.push(`| casos | ${casos.length} | ${omitidos.casos.length} |`);
+I.push(`| acciones (revisiones del libro) | ${casos.reduce((n, c) => n + c.acciones.length, 0)} | — |`);
 I.push('');
 for (const [lista, titulo2] of [
     ['casos', 'Casos que no se cargaron'],
     ['solicitantes', 'Respuestas del formulario que no se cargaron'],
     ['viviendas', 'Solicitantes sin datos de vivienda'],
     ['familias', 'Solicitantes sin datos de hogar'],
+    ['equipos', 'Responsables que no se pudieron identificar'],
 ]) {
     if (!omitidos[lista].length) continue;
     I.push(`## ${titulo2} (${omitidos[lista].length})`);
@@ -827,6 +1021,8 @@ console.log(`solicitantes  ${String(solicitantes.length).padStart(3)}  (omitidas
 console.log(`viviendas     ${String(viviendas.length).padStart(3)}  (omitidas ${omitidos.viviendas.length})`);
 console.log(`familias      ${String(familias.length).padStart(3)}  (omitidas ${omitidos.familias.length})`);
 console.log(`caracteristicas ${String(asignadas.length).padStart(3)}`);
+const totalAcciones = casos.reduce((n, c) => n + c.acciones.length, 0);
 console.log(`casos         ${String(casos.length).padStart(3)}  (omitidos ${omitidos.casos.length})`);
+console.log(`acciones      ${String(totalAcciones).padStart(3)}  (revisiones del libro)`);
 console.log(`\ndatabase/seeds/carga-inicial-2024-2025.sql`);
 console.log(`database/seeds/carga-inicial-informe.md`);
