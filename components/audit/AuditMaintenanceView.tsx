@@ -1,0 +1,255 @@
+'use client';
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, CheckCircle2, Trash2 } from 'lucide-react';
+
+import Table from '@/components/Table/Table';
+import TableSkeleton from '@/components/ui/skeletons/TableSkeleton';
+import Button from '@/components/ui/Button';
+import CatalogFormModal from '@/components/catalogs/CatalogFormModal';
+import PurgeAuditLogsModal from './PurgeAuditLogsModal';
+import { useToast } from '@/components/ui/feedback/ToastProvider';
+import {
+    getRetencionAuditoriaAction,
+    updateRetencionAuditoriaAction,
+    getUltimaPurgaAuditoriaAction,
+} from '@/app/actions/audit-retencion.actions';
+import type { ClaseRetencion, UltimaPurga } from '@/lib/db/queries/auditoria-retencion.queries';
+import { sanitizeUserMessage } from '@/lib/utils/error-messages';
+import { logger } from '@/lib/utils/logger';
+
+const COLUMNAS = ['Tipo de registro', 'Se conserva', 'Se depura lo anterior a', 'Registros', 'Por depurar'];
+const CLAVES = ['etiqueta_txt', 'plazo_txt', 'corte_txt', 'totales_txt', 'purgables_txt'];
+
+interface AuditMaintenanceViewProps {
+    /** La notificación abre la pestaña con el modal de depuración ya desplegado. */
+    abrirPurga?: boolean;
+    onPurgaCerrada?: () => void;
+}
+
+function formatearFecha(fecha: string | null): string {
+    if (!fecha) return '—';
+    // fecha viene como YYYY-MM-DD desde SQL; se parte a mano para no pasar por
+    // new Date('YYYY-MM-DD'), que lo interpreta en UTC y de noche corre el día.
+    const [anio, mes, dia] = fecha.split('-').map(Number);
+    if (!anio || !mes || !dia) return '—';
+    return new Date(anio, mes - 1, dia).toLocaleDateString('es-VE', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+    });
+}
+
+function formatearPlazo(meses: number): string {
+    if (meses % 12 === 0) {
+        const anios = meses / 12;
+        return anios === 1 ? '1 año' : `${anios} años`;
+    }
+    return meses === 1 ? '1 mes' : `${meses} meses`;
+}
+
+export default function AuditMaintenanceView({ abrirPurga = false, onPurgaCerrada }: AuditMaintenanceViewProps) {
+    const { toast } = useToast();
+    const [clases, setClases] = useState<ClaseRetencion[]>([]);
+    const [ultimaPurga, setUltimaPurga] = useState<UltimaPurga | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [editando, setEditando] = useState<ClaseRetencion | null>(null);
+    const [showPurgeModal, setShowPurgeModal] = useState(false);
+
+    const cargar = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const [resumen, purga] = await Promise.all([
+                getRetencionAuditoriaAction(),
+                getUltimaPurgaAuditoriaAction(),
+            ]);
+            if (resumen.success && resumen.data) {
+                setClases(resumen.data);
+            } else {
+                setError(resumen.error?.message || 'Error al cargar la política de retención');
+            }
+            if (purga.success) {
+                setUltimaPurga(purga.data ?? null);
+            }
+        } catch (err) {
+            setError(sanitizeUserMessage(err, 'Error al cargar la política de retención'));
+            logger.error('Error cargando la retención de auditoría', err);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        cargar();
+    }, [cargar]);
+
+    // Se espera a tener las clases cargadas: si el modal se abriera antes,
+    // enseñaría un "todo al día" falso mientras llega la consulta.
+    useEffect(() => {
+        if (abrirPurga && !loading) setShowPurgeModal(true);
+    }, [abrirPurga, loading]);
+
+    const filas = useMemo(
+        () =>
+            clases.map((c) => ({
+                ...c,
+                etiqueta_txt: c.etiqueta,
+                plazo_txt: formatearPlazo(c.meses_retencion),
+                corte_txt: formatearFecha(c.fecha_corte),
+                totales_txt: String(c.eventos_totales),
+                purgables_txt: c.eventos_purgables > 0 ? String(c.eventos_purgables) : '—',
+            })),
+        [clases]
+    );
+
+    const totalPurgable = useMemo(
+        () => clases.reduce((suma, c) => suma + c.eventos_purgables, 0),
+        [clases]
+    );
+    const totalRegistros = useMemo(
+        () => clases.reduce((suma, c) => suma + c.eventos_totales, 0),
+        [clases]
+    );
+
+    const handleGuardarPlazo = async (data: Record<string, string>) => {
+        if (!editando) return;
+        const meses = Number(data.meses_retencion);
+        const result = await updateRetencionAuditoriaAction(editando.clase, meses);
+        if (result.success && result.data) {
+            setClases(result.data);
+            toast.success(
+                `"${editando.etiqueta}" ahora se conserva ${formatearPlazo(meses)}.`,
+                'Plazo actualizado'
+            );
+            setEditando(null);
+        } else {
+            toast.error(result.error?.message || 'Error al actualizar el plazo', 'Error');
+        }
+    };
+
+    if (error) {
+        return (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
+                <p>Error: {error}</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="w-full px-3">
+            {/* Explicación: mismo bloque ámbar que el archivado de casos inactivos */}
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-lg p-4 flex items-start gap-3 transition-colors mb-6">
+                <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                    <h4 className="font-medium text-amber-800 dark:text-amber-300">
+                        Depuración de registros de auditoría
+                    </h4>
+                    <p className="text-sm text-amber-700 dark:text-amber-400/90 mt-1">
+                        La auditoría guarda cada cambio del sistema y crece sin parar. Aquí se define
+                        cuánto tiempo se conserva cada tipo de registro y se depuran los que ya cumplieron
+                        su plazo. Nada se borra solo: la depuración siempre la confirmas tú, y queda
+                        registrada como un evento más.
+                    </p>
+                </div>
+            </div>
+
+            {/* Resumen */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div className="text-base text-[var(--card-text-muted)]">
+                    {loading ? (
+                        'Calculando…'
+                    ) : (
+                        <>
+                            <span className="font-medium text-[var(--foreground)]">{totalRegistros}</span>{' '}
+                            registros en total
+                            {totalPurgable > 0 && (
+                                <>
+                                    {' · '}
+                                    <span className="font-medium text-[var(--foreground)]">{totalPurgable}</span>{' '}
+                                    ya cumplieron su plazo
+                                </>
+                            )}
+                            {ultimaPurga && (
+                                <>
+                                    {' · '}última depuración: {formatearFecha(ultimaPurga.fecha.slice(0, 10))} por{' '}
+                                    {ultimaPurga.usuario_nombre} ({ultimaPurga.eventos_borrados})
+                                </>
+                            )}
+                        </>
+                    )}
+                </div>
+
+                <Button
+                    variant="danger"
+                    onClick={() => setShowPurgeModal(true)}
+                    disabled={loading || totalPurgable === 0}
+                    className="gap-2 whitespace-nowrap"
+                >
+                    <Trash2 className="w-4 h-4" />
+                    Depurar registros vencidos
+                </Button>
+            </div>
+
+            {loading ? (
+                <TableSkeleton columns={COLUMNAS.length} rows={5} />
+            ) : (
+                <Table
+                    data={filas as unknown as Record<string, unknown>[]}
+                    columns={COLUMNAS}
+                    keys={CLAVES}
+                    idKey="clase"
+                    rowsPerPage={10}
+                    onEdit={(fila) => setEditando(fila as unknown as ClaseRetencion)}
+                />
+            )}
+
+            {!loading && totalPurgable === 0 && (
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                    <CheckCircle2 className="w-12 h-12 text-green-500 mb-3" />
+                    <p className="text-[var(--card-text-muted)]">
+                        No hay registros de auditoría que hayan cumplido su plazo.
+                    </p>
+                </div>
+            )}
+
+            {/* Editar el plazo: el mismo modal de formulario de los catálogos */}
+            <CatalogFormModal
+                key={editando?.clase ?? 'sin-edicion'}
+                isOpen={editando !== null}
+                onClose={() => setEditando(null)}
+                onSubmit={handleGuardarPlazo}
+                title={`Plazo de "${editando?.etiqueta ?? ''}"`}
+                fields={[
+                    {
+                        name: 'meses_retencion',
+                        label: `Meses que se conserva (mínimo ${editando?.meses_minimo ?? 1})`,
+                        type: 'number',
+                        required: true,
+                        defaultValue: editando ? String(editando.meses_retencion) : undefined,
+                        validate: (value) => {
+                            const meses = Number(value);
+                            if (!Number.isInteger(meses)) return 'Escribe un número entero de meses';
+                            if (editando && meses < editando.meses_minimo) {
+                                return `No puede ser menos de ${editando.meses_minimo} meses`;
+                            }
+                            if (meses > 600) return 'El máximo son 600 meses';
+                            return undefined;
+                        },
+                    },
+                ]}
+            />
+
+            <PurgeAuditLogsModal
+                isOpen={showPurgeModal}
+                clases={clases}
+                onClose={() => {
+                    setShowPurgeModal(false);
+                    onPurgaCerrada?.();
+                }}
+                onPurgeComplete={cargar}
+            />
+        </div>
+    );
+}

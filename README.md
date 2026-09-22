@@ -228,6 +228,10 @@ node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"
 - **Sin `DESKTOP_APP_TOKEN` la puerta queda abierta**, a propósito: si el código
   llega a producción antes que la variable, fallar cerrado dejaría fuera a todo
   el mundo. En desarrollo (`NODE_ENV !== 'production'`) tampoco se aplica.
+- Quien no pasa recibe el **404 por defecto de Next.js**, copiado palabra por
+  palabra: el dominio se ve igual que cualquier despliegue con una ruta que no
+  existe. `favicon.ico` también queda detrás de la puerta — son 25 KB con el
+  logo de la clínica que confirmarían de qué es el dominio.
 - Para entrar desde un navegador normal (demos, soporte): abrir cualquier ruta
   con `?acceso=<DESKTOP_APP_TOKEN>`. Deja una cookie por 30 días. El token queda
   en los registros de acceso del servidor, así que conviene rotarlo después.

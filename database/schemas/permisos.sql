@@ -80,3 +80,13 @@ GRANT USAGE, SELECT ON SEQUENCE auditoria_eventos_id_seq TO rol_coordinador, rol
 -- 20260910_120000_unificar_sesiones_reportes_soportes_en_auditoria_eventos.sql —
 -- ya no tienen tablas propias (auditoria_sesiones, auditoria_reportes,
 -- auditoria_descarga_soportes fueron eliminadas).
+
+-- Purga manual de la auditoría (migración 20260921_120000_purga_manual_auditoria.sql).
+-- Sigue sin haber DELETE sobre auditoria_eventos para ningún rol de la app: se
+-- borra únicamente a través de auditoria_purgar(), que es SECURITY DEFINER,
+-- valida que el actor sea Coordinador y deja constancia de cada purga.
+GRANT SELECT, UPDATE ON auditoria_retencion TO rol_coordinador;
+GRANT SELECT ON auditoria_retencion TO rol_profesor, rol_estudiante;
+GRANT EXECUTE ON FUNCTION public.auditoria_clase(TEXT, TEXT, JSONB) TO rol_coordinador;
+GRANT EXECUTE ON FUNCTION public.auditoria_retencion_resumen() TO rol_coordinador;
+GRANT EXECUTE ON FUNCTION public.auditoria_purgar(TEXT[], VARCHAR, BOOLEAN) TO rol_coordinador;

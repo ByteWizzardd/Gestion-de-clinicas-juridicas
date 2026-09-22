@@ -50,6 +50,12 @@ const Notification: React.FC<NotificationProps> = () => {
       return '/dashboard/cases?archiveInactive=true';
     }
 
+    // Notificación de retención de auditoría (Automatización).
+    // El título lo fija TITULO_NOTIFICACION_PURGA en audit-retention.service.ts.
+    if (notification.title.toLowerCase().includes('registros de auditoría por depurar')) {
+      return '/dashboard/audit?purgeLogs=true';
+    }
+
     const citaId = extractCitaId(notification.title) || extractCitaId(notification.message);
     if (citaId) {
       return `/dashboard/appointments/${citaId}`;

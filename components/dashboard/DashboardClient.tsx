@@ -53,7 +53,7 @@ interface DashboardClientProps {
   isCoordinator?: boolean;
 }
 
-import { triggerInactiveCasesCheckAction } from '@/app/actions/automation';
+import { triggerInactiveCasesCheckAction, triggerAuditRetentionCheckAction } from '@/app/actions/automation';
 
 export default function DashboardClient({
   initialAppointments,
@@ -79,6 +79,9 @@ export default function DashboardClient({
       try {
         // Fire and forget - logs handled in action/server
         await triggerInactiveCasesCheckAction();
+        // Mismo patrón para la auditoría: solo notifica, la purga la confirma
+        // el Coordinador desde la pestaña de Mantenimiento.
+        await triggerAuditRetentionCheckAction();
       } catch (error) {
         logger.error('Automation background check failed', error);
       }

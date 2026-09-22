@@ -12,6 +12,14 @@ const envPath = join(__dirname, "..", ".env");
 if (existsSync(envLocalPath)) dotenv.config({ path: envLocalPath });
 if (existsSync(envPath)) dotenv.config({ path: envPath });
 
+// El script usaba `logger` en sus bloques catch sin haberlo definido: cualquier
+// fallo al notificar reventaba con ReferenceError en vez de registrarse.
+const logger = {
+  info: (m, d = "") => console.log(`ℹ️ [${new Date().toISOString()}] ${m}`, d),
+  warn: (m, d = "") => console.warn(`⚠️ [${new Date().toISOString()}] ${m}`, d),
+  error: (m, d = "") => console.error(`❌ [${new Date().toISOString()}] ${m}`, d),
+};
+
 function formatCaseIdList(cases, limit = 50) {
   const ids = cases.map((c) => c.id_caso).filter((v) => v !== null && v !== undefined);
   const first = ids.slice(0, limit);

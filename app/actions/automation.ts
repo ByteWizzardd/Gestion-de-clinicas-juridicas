@@ -1,6 +1,7 @@
 'use server';
 
 import { checkAndNotifyInactiveCases } from '@/lib/services/inactive-cases.service';
+import { checkAndNotifyAuditRetention } from '@/lib/services/audit-retention.service';
 import { requireAuthInServerAction } from '@/lib/utils/server-auth';
 import { cookies } from 'next/headers';
 
@@ -26,4 +27,22 @@ export async function triggerInactiveCasesCheckAction() {
     const result = await checkAndNotifyInactiveCases();
 
     return result;
+}
+
+/**
+ * Chequeo de retención de la auditoría: avisa al Coordinador cuando hay
+ * registros que ya cumplieron su plazo. Solo NOTIFICA — la purga la confirma
+ * él a mano desde /dashboard/audit?purgeLogs=true.
+ */
+export async function triggerAuditRetentionCheckAction() {
+    const auth = await requireAuthInServerAction();
+    if (!auth.success || !auth.user) {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    if (auth.user.rol !== 'Coordinador') {
+        return { success: false, message: 'Skipped: User is not coordinator' };
+    }
+
+    return await checkAndNotifyAuditRetention();
 }

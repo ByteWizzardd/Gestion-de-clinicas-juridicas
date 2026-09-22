@@ -491,6 +491,24 @@ CREATE TABLE auditoria_eventos (
     CONSTRAINT auditoria_eventos_pkey PRIMARY KEY (id)
 );
 
+-- 40) AUDITORIA_RETENCION
+-- Politica de retencion de auditoria_eventos, editable por el Coordinador
+-- (migracion 20260921_120000_purga_manual_auditoria.sql).
+CREATE TABLE auditoria_retencion (
+    clase              VARCHAR(20)  NOT NULL,
+    etiqueta           VARCHAR(60)  NOT NULL,
+    descripcion        TEXT         NOT NULL,
+    meses_retencion    INTEGER      NOT NULL,
+    meses_minimo       INTEGER      NOT NULL,
+    orden              INTEGER      NOT NULL,
+    id_usuario_modifica VARCHAR(20),
+    fecha_modificacion TIMESTAMP    NOT NULL DEFAULT (now() AT TIME ZONE 'America/Caracas'::text),
+    CONSTRAINT auditoria_retencion_pkey PRIMARY KEY (clase),
+    CONSTRAINT auditoria_retencion_meses_check CHECK (meses_retencion >= meses_minimo),
+    CONSTRAINT auditoria_retencion_minimo_check CHECK (meses_minimo >= 1),
+    CONSTRAINT auditoria_retencion_tope_check CHECK (meses_retencion <= 600)
+);
+
 -- =========================================================
 -- CLAVES FORÁNEAS
 -- =========================================================
@@ -572,6 +590,7 @@ ALTER TABLE se_le_asigna ADD CONSTRAINT se_le_asigna_id_caso_fkey FOREIGN KEY (i
 ALTER TABLE se_le_asigna ADD CONSTRAINT se_le_asigna_id_usuario_registro_fkey FOREIGN KEY (id_usuario_registro) REFERENCES usuarios(cedula);
 ALTER TABLE se_le_asigna ADD CONSTRAINT se_le_asigna_term_cedula_estudiante_fkey FOREIGN KEY (term, cedula_estudiante) REFERENCES estudiantes(term, cedula_estudiante) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ocurren_en ADD CONSTRAINT ocurren_en_id_caso_fkey FOREIGN KEY (id_caso) REFERENCES casos(id_caso) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE auditoria_retencion ADD CONSTRAINT auditoria_retencion_id_usuario_modifica_fkey FOREIGN KEY (id_usuario_modifica) REFERENCES usuarios(cedula);
 ALTER TABLE ocurren_en ADD CONSTRAINT ocurren_en_term_fkey FOREIGN KEY (term) REFERENCES semestres(term) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 -- =========================================================
@@ -586,8 +605,8 @@ CREATE INDEX idx_citas_usuario_registro ON citas USING btree (id_usuario_registr
 CREATE INDEX idx_soportes_usuario_subio ON soportes USING btree (id_usuario_subio);
 CREATE INDEX idx_beneficiarios_usuario_actualizo ON beneficiarios USING btree (id_usuario_actualizo);
 CREATE INDEX idx_beneficiarios_usuario_registro ON beneficiarios USING btree (id_usuario_registro);
-CREATE INDEX idx_auditoria_eventos_datos_nuevos_gin ON auditoria_eventos USING gin (datos_nuevos);
 CREATE INDEX idx_auditoria_eventos_entidad_fecha ON auditoria_eventos USING btree (entidad, fecha_evento DESC);
+CREATE INDEX idx_auditoria_eventos_fecha ON auditoria_eventos USING btree (fecha_evento);
 CREATE INDEX idx_auditoria_eventos_id_entidad ON auditoria_eventos USING btree (entidad, id_entidad);
 CREATE INDEX idx_auditoria_eventos_transaccion ON auditoria_eventos USING btree (id_transaccion);
 CREATE INDEX idx_auditoria_eventos_usuario ON auditoria_eventos USING btree (id_usuario);
