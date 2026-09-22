@@ -22,7 +22,6 @@ import { generateCasoHistorialZip } from '@/lib/utils/case-history-pdf-generator
 import type { CasoHistorialData } from '@/lib/types/report-types';
 import { getSemestres } from '@/app/actions/catalogos/semestres.actions';
 import { logger } from '@/lib/utils/logger';
-import { getCurrentTermAction } from '@/app/actions/estudiantes';
 import { sanitizeUserMessage } from '@/lib/utils/error-messages';
 import { toLocalISODate } from '@/lib/utils/date-formatter';
 interface Caso {
@@ -141,12 +140,6 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
             .sort((a, b) => b.term.localeCompare(a.term))
             .map(s => ({ value: s.term, label: s.term }));
           setSemestresOptions(sortedTerms);
-        }
-
-        // Cargar el semestre actual como valor predeterminado
-        const currentTermResult = await getCurrentTermAction();
-        if (currentTermResult.success && currentTermResult.data) {
-          setTermFilter(currentTermResult.data.term);
         }
       } catch (error) {
         logger.error('Error cargando datos de catálogo:', error);

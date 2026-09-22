@@ -9,7 +9,7 @@ import CaseTools from '@/components/CaseTools/CaseTools';
 import Table from '@/components/Table/Table';
 import BulkUploadModal from './BulkUploadModal';
 import { getUsuariosAction, deleteUsuarioFisicoAction, getUsuarioInfoByCedulaAction, toggleHabilitadoUsuarioAction, disableUsuariosLoteAction, enableUsuariosLoteAction } from '@/app/actions/usuarios';
-import { getSemestresAction, getCurrentTermAction, deshabilitarUsuariosSemestreFinalizadoAction } from '@/app/actions/estudiantes';
+import { getSemestresAction, deshabilitarUsuariosSemestreFinalizadoAction } from '@/app/actions/estudiantes';
 import EditUserModal from './EditUserModal';
 import CreateUserModal from './CreateUserModal';
 import { logger } from '@/lib/utils/logger';
@@ -149,11 +149,6 @@ export default function UsersClient({ initialUsuarios = [], currentUserCedula = 
       const result = await getSemestresAction();
       if (result.success && result.data) {
         setSemestres(result.data);
-      }
-      // Cargar el semestre actual como valor predeterminado
-      const currentTermResult = await getCurrentTermAction();
-      if (currentTermResult.success && currentTermResult.data) {
-        setSemestreFilter(currentTermResult.data.term);
       }
     } catch (error) {
       logger.error('Error al cargar semestres:', error);
