@@ -306,6 +306,13 @@ body {
   /* Firefox */
 }
 
+/* Ocultar los botones nativos de Microsoft Edge para revelar contraseñas y limpiar campos */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
+
 /* Custom Scrollbar (Webkit) */
 ::-webkit-scrollbar {
   width: 12px;
