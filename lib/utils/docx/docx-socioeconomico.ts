@@ -25,6 +25,7 @@ import {
 } from '../pdf-generator-react';
 import { createExportStampParagraph, formatDate, base64ToUint8Array, createEmptyPortraitPage } from './docx-utils';
 import { formatDateTimeForFilename } from '../date-formatter';
+import { toTitleCase } from '../title-case';
 
 import {
     generateTitleImage,
@@ -183,7 +184,7 @@ export async function generateSocioeconomicoDOCX(
             types.forEach(type => {
                 housingSections.push({
                     key: `caract_${type.replace(/\s+/g, '_').toLowerCase()}`,
-                    title: type,
+                    title: toTitleCase(type),
                     isDynamicHousing: true,
                     typeName: type
                 });

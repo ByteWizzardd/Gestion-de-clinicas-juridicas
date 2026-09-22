@@ -4,6 +4,7 @@ import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/
 import { logger } from '@/lib/utils/logger';
 import { SocioeconomicoData } from '@/types/reports';
 import { ExportStamp } from '@/components/pdf/ExportStamp';
+import { toTitleCase } from '@/lib/utils/title-case';
 
 // Registrar League Spartan desde archivos locales
 try {
@@ -230,7 +231,7 @@ const InformeSocioeconomicoPDF: React.FC<InformeSocioeconomicoPDFProps> = ({
             if (chartImages[key]) {
                 housingSections.push({
                     key,
-                    title: type,
+                    title: toTitleCase(type),
                     totalLabel: type.toLowerCase().includes('artefact') ? 'Artefactos' : 'Solicitantes',
                     // Para el cálculo del total basado en esta sección específica
                     isDynamicHousing: true,
