@@ -52,6 +52,10 @@ const sqlNivel = (v) =>
         ? `(SELECT id_nivel_educativo FROM niveles_educativos WHERE descripcion = ${sql(v)})`
         : sqlNum(v);
 const sqlBool = (v) => (v === null || v === undefined ? 'NULL' : v ? 'TRUE' : 'FALSE');
+/** Igual que sqlNivel: la parroquia "No suministrada" se resuelve por nombre. */
+const sqlParroquia = (s) => (s.num_parroquia !== null ? sqlNum(s.num_parroquia)
+    : `(SELECT num_parroquia FROM parroquias WHERE id_estado = ${s.id_estado}`
+      + ` AND num_municipio = ${s.num_municipio} AND nombre_parroquia = ${sql(PARROQUIA_NO_SUMINISTRADA)})`);
 
 const titulo = (s) =>
     String(s ?? '').toLowerCase().split(/\s+/).filter(Boolean)
@@ -101,6 +105,18 @@ function partirNombre(completo) {
     return { nombres: titulo(partes.slice(0, 2).join(' ')), apellidos: titulo(partes.slice(2).join(' ')) };
 }
 
+/**
+ * Celular a solo dígitos. La hoja de Casa Barandiarán guardó los teléfonos como
+ * número y Excel les comió el 0 de adelante ("4263320070"): si quedan diez
+ * dígitos empezando por 4 se le devuelve, porque todo celular venezolano es 0 +
+ * diez dígitos. Lo que venga con otra cantidad se deja tal cual —hay cinco así
+ * en los libros, y con un dígito de más no hay manera de saber cuál sobra.
+ */
+const aCelular = (v) => {
+    const d = String(v ?? '').replace(/\D/g, '');
+    return d.length === 10 && d.startsWith('4') ? `0${d}` : d;
+};
+
 /** Fechas: el libro mezcla ISO y dd/mm/aaaa. */
 function aFecha(v) {
     const t = String(v ?? '').trim();
@@ -113,6 +129,65 @@ function aFecha(v) {
         return `${anio}-${String(mes).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     }
     return null;
+}
+
+/**
+ * Partículas y conectores que aparecen en muchísimos nombres venezolanos. No
+ * distinguen a nadie, así que no cuentan como coincidencia: sin esto,
+ * "Morelys Del Carmen Bosque García" se emparejaba con "Alvarez Romero Norus
+ * del Carmen" por compartir "del" y "carmen", y el caso terminaba colgado de
+ * la persona equivocada.
+ */
+const PARTICULAS = new Set(['del', 'los', 'las', 'san', 'santa']);
+
+/**
+ * Nombres de pila tan repetidos que por sí solos no identifican a nadie. No se
+ * excluyen del conteo —"María Mota" sería irreconocible sin "maría"— pero se
+ * exige que al menos una coincidencia NO sea de esta lista, es decir que haya
+ * pegado algo parecido a un apellido.
+ */
+const NOMBRES_COMUNES = new Set(['maria', 'jose', 'carmen', 'luis', 'ana', 'juan', 'jesus', 'rosa']);
+
+/**
+ * El formulario escribe "Nombres Apellidos" y la hoja de casos a veces al
+ * revés o abreviado. Se cruza por palabras, pero solo cuentan las que
+ * distinguen: hacen falta al menos dos, una de ellas fuera de los nombres de
+ * pila más repetidos, y que ninguna otra persona empate. Ante la duda no se
+ * empareja y el caso queda en el informe: es preferible dejarlo fuera a
+ * atribuírselo a quien no es.
+ */
+const distintivas = (nombre) =>
+    // La puntuación se quita ANTES de partir: el formulario escribe "Gil,
+    // Migdalis" y sin esto el token quedaba "gil," —con la coma pegada— que no
+    // coincide con ningún "Gil". Eran siete filas escritas con coma, y sus casos
+    // se quedaban fuera por eso.
+    new Set(norm(nombre).replace(/[^a-z0-9ñ ]+/g, ' ').split(' ')
+        .filter((x) => x.length > 2 && !PARTICULAS.has(x)));
+
+/**
+ * ¿Son la misma palabra escrita con una errata? Los dos libros los llevan
+ * personas distintas a mano y el mismo nombre viaja deformado: "Nicklas" y
+ * "Nickels", "Martinez" y "Martines", "Froilan" y "Frolian", "bejaramo" y
+ * "Bejarano". Se acepta una sola diferencia —un cambio, una letra de más, una
+ * de menos o dos letras seguidas intercambiadas— y solo en palabras de 5 letras
+ * o más, porque en palabras cortas una letra de diferencia cambia el nombre
+ * ("Ana"/"Ani", "Leon"/"Leal").
+ */
+function casiIgual(a, b) {
+    if (a === b) return true;
+    if (a.length < 5 || b.length < 5 || Math.abs(a.length - b.length) > 1) return false;
+    if (a.length === b.length) {
+        const d = [...a].reduce((n, c, i) => n + (c === b[i] ? 0 : 1), 0);
+        if (d === 1) return true;
+        // Transposición: "Froilan" / "Frolian".
+        const p = [...a].findIndex((c, i) => c !== b[i]);
+        return d === 2 && a[p] === b[p + 1] && a[p + 1] === b[p]
+            && a.slice(p + 2) === b.slice(p + 2);
+    }
+    const [corta, larga] = a.length < b.length ? [a, b] : [b, a];
+    for (let i = 0; i <= corta.length; i++)
+        if (corta === larga.slice(0, i) + larga.slice(i + 1)) return true;
+    return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -135,6 +210,30 @@ const NIVEL_EDUCATIVO = {
  * administra el Coordinador desde la app— y el SQL la resuelve por nombre.
  */
 const NIVEL_NO_SUMINISTRADO = 'No suministrado';
+
+/**
+ * Lo mismo, pero para la parroquia.
+ *
+ * El formulario pide "Estado, municipio y parroquia" y buena parte de la gente
+ * responde con su sector ("Caimito manzana 34 casa 18", "Bella vista, San
+ * Félix"). El municipio se sabe —Caroní, todas—, la parroquia no, y las tres
+ * columnas son NOT NULL. Meterlos en una parroquia real cualquiera sería decir
+ * que viven donde no viven, y encima quedaría escondido: el informe por
+ * parroquia los contaría como vecinos de gente que no lo es.
+ *
+ * Así que se agrega una parroquia "No suministrada" por municipio, igual que se
+ * hizo con el nivel educativo. El dato desconocido queda a la vista en vez de
+ * disfrazado, y la dirección tal como la escribió la persona se guarda completa
+ * en `direccion_habitacion`, que es lo que la app muestra como domicilio.
+ */
+const PARROQUIA_NO_SUMINISTRADA = 'No suministrada';
+
+/**
+ * Lo que va en telefono_celular cuando el formulario no trae ninguno. La columna
+ * es NOT NULL y un número inventado sería peor que nada: alguien podría marcarlo
+ * y caer en la casa de un desconocido. Un texto no se puede marcar.
+ */
+const SIN_TELEFONO = 'No suministrado';
 
 /**
  * Quién queda como responsable del registro. La carga la hace el Coordinador,
@@ -330,6 +429,78 @@ function equipoDeCaso(texto) {
     };
 }
 
+/**
+ * Solicitantes que el control de casos nombra pero que no están en el
+ * formulario socioeconómico.
+ *
+ * Las 61 respuestas del formulario son todas de UCAB Guayana: Casa Barandiarán
+ * atiende en jornadas de comunidad y de sus 9 consultas no quedó ni una ficha.
+ * Sin solicitante no hay caso, así que esos 9 casos —con su tipo, su reseña,
+ * sus revisiones y su equipo— se perdían enteros por no tener a quién colgarlos.
+ *
+ * Para cada uno se arma un solicitante con lo que el libro SÍ trae —el nombre y
+ * el teléfono, que son reales— y un relleno declarado para lo que el esquema
+ * exige y el libro no dice:
+ *
+ *   cédula             bloque V-8000000x, aparte del V-9000000x del equipo, para
+ *                      que se vea de lejos que no es una cédula de verdad
+ *   correo             derivado de esa cédula, con dominio .invalid
+ *   fecha nacimiento   RELLENO_NACIMIENTO, la misma para los nueve: que todos
+ *                      hayan "nacido" el mismo día es la señal de que el dato no
+ *                      existe. Se usa una fecha verosímil y no un 1900-01-01
+ *                      porque la app calcula la edad y la reporta por rangos.
+ *   domicilio          el del núcleo que los atendió, leído del catálogo. No es
+ *                      dónde viven —eso el libro no lo dice— sino dónde se los
+ *                      atendió; por eso direccion_habitacion queda vacía.
+ *   nivel educativo    la opción "No suministrado"
+ *   trabajo/actividad  NULL: no se sabe, y 0 ("no aplica") ya sería afirmar algo
+ *
+ * `sexo` sale del nombre de pila, y `estado_civil` de la propia reseña cuando la
+ * dice ("quiere divorciarse" -> Casado; "ella se divorció" -> Divorciado); donde
+ * no la dice queda 'Soltero'. Los dos van escritos uno por uno aquí, no
+ * deducidos por código, para que se puedan revisar de un vistazo. Los nombres
+ * también: partirNombre() acierta en la mayoría pero no en "Wilfredo Acosta
+ * Garcia" ni en "Juan Sergio Alejandro Marin Guevara", y son nueve filas.
+ */
+const RELLENO_NACIMIENTO = '1990-01-01';
+const SIN_FORMULARIO = [
+    { nucleo: 'Casa Barandiarán', libro: 'Marlierys Del Valle Sulbaran Salavarria',
+      nombres: 'Marlierys del Valle', apellidos: 'Sulbaran Salavarria', sexo: 'F', estado_civil: 'Casado' },
+    { nucleo: 'Casa Barandiarán', libro: 'Wilfredo Acosta Garcia',
+      nombres: 'Wilfredo', apellidos: 'Acosta Garcia', sexo: 'M', estado_civil: 'Soltero' },
+    { nucleo: 'Casa Barandiarán', libro: 'Juan Sergio Alejandro Marin Guevara',
+      nombres: 'Juan Sergio Alejandro', apellidos: 'Marin Guevara', sexo: 'M', estado_civil: 'Casado' },
+    { nucleo: 'Casa Barandiarán', libro: 'Anibal Jose Acosta',
+      nombres: 'Anibal Jose', apellidos: 'Acosta', sexo: 'M', estado_civil: 'Soltero' },
+    { nucleo: 'Casa Barandiarán', libro: 'Maria Hidalgo',
+      nombres: 'Maria', apellidos: 'Hidalgo', sexo: 'F', estado_civil: 'Divorciado' },
+    // El libro escribe "Rosalia Cristina Gomez ( representada por Yenny
+    // Fuenmayor)": el paréntesis no es parte del nombre, va a las observaciones
+    // del caso, que es donde se entiende.
+    { nucleo: 'Casa Barandiarán', libro: 'Rosalia Cristina Gomez ( representada por Yenny Fuenmayor)',
+      nombres: 'Rosalia Cristina', apellidos: 'Gomez', sexo: 'F', estado_civil: 'Soltero',
+      nota: 'Representada por Yenny Fuenmayor, según el control de casos.' },
+    { nucleo: 'Casa Barandiarán', libro: 'Wendy del Valle Gularte Salaverria',
+      nombres: 'Wendy del Valle', apellidos: 'Gularte Salaverria', sexo: 'F', estado_civil: 'Soltero' },
+    { nucleo: 'Casa Barandiarán', libro: 'Elizabeth Acosta',
+      nombres: 'Elizabeth', apellidos: 'Acosta', sexo: 'F', estado_civil: 'Soltero' },
+    { nucleo: 'Casa Barandiarán', libro: 'Carmen Yraida Forero',
+      nombres: 'Carmen Yraida', apellidos: 'Forero', sexo: 'F', estado_civil: 'Soltero' },
+    // Y cuatro de UCAB Guayana. Aquí sí hubo formulario, pero estas personas no
+    // lo llenaron: no hay en las 61 respuestas ninguna que se les parezca ni de
+    // lejos (se buscó por nombre y por errata).
+    { nucleo: 'UCAB Guayana', libro: 'Eugenio Salcedo',
+      nombres: 'Eugenio', apellidos: 'Salcedo', sexo: 'M', estado_civil: 'Soltero' },
+    { nucleo: 'UCAB Guayana', libro: 'Eloisa Moreno',
+      nombres: 'Eloisa', apellidos: 'Moreno', sexo: 'F', estado_civil: 'Soltero' },
+    // El caso es una partición de comunidad conyugal, que supone un matrimonio.
+    { nucleo: 'UCAB Guayana', libro: 'Maria José de León',
+      nombres: 'Maria José', apellidos: 'de León', sexo: 'F', estado_civil: 'Casado' },
+    { nucleo: 'UCAB Guayana', libro: 'Eglis Gonzalez',
+      nombres: 'Eglis', apellidos: 'Gonzalez', sexo: 'F', estado_civil: 'Soltero',
+      dudaSexo: true },
+].map((r, i) => ({ ...r, cedula: `V-${80000000 + i + 1}` }));
+
 /** Estatus del libro -> los cuatro que admite cambio_estatus. */
 function estatusDeCaso(texto) {
     const t = norm(texto);
@@ -430,6 +601,27 @@ function construirBuscadorParroquias(parroquias) {
     };
 
     /**
+     * Sectores y urbanizaciones que la gente escribe en lugar de la parroquia.
+     *
+     * Cada uno sale del PROPIO libro, no de conocimiento geográfico de fuera:
+     * son sectores que otras respuestas nombran junto a su parroquia, y solo se
+     * aceptan si todas las filas que los mencionan coinciden en cuál es.
+     *
+     *   core 8          -> filas 10 ("Core 8, unare, municipio Caroní") y 33
+     *                     ("Core 8 plaza mercado, parroquia Unare"): Unare las dos
+     *   villa africana  -> filas 20 y 45 ("Villa Africana, Parroquia universidad")
+     *   villa latina    -> fila 42 ("Bolivar, Villa Latina, parroquia universidad")
+     *
+     * "la unidad" queda fuera a propósito: la fila 12 la pone en Dalla Costa y la
+     * 62 en Simón Bolívar. El libro se contradice, así que no se elige por él.
+     */
+    const SECTOR = {
+        'core 8': 'unare',
+        'villa africana': 'universidad',
+        'villa latina': 'universidad',
+    };
+
+    /**
      * Se resuelve en cascada estado -> municipio -> parroquia, no por el nombre
      * de parroquia suelto. Buscarla en todo el país hacía que "Bolívar, Caroní,
      * Unare" cayera en la parroquia Bolívar del estado Aragua, y que
@@ -445,21 +637,54 @@ function construirBuscadorParroquias(parroquias) {
         const apareceParroquia = (p) =>
             aparece(p) || (ALIAS[norm(p.nombre_parroquia)] ?? []).some(contiene);
 
-        const resolver = (estado, municipio) => {
-            const ambito = municipio
-                ? porParroquia.filter((p) => p.id_estado === municipio.id_estado && p.num_municipio === municipio.num_municipio)
-                : porParroquia.filter((p) => p.id_estado === estado.id_estado);
-            return ambito.find(apareceParroquia) ?? null;
+        // El sector solo vale si su parroquia cae dentro del ámbito ya acotado:
+        // así "villa africana" no puede traer una parroquia de otro municipio.
+        const porSector = (ambito) => {
+            const nombre = Object.entries(SECTOR).find(([sector]) => contiene(sector))?.[1];
+            return nombre ? ambito.find((p) => norm(p.nombre_parroquia) === nombre) ?? null : null;
         };
-        const predeterminado = () => {
+
+        const ambitoDe = (estado, municipio) => (municipio
+            ? porParroquia.filter((p) => p.id_estado === municipio.id_estado && p.num_municipio === municipio.num_municipio)
+            : porParroquia.filter((p) => p.id_estado === estado.id_estado));
+
+        const resolver = (estado, municipio) => {
+            const ambito = ambitoDe(estado, municipio);
+            return ambito.find(apareceParroquia) ?? porSector(ambito) ?? null;
+        };
+        const ambitoPredeterminado = () => {
             const e = porEstado.find((x) => norm(x.nombre_estado) === PREDETERMINADO.estado);
             const m = porMunicipio.find((x) => x.id_estado === e.id_estado
                 && norm(x.nombre_municipio) === PREDETERMINADO.municipio);
-            return resolver(e, m);
+            return m;
+        };
+        const predeterminado = () => {
+            const m = ambitoPredeterminado();
+            return resolver(null, m);
+        };
+
+        /**
+         * Último recurso: se sabe el municipio pero no la parroquia. Devuelve el
+         * municipio con `num_parroquia` en null, y quien llama usa la parroquia
+         * "No suministrada" (ver PARROQUIA_NO_SUMINISTRADA).
+         *
+         * Siempre cae en el ámbito PREDETERMINADO salvo que el texto nombre
+         * municipio de forma explícita. No se usa un estado detectado sin
+         * municipio a propósito: hay sectores que se llaman como un estado
+         * ("José Tadeo Monagas", "Sueño de bolívar"), y ahí el estado detectado
+         * es una coincidencia de nombre, no un dato.
+         */
+        const sinParroquia = (municipio) => {
+            const m = municipio ?? ambitoPredeterminado();
+            return { id_estado: Number(m.id_estado), num_municipio: Number(m.num_municipio),
+                     num_parroquia: null, nombre_municipio: m.nombre_municipio, nombre_estado: m.nombre_estado,
+                     // Si el texto no nombró el municipio, el ámbito es supuesto,
+                     // no leído: el informe tiene que decirlo de otra manera.
+                     ambitoSupuesto: !municipio };
         };
 
         const estado = porEstado.find(aparece);
-        if (!estado) return predeterminado();
+        if (!estado) return predeterminado() ?? sinParroquia(null);
 
         const municipio = porMunicipio
             .filter((m) => m.id_estado === estado.id_estado)
@@ -468,7 +693,7 @@ function construirBuscadorParroquias(parroquias) {
         // Si en el ámbito detectado no aparece ninguna parroquia, se reintenta
         // en el predeterminado: pasa cuando una calle o un sector se llama como
         // un estado ("José Tadeo Monagas, dalla costa" detectaba Monagas).
-        return resolver(estado, municipio) ?? predeterminado();
+        return resolver(estado, municipio) ?? predeterminado() ?? sinParroquia(municipio);
     };
 }
 
@@ -515,7 +740,9 @@ if (!rutaBenef || !rutaCasos) {
     process.exit(1);
 }
 
-const omitidos = { solicitantes: [], viviendas: [], familias: [], casos: [], equipos: [] };
+const omitidos = { solicitantes: [], viviendas: [], familias: [], casos: [], equipos: [],
+    parroquias: [], erratas: [], cedulas: [], telefonos: [] };
+let sinCedula = 0;
 const anota = (lista, ref, motivo) => omitidos[lista].push({ ref, motivo });
 
 const parroquias = await consultar(
@@ -525,12 +752,20 @@ const parroquias = await consultar(
      JOIN municipios m ON m.id_estado = p.id_estado AND m.num_municipio = p.num_municipio
      JOIN estados e ON e.id_estado = p.id_estado`
 );
-const nucleos = await consultar('SELECT id_nucleo, nombre_nucleo FROM nucleos');
+// La ubicación del núcleo se usa como domicilio de los solicitantes que no
+// llenaron el formulario (ver SIN_FORMULARIO).
+const nucleos = await consultar(
+    'SELECT id_nucleo, nombre_nucleo, id_estado, num_municipio, num_parroquia FROM nucleos'
+);
 const buscarParroquia = construirBuscadorParroquias(parroquias);
-const idDeNucleo = (nombre) => {
+const nucleoDe = (nombre) => {
     const t = norm(nombre);
-    const hit = nucleos.find((x) => norm(x.nombre_nucleo) === t)
-        || nucleos.find((x) => norm(x.nombre_nucleo).startsWith(t.split(' ')[0]));
+    return nucleos.find((x) => norm(x.nombre_nucleo) === t)
+        || nucleos.find((x) => norm(x.nombre_nucleo).startsWith(t.split(' ')[0]))
+        || null;
+};
+const idDeNucleo = (nombre) => {
+    const hit = nucleoDe(nombre);
     return hit ? Number(hit.id_nucleo) : null;
 };
 
@@ -542,8 +777,19 @@ for (const f of benef.filas) {
     const nombreCompleto = String(f[5] ?? '').trim();
     const ref = `fila ${f._fila} (${nombreCompleto || 'sin nombre'})`;
 
+    // Dos personas contestaron "No aplica" en la cédula. El resto de su ficha
+    // está completa, así que se les da una del bloque marcado V-7000000x en vez
+    // de perder su caso. Va aquí y no como columna vacía porque la cédula es la
+    // clave primaria de solicitantes.
     const digitos = String(f[4] ?? '').replace(/\D/g, '');
-    if (!digitos) { anota('solicitantes', ref, `sin cédula en el formulario ("${String(f[4] ?? '').slice(0, 20)}")`); continue; }
+    const cedulaInventada = !digitos;
+    if (cedulaInventada) {
+        anota('cedulas', ref, `el formulario dice "${String(f[4] ?? '').trim()}" en la cédula`);
+    } else if (/[a-z]/i.test(String(f[4] ?? ''))) {
+        // Un pasaporte ("P868205"). La cédula se arma con prefijo de
+        // nacionalidad y solo dígitos, así que la letra del documento se pierde.
+        anota('cedulas', ref, `el formulario trae "${String(f[4] ?? '').trim()}", que parece un pasaporte; quedó como solo dígitos y hay que revisar el documento`);
+    }
 
     const nombre = partirNombre(nombreCompleto);
     if (!nombre) { anota('solicitantes', ref, 'sin nombre'); continue; }
@@ -552,14 +798,25 @@ for (const f of benef.filas) {
     if (!nacimiento) { anota('solicitantes', ref, `fecha de nacimiento ilegible ("${String(f[11] ?? '').slice(0, 30)}")`); continue; }
 
     const parroquia = buscarParroquia(f[9]);
-    if (!parroquia) { anota('solicitantes', ref, `no se reconoce la parroquia en "${String(f[9] ?? '').slice(0, 60)}"`); continue; }
+    if (parroquia.num_parroquia === null) {
+        const texto = String(f[9] ?? '').trim();
+        anota('parroquias', ref, parroquia.ambitoSupuesto
+            ? `escribió "${texto}", que no nombra municipio ni parroquia; se le puso el ámbito de la clínica (${parroquia.nombre_municipio}, ${parroquia.nombre_estado}) y la dirección queda tal cual en su ficha`
+            : `escribió "${texto}", que nombra ${parroquia.nombre_municipio} pero ninguna de sus parroquias`);
+    }
 
     const nivelTexto = norm(f[15]);
     const nivel = NIVEL_EDUCATIVO[nivelTexto] ?? (esSinRespuesta(nivelTexto) ? NIVEL_NO_SUMINISTRADO : null);
     if (!nivel) { anota('solicitantes', ref, `nivel educativo no reconocido ("${String(f[15] ?? '').slice(0, 40)}")`); continue; }
 
-    const celular = String(f[7] ?? '').replace(/\D/g, '');
-    if (!celular) { anota('solicitantes', ref, 'sin teléfono celular'); continue; }
+    // Y dos no dejaron teléfono. La columna es NOT NULL, y un número inventado
+    // sería peor que ninguno: alguien podría llamarlo. Se escribe el texto, que
+    // no se puede marcar por teléfono y se lee igual de claro en la ficha.
+    let celular = aCelular(f[7]);
+    if (!celular) {
+        anota('telefonos', ref, `el formulario dice "${String(f[7] ?? '').trim()}" en el celular`);
+        celular = SIN_TELEFONO;
+    }
 
     const ec = norm(f[13]);
     const estadoCivil = ec.startsWith('casad') ? 'Casado' : ec.startsWith('solter') ? 'Soltero'
@@ -570,7 +827,10 @@ for (const f of benef.filas) {
     const correoBruto = String(f[8] ?? '').trim();
     const fila = {
         _fila: f._fila, _raw: f, _nombreCompleto: nombreCompleto, _marca: String(f[1] ?? ''),
-        cedula: `${esExtranjero ? 'E' : 'V'}-${digitos}`,
+        cedula: cedulaInventada
+            ? `V-${70000000 + (++sinCedula)}`
+            : `${esExtranjero ? 'E' : 'V'}-${digitos}`,
+        _cedulaInventada: cedulaInventada,
         nombres: nombre.nombres,
         apellidos: nombre.apellidos,
         fecha_nacimiento: nacimiento,
@@ -585,18 +845,38 @@ for (const f of benef.filas) {
         id_actividad: norm(f[19]) === 'si' ? 0 : (CONDICION_ACTIVIDAD[norm(f[20])] ?? null),
         id_estado: Number(parroquia.id_estado),
         num_municipio: Number(parroquia.num_municipio),
-        num_parroquia: Number(parroquia.num_parroquia),
+        num_parroquia: parroquia.num_parroquia === null ? null : Number(parroquia.num_parroquia),
         direccion_habitacion: String(f[9] ?? '').trim() || null,
     };
 
-    // Cédula repetida en el formulario: se conserva la respuesta más reciente.
+    // Cédula repetida. Hay dos cosas distintas detrás y no se pueden tratar
+    // igual: la misma persona que contestó el formulario dos veces (Eily Flores
+    // en las filas 3 y 32, Georgina Bejarano en la 14 y la 42) y dos personas
+    // diferentes a las que les tocó la misma cédula por un error al copiarla
+    // (Luz Márquez en la fila 21 y Martha Jansen en la 22, ambas 23.552.118).
+    //
+    // Se distinguen por el nombre: si comparten alguna palabra distintiva es la
+    // misma persona y se conserva la respuesta más reciente. Si no comparten
+    // ninguna, la cédula es lo que está mal, no la persona, así que las dos
+    // entran y la segunda recibe una del bloque V-7000000x. Antes se descartaba
+    // a una de las dos, y con ella sus casos.
     const previo = porCedula.get(fila.cedula);
     if (previo) {
-        const gana = fila._marca > previo._marca ? fila : previo;
-        const pierde = gana === fila ? previo : fila;
-        anota('solicitantes', `fila ${pierde._fila} (${pierde._nombreCompleto})`,
-            `cédula ${fila.cedula} repetida; se conservó la respuesta de la fila ${gana._fila}`);
-        porCedula.set(fila.cedula, gana);
+        const a = distintivas(fila._nombreCompleto), b = distintivas(previo._nombreCompleto);
+        const mismaPersona = [...a].some((x) => [...b].some((y) => casiIgual(x, y)));
+        if (mismaPersona) {
+            const gana = fila._marca > previo._marca ? fila : previo;
+            const pierde = gana === fila ? previo : fila;
+            anota('solicitantes', `fila ${pierde._fila} (${pierde._nombreCompleto})`,
+                `cédula ${fila.cedula} repetida por la misma persona; se conservó la respuesta de la fila ${gana._fila}`);
+            porCedula.set(fila.cedula, gana);
+        } else {
+            anota('cedulas', `fila ${fila._fila} (${fila._nombreCompleto})`,
+                `el formulario le pone la cédula ${fila.cedula}, que ya es la de ${previo._nombreCompleto} (fila ${previo._fila})`);
+            fila.cedula = `V-${70000000 + (++sinCedula)}`;
+            fila._cedulaInventada = true;
+            porCedula.set(fila.cedula, fila);
+        }
     } else porCedula.set(fila.cedula, fila);
 }
 
@@ -658,49 +938,116 @@ for (const s of solicitantes) {
 }
 
 // ----- 3. Casos ------------------------------------------------------------
-/**
- * Partículas y conectores que aparecen en muchísimos nombres venezolanos. No
- * distinguen a nadie, así que no cuentan como coincidencia: sin esto,
- * "Morelys Del Carmen Bosque García" se emparejaba con "Alvarez Romero Norus
- * del Carmen" por compartir "del" y "carmen", y el caso terminaba colgado de
- * la persona equivocada.
- */
-const PARTICULAS = new Set(['del', 'los', 'las', 'san', 'santa']);
-
-/**
- * Nombres de pila tan repetidos que por sí solos no identifican a nadie. No se
- * excluyen del conteo —"María Mota" sería irreconocible sin "maría"— pero se
- * exige que al menos una coincidencia NO sea de esta lista, es decir que haya
- * pegado algo parecido a un apellido.
- */
-const NOMBRES_COMUNES = new Set(['maria', 'jose', 'carmen', 'luis', 'ana', 'juan', 'jesus', 'rosa']);
-
-/**
- * El formulario escribe "Nombres Apellidos" y la hoja de casos a veces al
- * revés o abreviado. Se cruza por palabras, pero solo cuentan las que
- * distinguen: hacen falta al menos dos, una de ellas fuera de los nombres de
- * pila más repetidos, y que ninguna otra persona empate. Ante la duda no se
- * empareja y el caso queda en el informe: es preferible dejarlo fuera a
- * atribuírselo a quien no es.
- */
-const distintivas = (nombre) =>
-    new Set(norm(nombre).split(' ').filter((x) => x.length > 2 && !PARTICULAS.has(x)));
-
 const indiceNombres = solicitantes.map((s) => ({ s, t: distintivas(s._nombreCompleto) }));
 
 function buscarSolicitante(nombre) {
     const t = distintivas(nombre);
-    let mejor = 0, quien = null, empate = false, comunesMejor = [];
+    // Se puntúa por (cuántas palabras coinciden, cuántas coinciden exactas). La
+    // segunda cifra decide los empates: entre alguien que coincide por escritura
+    // idéntica y alguien que coincide por errata, gana el primero.
+    let mejor = [0, 0], quien = null, empate = false, comunesMejor = [], inexactasMejor = [];
     for (const e of indiceNombres) {
-        const comunes = [...t].filter((x) => e.t.has(x));
-        if (comunes.length > mejor) {
-            mejor = comunes.length; quien = e.s; comunesMejor = comunes; empate = false;
-        } else if (comunes.length === mejor && mejor > 0 && e.s !== quien) empate = true;
+        const comunes = [...t].filter((x) => [...e.t].some((y) => casiIgual(x, y)));
+        const exactas = comunes.filter((x) => e.t.has(x));
+        const puntos = [comunes.length, exactas.length];
+        const cmp = puntos[0] - mejor[0] || puntos[1] - mejor[1];
+        if (cmp > 0) {
+            mejor = puntos; quien = e.s; comunesMejor = comunes; empate = false;
+            inexactasMejor = comunes.filter((x) => !e.t.has(x));
+        } else if (cmp === 0 && mejor[0] > 0 && e.s !== quien) empate = true;
     }
-    if (mejor < 2 || empate) return null;
+    if (mejor[0] < 2 || empate) return null;
     if (!comunesMejor.some((x) => !NOMBRES_COMUNES.has(x))) return null;
-    return quien;
+    // Las coincidencias por errata se marcan para que el informe las señale:
+    // son las atribuciones que más conviene revisar a ojo.
+    return { solicitante: quien, erratas: inexactasMejor };
 }
+
+/**
+ * Solicitante para quien el libro nombra pero el formulario no registra (ver
+ * SIN_FORMULARIO). Se crea una sola vez, la primera vez que hace falta, y se
+ * suma a `solicitantes` para que salga en el INSERT y en el informe.
+ *
+ * Devuelve null si el nombre no está en la lista: entonces el caso queda fuera
+ * como antes. No se generaliza a cualquier nombre desconocido a propósito —
+ * inventarle una identidad a alguien tiene que ser una decisión tomada nombre
+ * por nombre, no el comportamiento por omisión del ETL.
+ */
+const sinFormularioPorNombre = new Map(
+    SIN_FORMULARIO.map((r) => [`${norm(r.nucleo)}|${norm(r.libro)}`, r])
+);
+
+function solicitanteSinFormulario(nucleo, nombreLibro, telefono) {
+    const r = sinFormularioPorNombre.get(`${norm(nucleo)}|${norm(nombreLibro)}`);
+    if (!r) return null;
+    if (r._solicitante) return r._solicitante;
+
+    const celular = aCelular(telefono);
+    if (!celular) throw new Error(`${r.libro}: el libro tampoco trae teléfono, hay que revisarlo a mano`);
+
+    // El domicilio se resuelve igual que el de todos los demás, con el texto
+    // vacío: cae en el ámbito predeterminado (Bolívar, Caroní) con la parroquia
+    // "No suministrada". No se toma la del núcleo aunque se sepa: eso sería
+    // dónde se los atendió, no dónde viven, y además "UCAB Guayana" está
+    // registrado en el catálogo con una ubicación equivocada.
+    const ubicacion = buscarParroquia('');
+
+    const s = {
+        _fila: null, _raw: {}, _nombreCompleto: r.libro, _marca: '', _sinFormulario: r,
+        cedula: r.cedula,
+        nombres: r.nombres,
+        apellidos: r.apellidos,
+        fecha_nacimiento: RELLENO_NACIMIENTO,
+        telefono_celular: celular,
+        correo_electronico: `${r.cedula.toLowerCase()}@sin-correo.invalid`,
+        sexo: r.sexo,
+        nacionalidad: 'V',
+        estado_civil: r.estado_civil,
+        concubinato: false,
+        id_nivel_educativo: NIVEL_NO_SUMINISTRADO,
+        id_trabajo: null,
+        id_actividad: null,
+        id_estado: Number(ubicacion.id_estado),
+        num_municipio: Number(ubicacion.num_municipio),
+        num_parroquia: ubicacion.num_parroquia === null ? null : Number(ubicacion.num_parroquia),
+        direccion_habitacion: null,
+    };
+    r._solicitante = s;
+    solicitantes.push(s);
+    return s;
+}
+
+/**
+ * Nombres del control de casos que son una persona del formulario, pero que el
+ * emparejador no puede deducir sin abrir la mano de más.
+ *
+ * La regla general pide dos palabras distintivas en común y tolera una sola
+ * errata por palabra. Estas cuatro se quedan justo afuera, y aflojar la regla
+ * para que entren haría que empezaran a colarse emparejamientos falsos. Así que
+ * van a mano, con el motivo, y la clave es el número de fila del formulario
+ * —no la cédula— porque es lo que el informe cita y no cambia.
+ *
+ *   Yohannys Gonzalez   = Yohomys josefina Gonzales Machiz (fila 27). Es la
+ *                         única persona del formulario cuyo nombre empieza por
+ *                         "Yoho"/"Yohan", y el apellido coincide salvo la z/s.
+ *   Cristina Nicklas    = Cristina Nickels (fila 35). Mismo nombre de pila y el
+ *                         único apellido "Nick..." del formulario.
+ *   Daviannis Castillo  = Davianny Alexandra Pino Castillo (fila 54). Único
+ *                         "Castillo" del formulario y el nombre de pila coincide
+ *                         en las primeras siete letras.
+ *   Yurbanys Luzmery    = Yurbarys laya (fila 19). Único "Yurba..." del
+ *                         formulario; "Luzmery" será un segundo nombre que la
+ *                         respuesta no trae.
+ *
+ * Martha Jansen NO está aquí aunque también fallaba: su fila sí se encuentra
+ * sola, lo que la tumbaba era la cédula repetida con Luz Márquez.
+ */
+const EQUIVALE_A_FILA = {
+    'yohannys gonzalez': 27,
+    'cristina nicklas': 35,
+    'daviannis castillo': 54,
+    'yurbanys luzmery': 19,
+};
 
 const casos = [];
 for (const cfg of [
@@ -713,6 +1060,11 @@ for (const cfg of [
     const cTipo = idxDe('Tipo de Caso'), cAlumno = idxDe('Alumno responsable');
     const cFecha = idxDe('Fecha de atención'), cEstatus = idxDe('Estatus');
     const cResena = cols.findIndex((c) => /rese|observ/i.test(c)) + 1;
+    // El teléfono solo se usa para los solicitantes que no están en el
+    // formulario; el de los demás sale de su propia respuesta. "Grupo asignado"
+    // existe únicamente en la hoja de Casa Barandiarán.
+    const cTelefono = cols.findIndex((c) => /tel[eé]fono/i.test(c)) + 1;
+    const cGrupo = cols.findIndex((c) => /grupo/i.test(c)) + 1;
     const idNucleo = idDeNucleo(cfg.nucleo);
 
     for (const f of filas) {
@@ -724,7 +1076,16 @@ for (const cfg of [
         const fecha = aFecha(f[cFecha]);
         if (!fecha) { anota('casos', ref, `fecha de atención ilegible ("${String(f[cFecha] ?? '').slice(0, 30)}")`); continue; }
 
-        const solicitante = buscarSolicitante(nombre);
+        const porFila = EQUIVALE_A_FILA[norm(nombre)];
+        const hallado = porFila
+            ? { solicitante: solicitantes.find((x) => x._fila === porFila), erratas: [] }
+            : buscarSolicitante(nombre);
+        if (porFila && !hallado.solicitante)
+            throw new Error(`${nombre}: la fila ${porFila} del formulario no se cargó, revisar EQUIVALE_A_FILA`);
+        if (hallado?.erratas.length)
+            anota('erratas', ref, `se emparejó con **${hallado.solicitante._nombreCompleto}** (${hallado.solicitante.cedula}) aceptando errata en: ${hallado.erratas.join(', ')}`);
+        const solicitante = hallado?.solicitante
+            ?? solicitanteSinFormulario(cfg.nucleo, nombre, cTelefono ? f[cTelefono] : null);
         if (!solicitante) {
             anota('casos', ref, 'el solicitante no está en el formulario socioeconómico: sin cédula, fecha de nacimiento ni domicilio no se puede registrar');
             continue;
@@ -761,7 +1122,14 @@ for (const cfg of [
         // al final no se entendería.
         const notas = [];
         if (resena) notas.push(resena);
+        if (solicitante._sinFormulario?.nota) notas.push(solicitante._sinFormulario.nota);
         if (alumno) notas.push(`Responsable según el control de casos: ${alumno}`);
+        // La hoja de Casa Barandiarán trae además la pareja que llevó el caso.
+        // Solo se reconoce a quien figure como responsable, así que el grupo se
+        // guarda tal cual: nombra a gente de la que el libro no dice más que el
+        // nombre de pila, y no da para crearle un usuario.
+        const grupo = cGrupo ? String(f[cGrupo] ?? '').trim() : '';
+        if (grupo && norm(grupo) !== norm(alumno)) notas.push(`Grupo asignado según el control de casos: ${grupo}`);
 
         const equipo = equipoDeCaso(alumno);
         if (equipo.sinReconocer.length) {
@@ -842,6 +1210,29 @@ L.push(`FROM usuarios u CROSS JOIN (SELECT unnest(ARRAY[${TERMS.map(sql).join(',
 L.push(`WHERE u.cedula = ANY(ARRAY[${EQUIPO.filter((p) => p.rol === 'Profesor').map((p) => sql(p.cedula)).join(', ')}]);`);
 L.push('');
 
+// Parroquia "No suministrada" en los municipios donde hizo falta. Va con
+// max(num_parroquia)+1 porque parroquias no tiene secuencia: su clave es
+// (estado, municipio, número). El HAVING —y no un WHERE— es lo que hace que no
+// se duplique: con WHERE, la fila ya existente filtraría todo y max() sobre cero
+// filas devolvería NULL, que COALESCE convertiría en el número 1, ya ocupado.
+const municipiosSinParroquia = [...new Map(solicitantes
+    .filter((s) => s.num_parroquia === null)
+    .map((s) => [`${s.id_estado}/${s.num_municipio}`, s])).values()];
+if (municipiosSinParroquia.length) {
+    L.push('-- Parroquia para quien dio su sector pero no su parroquia. Las tres columnas');
+    L.push('-- del domicilio son NOT NULL y meterlos en una parroquia real cualquiera');
+    L.push('-- sería decir que viven donde no viven. La dirección que escribieron queda');
+    L.push('-- completa en direccion_habitacion.');
+    for (const m of municipiosSinParroquia) {
+        L.push('INSERT INTO parroquias (id_estado, num_municipio, num_parroquia, nombre_parroquia)');
+        L.push(`SELECT ${m.id_estado}, ${m.num_municipio}, COALESCE(max(num_parroquia), 0) + 1, ${sql(PARROQUIA_NO_SUMINISTRADA)}`);
+        L.push(`FROM parroquias WHERE id_estado = ${m.id_estado} AND num_municipio = ${m.num_municipio}`);
+        L.push(`HAVING NOT EXISTS (SELECT 1 FROM parroquias WHERE id_estado = ${m.id_estado}`);
+        L.push(`    AND num_municipio = ${m.num_municipio} AND nombre_parroquia = ${sql(PARROQUIA_NO_SUMINISTRADA)});`);
+    }
+    L.push('');
+}
+
 L.push('-- Opción de catálogo para quien no contestó el nivel educativo. El campo es');
 L.push('-- NOT NULL y "Sin Nivel" significaría que no estudió, que no es lo mismo.');
 L.push(`INSERT INTO niveles_educativos (descripcion)`);
@@ -856,7 +1247,7 @@ L.push(solicitantes.map((s) => `    (${[
     sql(s.cedula), sql(s.nombres), sql(s.apellidos), sql(s.fecha_nacimiento), sql(s.telefono_celular),
     sql(s.correo_electronico), sql(s.sexo), sql(s.nacionalidad), sql(s.estado_civil), sqlBool(s.concubinato),
     sqlNivel(s.id_nivel_educativo), sqlNum(s.id_trabajo), sqlNum(s.id_actividad),
-    sqlNum(s.id_estado), sqlNum(s.num_municipio), sqlNum(s.num_parroquia), sql(s.direccion_habitacion),
+    sqlNum(s.id_estado), sqlNum(s.num_municipio), sqlParroquia(s), sql(s.direccion_habitacion),
     sql(COORDINADOR),
 ].join(', ')})`).join(',\n') + ';');
 L.push('');
@@ -958,9 +1349,20 @@ writeFileSync(join(destino, 'carga-inicial-2024-2025.sql'), L.join('\n') + '\n',
 const I = [];
 I.push('# Carga inicial 2024-2025 — qué entró y qué no');
 I.push('');
-I.push('Generado por `scripts/etl-carga-inicial.mjs`. El criterio fue no inventar datos:');
-I.push('si a una fila le falta algo que el esquema exige, queda fuera y se lista aquí con');
-I.push('el motivo, para que la clínica lo complete y se vuelva a correr el ETL.');
+I.push('Generado por `scripts/etl-carga-inicial.mjs`.');
+I.push('');
+I.push('**Los 72 casos del libro están cargados.** Para lograrlo hubo que rellenar datos');
+I.push('que el libro no trae, porque las columnas son NOT NULL. Nada de eso se esconde:');
+I.push('cada relleno tiene su sección con quién lo recibió y por qué, y se eligió siempre');
+I.push('de modo que se note que no es un dato real (bloques de cédula aparte, dominio');
+I.push('`.invalid`, parroquia "No suministrada", la misma fecha de nacimiento para todos).');
+I.push('');
+I.push('Las secciones que conviene leer, en orden de importancia:');
+I.push('');
+I.push('1. **A quién quedó atribuido cada caso** — un caso colgado de la persona');
+I.push('   equivocada es el error más difícil de notar después.');
+I.push('2. **Casos emparejados aceptando una errata** — los que más riesgo tienen de eso.');
+I.push('3. Los rellenos: parroquia, cédula, teléfono y solicitantes completos.');
 I.push('');
 I.push('## Resumen');
 I.push('');
@@ -979,6 +1381,10 @@ for (const [lista, titulo2] of [
     ['viviendas', 'Solicitantes sin datos de vivienda'],
     ['familias', 'Solicitantes sin datos de hogar'],
     ['equipos', 'Responsables que no se pudieron identificar'],
+    ['erratas', 'Casos emparejados aceptando una errata en el nombre — REVISAR'],
+    ['parroquias', 'Solicitantes sin parroquia: quedaron en "No suministrada"'],
+    ['cedulas', 'Cédulas que hubo que tocar'],
+    ['telefonos', 'Solicitantes sin teléfono'],
 ]) {
     if (!omitidos[lista].length) continue;
     I.push(`## ${titulo2} (${omitidos[lista].length})`);
@@ -1002,6 +1408,70 @@ for (const c of casos) {
 }
 I.push('');
 
+const relleno = solicitantes.filter((s) => s._sinFormulario);
+if (relleno.length) {
+    I.push(`## Solicitantes con datos de relleno (${relleno.length}) — LEER`);
+    I.push('');
+    I.push('Estas personas aparecen en el control de casos pero no en el formulario');
+    I.push('socioeconómico. Las nueve de Casa Barandiarán, porque ese núcleo atiende en');
+    I.push('jornadas de comunidad y no se llenó ninguna ficha: las 61 respuestas del');
+    I.push('formulario son todas de UCAB Guayana. Las otras cuatro son de Guayana y');
+    I.push('simplemente no lo llenaron — se buscó por nombre y por errata y no hay en las 61');
+    I.push('respuestas ninguna que se les parezca. Sin solicitante no hay caso, así que se');
+    I.push('les armó uno para que sus casos existan.');
+    I.push('');
+    I.push('**Reales** (salen del libro): nombre, teléfono, y todo lo del caso en sí — tipo,');
+    I.push('reseña, revisiones con sus fechas, estatus y responsable.');
+    I.push('');
+    I.push('**Inventados** (el libro no los trae):');
+    I.push('');
+    I.push('| Dato | Qué se puso | Por qué así |');
+    I.push('|---|---|---|');
+    I.push('| Cédula | bloque `V-8000000x` | aparte del `V-9000000x` del equipo; se ve de lejos que no es real |');
+    I.push('| Correo | `v-8000000x@sin-correo.invalid` | `.invalid` no existe por norma: nadie le escribe por error |');
+    I.push(`| Fecha de nacimiento | ${RELLENO_NACIMIENTO} para todos | que todos "nazcan" el mismo día es la señal de que el dato no existe |`);
+    I.push('| Domicilio | parroquia "No suministrada" de Caroní, Bolívar | el ámbito de la clínica; la parroquia queda declarada como desconocida y `direccion_habitacion` vacía |');
+    I.push('| Nivel educativo | "No suministrado" | el campo es NOT NULL y "Sin Nivel" diría que no estudió |');
+    I.push('| Trabajo y actividad | vacíos | no se sabe, y "no aplica" ya sería afirmar algo |');
+    I.push('| Concubinato | No | el campo es NOT NULL y no admite "se desconoce" |');
+    I.push('');
+    I.push('`sexo` sale del nombre de pila y `estado_civil` de la reseña cuando la dice; donde no,');
+    I.push('queda Soltero. Ninguno tiene datos de vivienda, hogar ni características: eso solo');
+    I.push('lo pregunta el formulario.');
+    const dudosos = relleno.filter((x) => x._sinFormulario.dudaSexo);
+    if (dudosos.length) {
+        I.push('');
+        I.push(`Del sexo de ${dudosos.map((x) => x._nombreCompleto).join(', ')} no hay forma de`);
+        I.push('estar seguro por el nombre; la columna solo admite M o F y quedó en F.');
+    }
+    I.push('');
+    I.push('| Cédula | Como está en el libro | Nombres | Apellidos | Sexo | Estado civil | Teléfono |');
+    I.push('|---|---|---|---|---|---|---|');
+    for (const s of relleno)
+        I.push(`| ${s.cedula} | ${s._nombreCompleto} | ${s.nombres} | ${s.apellidos} | ${s.sexo} | ${s.estado_civil} | ${s.telefono_celular} |`);
+    I.push('');
+}
+
+// Quien llenó el formulario y no tiene ningún caso suele ser la misma persona
+// contada dos veces con la cédula mal copiada: si tuviera un caso, el caso está
+// colgado del otro registro. Es una señal barata y vale ponerla.
+const huerfanos = solicitantes.filter((s) => !casos.some((c) => c.cedula === s.cedula));
+if (huerfanos.length) {
+    I.push(`## Solicitantes sin ningún caso (${huerfanos.length}) — posible duplicado`);
+    I.push('');
+    I.push('Llenaron el formulario pero ningún caso del libro quedó a su nombre. Casi siempre');
+    I.push('es la misma persona registrada dos veces con la cédula copiada distinto: el caso');
+    I.push('está colgado del otro registro. Conviene comparar y unificar desde la app.');
+    I.push('');
+    for (const h of huerfanos) {
+        const parecidos = solicitantes.filter((o) => o !== h
+            && [...distintivas(o._nombreCompleto)].some((x) => [...distintivas(h._nombreCompleto)].some((y) => casiIgual(x, y))));
+        I.push(`- **${h.cedula} (${h._nombreCompleto})**`
+            + (parecidos.length ? ` — se parece a ${parecidos.map((o) => `${o._nombreCompleto} (${o.cedula})`).join('; ')}` : ''));
+    }
+    I.push('');
+}
+
 I.push('## Separación de nombre y apellido — conviene revisar');
 I.push('');
 I.push('El libro mezcla dos convenciones ("Francimar Josefina Gamboa" y "Poleo Ferrer, Daniel');
@@ -1012,7 +1482,9 @@ I.push('volver a correr el ETL.');
 I.push('');
 I.push('| Cédula | Como está en el libro | Nombres | Apellidos |');
 I.push('|---|---|---|---|');
-for (const s of solicitantes) I.push(`| ${s.cedula} | ${s._nombreCompleto} | ${s.nombres} | ${s.apellidos} |`);
+// Los de relleno no entran: su separación se escribió a mano y ya está arriba.
+for (const s of solicitantes.filter((x) => !x._sinFormulario))
+    I.push(`| ${s.cedula} | ${s._nombreCompleto} | ${s.nombres} | ${s.apellidos} |`);
 I.push('');
 
 writeFileSync(join(destino, 'carga-inicial-informe.md'), I.join('\n') + '\n', 'utf-8');

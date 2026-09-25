@@ -15,6 +15,12 @@
 --
 -- OJO: esto no se puede deshacer. Correr dentro de la misma transacción que
 -- la carga inicial, así o entra todo o no cambia nada.
+--
+-- OJO TAMBIÉN con ensayarlo revirtiendo la transacción: los DELETE se deshacen,
+-- pero los setval del punto 7 NO. Postgres deja las secuencias fuera de las
+-- transacciones a propósito, así que un ensayo devuelve los contadores a 1
+-- aunque las filas sigan ahí, y el siguiente INSERT choca con una clave que ya
+-- existe. Después de un ensayo hay que volver a subirlas a max(id).
 
 -- Los triggers de auditoría se silencian: el borrado dejaría un evento por
 -- cada fila eliminada, y lo que interesa registrar es la carga, no la purga.
