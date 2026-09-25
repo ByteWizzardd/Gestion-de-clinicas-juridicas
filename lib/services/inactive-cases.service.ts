@@ -6,17 +6,13 @@ import { logger } from '@/lib/utils/logger';
 /**
  * Detecta casos sin actividad en 2 semestres y avisa a quien corresponda.
  *
- * El aviso se repite en cada inicio de sesión mientras haya casos inactivos: es
- * un pendiente, no una novedad, y dejar de avisar porque el Coordinador ya lo
- * leyó una vez haría que los casos se quedaran ahí sin que nadie los mueva. Lo
- * que no se repite es dentro de la misma sesión, y de eso se encarga
- * `segundosDeSesion`.
- *
- * @param segundosDeSesion cuánto lleva abierta la sesión de quien dispara el
- *   chequeo. Si no se pasa, se usa un día, que era el comportamiento anterior
- *   salvo que antes no había corte de ningún tipo.
+ * El aviso es un pendiente, no una novedad: mientras el caso siga inactivo y
+ * la notificación siga sin eliminarse, no se crea otra igual (evita duplicados
+ * en la bandeja). En cuanto el destinatario la borra —"Eliminar" hace un
+ * DELETE real—, el siguiente chequeo la vuelve a crear si el caso sigue
+ * inactivo, así que sigue funcionando como recordatorio.
  */
-export async function checkAndNotifyInactiveCases(segundosDeSesion = 86400) {
+export async function checkAndNotifyInactiveCases() {
     try {
         // 1. Cargar Queries
         const queriesDir = join(process.cwd(), 'database/queries');
@@ -40,8 +36,10 @@ export async function checkAndNotifyInactiveCases(segundosDeSesion = 86400) {
             'utf-8'
         );
 
-        const existeEnEstaSesionSql = readFileSync(
-            join(queriesDir, 'notificaciones/exists-desde-inicio-sesion.sql'),
+        // A pesar del nombre del archivo, chequea existencia sin importar si
+        // ya se marcó como leída: solo deja de bloquear cuando se elimina.
+        const existeNotificacionSql = readFileSync(
+            join(queriesDir, 'notificaciones/exists-unread.sql'),
             'utf-8'
         );
 
@@ -108,10 +106,10 @@ export async function checkAndNotifyInactiveCases(segundosDeSesion = 86400) {
 
         for (const cedulaDestinatario of destinatarios) {
             try {
-                // ¿Ya se le avisó lo mismo en esta sesión? Si se le avisó en una
-                // anterior no cuenta: el aviso tiene que volver a salir.
-                const existeResultado = await pool.query(existeEnEstaSesionSql,
-                    [cedulaDestinatario, titulo, mensaje, segundosDeSesion]);
+                // ¿Ya tiene esta misma notificación sin eliminar? Si es así, no
+                // se duplica; solo vuelve a crearse cuando la borra.
+                const existeResultado = await pool.query(existeNotificacionSql,
+                    [cedulaDestinatario, titulo, mensaje]);
                 if (existeResultado.rowCount && existeResultado.rowCount > 0) {
                     continue;
                 }
