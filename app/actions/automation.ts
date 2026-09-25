@@ -31,10 +31,9 @@ export async function triggerInactiveCasesCheckAction() {
         return { success: false, message: 'Skipped: User is not coordinator' };
     }
 
-    // El aviso se repite en cada inicio de sesión mientras haya casos inactivos.
-    // Lo único que se evita es duplicarlo dentro de la misma sesión, y para eso
-    // el servicio necesita saber cuánto lleva abierta.
-    return await checkAndNotifyInactiveCases(segundosDeSesion(auth.user.sesionIniciadaEn));
+    // El servicio evita duplicados por sí mismo: no crea una notificación
+    // igual a una que el destinatario todavía no ha eliminado.
+    return await checkAndNotifyInactiveCases();
 }
 
 /**
