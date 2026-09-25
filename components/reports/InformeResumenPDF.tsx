@@ -510,42 +510,31 @@ export const InformeResumenPDF: React.FC<InformeResumenPDFProps> = ({
               justifyContent: 'center',
               alignItems: 'center',
             }}>
-              <Text style={{
-                // Medidas tomadas del año impreso en el Anexo 4: alto de dígito
-                // 18,2 pt y ancho total 152 pt cuando la portada ocupa 595 pt.
-                fontSize: 24,
-                letterSpacing: 4.3,
-                fontWeight: 500,
-                fontFamily: 'Bodoni Moda',
-                color: '#000000',
-                textAlign: 'center'
-              }}>
-                {(() => {
-                  // Prioritize Histórico check
-                  if (!fechaInicio && (!term || term === 'all')) {
-                    return 'Histórico';
-                  }
+              {(() => {
+                const isDateRange = !!(fechaInicio && fechaFin && (!term || term === 'all'));
+                const coverLabel = term && term !== 'all'
+                  ? term
+                  : (fechaInicio && fechaFin
+                    ? `${formatDate(fechaInicio)} - ${formatDate(fechaFin)}`
+                    : 'Histórico');
 
-                  if (term && term !== 'all') return term;
-
-                  if (fechaInicio) {
-                    // Start Year
-                    const startParts = fechaInicio.split('T')[0].split('-');
-                    const startYear = startParts[0];
-
-                    if (fechaFin) {
-                      // End Year
-                      const endParts = fechaFin.split('T')[0].split('-');
-                      const endYear = endParts[0];
-
-                      if (startYear !== endYear) return `${startYear}-${endYear}`;
-                    }
-                    return startYear;
-                  }
-
-                  return 'Histórico';
-                })()}
-              </Text>
+                return (
+                  <Text style={{
+                    // Medidas tomadas del año impreso en el Anexo 4: alto de dígito
+                    // 18,2 pt y ancho total 152 pt cuando la portada ocupa 595 pt.
+                    // Un rango de fechas completo no entra con ese mismo espaciado,
+                    // así que usa una variante más chica y compacta.
+                    fontSize: isDateRange ? 15 : 24,
+                    letterSpacing: isDateRange ? 1 : 4.3,
+                    fontWeight: 500,
+                    fontFamily: 'Bodoni Moda',
+                    color: '#000000',
+                    textAlign: 'center'
+                  }}>
+                    {coverLabel}
+                  </Text>
+                );
+              })()}
             </View>
           </View>
         </Page>

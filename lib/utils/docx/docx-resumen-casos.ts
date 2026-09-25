@@ -191,26 +191,15 @@ export async function generateResumenCasosDOCX(
         // 1. Primera Hoja con Portada (con fecha sobrepuesta)
         const portadaBase64 = await imageToBase64('/portada reporte.png');
 
-        let coverText = '';
+        const isDateRangeCover = !!(fechaInicio && fechaFin && (!term || term === 'all'));
+        let coverText = 'Histórico';
         if (term && term !== 'all') {
             coverText = term;
-        } else if (fechaInicio) {
-            const startYear = fechaInicio.split('T')[0].split('-')[0];
-            if (fechaFin) {
-                const endYear = fechaFin.split('T')[0].split('-')[0];
-                if (startYear !== endYear) {
-                    coverText = `${startYear}-${endYear}`;
-                } else {
-                    coverText = startYear;
-                }
-            } else {
-                coverText = startYear;
-            }
-        } else {
-            coverText = 'Histórico';
+        } else if (fechaInicio && fechaFin) {
+            coverText = `${formatDate(fechaInicio)} - ${formatDate(fechaFin)}`;
         }
 
-        const coverWithDateBase64 = await generateCoverImageWithDate(portadaBase64, coverText);
+        const coverWithDateBase64 = await generateCoverImageWithDate(portadaBase64, coverText, { compact: isDateRangeCover });
 
         if (coverWithDateBase64.includes('data:image')) {
             const portadaUint8 = base64ToUint8Array(coverWithDateBase64.split(',')[1]);

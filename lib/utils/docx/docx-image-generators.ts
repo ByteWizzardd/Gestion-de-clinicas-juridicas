@@ -54,7 +54,8 @@ function cargarBodoni(): Promise<boolean> {
  */
 export async function generateCoverImageWithDate(
     coverBase64: string,
-    text: string
+    text: string,
+    options?: { compact?: boolean }
 ): Promise<string> {
     const img = new Image();
     img.src = coverBase64;
@@ -85,9 +86,11 @@ export async function generateCoverImageWithDate(
     const hayBodoni = await cargarBodoni();
 
     // Las medidas en puntos del PDF se escalan por el ancho de la hoja.
+    // Un rango de fechas completo ("01/01/2025 - 04/09/2025") no entra con el
+    // mismo espaciado calibrado para un año, así que usa una variante compacta.
     const escala = anchoHoja / ANCHO_A4_PT;
-    const fontSize = 24 * escala;
-    const tracking = 4.3 * escala;
+    const fontSize = (options?.compact ? 15 : 24) * escala;
+    const tracking = (options?.compact ? 1 : 4.3) * escala;
 
     ctx.fillStyle = '#000000';
     ctx.font = `500 ${fontSize}px "${hayBodoni ? 'Bodoni Moda' : 'Times New Roman'}", serif`;
