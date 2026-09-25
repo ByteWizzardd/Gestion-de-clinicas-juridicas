@@ -22,17 +22,12 @@ interface CatalogDetailClientProps {
     renderActions?: (item: any) => React.ReactNode; // Custom render for actions column
     filterTarget?: 'estatus' | 'materia' | 'nucleo' | 'tramite'; // Explicitly map to CaseTools filter slot
     keys?: string[]; // Keys to display in the table
-    hideBackButton?: boolean; // If true, hides the default back button
     enableEstadoFilter?: boolean;
     enableMunicipioFilter?: boolean;
     enableParroquiaFilter?: boolean;
     enableCategoriaFilter?: boolean;
     enableSubcategoriaFilter?: boolean;
 }
-
-import { useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
-import Button from '@/components/ui/Button';
 
 export default function CatalogDetailClient({
     data,
@@ -51,14 +46,12 @@ export default function CatalogDetailClient({
     filterTarget = 'estatus', // Default to estatus
     keys,
     hideHeader = false,
-    hideBackButton = false,
     enableEstadoFilter = false,
     enableMunicipioFilter = false,
     enableParroquiaFilter = false,
     enableCategoriaFilter = false,
     enableSubcategoriaFilter = false
 }: CatalogDetailClientProps & { filterAllLabel?: string; hideHeader?: boolean }) {
-    const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterValue, setFilterValue] = useState('');
     const [estatusFilterValue, setEstatusFilterValue] = useState('');
@@ -218,19 +211,6 @@ export default function CatalogDetailClient({
 
     return (
         <div>
-            {!hideBackButton && (
-                <div className="mb-4">
-                    <Button
-                        variant="ghost"
-                        onClick={() => router.push('/dashboard/administration')}
-                        className="flex items-center gap-2 px-2 hover:bg-[var(--sidebar-hover)]"
-                        size="sm"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        <span className="text-sm font-medium">Volver a administración</span>
-                    </Button>
-                </div>
-            )}
             <CaseTools
                 addLabel={addLabel}
                 onAddClick={onAddClick}

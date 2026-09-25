@@ -70,7 +70,6 @@ export default function CondicionesActividadPage() {
         onAddClick={() => setIsModalOpen(true)}
         loading={loading}
         hideHeader={true}
-        hideBackButton={true}
         renderActions={(item: any) => (
           <CatalogActionsMenu
             item={item}

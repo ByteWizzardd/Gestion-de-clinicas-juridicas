@@ -118,7 +118,6 @@ export default function ParroquiasPage() {
                 onAddClick={() => setIsModalOpen(true)}
                 loading={loading}
                 hideHeader={true}
-                hideBackButton={true}
                 enableEstadoFilter={true}
                 enableMunicipioFilter={true}
                 renderActions={(item: any) => (

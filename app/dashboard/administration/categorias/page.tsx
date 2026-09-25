@@ -112,7 +112,6 @@ export default function CategoriasPage() {
                 autoGenerateFilter={true}
                 loading={loading}
                 hideHeader={true}
-                hideBackButton={true}
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}

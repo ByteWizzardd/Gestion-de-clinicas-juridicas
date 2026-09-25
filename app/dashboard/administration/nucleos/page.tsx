@@ -149,7 +149,6 @@ export default function NucleosPage() {
                 onAddClick={() => setIsModalOpen(true)}
                 loading={loading}
                 hideHeader={true}
-                hideBackButton={true}
                 enableEstadoFilter={true}
                 enableMunicipioFilter={true}
                 enableParroquiaFilter={true}
