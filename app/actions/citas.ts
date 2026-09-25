@@ -48,7 +48,7 @@ export async function createCitaAction(
       return {
         success: false,
         error: {
-          message: "Datos inválidos",
+          message: parseResult.error.issues[0]?.message ?? "Datos inválidos",
           code: "VALIDATION_ERROR",
         },
       };

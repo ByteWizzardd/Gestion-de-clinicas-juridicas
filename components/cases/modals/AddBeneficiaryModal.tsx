@@ -11,6 +11,7 @@ import DatePicker from '../../forms/DatePicker';
 import { X, Calendar, User, Users, Search } from 'lucide-react';
 import { logger } from '@/lib/utils/logger';
 import { createBeneficiarioAction, searchBeneficiariosByCedulaAction, getBeneficiarioByCedulaAction } from '@/app/actions/beneficiarios';
+import { validarNombre, validarCedulaNumero } from '@/lib/validations/comunes';
 
 interface AddBeneficiaryModalProps {
   isOpen: boolean;
@@ -84,6 +85,9 @@ export default function AddBeneficiaryModal({
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
 
+    const errorCedula = validarCedulaNumero(formData.cedulaNumero, { requerido: false });
+    if (errorCedula) newErrors.cedulaNumero = errorCedula;
+
     // Validar duplicado en este caso por cédula
     if (formData.cedulaNumero.trim()) {
       const fullCedula = `${formData.cedulaTipo}-${formData.cedulaNumero.trim()}`;
@@ -93,17 +97,11 @@ export default function AddBeneficiaryModal({
       }
     }
 
-    if (!formData.nombres.trim()) {
-      newErrors.nombres = 'El nombre es requerido';
-    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(formData.nombres.trim())) {
-      newErrors.nombres = 'Solo se permiten letras y espacios';
-    }
+    const errorNombres = validarNombre(formData.nombres);
+    if (errorNombres) newErrors.nombres = errorNombres;
 
-    if (!formData.apellidos.trim()) {
-      newErrors.apellidos = 'El apellido es requerido';
-    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(formData.apellidos.trim())) {
-      newErrors.apellidos = 'Solo se permiten letras y espacios';
-    }
+    const errorApellidos = validarNombre(formData.apellidos);
+    if (errorApellidos) newErrors.apellidos = errorApellidos;
 
     if (!formData.fechaNac) {
       newErrors.fechaNac = 'La fecha de nacimiento es requerida';

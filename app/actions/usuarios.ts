@@ -13,6 +13,8 @@ import { notificarDeshabilitacionUsuarioEnCasosService } from '@/lib/services/no
 import { withSecureTransaction } from '@/lib/db/secure-transactions';
 import { uploadProfilePhoto, deleteFile } from '@/lib/services/storage.service';
 import { toUserMessage } from '@/lib/utils/error-messages';
+import { validateUCABEmail } from '@/lib/utils/email-validation';
+import { validatePhone, normalizePhone, isPhoneEmpty } from '@/lib/utils/phone';
 export interface GetUsuarioCompleteByCedulaResult {
   success: boolean;
   data?: {
@@ -577,6 +579,15 @@ export async function updateUsuarioByCedulaAction(
     }
     const cedula_actor = userResult.data.cedula;
 
+    const errorTelefono = updates.telefono !== undefined ? validatePhone(updates.telefono) : undefined;
+    if (errorTelefono) {
+      return { success: false, error: { message: errorTelefono, code: "VALIDATION_ERROR" } };
+    }
+    // '' borra el teléfono; cualquier otro valor se guarda en formato "+58-412…"
+    const telefonoFinal = updates.telefono === undefined
+      ? null
+      : isPhoneEmpty(updates.telefono) ? '' : normalizePhone(updates.telefono);
+
     // Obtener el tipo_usuario actual del usuario para determinar qué valores pasar
     const usuarioActual = await usuariosQueries.getInfoByCedula(cedula);
     const tipoUsuarioActual = usuarioActual?.tipo_usuario || null;
@@ -621,7 +632,7 @@ export async function updateUsuarioByCedulaAction(
         apellidos: updates.apellidos ?? "",
         correo_electronico: updates.correo_electronico ?? "",
         nombre_usuario: updates.nombre_usuario ?? "",
-        telefono_celular: updates.telefono ?? null,
+        telefono_celular: telefonoFinal,
         tipo_usuario: (updates.tipo_usuario && updates.tipo_usuario.trim() !== '') ? updates.tipo_usuario : (tipoUsuarioActual || ""),
         nrc: tipoUsuarioParaValores === "Estudiante" ? updates.estudiante?.nrc ?? null : null,
         term:
@@ -768,6 +779,15 @@ export async function createUsuarioAction(
     }
     const cedula_actor = userResult.data.cedula;
 
+    // Mismas reglas que el formulario, por si la llamada no viene de él
+    const errorDatos = !validateUCABEmail(data.correo_electronico ?? '')
+      ? 'El correo debe tener dominio @est.ucab.edu.ve o @ucab.edu.ve'
+      : validatePhone(data.telefono);
+    if (errorDatos) {
+      return { success: false, error: { message: errorDatos, code: "VALIDATION_ERROR" } };
+    }
+    const telefono = isPhoneEmpty(data.telefono) ? null : normalizePhone(data.telefono);
+
     // 2. Hash de la contraseña
     const { hashPassword } = await import('@/lib/utils/security');
     const passwordHash = await hashPassword(data.contrasena);
@@ -782,7 +802,7 @@ export async function createUsuarioAction(
         correo_electronico: data.correo_electronico,
         nombre_usuario: data.nombre_usuario,
         contrasena: passwordHash,
-        telefono_celular: data.telefono,
+        telefono_celular: telefono,
         tipo_usuario: data.tipo_usuario,
         estudiante: data.estudiante,
         profesor: data.profesor,

@@ -14,6 +14,8 @@ import { useToast } from '@/components/ui/feedback/ToastProvider';
 import DatePicker from './DatePicker';
 import { logger } from '@/lib/utils/logger';
 import { validateEmailFormat } from '@/lib/utils/email-validation';
+import { validatePhone, normalizePhone } from '@/lib/utils/phone';
+import { validarNombre, validarCedulaNumero, validarEntero } from '@/lib/validations/comunes';
 
 interface ApplicantFormModalProps {
   isOpen: boolean;
@@ -288,51 +290,8 @@ const clearFormDataFromStorage = () => {
   }
 };
 
-// Helper para normalizar números de teléfono al formato con guión para el input
-// Entrada puede ser: "+58-4122727981", "+584122727981", "0412-2727981", "04122727981"
-// Salida siempre: "+58-4122727981" (con guión para visualizar)
-const normalizePhoneNumber = (phone: string | null | undefined): string => {
-  if (!phone) return '+58-';
-
-  // Eliminar espacios y paréntesis
-  let cleaned = phone.replace(/[\s()]/g, '');
-
-  // Si tiene formato con guión después del código (+58-...), mantenerlo
-  const dashMatch = cleaned.match(/^(\+\d{1,4})-(.*)$/);
-  if (dashMatch) {
-    const code = dashMatch[1];
-    const number = dashMatch[2].replace(/\D/g, '').replace(/^0+/, '');
-    return `${code}-${number}`;
-  }
-
-  // Eliminar guiones restantes
-  cleaned = cleaned.replace(/-/g, '');
-
-  // Si ya tiene formato internacional sin guión, agregar el guión
-  if (cleaned.startsWith('+')) {
-    const codeMatch = cleaned.match(/^(\+\d{1,4})/);
-    if (codeMatch) {
-      const code = codeMatch[1];
-      const number = cleaned.substring(code.length).replace(/^0+/, '');
-      return `${code}-${number}`;
-    }
-    return cleaned;
-  }
-
-  // Si empieza con 0 y luego 4 (formato venezolano local: 0412, 0414, etc.)
-  if (cleaned.startsWith('0') && cleaned.length >= 2 && cleaned[1] === '4') {
-    // Convertir a formato internacional: 0412... -> +58-412...
-    return '+58-' + cleaned.substring(1);
-  }
-
-  // Si solo es un número que empieza con 4 (sin el 0 inicial)
-  if (cleaned.startsWith('4') && cleaned.length >= 10) {
-    return '+58-' + cleaned;
-  }
-
-  // Por defecto, asumir que es venezolano
-  return '+58-' + cleaned.replace(/^0+/, '');
-};
+// Normaliza cualquier formato guardado ("0412…", "+58412…") a "+58-412…" para el input
+const normalizePhoneNumber = normalizePhone;
 
 // Helper para formatear el teléfono para guardar en BD (con guión)
 // Entrada: "+584122727981" -> Salida: "+58-4122727981"
@@ -656,22 +615,21 @@ export default function ApplicantFormModal({
     const newErrors: Partial<Record<keyof FormData, string>> = {};
 
     // Validar cédula
-    if (!formData.cedulaNumero.trim()) {
-      newErrors.cedulaNumero = 'Este campo es requerido';
+    const errorCedula = validarCedulaNumero(formData.cedulaNumero);
+    if (errorCedula) {
+      newErrors.cedulaNumero = errorCedula;
     }
 
     // Validar nombres
-    if (!formData.nombres.trim()) {
-      newErrors.nombres = 'Este campo es requerido';
-    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(formData.nombres.trim())) {
-      newErrors.nombres = 'Solo se permiten letras y espacios';
+    const errorNombres = validarNombre(formData.nombres);
+    if (errorNombres) {
+      newErrors.nombres = errorNombres;
     }
 
     // Validar apellidos
-    if (!formData.apellidos.trim()) {
-      newErrors.apellidos = 'Este campo es requerido';
-    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(formData.apellidos.trim())) {
-      newErrors.apellidos = 'Solo se permiten letras y espacios';
+    const errorApellidos = validarNombre(formData.apellidos);
+    if (errorApellidos) {
+      newErrors.apellidos = errorApellidos;
     }
 
     // Validar fecha de nacimiento
@@ -694,34 +652,10 @@ export default function ApplicantFormModal({
       newErrors.sexo = 'Este campo es requerido';
     }
 
-    // Validar teléfono celular
-    // Nota: el valor esperado es "<codigoPais>-<numero>", ej: "+58-4143714004".
-    const phoneValue = (formData.telefonoCelular || '').trim();
-    // Extraer código y número considerando el guión
-    const dashMatch = phoneValue.match(/^(\+\d{1,4})-(.*)$/);
-    let code = '';
-    let number = '';
-    if (dashMatch) {
-      code = dashMatch[1];
-      number = dashMatch[2].replace(/\D/g, '');
-    } else {
-      const codeMatch = phoneValue.match(/^(\+\d{1,4})/);
-      code = codeMatch ? codeMatch[1] : '';
-      number = phoneValue.slice(code.length).replace(/\D/g, '');
-    }
-
-    if (!phoneValue || !code || number.trim() === '') {
-      newErrors.telefonoCelular = 'Este campo es requerido';
-    } else if (code === '+58') {
-      // Para números venezolanos (+58), el número debe tener 10 dígitos y empezar con 4.
-      if (number.length !== 10 || !number.startsWith('4')) {
-        newErrors.telefonoCelular = 'Número venezolano inválido. Debe tener 10 dígitos y empezar con 4 (ej: 412...).';
-      }
-    } else {
-      // Para otros países, validar longitud mínima y máxima
-      if (number.length < 7 || number.length > 15) {
-        newErrors.telefonoCelular = 'Número de teléfono inválido';
-      }
+    // Validar teléfono celular (acepta "+58-412…", "0412…", etc.)
+    const errorCelular = validatePhone(formData.telefonoCelular, { required: true });
+    if (errorCelular) {
+      newErrors.telefonoCelular = errorCelular;
     }
 
     // Validar teléfono local (si está presente)
@@ -802,15 +736,13 @@ export default function ApplicantFormModal({
     if (!formData.tipoVivienda || formData.tipoVivienda.trim() === '') {
       newErrors.tipoVivienda = 'Este campo es requerido';
     }
-    if (!formData.cantHabitaciones.trim()) {
-      newErrors.cantHabitaciones = 'Este campo es requerido';
-    } else if (isNaN(Number(formData.cantHabitaciones)) || Number(formData.cantHabitaciones) < 0) {
-      newErrors.cantHabitaciones = 'Debe ser un número válido';
+    const errorCantHabitaciones = validarEntero(formData.cantHabitaciones);
+    if (errorCantHabitaciones) {
+      newErrors.cantHabitaciones = errorCantHabitaciones;
     }
-    if (!formData.cantBanos.trim()) {
-      newErrors.cantBanos = 'Este campo es requerido';
-    } else if (isNaN(Number(formData.cantBanos)) || Number(formData.cantBanos) < 0) {
-      newErrors.cantBanos = 'Debe ser un número válido';
+    const errorCantBanos = validarEntero(formData.cantBanos);
+    if (errorCantBanos) {
+      newErrors.cantBanos = errorCantBanos;
     }
     if (!formData.materialPiso || formData.materialPiso.trim() === '') {
       newErrors.materialPiso = 'Este campo es requerido';
@@ -848,8 +780,8 @@ export default function ApplicantFormModal({
       newErrors.cantPersonas = 'Este campo es requerido';
     } else {
       cantPersonasValue = Number(formData.cantPersonas);
-      if (isNaN(cantPersonasValue) || cantPersonasValue < 0) {
-        newErrors.cantPersonas = 'Debe ser un número válido';
+      if (!Number.isInteger(cantPersonasValue) || cantPersonasValue < 0) {
+        newErrors.cantPersonas = 'Debe ser un número entero, sin decimales';
       } else if (cantPersonasValue === 0) {
         newErrors.cantPersonas = 'Debe haber al menos una persona';
       }
@@ -860,8 +792,8 @@ export default function ApplicantFormModal({
       newErrors.cantTrabajadores = 'Este campo es requerido';
     } else {
       cantTrabajadoresValue = Number(formData.cantTrabajadores);
-      if (isNaN(cantTrabajadoresValue) || cantTrabajadoresValue < 0) {
-        newErrors.cantTrabajadores = 'Debe ser un número válido';
+      if (!Number.isInteger(cantTrabajadoresValue) || cantTrabajadoresValue < 0) {
+        newErrors.cantTrabajadores = 'Debe ser un número entero, sin decimales';
       } else if (!newErrors.cantPersonas && cantTrabajadoresValue > cantPersonasValue) {
         newErrors.cantTrabajadores = `No puede ser mayor que la cantidad de personas (${cantPersonasValue})`;
       }
@@ -872,8 +804,8 @@ export default function ApplicantFormModal({
       newErrors.cantNinos = 'Este campo es requerido';
     } else {
       cantNinosValue = Number(formData.cantNinos);
-      if (isNaN(cantNinosValue) || cantNinosValue < 0) {
-        newErrors.cantNinos = 'Debe ser un número válido';
+      if (!Number.isInteger(cantNinosValue) || cantNinosValue < 0) {
+        newErrors.cantNinos = 'Debe ser un número entero, sin decimales';
       } else if (!newErrors.cantPersonas && cantNinosValue > cantPersonasValue) {
         newErrors.cantNinos = `No puede ser mayor que la cantidad de personas (${cantPersonasValue})`;
       }
@@ -884,8 +816,8 @@ export default function ApplicantFormModal({
       newErrors.cantNinosEstudiando = 'Este campo es requerido';
     } else {
       cantNinosEstudiandoValue = Number(formData.cantNinosEstudiando);
-      if (isNaN(cantNinosEstudiandoValue) || cantNinosEstudiandoValue < 0) {
-        newErrors.cantNinosEstudiando = 'Debe ser un número válido';
+      if (!Number.isInteger(cantNinosEstudiandoValue) || cantNinosEstudiandoValue < 0) {
+        newErrors.cantNinosEstudiando = 'Debe ser un número entero, sin decimales';
       } else {
         // No puede ser mayor que la cantidad de niños
         if (!newErrors.cantNinos && cantNinosEstudiandoValue > cantNinosValue) {
@@ -934,8 +866,8 @@ export default function ApplicantFormModal({
           newErrors.tiempoEstudioJefe = 'Este campo es requerido';
         } else {
           const tiempoValue = Number(formData.tiempoEstudioJefe);
-          if (isNaN(tiempoValue) || tiempoValue < 0) {
-            newErrors.tiempoEstudioJefe = 'Debe ser un número válido mayor o igual a 0';
+          if (!Number.isInteger(tiempoValue) || tiempoValue < 0) {
+            newErrors.tiempoEstudioJefe = 'Debe ser un número entero mayor o igual a 0';
           }
         }
       }
@@ -962,8 +894,8 @@ export default function ApplicantFormModal({
         newErrors.tiempoEstudioSolicitante = 'Este campo es requerido';
       } else {
         const tiempoValue = Number(formData.tiempoEstudioSolicitante);
-        if (isNaN(tiempoValue) || tiempoValue < 0) {
-          newErrors.tiempoEstudioSolicitante = 'Debe ser un número válido mayor o igual a 0';
+        if (!Number.isInteger(tiempoValue) || tiempoValue < 0) {
+          newErrors.tiempoEstudioSolicitante = 'Debe ser un número entero mayor o igual a 0';
         }
       }
     }
@@ -1905,7 +1837,7 @@ export default function ApplicantFormModal({
       apellidos: solicitante.apellidos || prev.apellidos,
       fechaNacimiento: solicitante.fecha_nacimiento || prev.fechaNacimiento,
       sexo: solicitante.sexo || prev.sexo,
-      telefonoCelular: telefonoCompleto || prev.telefonoCelular,
+      telefonoCelular: telefonoCompleto ? normalizePhone(telefonoCompleto) : prev.telefonoCelular,
       correoElectronico: solicitante.correo_electronico || prev.correoElectronico,
       nacionalidad: nacionalidadAsignada || prev.nacionalidad,
     }));
@@ -1916,7 +1848,8 @@ export default function ApplicantFormModal({
     if (solicitante.apellidos) camposBloqueados.add('apellidos');
     if (solicitante.fecha_nacimiento) camposBloqueados.add('fechaNacimiento');
     if (solicitante.sexo) camposBloqueados.add('sexo');
-    if (telefonoCompleto) {
+    // Un teléfono inválido (p. ej. "No suministrado") queda editable para corregirlo
+    if (telefonoCompleto && !validatePhone(telefonoCompleto, { required: true })) {
       camposBloqueados.add('telefonoCelular');
     }
     if (solicitante.correo_electronico) camposBloqueados.add('correoElectronico');
@@ -1932,7 +1865,7 @@ export default function ApplicantFormModal({
       if (solicitante.apellidos) delete newErrors.apellidos;
       if (solicitante.fecha_nacimiento) delete newErrors.fechaNacimiento;
       if (solicitante.sexo) delete newErrors.sexo;
-      if (telefonoCompleto) {
+      if (telefonoCompleto && !validatePhone(telefonoCompleto, { required: true })) {
         delete newErrors.telefonoCelular;
       }
       if (solicitante.correo_electronico) delete newErrors.correoElectronico;
@@ -1984,7 +1917,7 @@ export default function ApplicantFormModal({
       cedulaNumero,
       nombres: usuario.nombres || prev.nombres,
       apellidos: usuario.apellidos || prev.apellidos,
-      telefonoCelular: telefonoCompleto || prev.telefonoCelular,
+      telefonoCelular: telefonoCompleto ? normalizePhone(telefonoCompleto) : prev.telefonoCelular,
       correoElectronico: usuario.correo_electronico || prev.correoElectronico,
       nacionalidad: nacionalidadAsignada || prev.nacionalidad,
     }));
@@ -1993,7 +1926,8 @@ export default function ApplicantFormModal({
     const camposBloqueados = new Set<keyof FormData>();
     if (usuario.nombres) camposBloqueados.add('nombres');
     if (usuario.apellidos) camposBloqueados.add('apellidos');
-    if (telefonoCompleto) {
+    // Un teléfono inválido (p. ej. "No suministrado") queda editable para corregirlo
+    if (telefonoCompleto && !validatePhone(telefonoCompleto, { required: true })) {
       camposBloqueados.add('telefonoCelular');
     }
     if (usuario.correo_electronico) camposBloqueados.add('correoElectronico');
@@ -2007,7 +1941,7 @@ export default function ApplicantFormModal({
       delete newErrors.cedulaNumero;
       if (usuario.nombres) delete newErrors.nombres;
       if (usuario.apellidos) delete newErrors.apellidos;
-      if (telefonoCompleto) {
+      if (telefonoCompleto && !validatePhone(telefonoCompleto, { required: true })) {
         delete newErrors.telefonoCelular;
       }
       if (usuario.correo_electronico) delete newErrors.correoElectronico;

@@ -31,7 +31,7 @@ const LONGITUD_MINIMA_PASSWORD = 8;
  * Distinguir "codigo incorrecto" de "no hay codigo" o "demasiados intentos" le
  * diria al atacante en cual de los tres casos esta.
  */
-const ERROR_CODIGO_GENERICO = 'Codigo de verificacion invalido o expirado';
+const ERROR_CODIGO_GENERICO = 'Código de verificación inválido o expirado';
 
 export interface LoginResult {
   success: boolean;
@@ -554,7 +554,7 @@ export async function verifyCodeAction(formData: FormData): Promise<VerifyCodeRe
     return {
       success: false,
       error: {
-        message: toUserMessage(error, 'Error al verificar el codigo'),
+        message: toUserMessage(error, 'Error al verificar el código'),
         code: 'UNKNOWN_ERROR',
       },
     };
@@ -589,7 +589,7 @@ export async function resetPasswordAction(formData: FormData): Promise<ResetPass
       return {
         success: false,
         error: {
-          message: 'La verificacion expiro o no es valida. Solicita un codigo nuevo.',
+          message: 'La verificación expiró o no es válida. Solicita un código nuevo.',
           code: 'INVALID_TICKET',
         },
       };
@@ -599,7 +599,7 @@ export async function resetPasswordAction(formData: FormData): Promise<ResetPass
       return {
         success: false,
         error: {
-          message: 'Las contrasenas no coinciden',
+          message: 'Las contraseñas no coinciden',
           code: 'VALIDATION_ERROR',
         },
       };
@@ -609,7 +609,7 @@ export async function resetPasswordAction(formData: FormData): Promise<ResetPass
       return {
         success: false,
         error: {
-          message: `La contrasena debe tener al menos ${LONGITUD_MINIMA_PASSWORD} caracteres`,
+          message: `La contraseña debe tener al menos ${LONGITUD_MINIMA_PASSWORD} caracteres`,
           code: 'VALIDATION_ERROR',
         },
       };
@@ -629,7 +629,7 @@ export async function resetPasswordAction(formData: FormData): Promise<ResetPass
       return {
         success: false,
         error: {
-          message: 'Esta verificacion ya fue utilizada. Solicita un codigo nuevo.',
+          message: 'Esta verificación ya fue utilizada. Solicita un código nuevo.',
           code: 'INVALID_TICKET',
         },
       };
@@ -655,7 +655,7 @@ export async function resetPasswordAction(formData: FormData): Promise<ResetPass
     return {
       success: true,
       data: {
-        message: 'Contrasena actualizada exitosamente',
+        message: 'Contraseña actualizada exitosamente',
       },
     };
   } catch (error) {
@@ -672,7 +672,7 @@ export async function resetPasswordAction(formData: FormData): Promise<ResetPass
     return {
       success: false,
       error: {
-        message: toUserMessage(error, 'Error al restablecer la contrasena'),
+        message: toUserMessage(error, 'Error al restablecer la contraseña'),
         code: 'UNKNOWN_ERROR',
       },
     };
