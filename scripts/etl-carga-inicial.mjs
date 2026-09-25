@@ -243,8 +243,8 @@ const SIN_TELEFONO = 'No suministrado';
 const COORDINADOR = 'V-77777777';
 /** Misma contraseña que el Coordinador; son cuentas de demostración. */
 const CLAVE_DEMO = '$2b$10$sV6rtquZ.uUT2RKkp.Gw/uNIj7qoYjPUwfYdek1tuvbNcBQ3ByYn2';
-/** Semestres que abarca el libro (septiembre 2024 - julio 2025 y su cola). */
-const TERMS = ['2024-25', '2025-15', '2025-25'];
+/** Semestres que abarca el libro: 2025-15 (sep 2024 - ene 2025), 2025-25 (mar - jul 2025) y la cola en 2026-15. */
+const TERMS = ['2025-15', '2025-25', '2026-15'];
 const esSinRespuesta = (t) => /^(no suministra|sin informacion|no informa|no aplica|sin respuesta|si informacion)/.test(t);
 
 const CONDICION_TRABAJO = { patrono: 1, empleado: 2, obrero: 3, 'cuenta propia': 4, 'no aplica': 0 };

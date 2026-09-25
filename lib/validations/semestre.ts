@@ -3,8 +3,7 @@
  *  - YYYY-15: empieza en septiembre de YYYY-1 y termina en enero de YYYY.
  *  - YYYY-25: empieza en marzo y termina en julio del mismo año YYYY.
  * Ej.: 2027-15 = sep 2026 – ene 2027 → 2027-25 = mar–jul 2027 → 2028-15 = sep 2027 …
- * Se admite un mes de holgura a cada lado porque las fechas reales se corren
- * (p. ej. un 15 que cierra en febrero o un 25 que arranca a fines de febrero).
+ * Solo se valida el mes (y el año); el día es libre.
  */
 
 export const TERM_REGEX = /^\d{4}-(15|25)$/;
@@ -12,24 +11,15 @@ export const TERM_REGEX = /^\d{4}-(15|25)$/;
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
     'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
-/** Ventana permitida como índice absoluto de mes (año * 12 + mes0). */
-type Ventana = { desde: number; hasta: number };
-
+/** Mes como índice absoluto (año * 12 + mes0), para comparar año y mes de una vez. */
 const idx = (anio: number, mes1: number) => anio * 12 + (mes1 - 1);
 
-function ventanas(term: string): { inicio: Ventana; fin: Ventana } | null {
+function mesesEsperados(term: string): { inicio: number; fin: number } | null {
     if (!TERM_REGEX.test(term)) return null;
     const anio = Number(term.slice(0, 4));
-    if (term.endsWith('-15')) {
-        return {
-            inicio: { desde: idx(anio - 1, 8), hasta: idx(anio - 1, 10) }, // ago–oct del año anterior (septiembre ±1)
-            fin: { desde: idx(anio - 1, 12), hasta: idx(anio, 2) },        // dic–feb (enero ±1)
-        };
-    }
-    return {
-        inicio: { desde: idx(anio, 2), hasta: idx(anio, 4) },  // feb–abr (marzo ±1)
-        fin: { desde: idx(anio, 6), hasta: idx(anio, 8) },     // jun–ago (julio ±1)
-    };
+    return term.endsWith('-15')
+        ? { inicio: idx(anio - 1, 9), fin: idx(anio, 1) }   // septiembre de YYYY-1 → enero de YYYY
+        : { inicio: idx(anio, 3), fin: idx(anio, 7) };      // marzo → julio de YYYY
 }
 
 export type FechaEntrada = string | Date | null | undefined;
@@ -53,22 +43,14 @@ function mesDe(iso: string | null): number | null {
     return iso ? idx(Number(iso.slice(0, 4)), Number(iso.slice(5, 7))) : null;
 }
 
-const nombre = (i: number) => `${MESES[i % 12]} ${Math.floor(i / 12)}`;
-
-export function esperadoSemestre(term: string): string | null {
-    if (!TERM_REGEX.test(term)) return null;
-    const anio = Number(term.slice(0, 4));
-    return term.endsWith('-15')
-        ? `septiembre de ${anio - 1} a enero de ${anio}`
-        : `marzo a julio de ${anio}`;
-}
+const nombre = (i: number) => `${MESES[i % 12]} de ${Math.floor(i / 12)}`;
 
 export function validarFechaInicioSemestre(term: string, fecha: FechaEntrada): string | undefined {
-    const v = ventanas(term);
+    const esperado = mesesEsperados(term);
     const mes = mesDe(aISO(fecha));
-    if (!v || mes === null) return undefined;
-    if (mes < v.inicio.desde || mes > v.inicio.hasta) {
-        return `El ${term} va de ${esperadoSemestre(term)}: debe empezar entre ${nombre(v.inicio.desde)} y ${nombre(v.inicio.hasta)}`;
+    if (!esperado || mes === null) return undefined;
+    if (mes !== esperado.inicio) {
+        return `El ${term} debe empezar en ${nombre(esperado.inicio)}`;
     }
     return undefined;
 }
@@ -79,11 +61,11 @@ export function validarFechaFinSemestre(term: string, fechaInicio: FechaEntrada,
     if (iniISO && finISO && finISO <= iniISO) {
         return 'La fecha de fin debe ser posterior a la fecha de inicio';
     }
-    const v = ventanas(term);
+    const esperado = mesesEsperados(term);
     const mes = mesDe(finISO);
-    if (!v || mes === null) return undefined;
-    if (mes < v.fin.desde || mes > v.fin.hasta) {
-        return `El ${term} va de ${esperadoSemestre(term)}: debe terminar entre ${nombre(v.fin.desde)} y ${nombre(v.fin.hasta)}`;
+    if (!esperado || mes === null) return undefined;
+    if (mes !== esperado.fin) {
+        return `El ${term} debe terminar en ${nombre(esperado.fin)}`;
     }
     return undefined;
 }
