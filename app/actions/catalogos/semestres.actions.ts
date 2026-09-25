@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache';
 import { getAllSemestres } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { toUserMessage } from '@/lib/utils/error-messages';
+import { validarSemestre } from '@/lib/validations/semestre';
 
 export async function getSemestres() {
     try {
@@ -42,9 +43,10 @@ export async function checkSemestreExists(term: string) {
 }
 
 export async function createSemestre(data: { term: string; fecha_inicio: string; fecha_fin: string }) {
-    // Validar formato YYYY-XX (ej: 2026-15)
-    if (!/^\d{4}-(15|25)$/.test(data.term)) {
-        return { success: false, error: 'El formato del semestre debe ser YYYY-15 o YYYY-25 (ej: 2026-15)' };
+    // Validar formato YYYY-XX y que las fechas caigan en la ventana del semestre
+    const errorSemestre = validarSemestre(data.term, data.fecha_inicio, data.fecha_fin);
+    if (errorSemestre) {
+        return { success: false, error: errorSemestre };
     }
 
     const authResult = await requireAuthInServerActionWithCode();
@@ -74,10 +76,9 @@ export async function createSemestre(data: { term: string; fecha_inicio: string;
 }
 
 export async function updateSemestre(term: string, data: { fecha_inicio: string; fecha_fin: string; new_term?: string }) {
-    if (data.new_term && data.new_term !== term) {
-        if (!/^\d{4}-(15|25)$/.test(data.new_term)) {
-            return { success: false, error: 'El formato del semestre debe ser YYYY-15 o YYYY-25' };
-        }
+    const errorSemestre = validarSemestre(data.new_term || term, data.fecha_inicio, data.fecha_fin);
+    if (errorSemestre) {
+        return { success: false, error: errorSemestre };
     }
 
     const authResult = await requireAuthInServerActionWithCode();
