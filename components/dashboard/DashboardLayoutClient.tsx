@@ -7,8 +7,9 @@ import Notification from '../ui/feedback/Notification';
 import DateTime from '../ui/calendar/DateTime';
 import { mapSystemRoleToSidebarRole } from '@/lib/utils/role-mapper';
 import { useState, useEffect } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ArrowLeft } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { useRouter } from 'next/navigation';
 
 interface DashboardLayoutClientProps {
   user: {
@@ -26,6 +27,7 @@ interface DashboardLayoutClientProps {
 
 export default function DashboardLayoutClient({ user, children, initialSidebarCollapsed = false, initialTheme }: DashboardLayoutClientProps) {
   const { setTheme } = useTheme();
+  const router = useRouter();
 
   // Aplicar tema inicial desde el servidor solo al montar para evitar sobreescrituras en caliente
   useEffect(() => {
@@ -96,21 +98,32 @@ export default function DashboardLayoutClient({ user, children, initialSidebarCo
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col w-full min-w-0 overflow-x-hidden">
+      <div className="flex-1 flex flex-col w-full min-w-0 overflow-x-hidden relative">
         {/* Header móvil (reserva espacio arriba para no tapar títulos) */}
         <div className="lg:hidden sticky top-0 z-30 bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60">
           <div className="px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-1">
             <div className="h-14 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                className="inline-flex items-center justify-center rounded-xl bg-(--card-bg) p-2 shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] shrink-0 transition-transform active:scale-95 cursor-pointer border border-(--card-border)"
-                aria-label={isMobileSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
-                aria-controls="mobile-sidebar"
-                aria-expanded={isMobileSidebarOpen}
-                onClick={() => setIsMobileSidebarOpen((v: boolean) => !v)}
-              >
-                {isMobileSidebarOpen ? <X className="w-8 h-8 text-foreground opacity-70" /> : <Menu className="w-8 h-8 text-foreground opacity-70" />}
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center rounded-xl bg-(--card-bg) p-2 shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] shrink-0 transition-transform active:scale-95 cursor-pointer border border-(--card-border)"
+                  aria-label="Volver atrás"
+                  onClick={() => router.back()}
+                >
+                  <ArrowLeft className="w-8 h-8 text-foreground opacity-70" />
+                </button>
+
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center rounded-xl bg-(--card-bg) p-2 shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] shrink-0 transition-transform active:scale-95 cursor-pointer border border-(--card-border)"
+                  aria-label={isMobileSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
+                  aria-controls="mobile-sidebar"
+                  aria-expanded={isMobileSidebarOpen}
+                  onClick={() => setIsMobileSidebarOpen((v: boolean) => !v)}
+                >
+                  {isMobileSidebarOpen ? <X className="w-8 h-8 text-foreground opacity-70" /> : <Menu className="w-8 h-8 text-foreground opacity-70" />}
+                </button>
+              </div>
 
               <div className="min-w-0">
                 <motion.div
@@ -126,6 +139,18 @@ export default function DashboardLayoutClient({ user, children, initialSidebarCo
             </div>
           </div>
         </div>
+
+        <motion.button
+          type="button"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          aria-label="Volver atrás"
+          onClick={() => router.back()}
+          className="hidden lg:inline-flex absolute top-6 left-6 items-center justify-center z-30 bg-(--glass-bg) backdrop-blur-md rounded-3xl shadow-[0px_0px_4px_0px_rgba(0,0,0,0.20)] p-3 border border-(--glass-border) transition-colors transition-transform active:scale-95 cursor-pointer hover:bg-(--card-bg)"
+        >
+          <ArrowLeft className="w-5 h-5 text-foreground opacity-70" />
+        </motion.button>
 
         <motion.div
           initial={{ opacity: 0 }}
