@@ -9,21 +9,27 @@ import { authQueries } from '@/lib/db/queries/auth.queries';
 import { toUserMessage } from '@/lib/utils/error-messages';
 import { logger } from './logger';
 
+/** Datos del usuario que hace la petición, ya contrastados con la base. */
+export interface UsuarioAutenticado {
+  cedula: string;
+  rol: string;
+  /**
+   * Inicio de la sesión, en segundos Unix (el `iat` del token). Sirve para
+   * distinguir "esta sesión" de las anteriores sin guardar estado en el
+   * servidor. Es opcional porque un token viejo podría no traerlo.
+   */
+  sesionIniciadaEn?: number;
+}
+
 export interface AuthResult {
   success: boolean;
-  user?: {
-    cedula: string;
-    rol: string;
-  };
+  user?: UsuarioAutenticado;
   error?: string;
 }
 
 export interface AuthResultWithCode {
   success: boolean;
-  user?: {
-    cedula: string;
-    rol: string;
-  };
+  user?: UsuarioAutenticado;
   error?: {
     message: string;
     code: string;
@@ -34,7 +40,7 @@ export interface AuthResultWithCode {
 type MotivoRechazo = 'sin_token' | 'token_invalido' | 'cuenta_inactiva';
 
 interface ResolucionAuth {
-  user?: { cedula: string; rol: string };
+  user?: UsuarioAutenticado;
   motivo?: MotivoRechazo;
 }
 
@@ -58,9 +64,11 @@ async function resolverUsuarioAutenticado(): Promise<ResolucionAuth> {
   }
 
   let cedula: string;
+  let sesionIniciadaEn: number | undefined;
   try {
     const claims = await verifyToken(token);
     cedula = claims.cedula;
+    sesionIniciadaEn = claims.iat;
   } catch {
     return { motivo: 'token_invalido' };
   }
@@ -77,7 +85,7 @@ async function resolverUsuarioAutenticado(): Promise<ResolucionAuth> {
     return { motivo: 'cuenta_inactiva' };
   }
 
-  return { user: { cedula: cuenta.cedula, rol: cuenta.rol } };
+  return { user: { cedula: cuenta.cedula, rol: cuenta.rol, sesionIniciadaEn } };
 }
 
 /** Mensaje para el usuario según el motivo del rechazo. */

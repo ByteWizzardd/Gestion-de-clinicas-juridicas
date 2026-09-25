@@ -33,6 +33,7 @@ export async function authorizeRole(allowedRoles: UserRole[]) {
   return {
     cedula: authResult.user.cedula,
     rol: authResult.user.rol,
+    sesionIniciadaEn: authResult.user.sesionIniciadaEn,
   };
 }
 

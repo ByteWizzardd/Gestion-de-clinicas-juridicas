@@ -4,10 +4,19 @@ import { join } from 'path';
 import { logger } from '@/lib/utils/logger';
 
 /**
- * Servicio para detectar casos inactivos y notificar a los usuarios correspondientes.
- * Se basa en la lógica original de scripts/check-inactive-cases.mjs
+ * Detecta casos sin actividad en 2 semestres y avisa a quien corresponda.
+ *
+ * El aviso se repite en cada inicio de sesión mientras haya casos inactivos: es
+ * un pendiente, no una novedad, y dejar de avisar porque el Coordinador ya lo
+ * leyó una vez haría que los casos se quedaran ahí sin que nadie los mueva. Lo
+ * que no se repite es dentro de la misma sesión, y de eso se encarga
+ * `segundosDeSesion`.
+ *
+ * @param segundosDeSesion cuánto lleva abierta la sesión de quien dispara el
+ *   chequeo. Si no se pasa, se usa un día, que era el comportamiento anterior
+ *   salvo que antes no había corte de ningún tipo.
  */
-export async function checkAndNotifyInactiveCases() {
+export async function checkAndNotifyInactiveCases(segundosDeSesion = 86400) {
     try {
         // 1. Cargar Queries
         const queriesDir = join(process.cwd(), 'database/queries');
@@ -31,8 +40,8 @@ export async function checkAndNotifyInactiveCases() {
             'utf-8'
         );
 
-        const existsUnreadSql = readFileSync(
-            join(queriesDir, 'notificaciones/exists-unread.sql'),
+        const existeEnEstaSesionSql = readFileSync(
+            join(queriesDir, 'notificaciones/exists-desde-inicio-sesion.sql'),
             'utf-8'
         );
 
@@ -99,8 +108,10 @@ export async function checkAndNotifyInactiveCases() {
 
         for (const cedulaDestinatario of destinatarios) {
             try {
-                // Verificar si ya tiene notificación pendiente con el mismo título y mensaje
-                const existeResultado = await pool.query(existsUnreadSql, [cedulaDestinatario, titulo, mensaje]);
+                // ¿Ya se le avisó lo mismo en esta sesión? Si se le avisó en una
+                // anterior no cuenta: el aviso tiene que volver a salir.
+                const existeResultado = await pool.query(existeEnEstaSesionSql,
+                    [cedulaDestinatario, titulo, mensaje, segundosDeSesion]);
                 if (existeResultado.rowCount && existeResultado.rowCount > 0) {
                     continue;
                 }
