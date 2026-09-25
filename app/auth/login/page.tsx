@@ -100,9 +100,10 @@ export default function LoginPage() {
                         exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
                         transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.15, ease: "easeOut" }}>
                         <Link href="/auth" onClick={handleBack}
-                            className="absolute top-4 left-4 sm:top-10 sm:left-8 z-30 p-2 hover:bg-[var(--sidebar-hover)] rounded-full transition-colors cursor-pointer"
+                            className="absolute top-4 left-4 sm:top-10 sm:left-8 z-30 inline-flex items-center gap-2 rounded-3xl bg-(--glass-bg) backdrop-blur-md px-4 py-2.5 shadow-[0px_0px_4px_0px_rgba(0,0,0,0.20)] border border-(--glass-border) transition-colors hover:bg-(--card-bg) cursor-pointer"
                         >
-                            <ArrowLeft className="w-6 h-6 sm:w-8 sm:h-8 text-[var(--foreground)] hover:text-primary transition-colors" />
+                            <ArrowLeft className="w-5 h-5 text-foreground opacity-70" />
+                            <span className="text-sm font-medium text-foreground opacity-70">Volver</span>
                         </Link>
                     </motion.div>
                 )}
