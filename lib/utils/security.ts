@@ -109,11 +109,18 @@ export function jwtExpiresInToSeconds(expiresIn: string): number {
 export async function verifyToken(token: string): Promise<{
   cedula: string;
   rol: string;
+  /**
+   * Cuándo se emitió el token, en segundos Unix. Como el token se firma una sola
+   * vez —al iniciar sesión, y no se refresca— esto es la hora exacta en que
+   * empezó la sesión. Lo usa el aviso de casos inactivos para saber si ya avisó
+   * en esta sesión o si toca avisar de nuevo.
+   */
+  iat?: number;
 }> {
   try {
     const decoded = jwt.verify(token, getJwtSecret(), {
       algorithms: [JWT_ALGORITHM],
-    }) as { cedula: string; rol: string };
+    }) as { cedula: string; rol: string; iat?: number };
 
     if (!decoded.cedula || !decoded.rol) {
       throw new Error('Token no contiene información válida del usuario');

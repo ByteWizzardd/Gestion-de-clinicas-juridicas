@@ -51,6 +51,12 @@ interface DashboardClientProps {
   initialCasos: Caso[];
   initialAcciones?: AccionReciente[];
   isCoordinator?: boolean;
+  /**
+   * Inicio de la sesión, en segundos Unix. Solo se usa como clave para saber si
+   * los avisos automáticos ya se lanzaron en ESTA sesión: cambia con cada inicio
+   * de sesión, así que sirve para distinguirlas sin guardar nada en el servidor.
+   */
+  sesionIniciadaEn?: number;
 }
 
 import { triggerInactiveCasesCheckAction, triggerAuditRetentionCheckAction } from '@/app/actions/automation';
@@ -59,7 +65,8 @@ export default function DashboardClient({
   initialAppointments,
   initialCasos,
   initialAcciones = [],
-  isCoordinator = false
+  isCoordinator = false,
+  sesionIniciadaEn
 }: DashboardClientProps) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -73,8 +80,29 @@ export default function DashboardClient({
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
-  // Trigger automation (inactive cases check)
+  // Avisos automáticos: casos inactivos y registros de auditoría por depurar.
+  //
+  // Se lanzan UNA vez por inicio de sesión, no una vez por visita al dashboard.
+  // La diferencia importa: si el Coordinador borra el aviso y vuelve al
+  // dashboard, volvería a aparecer al instante y parecería que no se puede
+  // quitar. Con el corte por sesión se queda borrado hasta el siguiente inicio
+  // de sesión, que es cuando toca recordárselo otra vez.
+  //
+  // La marca va en sessionStorage y lleva la hora de inicio de sesión en la
+  // clave: sessionStorage sobrevive a cerrar y volver a iniciar sesión en la
+  // misma pestaña, así que sin la hora en la clave el aviso no reaparecería.
+  // El servidor no se fía de esto —hace su propio corte por sesión—, esto solo
+  // evita el ida y vuelta innecesario.
   useEffect(() => {
+    const marca = `avisos-automaticos:${sesionIniciadaEn ?? 'sin-sesion'}`;
+    try {
+      if (sessionStorage.getItem(marca)) return;
+      sessionStorage.setItem(marca, '1');
+    } catch {
+      // Sin sessionStorage (ventana privada, almacenamiento bloqueado) se sigue
+      // adelante: el corte del servidor alcanza para no duplicar el aviso.
+    }
+
     const runAutomation = async () => {
       try {
         // Fire and forget - logs handled in action/server
@@ -87,7 +115,7 @@ export default function DashboardClient({
       }
     };
     runAutomation();
-  }, []);
+  }, [sesionIniciadaEn]);
 
   // Manejadores para el modal de detalles de citas
   const handleAppointmentClick = (appointment: Appointment) => {

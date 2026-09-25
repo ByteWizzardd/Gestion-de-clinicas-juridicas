@@ -3,7 +3,18 @@
 import { checkAndNotifyInactiveCases } from '@/lib/services/inactive-cases.service';
 import { checkAndNotifyAuditRetention } from '@/lib/services/audit-retention.service';
 import { requireAuthInServerAction } from '@/lib/utils/server-auth';
-import { cookies } from 'next/headers';
+
+/**
+ * Segundos que lleva abierta la sesión, a partir del `iat` del token.
+ *
+ * Si el token no trae `iat` —no debería pasar, pero es opcional en el tipo— se
+ * devuelve un día: con eso el aviso no se duplica en el uso normal, que es el
+ * error que más molesta de los dos posibles.
+ */
+function segundosDeSesion(inicioEnSegundosUnix?: number): number {
+    if (!inicioEnSegundosUnix) return 86400;
+    return Math.max(0, Math.floor(Date.now() / 1000) - inicioEnSegundosUnix);
+}
 
 /**
  * Trigger manual o automático para verificar casos inactivos.
@@ -20,13 +31,10 @@ export async function triggerInactiveCasesCheckAction() {
         return { success: false, message: 'Skipped: User is not coordinator' };
     }
 
-    // Rate Limiting removido a petición del usuario para notificar en cada inicio de sesión
-    // La duplicidad de notificaciones se maneja en el servicio (notificaciones no leídas)
-
-    // Ejecutar verificación
-    const result = await checkAndNotifyInactiveCases();
-
-    return result;
+    // El aviso se repite en cada inicio de sesión mientras haya casos inactivos.
+    // Lo único que se evita es duplicarlo dentro de la misma sesión, y para eso
+    // el servicio necesita saber cuánto lleva abierta.
+    return await checkAndNotifyInactiveCases(segundosDeSesion(auth.user.sesionIniciadaEn));
 }
 
 /**
@@ -44,5 +52,5 @@ export async function triggerAuditRetentionCheckAction() {
         return { success: false, message: 'Skipped: User is not coordinator' };
     }
 
-    return await checkAndNotifyAuditRetention();
+    return await checkAndNotifyAuditRetention(segundosDeSesion(auth.user.sesionIniciadaEn));
 }

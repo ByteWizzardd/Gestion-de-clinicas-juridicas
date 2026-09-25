@@ -40,6 +40,7 @@ export default async function DashboardPage() {
       initialCasos={casos}
       initialAcciones={acciones}
       isCoordinator={isCoordinator}
+      sesionIniciadaEn={user.sesionIniciadaEn}
     />
   );
 }

@@ -22,12 +22,17 @@ interface ResumenClase {
     meses_retencion: string | number;
 }
 
-export async function checkAndNotifyAuditRetention() {
+/**
+ * @param segundosDeSesion cuánto lleva abierta la sesión de quien dispara el
+ *   chequeo, para que el aviso se repita en cada inicio de sesión pero no se
+ *   duplique dentro de la misma. Igual que en el chequeo de casos inactivos.
+ */
+export async function checkAndNotifyAuditRetention(segundosDeSesion = 86400) {
     try {
         const resumenSql = loadSQL('auditoria-retencion/get-resumen.sql');
         const getCoordinatorsSql = loadSQL('usuarios/get-all-coordinators.sql');
         const createNotificationSql = loadSQL('notificaciones/create.sql');
-        const existsUnreadSql = loadSQL('notificaciones/exists-unread.sql');
+        const existeEnEstaSesionSql = loadSQL('notificaciones/exists-desde-inicio-sesion.sql');
 
         const coordsResult = await pool.query(getCoordinatorsSql);
         const coordinadores = coordsResult.rows;
@@ -59,9 +64,11 @@ export async function checkAndNotifyAuditRetention() {
 
         for (const coord of coordinadores) {
             try {
-                // exists-unread.sql compara título Y mensaje: si la cifra cambia
-                // el aviso se renueva, si no, no se duplica.
-                const existe = await pool.query(existsUnreadSql, [coord.cedula, titulo, mensaje]);
+                // Compara título Y mensaje dentro de la sesión: si la cifra
+                // cambia el aviso se renueva, si no, no se duplica. Y en el
+                // siguiente inicio de sesión vuelve a salir.
+                const existe = await pool.query(existeEnEstaSesionSql,
+                    [coord.cedula, titulo, mensaje, segundosDeSesion]);
                 if (existe.rowCount && existe.rowCount > 0) {
                     continue;
                 }
