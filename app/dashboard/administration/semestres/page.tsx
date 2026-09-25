@@ -8,7 +8,7 @@ import CatalogViewModal from "@/components/catalogs/CatalogViewModal";
 import { Hash, Calendar, CheckCircle2 } from "lucide-react";
 import { getSemestres, createSemestre, updateSemestre, toggleSemestreHabilitado, deleteSemestre, checkSemestreExists } from "@/app/actions/catalogos/semestres.actions";
 import { useToast } from "@/components/ui/feedback/ToastProvider";
-import { toLocalISODate } from '@/lib/utils/date-formatter';
+import { validarFechaInicioSemestre, validarFechaFinSemestre } from '@/lib/validations/semestre';
 
 export default function SemestresPage() {
   const [semestres, setSemestres] = useState<any[]>([]);
@@ -126,7 +126,7 @@ export default function SemestresPage() {
         fields={[
           {
             name: 'term',
-            label: 'TERM (ej: 2026-15)',
+            label: 'TERM (15: sep–ene · 25: mar–jul)',
             required: true,
             defaultValue: isEditMode ? editingItem?.term : undefined,
             validate: (value: string, formData: Record<string, string>) => {
@@ -147,22 +147,7 @@ export default function SemestresPage() {
             required: true,
             defaultValue: isEditMode ? editingItem?.fecha_inicio : undefined,
             validate: (value: string | Date, formData: Record<string, string>) => {
-              if (!value) return undefined;
-              // Ensure value is treated as string for validation
-              const strValue = value instanceof Date
-                ? toLocalISODate(value)
-                : String(value);
-
-              if (formData.term && /^\d{4}-(15|25)$/.test(formData.term)) {
-                const termYear = formData.term.substring(0, 4);
-                // Extract year safely
-                const startYear = strValue.includes('-') ? strValue.split('-')[0] : '';
-
-                if (startYear && startYear !== termYear) {
-                  return `El año de inicio (${startYear}) debe coincidir con el término (${termYear})`;
-                }
-              }
-              return undefined;
+              return validarFechaInicioSemestre(formData.term ?? '', value);
             }
           },
           {
@@ -171,12 +156,8 @@ export default function SemestresPage() {
             type: 'date',
             required: true,
             defaultValue: isEditMode ? editingItem?.fecha_fin : undefined,
-            validate: (value: string, formData: Record<string, string>) => {
-              if (formData.fecha_inicio && value <= formData.fecha_inicio) {
-                return 'La fecha de fin debe ser posterior a la fecha de inicio';
-              }
-              return undefined;
-            }
+            validate: (value: string | Date, formData: Record<string, string>) =>
+              validarFechaFinSemestre(formData.term ?? '', formData.fecha_inicio, value)
           }
         ]}
       />
