@@ -1561,11 +1561,11 @@ export default function ReportsPage() {
             <AnimatePresence>
                 {isGeneratingReport && (
                     <motion.div
-                        className="fixed inset-0 z-100 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+                        className="fixed inset-0 z-100 flex items-center justify-center bg-black/50"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
+                        transition={{ duration: 0.2 }}
                     >
                         <motion.div
                             className="bg-[var(--card-bg)] p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 border border-[var(--card-border)]"

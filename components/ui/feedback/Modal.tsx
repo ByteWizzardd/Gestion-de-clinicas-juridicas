@@ -39,14 +39,22 @@ export default function Modal({
 
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
-      // Prevenir scroll del body cuando el modal está abierto
-      document.body.style.overflow = 'hidden';
-    }
+      // Prevenir scroll del body y compensar el ancho del scrollbar para evitar layout shift
+      const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+      const originalOverflow = document.body.style.overflow;
+      const originalPaddingRight = document.body.style.paddingRight;
 
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
-    };
+      document.body.style.overflow = 'hidden';
+      if (scrollBarWidth > 0) {
+        document.body.style.paddingRight = `${scrollBarWidth}px`;
+      }
+
+      return () => {
+        document.removeEventListener('keydown', handleEscape);
+        document.body.style.overflow = originalOverflow;
+        document.body.style.paddingRight = originalPaddingRight;
+      };
+    }
   }, [isOpen, onClose]);
 
   // Focus trap básico
@@ -84,8 +92,8 @@ export default function Modal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6"
+          transition={{ duration: 0.15, ease: 'easeOut' }}
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/60 flex items-center justify-center p-4 sm:p-6"
           onClick={handleOverlayClick}
           aria-hidden="true"
         >
