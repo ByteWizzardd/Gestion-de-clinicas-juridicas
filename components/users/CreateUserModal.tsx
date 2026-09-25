@@ -376,14 +376,17 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
       const telefonoTrimmed = form.telefono.trim();
       const codeMatch = telefonoTrimmed.match(/^(\+\d{1,3})/);
       const code = codeMatch ? codeMatch[1] : '';
-      const number = telefonoTrimmed.replace(code, '').trim();
+      // PhoneInput guarda "+58-4122727981": hay que quitar también el guion
+      const number = telefonoTrimmed.replace(code, '').replace(/^-/, '').trim();
 
-      if (code === '+58') {
-        // Validación para números venezolanos
-        if (number.length < 10 || number.length > 10) {
-          newErrors.telefono = 'El número de teléfono debe tener 10 dígitos';
-        } else if (!/^[0-9]{10}$/.test(number)) {
-          newErrors.telefono = 'El número de teléfono solo debe contener dígitos';
+      // Si solo tiene el código sin número, es válido (se enviará como null)
+      if (number !== '') {
+        if (code === '+58') {
+          if (!/^4\d{9}$/.test(number)) {
+            newErrors.telefono = 'Número venezolano inválido. Debe tener 10 dígitos y empezar con 4 (ej: 412...).';
+          }
+        } else if (number.length < 7 || number.length > 15) {
+          newErrors.telefono = 'Número de teléfono inválido';
         }
       }
     }
@@ -435,8 +438,8 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
       // Construir cédula completa
       const cedula = `${form.cedulaTipo}-${form.cedulaNumero}`;
 
-      // Procesar teléfono (si solo es +58, enviar null)
-      const telefonoFinal = form.telefono && form.telefono.trim() !== '+58'
+      // Procesar teléfono (si solo trae el código, p. ej. "+58" o "+58-", enviar null)
+      const telefonoFinal = form.telefono && !/^\+\d{1,4}-?$/.test(form.telefono.trim())
         ? form.telefono.trim()
         : null;
 
