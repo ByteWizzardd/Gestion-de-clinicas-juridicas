@@ -6,6 +6,7 @@ import { solicitantesQueries, type Solicitante, type SolicitanteCompleto } from 
 import { AppError } from '@/lib/utils/errors';
 import { withAuditTransaction } from '@/lib/utils/audit-context';
 import { toUserMessage } from '@/lib/utils/error-messages';
+import { validatePhone, normalizePhone } from '@/lib/utils/phone';
 
 interface ApplicantFormData {
   // Identificación
@@ -88,53 +89,13 @@ function buildTelefonoCelular(input: {
   codigoPaisCelular?: unknown;
 }): string {
   const rawTelefono = (input.telefonoCelular ?? "").toString().trim();
-
-  // Si ya viene en formato con guión (+58-...), limpiarlo y reformatearlo
-  const dashMatch = rawTelefono.match(/^(\+\d{1,4})-(.*)$/);
-  if (dashMatch) {
-    const code = dashMatch[1];
-    const number = dashMatch[2].replace(/\D/g, "");
-    return `${code}-${number}`;
+  // Solo el número (sin "+"): se le antepone el código que venga aparte
+  if (rawTelefono && !rawTelefono.startsWith("+") && input.codigoPaisCelular) {
+    const rawCode = input.codigoPaisCelular.toString().trim();
+    const code = rawCode.startsWith("+") ? rawCode : `+${rawCode}`;
+    return normalizePhone(`${code}-${rawTelefono.replace(/\D/g, "").replace(/^0+/, "")}`);
   }
-
-  // Si ya viene en formato internacional sin guión, agregar el guión
-  if (rawTelefono.startsWith("+")) {
-    // Extraer el código de país usando códigos conocidos
-    const countryCode = extractCountryCode(rawTelefono);
-    const number = rawTelefono.slice(countryCode.length).replace(/\D/g, "");
-    return `${countryCode}-${number}`;
-  }
-
-  // Si viene solo el número, concatenar con código país (o default +58)
-  const rawCode = (input.codigoPaisCelular ?? "+58").toString().trim();
-  const normalizedCode = rawCode.startsWith("+") ? rawCode : `+${rawCode}`;
-  const onlyDigits = rawTelefono.replace(/\D/g, "");
-  return `${normalizedCode}-${onlyDigits}`;
-}
-
-/**
- * Extrae el código de país de un número telefónico internacional.
- * Usa una lista de códigos conocidos ordenados por longitud (más largos primero).
- */
-function extractCountryCode(phoneNumber: string): string {
-  // Códigos de país comunes en Latinoamérica y otros, ordenados por longitud descendente
-  const knownCodes = [
-    '+1787', '+1809', '+1829', '+1849', // Puerto Rico, Rep. Dominicana
-    '+598', '+595', '+593', '+592', '+591', '+507', '+506', '+505', '+504', '+503', '+502', '+501', // Latinoamérica 3 dígitos
-    '+58', '+57', '+56', '+55', '+54', '+53', '+52', '+51', // Venezuela, Colombia, Chile, Brasil, Argentina, Cuba, México, Perú
-    '+34', '+33', '+31', '+30', // España, Francia, etc.
-    '+44', '+49', '+39', '+1', // UK, Alemania, Italia, USA/Canadá
-  ];
-
-  for (const code of knownCodes) {
-    if (phoneNumber.startsWith(code)) {
-      return code;
-    }
-  }
-
-  // Fallback: tomar los primeros 3 caracteres (+XX) si no se reconoce
-  const fallbackMatch = phoneNumber.match(/^(\+\d{1,3})/);
-  return fallbackMatch ? fallbackMatch[1] : '+58';
+  return normalizePhone(rawTelefono);
 }
 
 /**
@@ -245,6 +206,11 @@ export const solicitantesService = {
       if (dateToCheck > today) {
         throw new AppError('La fecha de nacimiento no puede ser futura', 400, 'VALIDATION_ERROR');
       }
+    }
+
+    const errorTelefono = validatePhone(buildTelefonoCelular(data), { required: true });
+    if (errorTelefono) {
+      throw new AppError(errorTelefono, 400, 'VALIDATION_ERROR');
     }
 
     try {
@@ -544,24 +510,10 @@ export const solicitantesService = {
       }
     }
 
-    // Validar formato de teléfono celular
-    const phoneValue = (data.telefonoCelular || '').trim();
-    if (phoneValue) {
-      const codeMatch = phoneValue.match(/^(\+\d{1,4})/);
-      const code = codeMatch ? codeMatch[1] : '';
-      const number = phoneValue.slice(code.length).replace(/\D/g, '');
-
-      if (code === '+58') {
-        // Para números venezolanos (+58), el número debe tener 10 dígitos y empezar con 4
-        if (number.length !== 10 || !number.startsWith('4')) {
-          throw new AppError('Número venezolano inválido. Debe tener 10 dígitos y empezar con 4 (ej: 412...)', 400, 'VALIDATION_ERROR');
-        }
-      } else if (code) {
-        // Para otros países, validar longitud mínima y máxima
-        if (number.length < 7 || number.length > 15) {
-          throw new AppError('Número de teléfono inválido', 400, 'VALIDATION_ERROR');
-        }
-      }
+    // Validar teléfono celular (misma regla que el formulario)
+    const errorTelefono = validatePhone(buildTelefonoCelular(data), { required: true });
+    if (errorTelefono) {
+      throw new AppError(errorTelefono, 400, 'VALIDATION_ERROR');
     }
 
     try {

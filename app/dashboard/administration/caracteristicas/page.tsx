@@ -101,7 +101,6 @@ export default function CaracteristicasPage() {
         onAddClick={() => setIsModalOpen(true)}
         loading={loading}
         hideHeader={true}
-        hideBackButton={true}
         filterField="nombre_tipo_caracteristica"
         filterLabel="Tipo"
         autoGenerateFilter={true}

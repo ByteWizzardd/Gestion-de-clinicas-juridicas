@@ -45,12 +45,12 @@ INSERT INTO usuarios (cedula, nombres, apellidos, correo_electronico, nombre_usu
 -- Inscripción en los semestres que abarca el libro.
 INSERT INTO estudiantes (term, cedula_estudiante, tipo_estudiante, nrc, id_usuario_registro)
 SELECT s.term, u.cedula, 'Inscrito', 'CJ-2024-2025', 'V-77777777'
-FROM usuarios u CROSS JOIN (SELECT unnest(ARRAY['2024-25', '2025-15', '2025-25']) AS term) s
+FROM usuarios u CROSS JOIN (SELECT unnest(ARRAY['2025-15', '2025-25', '2026-15']) AS term) s
 WHERE u.cedula = ANY(ARRAY['V-90000003', 'V-90000004', 'V-90000005', 'V-90000006', 'V-90000007', 'V-90000008', 'V-90000009', 'V-90000010', 'V-90000011', 'V-90000012', 'V-90000013', 'V-90000014']);
 
 INSERT INTO profesores (term, cedula_profesor, tipo_profesor, id_usuario_registro)
 SELECT s.term, u.cedula, 'Asesor', 'V-77777777'
-FROM usuarios u CROSS JOIN (SELECT unnest(ARRAY['2024-25', '2025-15', '2025-25']) AS term) s
+FROM usuarios u CROSS JOIN (SELECT unnest(ARRAY['2025-15', '2025-25', '2026-15']) AS term) s
 WHERE u.cedula = ANY(ARRAY['V-90000001', 'V-90000002']);
 
 -- Parroquia para quien dio su sector pero no su parroquia. Las tres columnas

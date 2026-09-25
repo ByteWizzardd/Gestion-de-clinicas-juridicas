@@ -71,7 +71,6 @@ export default function TiposCaracteristicasPage() {
         onAddClick={() => setIsModalOpen(true)}
         loading={loading}
         hideHeader={true}
-        hideBackButton={true}
         renderActions={(item: any) => (
           <CatalogActionsMenu
             item={item}

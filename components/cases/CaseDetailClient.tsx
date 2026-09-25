@@ -434,6 +434,27 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
 
               return (
                 <>
+                  {/* 1. Información General -> Agregar Beneficiario */}
+                  <div className={`relative group ${isClosed ? 'cursor-not-allowed' : ''}`}>
+                    <button
+                      onClick={() => {
+                        if (isClosed) return;
+                        setShowAddBeneficiaryModal(true);
+                      }}
+                      disabled={isClosed}
+                      className={`w-full sm:w-auto h-9 sm:h-10 px-3 sm:px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-primary-light'}`}
+                    >
+                      <Plus className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#414040] dark:text-(--card-text-muted) shrink-0" />
+                      <span className="text-xs sm:text-base text-center">Agregar Beneficiario</span>
+                    </button>
+                    {isClosed && (
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-red-50 text-red-700 text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-[0px_4px_12px_rgba(0,0,0,0.1)] border border-red-100 font-medium tracking-wide">
+                        {tooltipText}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 2. Equipo Asignado -> Modificar/Asignar Equipo */}
                   {userRol && userRol !== 'Estudiante' && (
                     <div className={`relative group ${isClosed ? 'cursor-not-allowed' : ''}`}>
                       <button
@@ -461,25 +482,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
                     </div>
                   )}
 
-                  <div className={`relative group ${isClosed ? 'cursor-not-allowed' : ''}`}>
-                    <button
-                      onClick={() => {
-                        if (isClosed) return;
-                        setShowAddDocumentModal(true);
-                      }}
-                      disabled={isClosed}
-                      className={`w-full sm:w-auto h-9 sm:h-10 px-3 sm:px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-primary-light'}`}
-                    >
-                      <Plus className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#414040] dark:text-(--card-text-muted) shrink-0" />
-                      <span className="text-xs sm:text-base text-center">Agregar Documento</span>
-                    </button>
-                    {isClosed && (
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-red-50 text-red-700 text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-[0px_4px_12px_rgba(0,0,0,0.1)] border border-red-100 font-medium tracking-wide">
-                        {tooltipText}
-                      </div>
-                    )}
-                  </div>
-
+                  {/* 3. Historial de Acciones -> Registrar Acción */}
                   <div className={`relative group ${isClosed ? 'cursor-not-allowed' : ''}`}>
                     <button
                       onClick={() => {
@@ -499,35 +502,37 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
                     )}
                   </div>
 
-                  <div className={`relative group ${isClosed ? 'cursor-not-allowed' : ''}`}>
+                  {/* 4. Cambios de Estatus -> Cambiar Estatus */}
+                  <div className="relative group">
+                    <button
+                      onClick={() => {
+                        handleOpenStatusModal();
+                      }}
+                      className={`w-full sm:w-auto h-9 sm:h-10 px-3 sm:px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap transition-colors cursor-pointer hover:bg-primary-light`}
+                    >
+                      <RefreshCw className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#414040] dark:text-(--card-text-muted) shrink-0" />
+                      <span className="text-xs sm:text-base text-center">Cambiar Estatus</span>
+                    </button>
+                  </div>
+
+                  {/* 5. Soportes y Documentos -> Agregar Documento */}
+                  <div className={`relative group col-span-2 sm:col-span-1 ${isClosed ? 'cursor-not-allowed' : ''}`}>
                     <button
                       onClick={() => {
                         if (isClosed) return;
-                        setShowAddBeneficiaryModal(true);
+                        setShowAddDocumentModal(true);
                       }}
                       disabled={isClosed}
                       className={`w-full sm:w-auto h-9 sm:h-10 px-3 sm:px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-primary-light'}`}
                     >
                       <Plus className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#414040] dark:text-(--card-text-muted) shrink-0" />
-                      <span className="text-xs sm:text-base text-center">Agregar Beneficiario</span>
+                      <span className="text-xs sm:text-base text-center">Agregar Documento</span>
                     </button>
                     {isClosed && (
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-red-50 text-red-700 text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-[0px_4px_12px_rgba(0,0,0,0.1)] border border-red-100 font-medium tracking-wide">
                         {tooltipText}
                       </div>
                     )}
-                  </div>
-
-                  <div className="relative group col-span-2 sm:col-span-1">
-                    <button
-                      onClick={() => {
-                        handleOpenStatusModal();
-                      }}
-                      className={`w-full h-9 sm:h-10 px-3 sm:px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap transition-colors cursor-pointer hover:bg-primary-light`}
-                    >
-                      <RefreshCw className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#414040] dark:text-(--card-text-muted) shrink-0" />
-                      <span className="text-xs sm:text-base text-center">Cambiar Estatus</span>
-                    </button>
                   </div>
                 </>
               );

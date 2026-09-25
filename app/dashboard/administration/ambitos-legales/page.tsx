@@ -159,7 +159,6 @@ export default function AmbitosLegalesPage() {
                 filterTarget="materia"
                 autoGenerateFilter={true}
                 hideHeader={true}
-                hideBackButton={true}
                 enableCategoriaFilter={true}
                 enableSubcategoriaFilter={true}
                 renderActions={(item: any) => (

@@ -106,7 +106,6 @@ export default function NivelesEducativosPage() {
                 onAddClick={() => setIsModalOpen(true)}
                 loading={loading}
                 hideHeader={true}
-                hideBackButton={true}
                 renderActions={(item: any) => (
                     <CatalogActionsMenu
                         item={item}

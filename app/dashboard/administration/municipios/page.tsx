@@ -81,7 +81,6 @@ export default function MunicipiosPage() {
         onAddClick={() => setIsModalOpen(true)}
         loading={loading}
         hideHeader={true}
-        hideBackButton={true}
         enableEstadoFilter={true}
         renderActions={(item: any) => (
           <CatalogActionsMenu

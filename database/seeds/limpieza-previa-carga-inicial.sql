@@ -75,4 +75,4 @@ VALUES ('V-77777777', 'Coordinador', 'Administrador', 'coordinador@ucab.edu.ve',
     '$2b$10$sV6rtquZ.uUT2RKkp.Gw/uNIj7qoYjPUwfYdek1tuvbNcBQ3ByYn2', '0412-7777777', TRUE, 'Coordinador');
 
 INSERT INTO coordinadores (id_coordinador, term, habilitado)
-VALUES ('V-77777777', '2025-15', TRUE);
+VALUES ('V-77777777', '2025-25', TRUE);

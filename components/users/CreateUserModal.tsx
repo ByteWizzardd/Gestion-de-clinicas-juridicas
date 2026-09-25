@@ -10,6 +10,8 @@ import { getSemestres } from '@/app/actions/catalogos/semestres.actions';
 import PhoneInput from '../forms/PhoneInput';
 import CedulaInput from '../forms/CedulaInput';
 import { validateEmailFormat, validateEmailDomain } from '@/lib/utils/email-validation';
+import { validatePhone, normalizePhone, isPhoneEmpty } from '@/lib/utils/phone';
+import { validarNombre, validarCedulaNumero } from '@/lib/validations/comunes';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
 
@@ -143,7 +145,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
             // Solo llenar correo si viene de solicitante y no está vacío
             correo_electronico: lookupResult.data!.correo_electronico || prev.correo_electronico,
             // Solo llenar teléfono si viene de solicitante y no está vacío
-            telefono: lookupResult.data!.telefono_celular || prev.telefono,
+            telefono: lookupResult.data!.telefono_celular ? normalizePhone(lookupResult.data!.telefono_celular) : prev.telefono,
           }));
         }
       }
@@ -336,21 +338,24 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
     const newErrors: Partial<Record<keyof CreateUserForm, string>> = {};
 
     // Validar cédula
-    if (!form.cedulaNumero || form.cedulaNumero.trim() === '') {
-      newErrors.cedulaNumero = 'La cédula es requerida';
+    const errorCedula = validarCedulaNumero(form.cedulaNumero);
+    if (errorCedula) {
+      newErrors.cedulaNumero = errorCedula;
     } else if (errors.cedulaNumero && errors.cedulaNumero.includes('ya está registrada')) {
       // Mantener el error de cédula duplicada si existe
       newErrors.cedulaNumero = errors.cedulaNumero;
     }
 
     // Validar nombres
-    if (!form.nombres || form.nombres.trim() === '') {
-      newErrors.nombres = 'Los nombres son requeridos';
+    const errorNombres = validarNombre(form.nombres);
+    if (errorNombres) {
+      newErrors.nombres = errorNombres;
     }
 
     // Validar apellidos
-    if (!form.apellidos || form.apellidos.trim() === '') {
-      newErrors.apellidos = 'Los apellidos son requeridos';
+    const errorApellidos = validarNombre(form.apellidos);
+    if (errorApellidos) {
+      newErrors.apellidos = errorApellidos;
     }
 
     // Validar correo electrónico
@@ -358,6 +363,8 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
       newErrors.correo_electronico = 'El correo electrónico es requerido';
     } else if (!validateEmailFormat(form.correo_electronico)) {
       newErrors.correo_electronico = 'Correo electrónico inválido';
+    } else if (!validateEmailDomain(form.correo_electronico)) {
+      newErrors.correo_electronico = 'El correo debe tener dominio @est.ucab.edu.ve o @ucab.edu.ve';
     } else if (errors.correo_electronico && (errors.correo_electronico.includes('ya está registrado') || errors.correo_electronico.includes('no es válido') || errors.correo_electronico.includes('no existe'))) {
       // Mantener el error de correo si existe (duplicado o inválido)
       newErrors.correo_electronico = errors.correo_electronico;
@@ -366,29 +373,19 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
     // Validar nombre de usuario
     if (!form.nombre_usuario || form.nombre_usuario.trim() === '') {
       newErrors.nombre_usuario = 'El nombre de usuario es requerido';
+    } else if (/\s/.test(form.nombre_usuario.trim())) {
+      newErrors.nombre_usuario = 'El nombre de usuario no puede tener espacios';
+    } else if (form.nombre_usuario.trim().length > 50) {
+      newErrors.nombre_usuario = 'El nombre de usuario no puede superar 50 caracteres';
     } else if (errors.nombre_usuario && errors.nombre_usuario.includes('ya está registrado')) {
       // Mantener el error de nombre de usuario duplicado si existe
       newErrors.nombre_usuario = errors.nombre_usuario;
     }
 
-    // Validar teléfono (si está presente)
-    if (form.telefono && form.telefono.trim() && form.telefono.trim() !== '+58') {
-      const telefonoTrimmed = form.telefono.trim();
-      const codeMatch = telefonoTrimmed.match(/^(\+\d{1,3})/);
-      const code = codeMatch ? codeMatch[1] : '';
-      // PhoneInput guarda "+58-4122727981": hay que quitar también el guion
-      const number = telefonoTrimmed.replace(code, '').replace(/^-/, '').trim();
-
-      // Si solo tiene el código sin número, es válido (se enviará como null)
-      if (number !== '') {
-        if (code === '+58') {
-          if (!/^4\d{9}$/.test(number)) {
-            newErrors.telefono = 'Número venezolano inválido. Debe tener 10 dígitos y empezar con 4 (ej: 412...).';
-          }
-        } else if (number.length < 7 || number.length > 15) {
-          newErrors.telefono = 'Número de teléfono inválido';
-        }
-      }
+    // Validar teléfono (opcional)
+    const errorTelefono = validatePhone(form.telefono);
+    if (errorTelefono) {
+      newErrors.telefono = errorTelefono;
     }
 
     // Validar tipo de usuario
@@ -438,10 +435,8 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
       // Construir cédula completa
       const cedula = `${form.cedulaTipo}-${form.cedulaNumero}`;
 
-      // Procesar teléfono (si solo trae el código, p. ej. "+58" o "+58-", enviar null)
-      const telefonoFinal = form.telefono && !/^\+\d{1,4}-?$/.test(form.telefono.trim())
-        ? form.telefono.trim()
-        : null;
+      // Sin número (solo el código) se guarda null
+      const telefonoFinal = isPhoneEmpty(form.telefono) ? null : normalizePhone(form.telefono);
 
       const result = await createUsuarioAction({
         cedula,

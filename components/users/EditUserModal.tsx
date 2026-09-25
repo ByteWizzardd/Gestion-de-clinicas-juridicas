@@ -8,6 +8,7 @@ import { UpdateUserSchema } from '@/lib/validations/user.schema';
 import { getSemestres } from '@/app/actions/catalogos/semestres.actions';
 import PhoneInput from '../forms/PhoneInput';
 import { validateEmailFormat, validateEmailDomain } from '@/lib/utils/email-validation';
+import { validatePhone, normalizePhone, isPhoneEmpty } from '@/lib/utils/phone';
 import { Loader2 } from 'lucide-react';
 import { useToast } from "../ui/feedback/ToastProvider";
 
@@ -40,11 +41,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
     if (isOpen && usuario) {
       // Asegurarse de que el teléfono tenga un código de país si no lo tiene
       const initialFormState = { ...usuario };
-      if (initialFormState.telefono && !initialFormState.telefono.startsWith('+')) {
-        initialFormState.telefono = `+58${initialFormState.telefono.replace(/^0/, '')}`;
-      } else if (!initialFormState.telefono) {
-        initialFormState.telefono = '+58';
-      }
+      initialFormState.telefono = normalizePhone(initialFormState.telefono);
       // Default NRC to 15753 if empty
       if (!initialFormState.nrc || (typeof initialFormState.nrc === 'string' && !initialFormState.nrc.trim())) {
         initialFormState.nrc = '15753';
@@ -100,27 +97,10 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
       // La verificación profunda se hará en onBlur o antes del submit
     }
 
-    // Validar teléfono (si está presente)
-    if (form.telefono && form.telefono.trim() && form.telefono.trim() !== '+58') {
-      const telefonoTrimmed = form.telefono.trim();
-      const codeMatch = telefonoTrimmed.match(/^(\+\d{1,3})/);
-      const code = codeMatch ? codeMatch[1] : '';
-      const number = telefonoTrimmed.replace(code, '').replace(/^-/, '').trim();
-
-      // Si solo tiene el código sin número, es válido (se enviará como null)
-      if (number !== '') {
-        // Para números venezolanos (+58), el número debe tener 10 dígitos y empezar con 4
-        if (code === '+58') {
-          if (number.length !== 10 || !number.startsWith('4')) {
-            newErrors.telefono = 'Número venezolano inválido. Debe tener 10 dígitos y empezar con 4 (ej: 412...).';
-          }
-        } else {
-          // Para otros países, validar longitud mínima y máxima
-          if (number.length < 7 || number.length > 15) {
-            newErrors.telefono = 'Número de teléfono inválido';
-          }
-        }
-      }
+    // Validar teléfono (opcional)
+    const errorTelefono = validatePhone(form.telefono);
+    if (errorTelefono) {
+      newErrors.telefono = errorTelefono;
     }
 
     // Validar campos específicos según tipo de usuario
@@ -175,18 +155,8 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, usuario,
     setLoading(true);
     try {
       // Si el teléfono está vacío o es solo el prefijo (+58), enviarlo como string vacío
-      let telefonoFinal: string | undefined = form.telefono || undefined;
-      if (telefonoFinal) {
-        const trimmed = telefonoFinal.trim();
-        // Si el string coincide estrictamente con un formato de solo código (ej: +58, +1, +584) sin número real adicional
-        // Asumimos que si tiene menos de 5-6 dígitos en total, no es un número válido y es solo basura o código
-        if (/^\+\d{1,4}$/.test(trimmed)) {
-          telefonoFinal = ''; // Enviar cadena vacía para indicar "borrar"
-        }
-      } else {
-        // Si es null/undefined en el form, también enviar cadena vacía si queremos borrar
-        telefonoFinal = '';
-      }
+      // Solo el código (sin número) = borrar el teléfono
+      const telefonoFinal = isPhoneEmpty(form.telefono) ? '' : normalizePhone(form.telefono);
 
       const result = await updateUsuarioByCedulaAction(form.cedula, {
         correo_electronico: form.correo_electronico,
