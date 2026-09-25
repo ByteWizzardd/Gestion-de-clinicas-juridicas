@@ -55,9 +55,7 @@ export default async function AppointmentsPage() {
     })).sort((a, b) => b.term.localeCompare(a.term))
     : [];
 
-  const initialTermFilter = currentTermResult.success && currentTermResult.data?.term
-    ? currentTermResult.data.term
-    : '';
+  const initialTermFilter = '';
 
   return (
     <AppointmentsClient
