@@ -22,13 +22,14 @@ import AddActionModal from '@/components/cases/modals/AddActionModal';
 import AddBeneficiaryModal from '@/components/cases/modals/AddBeneficiaryModal';
 import ChangeStatusModal from '@/components/cases/modals/ChangeStatusModal';
 import { AppointmentModal } from '@/components/appointmentModal/AppointmentModal';
+import { AppointmentScheduleModal } from '@/components/appointmentModal/AppointmentScheduleModal';
 import ActionMenu from '@/components/ui/ActionMenu';
 import CaseFormModal from '@/components/forms/CaseFormModal';
 import ConfirmModal from '@/components/ui/feedback/ConfirmModal';
 import { descargarHistorialCasoAction } from '@/app/actions/reports';
 import { generateCasoHistorialZip } from '@/lib/utils/case-history-pdf-generator';
 import type { CasoHistorialData } from '@/lib/types/report-types';
-import { ChevronDown, Plus, Pencil, RefreshCw, Download } from 'lucide-react';
+import { ChevronDown, Plus, Pencil, RefreshCw, Download, Calendar } from 'lucide-react';
 import { getCurrentUserAction } from '@/app/actions/auth';
 import { useToast } from '@/components/ui/feedback/ToastProvider';
 import DetailPageSkeleton from '@/components/ui/skeletons/DetailPageSkeleton';
@@ -53,6 +54,7 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
   const [showAddActionModal, setShowAddActionModal] = useState(false);
   const [showAddBeneficiaryModal, setShowAddBeneficiaryModal] = useState(false);
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showChangeStatusModal, setShowChangeStatusModal] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const [editingAppointment, setEditingAppointment] = useState<any>(null);
@@ -399,6 +401,13 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
               {caso.estatus}
             </span>
           )}
+          <button
+            onClick={() => handleOpenStatusModal()}
+            className="h-8 px-3 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer hover:bg-primary-light"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-[#414040] dark:text-(--card-text-muted) shrink-0" />
+            <span className="text-sm font-medium">Cambiar Estatus</span>
+          </button>
           <ActionMenu
             variant="vertical"
             onEdit={handleEditCase}
@@ -502,17 +511,43 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
                     )}
                   </div>
 
-                  {/* 4. Cambios de Estatus -> Cambiar Estatus */}
-                  <div className="relative group">
-                    <button
-                      onClick={() => {
-                        handleOpenStatusModal();
-                      }}
-                      className={`w-full sm:w-auto h-9 sm:h-10 px-3 sm:px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap transition-colors cursor-pointer hover:bg-primary-light`}
+                  {/* 4. Citas y Orientaciones -> Agendar/Registrar Cita */}
+                  <div className={`relative group ${isClosed ? 'cursor-not-allowed' : ''}`}>
+                    <DropdownMenu
+                      trigger={(isOpen) => (
+                        <button
+                          disabled={isClosed}
+                          className={`w-full sm:w-auto h-9 sm:h-10 px-3 sm:px-4 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap transition-colors ${isClosed ? 'opacity-50 pointer-events-none' : 'hover:bg-primary-light'} ${isOpen ? 'bg-primary-light' : ''}`}
+                        >
+                          <Plus className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#414040] dark:text-(--card-text-muted) shrink-0" />
+                          <span className="text-xs sm:text-base text-center">Agregar Cita</span>
+                          <ChevronDown className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                      )}
+                      align="right"
+                      menuClassName="bg-[var(--card-bg)] border border-[var(--dropdown-border)] rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-2 mt-2 w-48 sm:w-56 overflow-hidden z-[9999]"
+                      disabled={isClosed}
                     >
-                      <RefreshCw className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#414040] dark:text-(--card-text-muted) shrink-0" />
-                      <span className="text-xs sm:text-base text-center">Cambiar Estatus</span>
-                    </button>
+                      <button
+                        onClick={() => setShowScheduleModal(true)}
+                        className="w-full text-left px-3 py-2 text-sm sm:text-base text-foreground hover:bg-[var(--sidebar-hover)] rounded-lg transition-colors flex items-center gap-2 mb-1"
+                      >
+                        <Calendar className="w-4 h-4" />
+                        Programar Cita
+                      </button>
+                      <button
+                        onClick={() => setShowAppointmentModal(true)}
+                        className="w-full text-left px-3 py-2 text-sm sm:text-base text-foreground hover:bg-[var(--sidebar-hover)] rounded-lg transition-colors flex items-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Registrar Cita Realizada
+                      </button>
+                    </DropdownMenu>
+                    {isClosed && (
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-red-50 text-red-700 text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-[0px_4px_12px_rgba(0,0,0,0.1)] border border-red-100 font-medium tracking-wide">
+                        {tooltipText}
+                      </div>
+                    )}
                   </div>
 
                   {/* 5. Soportes y Documentos -> Agregar Documento */}
@@ -599,6 +634,16 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
           }}
           onSave={handleAppointmentSaved}
           appointment={editingAppointment}
+        />
+      )}
+
+      {showScheduleModal && (
+        <AppointmentScheduleModal
+          onClose={() => setShowScheduleModal(false)}
+          onSave={() => {
+            setShowScheduleModal(false);
+            fetchCaso();
+          }}
         />
       )}
 
