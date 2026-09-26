@@ -23,6 +23,7 @@ import { withSecureTransaction } from '@/lib/db/secure-transactions';
 import { withAuditTransaction } from '@/lib/utils/audit-context';
 import { notificarVariosUsuariosAction } from './notificaciones';
 import { uploadSoporte, deleteFile, isValidSoporteMimeType } from '@/lib/services/storage.service';
+import { mapSystemRoleToSidebarRole } from '@/lib/utils/role-mapper';
 import { toUserMessage } from '@/lib/utils/error-messages';
 
 export interface CreateCasoResult {
@@ -1840,6 +1841,11 @@ export async function getCasosConEquipoAnteriorAction(): Promise<{
     if (!authResult.success || !authResult.user)
       return { success: false, error: authResult.error };
 
+    const isCoordinator = mapSystemRoleToSidebarRole(authResult.user.rol) === 'coordinator';
+    if (!isCoordinator) {
+      return { success: false, error: { message: 'No autorizado. Solo los coordinadores pueden reasignar equipos.', code: 'UNAUTHORIZED' } };
+    }
+
     const semestres = await semestresQueries.getAll();
     if (semestres.length === 0)
       return { success: false, error: { message: 'No hay semestres disponibles' } };
@@ -1887,6 +1893,11 @@ export async function desasignarEquipoSemestreAnteriorAction(
     const authResult = await requireAuthInServerActionWithCode();
     if (!authResult.success || !authResult.user)
       return { success: false, error: authResult.error };
+
+    const isCoordinator = mapSystemRoleToSidebarRole(authResult.user.rol) === 'coordinator';
+    if (!isCoordinator) {
+      return { success: false, error: { message: 'No autorizado. Solo los coordinadores pueden desasignar equipos.', code: 'UNAUTHORIZED' } };
+    }
 
     if (!idCasos.length)
       return { success: false, error: { message: 'No se seleccionaron casos' } };
@@ -1942,6 +1953,9 @@ export async function getCasosIdsPendientesReasignacionAction(): Promise<{
   try {
     const authResult = await requireAuthInServerActionWithCode();
     if (!authResult.success || !authResult.user) return { success: false, data: [] };
+
+    const isCoordinator = mapSystemRoleToSidebarRole(authResult.user.rol) === 'coordinator';
+    if (!isCoordinator) return { success: true, data: [] };
 
     const semestres = await semestresQueries.getAll();
     if (semestres.length === 0) return { success: true, data: [] };

@@ -61,9 +61,10 @@ interface TableRow extends Record<string, unknown> {
 
 interface CasesClientProps {
   initialCasos: Caso[];
+  isCoordinador?: boolean;
 }
 
-export default function CasesClient({ initialCasos }: CasesClientProps) {
+export default function CasesClient({ initialCasos, isCoordinador = false }: CasesClientProps) {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -777,7 +778,7 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
           casosAsignadosFilter={casosAsignadosFilter}
           onCasosAsignadosChange={handleCasosAsignadosChange}
           showCasosAsignados={true}
-          mostrarPendientesReasignacion={true}
+          mostrarPendientesReasignacion={isCoordinador}
           pendientesReasignacionFilter={pendientesReasignacionFilter}
           onPendientesReasignacionChange={setPendientesReasignacionFilter}
 
@@ -793,18 +794,20 @@ export default function CasesClient({ initialCasos }: CasesClientProps) {
         />
         </div>
         
-        <div className="flex shrink-0">
-          <button
-            id="btn-cierre-semestre"
-            onClick={() => setShowReasignarModal(true)}
-            className="h-10 px-4 cursor-pointer rounded-full border border-red-500 text-red-600
-                       dark:text-red-400 flex items-center gap-2 whitespace-nowrap
-                       hover:bg-red-50 dark:hover:bg-red-950/30 transition-all text-base"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Cierre de semestre
-          </button>
-        </div>
+        {isCoordinador && (
+          <div className="flex shrink-0">
+            <button
+              id="btn-cierre-semestre"
+              onClick={() => setShowReasignarModal(true)}
+              className="h-10 px-4 cursor-pointer rounded-full border border-red-500 text-red-600
+                         dark:text-red-400 flex items-center gap-2 whitespace-nowrap
+                         hover:bg-red-50 dark:hover:bg-red-950/30 transition-all text-base"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Cierre de semestre
+            </button>
+          </div>
+        )}
       </div>
       <div className="mt-10"></div>
 

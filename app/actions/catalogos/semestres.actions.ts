@@ -8,6 +8,7 @@ import { getAllSemestres } from '@/lib/db/queries/catalogos.queries';
 import { requireAuthInServerActionWithCode } from '@/lib/utils/server-auth';
 import { toUserMessage } from '@/lib/utils/error-messages';
 import { validarSemestre } from '@/lib/validations/semestre';
+import { mapSystemRoleToSidebarRole } from '@/lib/utils/role-mapper';
 
 export async function getSemestres() {
     try {
@@ -157,6 +158,12 @@ export async function cerrarSemestre(term: string) {
     if (!authResult.success || !authResult.user) {
         return { success: false, error: 'No autorizado' };
     }
+
+    const isCoordinator = mapSystemRoleToSidebarRole(authResult.user.rol) === 'coordinator';
+    if (!isCoordinator) {
+        return { success: false, error: 'No autorizado. Solo los coordinadores pueden cerrar el semestre.' };
+    }
+
     const userCedula = authResult.user.cedula;
 
     return await withAuditTransaction(
