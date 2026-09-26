@@ -358,13 +358,6 @@ export function AppointmentModal({ onClose, onSave, initialDate, appointment }: 
       const currentUsers = [...usuariosAtienden].sort();
       const hasUsersChange = JSON.stringify(initialUsers) !== JSON.stringify(currentUsers);
 
-      if (!hasDateChange && !hasEndDateChange && !hasOrientacionChange && !hasUsersChange) {
-        toast.info("No se han realizado cambios");
-        onClose();
-        return;
-      }
-
-      // Si hay cambios, continuamos con la lógica...
     }
 
     setLoading(true);
