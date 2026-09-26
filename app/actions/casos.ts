@@ -290,7 +290,7 @@ export async function uploadSoportesAction(
         nombre_archivo: file.name,
         tipo_mime: file.type || 'application/octet-stream',
         descripcion: undefined,
-        fecha_consignacion: new Date(),
+        fecha_consignacion: undefined,
         id_usuario_subio: authResult.user.cedula,
       });
 
