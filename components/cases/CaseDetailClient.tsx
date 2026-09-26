@@ -387,56 +387,78 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
       </motion.div>
 
       <motion.div
-        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 flex-wrap"
+        className="flex flex-col gap-4 mb-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
       >
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold dark:text-foreground" style={{ fontFamily: 'var(--font-league-spartan)' }}>
-            {codigoCaso}
-          </h1>
-          {caso.estatus && (
-            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(caso.estatus)}`}>
-              {caso.estatus}
-            </span>
-          )}
-          <button
-            onClick={() => handleOpenStatusModal()}
-            className="h-8 px-3 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer hover:bg-primary-light"
-          >
-            <RefreshCw className="w-3.5 h-3.5 text-[#414040] dark:text-(--card-text-muted) shrink-0" />
-            <span className="text-sm font-medium">Cambiar Estatus</span>
-          </button>
-          <ActionMenu
-            variant="vertical"
-            onEdit={handleEditCase}
-            onDelete={handleDeleteCase}
-            customActions={[
-              {
-                label: (
-                  <div className="flex items-center gap-2">
-                    <Download className="w-4 h-4 text-gray-500 group-hover:text-yellow-600 transition-colors" />
-                    <span className="group-hover:text-yellow-600 transition-colors">Descargar historial</span>
-                  </div>
-                ),
-                onClick: handleDownloadHistorial
-              },
-              {
-                label: (
-                  <div className="flex items-center gap-2 text-wrap pr-1">
-                    <Download className="w-4 h-4 text-gray-500 group-hover:text-yellow-600 transition-colors shrink-0" />
-                    <span className="group-hover:text-yellow-600 transition-colors leading-tight">Descargar registro y control</span>
-                  </div>
-                ),
-                onClick: handleDownloadRegistro
-              }
-            ]}
-          />
-        </div>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold dark:text-foreground" style={{ fontFamily: 'var(--font-league-spartan)' }}>
+              {codigoCaso}
+            </h1>
+            {caso.estatus && (
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(caso.estatus)}`}>
+                {caso.estatus}
+              </span>
+            )}
+            <button
+              onClick={() => handleOpenStatusModal()}
+              className="h-8 px-3 rounded-full bg-transparent border border-primary text-foreground flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer hover:bg-primary-light"
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-[#414040] dark:text-(--card-text-muted) shrink-0" />
+              <span className="text-sm font-medium">Cambiar Estatus</span>
+            </button>
+            <ActionMenu
+              variant="vertical"
+              onEdit={handleEditCase}
+              onDelete={handleDeleteCase}
+              customActions={[
+                {
+                  label: (
+                    <div className="flex items-center gap-2">
+                      <Download className="w-4 h-4 text-gray-500 group-hover:text-yellow-600 transition-colors" />
+                      <span className="group-hover:text-yellow-600 transition-colors">Descargar historial</span>
+                    </div>
+                  ),
+                  onClick: handleDownloadHistorial
+                },
+                {
+                  label: (
+                    <div className="flex items-center gap-2 text-wrap pr-1">
+                      <Download className="w-4 h-4 text-gray-500 group-hover:text-yellow-600 transition-colors shrink-0" />
+                      <span className="group-hover:text-yellow-600 transition-colors leading-tight">Descargar registro y control</span>
+                    </div>
+                  ),
+                  onClick: handleDownloadRegistro
+                }
+              ]}
+            />
+          </div>
 
-        <div className="w-full sm:w-auto pb-2 sm:pb-0 order-2 sm:order-0">
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:flex-wrap sm:justify-end">
+          <div className="w-full">
+            {nombreSolicitante && (
+              <p className="text-sm sm:text-base text-gray-500 dark:text-(--card-text-muted) flex items-center gap-1.5 flex-wrap">
+                Solicitante:
+                {caso.cedula ? (
+                  <>
+                    <Link
+                      href={`/dashboard/applicants/${caso.cedula}`}
+                      className="text-primary hover:underline font-medium transition-colors"
+                    >
+                      {nombreSolicitante}
+                    </Link>
+                    <span className="text-gray-400 dark:text-gray-500">({caso.cedula})</span>
+                  </>
+                ) : (
+                  <span>{nombreSolicitante}</span>
+                )}
+              </p>
+            )}
+          </div>
+
+          <div className="w-full mt-2">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:flex-wrap">
             {(() => {
               const isClosed = caso.estatus === 'Entregado' || caso.estatus === 'Archivado';
               const tooltipText = isClosed ? `No disponible: Caso ${caso.estatus}` : undefined;
@@ -574,25 +596,6 @@ export default function CaseDetailClient({ id: propId }: CaseDetailClientProps =
             })()}
           </div>
         </div>
-        <div className="w-full order-1 sm:order-0">
-          {nombreSolicitante && (
-            <p className="text-sm sm:text-base text-gray-500 dark:text-(--card-text-muted) mb-2 sm:mb-0 flex items-center gap-1.5 flex-wrap">
-              Solicitante:
-              {caso.cedula ? (
-                <>
-                  <Link
-                    href={`/dashboard/applicants/${caso.cedula}`}
-                    className="text-primary hover:underline font-medium transition-colors"
-                  >
-                    {nombreSolicitante}
-                  </Link>
-                  <span className="text-gray-400 dark:text-gray-500">({caso.cedula})</span>
-                </>
-              ) : (
-                <span>{nombreSolicitante}</span>
-              )}
-            </p>
-          )}
         </div>
       </motion.div>
 
